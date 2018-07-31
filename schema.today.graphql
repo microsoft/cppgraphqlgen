@@ -1,0 +1,107 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+scalar ItemCursor
+
+type Query {
+    node(id: ID!) : Node
+
+    appointments(first: Int, after: ItemCursor, last: Int, before: ItemCursor): AppointmentConnection!
+    tasks(first: Int, after: ItemCursor, last: Int, before: ItemCursor): TaskConnection!
+    unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
+
+    appointmentsById(ids: [ID!]!) : [Appointment]!
+    tasksById(ids: [ID!]!): [Task]!
+    unreadCountsById(ids: [ID!]!): [Folder]!
+}
+
+interface Node {
+    id: ID!
+}
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+}
+
+type AppointmentEdge {
+    node: Appointment
+    cursor: ItemCursor!
+}
+
+type AppointmentConnection {
+    pageInfo: PageInfo!
+    edges: [AppointmentEdge]
+}
+
+type TaskEdge {
+    node: Task
+    cursor: ItemCursor!
+}
+
+type TaskConnection {
+    pageInfo: PageInfo!
+    edges: [TaskEdge]
+}
+
+type FolderEdge {
+    node: Folder
+    cursor: ItemCursor!
+}
+
+type FolderConnection {
+    pageInfo: PageInfo!
+    edges: [FolderEdge]
+}
+
+input CompleteTaskInput {
+    id: ID!
+    isComplete: Boolean = true
+    clientMutationId: String
+}
+
+type CompleteTaskPayload {
+    task: Task
+    clientMutationId: String
+}
+
+type Mutation {
+    completeTask(input: CompleteTaskInput!) : CompleteTaskPayload!
+}
+
+type Subscription {
+    nextAppointmentChange : Appointment
+}
+
+scalar DateTime
+
+enum TaskState {
+    New
+    Started
+    Complete
+}
+
+type Appointment implements Node {
+    id: ID!
+    when: DateTime
+    subject: String
+    isNow: Boolean!
+}
+
+type Task implements Node {
+    id: ID!
+    title: String
+    isComplete: Boolean!
+}
+
+type Folder implements Node {
+    id: ID!
+    name: String
+    unreadCount: Int!
+}
