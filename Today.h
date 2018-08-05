@@ -31,7 +31,15 @@ public:
 	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>> ids) const override;
 
 private:
+	std::shared_ptr<Appointment> findAppointment(const std::vector<unsigned char>& id) const;
+	std::shared_ptr<Task> findTask(const std::vector<unsigned char>& id) const;
+	std::shared_ptr<Folder> findUnreadCount(const std::vector<unsigned char>& id) const;
+
 	// Lazy load the fields in each query
+	void loadAppointments() const;
+	void loadTasks() const;
+	void loadUnreadCounts() const;
+
 	mutable appointmentsLoader _getAppointments;
 	mutable tasksLoader _getTasks;
 	mutable unreadCountsLoader _getUnreadCounts;

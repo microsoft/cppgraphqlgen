@@ -66,7 +66,7 @@ struct ResolverParams
 	const web::json::object& variables;
 };
 
-using Resolver = std::function<web::json::value(ResolverParams)>;
+using Resolver = std::function<web::json::value(ResolverParams&&)>;
 using ResolverMap = std::unordered_map<std::string, Resolver>;
 
 // Types be wrapped non-null or list types in GraphQL. Since nullability is a more special case
@@ -100,7 +100,7 @@ struct ModifiedArgument
 	>::type;
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	static type require(typename std::conditional<TypeModifier::None == _Modifier, std::string, DisableNone>::type name,
+	static type require(const typename std::conditional<TypeModifier::None == _Modifier, std::string, DisableNone>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
@@ -111,7 +111,7 @@ struct ModifiedArgument
 	}
 
 	// Peel off nullable modifiers.
-	static type require(typename std::conditional<TypeModifier::Nullable == _Modifier, std::string, DisableNullable>::type name,
+	static type require(const typename std::conditional<TypeModifier::Nullable == _Modifier, std::string, DisableNullable>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
@@ -140,7 +140,7 @@ struct ModifiedArgument
 	}
 
 	// Peel off list modifiers.
-	static type require(typename std::conditional<TypeModifier::List == _Modifier, std::string, DisableList>::type name,
+	static type require(const typename std::conditional<TypeModifier::List == _Modifier, std::string, DisableList>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::List == _Modifier, "this is the list version");
@@ -171,7 +171,7 @@ struct ModifiedArgument
 		}
 	}
 
-	static std::pair<type, bool> find(std::string name, const web::json::object& arguments) noexcept
+	static std::pair<type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
 	{
 		try
 		{
@@ -193,7 +193,7 @@ struct ModifiedArgument<_Type, TypeModifier::None>
 	using type = _Type;
 
 	// Call convert on this type without any other modifiers.
-	static _Type require(std::string name, const web::json::object& arguments)
+	static _Type require(const std::string& name, const web::json::object& arguments)
 	{
 		try
 		{
@@ -209,7 +209,7 @@ struct ModifiedArgument<_Type, TypeModifier::None>
 	}
 
 	// Wrap require in a try/catch block.
-	static std::pair<_Type, bool> find(std::string name, const web::json::object& arguments) noexcept
+	static std::pair<_Type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
 	{
 		try
 		{
@@ -248,7 +248,7 @@ using TypeNames = std::unordered_set<std::string>;
 class Object : public std::enable_shared_from_this<Object>
 {
 public:
-	explicit Object(TypeNames typeNames, ResolverMap resolvers);
+	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 
 	web::json::value resolve(const ast::SelectionSet& selection, const FragmentMap& fragments, const web::json::object& variables) const;
 
@@ -283,7 +283,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	static web::json::value convert(const typename std::conditional<TypeModifier::None == _Modifier, type, DisableNone>::type& result,
-		ResolverParams params)
+		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
 		static_assert(sizeof...(_Other) == 0, "TypeModifier::None should always be last in the list of modifiers if it's included at all");
@@ -295,7 +295,7 @@ struct ModifiedResult
 	// Peel off nullable modifiers for std::shared_ptr<Object>.
 	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
 			&& std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisableNullableSharedPtr>::type& result,
-		ResolverParams params)
+		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
 		static_assert(std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, "this is the shared_ptr version");
@@ -311,7 +311,7 @@ struct ModifiedResult
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
 	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
 			&& !std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisableNullable>::type& result,
-		ResolverParams params)
+		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
 		static_assert(!std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, "this is the unique_ptr version");
@@ -326,7 +326,7 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	static web::json::value convert(const typename std::conditional<TypeModifier::List == _Modifier, type, DisableList>::type& result,
-		ResolverParams params)
+		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::List == _Modifier, "this is the list version");
 
@@ -335,7 +335,7 @@ struct ModifiedResult
 		std::transform(result.cbegin(), result.cend(), value.as_array().begin(),
 			[params](const typename ModifiedResult<_Type, _Other...>::type& element)
 		{
-			return ModifiedResult<_Type, _Other...>::convert(element, params);
+			return ModifiedResult<_Type, _Other...>::convert(element, ResolverParams(params));
 		});
 
 		return value;
@@ -352,7 +352,7 @@ struct ModifiedResult<_Type, TypeModifier::None>
 
 	// Convert a subclass of Object and call that specialization.
 	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		type, DisableNone>::type& result, ResolverParams params)
+		type, DisableNone>::type& result, ResolverParams&& params)
 	{
 		static_assert(std::is_same<std::shared_ptr<_Type>, type>::value, "this is the derived object type");
 
@@ -361,7 +361,7 @@ struct ModifiedResult<_Type, TypeModifier::None>
 
 	// Convert a single value of the specified type to JSON.
 	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		DisableNone, type>::type& result, ResolverParams params);
+		DisableNone, type>::type& result, ResolverParams&& params);
 };
 
 // Convenient type aliases for testing, generated code won't actually use these. These are also
@@ -381,7 +381,7 @@ template <TypeModifier... _Modifiers> using ObjectResult = ModifiedResult<Object
 class Request : public std::enable_shared_from_this<Request>
 {
 public:
-	explicit Request(TypeMap operationTypes);
+	explicit Request(TypeMap&& operationTypes);
 
 	web::json::value resolve(const ast::Node& document, const std::string& operationName, const web::json::object& variables) const;
 

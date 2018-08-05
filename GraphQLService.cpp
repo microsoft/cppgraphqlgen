@@ -122,37 +122,37 @@ std::vector<unsigned char> ModifiedArgument<std::vector<unsigned char>>::convert
 }
 
 template <>
-web::json::value ModifiedResult<int>::convert(const int& result, ResolverParams)
+web::json::value ModifiedResult<int>::convert(const int& result, ResolverParams&&)
 {
 	return web::json::value::number(result);
 }
 
 template <>
-web::json::value ModifiedResult<double>::convert(const double& result, ResolverParams)
+web::json::value ModifiedResult<double>::convert(const double& result, ResolverParams&&)
 {
 	return web::json::value::number(result);
 }
 
 template <>
-web::json::value ModifiedResult<std::string>::convert(const std::string& result, ResolverParams)
+web::json::value ModifiedResult<std::string>::convert(const std::string& result, ResolverParams&&)
 {
 	return web::json::value::string(utility::conversions::to_string_t(result));
 }
 
 template <>
-web::json::value ModifiedResult<bool>::convert(const bool& result, ResolverParams)
+web::json::value ModifiedResult<bool>::convert(const bool& result, ResolverParams&&)
 {
 	return web::json::value::boolean(result);
 }
 
 template <>
-web::json::value ModifiedResult<web::json::value>::convert(const web::json::value& result, ResolverParams)
+web::json::value ModifiedResult<web::json::value>::convert(const web::json::value& result, ResolverParams&&)
 {
 	return result;
 }
 
 template <>
-web::json::value ModifiedResult<std::vector<unsigned char>>::convert(const std::vector<unsigned char>& result, ResolverParams)
+web::json::value ModifiedResult<std::vector<unsigned char>>::convert(const std::vector<unsigned char>& result, ResolverParams&&)
 {
 	try
 	{
@@ -170,7 +170,7 @@ web::json::value ModifiedResult<std::vector<unsigned char>>::convert(const std::
 }
 
 template <>
-web::json::value ModifiedResult<Object>::convert(const std::shared_ptr<Object>& result, ResolverParams params)
+web::json::value ModifiedResult<Object>::convert(const std::shared_ptr<Object>& result, ResolverParams&& params)
 {
 	if (!result)
 	{
@@ -185,7 +185,7 @@ web::json::value ModifiedResult<Object>::convert(const std::shared_ptr<Object>& 
 	return result->resolve(*params.selection, params.fragments, params.variables);
 }
 
-Object::Object(TypeNames typeNames, ResolverMap resolvers)
+Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 	: _typeNames(std::move(typeNames))
 	, _resolvers(std::move(resolvers))
 {
@@ -215,7 +215,7 @@ web::json::value Object::resolve(const ast::SelectionSet& selection, const Fragm
 	return result;
 }
 
-Request::Request(TypeMap operationTypes)
+Request::Request(TypeMap&& operationTypes)
 	: _operations(std::move(operationTypes))
 {
 }

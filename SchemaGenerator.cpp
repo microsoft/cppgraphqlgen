@@ -949,13 +949,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	web::json::value resolve__typename(service::ResolverParams params);
+	web::json::value resolve__typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	web::json::value resolve__schema(service::ResolverParams params);
-	web::json::value resolve__type(service::ResolverParams params);
+					headerFile << R"cpp(	web::json::value resolve__schema(service::ResolverParams&& params);
+	web::json::value resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1066,7 +1066,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 
 	fieldName[0] = std::toupper(fieldName[0]);
 	output << R"cpp(	web::json::value resolve)cpp" << fieldName
-		<< R"cpp((service::ResolverParams params);
+		<< R"cpp((service::ResolverParams&& params);
 )cpp";
 
 	return output.str();
@@ -1141,7 +1141,7 @@ template <>
 template <>
 web::json::value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>::convert(const )cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(& value, ResolverParams)
+<< R"cpp(& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 )cpp";
@@ -1337,9 +1337,8 @@ namespace object {
 
 				fieldName[0] = std::toupper(fieldName[0]);
 				sourceFile << R"cpp(		{ ")cpp" << outputField.name
-					<< R"cpp(", std::bind(std::mem_fun(&)cpp" << objectType.type
-					<< R"cpp(::resolve)cpp" << fieldName
-					<< R"cpp(), this, std::placeholders::_1) })cpp";
+					<< R"cpp(", [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
+					<< R"cpp((std::move(params)); } })cpp";
 			}
 
 			if (!firstField)
@@ -1348,17 +1347,14 @@ namespace object {
 )cpp";
 			}
 
-			sourceFile << R"cpp(		{ "__typename", std::bind(std::mem_fun(&)cpp" << objectType.type
-				<< R"cpp(::resolve__typename), this, std::placeholders::_1) })cpp";
+			sourceFile << R"cpp(		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } })cpp";
 
 
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(,
-		{ "__schema", std::bind(std::mem_fun(&)cpp" << objectType.type
-					<< R"cpp(::resolve__schema), this, std::placeholders::_1) },
-		{ "__type", std::bind(std::mem_fun(&)cpp" << objectType.type
-					<< R"cpp(::resolve__type), this, std::placeholders::_1) })cpp";
+		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
+		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } })cpp";
 			}
 
 			sourceFile << R"cpp(
@@ -1397,7 +1393,7 @@ namespace object {
 				sourceFile << R"cpp(
 web::json::value )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
-<< R"cpp((service::ResolverParams params)
+<< R"cpp((service::ResolverParams&& params)
 {
 )cpp";
 
@@ -1500,7 +1496,7 @@ web::json::value )cpp" << objectType.type
 
 			sourceFile << R"cpp(
 web::json::value )cpp" << objectType.type
-<< R"cpp(::resolve__typename(service::ResolverParams)
+<< R"cpp(::resolve__typename(service::ResolverParams&&)
 {
 	return web::json::value::string(_XPLATSTR(")cpp" << objectType.type << R"cpp("));
 }
@@ -1510,7 +1506,7 @@ web::json::value )cpp" << objectType.type
 			{
 				sourceFile << R"cpp(
 web::json::value )cpp" << objectType.type
-<< R"cpp(::resolve__schema(service::ResolverParams params)
+<< R"cpp(::resolve__schema(service::ResolverParams&& params)
 {
 	auto result = service::ModifiedResult<introspection::Schema>::convert(_schema, std::move(params));
 
@@ -1518,7 +1514,7 @@ web::json::value )cpp" << objectType.type
 }
 
 web::json::value )cpp" << objectType.type
-<< R"cpp(::resolve__type(service::ResolverParams params)
+<< R"cpp(::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	auto result = service::ModifiedResult<introspection::object::__Type, service::TypeModifier::Nullable>::convert(_schema->LookupType(argName), std::move(params));
