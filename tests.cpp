@@ -30,24 +30,22 @@ protected:
 			[this]() -> std::vector<std::shared_ptr<today::Appointment>>
 		{
 			++_getAppointmentsCount;
-			return { std::make_shared<today::Appointment>(_fakeAppointmentId, "tomorrow", "Lunch?", false) };
+			return { std::make_shared<today::Appointment>(std::vector<unsigned char>(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
 		}, [this]() -> std::vector<std::shared_ptr<today::Task>>
 		{
 			++_getTasksCount;
-			return { std::make_shared<today::Task>(_fakeTaskId, "Don't forget", true) };
+			return { std::make_shared<today::Task>(std::vector<unsigned char>(_fakeTaskId), "Don't forget", true) };
 		}, [this]() -> std::vector<std::shared_ptr<today::Folder>>
 		{
 			++_getUnreadCountsCount;
-			return { std::make_shared<today::Folder>(_fakeFolderId, "\"Fake\" Inbox", 3) };
+			return { std::make_shared<today::Folder>(std::vector<unsigned char>(_fakeFolderId), "\"Fake\" Inbox", 3) };
 		});
 		auto mutation = std::make_shared<today::Mutation>(
-			[](today::CompleteTaskInput input) -> std::shared_ptr<today::CompleteTaskPayload>
+			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload>
 		{
 			return std::make_shared<today::CompleteTaskPayload>(
 				std::make_shared<today::Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
-				std::unique_ptr<std::string>(input.clientMutationId
-					? new std::string(*input.clientMutationId)
-					: nullptr)
+				std::move(input.clientMutationId)
 			);
 		});
 		auto subscription = std::make_shared<today::Subscription>();

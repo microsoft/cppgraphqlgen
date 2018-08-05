@@ -10,7 +10,7 @@ namespace facebook {
 namespace graphql {
 namespace today {
 
-Appointment::Appointment(std::vector<unsigned char> id, std::string when, std::string subject, bool isNow)
+Appointment::Appointment(std::vector<unsigned char>&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
 	, _when(std::move(when))
 	, _subject(std::move(subject))
@@ -18,21 +18,21 @@ Appointment::Appointment(std::vector<unsigned char> id, std::string when, std::s
 {
 }
 
-Task::Task(std::vector<unsigned char> id, std::string title, bool isComplete)
+Task::Task(std::vector<unsigned char>&& id, std::string&& title, bool isComplete)
 	: _id(std::move(id))
 	, _title(std::move(title))
 	, _isComplete(isComplete)
 {
 }
 
-Folder::Folder(std::vector<unsigned char> id, std::string name, int unreadCount)
+Folder::Folder(std::vector<unsigned char>&& id, std::string&& name, int unreadCount)
 	: _id(std::move(id))
 	, _name(std::move(name))
 	, _unreadCount(unreadCount)
 {
 }
 
-Query::Query(appointmentsLoader getAppointments, tasksLoader getTasks, unreadCountsLoader getUnreadCounts)
+Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts)
 	: _getAppointments(std::move(getAppointments))
 	, _getTasks(std::move(getTasks))
 	, _getUnreadCounts(getUnreadCounts)
@@ -117,7 +117,7 @@ std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<unsigned char>&
 	return nullptr;
 }
 
-std::shared_ptr<service::Object> Query::getNode(std::vector<unsigned char> id) const
+std::shared_ptr<service::Object> Query::getNode(std::vector<unsigned char>&& id) const
 {
 	auto appointment = findAppointment(id);
 
@@ -241,7 +241,7 @@ private:
 	const vec_type& _objects;
 };
 
-std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const
+std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
 {
 	loadAppointments();
 
@@ -251,7 +251,7 @@ std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::uniqu
 	return std::static_pointer_cast<object::AppointmentConnection>(connection);
 }
 
-std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const
+std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
 {
 	loadTasks();
 
@@ -261,7 +261,7 @@ std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int> fir
 	return std::static_pointer_cast<object::TaskConnection>(connection);
 }
 
-std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const
+std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
 {
 	loadUnreadCounts();
 
@@ -271,7 +271,7 @@ std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr
 	return std::static_pointer_cast<object::FolderConnection>(connection);
 }
 
-std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std::vector<std::vector<unsigned char>> ids) const
+std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
@@ -284,7 +284,7 @@ std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std
 	return result;
 }
 
-std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::vector<unsigned char>> ids) const
+std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::vector<unsigned char>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
@@ -297,7 +297,7 @@ std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::
 	return result;
 }
 
-std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vector<std::vector<unsigned char>> ids) const
+std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
@@ -310,12 +310,12 @@ std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vec
 	return result;
 }
 
-Mutation::Mutation(completeTaskMutation mutateCompleteTask)
+Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 	: _mutateCompleteTask(std::move(mutateCompleteTask))
 {
 }
 
-std::shared_ptr<object::CompleteTaskPayload> Mutation::getCompleteTask(CompleteTaskInput input) const
+std::shared_ptr<object::CompleteTaskPayload> Mutation::getCompleteTask(CompleteTaskInput&& input) const
 {
 	return _mutateCompleteTask(std::move(input));
 }

@@ -33,25 +33,23 @@ int main(int argc, char** argv)
 		[&binAppointmentId]() -> std::vector<std::shared_ptr<today::Appointment>>
 	{
 		std::cout << "Called getAppointments..." << std::endl;
-		return { std::make_shared<today::Appointment>(binAppointmentId, "tomorrow", "Lunch?", false) };
+		return { std::make_shared<today::Appointment>(std::move(binAppointmentId), "tomorrow", "Lunch?", false) };
 	}, [&binTaskId]() -> std::vector<std::shared_ptr<today::Task>>
 	{
 		std::cout << "Called getTasks..." << std::endl;
-		return { std::make_shared<today::Task>(binTaskId, "Don't forget", true) };
+		return { std::make_shared<today::Task>(std::move(binTaskId), "Don't forget", true) };
 	}, [&binFolderId]() -> std::vector<std::shared_ptr<today::Folder>>
 	{
 		std::cout << "Called getUnreadCounts..." << std::endl;
-		return { std::make_shared<today::Folder>(binFolderId, "\"Fake\" Inbox", 3) };
+		return { std::make_shared<today::Folder>(std::move(binFolderId), "\"Fake\" Inbox", 3) };
 	});
 	auto mutation = std::make_shared<today::Mutation>(
-		[](today::CompleteTaskInput input) -> std::shared_ptr<today::CompleteTaskPayload>
+		[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload>
 	{
 		return std::make_shared<today::CompleteTaskPayload>(
 			std::make_shared<today::Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
-			std::unique_ptr<std::string>(input.clientMutationId
-				? new std::string(*input.clientMutationId)
-				: nullptr)
-			);
+			std::move(input.clientMutationId)
+		);
 	});
 	auto subscription = std::make_shared<today::Subscription>();
 	auto service = std::make_shared<today::Operations>(query, mutation, subscription);

@@ -92,7 +92,7 @@ std::unique_ptr<std::string> BaseType::getDescription() const
 	return nullptr;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> BaseType::getFields(std::unique_ptr<bool> /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> BaseType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
 {
 	return nullptr;
 }
@@ -107,7 +107,7 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> BaseType::getPossi
 	return nullptr;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> BaseType::getEnumValues(std::unique_ptr<bool> /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> BaseType::getEnumValues(std::unique_ptr<bool>&& /*includeDeprecated*/) const
 {
 	return nullptr;
 }
@@ -166,7 +166,7 @@ std::unique_ptr<std::string> ObjectType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> ObjectType::getFields(std::unique_ptr<bool> /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> ObjectType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
 {
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>(_fields.size()));
 
@@ -206,7 +206,7 @@ std::unique_ptr<std::string> InterfaceType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> InterfaceType::getFields(std::unique_ptr<bool> /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> InterfaceType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
 {
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>(_fields.size()));
 
@@ -273,7 +273,7 @@ std::unique_ptr<std::string> EnumType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> EnumType::getEnumValues(std::unique_ptr<bool> includeDeprecated) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> EnumType::getEnumValues(std::unique_ptr<bool>&& /*includeDeprecated*/) const
 {
 	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> result(new std::vector<std::shared_ptr<object::__EnumValue>>(_enumValues.size()));
 

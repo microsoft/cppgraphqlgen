@@ -54,10 +54,10 @@ public:
 	// Accessors
 	std::unique_ptr<std::string> getName() const override;
 	std::unique_ptr<std::string> getDescription() const override;
-	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool> includeDeprecated) const override;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool>&& includeDeprecated) const override;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> getInterfaces() const override;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> getPossibleTypes() const override;
-	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> getEnumValues(std::unique_ptr<bool> includeDeprecated) const override;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> getEnumValues(std::unique_ptr<bool>&& includeDeprecated) const override;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>> getInputFields() const override;
 	std::shared_ptr<object::__Type> getOfType() const override;
 
@@ -89,7 +89,7 @@ public:
 	// Accessors
 	__TypeKind getKind() const override;
 	std::unique_ptr<std::string> getName() const override;
-	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool> includeDeprecated) const override;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool>&& includeDeprecated) const override;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> getInterfaces() const override;
 
 private:
@@ -109,7 +109,7 @@ public:
 	// Accessors
 	__TypeKind getKind() const override;
 	std::unique_ptr<std::string> getName() const override;
-	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool> includeDeprecated) const override;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> getFields(std::unique_ptr<bool>&& includeDeprecated) const override;
 
 private:
 	const std::string _name;
@@ -145,7 +145,7 @@ public:
 	// Accessors
 	__TypeKind getKind() const override;
 	std::unique_ptr<std::string> getName() const override;
-	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> getEnumValues(std::unique_ptr<bool> includeDeprecated) const override;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> getEnumValues(std::unique_ptr<bool>&& includeDeprecated) const override;
 
 private:
 	const std::string _name;

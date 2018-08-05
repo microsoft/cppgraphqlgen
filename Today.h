@@ -20,15 +20,15 @@ public:
 	using tasksLoader = std::function<std::vector<std::shared_ptr<Task>>()>;
 	using unreadCountsLoader = std::function<std::vector<std::shared_ptr<Folder>>()>;
 
-	explicit Query(appointmentsLoader getAppointments, tasksLoader getTasks, unreadCountsLoader getUnreadCounts);
+	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::shared_ptr<service::Object> getNode(std::vector<unsigned char> id) const override;
-	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const override;
-	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const override;
-	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int> first, std::unique_ptr<web::json::value> after, std::unique_ptr<int> last, std::unique_ptr<web::json::value> before) const override;
-	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<unsigned char>> ids) const override;
-	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<unsigned char>> ids) const override;
-	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>> ids) const override;
+	std::shared_ptr<service::Object> getNode(std::vector<unsigned char>&& id) const override;
+	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const override;
+	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const override;
+	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const override;
+	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const override;
+	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<unsigned char>>&& ids) const override;
+	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const override;
 
 private:
 	std::shared_ptr<Appointment> findAppointment(const std::vector<unsigned char>& id) const;
@@ -76,7 +76,7 @@ private:
 class Appointment : public object::Appointment
 {
 public:
-	explicit Appointment(std::vector<unsigned char> id, std::string when, std::string subject, bool isNow);
+	explicit Appointment(std::vector<unsigned char>&& id, std::string&& when, std::string&& subject, bool isNow);
 
 	std::vector<unsigned char> getId() const override { return _id; }
 	std::unique_ptr<web::json::value> getWhen() const override{ return std::unique_ptr<web::json::value>(new web::json::value(web::json::value::string(utility::conversions::to_string_t(_when)))); }
@@ -147,7 +147,7 @@ private:
 class Task : public object::Task
 {
 public:
-	explicit Task(std::vector<unsigned char> id, std::string title, bool isComplete);
+	explicit Task(std::vector<unsigned char>&& id, std::string&& title, bool isComplete);
 
 	std::vector<unsigned char> getId() const override { return _id; }
 	std::unique_ptr<std::string> getTitle() const override { return std::unique_ptr<std::string>(new std::string(_title)); }
@@ -217,7 +217,7 @@ private:
 class Folder : public object::Folder
 {
 public:
-	explicit Folder(std::vector<unsigned char> id, std::string name, int unreadCount);
+	explicit Folder(std::vector<unsigned char>&& id, std::string&& name, int unreadCount);
 
 	std::vector<unsigned char> getId() const override { return _id; }
 	std::unique_ptr<std::string> getName() const override { return std::unique_ptr<std::string>(new std::string(_name)); }
@@ -286,7 +286,7 @@ private:
 class CompleteTaskPayload : public object::CompleteTaskPayload
 {
 public:
-	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::unique_ptr<std::string> clientMutationId)
+	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::unique_ptr<std::string>&& clientMutationId)
 		: _task(std::move(task))
 		, _clientMutationId(std::move(clientMutationId))
 	{
@@ -312,11 +312,11 @@ private:
 class Mutation : public object::Mutation
 {
 public:
-	using completeTaskMutation = std::function<std::shared_ptr<CompleteTaskPayload>(CompleteTaskInput)>;
+	using completeTaskMutation = std::function<std::shared_ptr<CompleteTaskPayload>(CompleteTaskInput&&)>;
 
-	explicit Mutation(completeTaskMutation mutateCompleteTask);
+	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
-	std::shared_ptr<object::CompleteTaskPayload> getCompleteTask(CompleteTaskInput input) const override;
+	std::shared_ptr<object::CompleteTaskPayload> getCompleteTask(CompleteTaskInput&& input) const override;
 
 private:
 	completeTaskMutation _mutateCompleteTask;

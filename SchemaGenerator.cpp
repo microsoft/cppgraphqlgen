@@ -1050,7 +1050,8 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 		}
 
 		firstArgument = false;
-		output << getFieldDeclaration(argument);
+		output << getInputCppType(argument) << R"cpp(&& )cpp"
+			<< argument.name;
 	}
 
 	output << R"cpp() const = 0;
