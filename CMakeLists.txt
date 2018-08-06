@@ -21,7 +21,7 @@ elseif(WIN32)
   set(CPPRESTSDK_LIB cpprestsdk::cpprest)
 endif()
 
-target_include_directories(graphqlservice SYSTEM PUBLIC ${CMAKE_PREFIX_PATH}/include)
+target_include_directories(graphqlservice SYSTEM PUBLIC ${CMAKE_PREFIX_PATH}/include ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 target_link_libraries(graphqlservice ${CPPRESTSDK_LIB} ${GRAPHQLPARSER})
 target_link_libraries(schemagen ${CPPRESTSDK_LIB} ${GRAPHQLPARSER})
 
