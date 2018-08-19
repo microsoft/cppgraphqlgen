@@ -87,6 +87,9 @@ install(TARGETS graphqlservice schemagen
 install(FILES GraphQLService.h Introspection.h IntrospectionSchema.h
   DESTINATION include/graphqlservice)
 
+install(FILES IntrospectionSchema.h IntrospectionSchema.cpp TodaySchema.h TodaySchema.cpp
+  DESTINATION ${CMAKE_SOURCE_DIR}/samples)
+
 if(WIN32)
   set(GRAPHQLSERVICE_DIR $<TARGET_FILE_DIR:graphqlservice>)
   install(FILES ${GRAPHQLSERVICE_DIR}/graphqlservice.lib

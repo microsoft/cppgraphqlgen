@@ -6,6 +6,8 @@ Debug/
 Release/
 Testing/
 Win32/
+/IntrospectionSchema.*
+/TodaySchema.*
 *.filters
 *.vcxproj
 *.vcxproj.user
@@ -15,7 +17,6 @@ CMakeSettings.json
 CMakeCache.txt
 CTestCostData.txt
 CTestTestfile.cmake
-IntrospectionSchema.*
 install_manifest.txt
 LastTest.log
 lib*.so
@@ -24,4 +25,3 @@ schemagen
 settings.json
 test_today
 tests
-TodaySchema.*
