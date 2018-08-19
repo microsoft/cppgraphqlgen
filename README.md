@@ -4,7 +4,7 @@
 
 But GraphQL services are only implemented on the server. When using React Native or React JS in a hybrid application, you typically have a native application which hosts islands or entire pages of UI rendered with React components, and you might like to display content that you've cached offline or that you otherwise generate on the client without needing to declare a separate data interface or require a server round trip to load it.
 
-This project includes a `graphqlservice` library with the core functionality of a GraphQL service and a `schemagen` utility to generate types for your custom GraphQL service schema definition. Once you implement the pure virtual methods on the object interfaces and add hooks to the React Environment/Network to call your service, you can use the same GraphQL client code (e.g. Relay) to access your native data source or a GraphQL service online. You might even be able to share some more of that code between a progressive web app and your native app.
+This project includes a `graphqlservice` library with the core functionality of a GraphQL service and a `schemagen` utility to generate types for your custom GraphQL service schema definition. Once you implement the pure virtual methods on the object interfaces and add hooks to the Relay Environment/Network to call your service, you can use the same GraphQL client code to access your native data source or a GraphQL service online. You might even be able to share some more of that code between a progressive web app and your native app.
 
 # Getting Started
 
@@ -24,7 +24,7 @@ You'll need to have all 3 projects installed on your system along with CMake to 
 
 Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows. The Windows [installation instructions](https://github.com/Microsoft/vcpkg/blob/master/README.md) for [cpprestsdk](https://github.com/Microsoft/cpprestsdk) recommend it, and if you add the port I did for [graphqlparser](https://github.com/Microsoft/vcpkg/pull/3953) you can get both of them with this tool.
 
-This approach works well on Linux as well, but you'll still need that pull request to add graphqlparser to the ports collection.
+This approach works well on Linux as well, graphqlparser has been merged into the ports collection.
 
 ### Windows
 
@@ -40,7 +40,9 @@ Follow the Linux [installation instructions](https://github.com/Microsoft/cppres
 
 ## API references
 
-See [GraphQLService.h](GraphQLService.h) for the base types implemented in the `facebook::graphql::service` namespace. Take a look at [Today.h](Today.h) and [Today.cpp](Today.cpp) to see a sample implementation of a custom schema defined in [schema.today.graphql](schema.today.graphql) for testing purposes. The unit tests.
+See [GraphQLService.h](GraphQLService.h) for the base types implemented in the `facebook::graphql::service` namespace. Take a look at [Today.h](Today.h) and [Today.cpp](Today.cpp) to see a sample implementation of a custom schema defined in [schema.today.graphql](schema.today.graphql) for testing purposes.
+
+All of the generated files are in the [samples](samples/) directory. If you modify the code generator in SchemaGenerator.* and rebuild, `make install` will update them. Please remember to include updating the samples in any pull requests which change them.
 
 # Build and Test
 
