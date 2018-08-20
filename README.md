@@ -4,7 +4,7 @@
 
 But GraphQL services are only implemented on the server. When using React Native or React JS in a hybrid application, you typically have a native application which hosts islands or entire pages of UI rendered with React components, and you might like to display content that you've cached offline or that you otherwise generate on the client without needing to declare a separate data interface or require a server round trip to load it.
 
-This project includes a `graphqlservice` library with the core functionality of a GraphQL service and a `schemagen` utility to generate types for your custom GraphQL service schema definition. Once you implement the pure virtual methods on the object interfaces and add hooks to the Relay Environment/Network to call your service, you can use the same GraphQL client code to access your native data source or a GraphQL service online. You might even be able to share some more of that code between a progressive web app and your native app.
+This project includes a `graphqlservice` library with the core functionality of a GraphQL service and a `schemagen` utility to generate types for your custom GraphQL service schema definition. Once you implement the pure virtual methods on the object interfaces and add hooks to the Relay [Network Layer](https://facebook.github.io/relay/docs/en/network-layer.html)/Apollo [Terminating Link](https://www.apollographql.com/docs/link/overview.html#terminating) to call your service, you can use the same GraphQL client code to access your native data source or a GraphQL service online. You might even be able to share some more of that code between a progressive web app and your native/hybrid app.
 
 # Getting Started
 
