@@ -95,6 +95,10 @@ if(WIN32)
   install(FILES ${GRAPHQLSERVICE_DIR}/graphqlservice.lib
     DESTINATION lib)
 
-  install(CODE "include(${CMAKE_SOURCE_DIR}/copy-windows-dlls.cmake)"
-    CODE "copy_windows_dlls(${CMAKE_BINARY_DIR})")
+  option(INSTALL_WINDOWS_DLLS "Copy all Windows DLLs as part of the install to get dependencies." OFF)
+
+  if(INSTALL_WINDOWS_DLLS)
+    install(CODE "include(${CMAKE_SOURCE_DIR}/copy-windows-dlls.cmake)"
+      CODE "copy_windows_dlls(${CMAKE_BINARY_DIR})")
+  endif()
 endif()
