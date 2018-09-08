@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <cstring>
 
 #include <graphqlparser/GraphQLParser.h>
 
