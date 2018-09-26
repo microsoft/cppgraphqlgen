@@ -79,9 +79,11 @@ enum class TypeModifier
 	List,
 };
 
-struct DisableNone {};
-struct DisableNullable {};
-struct DisableList {};
+template <TypeModifier _Modifier>
+struct DisabledModifier
+{
+	DisabledModifier() = delete;
+};
 
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
@@ -100,7 +102,7 @@ struct ModifiedArgument
 	>::type;
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	static type require(const typename std::conditional<TypeModifier::None == _Modifier, std::string, DisableNone>::type& name,
+	static type require(const typename std::conditional<TypeModifier::None == _Modifier, std::string, DisabledModifier<TypeModifier::None>>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
@@ -111,7 +113,7 @@ struct ModifiedArgument
 	}
 
 	// Peel off nullable modifiers.
-	static type require(const typename std::conditional<TypeModifier::Nullable == _Modifier, std::string, DisableNullable>::type& name,
+	static type require(const typename std::conditional<TypeModifier::Nullable == _Modifier, std::string, DisabledModifier<TypeModifier::Nullable>>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
@@ -140,7 +142,7 @@ struct ModifiedArgument
 	}
 
 	// Peel off list modifiers.
-	static type require(const typename std::conditional<TypeModifier::List == _Modifier, std::string, DisableList>::type& name,
+	static type require(const typename std::conditional<TypeModifier::List == _Modifier, std::string, DisabledModifier<TypeModifier::List>>::type& name,
 		const web::json::object& arguments)
 	{
 		static_assert(TypeModifier::List == _Modifier, "this is the list version");
@@ -259,7 +261,10 @@ private:
 
 using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 
-struct DisableNullableSharedPtr {};
+struct DisabledNullableSharedPtr
+{
+	DisabledNullableSharedPtr() = delete;
+};
 
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
@@ -282,7 +287,7 @@ struct ModifiedResult
 	>::type;
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	static web::json::value convert(const typename std::conditional<TypeModifier::None == _Modifier, type, DisableNone>::type& result,
+	static web::json::value convert(const typename std::conditional<TypeModifier::None == _Modifier, type, DisabledModifier<TypeModifier::None>>::type& result,
 		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
@@ -294,7 +299,7 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for std::shared_ptr<Object>.
 	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
-			&& std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisableNullableSharedPtr>::type& result,
+			&& std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisabledNullableSharedPtr>::type& result,
 		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
@@ -310,7 +315,7 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
 	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
-			&& !std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisableNullable>::type& result,
+			&& !std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisabledModifier<TypeModifier::Nullable>>::type& result,
 		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
@@ -325,7 +330,7 @@ struct ModifiedResult
 	}
 
 	// Peel off list modifiers.
-	static web::json::value convert(const typename std::conditional<TypeModifier::List == _Modifier, type, DisableList>::type& result,
+	static web::json::value convert(const typename std::conditional<TypeModifier::List == _Modifier, type, DisabledModifier<TypeModifier::List>>::type& result,
 		ResolverParams&& params)
 	{
 		static_assert(TypeModifier::List == _Modifier, "this is the list version");
@@ -352,8 +357,9 @@ struct ModifiedResult<_Type, TypeModifier::None>
 
 	// Convert a subclass of Object and call that specialization.
 	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		type, DisableNone>::type& result, ResolverParams&& params)
+		type, DisabledModifier<TypeModifier::None>>::type& result, ResolverParams&& params)
 	{
+		static_assert(!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value, "should only be selected for subclasses of Object");
 		static_assert(std::is_same<std::shared_ptr<_Type>, type>::value, "this is the derived object type");
 
 		return ModifiedResult<Object>::convert(std::static_pointer_cast<Object>(result), std::move(params));
@@ -361,7 +367,7 @@ struct ModifiedResult<_Type, TypeModifier::None>
 
 	// Convert a single value of the specified type to JSON.
 	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		DisableNone, type>::type& result, ResolverParams&& params);
+		DisabledModifier<TypeModifier::None>, type>::type& result, ResolverParams&& params);
 };
 
 // Convenient type aliases for testing, generated code won't actually use these. These are also
