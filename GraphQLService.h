@@ -262,7 +262,7 @@ struct ModifiedResult
 	struct ResultTraits
 	{
 		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-			typename std::conditional<std::is_base_of<Object, _Type>::value
+			typename std::conditional<std::is_base_of<Object, U>::value
 				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
 				std::shared_ptr<U>,
 				std::unique_ptr<typename ResultTraits<U, _Other...>::type>
@@ -307,14 +307,11 @@ struct ModifiedResult
 		return convert(result, std::move(params));
 	}
 
-	// Peel off nullable modifiers for std::shared_ptr<Object>.
+	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
 		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
-		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
-		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value, "this is the shared_ptr version");
-
 		if (!result)
 		{
 			return web::json::value::null();
@@ -325,11 +322,11 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
 		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
-		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
-		static_assert(!std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value, "this is the unique_ptr version or a subclass of Object");
+		static_assert(std::is_same<std::unique_ptr<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+			"this is the unique_ptr version");
 
 		if (!result)
 		{
@@ -344,8 +341,6 @@ struct ModifiedResult
 	static typename std::enable_if<TypeModifier::List == _Modifier,
 		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
-		static_assert(TypeModifier::List == _Modifier, "this is the list version");
-
 		auto value = web::json::value::array(result.size());
 
 		std::transform(result.cbegin(), result.cend(), value.as_array().begin(),
