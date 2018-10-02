@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cerrno>
+#include <cstring>
 #include <iostream>
 
 using namespace facebook::graphql;

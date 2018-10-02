@@ -1224,7 +1224,8 @@ template <>
 				{
 					sourceFile << R"cpp(	auto value)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::require(")cpp" << inputField.name
+						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
+						<< R"cpp((")cpp" << inputField.name
 						<< R"cpp(", value.as_object());
 )cpp";
 				}
@@ -1232,12 +1233,14 @@ template <>
 				{
 					sourceFile << R"cpp(	auto pair)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::find(")cpp" << inputField.name
+						<< R"cpp(::find)cpp" << getTypeModifiers(inputField.modifiers)
+						<< R"cpp((")cpp" << inputField.name
 						<< R"cpp(", value.as_object());
 	auto value)cpp" << fieldName << R"cpp( = (pair)cpp" << fieldName << R"cpp(.second
 		? std::move(pair)cpp" << fieldName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::require(")cpp" << inputField.name
+						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
+						<< R"cpp((")cpp" << inputField.name
 						<< R"cpp(", defaultValue.as_object()));
 )cpp";
 				}
@@ -1447,7 +1450,8 @@ web::json::value )cpp" << objectType.type
 						{
 							sourceFile << R"cpp(	auto arg)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::require(")cpp" << argument.name
+								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
+								<< R"cpp((")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 )cpp";
 						}
@@ -1455,12 +1459,14 @@ web::json::value )cpp" << objectType.type
 						{
 							sourceFile << R"cpp(	auto pair)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::find(")cpp" << argument.name
+								<< R"cpp(::find)cpp" << getTypeModifiers(argument.modifiers)
+								<< R"cpp((")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 	auto arg)cpp" << argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
 		? std::move(pair)cpp" << argumentName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::require(")cpp" << argument.name
+								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
+								<< R"cpp((")cpp" << argument.name
 								<< R"cpp(", defaultArguments.as_object()));
 )cpp";
 						}
@@ -1491,7 +1497,9 @@ web::json::value )cpp" << objectType.type
 
 				sourceFile << R"cpp();
 
-	return )cpp" << getResultAccessType(outputField) << R"cpp(::convert(result, std::move(params));
+	return )cpp" << getResultAccessType(outputField)
+					<< R"cpp(::convert)cpp" << getTypeModifiers(outputField.modifiers)
+					<< R"cpp((result, std::move(params));
 }
 )cpp";
 			}
@@ -1519,7 +1527,7 @@ web::json::value )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
-	auto result = service::ModifiedResult<introspection::object::__Type, service::TypeModifier::Nullable>::convert(_schema->LookupType(argName), std::move(params));
+	auto result = service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 
 	return result;
 }
@@ -1990,11 +1998,9 @@ Operations::Operations()cpp";
 
 std::string Generator::getArgumentAccessType(const InputField& argument) const noexcept
 {
-	size_t templateCount = 0;
 	std::ostringstream argumentType;
 
 	argumentType << R"cpp(service::ModifiedArgument<)cpp";
-	++templateCount;
 
 	switch (argument.fieldType)
 	{
@@ -2009,35 +2015,16 @@ std::string Generator::getArgumentAccessType(const InputField& argument) const n
 			break;
 	}
 
-	for (auto modifier : argument.modifiers)
-	{
-		switch (modifier)
-		{
-			case service::TypeModifier::Nullable:
-				argumentType << R"cpp(, service::TypeModifier::Nullable)cpp";
-				break;
-
-			case service::TypeModifier::List:
-				argumentType << R"cpp(, service::TypeModifier::List)cpp";
-				break;
-		}
-	}
-
-	for (size_t i = 0; i < templateCount; ++i)
-	{
-		argumentType << R"cpp(>)cpp";
-	}
+	argumentType << R"cpp(>)cpp";
 
 	return argumentType.str();
 }
 
 std::string Generator::getResultAccessType(const OutputField& result) const noexcept
 {
-	size_t templateCount = 0;
 	std::ostringstream resultType;
 
 	resultType << R"cpp(service::ModifiedResult<)cpp";
-	++templateCount;
 
 	switch (result.fieldType)
 	{
@@ -2057,29 +2044,46 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 	}
 
-	for (auto modifier : result.modifiers)
+	resultType << R"cpp(>)cpp";
+
+	return resultType.str();
+}
+
+std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) const noexcept
+{
+	bool firstValue = true;
+	std::ostringstream typeModifiers;
+
+	for (auto modifier : modifiers)
 	{
+		if (firstValue)
+		{
+			typeModifiers << R"cpp(<)cpp";
+			firstValue = false;
+		}
+		else
+		{
+			typeModifiers << R"cpp(, )cpp";
+		}
+
 		switch (modifier)
 		{
 			case service::TypeModifier::Nullable:
-				resultType << R"cpp(, service::TypeModifier::Nullable)cpp";
+				typeModifiers << R"cpp(service::TypeModifier::Nullable)cpp";
 				break;
 
 			case service::TypeModifier::List:
-				resultType << R"cpp(, service::TypeModifier::List)cpp";
-				break;
-
-			default:
+				typeModifiers << R"cpp(service::TypeModifier::List)cpp";
 				break;
 		}
 	}
 
-	for (size_t i = 0; i < templateCount; ++i)
+	if (!firstValue)
 	{
-		resultType << R"cpp(>)cpp";
+		typeModifiers << R"cpp(>)cpp";
 	}
 
-	return resultType.str();
+	return typeModifiers.str();
 }
 
 std::string Generator::getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept

@@ -165,7 +165,7 @@ struct EdgeConstraints
 				{ _XPLATSTR("after"), *after }
 				});
 
-			auto afterId = service::IdArgument<>::require("after", value.as_object());
+			auto afterId = service::IdArgument::require("after", value.as_object());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
 				[&afterId](const std::shared_ptr<_Object>& entry)
 			{
@@ -184,7 +184,7 @@ struct EdgeConstraints
 				{ _XPLATSTR("before"), *before }
 				});
 
-			auto beforeId = service::IdArgument<>::require("before", value.as_object());
+			auto beforeId = service::IdArgument::require("before", value.as_object());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
 				[&beforeId](const std::shared_ptr<_Object>& entry)
 			{

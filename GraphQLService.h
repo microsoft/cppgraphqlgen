@@ -79,122 +79,36 @@ enum class TypeModifier
 	List,
 };
 
-template <TypeModifier _Modifier>
-struct DisabledModifier
-{
-	DisabledModifier() = delete;
-};
-
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
 // argument is missing or not the correct type. If it's nullable, use find and check the second
 // element in the pair to see if it was found or if you just got the default value for that type.
-template <typename _Type, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+template <typename _Type>
 struct ModifiedArgument
 {
 	// Peel off modifiers until we get to the underlying type.
-	using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-		std::unique_ptr<typename ModifiedArgument<_Type, _Other...>::type>,
-		typename std::conditional<TypeModifier::List == _Modifier,
-			std::vector<typename ModifiedArgument<_Type, _Other...>::type>,
-			_Type
-		>::type
-	>::type;
-
-	// Peel off the none modifier. If it's included, it should always be last in the list.
-	static type require(const typename std::conditional<TypeModifier::None == _Modifier, std::string, DisabledModifier<TypeModifier::None>>::type& name,
-		const web::json::object& arguments)
+	template <typename U, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	struct ArgumentTraits
 	{
-		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
-		static_assert(sizeof...(_Other) == 0, "TypeModifier::None should always be last in the list of modifiers if it's included at all");
+		// Peel off modifiers until we get to the underlying type.
+		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
+			std::unique_ptr<typename ArgumentTraits<U, _Other...>::type>,
+			typename std::conditional<TypeModifier::List == _Modifier,
+				std::vector<typename ArgumentTraits<U, _Other...>::type>,
+				U>::type
+		>::type;
+	};
 
-		// Just call through to the partial specialization without the modifier.
-		return ModifiedArgument<_Type>::require(std::move(name), arguments);
-	}
-
-	// Peel off nullable modifiers.
-	static type require(const typename std::conditional<TypeModifier::Nullable == _Modifier, std::string, DisabledModifier<TypeModifier::Nullable>>::type& name,
-		const web::json::object& arguments)
+	template <typename U>
+	struct ArgumentTraits<U, TypeModifier::None>
 	{
-		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
+		using type = U;
+	};
 
-		try
-		{
-			const auto& valueItr = arguments.find(utility::conversions::to_string_t(name));
+	// Convert a single value to the specified type.
+	static _Type convert(const web::json::value& value);
 
-			if (valueItr == arguments.cend()
-				|| valueItr->second.is_null())
-			{
-				return std::unique_ptr<typename ModifiedArgument<_Type, _Other...>::type>();
-			}
-
-			auto result = ModifiedArgument<_Type, _Other...>::require(std::move(name), arguments);
-			
-			return std::unique_ptr<typename ModifiedArgument<_Type, _Other...>::type>(new decltype(result)(std::move(result)));
-		}
-		catch (const web::json::json_exception& ex)
-		{
-			std::ostringstream error;
-
-			error << "Invalid argument: " << name << " message: " << ex.what();
-			throw schema_exception({ error.str() });
-		}
-	}
-
-	// Peel off list modifiers.
-	static type require(const typename std::conditional<TypeModifier::List == _Modifier, std::string, DisabledModifier<TypeModifier::List>>::type& name,
-		const web::json::object& arguments)
-	{
-		static_assert(TypeModifier::List == _Modifier, "this is the list version");
-
-		try
-		{
-			const auto& values = arguments.at(utility::conversions::to_string_t(name)).as_array();
-			type result(values.size());
-
-			std::transform(values.cbegin(), values.cend(), result.begin(),
-				[](const web::json::value& element)
-			{
-				auto single = web::json::value::object({
-					{ _XPLATSTR("value"), element }
-				});
-
-				return ModifiedArgument<_Type, _Other...>::require("value", single.as_object());
-			});
-
-			return result;
-		}
-		catch (const web::json::json_exception& ex)
-		{
-			std::ostringstream error;
-
-			error << "Invalid argument: " << name << " message: " << ex.what();
-			throw schema_exception({ error.str() });
-		}
-	}
-
-	static std::pair<type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
-	{
-		try
-		{
-			return { require(std::move(name), arguments), true };
-		}
-		catch (const schema_exception&)
-		{
-			type value;
-
-			return { std::move(value), false };
-		}
-	}
-};
-
-// Handle the empty modifier list case.
-template <typename _Type>
-struct ModifiedArgument<_Type, TypeModifier::None>
-{
-	using type = _Type;
-
-	// Call convert on this type without any other modifiers.
+	// Call convert on this type without any modifiers.
 	static _Type require(const std::string& name, const web::json::object& arguments)
 	{
 		try
@@ -219,25 +133,102 @@ struct ModifiedArgument<_Type, TypeModifier::None>
 		}
 		catch (const schema_exception&)
 		{
-			type value;
-
-			return { std::move(value), false };
+			return { {}, false };
 		}
 	}
 
-	// Convert a single value to the specified type.
-	static _Type convert(const web::json::value& value);
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier _Modifier = TypeModifier::None , TypeModifier... _Other >
+	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0, _Type>::type require(
+		const std::string& name, const web::json::object& arguments)
+	{
+		// Just call through to the non-template method without the modifiers.
+		return require(name, arguments);
+	}
+
+	// Peel off nullable modifiers.
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::Nullable == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
+		const std::string& name, const web::json::object& arguments)
+	{
+		try
+		{
+			const auto& valueItr = arguments.find(utility::conversions::to_string_t(name));
+
+			if (valueItr == arguments.cend()
+				|| valueItr->second.is_null())
+			{
+				return nullptr;
+			}
+
+			auto result = require<_Other...>(name, arguments);
+
+			return std::unique_ptr<decltype(result)> { new decltype(result)(std::move(result)) };
+		}
+		catch (const web::json::json_exception& ex)
+		{
+			std::ostringstream error;
+
+			error << "Invalid argument: " << name << " message: " << ex.what();
+			throw schema_exception({ error.str() });
+		}
+	}
+
+	// Peel off list modifiers.
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::List == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
+		const std::string& name, const web::json::object& arguments)
+	{
+		try
+		{
+			const auto& values = arguments.at(utility::conversions::to_string_t(name)).as_array();
+			typename ArgumentTraits<_Type, _Modifier, _Other...>::type result(values.size());
+
+			std::transform(values.cbegin(), values.cend(), result.begin(),
+				[](const web::json::value& element)
+			{
+				auto single = web::json::value::object({
+					{ _XPLATSTR("value"), element }
+				});
+
+				return require<_Other...>("value", single.as_object());
+			});
+
+			return result;
+		}
+		catch (const web::json::json_exception& ex)
+		{
+			std::ostringstream error;
+
+			error << "Invalid argument: " << name << " message: " << ex.what();
+			throw schema_exception({ error.str() });
+		}
+	}
+
+	// Wrap require with modifiers in a try/catch block.
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static std::pair<typename ArgumentTraits<_Type, _Modifier, _Other...>::type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
+	{
+		try
+		{
+			return { require<_Modifier, _Other...>(name, arguments), true };
+		}
+		catch (const schema_exception&)
+		{
+			return { typename ArgumentTraits<_Type, _Modifier, _Other...>::type{}, false };
+		}
+	}
 };
 
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for input types should be generated in schemagen.
-template <TypeModifier... _Modifiers> using IntArgument = ModifiedArgument<int, _Modifiers...>;
-template <TypeModifier... _Modifiers> using FloatArgument = ModifiedArgument<double, _Modifiers...>;
-template <TypeModifier... _Modifiers> using StringArgument = ModifiedArgument<std::string, _Modifiers...>;
-template <TypeModifier... _Modifiers> using BooleanArgument = ModifiedArgument<bool, _Modifiers...>;
-template <TypeModifier... _Modifiers> using IdArgument = ModifiedArgument<std::vector<unsigned char>, _Modifiers...>;
-template <TypeModifier... _Modifiers> using ScalarArgument = ModifiedArgument<web::json::value, _Modifiers...>;
+using IntArgument = ModifiedArgument<int>;
+using FloatArgument = ModifiedArgument<double>;
+using StringArgument = ModifiedArgument<std::string>;
+using BooleanArgument = ModifiedArgument<bool>;
+using IdArgument = ModifiedArgument<std::vector<unsigned char>>;
+using ScalarArgument = ModifiedArgument<web::json::value>;
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -261,125 +252,122 @@ private:
 
 using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 
-struct DisabledNullableSharedPtr
-{
-	DisabledNullableSharedPtr() = delete;
-};
-
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
-template <typename _Type, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+template <typename _Type>
 struct ModifiedResult
 {
 	// Peel off modifiers until we get to the underlying type.
-	using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-		typename std::conditional<std::is_base_of<Object, _Type>::value
-			&& std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value,
-			std::shared_ptr<_Type>,
-			std::unique_ptr<typename ModifiedResult<_Type, _Other...>::type>
-		>::type,
-		typename std::conditional<TypeModifier::List == _Modifier,
-			std::vector<typename ModifiedResult<_Type, _Other...>::type>,
-			typename std::conditional<std::is_base_of<Object, _Type>::value,
-				std::shared_ptr<_Type>,
-				_Type>::type
-		>::type
-	>::type;
+	template <typename U, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	struct ResultTraits
+	{
+		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
+			typename std::conditional<std::is_base_of<Object, _Type>::value
+				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
+				std::shared_ptr<U>,
+				std::unique_ptr<typename ResultTraits<U, _Other...>::type>
+			>::type,
+			typename std::conditional<TypeModifier::List == _Modifier,
+				std::vector<typename ResultTraits<U, _Other...>::type>,
+				typename std::conditional<std::is_base_of<Object, U>::value,
+					std::shared_ptr<U>,
+					U>::type
+			>::type
+		>::type;
+	};
+
+	template <typename U>
+	struct ResultTraits<U, TypeModifier::None>
+	{
+		using type = typename std::conditional<std::is_base_of<Object, U>::value,
+			std::shared_ptr<U>,
+			U>::type;
+	};
+
+	// Convert a single value of the specified type to JSON.
+	static web::json::value convert(const typename std::conditional<std::is_base_of<Object, _Type>::value, std::shared_ptr<Object>, typename ResultTraits<_Type>::type>::type& result,
+		ResolverParams&& params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	static web::json::value convert(const typename std::conditional<TypeModifier::None == _Modifier, type, DisabledModifier<TypeModifier::None>>::type& result,
-		ResolverParams&& params)
+	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
+		web::json::value>::type convert(const typename ResultTraits<_Type>::type& result, ResolverParams&& params)
 	{
-		static_assert(TypeModifier::None == _Modifier, "this is the empty version");
-		static_assert(sizeof...(_Other) == 0, "TypeModifier::None should always be last in the list of modifiers if it's included at all");
+		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
+		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type>::type>::value, "this is the derived object type");
+		return ModifiedResult<Object>::convert(std::static_pointer_cast<Object>(result), std::move(params));
+	}
 
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && (std::is_same<Object, _Type>::value || !std::is_base_of<Object, _Type>::value),
+		web::json::value>::type convert(const typename ResultTraits<_Type>::type& result, ResolverParams&& params)
+	{
 		// Just call through to the partial specialization without the modifier.
-		return ModifiedResult<_Type>::convert(result, std::move(params));
+		return convert(result, std::move(params));
 	}
 
 	// Peel off nullable modifiers for std::shared_ptr<Object>.
-	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
-			&& std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisabledNullableSharedPtr>::type& result,
-		ResolverParams&& params)
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
-		static_assert(std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, "this is the shared_ptr version");
+		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value, "this is the shared_ptr version");
 
 		if (!result)
 		{
 			return web::json::value::null();
 		}
 
-		return ModifiedResult<_Type, _Other...>::convert(result, std::move(params));
+		return convert<_Other...>(result, std::move(params));
 	}
 
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
-	static web::json::value convert(const typename std::conditional<TypeModifier::Nullable == _Modifier
-			&& !std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, type, DisabledModifier<TypeModifier::Nullable>>::type& result,
-		ResolverParams&& params)
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
 		static_assert(TypeModifier::Nullable == _Modifier, "this is the nullable version");
-		static_assert(!std::is_same<std::shared_ptr<_Type>, typename ModifiedResult<_Type, _Other...>::type>::value, "this is the unique_ptr version");
+		static_assert(!std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value, "this is the unique_ptr version or a subclass of Object");
 
 		if (!result)
 		{
 			return web::json::value::null();
 		}
 
-		return ModifiedResult<_Type, _Other...>::convert(*result, std::move(params));
+		return convert<_Other...>(*result, std::move(params));
 	}
 
 	// Peel off list modifiers.
-	static web::json::value convert(const typename std::conditional<TypeModifier::List == _Modifier, type, DisabledModifier<TypeModifier::List>>::type& result,
-		ResolverParams&& params)
+	template <TypeModifier _Modifier, TypeModifier... _Other>
+	static typename std::enable_if<TypeModifier::List == _Modifier,
+		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
 	{
 		static_assert(TypeModifier::List == _Modifier, "this is the list version");
 
 		auto value = web::json::value::array(result.size());
 
 		std::transform(result.cbegin(), result.cend(), value.as_array().begin(),
-			[params](const typename ModifiedResult<_Type, _Other...>::type& element)
+			[params](const typename ResultTraits<_Type, _Other...>::type& element)
 		{
-			return ModifiedResult<_Type, _Other...>::convert(element, ResolverParams(params));
+			return convert<_Other...>(element, ResolverParams(params));
 		});
 
 		return value;
 	}
 };
 
-// Handle the empty modifier list case.
-template <typename _Type>
-struct ModifiedResult<_Type, TypeModifier::None>
-{
-	using type = typename std::conditional<std::is_base_of<Object, _Type>::value,
-		std::shared_ptr<_Type>,
-		_Type>::type;
-
-	// Convert a subclass of Object and call that specialization.
-	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		type, DisabledModifier<TypeModifier::None>>::type& result, ResolverParams&& params)
-	{
-		static_assert(!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value, "should only be selected for subclasses of Object");
-		static_assert(std::is_same<std::shared_ptr<_Type>, type>::value, "this is the derived object type");
-
-		return ModifiedResult<Object>::convert(std::static_pointer_cast<Object>(result), std::move(params));
-	}
-
-	// Convert a single value of the specified type to JSON.
-	static web::json::value convert(const typename std::conditional<!std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		DisabledModifier<TypeModifier::None>, type>::type& result, ResolverParams&& params);
-};
-
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for output types should be generated in schemagen.
-template <TypeModifier... _Modifiers> using IntResult = ModifiedResult<int, _Modifiers...>;
-template <TypeModifier... _Modifiers> using FloatResult = ModifiedResult<double, _Modifiers...>;
-template <TypeModifier... _Modifiers> using StringResult = ModifiedResult<std::string, _Modifiers...>;
-template <TypeModifier... _Modifiers> using BooleanResult = ModifiedResult<bool, _Modifiers...>;
-template <TypeModifier... _Modifiers> using IdResult = ModifiedResult<std::vector<unsigned char>, _Modifiers...>;
-template <TypeModifier... _Modifiers> using ScalarResult = ModifiedResult<web::json::value, _Modifiers...>;
-template <TypeModifier... _Modifiers> using ObjectResult = ModifiedResult<Object, _Modifiers...>;
+using IntResult = ModifiedResult<int>;
+using FloatResult = ModifiedResult<double>;
+using StringResult = ModifiedResult<std::string>;
+using BooleanResult = ModifiedResult<bool>;
+using IdResult = ModifiedResult<std::vector<unsigned char>>;
+using ScalarResult = ModifiedResult<web::json::value>;
+using ObjectResult = ModifiedResult<Object>;
 
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
