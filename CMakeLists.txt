@@ -9,7 +9,7 @@ if(WIN32)
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
-add_library(graphqlservice SHARED GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
+add_library(graphqlservice GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
 add_executable(schemagen SchemaGenerator.cpp)
 
 find_library(GRAPHQLPARSER graphqlparser)
@@ -50,7 +50,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   )
 
   if(BUILD_TESTS)
-    add_library(todaygraphql SHARED
+    add_library(todaygraphql
       TodaySchema.cpp
       Today.cpp)
 
@@ -99,6 +99,7 @@ endif()
 install(TARGETS graphqlservice schemagen
   EXPORT cppgraphqlgen-config
   RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
 install(FILES GraphQLService.h Introspection.h IntrospectionSchema.h
