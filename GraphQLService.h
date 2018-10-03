@@ -129,7 +129,7 @@ struct ModifiedArgument
 	{
 		try
 		{
-			return { require(std::move(name), arguments), true };
+			return { require(name, arguments), true };
 		}
 		catch (const schema_exception&)
 		{
