@@ -58,6 +58,12 @@ target_link_libraries(test_today
   todaygraphql)
 target_include_directories(test_today SYSTEM PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
+
+find_package(pegtl CONFIG REQUIRED)
+
+add_library(graphqlpeg SHARED GraphQLGrammar.cpp)
+target_link_libraries(graphqlpeg taocpp::pegtl)
+
 enable_testing()
 add_executable(tests tests.cpp)
 find_package(GTest REQUIRED)
@@ -65,6 +71,7 @@ target_link_libraries(tests
   ${CPPRESTSDK_LIB}
   ${GRAPHQLPARSER}
   graphqlservice
+  graphqlpeg
   todaygraphql
   GTest::GTest
   GTest::Main)
