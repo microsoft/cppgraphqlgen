@@ -170,7 +170,6 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 TEST_F(TodayServiceCase, QueryEverythingWithPegtl)
 {
-	const char* error = nullptr;
 	auto ast = service::parseString(R"gql(
 		query Everything {
 			appointments {
@@ -202,13 +201,6 @@ TEST_F(TodayServiceCase, QueryEverythingWithPegtl)
 				}
 			}
 		})gql");
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
 	auto result = _service->resolve(*ast, "Everything", web::json::value::object().as_object());
 	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -225,38 +217,38 @@ TEST_F(TodayServiceCase, QueryEverythingWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
 
-		auto appointmentEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("appointments", data.as_object()).as_object());
+		auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("appointments", data.as_object()).as_object());
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].is_object()) << "appointment should be an object";
-		auto appointmentNode = service::ScalarArgument<>::require("node", appointmentEdges[0].as_object());
+		auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].as_object());
 		const web::json::object& appointment = appointmentNode.as_object();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument<>::require("id", appointment)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument<>::require("subject", appointment)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument<>::require("when", appointment)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument<>::require("isNow", appointment)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointment)) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointment)) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointment)) << "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointment)) << "isNow should match";
 
-		auto taskEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("tasks", data.as_object()).as_object());
+		auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("tasks", data.as_object()).as_object());
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].is_object()) << "task should be an object";
-		auto taskNode = service::ScalarArgument<>::require("node", taskEdges[0].as_object());
+		auto taskNode = service::ScalarArgument::require("node", taskEdges[0].as_object());
 		const web::json::object& task = taskNode.as_object();
-		EXPECT_EQ(_fakeTaskId, service::IdArgument<>::require("id", task)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument<>::require("title", task)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument<>::require("isComplete", task)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", task)) << "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", task)) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
 
-		auto unreadCountEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("unreadCounts", data.as_object()).as_object());
+		auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("unreadCounts", data.as_object()).as_object());
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].is_object()) << "unreadCount should be an object";
-		auto unreadCountNode = service::ScalarArgument<>::require("node", unreadCountEdges[0].as_object());
+		auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].as_object());
 		const web::json::object& folder = unreadCountNode.as_object();
-		EXPECT_EQ(_fakeFolderId, service::IdArgument<>::require("id", folder)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument<>::require("name", folder)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument<>::require("unreadCount", folder)) << "isComplete should match";
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", folder)) << "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", folder)) << "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", folder)) << "isComplete should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -341,7 +333,6 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithPegtl)
 				}
 			}
 		})gql");
-
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -358,18 +349,18 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
 
-		auto appointmentEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("appointments", data.as_object()).as_object());
+		auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("appointments", data.as_object()).as_object());
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].is_object()) << "appointment should be an object";
-		auto appointmentNode = service::ScalarArgument<>::require("node", appointmentEdges[0].as_object());
+		auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].as_object());
 		const web::json::object& appointment = appointmentNode.as_object();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument<>::require("appointmentId", appointment)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument<>::require("subject", appointment)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument<>::require("when", appointment)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument<>::require("isNow", appointment)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointment)) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointment)) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointment)) << "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointment)) << "isNow should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -451,7 +442,6 @@ TEST_F(TodayServiceCase, QueryTasksWithPegtl)
 				}
 			}
 		})gql");
-
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -468,17 +458,17 @@ TEST_F(TodayServiceCase, QueryTasksWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
 
-		auto taskEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("tasks", data.as_object()).as_object());
+		auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("tasks", data.as_object()).as_object());
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].is_object()) << "task should be an object";
-		auto taskNode = service::ScalarArgument<>::require("node", taskEdges[0].as_object());
+		auto taskNode = service::ScalarArgument::require("node", taskEdges[0].as_object());
 		const web::json::object& task = taskNode.as_object();
-		EXPECT_EQ(_fakeTaskId, service::IdArgument<>::require("taskId", task)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument<>::require("title", task)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument<>::require("isComplete", task)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", task)) << "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", task)) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -560,7 +550,6 @@ TEST_F(TodayServiceCase, QueryUnreadCountsWithPegtl)
 				}
 			}
 		})gql");
-
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -577,17 +566,17 @@ TEST_F(TodayServiceCase, QueryUnreadCountsWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
 
-		auto unreadCountEdges = service::ScalarArgument<service::TypeModifier::List>::require("edges",
-			service::ScalarArgument<>::require("unreadCounts", data.as_object()).as_object());
+		auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
+			service::ScalarArgument::require("unreadCounts", data.as_object()).as_object());
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].is_object()) << "unreadCount should be an object";
-		auto unreadCountNode = service::ScalarArgument<>::require("node", unreadCountEdges[0].as_object());
+		auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].as_object());
 		const web::json::object& folder = unreadCountNode.as_object();
-		EXPECT_EQ(_fakeFolderId, service::IdArgument<>::require("folderId", folder)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument<>::require("name", folder)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument<>::require("unreadCount", folder)) << "isComplete should match";
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", folder)) << "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", folder)) << "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", folder)) << "isComplete should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -666,7 +655,6 @@ TEST_F(TodayServiceCase, MutateCompleteTaskWithPegtl)
 				clientMutationId
 			}
 		})gql");
-
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 
 	try
@@ -680,18 +668,18 @@ TEST_F(TodayServiceCase, MutateCompleteTaskWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
 
-		auto completedTask = service::ScalarArgument<>::require("completedTask", data.as_object());
+		auto completedTask = service::ScalarArgument::require("completedTask", data.as_object());
 		ASSERT_TRUE(completedTask.is_object()) << "payload should be an object";
 
-		auto task = service::ScalarArgument<>::require("completedTask", completedTask.as_object());
+		auto task = service::ScalarArgument::require("completedTask", completedTask.as_object());
 		EXPECT_TRUE(task.is_object()) << "should get back a task";
-		EXPECT_EQ(_fakeTaskId, service::IdArgument<>::require("completedTaskId", task.as_object())) << "id should match in base64 encoding";
-		EXPECT_EQ("Mutated Task!", service::StringArgument<>::require("title", task.as_object())) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument<>::require("isComplete", task.as_object())) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task.as_object())) << "id should match in base64 encoding";
+		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task.as_object())) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task.as_object())) << "isComplete should match";
 
-		auto clientMutationId = service::StringArgument<>::require("clientMutationId", completedTask.as_object());
+		auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask.as_object());
 		EXPECT_EQ("Hi There!", clientMutationId) << "clientMutationId should match";
 	}
 	catch (const service::schema_exception& ex)
@@ -811,7 +799,6 @@ TEST_F(TodayServiceCase, IntrospectionWithPegtl)
 				}
 			}
 		})gql");
-
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 
 	try
@@ -825,11 +812,11 @@ TEST_F(TodayServiceCase, IntrospectionWithPegtl)
 			errors << errorsItr->second;
 			FAIL() << utility::conversions::to_utf8string(errors.str());
 		}
-		auto data = service::ScalarArgument<>::require("data", result.as_object());
-		auto schema = service::ScalarArgument<>::require("__schema", data.as_object());
-		auto types = service::ModifiedArgument<web::json::value, service::TypeModifier::List>::require("types", schema.as_object());
-		auto queryType = service::ScalarArgument<>::require("queryType", schema.as_object());
-		auto mutationType = service::ScalarArgument<>::require("mutationType", schema.as_object());
+		auto data = service::ScalarArgument::require("data", result.as_object());
+		auto schema = service::ScalarArgument::require("__schema", data.as_object());
+		auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema.as_object());
+		auto queryType = service::ScalarArgument::require("queryType", schema.as_object());
+		auto mutationType = service::ScalarArgument::require("mutationType", schema.as_object());
 
 		ASSERT_FALSE(types.empty());
 		ASSERT_TRUE(queryType.is_object());
