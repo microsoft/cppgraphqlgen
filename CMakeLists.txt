@@ -21,9 +21,15 @@ elseif(WIN32)
   set(CPPRESTSDK_LIB cpprestsdk::cpprest)
 endif()
 
+find_package(pegtl CONFIG REQUIRED)
+
+add_library(graphqlpeg SHARED GraphQLGrammar.cpp)
+target_include_directories(graphqlpeg SYSTEM PUBLIC ${CMAKE_PREFIX_PATH}/include ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+target_link_libraries(graphqlpeg taocpp::pegtl ${GRAPHQLPARSER})
+
 target_include_directories(graphqlservice SYSTEM PUBLIC ${CMAKE_PREFIX_PATH}/include ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-target_link_libraries(graphqlservice ${CPPRESTSDK_LIB} ${GRAPHQLPARSER})
-target_link_libraries(schemagen ${CPPRESTSDK_LIB} ${GRAPHQLPARSER})
+target_link_libraries(graphqlservice ${CPPRESTSDK_LIB} ${GRAPHQLPARSER} graphqlpeg)
+target_link_libraries(schemagen ${CPPRESTSDK_LIB} ${GRAPHQLPARSER} graphqlpeg)
 
 add_custom_command(
   OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
@@ -57,12 +63,6 @@ target_link_libraries(test_today
   graphqlservice
   todaygraphql)
 target_include_directories(test_today SYSTEM PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-
-
-find_package(pegtl CONFIG REQUIRED)
-
-add_library(graphqlpeg SHARED GraphQLGrammar.cpp)
-target_link_libraries(graphqlpeg taocpp::pegtl)
 
 enable_testing()
 add_executable(tests tests.cpp)

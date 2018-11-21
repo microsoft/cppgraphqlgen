@@ -13,6 +13,7 @@
 #include <exception>
 #include <type_traits>
 
+// Re-using the AST generated from GraphQLParser for now.
 #include <graphqlparser/Ast.h>
 #include <graphqlparser/AstVisitor.h>
 
@@ -21,6 +22,10 @@
 namespace facebook {
 namespace graphql {
 namespace service {
+
+// Re-using the AST generated from GraphQLParser for now.
+std::unique_ptr<ast::Node> parseString(const char* text);
+std::unique_ptr<ast::Node> parseFile(FILE* file);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception

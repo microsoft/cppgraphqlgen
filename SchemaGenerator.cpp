@@ -42,8 +42,7 @@ Generator::Generator()
 	, _filenamePrefix("Introspection")
 	, _schemaNamespace(s_introspectionNamespace)
 {
-	const char* error = nullptr;
-	auto ast = parseStringWithExperimentalSchemaSupport(R"gql(
+	auto ast = service::parseString(R"gql(
 		# Introspection Schema
 
 		type __Schema {
@@ -126,14 +125,7 @@ Generator::Generator()
 			INPUT_OBJECT
 			LIST
 			NON_NULL
-		})gql", &error);
-
-	if (nullptr != error)
-	{
-		std::runtime_error ex(error);
-		free(const_cast<char*>(error));
-		throw ex;
-	}
+		})gql");
 
 	if (!ast)
 	{
@@ -154,14 +146,7 @@ Generator::Generator(FILE* schemaDefinition, std::string filenamePrefix, std::st
 	, _schemaNamespace(std::move(schemaNamespace))
 {
 	const char* error = nullptr;
-	auto ast = parseFileWithExperimentalSchemaSupport(schemaDefinition, &error);
-
-	if (nullptr != error)
-	{
-		std::runtime_error ex(error);
-		free(const_cast<char*>(error));
-		throw ex;
-	}
+	auto ast = service::parseFile(schemaDefinition);
 
 	if (!ast)
 	{
@@ -2185,7 +2170,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		FILE* schemaDefinition = std::fopen(argv[1], "r");
+		FILE* schemaDefinition = std::fopen(argv[1], "rb");
 
 		if (nullptr == schemaDefinition)
 		{

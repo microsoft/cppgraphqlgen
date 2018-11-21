@@ -2,7 +2,8 @@
 // Licensed under the MIT License.
 //
 // This grammar is based on the June 2018 Edition of the GraphQL spec:
-// https://facebook.github.io/graphql/June2018/
+// https://facebook.github.io/graphql/June2018/
+
 #pragma once
 
 #include <tao/pegtl.hpp>
@@ -79,9 +80,14 @@ struct string_escape_sequence
 {
 };
 
+struct string_quote_character
+	: source_character
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#StringCharacter
 struct string_quote
-	: seq<quote_token, star<seq<not_at<quote_token>, sor<string_escape_sequence, source_character>>>, quote_token>
+	: seq<quote_token, star<seq<not_at<quote_token>, sor<string_escape_sequence, string_quote_character>>>, quote_token>
 {
 };
 
@@ -95,9 +101,14 @@ struct block_escape_sequence
 {
 };
 
+struct block_quote_character
+	: source_character
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#BlockStringCharacter
 struct block_quote
-	: seq<block_quote_token, star<seq<not_at<block_quote_token>, sor<block_escape_sequence, source_character>>>, block_quote_token>
+	: seq<block_quote_token, star<seq<not_at<block_quote_token>, sor<block_escape_sequence, block_quote_character>>>, block_quote_token>
 {
 };
 
@@ -198,14 +209,19 @@ struct operation_type
 {
 };
 
+struct alias_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#Alias
 struct alias
-	: seq<name, star<ignored>, utf8::one<':'>>
+	: seq<alias_name, star<ignored>, utf8::one<':'>>
 {
 };
 
 struct argument_name
-	: alias
+	: name
 {
 };
 
@@ -213,7 +229,7 @@ struct input_value;
 
 // https://facebook.github.io/graphql/June2018/#Argument
 struct argument
-	: seq<argument_name, star<ignored>, input_value>
+	: seq<seq<argument_name, star<ignored>, utf8::one<':'>>, star<ignored>, input_value>
 {
 };
 
@@ -223,15 +239,43 @@ struct arguments
 {
 };
 
+struct list_entry;
+
+struct begin_list
+	: utf8::one<'['>
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#ListValue
 struct list_value
-	: seq<utf8::one<'['>, star<ignored>, opt<list<input_value, plus<ignored>>>, star<ignored>, utf8::one<']'>>
+	: seq<begin_list, star<ignored>, opt<list<list_entry, plus<ignored>>>, star<ignored>, utf8::one<']'>>
+{
+};
+
+struct object_field_name
+	: name
+{
+};
+
+// https://facebook.github.io/graphql/June2018/#ObjectField
+struct object_field
+	: seq<seq<object_field_name, star<ignored>, utf8::one<':'>>, star<ignored>, input_value>
+{
+};
+
+struct begin_object
+	: utf8::one<'{'>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#ObjectValue
 struct object_value
-	: seq<utf8::one<'{'>, star<ignored>, opt<list<argument, plus<ignored>>>, star<ignored>, utf8::one<'}'>>
+	: seq<begin_object, star<ignored>, opt<list<object_field, plus<ignored>>>, star<ignored>, utf8::one<'}'>>
+{
+};
+
+struct variable_value
+	: variable_name
 {
 };
 
@@ -239,13 +283,18 @@ struct object_value
 struct input_value
 	: sor<list_value
 	, object_value
-	, variable_name
+	, variable_value
 	, integer_value
 	, float_value
 	, string_value
 	, bool_value
 	, null_keyword
 	, enum_value>
+{
+};
+
+struct list_entry
+	: input_value
 {
 };
 
@@ -295,9 +344,14 @@ struct variable_definitions
 {
 };
 
+struct directive_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#Directive
 struct directive
-	: seq<utf8::one<'@'>, name, opt<seq<star<ignored>, arguments>>>
+	: seq<utf8::one<'@'>, directive_name, opt<seq<star<ignored>, arguments>>>
 {
 };
 
@@ -309,11 +363,16 @@ struct directives
 
 struct selection_set;
 
+struct field_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#Field
 struct field
-	: sor<seq<opt<seq<alias, star<ignored>>>, name, opt<seq<star<ignored>, arguments>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, selection_set>>
-	, seq<opt<seq<alias, star<ignored>>>, name, opt<seq<star<ignored>, arguments>>, seq<star<ignored>, directives>>
-	, seq<opt<seq<alias, star<ignored>>>, name, opt<seq<star<ignored>, arguments>>>>
+	: sor<seq<opt<seq<alias, star<ignored>>>, field_name, opt<seq<star<ignored>, arguments>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, selection_set>>
+	, seq<opt<seq<alias, star<ignored>>>, field_name, opt<seq<star<ignored>, arguments>>, seq<star<ignored>, directives>>
+	, seq<opt<seq<alias, star<ignored>>>, field_name, opt<seq<star<ignored>, arguments>>>>
 {
 };
 
@@ -359,15 +418,25 @@ struct selection
 {
 };
 
+struct begin_selection_set
+	: utf8::one<'{'>
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#SelectionSet
 struct selection_set
-	: seq<utf8::one<'{'>, star<ignored>, list<selection, plus<ignored>>, star<ignored>, utf8::one<'}'>>
+	: seq<begin_selection_set, star<ignored>, list<selection, plus<ignored>>, star<ignored>, utf8::one<'}'>>
+{
+};
+
+struct operation_name
+	: name
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#OperationDefinition
 struct operation_definition
-	: sor<seq<operation_type, opt<seq<plus<ignored>, name>>, opt<seq<star<ignored>, variable_definitions>>, star<ignored>, selection_set>
+	: sor<seq<operation_type, opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, star<ignored>, selection_set>
 	, selection_set>
 {
 };
@@ -413,20 +482,19 @@ struct description
 {
 };
 
+struct scalar_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#ScalarTypeDefinition
 struct scalar_type_definition
-	: seq<opt<seq<description, star<ignored>>>, scalar_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>>
+	: seq<opt<seq<description, star<ignored>>>, scalar_keyword, plus<ignored>, scalar_name, opt<seq<star<ignored>, directives>>>
 {
 };
 
 struct type_keyword
 	: TAO_PEGTL_KEYWORD("type")
-{
-};
-
-// https://facebook.github.io/graphql/June2018/#ImplementsInterfaces
-struct implements_interfaces
-	: seq<TAO_PEGTL_KEYWORD("implements"), opt<seq<star<ignored>, utf8::one<'&'>>>, star<ignored>, list<named_type, seq<star<ignored>, utf8::one<'&'>, star<ignored>>>>
 {
 };
 
@@ -440,7 +508,7 @@ struct arguments_definition
 
 // https://facebook.github.io/graphql/June2018/#FieldDefinition
 struct field_definition
-	: seq<opt<seq<description, star<ignored>>>, name, opt<seq<star<ignored>, arguments_definition>>, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, directives>>>
+	: seq<opt<seq<description, star<ignored>>>, field_name, opt<seq<star<ignored>, arguments_definition>>, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, directives>>>
 {
 };
 
@@ -450,11 +518,27 @@ struct fields_definition
 {
 };
 
+struct interface_type
+	: named_type
+{
+};
+
+// https://facebook.github.io/graphql/June2018/#ImplementsInterfaces
+struct implements_interfaces
+	: seq<TAO_PEGTL_KEYWORD("implements"), opt<seq<star<ignored>, utf8::one<'&'>>>, star<ignored>, list<interface_type, seq<star<ignored>, utf8::one<'&'>, star<ignored>>>>
+{
+};
+
+struct object_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#ObjectTypeDefinition
 struct object_type_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, name, opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
-	, seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, name, opt<seq<plus<ignored>, implements_interfaces>>, seq<star<ignored>, directives>>
-	, seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, name, opt<seq<plus<ignored>, implements_interfaces>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, object_name, opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
+	, seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, object_name, opt<seq<plus<ignored>, implements_interfaces>>, seq<star<ignored>, directives>>
+	, seq<opt<seq<description, star<ignored>>>, type_keyword, plus<ignored>, object_name, opt<seq<plus<ignored>, implements_interfaces>>>>
 {
 };
 
@@ -463,10 +547,15 @@ struct interface_keyword
 {
 };
 
+struct interface_name
+	: name
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#InterfaceTypeDefinition
 struct interface_type_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, interface_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
-	, seq<opt<seq<description, star<ignored>>>, interface_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, interface_keyword, plus<ignored>, interface_name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
+	, seq<opt<seq<description, star<ignored>>>, interface_keyword, plus<ignored>, interface_name, opt<seq<star<ignored>, directives>>>>
 {
 };
 
@@ -475,21 +564,36 @@ struct union_keyword
 {
 };
 
+struct union_name
+	: name
+{
+};
+
+struct union_type
+	: named_type
+{
+};
+
 // https://facebook.github.io/graphql/June2018/#UnionMemberTypes
 struct union_member_types
-	: seq<utf8::one<'='>, opt<seq<star<ignored>, utf8::one<'|'>>>, star<ignored>, list<named_type, seq<star<ignored>, utf8::one<'|'>, star<ignored>>>>
+	: seq<utf8::one<'='>, opt<seq<star<ignored>, utf8::one<'|'>>>, star<ignored>, list<union_type, seq<star<ignored>, utf8::one<'|'>, star<ignored>>>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#UnionTypeDefinition
 struct union_type_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, union_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>
-	, seq<opt<seq<description, star<ignored>>>, union_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, union_keyword, plus<ignored>, union_name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>
+	, seq<opt<seq<description, star<ignored>>>, union_keyword, plus<ignored>, union_name, opt<seq<star<ignored>, directives>>>>
 {
 };
 
 struct enum_keyword
 	: TAO_PEGTL_KEYWORD("enum")
+{
+};
+
+struct enum_name
+	: name
 {
 };
 
@@ -507,8 +611,8 @@ struct enum_values_definition
 
 // https://facebook.github.io/graphql/June2018/#EnumTypeDefinition
 struct enum_type_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, enum_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, enum_values_definition>>
-	, seq<opt<seq<description, star<ignored>>>, enum_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, enum_keyword, plus<ignored>, enum_name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, enum_values_definition>>
+	, seq<opt<seq<description, star<ignored>>>, enum_keyword, plus<ignored>, enum_name, opt<seq<star<ignored>, directives>>>>
 {
 };
 
@@ -519,8 +623,8 @@ struct input_keyword
 
 // https://facebook.github.io/graphql/June2018/#InputValueDefinition
 struct input_field_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, name, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, default_value>>, seq<star<ignored>, directives>>
-	, seq<opt<seq<description, star<ignored>>>, name, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, default_value>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, argument_name, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, default_value>>, seq<star<ignored>, directives>>
+	, seq<opt<seq<description, star<ignored>>>, argument_name, star<ignored>, utf8::one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, default_value>>>>
 {
 };
 
@@ -532,8 +636,8 @@ struct input_fields_definition
 
 // https://facebook.github.io/graphql/June2018/#InputObjectTypeDefinition
 struct input_object_type_definition
-	: sor<seq<opt<seq<description, star<ignored>>>, input_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, input_fields_definition>>
-	, seq<opt<seq<description, star<ignored>>>, input_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>>>
+	: sor<seq<opt<seq<description, star<ignored>>>, input_keyword, plus<ignored>, object_name, opt<seq<star<ignored>, directives>>, seq<star<ignored>, input_fields_definition>>
+	, seq<opt<seq<description, star<ignored>>>, input_keyword, plus<ignored>, object_name, opt<seq<star<ignored>, directives>>>>
 {
 };
 
@@ -591,7 +695,7 @@ struct directive_locations
 
 // https://facebook.github.io/graphql/June2018/#DirectiveDefinition
 struct directive_definition
-	: seq<opt<seq<description, star<ignored>>>, TAO_PEGTL_KEYWORD("directive"), star<ignored>, utf8::one<'@'>, name, arguments_definition, plus<ignored>, on_keyword, plus<ignored>, directive_locations>
+	: seq<opt<seq<description, star<ignored>>>, TAO_PEGTL_KEYWORD("directive"), star<ignored>, utf8::one<'@'>, directive_name, arguments_definition, plus<ignored>, on_keyword, plus<ignored>, directive_locations>
 {
 };
 
@@ -623,43 +727,43 @@ struct schema_extension
 
 // https://facebook.github.io/graphql/June2018/#ScalarTypeExtension
 struct scalar_type_extension
-	: seq<extend_keyword, plus<ignored>, scalar_keyword, star<ignored>, directives>
+	: seq<extend_keyword, plus<ignored>, scalar_keyword, star<ignored>, scalar_name, star<ignored>, directives>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#ObjectTypeExtension
 struct object_type_extension
-	: sor<seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, name, opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
-	, seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, name, opt<seq<plus<ignored>, implements_interfaces>>, star<ignored>, directives>
-	, seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, name, plus<ignored>, implements_interfaces>>
+	: sor<seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, object_name, opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
+	, seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, object_name, opt<seq<plus<ignored>, implements_interfaces>>, star<ignored>, directives>
+	, seq<extend_keyword, plus<ignored>, type_keyword, plus<ignored>, object_name, plus<ignored>, implements_interfaces>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#InterfaceTypeExtension
 struct interface_type_extension
-	: sor<seq<extend_keyword, plus<ignored>, interface_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
-	, seq<extend_keyword, plus<ignored>, interface_keyword, plus<ignored>, name, star<ignored>, directives>>
+	: sor<seq<extend_keyword, plus<ignored>, interface_keyword, plus<ignored>, interface_name, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
+	, seq<extend_keyword, plus<ignored>, interface_keyword, plus<ignored>, interface_name, star<ignored>, directives>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#UnionTypeExtension
 struct union_type_extension
-	: sor<seq<extend_keyword, plus<ignored>, union_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, star<ignored>, union_member_types>
-	, seq<extend_keyword, plus<ignored>, union_keyword, plus<ignored>, name, star<ignored>, directives>>
+	: sor<seq<extend_keyword, plus<ignored>, union_keyword, plus<ignored>, union_name, opt<seq<star<ignored>, directives>>, star<ignored>, union_member_types>
+	, seq<extend_keyword, plus<ignored>, union_keyword, plus<ignored>, union_name, star<ignored>, directives>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#EnumTypeExtension
 struct enum_type_extension
-	: sor<seq<extend_keyword, plus<ignored>, enum_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, star<ignored>, enum_values_definition>
-	, seq<extend_keyword, plus<ignored>, enum_keyword, plus<ignored>, name, star<ignored>, directives>>
+	: sor<seq<extend_keyword, plus<ignored>, enum_keyword, plus<ignored>, enum_name, opt<seq<star<ignored>, directives>>, star<ignored>, enum_values_definition>
+	, seq<extend_keyword, plus<ignored>, enum_keyword, plus<ignored>, enum_name, star<ignored>, directives>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#InputObjectTypeExtension
 struct input_object_type_extension
-	: sor<seq<extend_keyword, plus<ignored>, input_keyword, plus<ignored>, name, opt<seq<star<ignored>, directives>>, star<ignored>, input_fields_definition>
-	, seq<extend_keyword, plus<ignored>, input_keyword, plus<ignored>, name, star<ignored>, directives>>
+	: sor<seq<extend_keyword, plus<ignored>, input_keyword, plus<ignored>, object_name, opt<seq<star<ignored>, directives>>, star<ignored>, input_fields_definition>
+	, seq<extend_keyword, plus<ignored>, input_keyword, plus<ignored>, object_name, star<ignored>, directives>>
 {
 };
 
