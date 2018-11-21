@@ -42,6 +42,7 @@ Generator::Generator()
 	, _filenamePrefix("Introspection")
 	, _schemaNamespace(s_introspectionNamespace)
 {
+	// TODO: Double check that this still matches the spec
 	auto ast = service::parseString(R"gql(
 		# Introspection Schema
 

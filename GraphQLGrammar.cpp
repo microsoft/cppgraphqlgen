@@ -1070,7 +1070,8 @@ struct build_ast<grammar::directive_definition>
 
 // TODO: The GraphQLParser AST only has support for TypeExtensionDefinition, so we can't implement all of the
 // extension types in the grammar's type_system_extension. I'm going to wait until I implement my own AST to
-// generate them, I don't support them in the SchemaGenerator anyway.
+// generate them, I don't support them in the SchemaGenerator anyway. Alternatively, maybe I can bypass the AST
+// entirely and drive the whole service based on pegtl actions.
 
 template <>
 struct build_ast<grammar::document>
