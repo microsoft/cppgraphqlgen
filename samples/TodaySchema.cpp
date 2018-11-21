@@ -53,11 +53,11 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 	});
 
 	auto valueId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", value.as_object());
-	auto pairIsComplete = service::ModifiedArgument<bool, service::TypeModifier::Nullable>::find("isComplete", value.as_object());
+	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("isComplete", value.as_object());
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
-		: service::ModifiedArgument<bool, service::TypeModifier::Nullable>::require("isComplete", defaultValue.as_object()));
-	auto valueClientMutationId = service::ModifiedArgument<std::string, service::TypeModifier::Nullable>::require("clientMutationId", value.as_object());
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("isComplete", defaultValue.as_object()));
+	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("clientMutationId", value.as_object());
 
 	return {
 		std::move(valueId),
@@ -97,15 +97,15 @@ web::json::value Query::resolveNode(service::ResolverParams&& params)
 	auto argId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", params.arguments);
 	auto result = getNode(std::move(argId));
 
-	return service::ModifiedResult<service::Object, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Query::resolveAppointments(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("after", params.arguments);
-	auto argLast = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("before", params.arguments);
+	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getAppointments(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<AppointmentConnection>::convert(result, std::move(params));
@@ -113,10 +113,10 @@ web::json::value Query::resolveAppointments(service::ResolverParams&& params)
 
 web::json::value Query::resolveTasks(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("after", params.arguments);
-	auto argLast = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("before", params.arguments);
+	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getTasks(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<TaskConnection>::convert(result, std::move(params));
@@ -124,10 +124,10 @@ web::json::value Query::resolveTasks(service::ResolverParams&& params)
 
 web::json::value Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("after", params.arguments);
-	auto argLast = service::ModifiedArgument<int, service::TypeModifier::Nullable>::require("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value, service::TypeModifier::Nullable>::require("before", params.arguments);
+	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getUnreadCounts(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<FolderConnection>::convert(result, std::move(params));
@@ -135,26 +135,26 @@ web::json::value Query::resolveUnreadCounts(service::ResolverParams&& params)
 
 web::json::value Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>, service::TypeModifier::List>::require("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getAppointmentsById(std::move(argIds));
 
-	return service::ModifiedResult<Appointment, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Query::resolveTasksById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>, service::TypeModifier::List>::require("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(std::move(argIds));
 
-	return service::ModifiedResult<Task, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>, service::TypeModifier::List>::require("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getUnreadCountsById(std::move(argIds));
 
-	return service::ModifiedResult<Folder, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Query::resolve__typename(service::ResolverParams&&)
@@ -172,7 +172,7 @@ web::json::value Query::resolve__schema(service::ResolverParams&& params)
 web::json::value Query::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
-	auto result = service::ModifiedResult<introspection::object::__Type, service::TypeModifier::Nullable>::convert(_schema->LookupType(argName), std::move(params));
+	auto result = service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 
 	return result;
 }
@@ -222,7 +222,7 @@ web::json::value AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Appointment, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value AppointmentEdge::resolveCursor(service::ResolverParams&& params)
@@ -259,7 +259,7 @@ web::json::value AppointmentConnection::resolveEdges(service::ResolverParams&& p
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<AppointmentEdge, service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value AppointmentConnection::resolve__typename(service::ResolverParams&&)
@@ -282,7 +282,7 @@ web::json::value TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Task, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value TaskEdge::resolveCursor(service::ResolverParams&& params)
@@ -319,7 +319,7 @@ web::json::value TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<TaskEdge, service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value TaskConnection::resolve__typename(service::ResolverParams&&)
@@ -342,7 +342,7 @@ web::json::value FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Folder, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value FolderEdge::resolveCursor(service::ResolverParams&& params)
@@ -379,7 +379,7 @@ web::json::value FolderConnection::resolveEdges(service::ResolverParams&& params
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<FolderEdge, service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value FolderConnection::resolve__typename(service::ResolverParams&&)
@@ -402,14 +402,14 @@ web::json::value CompleteTaskPayload::resolveTask(service::ResolverParams&& para
 {
 	auto result = getTask();
 
-	return service::ModifiedResult<Task, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
 	auto result = getClientMutationId();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
@@ -454,7 +454,7 @@ web::json::value Subscription::resolveNextAppointmentChange(service::ResolverPar
 {
 	auto result = getNextAppointmentChange();
 
-	return service::ModifiedResult<Appointment, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Subscription::resolve__typename(service::ResolverParams&&)
@@ -487,14 +487,14 @@ web::json::value Appointment::resolveWhen(service::ResolverParams&& params)
 {
 	auto result = getWhen();
 
-	return service::ModifiedResult<web::json::value, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<web::json::value>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	auto result = getSubject();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Appointment::resolveIsNow(service::ResolverParams&& params)
@@ -533,7 +533,7 @@ web::json::value Task::resolveTitle(service::ResolverParams&& params)
 {
 	auto result = getTitle();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Task::resolveIsComplete(service::ResolverParams&& params)
@@ -572,7 +572,7 @@ web::json::value Folder::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value Folder::resolveUnreadCount(service::ResolverParams&& params)

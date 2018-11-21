@@ -19,6 +19,7 @@ CTestCostData.txt
 CTestTestfile.cmake
 install_manifest.txt
 LastTest.log
+lib*.a
 lib*.so
 Makefile
 schemagen

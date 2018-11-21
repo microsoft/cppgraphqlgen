@@ -139,7 +139,7 @@ web::json::value __Schema::resolveTypes(service::ResolverParams&& params)
 {
 	auto result = getTypes();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Schema::resolveQueryType(service::ResolverParams&& params)
@@ -153,21 +153,21 @@ web::json::value __Schema::resolveMutationType(service::ResolverParams&& params)
 {
 	auto result = getMutationType();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
 	auto result = getSubscriptionType();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Schema::resolveDirectives(service::ResolverParams&& params)
 {
 	auto result = getDirectives();
 
-	return service::ModifiedResult<__Directive, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__Directive>::convert<service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Schema::resolve__typename(service::ResolverParams&&)
@@ -199,21 +199,21 @@ web::json::value __Directive::resolveDescription(service::ResolverParams&& param
 {
 	auto result = getDescription();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Directive::resolveLocations(service::ResolverParams&& params)
 {
 	auto result = getLocations();
 
-	return service::ModifiedResult<__DirectiveLocation, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__DirectiveLocation>::convert<service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Directive::resolveArgs(service::ResolverParams&& params)
 {
 	auto result = getArgs();
 
-	return service::ModifiedResult<__InputValue, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Directive::resolve__typename(service::ResolverParams&&)
@@ -250,14 +250,14 @@ web::json::value __Type::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Type::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Type::resolveFields(service::ResolverParams&& params)
@@ -266,27 +266,27 @@ web::json::value __Type::resolveFields(service::ResolverParams&& params)
 		{ _XPLATSTR("includeDeprecated"), web::json::value::parse(_XPLATSTR(R"js(false)js")) }
 	});
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<bool, service::TypeModifier::Nullable>::find("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<bool, service::TypeModifier::Nullable>::require("includeDeprecated", defaultArguments.as_object()));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments.as_object()));
 	auto result = getFields(std::move(argIncludeDeprecated));
 
-	return service::ModifiedResult<__Field, service::TypeModifier::Nullable, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Type::resolveInterfaces(service::ResolverParams&& params)
 {
 	auto result = getInterfaces();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::Nullable, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
 	auto result = getPossibleTypes();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::Nullable, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Type::resolveEnumValues(service::ResolverParams&& params)
@@ -295,27 +295,27 @@ web::json::value __Type::resolveEnumValues(service::ResolverParams&& params)
 		{ _XPLATSTR("includeDeprecated"), web::json::value::parse(_XPLATSTR(R"js(false)js")) }
 	});
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<bool, service::TypeModifier::Nullable>::find("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<bool, service::TypeModifier::Nullable>::require("includeDeprecated", defaultArguments.as_object()));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments.as_object()));
 	auto result = getEnumValues(std::move(argIncludeDeprecated));
 
-	return service::ModifiedResult<__EnumValue, service::TypeModifier::Nullable, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Type::resolveInputFields(service::ResolverParams&& params)
 {
 	auto result = getInputFields();
 
-	return service::ModifiedResult<__InputValue, service::TypeModifier::Nullable, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Type::resolveOfType(service::ResolverParams&& params)
 {
 	auto result = getOfType();
 
-	return service::ModifiedResult<__Type, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Type::resolve__typename(service::ResolverParams&&)
@@ -349,14 +349,14 @@ web::json::value __Field::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Field::resolveArgs(service::ResolverParams&& params)
 {
 	auto result = getArgs();
 
-	return service::ModifiedResult<__InputValue, service::TypeModifier::List>::convert(result, std::move(params));
+	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(result, std::move(params));
 }
 
 web::json::value __Field::resolveType(service::ResolverParams&& params)
@@ -377,7 +377,7 @@ web::json::value __Field::resolveDeprecationReason(service::ResolverParams&& par
 {
 	auto result = getDeprecationReason();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __Field::resolve__typename(service::ResolverParams&&)
@@ -409,7 +409,7 @@ web::json::value __InputValue::resolveDescription(service::ResolverParams&& para
 {
 	auto result = getDescription();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __InputValue::resolveType(service::ResolverParams&& params)
@@ -423,7 +423,7 @@ web::json::value __InputValue::resolveDefaultValue(service::ResolverParams&& par
 {
 	auto result = getDefaultValue();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __InputValue::resolve__typename(service::ResolverParams&&)
@@ -455,7 +455,7 @@ web::json::value __EnumValue::resolveDescription(service::ResolverParams&& param
 {
 	auto result = getDescription();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
@@ -469,7 +469,7 @@ web::json::value __EnumValue::resolveDeprecationReason(service::ResolverParams&&
 {
 	auto result = getDeprecationReason();
 
-	return service::ModifiedResult<std::string, service::TypeModifier::Nullable>::convert(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 web::json::value __EnumValue::resolve__typename(service::ResolverParams&&)

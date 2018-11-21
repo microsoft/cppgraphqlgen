@@ -237,6 +237,7 @@ private:
 	bool outputSource() const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
+	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 	std::string getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept;
 
 	static const std::string s_introspectionNamespace;
