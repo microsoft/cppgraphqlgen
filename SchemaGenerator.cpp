@@ -4,12 +4,11 @@
 #include "SchemaGenerator.h"
 #include "GraphQLService.h"
 
-#include <exception>
+#include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cctype>
-#include <cstring>
 
 #include <graphqlparser/GraphQLParser.h>
 
@@ -141,13 +140,12 @@ Generator::Generator()
 	}
 }
 
-Generator::Generator(FILE* schemaDefinition, std::string filenamePrefix, std::string schemaNamespace)
+Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std::string schemaNamespace)
 	: _isIntrospection(false)
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
 {
-	const char* error = nullptr;
-	auto ast = service::parseFile(schemaDefinition);
+	auto ast = service::parseFile(schemaFileName.c_str());
 
 	if (!ast)
 	{
@@ -2160,39 +2158,37 @@ int main(int argc, char** argv)
 {
 	std::vector<std::string> files;
 
-	if (argc == 1)
+	try
 	{
-		files = facebook::graphql::schema::Generator().Build();
-	}
-	else
-	{
-		if (argc != 4)
+		if (argc == 1)
 		{
-			std::cerr << "Usage (to generate a custom schema): " << argv[0]
-				<< " <schema file> <output filename prefix> <output namespace>"
-				<< std::endl;
-			std::cerr << "Usage (to generate IntrospectionSchema): " << argv[0] << std::endl;
-			return 1;
+			files = facebook::graphql::schema::Generator().Build();
+		}
+		else
+		{
+			if (argc != 4)
+			{
+				std::cerr << "Usage (to generate a custom schema): " << argv[0]
+					<< " <schema file> <output filename prefix> <output namespace>"
+					<< std::endl;
+				std::cerr << "Usage (to generate IntrospectionSchema): " << argv[0] << std::endl;
+				return 1;
+			}
+
+			facebook::graphql::schema::Generator generator(argv[1], argv[2], argv[3]);
+
+			files = generator.Build();
 		}
 
-		FILE* schemaDefinition = std::fopen(argv[1], "rb");
-
-		if (nullptr == schemaDefinition)
+		for (const auto& file : files)
 		{
-			std::cerr << "Could not open the file: " << argv[1] << std::endl;
-			std::cerr << "Error: " << std::strerror(errno) << std::endl;
-			return 1;
+			std::cout << file << std::endl;
 		}
-
-		facebook::graphql::schema::Generator generator(schemaDefinition, argv[2], argv[3]);
-		std::fclose(schemaDefinition);
-
-		files = generator.Build();
 	}
-
-	for (const auto& file : files)
+	catch (const std::runtime_error& ex)
 	{
-		std::cout << file << std::endl;
+		std::cerr << ex.what() << std::endl;
+		return 1;
 	}
 
 	return 0;

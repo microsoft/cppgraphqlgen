@@ -1,13 +1,14 @@
 #include "GraphQLGrammar.h"
 
+#include <tao/pegtl/contrib/unescape.hpp>
+
 #include <graphqlparser/Ast.h>
 
 #include <memory>
-#include <iostream>
 #include <stack>
 #include <tuple>
-#include <codecvt>
-#include <locale>
+
+#include <cstdio>
 
 namespace facebook {
 namespace graphql {
@@ -26,7 +27,7 @@ struct parser_state
 	std::unique_ptr<ast::SelectionSet> selectionSet;
 
 	std::string enumValue;
-	std::ostringstream stringBuffer;
+	std::string stringBuffer;
 
 	std::unique_ptr<ast::Name> name;
 	std::unique_ptr<ast::Name> aliasName;
@@ -222,16 +223,10 @@ struct build_ast<grammar::escaped_unicode>
 	template <typename _Input>
 	static void apply(const _Input& in, parser_state& state)
 	{
-		std::wstring source;
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8conv;
-		std::istringstream encoded(in.string());
-		uint32_t wch;
-
-		// Skip past the first 'u' character
-		encoded.seekg(1);
-		encoded >> std::hex >> wch;
-		source.push_back(static_cast<wchar_t>(wch));
-		state.stringBuffer << utf8conv.to_bytes(source);
+		if (!unescape::utf8_append_utf32(state.stringBuffer, unescape::unhex_string<uint32_t>(in.begin() + 1, in.end())))
+		{
+			throw parse_error("invalid escaped unicode code point", in);
+		}
 	}
 };
 
@@ -246,40 +241,39 @@ struct build_ast<grammar::escaped_char>
 		switch (ch)
 		{
 			case '"':
-				state.stringBuffer << '"';
+				state.stringBuffer += '"';
 				break;
 
 			case '\\':
-				state.stringBuffer << '\\';
+				state.stringBuffer += '\\';
 				break;
 
 			case '/':
-				state.stringBuffer << '/';
+				state.stringBuffer += '/';
 				break;
 
 			case 'b':
-				state.stringBuffer << '\b';
+				state.stringBuffer += '\b';
 				break;
 
 			case 'f':
-				state.stringBuffer << '\f';
+				state.stringBuffer += '\f';
 				break;
 
 			case 'n':
-				state.stringBuffer << '\n';
+				state.stringBuffer += '\n';
 				break;
 
 			case 'r':
-				state.stringBuffer << '\r';
+				state.stringBuffer += '\r';
 				break;
 
 			case 't':
-				state.stringBuffer << '\t';
+				state.stringBuffer += '\t';
 				break;
 
 			default:
-				state.stringBuffer << '\\' << ch;
-				break;
+				throw parse_error("invalid escaped character sequence", in);
 		}
 	}
 };
@@ -290,7 +284,7 @@ struct build_ast<grammar::string_quote_character>
 	template <typename _Input>
 	static void apply(const _Input& in, parser_state& state)
 	{
-		state.stringBuffer << in.peek_char();
+		state.stringBuffer += in.peek_char();
 	}
 };
 
@@ -301,7 +295,7 @@ struct build_ast<grammar::block_escape_sequence>
 	template <typename _Input>
 	static void apply(const _Input& in, parser_state& state)
 	{
-		state.stringBuffer << R"bq(""")bq";
+		state.stringBuffer.append(R"bq(""")bq");
 	}
 };
 
@@ -311,7 +305,7 @@ struct build_ast<grammar::block_quote_character>
 	template <typename _Input>
 	static void apply(const _Input& in, parser_state& state)
 	{
-		state.stringBuffer << in.peek_char();
+		state.stringBuffer += in.peek_char();
 	}
 };
 
@@ -321,13 +315,12 @@ struct build_ast<grammar::string_value>
 	template <typename _Input>
 	static void apply(const _Input& in, parser_state& state)
 	{
-		auto parsedValue = state.stringBuffer.str();
+		auto parsedValue = std::move(state.stringBuffer);
 		std::unique_ptr<char[], ast::CDeleter> value(reinterpret_cast<char*>(malloc(parsedValue.size() + 1)));
 
 		memmove(value.get(), parsedValue.data(), parsedValue.size());
 		value[parsedValue.size()] = '\0';
 		state.value.push(std::unique_ptr<ast::Value>(new ast::StringValue(get_location(in), value.release())));
-		state.stringBuffer.str("");
 	}
 };
 
@@ -1096,11 +1089,23 @@ std::unique_ptr<ast::Node> parseString(const char* text)
 	return std::unique_ptr<ast::Node>(document.release());
 }
 
-std::unique_ptr<ast::Node> parseFile(FILE* file)
+std::unique_ptr<ast::Node> parseFile(const char* fileName)
 {
 	parser_state state;
 	std::unique_ptr<ast::Document> document;
-	file_input<> in(file, "GraphQL");
+	file_input<> in(fileName);
+
+	state.document = &document;
+	parse<grammar::document, build_ast>(std::move(in), std::move(state));
+
+	return std::unique_ptr<ast::Node>(document.release());
+}
+
+std::unique_ptr<ast::Node> parseInput()
+{
+	parser_state state;
+	std::unique_ptr<ast::Document> document;
+	cstream_input<> in(stdin, 1024 * 1024, "GraphQL");
 
 	state.document = &document;
 	parse<grammar::document, build_ast>(std::move(in), std::move(state));

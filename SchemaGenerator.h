@@ -167,7 +167,7 @@ public:
 	explicit Generator();
 
 	// Initialize the generator with the GraphQL schema and output parameters.
-	explicit Generator(FILE* schemaDefinition, std::string filenamePrefix, std::string schemaNamespace);
+	explicit Generator(std::string schemaFileName, std::string filenamePrefix, std::string schemaNamespace);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;

@@ -25,7 +25,8 @@ namespace service {
 
 // Re-using the AST generated from GraphQLParser for now.
 std::unique_ptr<ast::Node> parseString(const char* text);
-std::unique_ptr<ast::Node> parseFile(FILE* file);
+std::unique_ptr<ast::Node> parseFile(const char* fileName);
+std::unique_ptr<ast::Node> parseInput();
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception

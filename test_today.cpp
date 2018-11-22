@@ -3,12 +3,8 @@
 
 #include "Today.h"
 
-#include <graphqlparser/GraphQLParser.h>
-
-#include <cstdio>
-#include <cerrno>
-#include <cstring>
 #include <iostream>
+#include <stdexcept>
 
 using namespace facebook::graphql;
 
@@ -57,48 +53,28 @@ int main(int argc, char** argv)
 
 	std::cout << "Created the service..." << std::endl;
 
-	FILE* in = stdin;
-
-	if (argc > 1)
+	try
 	{
-		in = std::fopen(argv[1], "r");
+		auto ast = (argc > 1) ? service::parseFile(argv[1]) : service::parseInput();
 
-		if (nullptr == in)
+		if (!ast)
 		{
-			std::cerr << "Could not open the file: " << argv[1] << std::endl;
-			std::cerr << "Error: " << std::strerror(errno) << std::endl;
+			std::cerr << "Unknown error!" << std::endl;
+			std::cerr << std::endl;
 			return 1;
 		}
+
+		std::cout << "Executing query..." << std::endl;
+
+		utility::ostringstream_t output;
+		output << service->resolve(*ast, ((argc > 2) ? argv[2] : ""), web::json::value::object().as_object());
+		std::cout << utility::conversions::to_utf8string(output.str()) << std::endl;
 	}
-
-	const char* error = nullptr;
-	auto ast = parseFile(in, &error);
-
-	if (argc > 1)
+	catch (const std::runtime_error& ex)
 	{
-		std::fclose(in);
-	}
-
-	if (!ast)
-	{
-		if (nullptr == error)
-		{
-			std::cerr << "Unknown error!";
-		}
-		else
-		{
-			std::cerr << error;
-			free(const_cast<char*>(error));
-		}
-		std::cerr << std::endl;
+		std::cerr << ex.what() << std::endl;
 		return 1;
 	}
-
-	std::cout << "Executing query..." << std::endl;
-
-	utility::ostringstream_t output;
-	output << service->resolve(*ast, ((argc > 2) ? argv[2] : ""), web::json::value::object().as_object());
-	std::cout << utility::conversions::to_utf8string(output.str()) << std::endl;
 
 	return 0;
 }
