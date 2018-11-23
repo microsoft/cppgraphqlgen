@@ -9,8 +9,14 @@ if(WIN32)
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
+add_library(graphqlpeg GraphQLTree.cpp)
 add_library(graphqlservice GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
 add_executable(schemagen SchemaGenerator.cpp)
+
+find_package(pegtl CONFIG REQUIRED)
+
+target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
+target_link_libraries(graphqlpeg taocpp::pegtl)
 
 find_package(cpprestsdk REQUIRED)
 set(CPPRESTSDK cpprestsdk::cpprest)
@@ -19,12 +25,6 @@ if(UNIX)
   find_library(BOOST_SYSTEM boost_system)
   list(APPEND CPPRESTSDK ${BOOST_SYSTEM})
 endif()
-
-find_package(pegtl CONFIG REQUIRED)
-
-add_library(graphqlpeg GraphQLGrammar.cpp)
-target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlpeg taocpp::pegtl)
 
 target_include_directories(graphqlservice INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
 target_link_libraries(graphqlservice ${CPPRESTSDK} graphqlpeg)

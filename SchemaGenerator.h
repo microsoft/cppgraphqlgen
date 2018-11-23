@@ -7,6 +7,7 @@
 #include <cstdio>
 
 #include "GraphQLService.h"
+#include "GraphQLTree.h"
 
 namespace facebook {
 namespace graphql {
@@ -173,29 +174,33 @@ public:
 	std::vector<std::string> Build() const noexcept;
 
 private:
-	bool visitSchemaDefinition(const grammar::ast_node& schemaDefinition);
-	bool visitScalarTypeDefinition(const grammar::ast_node& scalarTypeDefinition);
-	bool visitEnumTypeDefinition(const grammar::ast_node& enumTypeDefinition);
-	bool visitInputObjectTypeDefinition(const grammar::ast_node& inputObjectTypeDefinition);
-	bool visitUnionTypeDefinition(const grammar::ast_node& unionTypeDefinition);
-	bool visitInterfaceTypeDefinition(const grammar::ast_node& interfaceTypeDefinition);
-	bool visitObjectTypeDefinition(const grammar::ast_node& objectTypeDefinition);
+	void visitDefinition(const peg::ast_node& definition);
 
-	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields);
-	static InputFieldList getInputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields);
+	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
+	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
+	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
+	void visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition);
+	void visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition);
+	void visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition);
+	void visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition);
+
+	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
+	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 
 	// Recursively visit a Type node until we reach a NamedType and we've
 	// taken stock of all of the modifier wrappers.
 	class TypeVisitor
 	{
 	public:
-		bool visitNamedType(const grammar::ast_node& namedType);
-		bool visitListType(const grammar::ast_node& listType);
-		bool visitNonNullType(const grammar::ast_node& nonNullType);
-
 		std::pair<std::string, TypeModifierStack> getType();
 
+		void visit(const peg::ast_node& typeName);
+
 	private:
+		void visitNamedType(const peg::ast_node& namedType);
+		void visitListType(const peg::ast_node& listType);
+		void visitNonNullType(const peg::ast_node& nonNullType);
+
 		std::string _type;
 		TypeModifierStack _modifiers;
 		bool _nonNull = false;
@@ -206,18 +211,20 @@ private:
 	class DefaultValueVisitor
 	{
 	public:
-		bool visitIntValue(const grammar::ast_node& intValue);
-		bool visitFloatValue(const grammar::ast_node& floatValue);
-		bool visitStringValue(const grammar::ast_node& stringValue);
-		bool visitBooleanValue(const grammar::ast_node& booleanValue);
-		bool visitNullValue(const grammar::ast_node& nullValue);
-		bool visitEnumValue(const grammar::ast_node& enumValue);
-		bool visitListValue(const grammar::ast_node& listValue);
-		bool visitObjectValue(const grammar::ast_node& objectValue);
-
 		web::json::value getValue();
 
+		void visit(const peg::ast_node& value);
+
 	private:
+		void visitIntValue(const peg::ast_node& intValue);
+		void visitFloatValue(const peg::ast_node& floatValue);
+		void visitStringValue(const peg::ast_node& stringValue);
+		void visitBooleanValue(const peg::ast_node& booleanValue);
+		void visitNullValue(const peg::ast_node& nullValue);
+		void visitEnumValue(const peg::ast_node& enumValue);
+		void visitListValue(const peg::ast_node& listValue);
+		void visitObjectValue(const peg::ast_node& objectValue);
+
 		web::json::value _value;
 	};
 

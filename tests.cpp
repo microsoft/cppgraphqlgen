@@ -4,15 +4,13 @@
 #include <gtest/gtest.h>
 
 #include "Today.h"
+#include "GraphQLTree.h"
 
-#include "GraphQLGrammar.h"
 #include <tao/pegtl/analyze.hpp>
 
-#include <graphqlparser/GraphQLParser.h>
-
 using namespace facebook::graphql;
+using namespace facebook::graphql::peg;
 
-using namespace facebook::graphql::grammar;
 using namespace tao::pegtl;
 
 class TodayServiceCase : public ::testing::Test
@@ -71,7 +69,7 @@ protected:
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
-	auto ast = grammar::parseString(R"gql(
+	auto ast = peg::parseString(R"gql(
 		query Everything {
 			appointments {
 				edges {
@@ -162,7 +160,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 TEST_F(TodayServiceCase, QueryAppointments)
 {
-	auto ast = grammar::parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			appointments {
 				edges {
 					node {
@@ -214,7 +212,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 
 TEST_F(TodayServiceCase, QueryTasks)
 {
-	auto ast = grammar::parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			tasks {
 				edges {
 					node {
@@ -264,7 +262,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 
 TEST_F(TodayServiceCase, QueryUnreadCounts)
 {
-	auto ast = grammar::parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			unreadCounts {
 				edges {
 					node {
@@ -314,7 +312,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 
 TEST_F(TodayServiceCase, MutateCompleteTask)
 {
-	auto ast = grammar::parseString(R"gql(mutation {
+	auto ast = peg::parseString(R"gql(mutation {
 			completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
 				completedTask: task {
 					completedTaskId: id
@@ -362,7 +360,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 TEST_F(TodayServiceCase, Introspection)
 {
-	auto ast = grammar::parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			__schema {
 				types {
 					kind

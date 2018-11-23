@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "GraphQLTree.h"
+
 #include <memory>
 #include <string>
 #include <sstream>
@@ -19,18 +21,6 @@
 
 namespace facebook {
 namespace graphql {
-namespace grammar {
-
-using namespace tao::pegtl;
-
-struct ast_node
-	: parse_tree::basic_node<ast_node>
-{
-	std::string unescaped;
-};
-
-} /* namespace grammar */
-
 namespace service {
 
 // This exception bubbles up 1 or more error messages to the JSON results.
@@ -51,15 +41,15 @@ private:
 class Fragment
 {
 public:
-	explicit Fragment(const grammar::ast_node& fragmentDefinition);
+	explicit Fragment(const peg::ast_node& fragmentDefinition);
 
 	const std::string& getType() const;
-	const grammar::ast_node& getSelection() const;
+	const peg::ast_node& getSelection() const;
 
 private:
 	std::string _type;
 
-	const grammar::ast_node& _selection;
+	const peg::ast_node& _selection;
 };
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
@@ -72,7 +62,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 struct ResolverParams
 {
 	const web::json::object& arguments;
-	const grammar::ast_node* selection;
+	const peg::ast_node* selection;
 	const FragmentMap& fragments;
 	const web::json::object& variables;
 };
@@ -254,7 +244,7 @@ class Object : public std::enable_shared_from_this<Object>
 public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 
-	web::json::value resolve(const grammar::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const;
+	web::json::value resolve(const peg::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const;
 
 private:
 	TypeNames _typeNames;
@@ -383,7 +373,7 @@ class Request : public std::enable_shared_from_this<Request>
 public:
 	explicit Request(TypeMap&& operationTypes);
 
-	web::json::value resolve(const grammar::ast_node& document, const std::string& operationName, const web::json::object& variables) const;
+	web::json::value resolve(const peg::ast_node& root, const std::string& operationName, const web::json::object& variables) const;
 
 private:
 	TypeMap _operations;
@@ -396,14 +386,16 @@ class SelectionVisitor
 public:
 	SelectionVisitor(const FragmentMap& fragments, const web::json::object& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
+	void visit(const peg::ast_node& selection);
+
 	web::json::value getValues();
 
-	bool visitField(const grammar::ast_node& field);
-	bool visitFragmentSpread(const grammar::ast_node& fragmentSpread);
-	bool visitInlineFragment(const grammar::ast_node& inlineFragment);
-
 private:
-	bool shouldSkip(const std::vector<std::unique_ptr<grammar::ast_node>>* directives) const;
+	bool shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const;
+
+	void visitField(const peg::ast_node& field);
+	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
+	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
 	const FragmentMap& _fragments;
 	const web::json::object& _variables;
@@ -419,19 +411,21 @@ class ValueVisitor
 public:
 	ValueVisitor(const web::json::object& variables);
 
+	void visit(const peg::ast_node& value);
+
 	web::json::value getValue();
 
-	bool visitVariable(const grammar::ast_node& variable);
-	bool visitIntValue(const grammar::ast_node& intValue);
-	bool visitFloatValue(const grammar::ast_node& floatValue);
-	bool visitStringValue(const grammar::ast_node& stringValue);
-	bool visitBooleanValue(const grammar::ast_node& booleanValue);
-	bool visitNullValue(const grammar::ast_node& nullValue);
-	bool visitEnumValue(const grammar::ast_node& enumValue);
-	bool visitListValue(const grammar::ast_node& listValue);
-	bool visitObjectValue(const grammar::ast_node& objectValue);
-
 private:
+	void visitVariable(const peg::ast_node& variable);
+	void visitIntValue(const peg::ast_node& intValue);
+	void visitFloatValue(const peg::ast_node& floatValue);
+	void visitStringValue(const peg::ast_node& stringValue);
+	void visitBooleanValue(const peg::ast_node& booleanValue);
+	void visitNullValue(const peg::ast_node& nullValue);
+	void visitEnumValue(const peg::ast_node& enumValue);
+	void visitListValue(const peg::ast_node& listValue);
+	void visitObjectValue(const peg::ast_node& objectValue);
+
 	const web::json::object& _variables;
 	web::json::value _value;
 };
@@ -445,7 +439,7 @@ public:
 
 	FragmentMap getFragments();
 
-	bool visitFragmentDefinition(const grammar::ast_node& fragmentDefinition);
+	void visit(const peg::ast_node& fragmentDefinition);
 
 private:
 	FragmentMap _fragments;
@@ -460,7 +454,7 @@ public:
 
 	web::json::value getValue();
 
-	bool visitOperationDefinition(const grammar::ast_node& operationDefinition);
+	void visit(const peg::ast_node& operationDefinition);
 
 private:
 	const TypeMap& _operations;

@@ -6,13 +6,11 @@
 
 #pragma once
 
-#include "GraphQLService.h"
-
 #include <tao/pegtl.hpp>
 
 namespace facebook {
 namespace graphql {
-namespace grammar {
+namespace peg {
 
 using namespace tao::pegtl;
 
@@ -797,9 +795,6 @@ struct document
 {
 };
 
-std::unique_ptr<ast_node> parseString(const char* text);
-std::unique_ptr<ast_node> parseFile(file_input<>&& in);
-
-} /* namespace grammar */
+} /* namespace peg */
 } /* namespace graphql */
 } /* namespace facebook */

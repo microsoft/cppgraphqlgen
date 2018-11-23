@@ -1,9 +1,9 @@
-#include "GraphQLGrammar.h"
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#include "GraphQLTree.h"
 
 #include <tao/pegtl/contrib/unescape.hpp>
-#include <tao/pegtl/contrib/parse_tree.hpp>
-
-#include <graphqlparser/Ast.h>
 
 #include <memory>
 #include <stack>
@@ -11,11 +11,9 @@
 #include <functional>
 #include <numeric>
 
-#include <cstdio>
-
 namespace facebook {
 namespace graphql {
-namespace grammar {
+namespace peg {
 
 using namespace tao::pegtl;
 
@@ -569,6 +567,6 @@ std::unique_ptr<ast_node> parseFile(file_input<>&& in)
 	return parse_tree::parse<document, ast_node, ast_selector>(std::move(in));
 }
 
-} /* namespace service */
+} /* namespace peg */
 } /* namespace graphql */
 } /* namespace facebook */
