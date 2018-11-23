@@ -1,1116 +1,572 @@
 #include "GraphQLGrammar.h"
 
 #include <tao/pegtl/contrib/unescape.hpp>
+#include <tao/pegtl/contrib/parse_tree.hpp>
 
 #include <graphqlparser/Ast.h>
 
 #include <memory>
 #include <stack>
 #include <tuple>
+#include <functional>
+#include <numeric>
 
 #include <cstdio>
 
 namespace facebook {
 namespace graphql {
-namespace service {
+namespace grammar {
 
 using namespace tao::pegtl;
 
-struct parser_state
-{
-	std::unique_ptr<ast::Document>* document = nullptr;
-
-	std::unique_ptr<char[], ast::CDeleter> operationType;
-	std::unique_ptr<ast::NamedType> typeCondition;
-	std::unique_ptr<ast::Type> type;
-	std::unique_ptr<ast::NamedType> namedType;
-	std::unique_ptr<ast::SelectionSet> selectionSet;
-
-	std::string enumValue;
-	std::string stringBuffer;
-
-	std::unique_ptr<ast::Name> name;
-	std::unique_ptr<ast::Name> aliasName;
-	std::unique_ptr<ast::Name> fieldName;
-	std::unique_ptr<ast::Name> objectFieldName;
-	std::unique_ptr<ast::Name> variableName;
-	std::unique_ptr<ast::Name> argumentName;
-	std::unique_ptr<ast::Name> directiveName;
-	std::unique_ptr<ast::Name> operationName;
-	std::unique_ptr<ast::Name> fragmentName;
-	std::unique_ptr<ast::Name> scalarName;
-	std::unique_ptr<ast::Name> objectName;
-	std::unique_ptr<ast::Name> interfaceName;
-	std::unique_ptr<ast::Name> unionName;
-	std::unique_ptr<ast::Name> enumName;
-
-	std::unique_ptr<ast::Value> defaultValue;
-
-	std::unique_ptr<std::vector<std::unique_ptr<ast::Definition>>> definitionList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::VariableDefinition>>> variableDefinitionList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::Directive>>> directiveList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::Argument>>> argumentList;
-
-	std::stack<std::pair<std::unique_ptr<ast::Name>, std::unique_ptr<ast::Name>>> fieldNames;
-	std::stack<std::unique_ptr<std::vector<std::unique_ptr<ast::Argument>>>> argumentLists;
-	std::stack<std::unique_ptr<ast::Value>> value;
-
-	std::stack<std::unique_ptr<std::vector<std::unique_ptr<ast::Selection>>>> selectionList;
-	std::stack<std::unique_ptr<std::vector<std::unique_ptr<ast::Value>>>> valueList;
-	std::stack<std::unique_ptr<std::vector<std::unique_ptr<ast::ObjectField>>>> objectFieldList;
-
-	// Schema types
-	std::unique_ptr<ast::TypeExtensionDefinition> typeExtensionDefinition;
-
-	std::unique_ptr<std::vector<std::unique_ptr<ast::OperationTypeDefinition>>> operationTypeDefinitionList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::NamedType>>> typeNameList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::InputValueDefinition>>> inputValueDefinitionList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::FieldDefinition>>> fieldDefinitionList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::Name>>> nameList;
-	std::unique_ptr<std::vector<std::unique_ptr<ast::EnumValueDefinition>>> enumValueDefinitionList;
-};
-
-template <typename _Input>
-static yy::location get_location(const _Input& in)
-{
-	position pos = in.position();
-	yy::position begin(&pos.source, pos.line, pos.byte_in_line);
-	yy::position end(&pos.source, in.input().line(), in.input().byte_in_line());
-
-	return yy::location(begin, end);
-}
-
-template <typename _Input>
-static std::unique_ptr<char[], ast::CDeleter> get_name(const _Input& in)
-{
-	auto parsedName = in.string();
-	std::unique_ptr<char[], ast::CDeleter> name(reinterpret_cast<char*>(malloc(parsedName.size() + 1)));
-
-	memmove(name.get(), parsedName.data(), parsedName.size());
-	name[parsedName.size()] = '\0';
-	return name;
-}
-
 template <typename _Rule>
-struct build_ast
-	: nothing<_Rule>
+struct ast_selector
+	: std::false_type
 {
 };
 
 template <>
-struct build_ast<grammar::operation_type>
+struct ast_selector<operation_type>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.operationType = get_name(in);
-	}
 };
 
 template <>
-struct build_ast<grammar::begin_list>
+struct ast_selector<list_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.valueList.push(std::unique_ptr<std::vector<std::unique_ptr<ast::Value>>>(new std::vector<std::unique_ptr<ast::Value>>()));
-	}
 };
 
 template <>
-struct build_ast<grammar::list_entry>
+struct ast_selector<object_field_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.valueList.top()->push_back(std::unique_ptr<ast::Value>(state.value.top().release()));
-		state.value.pop();
-	}
 };
 
 template <>
-struct build_ast<grammar::list_value>
+struct ast_selector<object_field>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::ListValue(get_location(in), state.valueList.top().release())));
-		state.valueList.pop();
-	}
 };
 
 template <>
-struct build_ast<grammar::begin_object>
+struct ast_selector<object_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.objectFieldList.push(std::unique_ptr<std::vector<std::unique_ptr<ast::ObjectField>>>(new std::vector<std::unique_ptr<ast::ObjectField>>()));
-	}
 };
 
 template <>
-struct build_ast<grammar::object_field_name>
+struct ast_selector<variable_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.objectFieldName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
 };
 
 template <>
-struct build_ast<grammar::object_field>
+struct ast_selector<integer_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.objectFieldList.top()->push_back(std::unique_ptr<ast::ObjectField>(
-			new ast::ObjectField(get_location(in),
-				state.objectFieldName.release(),
-				state.value.top().release())));
-
-		state.value.pop();
-	}
 };
 
 template <>
-struct build_ast<grammar::object_value>
+struct ast_selector<float_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::ObjectValue(get_location(in), state.objectFieldList.top().release())));
-		state.objectFieldList.pop();
-	}
 };
 
 template <>
-struct build_ast<grammar::variable_value>
+struct ast_selector<escaped_unicode>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
+	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		std::unique_ptr<ast::Name> variableName(new ast::Name(get_location(in), get_name(in).release()));
-
-		state.value.push(std::unique_ptr<ast::Value>(new ast::Variable(get_location(in), variableName.release())));
-	}
-};
-
-template <>
-struct build_ast<grammar::integer_value>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::IntValue(get_location(in), get_name(in).release())));
-	}
-};
-
-template <>
-struct build_ast<grammar::float_value>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::FloatValue(get_location(in), get_name(in).release())));
-	}
-};
-
-template <>
-struct build_ast<grammar::escaped_unicode>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!unescape::utf8_append_utf32(state.stringBuffer, unescape::unhex_string<uint32_t>(in.begin() + 1, in.end())))
+		if (n->has_content())
 		{
-			throw parse_error("invalid escaped unicode code point", in);
-		}
-	}
-};
+			std::string content = n->content();
 
-template <>
-struct build_ast<grammar::escaped_char>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		const char ch = in.peek_char();
-
-		switch (ch)
-		{
-			case '"':
-				state.stringBuffer += '"';
-				break;
-
-			case '\\':
-				state.stringBuffer += '\\';
-				break;
-
-			case '/':
-				state.stringBuffer += '/';
-				break;
-
-			case 'b':
-				state.stringBuffer += '\b';
-				break;
-
-			case 'f':
-				state.stringBuffer += '\f';
-				break;
-
-			case 'n':
-				state.stringBuffer += '\n';
-				break;
-
-			case 'r':
-				state.stringBuffer += '\r';
-				break;
-
-			case 't':
-				state.stringBuffer += '\t';
-				break;
-
-			default:
-				throw parse_error("invalid escaped character sequence", in);
-		}
-	}
-};
-
-template <>
-struct build_ast<grammar::string_quote_character>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.stringBuffer += in.peek_char();
-	}
-};
-
-
-template <>
-struct build_ast<grammar::block_escape_sequence>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.stringBuffer.append(R"bq(""")bq");
-	}
-};
-
-template <>
-struct build_ast<grammar::block_quote_character>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.stringBuffer += in.peek_char();
-	}
-};
-
-template <>
-struct build_ast<grammar::string_value>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		auto parsedValue = std::move(state.stringBuffer);
-		std::unique_ptr<char[], ast::CDeleter> value(reinterpret_cast<char*>(malloc(parsedValue.size() + 1)));
-
-		memmove(value.get(), parsedValue.data(), parsedValue.size());
-		value[parsedValue.size()] = '\0';
-		state.value.push(std::unique_ptr<ast::Value>(new ast::StringValue(get_location(in), value.release())));
-	}
-};
-
-template <>
-struct build_ast<grammar::true_keyword>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::BooleanValue(get_location(in), true)));
-	}
-};
-
-template <>
-struct build_ast<grammar::false_keyword>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::BooleanValue(get_location(in), false)));
-	}
-};
-
-template <>
-struct build_ast<grammar::null_keyword>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::NullValue(get_location(in))));
-	}
-};
-
-template <>
-struct build_ast<grammar::enum_value>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.value.push(std::unique_ptr<ast::Value>(new ast::EnumValue(get_location(in), get_name(in).release())));
-		state.enumValue = in.string();
-	}
-};
-
-template <>
-struct build_ast<grammar::variable_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.variableName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::alias_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.name.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::alias>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.aliasName = std::move(state.name);
-	}
-};
-
-template <>
-struct build_ast<grammar::argument_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.argumentName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::named_type>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		std::unique_ptr<ast::Name> namedTypeName(new ast::Name(get_location(in), get_name(in).release()));
-
-		state.namedType.reset(new ast::NamedType(get_location(in), namedTypeName.release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::directive_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.directiveName.reset(new ast::Name(get_location(in), get_name(in).release()));
-
-		state.argumentLists.push(std::move(state.argumentList));
-	}
-};
-
-template <>
-struct build_ast<grammar::field_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.fieldName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::operation_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.operationName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::fragment_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.fragmentName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::scalar_name>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.scalarName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
-};
-
-template <>
-struct build_ast<grammar::list_type>
-{
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (state.namedType)
-		{
-			state.type = std::move(state.namedType);
+			if (unescape::utf8_append_utf32(n->unescaped, unescape::unhex_string<uint32_t>(content.data() + 1, content.data() + content.size())))
+			{
+				return;
+			}
 		}
 
-		state.type.reset(new ast::ListType(get_location(in), state.type.release()));
+		throw parse_error("invalid escaped unicode code point", { n->begin(), n->end() });
 	}
 };
 
 template <>
-struct build_ast<grammar::nonnull_type>
+struct ast_selector<escaped_char>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
+	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		if (state.namedType)
+		if (n->has_content())
 		{
-			state.type = std::move(state.namedType);
+			const char ch = n->content().front();
+
+			switch (ch)
+			{
+				case '"':
+					n->unescaped = "\"";
+					return;
+
+				case '\\':
+					n->unescaped = "\\";
+					return;
+
+				case '/':
+					n->unescaped = "/";
+					return;
+
+				case 'b':
+					n->unescaped = "\b";
+					return;
+
+				case 'f':
+					n->unescaped = "\f";
+					return;
+
+				case 'n':
+					n->unescaped = "\n";
+					return;
+
+				case 'r':
+					n->unescaped = "\r";
+					return;
+
+				case 't':
+					n->unescaped = "\t";
+					return;
+
+				default:
+					break;
+			}
 		}
 
-		state.type.reset(new ast::NonNullType(get_location(in), state.type.release()));
+		throw parse_error("invalid escaped character sequence", { n->begin(), n->end() });
 	}
 };
 
 template <>
-struct build_ast<grammar::default_value>
+struct ast_selector<string_quote_character>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
+	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		state.defaultValue = std::move(state.value.top());
-		state.value.pop();
+		n->unescaped = n->content();
 	}
 };
 
 template <>
-struct build_ast<grammar::variable>
+struct ast_selector<block_escape_sequence>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
+	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		auto parsedName = in.string();
-		std::unique_ptr<ast::Variable> variable(new ast::Variable(get_location(in), state.variableName.release()));
+		n->unescaped = R"bq(""")bq";
+	}
+};
 
-		if (state.namedType)
+template <>
+struct ast_selector<block_quote_character>
+	: std::true_type
+{
+	static void transform(std::unique_ptr<ast_node>& n)
+	{
+		n->unescaped = n->content();
+	}
+};
+
+template <>
+struct ast_selector<string_value>
+	: std::true_type
+{
+	static void transform(std::unique_ptr<ast_node>& n)
+	{
+		n->unescaped.reserve(std::accumulate(n->children.cbegin(), n->children.cend(), size_t(0),
+			[](size_t total, const std::unique_ptr<ast_node>& child)
 		{
-			state.type = std::move(state.namedType);
+			return total + child->unescaped.size();
+		}));
+
+		for (const auto& child : n->children)
+		{
+			n->unescaped.append(child->unescaped);
 		}
 
-		if (!state.variableDefinitionList)
-		{
-			state.variableDefinitionList.reset(new std::vector<std::unique_ptr<ast::VariableDefinition>>());
-		}
-
-		state.variableDefinitionList->push_back(std::unique_ptr<ast::VariableDefinition>(
-			new ast::VariableDefinition(get_location(in),
-				variable.release(),
-				state.type.release(),
-				state.defaultValue.release())));
+		n->remove_content();
+		n->children.clear();
 	}
+};
+
+
+template <>
+struct ast_selector<description>
+	: std::true_type
+{
 };
 
 template <>
-struct build_ast<grammar::object_name>
+struct ast_selector<true_keyword>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.objectName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
 };
 
 template <>
-struct build_ast<grammar::interface_name>
+struct ast_selector<false_keyword>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.interfaceName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
 };
 
 template <>
-struct build_ast<grammar::union_name>
+struct ast_selector<null_keyword>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.unionName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
 };
 
 template <>
-struct build_ast<grammar::enum_name>
+struct ast_selector<enum_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.enumName.reset(new ast::Name(get_location(in), get_name(in).release()));
-	}
 };
 
 template <>
-struct build_ast<grammar::argument>
+struct ast_selector<variable_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.argumentList)
-		{
-			state.argumentList.reset(new std::vector<std::unique_ptr<ast::Argument>>());
-		}
-
-		state.argumentList->push_back(std::unique_ptr<ast::Argument>(
-			new ast::Argument(get_location(in),
-				state.argumentName.release(),
-				state.value.top().release())));
-
-		state.value.pop();
-	}
 };
 
 template <>
-struct build_ast<grammar::directive>
+struct ast_selector<alias_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.directiveList)
-		{
-			state.directiveList.reset(new std::vector<std::unique_ptr<ast::Directive>>());
-		}
-
-		state.directiveList->push_back(std::unique_ptr<ast::Directive>(
-			new ast::Directive(get_location(in),
-				state.directiveName.release(),
-				state.argumentList.release())));
-
-		if (!state.argumentLists.empty())
-		{
-			state.argumentList = std::move(state.argumentLists.top());
-			state.argumentLists.pop();
-		}
-	}
 };
 
 template <>
-struct build_ast<grammar::begin_selection_set>
+struct ast_selector<alias>
+	: parse_tree::fold_one
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.selectionList.push(std::unique_ptr<std::vector<std::unique_ptr<ast::Selection>>>(new std::vector<std::unique_ptr<ast::Selection>>()));
-
-		if (state.fieldName)
-		{
-			state.fieldNames.push({
-				std::move(state.aliasName),
-				std::move(state.fieldName)
-				});
-
-			state.argumentLists.push(std::move(state.argumentList));
-		}
-	}
 };
 
 template <>
-struct build_ast<grammar::field>
+struct ast_selector<argument_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.selectionList.top()->push_back(std::unique_ptr<ast::Field>(
-			new ast::Field(get_location(in),
-				state.aliasName.release(),
-				state.fieldName.release(),
-				state.argumentList.release(),
-				state.directiveList.release(),
-				state.selectionSet.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::fragment_spread>
+struct ast_selector<named_type>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.selectionList.top()->push_back(std::unique_ptr<ast::FragmentSpread>(
-			new ast::FragmentSpread(get_location(in),
-				state.fragmentName.release(),
-				state.directiveList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::inline_fragment>
+struct ast_selector<directive_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.selectionList.top()->push_back(std::unique_ptr<ast::InlineFragment>(
-			new ast::InlineFragment(get_location(in),
-				state.typeCondition.release(),
-				state.directiveList.release(),
-				state.selectionSet.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::selection_set>
+struct ast_selector<field_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.selectionSet.reset(new ast::SelectionSet(get_location(in), state.selectionList.top().release()));
-		state.selectionList.pop();
-
-		if (!state.fieldNames.empty())
-		{
-			state.aliasName = std::move(state.fieldNames.top().first);
-			state.fieldName = std::move(state.fieldNames.top().second);
-			state.fieldNames.pop();
-		}
-
-		if (!state.argumentLists.empty())
-		{
-			state.argumentList = std::move(state.argumentLists.top());
-			state.argumentLists.pop();
-		}
-	}
 };
 
 template <>
-struct build_ast<grammar::operation_definition>
+struct ast_selector<operation_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.operationType)
-		{
-			static const char defaultOperation[] = "query";
-			std::unique_ptr<char[], ast::CDeleter> name(reinterpret_cast<char*>(malloc(sizeof(defaultOperation))));
-
-			memmove(name.get(), defaultOperation, sizeof(defaultOperation));
-			state.operationType = std::move(name);
-		}
-
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::OperationDefinition(get_location(in),
-				state.operationType.release(),
-				state.operationName.release(),
-				state.variableDefinitionList.release(),
-				state.directiveList.release(),
-				state.selectionSet.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::type_condition>
+struct ast_selector<fragment_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.typeCondition = std::move(state.namedType);
-	}
 };
 
 template <>
-struct build_ast<grammar::fragment_definition>
+struct ast_selector<scalar_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::FragmentDefinition(get_location(in),
-				state.fragmentName.release(),
-				state.typeCondition.release(),
-				state.directiveList.release(),
-				state.selectionSet.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::root_operation_definition>
+struct ast_selector<list_type>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.operationTypeDefinitionList)
-		{
-			state.operationTypeDefinitionList.reset(new std::vector<std::unique_ptr<ast::OperationTypeDefinition>>());
-		}
-
-		state.operationTypeDefinitionList->push_back(std::unique_ptr<ast::OperationTypeDefinition>(
-			new ast::OperationTypeDefinition(get_location(in),
-				state.operationType.release(),
-				state.namedType.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::schema_definition>
+struct ast_selector<nonnull_type>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::SchemaDefinition(get_location(in),
-				state.directiveList.release(),
-				state.operationTypeDefinitionList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::scalar_type_definition>
+struct ast_selector<default_value>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::ScalarTypeDefinition(get_location(in),
-				state.scalarName.release(),
-				state.directiveList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::interface_type>
+struct ast_selector<variable>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.typeNameList)
-		{
-			state.typeNameList.reset(new std::vector<std::unique_ptr<ast::NamedType>>());
-		}
-
-		std::unique_ptr<ast::Name> namedTypeName(new ast::Name(get_location(in), get_name(in).release()));
-
-		state.typeNameList->push_back(std::unique_ptr<ast::NamedType>(new ast::NamedType(get_location(in), namedTypeName.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::input_field_definition>
+struct ast_selector<object_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.inputValueDefinitionList)
-		{
-			state.inputValueDefinitionList.reset(new std::vector<std::unique_ptr<ast::InputValueDefinition>>());
-		}
-
-		if (state.namedType)
-		{
-			state.type = std::move(state.namedType);
-		}
-
-		state.inputValueDefinitionList->push_back(std::unique_ptr<ast::InputValueDefinition>(
-			new ast::InputValueDefinition(get_location(in),
-				state.argumentName.release(),
-				state.type.release(),
-				state.defaultValue.release(),
-				state.directiveList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::field_definition>
+struct ast_selector<interface_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.fieldDefinitionList)
-		{
-			state.fieldDefinitionList.reset(new std::vector<std::unique_ptr<ast::FieldDefinition>>());
-		}
-
-		if (state.namedType)
-		{
-			state.type = std::move(state.namedType);
-		}
-
-		state.fieldDefinitionList->push_back(std::unique_ptr<ast::FieldDefinition>(
-			new ast::FieldDefinition(get_location(in),
-				state.fieldName.release(),
-				state.inputValueDefinitionList.release(),
-				state.type.release(),
-				state.directiveList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::object_type_definition>
+struct ast_selector<union_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::ObjectTypeDefinition(get_location(in),
-				state.objectName.release(),
-				state.typeNameList.release(),
-				state.directiveList.release(),
-				state.fieldDefinitionList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::interface_type_definition>
+struct ast_selector<enum_name>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::InterfaceTypeDefinition(get_location(in),
-				state.interfaceName.release(),
-				state.directiveList.release(),
-				state.fieldDefinitionList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::union_type>
+struct ast_selector<argument>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.typeNameList)
-		{
-			state.typeNameList.reset(new std::vector<std::unique_ptr<ast::NamedType>>());
-		}
-
-		std::unique_ptr<ast::Name> namedTypeName(new ast::Name(get_location(in), get_name(in).release()));
-
-		state.typeNameList->push_back(std::unique_ptr<ast::NamedType>(new ast::NamedType(get_location(in), namedTypeName.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::union_type_definition>
+struct ast_selector<arguments>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::UnionTypeDefinition(get_location(in),
-				state.unionName.release(),
-				state.directiveList.release(),
-				state.typeNameList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::enum_value_definition>
+struct ast_selector<directive>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.enumValueDefinitionList)
-		{
-			state.enumValueDefinitionList.reset(new std::vector<std::unique_ptr<ast::EnumValueDefinition>>());
-		}
-
-		std::unique_ptr<ast::Name> enumValueName;
-		std::unique_ptr<char[], ast::CDeleter> value(reinterpret_cast<char*>(malloc(state.enumValue.size() + 1)));
-
-		memmove(value.get(), state.enumValue.data(), state.enumValue.size());
-		value[state.enumValue.size()] = '\0';
-		enumValueName.reset(new ast::Name(get_location(in), value.release()));
-
-		state.enumValueDefinitionList->push_back(std::unique_ptr<ast::EnumValueDefinition>(
-			new ast::EnumValueDefinition(get_location(in),
-				enumValueName.release(),
-				state.directiveList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::enum_type_definition>
+struct ast_selector<directives>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::EnumTypeDefinition(get_location(in),
-				state.enumName.release(),
-				state.directiveList.release(),
-				state.enumValueDefinitionList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::input_object_type_definition>
+struct ast_selector<field>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::InputObjectTypeDefinition(get_location(in),
-				state.objectName.release(),
-				state.directiveList.release(),
-				state.inputValueDefinitionList.release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::directive_location>
+struct ast_selector<fragment_spread>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.nameList)
-		{
-			state.nameList.reset(new std::vector<std::unique_ptr<ast::Name>>());
-		}
-
-		state.nameList->push_back(std::unique_ptr<ast::Name>(new ast::Name(get_location(in), get_name(in).release())));
-	}
 };
 
 template <>
-struct build_ast<grammar::directive_definition>
+struct ast_selector<inline_fragment>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		if (!state.definitionList)
-		{
-			state.definitionList.reset(new std::vector<std::unique_ptr<ast::Definition>>());
-		}
-
-		state.definitionList->push_back(std::unique_ptr<ast::Definition>(
-			new ast::DirectiveDefinition(get_location(in),
-				state.directiveName.release(),
-				state.inputValueDefinitionList.release(),
-				state.nameList.release())));
-	}
 };
-
-// TODO: The GraphQLParser AST only has support for TypeExtensionDefinition, so we can't implement all of the
-// extension types in the grammar's type_system_extension. I'm going to wait until I implement my own AST to
-// generate them, I don't support them in the SchemaGenerator anyway. Alternatively, maybe I can bypass the AST
-// entirely and drive the whole service based on pegtl actions.
 
 template <>
-struct build_ast<grammar::document>
+struct ast_selector<selection_set>
+	: std::true_type
 {
-	template <typename _Input>
-	static void apply(const _Input& in, parser_state& state)
-	{
-		state.document->reset(new ast::Document(get_location(in),
-			state.definitionList.release()));
-	}
 };
 
-std::unique_ptr<ast::Node> parseString(const char* text)
+template <>
+struct ast_selector<operation_definition>
+	: std::true_type
 {
-	parser_state state;
-	std::unique_ptr<ast::Document> document;
-	memory_input<> in(text, "GraphQL");
+};
 
-	state.document = &document;
-	parse<grammar::document, build_ast>(std::move(in), std::move(state));
+template <>
+struct ast_selector<type_condition>
+	: std::true_type
+{
+};
 
-	return std::unique_ptr<ast::Node>(document.release());
+template <>
+struct ast_selector<fragment_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<root_operation_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<schema_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<scalar_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<interface_type>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<input_field_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<input_fields_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<arguments_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<field_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<fields_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<object_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<interface_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<union_type>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<union_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<enum_value_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<enum_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<input_object_type_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<directive_location>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<directive_definition>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<schema_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<scalar_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<object_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<interface_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<union_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<enum_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<input_object_type_extension>
+	: std::true_type
+{
+};
+
+template <>
+struct ast_selector<document>
+	: std::true_type
+{
+};
+
+std::unique_ptr<ast_node> parseString(const char* text)
+{
+	return parse_tree::parse<document, ast_node, ast_selector>(memory_input<>(text, "GraphQL"));
 }
 
-std::unique_ptr<ast::Node> parseFile(const char* fileName)
+std::unique_ptr<ast_node> parseFile(file_input<>&& in)
 {
-	parser_state state;
-	std::unique_ptr<ast::Document> document;
-	file_input<> in(fileName);
-
-	state.document = &document;
-	parse<grammar::document, build_ast>(std::move(in), std::move(state));
-
-	return std::unique_ptr<ast::Node>(document.release());
-}
-
-std::unique_ptr<ast::Node> parseInput()
-{
-	parser_state state;
-	std::unique_ptr<ast::Document> document;
-	cstream_input<> in(stdin, 1024 * 1024, "GraphQL");
-
-	state.document = &document;
-	parse<grammar::document, build_ast>(std::move(in), std::move(state));
-
-	return std::unique_ptr<ast::Node>(document.release());
+	return parse_tree::parse<document, ast_node, ast_selector>(std::move(in));
 }
 
 } /* namespace service */

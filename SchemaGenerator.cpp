@@ -3,6 +3,7 @@
 
 #include "SchemaGenerator.h"
 #include "GraphQLService.h"
+#include "GraphQLGrammar.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -42,7 +43,7 @@ Generator::Generator()
 	, _schemaNamespace(s_introspectionNamespace)
 {
 	// TODO: Double check that this still matches the spec
-	auto ast = service::parseString(R"gql(
+	auto ast = grammar::parseString(R"gql(
 		# Introspection Schema
 
 		type __Schema {
@@ -132,7 +133,37 @@ Generator::Generator()
 		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
 	}
 
-	ast->accept(this);
+	for (const auto& child : ast->children.front()->children)
+	{
+		if (child->is<grammar::schema_definition>())
+		{
+			visitSchemaDefinition(*child);
+		}
+		else if (child->is<grammar::scalar_type_definition>())
+		{
+			visitScalarTypeDefinition(*child);
+		}
+		else if (child->is<grammar::enum_type_definition>())
+		{
+			visitEnumTypeDefinition(*child);
+		}
+		else if (child->is<grammar::input_object_type_definition>())
+		{
+			visitInputObjectTypeDefinition(*child);
+		}
+		else if (child->is<grammar::input_object_type_definition>())
+		{
+			visitUnionTypeDefinition(*child);
+		}
+		else if (child->is<grammar::interface_type_definition>())
+		{
+			visitInterfaceTypeDefinition(*child);
+		}
+		else if (child->is<grammar::object_type_definition>())
+		{
+			visitObjectTypeDefinition(*child);
+		}
+	}
 
 	if (!validateSchema())
 	{
@@ -145,14 +176,45 @@ Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
 {
-	auto ast = service::parseFile(schemaFileName.c_str());
+	tao::pegtl::file_input<> in(schemaFileName.c_str());
+	auto ast = grammar::parseFile(std::move(in));
 
 	if (!ast)
 	{
 		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
 	}
 
-	ast->accept(this);
+	for (const auto& child : ast->children.front()->children)
+	{
+		if (child->is<grammar::schema_definition>())
+		{
+			visitSchemaDefinition(*child);
+		}
+		else if (child->is<grammar::scalar_type_definition>())
+		{
+			visitScalarTypeDefinition(*child);
+		}
+		else if (child->is<grammar::enum_type_definition>())
+		{
+			visitEnumTypeDefinition(*child);
+		}
+		else if (child->is<grammar::input_object_type_definition>())
+		{
+			visitInputObjectTypeDefinition(*child);
+		}
+		else if (child->is<grammar::input_object_type_definition>())
+		{
+			visitUnionTypeDefinition(*child);
+		}
+		else if (child->is<grammar::interface_type_definition>())
+		{
+			visitInterfaceTypeDefinition(*child);
+		}
+		else if (child->is<grammar::object_type_definition>())
+		{
+			visitObjectTypeDefinition(*child);
+		}
+	}
 
 	if (!validateSchema())
 	{
@@ -300,30 +362,44 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 	return true;
 }
 
-bool Generator::visitSchemaDefinition(const ast::SchemaDefinition& schemaDefinition)
+bool Generator::visitSchemaDefinition(const grammar::ast_node& schemaDefinition)
 {
-	for (const auto& operationTypeDefinition : schemaDefinition.getOperationTypes())
+	for (const auto& operationTypeDefinition : schemaDefinition.children)
 	{
-		std::string operation(operationTypeDefinition->getOperation());
-		std::string name(operationTypeDefinition->getType().getName().getValue());
+		if (operationTypeDefinition->is<grammar::root_operation_definition>())
+		{
+			std::string operation(operationTypeDefinition->children.front()->content());
+			std::string name(operationTypeDefinition->children.back()->content());
 
-		_operationTypes.push_back({ std::move(name), std::move(operation) });
+			_operationTypes.push_back({ std::move(name), std::move(operation) });
+		}
 	}
 
 	return false;
 }
 
-bool Generator::visitObjectTypeDefinition(const ast::ObjectTypeDefinition& objectTypeDefinition)
+bool Generator::visitObjectTypeDefinition(const grammar::ast_node& objectTypeDefinition)
 {
-	std::string name(objectTypeDefinition.getName().getValue());
+	std::string name;
 	std::vector<std::string> interfaces;
-	auto fields = getOutputFields(objectTypeDefinition.getFields());
+	OutputFieldList fields;
 
-	if (objectTypeDefinition.getInterfaces() != nullptr)
+	for (const auto& child : objectTypeDefinition.children)
 	{
-		for (const auto& namedType : *(objectTypeDefinition.getInterfaces()))
+		if (child->is<grammar::object_name>())
 		{
-			interfaces.push_back(namedType->getName().getValue());
+			name = child->content();
+		}
+		else if (child->is<grammar::implements_interfaces>())
+		{
+			for (const auto& namedType : child->children)
+			{
+				interfaces.push_back(namedType->content());
+			}
+		}
+		else if (child->is<grammar::fields_definition>())
+		{
+			fields = getOutputFields(child->children);
 		}
 	}
 
@@ -334,10 +410,22 @@ bool Generator::visitObjectTypeDefinition(const ast::ObjectTypeDefinition& objec
 	return false;
 }
 
-bool Generator::visitInterfaceTypeDefinition(const ast::InterfaceTypeDefinition& interfaceTypeDefinition)
+bool Generator::visitInterfaceTypeDefinition(const grammar::ast_node& interfaceTypeDefinition)
 {
-	std::string name(interfaceTypeDefinition.getName().getValue());
-	auto fields = getOutputFields(interfaceTypeDefinition.getFields());
+	std::string name;
+	OutputFieldList fields;
+
+	for (const auto& child : interfaceTypeDefinition.children)
+	{
+		if (child->is<grammar::interface_name>())
+		{
+			name = child->content();
+		}
+		else if (child->is<grammar::fields_definition>())
+		{
+			fields = getOutputFields(child->children);
+		}
+	}
 
 	_schemaTypes[name] = SchemaType::Interface;
 	_interfaceNames[name] = _interfaceTypes.size();
@@ -346,10 +434,22 @@ bool Generator::visitInterfaceTypeDefinition(const ast::InterfaceTypeDefinition&
 	return false;
 }
 
-bool Generator::visitInputObjectTypeDefinition(const ast::InputObjectTypeDefinition& inputObjectTypeDefinition)
+bool Generator::visitInputObjectTypeDefinition(const grammar::ast_node& inputObjectTypeDefinition)
 {
-	std::string name(inputObjectTypeDefinition.getName().getValue());
-	auto fields = getInputFields(inputObjectTypeDefinition.getFields());
+	std::string name;
+	InputFieldList fields;
+
+	for (const auto& child : inputObjectTypeDefinition.children)
+	{
+		if (child->is<grammar::object_name>())
+		{
+			name = child->content();
+		}
+		else if (child->is<grammar::input_fields_definition>())
+		{
+			fields = getInputFields(child->children);
+		}
+	}
 
 	_schemaTypes[name] = SchemaType::Input;
 	_inputNames[name] = _inputTypes.size();
@@ -358,16 +458,29 @@ bool Generator::visitInputObjectTypeDefinition(const ast::InputObjectTypeDefinit
 	return false;
 }
 
-bool Generator::visitEnumTypeDefinition(const ast::EnumTypeDefinition& enumTypeDefinition)
+bool Generator::visitEnumTypeDefinition(const grammar::ast_node& enumTypeDefinition)
 {
-	std::string name(enumTypeDefinition.getName().getValue());
-	std::vector<std::string> values(enumTypeDefinition.getValues().size());
+	std::string name;
+	std::vector<std::string> values;
 
-	std::transform(enumTypeDefinition.getValues().cbegin(), enumTypeDefinition.getValues().cend(), values.begin(),
-		[](const std::unique_ptr<ast::EnumValueDefinition>& enumValue)
+	for (const auto& child : enumTypeDefinition.children)
 	{
-		return std::string(enumValue->getName().getValue());
-	});
+		if (child->is<grammar::enum_name>())
+		{
+			name = child->content();
+		}
+		else if (child->is<grammar::enum_value_definition>())
+		{
+			for (const auto& enumValue : child->children)
+			{
+				if (enumValue->is<grammar::enum_value>())
+				{
+					values.push_back(enumValue->content());
+					break;
+				}
+			}
+		}
+	}
 
 	_schemaTypes[name] = SchemaType::Enum;
 	_enumNames[name] = _enumTypes.size();
@@ -376,9 +489,18 @@ bool Generator::visitEnumTypeDefinition(const ast::EnumTypeDefinition& enumTypeD
 	return false;
 }
 
-bool Generator::visitScalarTypeDefinition(const ast::ScalarTypeDefinition& scalarTypeDefinition)
+bool Generator::visitScalarTypeDefinition(const grammar::ast_node& scalarTypeDefinition)
 {
-	std::string name(scalarTypeDefinition.getName().getValue());
+	std::string name;
+
+	for (const auto& child : scalarTypeDefinition.children)
+	{
+		if (child->is<grammar::scalar_name>())
+		{
+			name = child->content();
+			break;
+		}
+	}
 
 	_schemaTypes[name] = SchemaType::Scalar;
 	_scalarNames[name] = _scalarTypes.size();
@@ -387,16 +509,22 @@ bool Generator::visitScalarTypeDefinition(const ast::ScalarTypeDefinition& scala
 	return false;
 }
 
-bool Generator::visitUnionTypeDefinition(const ast::UnionTypeDefinition& unionTypeDefinition)
+bool Generator::visitUnionTypeDefinition(const grammar::ast_node& unionTypeDefinition)
 {
-	std::string name(unionTypeDefinition.getName().getValue());
-	std::vector<std::string> options(unionTypeDefinition.getTypes().size());
+	std::string name;
+	std::vector<std::string> options;
 
-	std::transform(unionTypeDefinition.getTypes().cbegin(), unionTypeDefinition.getTypes().cend(), options.begin(),
-		[](const std::unique_ptr<ast::NamedType>& namedType)
+	for (const auto& child : unionTypeDefinition.children)
 	{
-		return namedType->getName().getValue();
-	});
+		if (child->is<grammar::union_name>())
+		{
+			name = child->content();
+		}
+		else if (child->is<grammar::union_type>())
+		{
+			options.push_back(child->content());
+		}
+	}
 
 	_schemaTypes[name] = SchemaType::Union;
 	_unionNames[name] = _unionTypes.size();
@@ -405,71 +533,134 @@ bool Generator::visitUnionTypeDefinition(const ast::UnionTypeDefinition& unionTy
 	return false;
 }
 
-OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<ast::FieldDefinition>>& fields)
+OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields)
 {
 	OutputFieldList outputFields;
 
 	for (const auto& fieldDefinition : fields)
 	{
 		OutputField field;
-		std::string fieldName(fieldDefinition->getName().getValue());
 		TypeVisitor fieldType;
 
-		fieldDefinition->getType().accept(&fieldType);
-		std::tie(field.type, field.modifiers) = fieldType.getType();
-		field.name = std::move(fieldName);
-
-		if (fieldDefinition->getArguments() != nullptr)
+		for (const auto& child : fieldDefinition->children)
 		{
-			field.arguments = getInputFields(*(fieldDefinition->getArguments()));
+			if (child->is<grammar::field_name>())
+			{
+				field.name = child->content();
+			}
+			else if (child->is<grammar::arguments_definition>())
+			{
+				field.arguments = getInputFields(child->children);
+			}
+			else if (child->is<grammar::named_type>())
+			{
+				fieldType.visitNamedType(*child);
+			}
+			else if (child->is<grammar::list_type>())
+			{
+				fieldType.visitListType(*child);
+			}
+			else if (child->is<grammar::nonnull_type>())
+			{
+				fieldType.visitNonNullType(*child);
+			}
 		}
 
+		std::tie(field.type, field.modifiers) = fieldType.getType();
 		outputFields.push_back(std::move(field));
 	}
 
 	return outputFields;
 }
 
-InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<ast::InputValueDefinition>>& fields)
+InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields)
 {
 	InputFieldList inputFields;
 
 	for (const auto& fieldDefinition : fields)
 	{
 		InputField field;
-		std::string fieldName(fieldDefinition->getName().getValue());
 		TypeVisitor fieldType;
 
-		fieldDefinition->getType().accept(&fieldType);
-		std::tie(field.type, field.modifiers) = fieldType.getType();
-		field.name = std::move(fieldName);
-
-		if (fieldDefinition->getDefaultValue() != nullptr)
+		for (const auto& child : fieldDefinition->children)
 		{
-			DefaultValueVisitor defaultValue;
+			if (child->is<grammar::argument_name>())
+			{
+				field.name = child->content();
+			}
+			else if (child->is<grammar::named_type>())
+			{
+				fieldType.visitNamedType(*child);
+			}
+			else if (child->is<grammar::list_type>())
+			{
+				fieldType.visitListType(*child);
+			}
+			else if (child->is<grammar::nonnull_type>())
+			{
+				fieldType.visitNonNullType(*child);
+			}
+			else if (child->is<grammar::default_value>())
+			{
+				DefaultValueVisitor defaultValue;
 
-			fieldDefinition->getDefaultValue()->accept(&defaultValue);
-			field.defaultValue = defaultValue.getValue();
+				if (child->children.back()->is<grammar::integer_value>())
+				{
+					defaultValue.visitIntValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::float_value>())
+				{
+					defaultValue.visitFloatValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::string_value>())
+				{
+					defaultValue.visitStringValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::true_keyword>()
+					|| child->children.back()->is<grammar::false_keyword>())
+				{
+					defaultValue.visitBooleanValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::null_keyword>())
+				{
+					defaultValue.visitNullValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::enum_value>())
+				{
+					defaultValue.visitEnumValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::list_value>())
+				{
+					defaultValue.visitListValue(*child->children.back());
+				}
+				else if (child->children.back()->is<grammar::object_value>())
+				{
+					defaultValue.visitObjectValue(*child->children.back());
+				}
+
+				field.defaultValue = defaultValue.getValue();
+			}
 		}
 
+		std::tie(field.type, field.modifiers) = fieldType.getType();
 		inputFields.push_back(std::move(field));
 	}
 
 	return inputFields;
 }
 
-bool Generator::TypeVisitor::visitNamedType(const ast::NamedType& namedType)
+bool Generator::TypeVisitor::visitNamedType(const grammar::ast_node& namedType)
 {
 	if (!_nonNull)
 	{
 		_modifiers.push_back(service::TypeModifier::Nullable);
 	}
 
-	_type = namedType.getName().getValue();
+	_type = namedType.content();
 	return false;
 }
 
-bool Generator::TypeVisitor::visitListType(const ast::ListType& listType)
+bool Generator::TypeVisitor::visitListType(const grammar::ast_node& listType)
 {
 	if (!_nonNull)
 	{
@@ -478,12 +669,36 @@ bool Generator::TypeVisitor::visitListType(const ast::ListType& listType)
 	_nonNull = false;
 
 	_modifiers.push_back(service::TypeModifier::List);
+	
+	if (listType.children.front()->is<grammar::nonnull_type>())
+	{
+		visitNonNullType(*listType.children.front());
+	}
+	else if (listType.children.front()->is<grammar::list_type>())
+	{
+		visitListType(*listType.children.front());
+	}
+	else if (listType.children.front()->is<grammar::named_type>())
+	{
+		visitNamedType(*listType.children.front());
+	}
+
 	return true;
 }
 
-bool Generator::TypeVisitor::visitNonNullType(const ast::NonNullType& nonNullType)
+bool Generator::TypeVisitor::visitNonNullType(const grammar::ast_node& nonNullType)
 {
 	_nonNull = true;
+
+	if (nonNullType.children.front()->is<grammar::list_type>())
+	{
+		visitListType(*nonNullType.children.front());
+	}
+	else if (nonNullType.children.front()->is<grammar::named_type>())
+	{
+		visitNamedType(*nonNullType.children.front());
+	}
+
 	return true;
 }
 
@@ -492,68 +707,134 @@ std::pair<std::string, TypeModifierStack> Generator::TypeVisitor::getType()
 	return { std::move(_type), std::move(_modifiers) };
 }
 
-bool Generator::DefaultValueVisitor::visitIntValue(const ast::IntValue& intValue)
+bool Generator::DefaultValueVisitor::visitIntValue(const grammar::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atoi(intValue.getValue()));
+	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitFloatValue(const ast::FloatValue& floatValue)
+bool Generator::DefaultValueVisitor::visitFloatValue(const grammar::ast_node& floatValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.getValue()));
+	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitStringValue(const ast::StringValue& stringValue)
+bool Generator::DefaultValueVisitor::visitStringValue(const grammar::ast_node& stringValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.getValue()));
+	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitBooleanValue(const ast::BooleanValue& booleanValue)
+bool Generator::DefaultValueVisitor::visitBooleanValue(const grammar::ast_node& booleanValue)
 {
-	_value = web::json::value::boolean(booleanValue.getValue());
+	_value = web::json::value::boolean(booleanValue.content().c_str());
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitNullValue(const ast::NullValue& nullValue)
+bool Generator::DefaultValueVisitor::visitNullValue(const grammar::ast_node& nullValue)
 {
 	_value = web::json::value::null();
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitEnumValue(const ast::EnumValue& enumValue)
+bool Generator::DefaultValueVisitor::visitEnumValue(const grammar::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.getValue()));
+	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitListValue(const ast::ListValue& listValue)
+bool Generator::DefaultValueVisitor::visitListValue(const grammar::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.getValues().size());
+	_value = web::json::value::array(listValue.children.size());
 
-	std::transform(listValue.getValues().cbegin(), listValue.getValues().cend(), _value.as_array().begin(),
-		[](const std::unique_ptr<ast::Value>& value)
+	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
+		[this](const std::unique_ptr<grammar::ast_node>& value)
 	{
 		DefaultValueVisitor visitor;
 
-		value->accept(&visitor);
+		if (value->children.back()->is<grammar::integer_value>())
+		{
+			visitor.visitIntValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::float_value>())
+		{
+			visitor.visitFloatValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::string_value>())
+		{
+			visitor.visitStringValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::true_keyword>()
+			|| value->children.back()->is<grammar::false_keyword>())
+		{
+			visitor.visitBooleanValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::null_keyword>())
+		{
+			visitor.visitNullValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::enum_value>())
+		{
+			visitor.visitEnumValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::list_value>())
+		{
+			visitor.visitListValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::object_value>())
+		{
+			visitor.visitObjectValue(*value->children.back());
+		}
+
 		return visitor.getValue();
 	});
 
 	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitObjectValue(const ast::ObjectValue& objectValue)
+bool Generator::DefaultValueVisitor::visitObjectValue(const grammar::ast_node& objectValue)
 {
 	_value = web::json::value::object(true);
 
-	for (const auto& field : objectValue.getFields())
+	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->getName().getValue());
+		const std::string name(field->children.front()->content());
 		DefaultValueVisitor visitor;
 
-		field->getValue().accept(&visitor);
+		if (field->children.back()->children.back()->is<grammar::integer_value>())
+		{
+			visitor.visitIntValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::float_value>())
+		{
+			visitor.visitFloatValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::string_value>())
+		{
+			visitor.visitStringValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::true_keyword>()
+			|| field->children.back()->children.back()->is<grammar::false_keyword>())
+		{
+			visitor.visitBooleanValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::null_keyword>())
+		{
+			visitor.visitNullValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::enum_value>())
+		{
+			visitor.visitEnumValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::list_value>())
+		{
+			visitor.visitListValue(*field->children.back()->children.back());
+		}
+		else if (field->children.back()->children.back()->is<grammar::object_value>())
+		{
+			visitor.visitObjectValue(*field->children.back()->children.back());
+		}
+
 		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
 	}
 

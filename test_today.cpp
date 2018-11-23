@@ -2,9 +2,13 @@
 // Licensed under the MIT License.
 
 #include "Today.h"
+#include "GraphQLGrammar.h"
 
 #include <iostream>
 #include <stdexcept>
+#include <cstdio>
+
+#include <tao/pegtl.hpp>
 
 using namespace facebook::graphql;
 
@@ -55,7 +59,26 @@ int main(int argc, char** argv)
 
 	try
 	{
-		auto ast = (argc > 1) ? service::parseFile(argv[1]) : service::parseInput();
+		std::string input;
+		std::unique_ptr<tao::pegtl::file_input<>> file;
+		std::unique_ptr<grammar::ast_node> ast;
+
+		if (argc > 1)
+		{
+			file.reset(new tao::pegtl::file_input<>(argv[1]));
+			ast = grammar::parseFile(std::move(*file));
+		}
+		else
+		{
+			std::string line;
+
+			while (std::getline(std::cin, line))
+			{
+				input.append(line);
+			}
+
+			ast = grammar::parseString(input.c_str());
+		}
 
 		if (!ast)
 		{

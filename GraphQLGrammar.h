@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "GraphQLService.h"
+
 #include <tao/pegtl.hpp>
 
 namespace facebook {
@@ -241,14 +243,9 @@ struct arguments
 
 struct list_entry;
 
-struct begin_list
-	: one<'['>
-{
-};
-
 // https://facebook.github.io/graphql/June2018/#ListValue
 struct list_value
-	: if_must<begin_list, star<ignored>, opt<list<list_entry, plus<ignored>>>, star<ignored>, one<']'>>
+	: if_must<one<'['>, star<ignored>, opt<list<list_entry, plus<ignored>>>, star<ignored>, one<']'>>
 {
 };
 
@@ -263,14 +260,9 @@ struct object_field
 {
 };
 
-struct begin_object
-	: one<'{'>
-{
-};
-
 // https://facebook.github.io/graphql/June2018/#ObjectValue
 struct object_value
-	: if_must<begin_object, star<ignored>, opt<list<object_field, plus<ignored>>>, star<ignored>, one<'}'>>
+	: if_must<one<'{'>, star<ignored>, opt<list<object_field, plus<ignored>>>, star<ignored>, one<'}'>>
 {
 };
 
@@ -417,14 +409,9 @@ struct selection
 {
 };
 
-struct begin_selection_set
-	: one<'{'>
-{
-};
-
 // https://facebook.github.io/graphql/June2018/#SelectionSet
 struct selection_set
-	: if_must<begin_selection_set, star<ignored>, list<selection, plus<ignored>>, star<ignored>, one<'}'>>
+	: if_must<one<'{'>, star<ignored>, list<selection, plus<ignored>>, star<ignored>, one<'}'>>
 {
 };
 
@@ -809,6 +796,9 @@ struct document
 	: must<bof, opt<utf8::bom>, star<ignored>, list<definition, plus<ignored>>, star<ignored>, tao::pegtl::eof>
 {
 };
+
+std::unique_ptr<ast_node> parseString(const char* text);
+std::unique_ptr<ast_node> parseFile(file_input<>&& in);
 
 } /* namespace grammar */
 } /* namespace graphql */

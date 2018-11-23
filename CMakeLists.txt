@@ -24,7 +24,7 @@ endif()
 
 find_package(pegtl CONFIG REQUIRED)
 
-add_library(graphqlpeg SHARED GraphQLGrammar.cpp)
+add_library(graphqlpeg GraphQLGrammar.cpp)
 target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
 target_link_libraries(graphqlpeg taocpp::pegtl ${GRAPHQLPARSER})
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "GraphQLService.h"
+#include "GraphQLGrammar.h"
 
 #include <iostream>
 #include <algorithm>
@@ -27,9 +28,9 @@ const web::json::value& schema_exception::getErrors() const noexcept
 	return _errors;
 }
 
-Fragment::Fragment(const ast::FragmentDefinition& fragmentDefinition)
-	: _type(fragmentDefinition.getTypeCondition().getName().getValue())
-	, _selection(fragmentDefinition.getSelectionSet())
+Fragment::Fragment(const grammar::ast_node& fragmentDefinition)
+	: _type(fragmentDefinition.children[1]->children.front()->content())
+	, _selection(*(fragmentDefinition.children.back()))
 {
 }
 
@@ -38,7 +39,7 @@ const std::string& Fragment::getType() const
 	return _type;
 }
 
-const ast::SelectionSet& Fragment::getSelection() const
+const grammar::ast_node& Fragment::getSelection() const
 {
 	return _selection;
 }
@@ -191,15 +192,26 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-web::json::value Object::resolve(const ast::SelectionSet& selection, const FragmentMap& fragments, const web::json::object& variables) const
+web::json::value Object::resolve(const grammar::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const
 {
-	auto result = web::json::value::object(selection.getSelections().size());
+	auto result = web::json::value::object(selection.children.size());
 
-	for (const auto& entry : selection.getSelections())
+	for (const auto& child : selection.children)
 	{
 		SelectionVisitor visitor(fragments, variables, _typeNames, _resolvers);
 
-		entry->accept(&visitor);
+		if (child->is<grammar::field>())
+		{
+			visitor.visitField(*child);
+		}
+		else if (child->is<grammar::fragment_spread>())
+		{
+			visitor.visitFragmentSpread(*child);
+		}
+		else if (child->is<grammar::inline_fragment>())
+		{
+			visitor.visitInlineFragment(*child);
+		}
 
 		auto values = visitor.getValues();
 
@@ -220,16 +232,28 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-web::json::value Request::resolve(const ast::Node& document, const std::string& operationName, const web::json::object& variables) const
+web::json::value Request::resolve(const grammar::ast_node& document, const std::string& operationName, const web::json::object& variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor;
 
-	document.accept(&fragmentVisitor);
+	for (const auto& child : document.children.front()->children)
+	{
+		if (child->is<grammar::fragment_definition>())
+		{
+			fragmentVisitor.visitFragmentDefinition(*child);
+		}
+	}
 
 	auto fragments = fragmentVisitor.getFragments();
 	OperationDefinitionVisitor operationVisitor(_operations, operationName, variables, fragments);
 
-	document.accept(&operationVisitor);
+	for (const auto& child : document.children.front()->children)
+	{
+		if (child->is<grammar::operation_definition>())
+		{
+			operationVisitor.visitOperationDefinition(*child);
+		}
+	}
 
 	return operationVisitor.getValue();
 }
@@ -249,84 +273,229 @@ web::json::value SelectionVisitor::getValues()
 	return result;
 }
 
-bool SelectionVisitor::visitField(const ast::Field& field)
+bool SelectionVisitor::visitField(const grammar::ast_node& field)
 {
-	const std::string name(field.getName().getValue());
-	const std::string alias((field.getAlias() != nullptr) ? field.getAlias()->getValue() : name);
+	const bool hasAlias = field.children.front()->is<grammar::alias_name>();
+	const std::string name(field.children[hasAlias ? 1 : 0]->content());
+	const std::string alias(hasAlias ? field.children.front()->content() : name);
 	auto itr = _resolvers.find(name);
 
 	if (itr == _resolvers.cend())
 	{
+		auto position = field.begin();
 		std::ostringstream error;
 
 		error << "Unknown field name: " << name
-			<< " line: " << field.getLocation().begin.line
-			<< " column: " << field.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
 
-	if (shouldSkip(field.getDirectives()))
+	for (const auto& child : field.children)
 	{
-		return false;
+		if (child->is<grammar::directives>())
+		{
+			if (shouldSkip(&(child->children)))
+			{
+				return false;
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 
 	auto arguments = web::json::value::object(true);
 
-	if (field.getArguments() != nullptr)
+	for (const auto& child : field.children)
 	{
-		ValueVisitor visitor(_variables);
-
-		for (const auto& argument : *field.getArguments())
+		if (child->is<grammar::arguments>())
 		{
-			argument->getValue().accept(&visitor);
-			arguments[utility::conversions::to_string_t(argument->getName().getValue())] = visitor.getValue();
+			ValueVisitor visitor(_variables);
+
+			for (const auto& argument : child->children)
+			{
+				if (argument->children.back()->is<grammar::variable_value>())
+				{
+					visitor.visitVariable(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::integer_value>())
+				{
+					visitor.visitIntValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::float_value>())
+				{
+					visitor.visitFloatValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::string_value>())
+				{
+					visitor.visitStringValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::true_keyword>()
+					|| argument->children.back()->is<grammar::false_keyword>())
+				{
+					visitor.visitBooleanValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::null_keyword>())
+				{
+					visitor.visitNullValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::enum_value>())
+				{
+					visitor.visitEnumValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::list_value>())
+				{
+					visitor.visitListValue(*argument->children.back());
+				}
+				else if (argument->children.back()->is<grammar::object_value>())
+				{
+					visitor.visitObjectValue(*argument->children.back());
+				}
+
+				arguments[utility::conversions::to_string_t(argument->children.front()->content())] = visitor.getValue();
+			}
+
+			break;
 		}
 	}
 
-	_values[utility::conversions::to_string_t(alias)] = itr->second({ arguments.as_object(), field.getSelectionSet(), _fragments, _variables });
+	const grammar::ast_node* selection = nullptr;
+
+	for (const auto& child : field.children)
+	{
+		if (child->is<grammar::selection_set>())
+		{
+			selection = child.get();
+			break;
+		}
+	}
+
+	_values[utility::conversions::to_string_t(alias)] = itr->second({ arguments.as_object(), selection, _fragments, _variables });
 
 	return false;
 }
 
-bool SelectionVisitor::visitFragmentSpread(const ast::FragmentSpread &fragmentSpread)
+bool SelectionVisitor::visitFragmentSpread(const grammar::ast_node& fragmentSpread)
 {
-	const std::string name(fragmentSpread.getName().getValue());
+	const std::string name(fragmentSpread.children.front()->content());
 	auto itr = _fragments.find(name);
 
 	if (itr == _fragments.cend())
 	{
+		auto position = fragmentSpread.begin();
 		std::ostringstream error;
 
 		error << "Unknown fragment name: " << name
-			<< " line: " << fragmentSpread.getLocation().begin.line
-			<< " column: " << fragmentSpread.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
 
-	if (!shouldSkip(fragmentSpread.getDirectives())
+	const std::vector<std::unique_ptr<grammar::ast_node>>* directives = nullptr;
+
+	for (const auto& child : fragmentSpread.children)
+	{
+		if (child->is<grammar::directives>())
+		{
+			directives = &child->children;
+			break;
+		}
+	}
+
+	if (!shouldSkip(directives)
 		&& _typeNames.count(itr->second.getType()) > 0)
 	{
-		itr->second.getSelection().accept(this);
+		for (const auto& child : fragmentSpread.children)
+		{
+			if (child->is<grammar::selection_set>())
+			{
+				for (const auto& selection : child->children)
+				{
+					if (selection->is<grammar::field>())
+					{
+						visitField(*selection);
+					}
+					else if (selection->is<grammar::fragment_spread>())
+					{
+						visitFragmentSpread(*selection);
+					}
+					else if (selection->is<grammar::inline_fragment>())
+					{
+						visitInlineFragment(*selection);
+					}
+				}
+
+				break;
+			}
+		}
 	}
 
 	return false;
 }
 
-bool SelectionVisitor::visitInlineFragment(const ast::InlineFragment &inlineFragment)
+bool SelectionVisitor::visitInlineFragment(const grammar::ast_node& inlineFragment)
 {
-	if (!shouldSkip(inlineFragment.getDirectives())
-		&& (inlineFragment.getTypeCondition() == nullptr
-			|| _typeNames.count(inlineFragment.getTypeCondition()->getName().getValue()) > 0))
+	const std::vector<std::unique_ptr<grammar::ast_node>>* directives = nullptr;
+
+	for (const auto& child : inlineFragment.children)
 	{
-		inlineFragment.getSelectionSet().accept(this);
+		if (child->is<grammar::directives>())
+		{
+			directives = &child->children;
+			break;
+		}
+	}
+
+	if (!shouldSkip(directives))
+	{
+		const grammar::ast_node* typeCondition = nullptr;
+
+		for (const auto& child : inlineFragment.children)
+		{
+			if (child->is<grammar::type_condition>())
+			{
+				typeCondition = child.get();
+				break;
+			}
+		}
+
+		if (typeCondition == nullptr
+			|| _typeNames.count(typeCondition->children.front()->content()) > 0)
+		{
+			for (const auto& child : inlineFragment.children)
+			{
+				if (child->is<grammar::selection_set>())
+				{
+					for (const auto& selection : child->children)
+					{
+						if (selection->is<grammar::field>())
+						{
+							visitField(*selection);
+						}
+						else if (selection->is<grammar::fragment_spread>())
+						{
+							visitFragmentSpread(*selection);
+						}
+						else if (selection->is<grammar::inline_fragment>())
+						{
+							visitInlineFragment(*selection);
+						}
+					}
+
+					break;
+				}
+			}
+		}
 	}
 
 	return false;
 }
 
-bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directive>>* directives) const
+bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<grammar::ast_node>>* directives) const
 {
 	if (directives == nullptr)
 	{
@@ -335,7 +504,7 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 
 	for (const auto& directive : *directives)
 	{
-		const std::string name(directive->getName().getValue());
+		const std::string name(directive->children.front()->content());
 		const bool include = (name == "include");
 		const bool skip = (!include && (name == "skip"));
 
@@ -344,10 +513,10 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 			continue;
 		}
 
-		const auto argument = (directive->getArguments() != nullptr && directive->getArguments()->size() == 1)
-			? directive->getArguments()->front().get()
+		const auto argument = (directive->children.back()->is<grammar::arguments>() && directive->children.back()->children.size() == 1)
+			? directive->children.back()->children.front().get()
 			: nullptr;
-		const std::string argumentName((argument != nullptr) ? argument->getName().getValue() : "");
+		const std::string argumentName((argument != nullptr) ? argument->children.front()->content() : "");
 
 		if (argumentName != "if")
 		{
@@ -362,34 +531,33 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 
 			if (argument != nullptr)
 			{
-				error << " line: " << argument->getLocation().begin.line
-					<< " column: " << argument->getLocation().begin.column;
+				auto position = argument->begin();
+
+				error << " line: " << position.line
+					<< " column: " << position.byte_in_line;
 			}
 
 			throw schema_exception({ error.str() });
 		}
 
-		ValueVisitor visitor(_variables);
-
-		argument->getValue().accept(&visitor);
-
-		auto value = visitor.getValue();
-
-		if (!value.is_boolean())
+		if (argument->children.back()->is<grammar::true_keyword>())
 		{
+			return skip;
+		}
+		else if (argument->children.back()->is<grammar::false_keyword>())
+		{
+			return !skip;
+		}
+		else
+		{
+			auto position = argument->begin();
 			std::ostringstream error;
 
-			error << "Invalid argument to directive: " << name
-				<< " name: if line: " << argument->getLocation().begin.line
-				<< " column: " << argument->getLocation().begin.column;
+			error << "Unknown argument to directive: " << name
+				<< " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
-		}
-
-		if (value.as_bool() == skip)
-		{
-			// Skip this item
-			return true;
 		}
 	}
 
@@ -407,18 +575,19 @@ web::json::value ValueVisitor::getValue()
 	return result;
 }
 
-bool ValueVisitor::visitVariable(const ast::Variable& variable)
+bool ValueVisitor::visitVariable(const grammar::ast_node& variable)
 {
-	const std::string name(variable.getName().getValue());
+	const std::string name(variable.content().c_str() + 1);
 	auto itr = _variables.find(utility::conversions::to_string_t(name));
 
 	if (itr == _variables.cend())
 	{
+		auto position = variable.begin();
 		std::ostringstream error;
 
 		error << "Unknown variable name: " << name
-			<< " line: " << variable.getLocation().begin.line
-			<< " column: " << variable.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
@@ -428,68 +597,142 @@ bool ValueVisitor::visitVariable(const ast::Variable& variable)
 	return false;
 }
 
-bool ValueVisitor::visitIntValue(const ast::IntValue& intValue)
+bool ValueVisitor::visitIntValue(const grammar::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atoi(intValue.getValue()));
+	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
 	return false;
 }
 
-bool ValueVisitor::visitFloatValue(const ast::FloatValue& floatValue)
+bool ValueVisitor::visitFloatValue(const grammar::ast_node& floatValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.getValue()));
+	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
 	return false;
 }
 
-bool ValueVisitor::visitStringValue(const ast::StringValue& stringValue)
+bool ValueVisitor::visitStringValue(const grammar::ast_node& stringValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.getValue()));
+	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
 	return false;
 }
 
-bool ValueVisitor::visitBooleanValue(const ast::BooleanValue& booleanValue)
+bool ValueVisitor::visitBooleanValue(const grammar::ast_node& booleanValue)
 {
-	_value = web::json::value::boolean(booleanValue.getValue());
+	_value = web::json::value::boolean(booleanValue.content().c_str());
 	return false;
 }
 
-bool ValueVisitor::visitNullValue(const ast::NullValue& nullValue)
+bool ValueVisitor::visitNullValue(const grammar::ast_node& nullValue)
 {
 	_value = web::json::value::null();
 	return false;
 }
 
-bool ValueVisitor::visitEnumValue(const ast::EnumValue& enumValue)
+bool ValueVisitor::visitEnumValue(const grammar::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.getValue()));
+	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
 	return false;
 }
 
-bool ValueVisitor::visitListValue(const ast::ListValue& listValue)
+bool ValueVisitor::visitListValue(const grammar::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.getValues().size());
+	_value = web::json::value::array(listValue.children.size());
 
-	std::transform(listValue.getValues().cbegin(), listValue.getValues().cend(), _value.as_array().begin(),
-		[this](const std::unique_ptr<ast::Value>& value)
+	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
+		[this](const std::unique_ptr<grammar::ast_node>& value)
 	{
 		ValueVisitor visitor(_variables);
 
-		value->accept(&visitor);
+		if (value->children.back()->is<grammar::variable_value>())
+		{
+			visitor.visitVariable(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::integer_value>())
+		{
+			visitor.visitIntValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::float_value>())
+		{
+			visitor.visitFloatValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::string_value>())
+		{
+			visitor.visitStringValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::true_keyword>()
+			|| value->children.back()->is<grammar::false_keyword>())
+		{
+			visitor.visitBooleanValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::null_keyword>())
+		{
+			visitor.visitNullValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::enum_value>())
+		{
+			visitor.visitEnumValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::list_value>())
+		{
+			visitor.visitListValue(*value->children.back());
+		}
+		else if (value->children.back()->is<grammar::object_value>())
+		{
+			visitor.visitObjectValue(*value->children.back());
+		}
+
 		return visitor.getValue();
 	});
 
 	return false;
 }
 
-bool ValueVisitor::visitObjectValue(const ast::ObjectValue& objectValue)
+bool ValueVisitor::visitObjectValue(const grammar::ast_node& objectValue)
 {
 	_value = web::json::value::object(true);
 
-	for (const auto& field : objectValue.getFields())
+	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->getName().getValue());
+		const std::string name(field->children.front()->content());
 		ValueVisitor visitor(_variables);
 
-		field->getValue().accept(&visitor);
+		if (field->children.back()->is<grammar::variable_value>())
+		{
+			visitor.visitVariable(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::integer_value>())
+		{
+			visitor.visitIntValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::float_value>())
+		{
+			visitor.visitFloatValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::string_value>())
+		{
+			visitor.visitStringValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::true_keyword>()
+			|| field->children.back()->is<grammar::false_keyword>())
+		{
+			visitor.visitBooleanValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::null_keyword>())
+		{
+			visitor.visitNullValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::enum_value>())
+		{
+			visitor.visitEnumValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::list_value>())
+		{
+			visitor.visitListValue(*field->children.back());
+		}
+		else if (field->children.back()->is<grammar::object_value>())
+		{
+			visitor.visitObjectValue(*field->children.back());
+		}
+
 		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
 	}
 
@@ -506,9 +749,9 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 	return result;
 }
 
-bool FragmentDefinitionVisitor::visitFragmentDefinition(const ast::FragmentDefinition& fragmentDefinition)
+bool FragmentDefinitionVisitor::visitFragmentDefinition(const grammar::ast_node& fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.getName().getValue(), Fragment(fragmentDefinition) });
+	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 	return false;
 }
 
@@ -551,11 +794,22 @@ web::json::value OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDefinition& operationDefinition)
+bool OperationDefinitionVisitor::visitOperationDefinition(const grammar::ast_node& operationDefinition)
 {
-	std::string operation(operationDefinition.getOperation());
-	const std::string name((operationDefinition.getName() != nullptr) ? operationDefinition.getName()->getValue() : "");
-	const yy::location& location = name.empty() ? operationDefinition.getLocation() : operationDefinition.getName()->getLocation();
+	auto position = operationDefinition.begin();
+	auto operation = operationDefinition.children.front()->is<grammar::operation_type>()
+		? operationDefinition.children.front()->content()
+		: std::string("query");
+	std::string name;
+
+	for (const auto& child : operationDefinition.children)
+	{
+		if (child->is<grammar::operation_name>())
+		{
+			name = child->content();
+			break;
+		}
+	}
 
 	try
 	{
@@ -565,7 +819,6 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 			// Skip the operations that don't match the name
 			return false;
 		}
-
 
 		if (!_result.is_null())
 		{
@@ -585,8 +838,8 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 				error << " name: " << name;
 			}
 
-			error << " line: " << location.begin.line
-				<< " column: " << location.begin.column;
+			error << " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
 		}
@@ -604,37 +857,79 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 				error << " name: " << name;
 			}
 
-			error << " line: " << location.begin.line
-				<< " column: " << location.begin.column;
+			error << " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
 		}
 
 		auto operationVariables = web::json::value::object();
 
-		if (operationDefinition.getVariableDefinitions() != nullptr)
+		for (const auto& child : operationDefinition.children)
 		{
-			for (const auto& variable : *operationDefinition.getVariableDefinitions())
+			if (child->is<grammar::variable_definitions>())
 			{
-				auto nameVar = utility::conversions::to_string_t(variable->getVariable().getName().getValue());
-				auto itrVar = _variables.find(nameVar);
-
-				if (itrVar != _variables.cend())
+				for (const auto& variable : child->children)
 				{
-					operationVariables[itrVar->first] = itrVar->second;
-				}
-				else if (variable->getDefaultValue() != nullptr)
-				{
-					ValueVisitor visitor(_variables);
+					auto nameVar = utility::conversions::to_string_t(variable->children.front()->content().c_str() + 1);
+					auto itrVar = _variables.find(nameVar);
 
-					variable->getDefaultValue()->accept(&visitor);
-					operationVariables[std::move(nameVar)] = visitor.getValue();
+					if (itrVar != _variables.cend())
+					{
+						operationVariables[itrVar->first] = itrVar->second;
+					}
+					else if (variable->children.back()->is<grammar::default_value>())
+					{
+						ValueVisitor visitor(_variables);
+
+						if (variable->children.back()->children.front()->is<grammar::variable_value>())
+						{
+							visitor.visitVariable(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::integer_value>())
+						{
+							visitor.visitIntValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::float_value>())
+						{
+							visitor.visitFloatValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::string_value>())
+						{
+							visitor.visitStringValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::true_keyword>()
+							|| variable->children.back()->children.front()->is<grammar::false_keyword>())
+						{
+							visitor.visitBooleanValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::null_keyword>())
+						{
+							visitor.visitNullValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::enum_value>())
+						{
+							visitor.visitEnumValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::list_value>())
+						{
+							visitor.visitListValue(*variable->children.back()->children.front());
+						}
+						else if (variable->children.back()->children.front()->is<grammar::object_value>())
+						{
+							visitor.visitObjectValue(*variable->children.back()->children.front());
+						}
+
+						operationVariables[std::move(nameVar)] = visitor.getValue();
+					}
 				}
+
+				break;
 			}
 		}
 
 		_result = web::json::value::object({
-			{ _XPLATSTR("data"), itr->second->resolve(operationDefinition.getSelectionSet(), _fragments, operationVariables.as_object()) }
+			{ _XPLATSTR("data"), itr->second->resolve(*operationDefinition.children.back(), _fragments, operationVariables.as_object()) }
 			}, true);
 	}
 	catch (const schema_exception& ex)

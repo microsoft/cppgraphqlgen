@@ -160,7 +160,7 @@ struct OperationType
 
 using OperationTypeList = std::vector<OperationType>;
 
-class Generator : private ast::visitor::AstVisitor
+class Generator
 {
 public:
 	// Initialize the generator with the introspection schema.
@@ -173,25 +173,25 @@ public:
 	std::vector<std::string> Build() const noexcept;
 
 private:
-	bool visitSchemaDefinition(const ast::SchemaDefinition& schemaDefinition) override;
-	bool visitScalarTypeDefinition(const ast::ScalarTypeDefinition& scalarTypeDefinition) override;
-	bool visitEnumTypeDefinition(const ast::EnumTypeDefinition& enumTypeDefinition) override;
-	bool visitInputObjectTypeDefinition(const ast::InputObjectTypeDefinition& inputObjectTypeDefinition) override;
-	bool visitUnionTypeDefinition(const ast::UnionTypeDefinition& unionTypeDefinition) override;
-	bool visitInterfaceTypeDefinition(const ast::InterfaceTypeDefinition& interfaceTypeDefinition) override;
-	bool visitObjectTypeDefinition(const ast::ObjectTypeDefinition& objectTypeDefinition) override;
+	bool visitSchemaDefinition(const grammar::ast_node& schemaDefinition);
+	bool visitScalarTypeDefinition(const grammar::ast_node& scalarTypeDefinition);
+	bool visitEnumTypeDefinition(const grammar::ast_node& enumTypeDefinition);
+	bool visitInputObjectTypeDefinition(const grammar::ast_node& inputObjectTypeDefinition);
+	bool visitUnionTypeDefinition(const grammar::ast_node& unionTypeDefinition);
+	bool visitInterfaceTypeDefinition(const grammar::ast_node& interfaceTypeDefinition);
+	bool visitObjectTypeDefinition(const grammar::ast_node& objectTypeDefinition);
 
-	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<ast::FieldDefinition>>& fields);
-	static InputFieldList getInputFields(const std::vector<std::unique_ptr<ast::InputValueDefinition>>& fields);
+	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields);
+	static InputFieldList getInputFields(const std::vector<std::unique_ptr<grammar::ast_node>>& fields);
 
 	// Recursively visit a Type node until we reach a NamedType and we've
 	// taken stock of all of the modifier wrappers.
-	class TypeVisitor : public ast::visitor::AstVisitor
+	class TypeVisitor
 	{
 	public:
-		bool visitNamedType(const ast::NamedType& namedType) override;
-		bool visitListType(const ast::ListType& listType) override;
-		bool visitNonNullType(const ast::NonNullType& nonNullType) override;
+		bool visitNamedType(const grammar::ast_node& namedType);
+		bool visitListType(const grammar::ast_node& listType);
+		bool visitNonNullType(const grammar::ast_node& nonNullType);
 
 		std::pair<std::string, TypeModifierStack> getType();
 
@@ -203,17 +203,17 @@ private:
 
 	// Recursively visit a Value node representing the default value on an input field
 	// and build a JSON representation of the hardcoded value.
-	class DefaultValueVisitor : public ast::visitor::AstVisitor
+	class DefaultValueVisitor
 	{
 	public:
-		bool visitIntValue(const ast::IntValue& intValue) override;
-		bool visitFloatValue(const ast::FloatValue& floatValue) override;
-		bool visitStringValue(const ast::StringValue& stringValue) override;
-		bool visitBooleanValue(const ast::BooleanValue& booleanValue) override;
-		bool visitNullValue(const ast::NullValue& nullValue) override;
-		bool visitEnumValue(const ast::EnumValue& enumValue) override;
-		bool visitListValue(const ast::ListValue& listValue) override;
-		bool visitObjectValue(const ast::ObjectValue& objectValue) override;
+		bool visitIntValue(const grammar::ast_node& intValue);
+		bool visitFloatValue(const grammar::ast_node& floatValue);
+		bool visitStringValue(const grammar::ast_node& stringValue);
+		bool visitBooleanValue(const grammar::ast_node& booleanValue);
+		bool visitNullValue(const grammar::ast_node& nullValue);
+		bool visitEnumValue(const grammar::ast_node& enumValue);
+		bool visitListValue(const grammar::ast_node& listValue);
+		bool visitObjectValue(const grammar::ast_node& objectValue);
 
 		web::json::value getValue();
 
