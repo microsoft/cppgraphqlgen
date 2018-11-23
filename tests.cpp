@@ -103,9 +103,9 @@ TEST_F(TodayServiceCase, QueryEverything)
 			}
 		})gql");
 	auto result = _service->resolve(*ast, "Everything", web::json::value::object().as_object());
-	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -175,9 +175,9 @@ TEST_F(TodayServiceCase, QueryAppointments)
 			}
 		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -226,9 +226,9 @@ TEST_F(TodayServiceCase, QueryTasks)
 			}
 		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -276,9 +276,9 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 			}
 		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{

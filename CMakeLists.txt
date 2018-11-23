@@ -12,8 +12,6 @@ endif()
 add_library(graphqlservice GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
 add_executable(schemagen SchemaGenerator.cpp)
 
-find_library(GRAPHQLPARSER graphqlparser)
-
 find_package(cpprestsdk REQUIRED)
 set(CPPRESTSDK cpprestsdk::cpprest)
 
@@ -26,11 +24,11 @@ find_package(pegtl CONFIG REQUIRED)
 
 add_library(graphqlpeg GraphQLGrammar.cpp)
 target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlpeg taocpp::pegtl ${GRAPHQLPARSER})
+target_link_libraries(graphqlpeg taocpp::pegtl)
 
 target_include_directories(graphqlservice INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlservice ${CPPRESTSDK} ${GRAPHQLPARSER} graphqlpeg)
-target_link_libraries(schemagen ${CPPRESTSDK} ${GRAPHQLPARSER} graphqlpeg)
+target_link_libraries(graphqlservice ${CPPRESTSDK} graphqlpeg)
+target_link_libraries(schemagen ${CPPRESTSDK} graphqlpeg)
 
 add_custom_command(
   OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
@@ -63,7 +61,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     target_link_libraries(todaygraphql
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
       graphqlservice)
     target_include_directories(todaygraphql SYSTEM PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
@@ -71,7 +68,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     target_link_libraries(test_today
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
 	  graphqlpeg
       graphqlservice
       todaygraphql)
@@ -82,7 +78,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     find_package(GTest REQUIRED)
     target_link_libraries(tests
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
 	  graphqlpeg
       graphqlservice
       todaygraphql
