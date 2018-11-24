@@ -106,7 +106,7 @@ install(TARGETS graphqlpeg graphqlservice schemagen
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-install(FILES GraphQLService.h Introspection.h IntrospectionSchema.h
+install(FILES GraphQLService.h GraphQLTree.h Introspection.h IntrospectionSchema.h
   DESTINATION include/graphqlservice)
 
 if(WIN32)

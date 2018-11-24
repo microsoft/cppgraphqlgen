@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
 #include <tao/pegtl/contrib/unescape.hpp>
 

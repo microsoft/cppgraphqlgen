@@ -5,6 +5,7 @@
 
 #include "Today.h"
 #include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
 #include <tao/pegtl/analyze.hpp>
 

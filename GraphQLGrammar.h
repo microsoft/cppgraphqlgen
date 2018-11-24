@@ -14,6 +14,19 @@ namespace peg {
 
 using namespace tao::pegtl;
 
+template <typename _Rule>
+void for_each_child(const ast_node& n, std::function<bool(const ast_node&)>&& func)
+{
+	for (const auto& child : n.children)
+	{
+		if (child->is<_Rule>()
+			&& !func(*child))
+		{
+			return;
+		}
+	}
+}
+
 // https://facebook.github.io/graphql/June2018/#sec-Source-Text
 struct source_character
 	: sor<one<0x0009, 0x000A, 0x000D>

@@ -3,6 +3,7 @@
 
 #include "SchemaGenerator.h"
 #include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
 #include <stdexcept>
 #include <iostream>

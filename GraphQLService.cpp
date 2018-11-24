@@ -3,6 +3,7 @@
 
 #include "GraphQLService.h"
 #include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
 #include <iostream>
 #include <algorithm>
