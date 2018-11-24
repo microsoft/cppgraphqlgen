@@ -363,14 +363,11 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 		return false;
 	});
 
-	peg::for_each_child<peg::implements_interfaces>(objectTypeDefinition,
+	peg::for_each_child<peg::interface_type>(objectTypeDefinition,
 		[&interfaces](const peg::ast_node& child)
 	{
-		for (const auto& namedType : child.children)
-		{
-			interfaces.push_back(namedType->content());
-		}
-		return false;
+		interfaces.push_back(child.content());
+		return true;
 	});
 
 	peg::for_each_child<peg::fields_definition>(objectTypeDefinition,
