@@ -2,16 +2,14 @@
 // Licensed under the MIT License.
 
 #include "SchemaGenerator.h"
-#include "GraphQLService.h"
+#include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
-#include <exception>
+#include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cctype>
-#include <cstring>
-
-#include <graphqlparser/GraphQLParser.h>
 
 namespace facebook {
 namespace graphql {
@@ -42,8 +40,8 @@ Generator::Generator()
 	, _filenamePrefix("Introspection")
 	, _schemaNamespace(s_introspectionNamespace)
 {
-	const char* error = nullptr;
-	auto ast = parseStringWithExperimentalSchemaSupport(R"gql(
+	// TODO: Double check that this still matches the spec
+	auto ast = peg::parseString(R"gql(
 		# Introspection Schema
 
 		type __Schema {
@@ -126,21 +124,17 @@ Generator::Generator()
 			INPUT_OBJECT
 			LIST
 			NON_NULL
-		})gql", &error);
-
-	if (nullptr != error)
-	{
-		std::runtime_error ex(error);
-		free(const_cast<char*>(error));
-		throw ex;
-	}
+		})gql");
 
 	if (!ast)
 	{
 		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
 	}
 
-	ast->accept(this);
+	for (const auto& child : ast->children.front()->children)
+	{
+		visitDefinition(*child);
+	}
 
 	if (!validateSchema())
 	{
@@ -148,27 +142,23 @@ Generator::Generator()
 	}
 }
 
-Generator::Generator(FILE* schemaDefinition, std::string filenamePrefix, std::string schemaNamespace)
+Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std::string schemaNamespace)
 	: _isIntrospection(false)
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
 {
-	const char* error = nullptr;
-	auto ast = parseFileWithExperimentalSchemaSupport(schemaDefinition, &error);
-
-	if (nullptr != error)
-	{
-		std::runtime_error ex(error);
-		free(const_cast<char*>(error));
-		throw ex;
-	}
+	tao::pegtl::file_input<> in(schemaFileName.c_str());
+	auto ast = peg::parseFile(std::move(in));
 
 	if (!ast)
 	{
 		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
 	}
 
-	ast->accept(this);
+	for (const auto& child : ast->children.front()->children)
+	{
+		visitDefinition(*child);
+	}
 
 	if (!validateSchema())
 	{
@@ -316,176 +306,298 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 	return true;
 }
 
-bool Generator::visitSchemaDefinition(const ast::SchemaDefinition& schemaDefinition)
+void Generator::visitDefinition(const peg::ast_node& definition)
 {
-	for (const auto& operationTypeDefinition : schemaDefinition.getOperationTypes())
+	if (definition.is<peg::schema_definition>())
 	{
-		std::string operation(operationTypeDefinition->getOperation());
-		std::string name(operationTypeDefinition->getType().getName().getValue());
-
-		_operationTypes.push_back({ std::move(name), std::move(operation) });
+		visitSchemaDefinition(definition);
 	}
-
-	return false;
+	else if (definition.is<peg::scalar_type_definition>())
+	{
+		visitScalarTypeDefinition(definition);
+	}
+	else if (definition.is<peg::enum_type_definition>())
+	{
+		visitEnumTypeDefinition(definition);
+	}
+	else if (definition.is<peg::input_object_type_definition>())
+	{
+		visitInputObjectTypeDefinition(definition);
+	}
+	else if (definition.is<peg::input_object_type_definition>())
+	{
+		visitUnionTypeDefinition(definition);
+	}
+	else if (definition.is<peg::interface_type_definition>())
+	{
+		visitInterfaceTypeDefinition(definition);
+	}
+	else if (definition.is<peg::object_type_definition>())
+	{
+		visitObjectTypeDefinition(definition);
+	}
 }
 
-bool Generator::visitObjectTypeDefinition(const ast::ObjectTypeDefinition& objectTypeDefinition)
+void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 {
-	std::string name(objectTypeDefinition.getName().getValue());
-	std::vector<std::string> interfaces;
-	auto fields = getOutputFields(objectTypeDefinition.getFields());
-
-	if (objectTypeDefinition.getInterfaces() != nullptr)
+	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
+		[this](const peg::ast_node& child)
 	{
-		for (const auto& namedType : *(objectTypeDefinition.getInterfaces()))
-		{
-			interfaces.push_back(namedType->getName().getValue());
-		}
-	}
+		std::string operation(child.children.front()->content());
+		std::string name(child.children.back()->content());
+
+		_operationTypes.push_back({ std::move(name), std::move(operation) });
+		return true;
+	});
+}
+
+void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition)
+{
+	std::string name;
+	std::vector<std::string> interfaces;
+	OutputFieldList fields;
+
+	peg::for_each_child<peg::object_name>(objectTypeDefinition,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+		return false;
+	});
+
+	peg::for_each_child<peg::interface_type>(objectTypeDefinition,
+		[&interfaces](const peg::ast_node& child)
+	{
+		interfaces.push_back(child.content());
+		return true;
+	});
+
+	peg::for_each_child<peg::fields_definition>(objectTypeDefinition,
+		[&fields](const peg::ast_node& child)
+	{
+		fields = getOutputFields(child.children);
+		return false;
+	});
 
 	_schemaTypes[name] = SchemaType::Object;
 	_objectNames[name] = _objectTypes.size();
 	_objectTypes.push_back({ std::move(name), std::move(interfaces), std::move(fields) });
-
-	return false;
 }
 
-bool Generator::visitInterfaceTypeDefinition(const ast::InterfaceTypeDefinition& interfaceTypeDefinition)
+void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition)
 {
-	std::string name(interfaceTypeDefinition.getName().getValue());
-	auto fields = getOutputFields(interfaceTypeDefinition.getFields());
+	std::string name;
+	OutputFieldList fields;
+
+	peg::for_each_child<peg::interface_name>(interfaceTypeDefinition,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+		return false;
+	});
+
+	peg::for_each_child<peg::fields_definition>(interfaceTypeDefinition,
+		[&fields](const peg::ast_node& child)
+	{
+		fields = getOutputFields(child.children);
+		return false;
+	});
 
 	_schemaTypes[name] = SchemaType::Interface;
 	_interfaceNames[name] = _interfaceTypes.size();
 	_interfaceTypes.push_back({ std::move(name), std::move(fields) });
-
-	return false;
 }
 
-bool Generator::visitInputObjectTypeDefinition(const ast::InputObjectTypeDefinition& inputObjectTypeDefinition)
+void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition)
 {
-	std::string name(inputObjectTypeDefinition.getName().getValue());
-	auto fields = getInputFields(inputObjectTypeDefinition.getFields());
+	std::string name;
+	InputFieldList fields;
+
+	peg::for_each_child<peg::object_name>(inputObjectTypeDefinition,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+		return false;
+	});
+
+	peg::for_each_child<peg::input_fields_definition>(inputObjectTypeDefinition,
+		[&fields](const peg::ast_node& child)
+	{
+		fields = getInputFields(child.children);
+		return false;
+	});
 
 	_schemaTypes[name] = SchemaType::Input;
 	_inputNames[name] = _inputTypes.size();
 	_inputTypes.push_back({ std::move(name), std::move(fields) });
-
-	return false;
 }
 
-bool Generator::visitEnumTypeDefinition(const ast::EnumTypeDefinition& enumTypeDefinition)
+void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 {
-	std::string name(enumTypeDefinition.getName().getValue());
-	std::vector<std::string> values(enumTypeDefinition.getValues().size());
+	std::string name;
+	std::vector<std::string> values;
 
-	std::transform(enumTypeDefinition.getValues().cbegin(), enumTypeDefinition.getValues().cend(), values.begin(),
-		[](const std::unique_ptr<ast::EnumValueDefinition>& enumValue)
+	peg::for_each_child<peg::enum_name>(enumTypeDefinition,
+		[&name](const peg::ast_node& child)
 	{
-		return std::string(enumValue->getName().getValue());
+		name = child.content();
+		return false;
+	});
+
+	peg::for_each_child<peg::enum_value_definition>(enumTypeDefinition,
+		[&values](const peg::ast_node& child)
+	{
+		peg::for_each_child<peg::enum_value>(child,
+			[&values](const peg::ast_node& enumValue)
+		{
+			values.push_back(enumValue.content());
+			return false;
+		});
+		return true;
 	});
 
 	_schemaTypes[name] = SchemaType::Enum;
 	_enumNames[name] = _enumTypes.size();
 	_enumTypes.push_back({ std::move(name), std::move(values) });
-
-	return false;
 }
 
-bool Generator::visitScalarTypeDefinition(const ast::ScalarTypeDefinition& scalarTypeDefinition)
+void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition)
 {
-	std::string name(scalarTypeDefinition.getName().getValue());
+	std::string name;
+
+	peg::for_each_child<peg::scalar_name>(scalarTypeDefinition,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+		return false;
+	});
 
 	_schemaTypes[name] = SchemaType::Scalar;
 	_scalarNames[name] = _scalarTypes.size();
 	_scalarTypes.push_back(std::move(name));
-
-	return false;
 }
 
-bool Generator::visitUnionTypeDefinition(const ast::UnionTypeDefinition& unionTypeDefinition)
+void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
 {
-	std::string name(unionTypeDefinition.getName().getValue());
-	std::vector<std::string> options(unionTypeDefinition.getTypes().size());
+	std::string name;
+	std::vector<std::string> options;
 
-	std::transform(unionTypeDefinition.getTypes().cbegin(), unionTypeDefinition.getTypes().cend(), options.begin(),
-		[](const std::unique_ptr<ast::NamedType>& namedType)
+	peg::for_each_child<peg::union_name>(unionTypeDefinition,
+		[&name](const peg::ast_node& child)
 	{
-		return namedType->getName().getValue();
+		name = child.content();
+		return false;
+	});
+
+	peg::for_each_child<peg::union_type>(unionTypeDefinition,
+		[&options](const peg::ast_node& child)
+	{
+		options.push_back(child.content());
+		return true;
 	});
 
 	_schemaTypes[name] = SchemaType::Union;
 	_unionNames[name] = _unionTypes.size();
 	_unionTypes.push_back({ std::move(name), std::move(options) });
-
-	return false;
 }
 
-OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<ast::FieldDefinition>>& fields)
+OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
 {
 	OutputFieldList outputFields;
 
 	for (const auto& fieldDefinition : fields)
 	{
 		OutputField field;
-		std::string fieldName(fieldDefinition->getName().getValue());
 		TypeVisitor fieldType;
 
-		fieldDefinition->getType().accept(&fieldType);
-		std::tie(field.type, field.modifiers) = fieldType.getType();
-		field.name = std::move(fieldName);
-
-		if (fieldDefinition->getArguments() != nullptr)
+		for (const auto& child : fieldDefinition->children)
 		{
-			field.arguments = getInputFields(*(fieldDefinition->getArguments()));
+			if (child->is<peg::field_name>())
+			{
+				field.name = child->content();
+			}
+			else if (child->is<peg::arguments_definition>())
+			{
+				field.arguments = getInputFields(child->children);
+			}
+			else if (child->is<peg::named_type>()
+				|| child->is<peg::list_type>()
+				|| child->is<peg::nonnull_type>())
+			{
+				fieldType.visit(*child);
+			}
 		}
 
+		std::tie(field.type, field.modifiers) = fieldType.getType();
 		outputFields.push_back(std::move(field));
 	}
 
 	return outputFields;
 }
 
-InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<ast::InputValueDefinition>>& fields)
+InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
 {
 	InputFieldList inputFields;
 
 	for (const auto& fieldDefinition : fields)
 	{
 		InputField field;
-		std::string fieldName(fieldDefinition->getName().getValue());
 		TypeVisitor fieldType;
 
-		fieldDefinition->getType().accept(&fieldType);
-		std::tie(field.type, field.modifiers) = fieldType.getType();
-		field.name = std::move(fieldName);
-
-		if (fieldDefinition->getDefaultValue() != nullptr)
+		for (const auto& child : fieldDefinition->children)
 		{
-			DefaultValueVisitor defaultValue;
+			if (child->is<peg::argument_name>())
+			{
+				field.name = child->content();
+			}
+			else if (child->is<peg::named_type>()
+				|| child->is<peg::list_type>()
+				|| child->is<peg::nonnull_type>())
+			{
+				fieldType.visit(*child);
+			}
+			else if (child->is<peg::default_value>())
+			{
+				DefaultValueVisitor defaultValue;
 
-			fieldDefinition->getDefaultValue()->accept(&defaultValue);
-			field.defaultValue = defaultValue.getValue();
+				defaultValue.visit(*child->children.back());
+				field.defaultValue = defaultValue.getValue();
+			}
 		}
 
+		std::tie(field.type, field.modifiers) = fieldType.getType();
 		inputFields.push_back(std::move(field));
 	}
 
 	return inputFields;
 }
 
-bool Generator::TypeVisitor::visitNamedType(const ast::NamedType& namedType)
+void Generator::TypeVisitor::visit(const peg::ast_node& typeName)
+{
+	if (typeName.is<peg::nonnull_type>())
+	{
+	visitNonNullType(typeName);
+	}
+	else if (typeName.is<peg::list_type>())
+	{
+		visitListType(typeName);
+	}
+	else if (typeName.is<peg::named_type>())
+	{
+		visitNamedType(typeName);
+	}
+}
+
+void Generator::TypeVisitor::visitNamedType(const peg::ast_node& namedType)
 {
 	if (!_nonNull)
 	{
 		_modifiers.push_back(service::TypeModifier::Nullable);
 	}
 
-	_type = namedType.getName().getValue();
-	return false;
+	_type = namedType.content();
 }
 
-bool Generator::TypeVisitor::visitListType(const ast::ListType& listType)
+void Generator::TypeVisitor::visitListType(const peg::ast_node& listType)
 {
 	if (!_nonNull)
 	{
@@ -494,13 +606,15 @@ bool Generator::TypeVisitor::visitListType(const ast::ListType& listType)
 	_nonNull = false;
 
 	_modifiers.push_back(service::TypeModifier::List);
-	return true;
+	
+	visit(*listType.children.front());
 }
 
-bool Generator::TypeVisitor::visitNonNullType(const ast::NonNullType& nonNullType)
+void Generator::TypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
 {
 	_nonNull = true;
-	return true;
+
+	visit(*nonNullType.children.front());
 }
 
 std::pair<std::string, TypeModifierStack> Generator::TypeVisitor::getType()
@@ -508,72 +622,100 @@ std::pair<std::string, TypeModifierStack> Generator::TypeVisitor::getType()
 	return { std::move(_type), std::move(_modifiers) };
 }
 
-bool Generator::DefaultValueVisitor::visitIntValue(const ast::IntValue& intValue)
+void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 {
-	_value = web::json::value::number(std::atoi(intValue.getValue()));
-	return false;
+	if (value.is<peg::integer_value>())
+	{
+		visitIntValue(value);
+	}
+	else if (value.is<peg::float_value>())
+	{
+		visitFloatValue(value);
+	}
+	else if (value.is<peg::string_value>())
+	{
+		visitStringValue(value);
+	}
+	else if (value.is<peg::true_keyword>()
+		|| value.is<peg::false_keyword>())
+	{
+		visitBooleanValue(value);
+	}
+	else if (value.is<peg::null_keyword>())
+	{
+		visitNullValue(value);
+	}
+	else if (value.is<peg::enum_value>())
+	{
+		visitEnumValue(value);
+	}
+	else if (value.is<peg::list_value>())
+	{
+		visitListValue(value);
+	}
+	else if (value.is<peg::object_value>())
+	{
+		visitObjectValue(value);
+	}
 }
 
-bool Generator::DefaultValueVisitor::visitFloatValue(const ast::FloatValue& floatValue)
+void Generator::DefaultValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.getValue()));
-	return false;
+	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
 }
 
-bool Generator::DefaultValueVisitor::visitStringValue(const ast::StringValue& stringValue)
+void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.getValue()));
-	return false;
+	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
 }
 
-bool Generator::DefaultValueVisitor::visitBooleanValue(const ast::BooleanValue& booleanValue)
+void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = web::json::value::boolean(booleanValue.getValue());
-	return false;
+	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
 }
 
-bool Generator::DefaultValueVisitor::visitNullValue(const ast::NullValue& nullValue)
+void Generator::DefaultValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
+{
+	_value = web::json::value::boolean(booleanValue.is<peg::true_keyword>());
+}
+
+void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
 	_value = web::json::value::null();
-	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitEnumValue(const ast::EnumValue& enumValue)
+void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.getValue()));
-	return false;
+	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
 }
 
-bool Generator::DefaultValueVisitor::visitListValue(const ast::ListValue& listValue)
+void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.getValues().size());
+	_value = web::json::value::array(listValue.children.size());
 
-	std::transform(listValue.getValues().cbegin(), listValue.getValues().cend(), _value.as_array().begin(),
-		[](const std::unique_ptr<ast::Value>& value)
+	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
+		[this](const std::unique_ptr<peg::ast_node>& value)
 	{
 		DefaultValueVisitor visitor;
 
-		value->accept(&visitor);
+		visitor.visit(*value);
+
 		return visitor.getValue();
 	});
-
-	return false;
 }
 
-bool Generator::DefaultValueVisitor::visitObjectValue(const ast::ObjectValue& objectValue)
+void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
 	_value = web::json::value::object(true);
 
-	for (const auto& field : objectValue.getFields())
+	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->getName().getValue());
+		const std::string name(field->children.front()->content());
 		DefaultValueVisitor visitor;
 
-		field->getValue().accept(&visitor);
+		visitor.visit(*field->children.back());
 		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
 	}
-
-	return false;
 }
 
 web::json::value Generator::DefaultValueVisitor::getValue()
@@ -2174,39 +2316,37 @@ int main(int argc, char** argv)
 {
 	std::vector<std::string> files;
 
-	if (argc == 1)
+	try
 	{
-		files = facebook::graphql::schema::Generator().Build();
-	}
-	else
-	{
-		if (argc != 4)
+		if (argc == 1)
 		{
-			std::cerr << "Usage (to generate a custom schema): " << argv[0]
-				<< " <schema file> <output filename prefix> <output namespace>"
-				<< std::endl;
-			std::cerr << "Usage (to generate IntrospectionSchema): " << argv[0] << std::endl;
-			return 1;
+			files = facebook::graphql::schema::Generator().Build();
+		}
+		else
+		{
+			if (argc != 4)
+			{
+				std::cerr << "Usage (to generate a custom schema): " << argv[0]
+					<< " <schema file> <output filename prefix> <output namespace>"
+					<< std::endl;
+				std::cerr << "Usage (to generate IntrospectionSchema): " << argv[0] << std::endl;
+				return 1;
+			}
+
+			facebook::graphql::schema::Generator generator(argv[1], argv[2], argv[3]);
+
+			files = generator.Build();
 		}
 
-		FILE* schemaDefinition = std::fopen(argv[1], "r");
-
-		if (nullptr == schemaDefinition)
+		for (const auto& file : files)
 		{
-			std::cerr << "Could not open the file: " << argv[1] << std::endl;
-			std::cerr << "Error: " << std::strerror(errno) << std::endl;
-			return 1;
+			std::cout << file << std::endl;
 		}
-
-		facebook::graphql::schema::Generator generator(schemaDefinition, argv[2], argv[3]);
-		std::fclose(schemaDefinition);
-
-		files = generator.Build();
 	}
-
-	for (const auto& file : files)
+	catch (const std::runtime_error& ex)
 	{
-		std::cout << file << std::endl;
+		std::cerr << ex.what() << std::endl;
+		return 1;
 	}
 
 	return 0;

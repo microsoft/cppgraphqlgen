@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 #include "GraphQLService.h"
+#include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
 #include <iostream>
 #include <algorithm>
@@ -27,9 +29,9 @@ const web::json::value& schema_exception::getErrors() const noexcept
 	return _errors;
 }
 
-Fragment::Fragment(const ast::FragmentDefinition& fragmentDefinition)
-	: _type(fragmentDefinition.getTypeCondition().getName().getValue())
-	, _selection(fragmentDefinition.getSelectionSet())
+Fragment::Fragment(const peg::ast_node& fragmentDefinition)
+	: _type(fragmentDefinition.children[1]->children.front()->content())
+	, _selection(*(fragmentDefinition.children.back()))
 {
 }
 
@@ -38,7 +40,7 @@ const std::string& Fragment::getType() const
 	return _type;
 }
 
-const ast::SelectionSet& Fragment::getSelection() const
+const peg::ast_node& Fragment::getSelection() const
 {
 	return _selection;
 }
@@ -191,15 +193,15 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-web::json::value Object::resolve(const ast::SelectionSet& selection, const FragmentMap& fragments, const web::json::object& variables) const
+web::json::value Object::resolve(const peg::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const
 {
-	auto result = web::json::value::object(selection.getSelections().size());
+	auto result = web::json::value::object(selection.children.size());
 
-	for (const auto& entry : selection.getSelections())
+	for (const auto& child : selection.children)
 	{
 		SelectionVisitor visitor(fragments, variables, _typeNames, _resolvers);
 
-		entry->accept(&visitor);
+		visitor.visit(*child);
 
 		auto values = visitor.getValues();
 
@@ -220,16 +222,27 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-web::json::value Request::resolve(const ast::Node& document, const std::string& operationName, const web::json::object& variables) const
+web::json::value Request::resolve(const peg::ast_node& root, const std::string& operationName, const web::json::object& variables) const
 {
+	const auto& document = *root.children.front();
 	FragmentDefinitionVisitor fragmentVisitor;
 
-	document.accept(&fragmentVisitor);
+	peg::for_each_child<peg::fragment_definition>(document,
+		[&fragmentVisitor](const peg::ast_node& child)
+	{
+		fragmentVisitor.visit(child);
+		return true;
+	});
 
 	auto fragments = fragmentVisitor.getFragments();
 	OperationDefinitionVisitor operationVisitor(_operations, operationName, variables, fragments);
 
-	document.accept(&operationVisitor);
+	peg::for_each_child<peg::operation_definition>(document,
+		[&operationVisitor](const peg::ast_node& child)
+	{
+		operationVisitor.visit(child);
+		return true;
+	});
 
 	return operationVisitor.getValue();
 }
@@ -249,84 +262,189 @@ web::json::value SelectionVisitor::getValues()
 	return result;
 }
 
-bool SelectionVisitor::visitField(const ast::Field& field)
+void SelectionVisitor::visit(const peg::ast_node& selection)
 {
-	const std::string name(field.getName().getValue());
-	const std::string alias((field.getAlias() != nullptr) ? field.getAlias()->getValue() : name);
+	if (selection.is<peg::field>())
+	{
+		visitField(selection);
+	}
+	else if (selection.is<peg::fragment_spread>())
+	{
+		visitFragmentSpread(selection);
+	}
+	else if (selection.is<peg::inline_fragment>())
+	{
+		visitInlineFragment(selection);
+	}
+}
+
+void SelectionVisitor::visitField(const peg::ast_node& field)
+{
+	const bool hasAlias = field.children.front()->is<peg::alias_name>();
+	const std::string name(field.children[hasAlias ? 1 : 0]->content());
+	const std::string alias(hasAlias ? field.children.front()->content() : name);
 	auto itr = _resolvers.find(name);
 
 	if (itr == _resolvers.cend())
 	{
+		auto position = field.begin();
 		std::ostringstream error;
 
 		error << "Unknown field name: " << name
-			<< " line: " << field.getLocation().begin.line
-			<< " column: " << field.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
 
-	if (shouldSkip(field.getDirectives()))
+	bool skip = false;
+
+	peg::for_each_child<peg::directives>(field,
+		[this, &skip](const peg::ast_node& child)
 	{
+		skip = shouldSkip(&child.children);
 		return false;
+	});
+
+	if (skip)
+	{
+		return;
 	}
 
 	auto arguments = web::json::value::object(true);
 
-	if (field.getArguments() != nullptr)
+	for (const auto& child : field.children)
 	{
-		ValueVisitor visitor(_variables);
-
-		for (const auto& argument : *field.getArguments())
+		if (child->is<peg::arguments>())
 		{
-			argument->getValue().accept(&visitor);
-			arguments[utility::conversions::to_string_t(argument->getName().getValue())] = visitor.getValue();
+			ValueVisitor visitor(_variables);
+
+			for (const auto& argument : child->children)
+			{
+				visitor.visit(*argument->children.back());
+				arguments[utility::conversions::to_string_t(argument->children.front()->content())] = visitor.getValue();
+			}
+
+			break;
 		}
 	}
 
-	_values[utility::conversions::to_string_t(alias)] = itr->second({ arguments.as_object(), field.getSelectionSet(), _fragments, _variables });
+	const peg::ast_node* selection = nullptr;
 
-	return false;
+	for (const auto& child : field.children)
+	{
+		if (child->is<peg::selection_set>())
+		{
+			selection = child.get();
+			break;
+		}
+	}
+
+	_values[utility::conversions::to_string_t(alias)] = itr->second({ arguments.as_object(), selection, _fragments, _variables });
 }
 
-bool SelectionVisitor::visitFragmentSpread(const ast::FragmentSpread &fragmentSpread)
+void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
-	const std::string name(fragmentSpread.getName().getValue());
+	const std::string name(fragmentSpread.children.front()->content());
 	auto itr = _fragments.find(name);
 
 	if (itr == _fragments.cend())
 	{
+		auto position = fragmentSpread.begin();
 		std::ostringstream error;
 
 		error << "Unknown fragment name: " << name
-			<< " line: " << fragmentSpread.getLocation().begin.line
-			<< " column: " << fragmentSpread.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
 
-	if (!shouldSkip(fragmentSpread.getDirectives())
-		&& _typeNames.count(itr->second.getType()) > 0)
+	bool skip = (_typeNames.count(itr->second.getType()) == 0);
+
+	if (!skip)
 	{
-		itr->second.getSelection().accept(this);
+		peg::for_each_child<peg::directives>(fragmentSpread,
+			[this, &skip](const peg::ast_node& child)
+		{
+			skip = shouldSkip(&child.children);
+			return false;
+		});
 	}
 
-	return false;
+	if (skip)
+	{
+		return;
+	}
+
+	peg::for_each_child<peg::selection_set>(fragmentSpread,
+		[this](const peg::ast_node& child)
+	{
+		for (const auto& selection : child.children)
+		{
+			visit(*selection);
+		}
+		return false;
+	});
 }
 
-bool SelectionVisitor::visitInlineFragment(const ast::InlineFragment &inlineFragment)
+void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
-	if (!shouldSkip(inlineFragment.getDirectives())
-		&& (inlineFragment.getTypeCondition() == nullptr
-			|| _typeNames.count(inlineFragment.getTypeCondition()->getName().getValue()) > 0))
+	bool skip = false;
+
+	peg::for_each_child<peg::directives>(inlineFragment,
+		[this, &skip](const peg::ast_node& child)
 	{
-		inlineFragment.getSelectionSet().accept(this);
+		skip = shouldSkip(&child.children);
+		return false;
+	});
+
+	if (skip)
+	{
+		return;
 	}
 
-	return false;
+	const peg::ast_node* typeCondition = nullptr;
+
+	for (const auto& child : inlineFragment.children)
+	{
+		if (child->is<peg::type_condition>())
+		{
+			typeCondition = child.get();
+			break;
+		}
+	}
+
+	if (typeCondition == nullptr
+		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
+	{
+		for (const auto& child : inlineFragment.children)
+		{
+			if (child->is<peg::selection_set>())
+			{
+				for (const auto& selection : child->children)
+				{
+					if (selection->is<peg::field>())
+					{
+						visitField(*selection);
+					}
+					else if (selection->is<peg::fragment_spread>())
+					{
+						visitFragmentSpread(*selection);
+					}
+					else if (selection->is<peg::inline_fragment>())
+					{
+						visitInlineFragment(*selection);
+					}
+				}
+
+				break;
+			}
+		}
+	}
 }
 
-bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directive>>* directives) const
+bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const
 {
 	if (directives == nullptr)
 	{
@@ -335,7 +453,7 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 
 	for (const auto& directive : *directives)
 	{
-		const std::string name(directive->getName().getValue());
+		const std::string name(directive->children.front()->content());
 		const bool include = (name == "include");
 		const bool skip = (!include && (name == "skip"));
 
@@ -344,10 +462,10 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 			continue;
 		}
 
-		const auto argument = (directive->getArguments() != nullptr && directive->getArguments()->size() == 1)
-			? directive->getArguments()->front().get()
+		const auto argument = (directive->children.back()->is<peg::arguments>() && directive->children.back()->children.size() == 1)
+			? directive->children.back()->children.front().get()
 			: nullptr;
-		const std::string argumentName((argument != nullptr) ? argument->getName().getValue() : "");
+		const std::string argumentName((argument != nullptr) ? argument->children.front()->content() : "");
 
 		if (argumentName != "if")
 		{
@@ -362,34 +480,33 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<ast::Directi
 
 			if (argument != nullptr)
 			{
-				error << " line: " << argument->getLocation().begin.line
-					<< " column: " << argument->getLocation().begin.column;
+				auto position = argument->begin();
+
+				error << " line: " << position.line
+					<< " column: " << position.byte_in_line;
 			}
 
 			throw schema_exception({ error.str() });
 		}
 
-		ValueVisitor visitor(_variables);
-
-		argument->getValue().accept(&visitor);
-
-		auto value = visitor.getValue();
-
-		if (!value.is_boolean())
+		if (argument->children.back()->is<peg::true_keyword>())
 		{
+			return skip;
+		}
+		else if (argument->children.back()->is<peg::false_keyword>())
+		{
+			return !skip;
+		}
+		else
+		{
+			auto position = argument->begin();
 			std::ostringstream error;
 
-			error << "Invalid argument to directive: " << name
-				<< " name: if line: " << argument->getLocation().begin.line
-				<< " column: " << argument->getLocation().begin.column;
+			error << "Unknown argument to directive: " << name
+				<< " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
-		}
-
-		if (value.as_bool() == skip)
-		{
-			// Skip this item
-			return true;
 		}
 	}
 
@@ -407,93 +524,125 @@ web::json::value ValueVisitor::getValue()
 	return result;
 }
 
-bool ValueVisitor::visitVariable(const ast::Variable& variable)
+void ValueVisitor::visit(const peg::ast_node& value)
 {
-	const std::string name(variable.getName().getValue());
+	if (value.is<peg::variable_value>())
+	{
+		visitVariable(value);
+	}
+	else if (value.is<peg::integer_value>())
+	{
+		visitIntValue(value);
+	}
+	else if (value.is<peg::float_value>())
+	{
+		visitFloatValue(value);
+	}
+	else if (value.is<peg::string_value>())
+	{
+		visitStringValue(value);
+	}
+	else if (value.is<peg::true_keyword>()
+		|| value.is<peg::false_keyword>())
+	{
+		visitBooleanValue(value);
+	}
+	else if (value.is<peg::null_keyword>())
+	{
+		visitNullValue(value);
+	}
+	else if (value.is<peg::enum_value>())
+	{
+		visitEnumValue(value);
+	}
+	else if (value.is<peg::list_value>())
+	{
+		visitListValue(value);
+	}
+	else if (value.is<peg::object_value>())
+	{
+		visitObjectValue(value);
+	}
+}
+
+void ValueVisitor::visitVariable(const peg::ast_node& variable)
+{
+	const std::string name(variable.content().c_str() + 1);
 	auto itr = _variables.find(utility::conversions::to_string_t(name));
 
 	if (itr == _variables.cend())
 	{
+		auto position = variable.begin();
 		std::ostringstream error;
 
 		error << "Unknown variable name: " << name
-			<< " line: " << variable.getLocation().begin.line
-			<< " column: " << variable.getLocation().begin.column;
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
 
 		throw schema_exception({ error.str() });
 	}
 
 	_value = itr->second;
-
-	return false;
 }
 
-bool ValueVisitor::visitIntValue(const ast::IntValue& intValue)
+void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atoi(intValue.getValue()));
-	return false;
+	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
 }
 
-bool ValueVisitor::visitFloatValue(const ast::FloatValue& floatValue)
+void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.getValue()));
-	return false;
+	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
 }
 
-bool ValueVisitor::visitStringValue(const ast::StringValue& stringValue)
+void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.getValue()));
-	return false;
+	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
 }
 
-bool ValueVisitor::visitBooleanValue(const ast::BooleanValue& booleanValue)
+void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value = web::json::value::boolean(booleanValue.getValue());
-	return false;
+	_value = web::json::value::boolean(booleanValue.is<peg::true_keyword>());
 }
 
-bool ValueVisitor::visitNullValue(const ast::NullValue& nullValue)
+void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
 	_value = web::json::value::null();
-	return false;
 }
 
-bool ValueVisitor::visitEnumValue(const ast::EnumValue& enumValue)
+void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.getValue()));
-	return false;
+	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
 }
 
-bool ValueVisitor::visitListValue(const ast::ListValue& listValue)
+void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.getValues().size());
+	_value = web::json::value::array(listValue.children.size());
 
-	std::transform(listValue.getValues().cbegin(), listValue.getValues().cend(), _value.as_array().begin(),
-		[this](const std::unique_ptr<ast::Value>& value)
+	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
+		[this](const std::unique_ptr<peg::ast_node>& value)
 	{
 		ValueVisitor visitor(_variables);
 
-		value->accept(&visitor);
+		visitor.visit(*value->children.back());
+
 		return visitor.getValue();
 	});
-
-	return false;
 }
 
-bool ValueVisitor::visitObjectValue(const ast::ObjectValue& objectValue)
+void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
 	_value = web::json::value::object(true);
 
-	for (const auto& field : objectValue.getFields())
+	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->getName().getValue());
+		const std::string name(field->children.front()->content());
 		ValueVisitor visitor(_variables);
 
-		field->getValue().accept(&visitor);
+		visitor.visit(*field->children.back());
+
 		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
 	}
-
-	return false;
 }
 
 FragmentDefinitionVisitor::FragmentDefinitionVisitor()
@@ -506,10 +655,9 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 	return result;
 }
 
-bool FragmentDefinitionVisitor::visitFragmentDefinition(const ast::FragmentDefinition& fragmentDefinition)
+void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.getName().getValue(), Fragment(fragmentDefinition) });
-	return false;
+	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
 OperationDefinitionVisitor::OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const web::json::object& variables, const FragmentMap& fragments)
@@ -551,22 +699,30 @@ web::json::value OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDefinition& operationDefinition)
+void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 {
-	std::string operation(operationDefinition.getOperation());
-	const std::string name((operationDefinition.getName() != nullptr) ? operationDefinition.getName()->getValue() : "");
-	const yy::location& location = name.empty() ? operationDefinition.getLocation() : operationDefinition.getName()->getLocation();
+	auto position = operationDefinition.begin();
+	auto operation = operationDefinition.children.front()->is<peg::operation_type>()
+		? operationDefinition.children.front()->content()
+		: std::string("query");
+	std::string name;
+
+	peg::for_each_child<peg::operation_name>(operationDefinition,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+		return false;
+	});
+
+	if (!_operationName.empty()
+		&& name != _operationName)
+	{
+		// Skip the operations that don't match the name
+		return;
+	}
 
 	try
 	{
-		if (!_operationName.empty()
-			&& name != _operationName)
-		{
-			// Skip the operations that don't match the name
-			return false;
-		}
-
-
 		if (!_result.is_null())
 		{
 			std::ostringstream error;
@@ -585,8 +741,8 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 				error << " name: " << name;
 			}
 
-			error << " line: " << location.begin.line
-				<< " column: " << location.begin.column;
+			error << " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
 		}
@@ -604,37 +760,42 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 				error << " name: " << name;
 			}
 
-			error << " line: " << location.begin.line
-				<< " column: " << location.begin.column;
+			error << " line: " << position.line
+				<< " column: " << position.byte_in_line;
 
 			throw schema_exception({ error.str() });
 		}
 
 		auto operationVariables = web::json::value::object();
 
-		if (operationDefinition.getVariableDefinitions() != nullptr)
+		peg::for_each_child<peg::variable_definitions>(operationDefinition,
+			[this, &operationVariables](const peg::ast_node& child)
 		{
-			for (const auto& variable : *operationDefinition.getVariableDefinitions())
+			for (const auto& variable : child.children)
 			{
-				auto nameVar = utility::conversions::to_string_t(variable->getVariable().getName().getValue());
+				const auto& nameNode = *variable->children.front();
+				const auto& defaultValueNode = *variable->children.back();
+				auto nameVar = utility::conversions::to_string_t(nameNode.content().c_str() + 1);
 				auto itrVar = _variables.find(nameVar);
 
 				if (itrVar != _variables.cend())
 				{
 					operationVariables[itrVar->first] = itrVar->second;
 				}
-				else if (variable->getDefaultValue() != nullptr)
+				else if (defaultValueNode.is<peg::default_value>())
 				{
 					ValueVisitor visitor(_variables);
 
-					variable->getDefaultValue()->accept(&visitor);
+					visitor.visit(*defaultValueNode.children.front());
 					operationVariables[std::move(nameVar)] = visitor.getValue();
 				}
 			}
-		}
+
+			return false;
+		});
 
 		_result = web::json::value::object({
-			{ _XPLATSTR("data"), itr->second->resolve(operationDefinition.getSelectionSet(), _fragments, operationVariables.as_object()) }
+			{ _XPLATSTR("data"), itr->second->resolve(*operationDefinition.children.back(), _fragments, operationVariables.as_object()) }
 			}, true);
 	}
 	catch (const schema_exception& ex)
@@ -644,8 +805,6 @@ bool OperationDefinitionVisitor::visitOperationDefinition(const ast::OperationDe
 			{ _XPLATSTR("errors"), ex.getErrors() }
 			}, true);
 	}
-
-	return false;
 }
 
 } /* namespace service */

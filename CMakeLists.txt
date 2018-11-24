@@ -9,10 +9,14 @@ if(WIN32)
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
+add_library(graphqlpeg GraphQLTree.cpp)
 add_library(graphqlservice GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
 add_executable(schemagen SchemaGenerator.cpp)
 
-find_library(GRAPHQLPARSER graphqlparser)
+find_package(pegtl CONFIG REQUIRED)
+
+target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
+target_link_libraries(graphqlpeg taocpp::pegtl)
 
 find_package(cpprestsdk REQUIRED)
 set(CPPRESTSDK cpprestsdk::cpprest)
@@ -23,8 +27,8 @@ if(UNIX)
 endif()
 
 target_include_directories(graphqlservice INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlservice ${CPPRESTSDK} ${GRAPHQLPARSER})
-target_link_libraries(schemagen ${CPPRESTSDK} ${GRAPHQLPARSER})
+target_link_libraries(graphqlservice ${CPPRESTSDK} graphqlpeg)
+target_link_libraries(schemagen ${CPPRESTSDK} graphqlpeg)
 
 add_custom_command(
   OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
@@ -34,6 +38,7 @@ add_custom_command(
 )
 
 if(UNIX)
+  target_compile_options(graphqlpeg PRIVATE -std=c++11)
   target_compile_options(graphqlservice PRIVATE -std=c++11)
   target_compile_options(schemagen PRIVATE -std=c++11)
 endif()
@@ -56,7 +61,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     target_link_libraries(todaygraphql
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
       graphqlservice)
     target_include_directories(todaygraphql SYSTEM PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
@@ -64,7 +68,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     target_link_libraries(test_today
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
+	  graphqlpeg
       graphqlservice
       todaygraphql)
     target_include_directories(test_today SYSTEM PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
@@ -74,7 +78,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     find_package(GTest REQUIRED)
     target_link_libraries(tests
       ${CPPRESTSDK}
-      ${GRAPHQLPARSER}
+	  graphqlpeg
       graphqlservice
       todaygraphql
       GTest::GTest
@@ -96,18 +100,18 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   endif()
 endif()
 
-install(TARGETS graphqlservice schemagen
+install(TARGETS graphqlpeg graphqlservice schemagen
   EXPORT cppgraphqlgen-config
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-install(FILES GraphQLService.h Introspection.h IntrospectionSchema.h
+install(FILES GraphQLService.h GraphQLTree.h Introspection.h IntrospectionSchema.h
   DESTINATION include/graphqlservice)
 
 if(WIN32)
   set(GRAPHQLSERVICE_DIR $<TARGET_FILE_DIR:graphqlservice>)
-  install(FILES ${GRAPHQLSERVICE_DIR}/graphqlservice.lib
+  install(FILES ${GRAPHQLSERVICE_DIR}/graphqlservice.lib  ${GRAPHQLSERVICE_DIR}/graphqlpeg.lib
     DESTINATION lib)
 endif()
 

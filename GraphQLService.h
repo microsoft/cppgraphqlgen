@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "GraphQLTree.h"
+
 #include <memory>
 #include <string>
 #include <sstream>
@@ -13,10 +15,9 @@
 #include <exception>
 #include <type_traits>
 
-#include <graphqlparser/Ast.h>
-#include <graphqlparser/AstVisitor.h>
-
 #include <cpprest/json.h>
+
+#include <tao/pegtl/contrib/parse_tree.hpp>
 
 namespace facebook {
 namespace graphql {
@@ -40,15 +41,15 @@ private:
 class Fragment
 {
 public:
-	explicit Fragment(const ast::FragmentDefinition& fragmentDefinition);
+	explicit Fragment(const peg::ast_node& fragmentDefinition);
 
 	const std::string& getType() const;
-	const ast::SelectionSet& getSelection() const;
+	const peg::ast_node& getSelection() const;
 
 private:
 	std::string _type;
 
-	const ast::SelectionSet& _selection;
+	const peg::ast_node& _selection;
 };
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
@@ -61,7 +62,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 struct ResolverParams
 {
 	const web::json::object& arguments;
-	const ast::SelectionSet* selection;
+	const peg::ast_node* selection;
 	const FragmentMap& fragments;
 	const web::json::object& variables;
 };
@@ -243,7 +244,7 @@ class Object : public std::enable_shared_from_this<Object>
 public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 
-	web::json::value resolve(const ast::SelectionSet& selection, const FragmentMap& fragments, const web::json::object& variables) const;
+	web::json::value resolve(const peg::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const;
 
 private:
 	TypeNames _typeNames;
@@ -372,7 +373,7 @@ class Request : public std::enable_shared_from_this<Request>
 public:
 	explicit Request(TypeMap&& operationTypes);
 
-	web::json::value resolve(const ast::Node& document, const std::string& operationName, const web::json::object& variables) const;
+	web::json::value resolve(const peg::ast_node& root, const std::string& operationName, const web::json::object& variables) const;
 
 private:
 	TypeMap _operations;
@@ -380,19 +381,21 @@ private:
 
 // SelectionVisitor visits the AST and resolves a field or fragment, unless its skipped by
 // a directive or type condition.
-class SelectionVisitor : public ast::visitor::AstVisitor
+class SelectionVisitor
 {
 public:
 	SelectionVisitor(const FragmentMap& fragments, const web::json::object& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
+	void visit(const peg::ast_node& selection);
+
 	web::json::value getValues();
 
-	bool visitField(const ast::Field& field) override;
-	bool visitFragmentSpread(const ast::FragmentSpread &fragmentSpread) override;
-	bool visitInlineFragment(const ast::InlineFragment &inlineFragment) override;
-
 private:
-	bool shouldSkip(const std::vector<std::unique_ptr<ast::Directive>>* directives) const;
+	bool shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const;
+
+	void visitField(const peg::ast_node& field);
+	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
+	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
 	const FragmentMap& _fragments;
 	const web::json::object& _variables;
@@ -403,38 +406,40 @@ private:
 
 // ValueVisitor visits the AST and builds a JSON representation of any value
 // hardcoded or referencing a variable in an operation.
-class ValueVisitor : public ast::visitor::AstVisitor
+class ValueVisitor
 {
 public:
 	ValueVisitor(const web::json::object& variables);
 
+	void visit(const peg::ast_node& value);
+
 	web::json::value getValue();
 
-	bool visitVariable(const ast::Variable& variable) override;
-	bool visitIntValue(const ast::IntValue& intValue) override;
-	bool visitFloatValue(const ast::FloatValue& floatValue) override;
-	bool visitStringValue(const ast::StringValue& stringValue) override;
-	bool visitBooleanValue(const ast::BooleanValue& booleanValue) override;
-	bool visitNullValue(const ast::NullValue& nullValue) override;
-	bool visitEnumValue(const ast::EnumValue& enumValue) override;
-	bool visitListValue(const ast::ListValue& listValue) override;
-	bool visitObjectValue(const ast::ObjectValue& objectValue) override;
-
 private:
+	void visitVariable(const peg::ast_node& variable);
+	void visitIntValue(const peg::ast_node& intValue);
+	void visitFloatValue(const peg::ast_node& floatValue);
+	void visitStringValue(const peg::ast_node& stringValue);
+	void visitBooleanValue(const peg::ast_node& booleanValue);
+	void visitNullValue(const peg::ast_node& nullValue);
+	void visitEnumValue(const peg::ast_node& enumValue);
+	void visitListValue(const peg::ast_node& listValue);
+	void visitObjectValue(const peg::ast_node& objectValue);
+
 	const web::json::object& _variables;
 	web::json::value _value;
 };
 
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment
 // definitions in the document.
-class FragmentDefinitionVisitor : public ast::visitor::AstVisitor
+class FragmentDefinitionVisitor
 {
 public:
 	FragmentDefinitionVisitor();
 
 	FragmentMap getFragments();
 
-	bool visitFragmentDefinition(const ast::FragmentDefinition& fragmentDefinition) override;
+	void visit(const peg::ast_node& fragmentDefinition);
 
 private:
 	FragmentMap _fragments;
@@ -442,14 +447,14 @@ private:
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
 // operation name.
-class OperationDefinitionVisitor : public ast::visitor::AstVisitor
+class OperationDefinitionVisitor
 {
 public:
 	OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const web::json::object& variables, const FragmentMap& fragments);
 
 	web::json::value getValue();
 
-	bool visitOperationDefinition(const ast::OperationDefinition& operationDefinition) override;
+	void visit(const peg::ast_node& operationDefinition);
 
 private:
 	const TypeMap& _operations;

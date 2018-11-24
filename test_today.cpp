@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 
 #include "Today.h"
+#include "GraphQLTree.h"
 
-#include <graphqlparser/GraphQLParser.h>
-
-#include <cstdio>
-#include <cerrno>
-#include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <cstdio>
 
 using namespace facebook::graphql;
 
@@ -57,48 +55,47 @@ int main(int argc, char** argv)
 
 	std::cout << "Created the service..." << std::endl;
 
-	FILE* in = stdin;
-
-	if (argc > 1)
+	try
 	{
-		in = std::fopen(argv[1], "r");
+		std::string input;
+		std::unique_ptr<tao::pegtl::file_input<>> file;
+		std::unique_ptr<peg::ast_node> ast;
 
-		if (nullptr == in)
+		if (argc > 1)
 		{
-			std::cerr << "Could not open the file: " << argv[1] << std::endl;
-			std::cerr << "Error: " << std::strerror(errno) << std::endl;
-			return 1;
-		}
-	}
-
-	const char* error = nullptr;
-	auto ast = parseFile(in, &error);
-
-	if (argc > 1)
-	{
-		std::fclose(in);
-	}
-
-	if (!ast)
-	{
-		if (nullptr == error)
-		{
-			std::cerr << "Unknown error!";
+			file.reset(new tao::pegtl::file_input<>(argv[1]));
+			ast = peg::parseFile(std::move(*file));
 		}
 		else
 		{
-			std::cerr << error;
-			free(const_cast<char*>(error));
+			std::string line;
+
+			while (std::getline(std::cin, line))
+			{
+				input.append(line);
+			}
+
+			ast = peg::parseString(input.c_str());
 		}
-		std::cerr << std::endl;
+
+		if (!ast)
+		{
+			std::cerr << "Unknown error!" << std::endl;
+			std::cerr << std::endl;
+			return 1;
+		}
+
+		std::cout << "Executing query..." << std::endl;
+
+		utility::ostringstream_t output;
+		output << service->resolve(*ast, ((argc > 2) ? argv[2] : ""), web::json::value::object().as_object());
+		std::cout << utility::conversions::to_utf8string(output.str()) << std::endl;
+	}
+	catch (const std::runtime_error& ex)
+	{
+		std::cerr << ex.what() << std::endl;
 		return 1;
 	}
-
-	std::cout << "Executing query..." << std::endl;
-
-	utility::ostringstream_t output;
-	output << service->resolve(*ast, ((argc > 2) ? argv[2] : ""), web::json::value::object().as_object());
-	std::cout << utility::conversions::to_utf8string(output.str()) << std::endl;
 
 	return 0;
 }

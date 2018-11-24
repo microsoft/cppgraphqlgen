@@ -16,25 +16,25 @@ I've tested this on Windows with Visual Studio 2017 and Linux using an Ubuntu in
 
 ## Software dependencies
 
-I picked [cpprestsdk](https://github.com/Microsoft/cpprestsdk) for the JSON support, [libgraphqlparser](https://github.com/graphql/libgraphqlparser) for the GraphQL parsing, and [Google Test](https://github.com/google/googletest) for the unit testing framework. The build for all of these uses [CMake](http://www.cmake.org/).
+I picked a few projects as dependencies:
 
-You'll need to have all 3 projects installed on your system along with CMake to build this project.
+- JSON support: Microsoft's [cpprestsdk](https://github.com/Microsoft/cpprestsdk).
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection.
+- Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
+
+The build for all of these uses [CMake](http://www.cmake.org/). You'll need to have all 3 projects installed on your system along with CMake to build this project.
 
 ### Using vcpkg
 
-Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows. The Windows [installation instructions](https://github.com/Microsoft/vcpkg/blob/master/README.md) for [cpprestsdk](https://github.com/Microsoft/cpprestsdk) recommend it, and if you add the port I did for [graphqlparser](https://github.com/Microsoft/vcpkg/pull/3953) you can get both of them with this tool.
+Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows. The Windows [installation instructions](https://github.com/Microsoft/vcpkg/blob/master/README.md) for [cpprestsdk](https://github.com/Microsoft/cpprestsdk) recommend it, and it has a port for `pegtl` which satisfies that dependency as well.
 
-This approach works well on Linux as well, graphqlparser has been merged into the ports collection.
+This approach works well on Linux. I've done all of my testing for Linux with WSL.
 
 ### Windows
 
-The [cpprestsdk](https://github.com/Microsoft/cpprestsdk) package should also be available in NuGet packages if you don't want to use [vcpkg](https://github.com/Microsoft/vcpkg).
-
-However, the [libgraphqlparser](https://github.com/graphql/libgraphqlparser) project does not officially support building on Windows yet. I submitted another [pull request](https://github.com/graphql/libgraphqlparser/pull/67) to add that.
+All of these packages dependencies should also be available in NuGet packages if you don't want to use [vcpkg](https://github.com/Microsoft/vcpkg). 
 
 ### Linux
-
-Clone [libgraphqlparser](https://github.com/graphql/libgraphqlparser) and follow the installation instructions in the [README](https://github.com/graphql/libgraphqlparser/blob/master/README.md#building-libgraphqlparser). At some point it may prompt you to install additional components like Google Test.
 
 Follow the Linux [installation instructions](https://github.com/Microsoft/cpprestsdk/blob/master/README.md#getting-started) for cpprestsdk. Again, it may pull in more dependencies.
 

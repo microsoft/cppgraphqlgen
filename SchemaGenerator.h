@@ -7,6 +7,7 @@
 #include <cstdio>
 
 #include "GraphQLService.h"
+#include "GraphQLTree.h"
 
 namespace facebook {
 namespace graphql {
@@ -160,42 +161,46 @@ struct OperationType
 
 using OperationTypeList = std::vector<OperationType>;
 
-class Generator : private ast::visitor::AstVisitor
+class Generator
 {
 public:
 	// Initialize the generator with the introspection schema.
 	explicit Generator();
 
 	// Initialize the generator with the GraphQL schema and output parameters.
-	explicit Generator(FILE* schemaDefinition, std::string filenamePrefix, std::string schemaNamespace);
+	explicit Generator(std::string schemaFileName, std::string filenamePrefix, std::string schemaNamespace);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
 
 private:
-	bool visitSchemaDefinition(const ast::SchemaDefinition& schemaDefinition) override;
-	bool visitScalarTypeDefinition(const ast::ScalarTypeDefinition& scalarTypeDefinition) override;
-	bool visitEnumTypeDefinition(const ast::EnumTypeDefinition& enumTypeDefinition) override;
-	bool visitInputObjectTypeDefinition(const ast::InputObjectTypeDefinition& inputObjectTypeDefinition) override;
-	bool visitUnionTypeDefinition(const ast::UnionTypeDefinition& unionTypeDefinition) override;
-	bool visitInterfaceTypeDefinition(const ast::InterfaceTypeDefinition& interfaceTypeDefinition) override;
-	bool visitObjectTypeDefinition(const ast::ObjectTypeDefinition& objectTypeDefinition) override;
+	void visitDefinition(const peg::ast_node& definition);
 
-	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<ast::FieldDefinition>>& fields);
-	static InputFieldList getInputFields(const std::vector<std::unique_ptr<ast::InputValueDefinition>>& fields);
+	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
+	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
+	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
+	void visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition);
+	void visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition);
+	void visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition);
+	void visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition);
+
+	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
+	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 
 	// Recursively visit a Type node until we reach a NamedType and we've
 	// taken stock of all of the modifier wrappers.
-	class TypeVisitor : public ast::visitor::AstVisitor
+	class TypeVisitor
 	{
 	public:
-		bool visitNamedType(const ast::NamedType& namedType) override;
-		bool visitListType(const ast::ListType& listType) override;
-		bool visitNonNullType(const ast::NonNullType& nonNullType) override;
-
 		std::pair<std::string, TypeModifierStack> getType();
 
+		void visit(const peg::ast_node& typeName);
+
 	private:
+		void visitNamedType(const peg::ast_node& namedType);
+		void visitListType(const peg::ast_node& listType);
+		void visitNonNullType(const peg::ast_node& nonNullType);
+
 		std::string _type;
 		TypeModifierStack _modifiers;
 		bool _nonNull = false;
@@ -203,21 +208,23 @@ private:
 
 	// Recursively visit a Value node representing the default value on an input field
 	// and build a JSON representation of the hardcoded value.
-	class DefaultValueVisitor : public ast::visitor::AstVisitor
+	class DefaultValueVisitor
 	{
 	public:
-		bool visitIntValue(const ast::IntValue& intValue) override;
-		bool visitFloatValue(const ast::FloatValue& floatValue) override;
-		bool visitStringValue(const ast::StringValue& stringValue) override;
-		bool visitBooleanValue(const ast::BooleanValue& booleanValue) override;
-		bool visitNullValue(const ast::NullValue& nullValue) override;
-		bool visitEnumValue(const ast::EnumValue& enumValue) override;
-		bool visitListValue(const ast::ListValue& listValue) override;
-		bool visitObjectValue(const ast::ObjectValue& objectValue) override;
-
 		web::json::value getValue();
 
+		void visit(const peg::ast_node& value);
+
 	private:
+		void visitIntValue(const peg::ast_node& intValue);
+		void visitFloatValue(const peg::ast_node& floatValue);
+		void visitStringValue(const peg::ast_node& stringValue);
+		void visitBooleanValue(const peg::ast_node& booleanValue);
+		void visitNullValue(const peg::ast_node& nullValue);
+		void visitEnumValue(const peg::ast_node& enumValue);
+		void visitListValue(const peg::ast_node& listValue);
+		void visitObjectValue(const peg::ast_node& objectValue);
+
 		web::json::value _value;
 	};
 

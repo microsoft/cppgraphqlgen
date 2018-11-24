@@ -4,10 +4,15 @@
 #include <gtest/gtest.h>
 
 #include "Today.h"
+#include "GraphQLTree.h"
+#include "GraphQLGrammar.h"
 
-#include <graphqlparser/GraphQLParser.h>
+#include <tao/pegtl/analyze.hpp>
 
 using namespace facebook::graphql;
+using namespace facebook::graphql::peg;
+
+using namespace tao::pegtl;
 
 class TodayServiceCase : public ::testing::Test
 {
@@ -21,11 +26,11 @@ protected:
 		std::string fakeTaskId("fakeTaskId");
 		_fakeTaskId.resize(fakeTaskId.size());
 		std::copy(fakeTaskId.cbegin(), fakeTaskId.cend(), _fakeTaskId.begin());
-		
+
 		std::string fakeFolderId("fakeFolderId");
 		_fakeFolderId.resize(fakeFolderId.size());
 		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
-		
+
 		auto query = std::make_shared<today::Query>(
 			[this]() -> std::vector<std::shared_ptr<today::Appointment>>
 		{
@@ -46,7 +51,7 @@ protected:
 			return std::make_shared<today::CompleteTaskPayload>(
 				std::make_shared<today::Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
 				std::move(input.clientMutationId)
-			);
+				);
 		});
 		auto subscription = std::make_shared<today::Subscription>();
 
@@ -65,8 +70,7 @@ protected:
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql(
+	auto ast = peg::parseString(R"gql(
 		query Everything {
 			appointments {
 				edges {
@@ -96,18 +100,11 @@ TEST_F(TodayServiceCase, QueryEverything)
 					}
 				}
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "Everything", web::json::value::object().as_object());
-	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -164,8 +161,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 TEST_F(TodayServiceCase, QueryAppointments)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			appointments {
 				edges {
 					node {
@@ -176,18 +172,11 @@ TEST_F(TodayServiceCase, QueryAppointments)
 					}
 				}
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_EQ(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -224,8 +213,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 
 TEST_F(TodayServiceCase, QueryTasks)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			tasks {
 				edges {
 					node {
@@ -235,18 +223,11 @@ TEST_F(TodayServiceCase, QueryTasks)
 					}
 				}
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -282,8 +263,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 
 TEST_F(TodayServiceCase, QueryUnreadCounts)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			unreadCounts {
 				edges {
 					node {
@@ -293,18 +273,11 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 					}
 				}
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
-	EXPECT_GE(1, _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(1, _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(1, _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
@@ -340,8 +313,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 
 TEST_F(TodayServiceCase, MutateCompleteTask)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql(mutation {
+	auto ast = peg::parseString(R"gql(mutation {
 			completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
 				completedTask: task {
 					completedTaskId: id
@@ -350,14 +322,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 				}
 				clientMutationId
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 
 	try
@@ -396,8 +361,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 TEST_F(TodayServiceCase, Introspection)
 {
-	const char* error = nullptr;
-	auto ast = parseString(R"gql({
+	auto ast = peg::parseString(R"gql({
 			__schema {
 				types {
 					kind
@@ -428,14 +392,7 @@ TEST_F(TodayServiceCase, Introspection)
 					name
 				}
 			}
-		})gql", &error);
-	EXPECT_EQ(nullptr, error) << error;
-	if (nullptr != error)
-	{
-		free(const_cast<char*>(error));
-		return;
-	}
-
+		})gql");
 	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
 
 	try
@@ -641,3 +598,385 @@ TEST(ArgumentsCase, TaskStateEnum)
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
 }
 
+TEST(PegtlCase, ParseKitchenSinkQuery)
+{
+	memory_input<> input(R"gql(
+		# Copyright (c) 2015-present, Facebook, Inc.
+		#
+		# This source code is licensed under the MIT license found in the
+		# LICENSE file in the root directory of this source tree.
+
+		query queryName($foo: ComplexType, $site: Site = MOBILE) {
+		  whoever123is: node(id: [123, 456]) {
+			id ,
+			... on User @defer {
+			  field2 {
+				id ,
+				alias: field1(first:10, after:$foo,) @include(if: $foo) {
+				  id,
+				  ...frag
+				}
+			  }
+			}
+			... @skip(unless: $foo) {
+			  id
+			}
+			... {
+			  id
+			}
+		  }
+		}
+
+		mutation likeStory {
+		  like(story: 123) @defer {
+			story {
+			  id
+			}
+		  }
+		}
+
+		subscription StoryLikeSubscription($input: StoryLikeSubscribeInput) {
+		  storyLikeSubscribe(input: $input) {
+			story {
+			  likers {
+				count
+			  }
+			  likeSentence {
+				text
+			  }
+			}
+		  }
+		}
+
+		fragment frag on Friend {
+		  foo(size: $size, bar: $b, obj: {key: "value", block: """
+
+			  block string uses \"""
+
+		  """})
+		}
+
+		{
+		  unnamed(truthy: true, falsey: false, nullish: null),
+		  query
+		})gql", "ParseKitchenSinkQuery");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlCase, ParseKitchenSinkSchema)
+{
+	memory_input<> input(R"gql(
+		# Copyright (c) 2015-present, Facebook, Inc.
+		#
+		# This source code is licensed under the MIT license found in the
+		# LICENSE file in the root directory of this source tree.
+
+		# (this line is padding to maintain test line numbers)
+
+		schema {
+		  query: QueryType
+		  mutation: MutationType
+		}
+
+		type Foo implements Bar {
+		  one: Type
+		  two(argument: InputType!): Type
+		  three(argument: InputType, other: String): Int
+		  four(argument: String = "string"): String
+		  five(argument: [String] = ["string", "string"]): String
+		  six(argument: InputType = {key: "value"}): Type
+		  seven(argument: Int = null): Type
+		}
+
+		type AnnotatedObject @onObject(arg: "value") {
+		  annotatedField(arg: Type = "default" @onArg): Type @onField
+		}
+
+		interface Bar {
+		  one: Type
+		  four(argument: String = "string"): String
+		}
+
+		interface AnnotatedInterface @onInterface {
+		  annotatedField(arg: Type @onArg): Type @onField
+		}
+
+		union Feed = Story | Article | Advert
+
+		union AnnotatedUnion @onUnion = A | B
+
+		scalar CustomScalar
+
+		scalar AnnotatedScalar @onScalar
+
+		enum Site {
+		  DESKTOP
+		  MOBILE
+		}
+
+		enum AnnotatedEnum @onEnum {
+		  ANNOTATED_VALUE @onEnumValue
+		  OTHER_VALUE
+		}
+
+		input InputType {
+		  key: String!
+		  answer: Int = 42
+		}
+
+		input AnnotatedInput @onInputObjectType {
+		  annotatedField: Type @onField
+		}
+
+		extend type Foo {
+		  seven(argument: [String]): Type
+		}
+
+		# NOTE: out-of-spec test cases commented out until the spec is clarified; see
+		# https://github.com/graphql/graphql-js/issues/650 .
+		# extend type Foo @onType {}
+
+		#type NoFields {}
+
+		directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+		directive @include(if: Boolean!)
+		  on FIELD
+		   | FRAGMENT_SPREAD
+		   | INLINE_FRAGMENT)gql", "ParseKitchenSinkSchema");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlCase, ParseKitchenSink)
+{
+	memory_input<> input(R"gql(
+		# Copyright (c) 2015-present, Facebook, Inc.
+		#
+		# This source code is licensed under the MIT license found in the
+		# LICENSE file in the root directory of this source tree.
+
+		query queryName($foo: ComplexType, $site: Site = MOBILE) {
+		  whoever123is: node(id: [123, 456]) {
+			id ,
+			... on User @defer {
+			  field2 {
+				id ,
+				alias: field1(first:10, after:$foo,) @include(if: $foo) {
+				  id,
+				  ...frag
+				}
+			  }
+			}
+			... @skip(unless: $foo) {
+			  id
+			}
+			... {
+			  id
+			}
+		  }
+		}
+
+		mutation likeStory {
+		  like(story: 123) @defer {
+			story {
+			  id
+			}
+		  }
+		}
+
+		subscription StoryLikeSubscription($input: StoryLikeSubscribeInput) {
+		  storyLikeSubscribe(input: $input) {
+			story {
+			  likers {
+				count
+			  }
+			  likeSentence {
+				text
+			  }
+			}
+		  }
+		}
+
+		fragment frag on Friend {
+		  foo(size: $size, bar: $b, obj: {key: "value", block: """
+
+			  block string uses \"""
+
+		  """})
+		}
+
+		{
+		  unnamed(truthy: true, falsey: false, nullish: null),
+		  query
+		})gql", "ParseKitchenSinkSchema");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlCase, ParseTodayQuery)
+{
+	memory_input<> input(R"gql(
+		query Everything {
+			appointments {
+				edges {
+					node {
+						id
+						subject
+						when
+						isNow
+					}
+				}
+			}
+			tasks {
+				edges {
+					node {
+						id
+						title
+						isComplete
+					}
+				}
+			}
+			unreadCounts {
+				edges {
+					node {
+						id
+						name
+						unreadCount
+					}
+				}
+			}
+		})gql", "ParseTodayQuery");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlCase, ParseTodaySchema)
+{
+	memory_input<> input(R"gql(
+		# Copyright (c) Microsoft Corporation. All rights reserved.
+		# Licensed under the MIT License.
+
+		schema {
+			query: Query
+			mutation: Mutation
+			subscription: Subscription
+		}
+
+		scalar ItemCursor
+
+		type Query {
+			node(id: ID!) : Node
+
+			appointments(first: Int, after: ItemCursor, last: Int, before: ItemCursor): AppointmentConnection!
+			tasks(first: Int, after: ItemCursor, last: Int, before: ItemCursor): TaskConnection!
+			unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
+
+			appointmentsById(ids: [ID!]!) : [Appointment]!
+			tasksById(ids: [ID!]!): [Task]!
+			unreadCountsById(ids: [ID!]!): [Folder]!
+		}
+
+		interface Node {
+			id: ID!
+		}
+
+		type PageInfo {
+			hasNextPage: Boolean!
+			hasPreviousPage: Boolean!
+		}
+
+		type AppointmentEdge {
+			node: Appointment
+			cursor: ItemCursor!
+		}
+
+		type AppointmentConnection {
+			pageInfo: PageInfo!
+			edges: [AppointmentEdge]
+		}
+
+		type TaskEdge {
+			node: Task
+			cursor: ItemCursor!
+		}
+
+		type TaskConnection {
+			pageInfo: PageInfo!
+			edges: [TaskEdge]
+		}
+
+		type FolderEdge {
+			node: Folder
+			cursor: ItemCursor!
+		}
+
+		type FolderConnection {
+			pageInfo: PageInfo!
+			edges: [FolderEdge]
+		}
+
+		input CompleteTaskInput {
+			id: ID!
+			isComplete: Boolean = true
+			clientMutationId: String
+		}
+
+		type CompleteTaskPayload {
+			task: Task
+			clientMutationId: String
+		}
+
+		type Mutation {
+			completeTask(input: CompleteTaskInput!) : CompleteTaskPayload!
+		}
+
+		type Subscription {
+			nextAppointmentChange : Appointment
+		}
+
+		scalar DateTime
+
+		enum TaskState {
+			New
+			Started
+			Complete
+		}
+
+		type Appointment implements Node {
+			id: ID!
+			when: DateTime
+			subject: String
+			isNow: Boolean!
+		}
+
+		type Task implements Node {
+			id: ID!
+			title: String
+			isComplete: Boolean!
+		}
+
+		type Folder implements Node {
+			id: ID!
+			name: String
+			unreadCount: Int!
+		})gql", "ParseTodaySchema");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlCase, AnalyzeGrammar)
+{
+	ASSERT_EQ(0, analyze<document>(true)) << "there shuldn't be any infinite loops in the PEG version of the grammar";
+}
