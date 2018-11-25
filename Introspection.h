@@ -62,13 +62,16 @@ public:
 	std::shared_ptr<object::__Type> getOfType() const override;
 
 protected:
-	BaseType() = default;
+	BaseType(std::string description);
+
+private:
+	const std::string _description;
 };
 
 class ScalarType : public BaseType
 {
 public:
-	explicit ScalarType(std::string name);
+	explicit ScalarType(std::string name, std::string description);
 
 	// Accessors
 	__TypeKind getKind() const override;
@@ -81,7 +84,7 @@ private:
 class ObjectType : public BaseType
 {
 public:
-	explicit ObjectType(std::string name);
+	explicit ObjectType(std::string name, std::string description);
 
 	void AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces);
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
@@ -102,7 +105,7 @@ private:
 class InterfaceType : public BaseType
 {
 public:
-	explicit InterfaceType(std::string name);
+	explicit InterfaceType(std::string name, std::string description);
 
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
@@ -120,7 +123,7 @@ private:
 class UnionType : public BaseType
 {
 public:
-	explicit UnionType(std::string name);
+	explicit UnionType(std::string name, std::string description);
 
 	void AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes);
 
@@ -135,12 +138,18 @@ private:
 	std::vector<std::shared_ptr<object::__Type>> _possibleTypes;
 };
 
+struct EnumValueType
+{
+	std::string value;
+	std::string description;
+};
+
 class EnumType : public BaseType
 {
 public:
-	explicit EnumType(std::string name);
+	explicit EnumType(std::string name, std::string description);
 
-	void AddEnumValues(std::vector<std::string> enumValues);
+	void AddEnumValues(std::vector<EnumValueType> enumValues);
 
 	// Accessors
 	__TypeKind getKind() const override;
@@ -156,7 +165,7 @@ private:
 class InputObjectType : public BaseType
 {
 public:
-	explicit InputObjectType(std::string name);
+	explicit InputObjectType(std::string name, std::string description);
 
 	void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
@@ -188,7 +197,7 @@ private:
 class Field : public object::__Field
 {
 public:
-	explicit Field(std::string name, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
+	explicit Field(std::string name, std::string description, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
 
 	// Accessors
 	std::string getName() const override;
@@ -200,6 +209,7 @@ public:
 
 private:
 	const std::string _name;
+	const std::string _description;
 	const std::vector<std::shared_ptr<InputValue>> _args;
 	const std::shared_ptr<object::__Type> _type;
 };
@@ -207,7 +217,7 @@ private:
 class InputValue : public object::__InputValue
 {
 public:
-	explicit InputValue(std::string name, std::shared_ptr<object::__Type> type, const web::json::value& defaultValue);
+	explicit InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, const rapidjson::Value& defaultValue);
 
 	// Accessors
 	std::string getName() const override;
@@ -216,9 +226,10 @@ public:
 	std::unique_ptr<std::string> getDefaultValue() const override;
 
 private:
-	static std::string formatDefaultValue(const web::json::value& defaultValue) noexcept;
+	static std::string formatDefaultValue(const rapidjson::Value& defaultValue) noexcept;
 
 	const std::string _name;
+	const std::string _description;
 	const std::shared_ptr<object::__Type> _type;
 	const std::string _defaultValue;
 };
@@ -226,7 +237,7 @@ private:
 class EnumValue : public object::__EnumValue
 {
 public:
-	explicit EnumValue(std::string name);
+	explicit EnumValue(std::string name, std::string description);
 
 	// Accessors
 	std::string getName() const override;
@@ -236,6 +247,7 @@ public:
 
 private:
 	const std::string _name;
+	const std::string _description;
 };
 
 } /* namespace facebook */

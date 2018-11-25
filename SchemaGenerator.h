@@ -54,13 +54,26 @@ using TypeModifierStack = std::vector<service::TypeModifier>;
 // Scalar types are opaque to the generator, it's up to the service implementation
 // to handle parsing, validating, and serializing them. We just need to track which
 // scalar type names have been declared so we recognize the references.
-using ScalarTypeList = std::vector<std::string>;
+struct ScalarType
+{
+	std::string type;
+	std::string description;
+};
+
+using ScalarTypeList = std::vector<ScalarType>;
 
 // Enum types map a type name to a collection of valid string values.
+struct EnumValueType
+{
+	std::string value;
+	std::string description;
+};
+
 struct EnumType
 {
 	std::string type;
-	std::vector<std::string> values;
+	std::vector<EnumValueType> values;
+	std::string description;
 };
 
 using EnumTypeList = std::vector<EnumType>;
@@ -80,9 +93,10 @@ struct InputField
 {
 	std::string type;
 	std::string name;
-	web::json::value defaultValue;
+	rapidjson::Document defaultValue;
 	InputFieldType fieldType = InputFieldType::Builtin;
 	TypeModifierStack modifiers;
+	std::string description;
 };
 
 using InputFieldList = std::vector<InputField>;
@@ -91,6 +105,7 @@ struct InputType
 {
 	std::string type;
 	InputFieldList fields;
+	std::string description;
 };
 
 using InputTypeList = std::vector<InputType>;
@@ -100,6 +115,7 @@ struct UnionType
 {
 	std::string type;
 	std::vector<std::string> options;
+	std::string description;
 };
 
 using UnionTypeList = std::vector<UnionType>;
@@ -125,6 +141,7 @@ struct OutputField
 	InputFieldList arguments;
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
+	std::string description;
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -137,6 +154,7 @@ struct InterfaceType
 {
 	std::string type;
 	OutputFieldList fields;
+	std::string description;
 };
 
 using InterfaceTypeList = std::vector<InterfaceType>;
@@ -148,6 +166,7 @@ struct ObjectType
 	std::string type;
 	std::vector<std::string> interfaces;
 	OutputFieldList fields;
+	std::string description;
 };
 
 using ObjectTypeList = std::vector<ObjectType>;
@@ -211,7 +230,7 @@ private:
 	class DefaultValueVisitor
 	{
 	public:
-		web::json::value getValue();
+		rapidjson::Document getValue();
 
 		void visit(const peg::ast_node& value);
 
@@ -225,7 +244,7 @@ private:
 		void visitListValue(const peg::ast_node& listValue);
 		void visitObjectValue(const peg::ast_node& objectValue);
 
-		web::json::value _value;
+		rapidjson::Document _value;
 	};
 
 	bool validateSchema();

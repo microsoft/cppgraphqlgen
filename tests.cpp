@@ -9,10 +9,13 @@
 
 #include <tao/pegtl/analyze.hpp>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 using namespace facebook::graphql;
 using namespace facebook::graphql::peg;
 
-using namespace tao::pegtl;
+using namespace tao::graphqlpeg;
 
 class TodayServiceCase : public ::testing::Test
 {
@@ -101,61 +104,63 @@ TEST_F(TodayServiceCase, QueryEverything)
 				}
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "Everything", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "Everything", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
-
-		auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("appointments", data.as_object()).as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
+		
+		const auto appointments = service::ScalarArgument::require("appointments", data.GetObject());
+		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments.GetObject());
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].is_object()) << "appointment should be an object";
-		auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].as_object());
-		const web::json::object& appointment = appointmentNode.as_object();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointment)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointment)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointment)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointment)) << "isNow should match";
+		ASSERT_TRUE(appointmentEdges[0].IsObject()) << "appointment should be an object";
+		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].GetObject());
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode.GetObject())) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode.GetObject())) << "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode.GetObject())) << "isNow should match";
 
-		auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("tasks", data.as_object()).as_object());
+		const auto tasks = service::ScalarArgument::require("tasks", data.GetObject());
+		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks.GetObject());
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
-		ASSERT_TRUE(taskEdges[0].is_object()) << "task should be an object";
-		auto taskNode = service::ScalarArgument::require("node", taskEdges[0].as_object());
-		const web::json::object& task = taskNode.as_object();
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", task)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", task)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
+		ASSERT_TRUE(taskEdges[0].IsObject()) << "task should be an object";
+		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0].GetObject());
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode.GetObject())) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode.GetObject())) << "isComplete should match";
 
-		auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("unreadCounts", data.as_object()).as_object());
+		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data.GetObject());
+		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts.GetObject());
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].is_object()) << "unreadCount should be an object";
-		auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].as_object());
-		const web::json::object& folder = unreadCountNode.as_object();
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", folder)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", folder)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument::require("unreadCount", folder)) << "isComplete should match";
+		ASSERT_TRUE(unreadCountEdges[0].IsObject()) << "unreadCount should be an object";
+		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].GetObject());
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode.GetObject())) << "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode.GetObject())) << "unreadCount should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
@@ -173,41 +178,45 @@ TEST_F(TodayServiceCase, QueryAppointments)
 				}
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
 
-		auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("appointments", data.as_object()).as_object());
+		const auto appointments = service::ScalarArgument::require("appointments", data.GetObject());
+		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments.GetObject());
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].is_object()) << "appointment should be an object";
-		auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].as_object());
-		const web::json::object& appointment = appointmentNode.as_object();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointment)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointment)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointment)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointment)) << "isNow should match";
+		ASSERT_TRUE(appointmentEdges[0].IsObject()) << "appointment should be an object";
+		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0].GetObject());
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode.GetObject())) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode.GetObject())) << "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode.GetObject())) << "isNow should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
@@ -224,40 +233,44 @@ TEST_F(TodayServiceCase, QueryTasks)
 				}
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
 
-		auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("tasks", data.as_object()).as_object());
+		const auto tasks = service::ScalarArgument::require("tasks", data.GetObject());
+		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks.GetObject());
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
-		ASSERT_TRUE(taskEdges[0].is_object()) << "task should be an object";
-		auto taskNode = service::ScalarArgument::require("node", taskEdges[0].as_object());
-		const web::json::object& task = taskNode.as_object();
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", task)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", task)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
+		ASSERT_TRUE(taskEdges[0].IsObject()) << "task should be an object";
+		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0].GetObject());
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode.GetObject())) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode.GetObject())) << "isComplete should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
@@ -274,40 +287,44 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 				}
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
 
-		auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges",
-			service::ScalarArgument::require("unreadCounts", data.as_object()).as_object());
+		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data.GetObject());
+		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts.GetObject());
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].is_object()) << "unreadCount should be an object";
-		auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].as_object());
-		const web::json::object& folder = unreadCountNode.as_object();
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", folder)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", folder)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument::require("unreadCount", folder)) << "isComplete should match";
+		ASSERT_TRUE(unreadCountEdges[0].IsObject()) << "unreadCount should be an object";
+		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0].GetObject());
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", unreadCountNode.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode.GetObject())) << "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode.GetObject())) << "unreadCount should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
@@ -323,39 +340,44 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 				clientMutationId
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "", variables.GetObject());
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
 
-		auto completedTask = service::ScalarArgument::require("completedTask", data.as_object());
-		ASSERT_TRUE(completedTask.is_object()) << "payload should be an object";
+		const auto completedTask = service::ScalarArgument::require("completedTask", data.GetObject());
+		ASSERT_TRUE(completedTask.IsObject()) << "payload should be an object";
 
-		auto task = service::ScalarArgument::require("completedTask", completedTask.as_object());
-		EXPECT_TRUE(task.is_object()) << "should get back a task";
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task.as_object())) << "id should match in base64 encoding";
-		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task.as_object())) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task.as_object())) << "isComplete should match";
+		const auto task = service::ScalarArgument::require("completedTask", completedTask.GetObject());
+		EXPECT_TRUE(task.IsObject()) << "should get back a task";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task.GetObject())) << "id should match in base64 encoding";
+		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task.GetObject())) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task.GetObject())) << "isComplete should match";
 
-		auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask.as_object());
+		const auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask.GetObject());
 		EXPECT_EQ("Hi There!", clientMutationId) << "clientMutationId should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
@@ -393,57 +415,66 @@ TEST_F(TodayServiceCase, Introspection)
 				}
 			}
 		})gql");
-	auto result = _service->resolve(*ast, "", web::json::value::object().as_object());
+	const rapidjson::Document variables(rapidjson::Type::kObjectType);
+	const auto result = _service->resolve(*ast, "", variables.GetObject());
 
 	try
 	{
-		ASSERT_TRUE(result.is_object());
-		auto errorsItr = result.as_object().find(_XPLATSTR("errors"));
-		if (errorsItr != result.as_object().cend())
+		ASSERT_TRUE(result.IsObject());
+		auto errorsItr = result.FindMember("errors");
+		if (errorsItr != result.MemberEnd())
 		{
-			utility::ostringstream_t errors;
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-			errors << errorsItr->second;
-			FAIL() << utility::conversions::to_utf8string(errors.str());
+			errorsItr->value.Accept(writer);
+
+			FAIL() << buffer.GetString();
 		}
-		auto data = service::ScalarArgument::require("data", result.as_object());
-		auto schema = service::ScalarArgument::require("__schema", data.as_object());
-		auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema.as_object());
-		auto queryType = service::ScalarArgument::require("queryType", schema.as_object());
-		auto mutationType = service::ScalarArgument::require("mutationType", schema.as_object());
+		const auto data = service::ScalarArgument::require("data", result.GetObject());
+		const auto schema = service::ScalarArgument::require("__schema", data.GetObject());
+		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema.GetObject());
+		const auto queryType = service::ScalarArgument::require("queryType", schema.GetObject());
+		const auto mutationType = service::ScalarArgument::require("mutationType", schema.GetObject());
 
 		ASSERT_FALSE(types.empty());
-		ASSERT_TRUE(queryType.is_object());
-		ASSERT_TRUE(mutationType.is_object());
+		ASSERT_TRUE(queryType.IsObject());
+		ASSERT_TRUE(mutationType.IsObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 }
 
 TEST(ArgumentsCase, ListArgumentStrings)
 {
-	auto jsonListOfStrings = web::json::value::parse(_XPLATSTR(R"js({"value":[
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"value":[
 		"string1",
 		"string2",
 		"string3"
-	]})js"));
+	]})js");
+	const auto jsonListOfStrings = std::move(parsed);
 	std::vector<std::string> actual;
 
 	try
 	{
-		actual = service::StringArgument::require<service::TypeModifier::List>("value", jsonListOfStrings.as_object());
+		actual = service::StringArgument::require<service::TypeModifier::List>("value", jsonListOfStrings.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 
 	ASSERT_EQ(3, actual.size()) << "should get 3 entries";
@@ -454,25 +485,29 @@ TEST(ArgumentsCase, ListArgumentStrings)
 
 TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 {
-	auto jsonListOfStrings = web::json::value::parse(_XPLATSTR(R"js({"value":[
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"value":[
 		"string1",
 		null,
 		"string2",
 		"string3"
-	]})js"));
+	]})js");
+	const auto jsonListOfStrings = std::move(parsed);
 	bool caughtException = false;
 	std::string exceptionWhat;
 
 	try
 	{
-		service::StringArgument::require<service::TypeModifier::List>("value", jsonListOfStrings.as_object());
+		service::StringArgument::require<service::TypeModifier::List>("value", jsonListOfStrings.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		exceptionWhat = utility::conversions::to_utf8string(errors.str());
+		ex.getErrors().Accept(writer);
+
+		exceptionWhat = buffer.GetString();
 		caughtException = true;
 	}
 
@@ -482,12 +517,14 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 
 TEST(ArgumentsCase, ListArgumentStringsNullable)
 {
-	auto jsonListOfStrings = web::json::value::parse(_XPLATSTR(R"js({"value":[
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"value":[
 		"string1",
 		"string2",
 		null,
 		"string3"
-	]})js"));
+	]})js");
+	const auto jsonListOfStrings = std::move(parsed);
 	std::vector<std::unique_ptr<std::string>> actual;
 
 	try
@@ -495,14 +532,16 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 		actual = service::StringArgument::require<
 			service::TypeModifier::List,
 			service::TypeModifier::Nullable
-		>("value", jsonListOfStrings.as_object());
+		>("value", jsonListOfStrings.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 
 	ASSERT_EQ(4, actual.size()) << "should get 4 entries";
@@ -517,10 +556,12 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 
 TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 {
-	auto jsonListOfListOfStrings = web::json::value::parse(_XPLATSTR(R"js({"value":[
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"value":[
 		["list1string1", "list1string2"],
 		["list2string1", "list2string2"]
-	]})js"));
+	]})js");
+	const auto jsonListOfListOfStrings = std::move(parsed);
 	std::vector<std::vector<std::string>> actual;
 
 	try
@@ -528,14 +569,16 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 		actual = service::StringArgument::require<
 			service::TypeModifier::List,
 			service::TypeModifier::List
-		>("value", jsonListOfListOfStrings.as_object());
+		>("value", jsonListOfListOfStrings.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -549,10 +592,12 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 
 TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 {
-	auto jsonListOfListOfStrings = web::json::value::parse(_XPLATSTR(R"js({"value":[
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"value":[
 		null,
 		["list2string1", "list2string2"]
-	]})js"));
+	]})js");
+	const auto jsonListOfListOfStrings = std::move(parsed);
 	std::vector<std::unique_ptr<std::vector<std::string>>> actual;
 
 	try
@@ -561,14 +606,16 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 			service::TypeModifier::List,
 			service::TypeModifier::Nullable,
 			service::TypeModifier::List
-		>("value", jsonListOfListOfStrings.as_object());
+		>("value", jsonListOfListOfStrings.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -580,19 +627,23 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 
 TEST(ArgumentsCase, TaskStateEnum)
 {
-	auto jsonTaskState = web::json::value::parse(_XPLATSTR(R"js({"status":"Started"})js"));
+	rapidjson::Document parsed;
+	parsed.Parse(R"js({"status":"Started"})js");
+	const auto jsonTaskState = std::move(parsed);
 	today::TaskState actual = static_cast<today::TaskState>(-1);
 
 	try
 	{
-		actual = service::ModifiedArgument<today::TaskState>::require("status", jsonTaskState.as_object());
+		actual = service::ModifiedArgument<today::TaskState>::require("status", jsonTaskState.GetObject());
 	}
 	catch (const service::schema_exception& ex)
 	{
-		utility::ostringstream_t errors;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-		errors << ex.getErrors();
-		FAIL() << errors.str();
+		ex.getErrors().Accept(writer);
+
+		FAIL() << buffer.GetString();
 	}
 
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
