@@ -14,29 +14,31 @@ First, clone this repo, then make sure you have the dependencies. Acquiring the 
 
 I've tested this on Windows with Visual Studio 2017 and Linux using an Ubuntu instance running in WSL.
 
+I plan on adding a vcpkg package for this project, and then you can install everything with `vcpkg install cppgraphqlgen`.
+
 ## Software dependencies
 
 I picked a few projects as dependencies:
 
-- JSON support: Microsoft's [cpprestsdk](https://github.com/Microsoft/cpprestsdk).
+- JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
 - GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection.
 - Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
 
-The build for all of these uses [CMake](http://www.cmake.org/). You'll need to have all 3 projects installed on your system along with CMake to build this project.
+The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all 3 dependencies installed on your system along with CMake to build this project.
 
 ### Using vcpkg
 
-Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows. The Windows [installation instructions](https://github.com/Microsoft/vcpkg/blob/master/README.md) for [cpprestsdk](https://github.com/Microsoft/cpprestsdk) recommend it, and it has a port for `pegtl` which satisfies that dependency as well.
+Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows. Use `vcpkg install rapidjson pegtl gtest` to get all of them.
 
-This approach works well on Linux. I've done all of my testing for Linux with WSL.
+This approach works well on Linux. I've done all of my testing for Linux with WSL using vcpkg.
 
-### Windows
+### Windows with NuGet
 
-All of these packages dependencies should also be available in NuGet packages if you don't want to use [vcpkg](https://github.com/Microsoft/vcpkg). 
+All of these packages dependencies should also be available in NuGet packages if you don't want to use [vcpkg](https://github.com/Microsoft/vcpkg) but still want to use a package manager.
 
-### Linux
+### Linux or Windows from GitHub
 
-Follow the Linux [installation instructions](https://github.com/Microsoft/cpprestsdk/blob/master/README.md#getting-started) for cpprestsdk. Again, it may pull in more dependencies.
+Clone each of the repos from GitHub and follow the installation instructions in the README.md files.
 
 ## API references
 
