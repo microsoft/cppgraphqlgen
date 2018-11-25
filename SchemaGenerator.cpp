@@ -1829,7 +1829,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	schema->AddType(")cpp" << scalarType.type
 				<< R"cpp(", std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ScalarType>(")cpp" << scalarType.type
-				<< R"cpp(", ")cpp" << scalarType.description << R"cpp("));
+				<< R"cpp(", R"gql()cpp" << scalarType.description << R"cpp()gql"));
 )cpp";
 		}
 	}
@@ -1841,7 +1841,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << enumType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::EnumType>(")cpp" << enumType.type
-				<< R"cpp(", ")cpp" << enumType.description << R"cpp(");
+				<< R"cpp(", R"gql()cpp" << enumType.description << R"cpp()gql");
 	schema->AddType(")cpp" << enumType.type
 				<< R"cpp(", type)cpp" << enumType.type
 				<< R"cpp();
@@ -1856,7 +1856,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << inputType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InputObjectType>(")cpp" << inputType.type
-				<< R"cpp(", ")cpp" << inputType.description << R"cpp(");
+				<< R"cpp(", R"gql()cpp" << inputType.description << R"cpp()gql");
 	schema->AddType(")cpp" << inputType.type
 				<< R"cpp(", type)cpp" << inputType.type
 				<< R"cpp();
@@ -1871,7 +1871,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << unionType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::UnionType>(")cpp" << unionType.type
-				<< R"cpp(", ")cpp" << unionType.description << R"cpp(");
+				<< R"cpp(", R"gql()cpp" << unionType.description << R"cpp()gql");
 	schema->AddType(")cpp" << unionType.type
 				<< R"cpp(", type)cpp" << unionType.type
 				<< R"cpp();
@@ -1886,7 +1886,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << interfaceType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InterfaceType>(")cpp" << interfaceType.type
-				<< R"cpp(", ")cpp" << interfaceType.description << R"cpp(");
+				<< R"cpp(", R"gql()cpp" << interfaceType.description << R"cpp()gql");
 	schema->AddType(")cpp" << interfaceType.type
 				<< R"cpp(", type)cpp" << interfaceType.type
 				<< R"cpp();
@@ -1901,7 +1901,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << objectType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ObjectType>(")cpp" << objectType.type
-				<< R"cpp(", ")cpp" << objectType.description << R"cpp(");
+				<< R"cpp(", R"gql()cpp" << objectType.description << R"cpp()gql");
 	schema->AddType(")cpp" << objectType.type
 				<< R"cpp(", type)cpp" << objectType.type
 				<< R"cpp();
@@ -1934,7 +1934,7 @@ Operations::Operations()cpp";
 
 					firstValue = false;
 					sourceFile << R"cpp(		{ ")cpp" << enumValue.value
-						<< R"cpp(", ")cpp" << enumValue.description << R"cpp(" })cpp";
+						<< R"cpp(", R"gql()cpp" << enumValue.description << R"cpp()gql" })cpp";
 				}
 
 				sourceFile << R"cpp(
@@ -1989,8 +1989,8 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>(")cpp" << inputField.name
-						<< R"cpp(", ")cpp" << inputField.description
-						<< R"cpp(", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
+						<< R"cpp(", R"gql()cpp" << inputField.description
+						<< R"cpp()gql", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
 						<< R"cpp(, default)cpp" << inputType.type << inputField.name << R"cpp())cpp";
 				}
 
@@ -2079,8 +2079,8 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
-						<< R"cpp(", ")cpp" << interfaceField.description
-						<< R"cpp(", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"gql()cpp" << interfaceField.description
+						<< R"cpp()gql", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -2106,8 +2106,8 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", ")cpp" << argument.description
-								<< R"cpp(", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(", R"gql()cpp" << argument.description
+								<< R"cpp()gql", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
 								<< R"cpp(, default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp())cpp";
 						}
 
@@ -2194,8 +2194,8 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
-						<< R"cpp(", ")cpp" << objectField.description
-						<< R"cpp(", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"gql()cpp" << objectField.description
+						<< R"cpp()gql", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())
@@ -2221,8 +2221,8 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", ")cpp" << argument.description
-								<< R"cpp(", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(", R"gql()cpp" << argument.description
+								<< R"cpp()gql", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
 								<< R"cpp(, default)cpp" << objectType.type << objectField.name << argument.name << R"cpp())cpp";
 						}
 

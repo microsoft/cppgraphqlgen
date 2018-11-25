@@ -15,7 +15,7 @@ namespace graphql {
 namespace service {
 
 template <>
-today::TaskState ModifiedArgument<today::TaskState>::convert(const web::json::value& value)
+today::TaskState ModifiedArgument<today::TaskState>::convert(const rapidjson::Value& value)
 {
 	static const std::unordered_map<std::string, today::TaskState> s_names = {
 		{ "New", today::TaskState::New },
@@ -23,18 +23,18 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const web::json::va
 		{ "Complete", today::TaskState::Complete }
 	};
 
-	auto itr = s_names.find(utility::conversions::to_utf8string(value.as_string()));
+	auto itr = s_names.find(value.GetString());
 
 	if (itr == s_names.cend())
 	{
-		throw web::json::json_exception(_XPLATSTR("not a valid TaskState value"));
+		throw service::schema_exception({ "not a valid TaskState value" });
 	}
 
 	return itr->second;
 }
 
 template <>
-web::json::value service::ModifiedResult<today::TaskState>::convert(const today::TaskState& value, ResolverParams&&)
+rapidjson::Document service::ModifiedResult<today::TaskState>::convert(today::TaskState&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"New",
@@ -42,22 +42,36 @@ web::json::value service::ModifiedResult<today::TaskState>::convert(const today:
 		"Complete"
 	};
 
-	return web::json::value::string(utility::conversions::to_string_t(s_names[static_cast<size_t>(value)]));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
+
+	return result;
 }
 
 template <>
-today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const web::json::value& value)
+today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const rapidjson::Value& value)
 {
-	static const auto defaultValue = web::json::value::object({
-		{ _XPLATSTR("isComplete"), web::json::value::parse(_XPLATSTR(R"js(true)js")) }
-	});
+	static const auto defaultValue = []() -> rapidjson::Document
+	{
+		rapidjson::Document values(rapidjson::Type::kObjectType);
+		auto& allocator = values.GetAllocator();
+		rapidjson::Document parsed;
+		rapidjson::Value entry;
 
-	auto valueId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", value.as_object());
-	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("isComplete", value.as_object());
+		parsed.Parse(R"js(true)js");
+		entry.CopyFrom(parsed, allocator);
+		values.AddMember(rapidjson::StringRef("isComplete"), entry, allocator);
+
+		return values;
+	}();
+
+	auto valueId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", value.GetObject());
+	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("isComplete", value.GetObject());
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
-		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("isComplete", defaultValue.as_object()));
-	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("clientMutationId", value.as_object());
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("isComplete", defaultValue.GetObject()));
+	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("clientMutationId", value.GetObject());
 
 	return {
 		std::move(valueId),
@@ -92,84 +106,86 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
-web::json::value Query::resolveNode(service::ResolverParams&& params)
+rapidjson::Document Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", params.arguments);
 	auto result = getNode(std::move(argId));
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveAppointments(service::ResolverParams&& params)
+rapidjson::Document Query::resolveAppointments(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argAfter = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	auto argBefore = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getAppointments(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
-	return service::ModifiedResult<AppointmentConnection>::convert(result, std::move(params));
+	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveTasks(service::ResolverParams&& params)
+rapidjson::Document Query::resolveTasks(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argAfter = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	auto argBefore = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getTasks(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
-	return service::ModifiedResult<TaskConnection>::convert(result, std::move(params));
+	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveUnreadCounts(service::ResolverParams&& params)
+rapidjson::Document Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("first", params.arguments);
-	auto argAfter = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argAfter = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("last", params.arguments);
-	auto argBefore = service::ModifiedArgument<web::json::value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	auto argBefore = service::ModifiedArgument<rapidjson::Document>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getUnreadCounts(std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
-	return service::ModifiedResult<FolderConnection>::convert(result, std::move(params));
+	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveAppointmentsById(service::ResolverParams&& params)
+rapidjson::Document Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getAppointmentsById(std::move(argIds));
 
-	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveTasksById(service::ResolverParams&& params)
+rapidjson::Document Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(std::move(argIds));
 
-	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolveUnreadCountsById(service::ResolverParams&& params)
+rapidjson::Document Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getUnreadCountsById(std::move(argIds));
 
-	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Query::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Query::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Query"));
-}
+	rapidjson::Document result(rapidjson::Type::kStringType);
 
-web::json::value Query::resolve__schema(service::ResolverParams&& params)
-{
-	auto result = service::ModifiedResult<introspection::Schema>::convert(_schema, std::move(params));
+	result.SetString(rapidjson::StringRef("Query"));
 
 	return result;
 }
 
-web::json::value Query::resolve__type(service::ResolverParams&& params)
+rapidjson::Document Query::resolve__schema(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
+}
+
+rapidjson::Document Query::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	auto result = service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
@@ -188,23 +204,27 @@ PageInfo::PageInfo()
 {
 }
 
-web::json::value PageInfo::resolveHasNextPage(service::ResolverParams&& params)
+rapidjson::Document PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	auto result = getHasNextPage();
 
-	return service::ModifiedResult<bool>::convert(result, std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-web::json::value PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
+rapidjson::Document PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
 	auto result = getHasPreviousPage();
 
-	return service::ModifiedResult<bool>::convert(result, std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-web::json::value PageInfo::resolve__typename(service::ResolverParams&&)
+rapidjson::Document PageInfo::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("PageInfo"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("PageInfo"));
+
+	return result;
 }
 
 AppointmentEdge::AppointmentEdge()
@@ -218,23 +238,27 @@ AppointmentEdge::AppointmentEdge()
 {
 }
 
-web::json::value AppointmentEdge::resolveNode(service::ResolverParams&& params)
+rapidjson::Document AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value AppointmentEdge::resolveCursor(service::ResolverParams&& params)
+rapidjson::Document AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
 	auto result = getCursor();
 
-	return service::ModifiedResult<web::json::value>::convert(result, std::move(params));
+	return service::ModifiedResult<rapidjson::Document>::convert(std::move(result), std::move(params));
 }
 
-web::json::value AppointmentEdge::resolve__typename(service::ResolverParams&&)
+rapidjson::Document AppointmentEdge::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("AppointmentEdge"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("AppointmentEdge"));
+
+	return result;
 }
 
 AppointmentConnection::AppointmentConnection()
@@ -248,23 +272,27 @@ AppointmentConnection::AppointmentConnection()
 {
 }
 
-web::json::value AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
+rapidjson::Document AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo();
 
-	return service::ModifiedResult<PageInfo>::convert(result, std::move(params));
+	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-web::json::value AppointmentConnection::resolveEdges(service::ResolverParams&& params)
+rapidjson::Document AppointmentConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value AppointmentConnection::resolve__typename(service::ResolverParams&&)
+rapidjson::Document AppointmentConnection::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("AppointmentConnection"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("AppointmentConnection"));
+
+	return result;
 }
 
 TaskEdge::TaskEdge()
@@ -278,23 +306,27 @@ TaskEdge::TaskEdge()
 {
 }
 
-web::json::value TaskEdge::resolveNode(service::ResolverParams&& params)
+rapidjson::Document TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value TaskEdge::resolveCursor(service::ResolverParams&& params)
+rapidjson::Document TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
 	auto result = getCursor();
 
-	return service::ModifiedResult<web::json::value>::convert(result, std::move(params));
+	return service::ModifiedResult<rapidjson::Document>::convert(std::move(result), std::move(params));
 }
 
-web::json::value TaskEdge::resolve__typename(service::ResolverParams&&)
+rapidjson::Document TaskEdge::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("TaskEdge"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("TaskEdge"));
+
+	return result;
 }
 
 TaskConnection::TaskConnection()
@@ -308,23 +340,27 @@ TaskConnection::TaskConnection()
 {
 }
 
-web::json::value TaskConnection::resolvePageInfo(service::ResolverParams&& params)
+rapidjson::Document TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo();
 
-	return service::ModifiedResult<PageInfo>::convert(result, std::move(params));
+	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-web::json::value TaskConnection::resolveEdges(service::ResolverParams&& params)
+rapidjson::Document TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value TaskConnection::resolve__typename(service::ResolverParams&&)
+rapidjson::Document TaskConnection::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("TaskConnection"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("TaskConnection"));
+
+	return result;
 }
 
 FolderEdge::FolderEdge()
@@ -338,23 +374,27 @@ FolderEdge::FolderEdge()
 {
 }
 
-web::json::value FolderEdge::resolveNode(service::ResolverParams&& params)
+rapidjson::Document FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode();
 
-	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value FolderEdge::resolveCursor(service::ResolverParams&& params)
+rapidjson::Document FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
 	auto result = getCursor();
 
-	return service::ModifiedResult<web::json::value>::convert(result, std::move(params));
+	return service::ModifiedResult<rapidjson::Document>::convert(std::move(result), std::move(params));
 }
 
-web::json::value FolderEdge::resolve__typename(service::ResolverParams&&)
+rapidjson::Document FolderEdge::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("FolderEdge"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("FolderEdge"));
+
+	return result;
 }
 
 FolderConnection::FolderConnection()
@@ -368,23 +408,27 @@ FolderConnection::FolderConnection()
 {
 }
 
-web::json::value FolderConnection::resolvePageInfo(service::ResolverParams&& params)
+rapidjson::Document FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo();
 
-	return service::ModifiedResult<PageInfo>::convert(result, std::move(params));
+	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-web::json::value FolderConnection::resolveEdges(service::ResolverParams&& params)
+rapidjson::Document FolderConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges();
 
-	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value FolderConnection::resolve__typename(service::ResolverParams&&)
+rapidjson::Document FolderConnection::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("FolderConnection"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("FolderConnection"));
+
+	return result;
 }
 
 CompleteTaskPayload::CompleteTaskPayload()
@@ -398,23 +442,27 @@ CompleteTaskPayload::CompleteTaskPayload()
 {
 }
 
-web::json::value CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
+rapidjson::Document CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	auto result = getTask();
 
-	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
+rapidjson::Document CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
 	auto result = getClientMutationId();
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
+rapidjson::Document CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("CompleteTaskPayload"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("CompleteTaskPayload"));
+
+	return result;
 }
 
 Mutation::Mutation()
@@ -427,17 +475,21 @@ Mutation::Mutation()
 {
 }
 
-web::json::value Mutation::resolveCompleteTask(service::ResolverParams&& params)
+rapidjson::Document Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<CompleteTaskInput>::require("input", params.arguments);
 	auto result = getCompleteTask(std::move(argInput));
 
-	return service::ModifiedResult<CompleteTaskPayload>::convert(result, std::move(params));
+	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Mutation::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Mutation::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Mutation"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("Mutation"));
+
+	return result;
 }
 
 Subscription::Subscription()
@@ -450,16 +502,20 @@ Subscription::Subscription()
 {
 }
 
-web::json::value Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
+rapidjson::Document Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	auto result = getNextAppointmentChange();
 
-	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Subscription::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Subscription::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Subscription"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("Subscription"));
+
+	return result;
 }
 
 Appointment::Appointment()
@@ -476,37 +532,41 @@ Appointment::Appointment()
 {
 }
 
-web::json::value Appointment::resolveId(service::ResolverParams&& params)
+rapidjson::Document Appointment::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(result, std::move(params));
+	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Appointment::resolveWhen(service::ResolverParams&& params)
+rapidjson::Document Appointment::resolveWhen(service::ResolverParams&& params)
 {
 	auto result = getWhen();
 
-	return service::ModifiedResult<web::json::value>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<rapidjson::Document>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Appointment::resolveSubject(service::ResolverParams&& params)
+rapidjson::Document Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	auto result = getSubject();
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Appointment::resolveIsNow(service::ResolverParams&& params)
+rapidjson::Document Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	auto result = getIsNow();
 
-	return service::ModifiedResult<bool>::convert(result, std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Appointment::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Appointment::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Appointment"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("Appointment"));
+
+	return result;
 }
 
 Task::Task()
@@ -522,30 +582,34 @@ Task::Task()
 {
 }
 
-web::json::value Task::resolveId(service::ResolverParams&& params)
+rapidjson::Document Task::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(result, std::move(params));
+	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Task::resolveTitle(service::ResolverParams&& params)
+rapidjson::Document Task::resolveTitle(service::ResolverParams&& params)
 {
 	auto result = getTitle();
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Task::resolveIsComplete(service::ResolverParams&& params)
+rapidjson::Document Task::resolveIsComplete(service::ResolverParams&& params)
 {
 	auto result = getIsComplete();
 
-	return service::ModifiedResult<bool>::convert(result, std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Task::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Task::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Task"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("Task"));
+
+	return result;
 }
 
 Folder::Folder()
@@ -561,30 +625,34 @@ Folder::Folder()
 {
 }
 
-web::json::value Folder::resolveId(service::ResolverParams&& params)
+rapidjson::Document Folder::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(result, std::move(params));
+	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Folder::resolveName(service::ResolverParams&& params)
+rapidjson::Document Folder::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-web::json::value Folder::resolveUnreadCount(service::ResolverParams&& params)
+rapidjson::Document Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
 	auto result = getUnreadCount();
 
-	return service::ModifiedResult<int>::convert(result, std::move(params));
+	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
-web::json::value Folder::resolve__typename(service::ResolverParams&&)
+rapidjson::Document Folder::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR("Folder"));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef("Folder"));
+
+	return result;
 }
 
 } /* namespace object */
@@ -603,155 +671,195 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 {
-	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor"));
-	schema->AddType("DateTime", std::make_shared<introspection::ScalarType>("DateTime"));
-	auto typeTaskState= std::make_shared<introspection::EnumType>("TaskState");
+	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor", R"gql()gql"));
+	schema->AddType("DateTime", std::make_shared<introspection::ScalarType>("DateTime", R"gql()gql"));
+	auto typeTaskState= std::make_shared<introspection::EnumType>("TaskState", R"gql()gql");
 	schema->AddType("TaskState", typeTaskState);
-	auto typeCompleteTaskInput= std::make_shared<introspection::InputObjectType>("CompleteTaskInput");
+	auto typeCompleteTaskInput= std::make_shared<introspection::InputObjectType>("CompleteTaskInput", R"gql()gql");
 	schema->AddType("CompleteTaskInput", typeCompleteTaskInput);
-	auto typeNode= std::make_shared<introspection::InterfaceType>("Node");
+	auto typeNode= std::make_shared<introspection::InterfaceType>("Node", R"gql()gql");
 	schema->AddType("Node", typeNode);
-	auto typeQuery= std::make_shared<introspection::ObjectType>("Query");
+	auto typeQuery= std::make_shared<introspection::ObjectType>("Query", R"gql()gql");
 	schema->AddType("Query", typeQuery);
-	auto typePageInfo= std::make_shared<introspection::ObjectType>("PageInfo");
+	auto typePageInfo= std::make_shared<introspection::ObjectType>("PageInfo", R"gql()gql");
 	schema->AddType("PageInfo", typePageInfo);
-	auto typeAppointmentEdge= std::make_shared<introspection::ObjectType>("AppointmentEdge");
+	auto typeAppointmentEdge= std::make_shared<introspection::ObjectType>("AppointmentEdge", R"gql()gql");
 	schema->AddType("AppointmentEdge", typeAppointmentEdge);
-	auto typeAppointmentConnection= std::make_shared<introspection::ObjectType>("AppointmentConnection");
+	auto typeAppointmentConnection= std::make_shared<introspection::ObjectType>("AppointmentConnection", R"gql()gql");
 	schema->AddType("AppointmentConnection", typeAppointmentConnection);
-	auto typeTaskEdge= std::make_shared<introspection::ObjectType>("TaskEdge");
+	auto typeTaskEdge= std::make_shared<introspection::ObjectType>("TaskEdge", R"gql()gql");
 	schema->AddType("TaskEdge", typeTaskEdge);
-	auto typeTaskConnection= std::make_shared<introspection::ObjectType>("TaskConnection");
+	auto typeTaskConnection= std::make_shared<introspection::ObjectType>("TaskConnection", R"gql()gql");
 	schema->AddType("TaskConnection", typeTaskConnection);
-	auto typeFolderEdge= std::make_shared<introspection::ObjectType>("FolderEdge");
+	auto typeFolderEdge= std::make_shared<introspection::ObjectType>("FolderEdge", R"gql()gql");
 	schema->AddType("FolderEdge", typeFolderEdge);
-	auto typeFolderConnection= std::make_shared<introspection::ObjectType>("FolderConnection");
+	auto typeFolderConnection= std::make_shared<introspection::ObjectType>("FolderConnection", R"gql()gql");
 	schema->AddType("FolderConnection", typeFolderConnection);
-	auto typeCompleteTaskPayload= std::make_shared<introspection::ObjectType>("CompleteTaskPayload");
+	auto typeCompleteTaskPayload= std::make_shared<introspection::ObjectType>("CompleteTaskPayload", R"gql()gql");
 	schema->AddType("CompleteTaskPayload", typeCompleteTaskPayload);
-	auto typeMutation= std::make_shared<introspection::ObjectType>("Mutation");
+	auto typeMutation= std::make_shared<introspection::ObjectType>("Mutation", R"gql()gql");
 	schema->AddType("Mutation", typeMutation);
-	auto typeSubscription= std::make_shared<introspection::ObjectType>("Subscription");
+	auto typeSubscription= std::make_shared<introspection::ObjectType>("Subscription", R"gql()gql");
 	schema->AddType("Subscription", typeSubscription);
-	auto typeAppointment= std::make_shared<introspection::ObjectType>("Appointment");
+	auto typeAppointment= std::make_shared<introspection::ObjectType>("Appointment", R"gql()gql");
 	schema->AddType("Appointment", typeAppointment);
-	auto typeTask= std::make_shared<introspection::ObjectType>("Task");
+	auto typeTask= std::make_shared<introspection::ObjectType>("Task", R"gql()gql");
 	schema->AddType("Task", typeTask);
-	auto typeFolder= std::make_shared<introspection::ObjectType>("Folder");
+	auto typeFolder= std::make_shared<introspection::ObjectType>("Folder", R"gql()gql");
 	schema->AddType("Folder", typeFolder);
 
 	typeTaskState->AddEnumValues({
-		"New",
-		"Started",
-		"Complete"
+		{ "New", R"gql()gql" },
+		{ "Started", R"gql()gql" },
+		{ "Complete", R"gql()gql" }
 	});
 
+	rapidjson::Document defaultCompleteTaskInputid;
+	defaultCompleteTaskInputid.Parse(R"js(null)js");
+	rapidjson::Document defaultCompleteTaskInputisComplete;
+	defaultCompleteTaskInputisComplete.Parse(R"js(true)js");
+	rapidjson::Document defaultCompleteTaskInputclientMutationId;
+	defaultCompleteTaskInputclientMutationId.Parse(R"js(null)js");
 	typeCompleteTaskInput->AddInputValues({
-		std::make_shared<introspection::InputValue>("id", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-		std::make_shared<introspection::InputValue>("isComplete", schema->LookupType("Boolean"), web::json::value::parse(_XPLATSTR(R"js(true)js"))),
-		std::make_shared<introspection::InputValue>("clientMutationId", schema->LookupType("String"), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::InputValue>("id", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), defaultCompleteTaskInputid),
+		std::make_shared<introspection::InputValue>("isComplete", R"gql()gql", schema->LookupType("Boolean"), defaultCompleteTaskInputisComplete),
+		std::make_shared<introspection::InputValue>("clientMutationId", R"gql()gql", schema->LookupType("String"), defaultCompleteTaskInputclientMutationId)
 	});
 
 	typeNode->AddFields({
-		std::make_shared<introspection::Field>("id", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))
+		std::make_shared<introspection::Field>("id", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 
+	rapidjson::Document defaultQuerynodeid;
+	defaultQuerynodeid.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryappointmentsfirst;
+	defaultQueryappointmentsfirst.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryappointmentsafter;
+	defaultQueryappointmentsafter.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryappointmentslast;
+	defaultQueryappointmentslast.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryappointmentsbefore;
+	defaultQueryappointmentsbefore.Parse(R"js(null)js");
+	rapidjson::Document defaultQuerytasksfirst;
+	defaultQuerytasksfirst.Parse(R"js(null)js");
+	rapidjson::Document defaultQuerytasksafter;
+	defaultQuerytasksafter.Parse(R"js(null)js");
+	rapidjson::Document defaultQuerytaskslast;
+	defaultQuerytaskslast.Parse(R"js(null)js");
+	rapidjson::Document defaultQuerytasksbefore;
+	defaultQuerytasksbefore.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryunreadCountsfirst;
+	defaultQueryunreadCountsfirst.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryunreadCountsafter;
+	defaultQueryunreadCountsafter.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryunreadCountslast;
+	defaultQueryunreadCountslast.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryunreadCountsbefore;
+	defaultQueryunreadCountsbefore.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryappointmentsByIdids;
+	defaultQueryappointmentsByIdids.Parse(R"js(null)js");
+	rapidjson::Document defaultQuerytasksByIdids;
+	defaultQuerytasksByIdids.Parse(R"js(null)js");
+	rapidjson::Document defaultQueryunreadCountsByIdids;
+	defaultQueryunreadCountsByIdids.Parse(R"js(null)js");
 	typeQuery->AddFields({
-		std::make_shared<introspection::Field>("node", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("id", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("node", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("id", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), defaultQuerynodeid)
 		}), schema->LookupType("Node")),
-		std::make_shared<introspection::Field>("appointments", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("after", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("last", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("before", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("appointments", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("first", R"gql()gql", schema->LookupType("Int"), defaultQueryappointmentsfirst),
+			std::make_shared<introspection::InputValue>("after", R"gql()gql", schema->LookupType("ItemCursor"), defaultQueryappointmentsafter),
+			std::make_shared<introspection::InputValue>("last", R"gql()gql", schema->LookupType("Int"), defaultQueryappointmentslast),
+			std::make_shared<introspection::InputValue>("before", R"gql()gql", schema->LookupType("ItemCursor"), defaultQueryappointmentsbefore)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("AppointmentConnection"))),
-		std::make_shared<introspection::Field>("tasks", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("after", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("last", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("before", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("tasks", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("first", R"gql()gql", schema->LookupType("Int"), defaultQuerytasksfirst),
+			std::make_shared<introspection::InputValue>("after", R"gql()gql", schema->LookupType("ItemCursor"), defaultQuerytasksafter),
+			std::make_shared<introspection::InputValue>("last", R"gql()gql", schema->LookupType("Int"), defaultQuerytaskslast),
+			std::make_shared<introspection::InputValue>("before", R"gql()gql", schema->LookupType("ItemCursor"), defaultQuerytasksbefore)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("TaskConnection"))),
-		std::make_shared<introspection::Field>("unreadCounts", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("after", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("last", schema->LookupType("Int"), web::json::value::parse(_XPLATSTR(R"js(null)js"))),
-			std::make_shared<introspection::InputValue>("before", schema->LookupType("ItemCursor"), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("unreadCounts", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("first", R"gql()gql", schema->LookupType("Int"), defaultQueryunreadCountsfirst),
+			std::make_shared<introspection::InputValue>("after", R"gql()gql", schema->LookupType("ItemCursor"), defaultQueryunreadCountsafter),
+			std::make_shared<introspection::InputValue>("last", R"gql()gql", schema->LookupType("Int"), defaultQueryunreadCountslast),
+			std::make_shared<introspection::InputValue>("before", R"gql()gql", schema->LookupType("ItemCursor"), defaultQueryunreadCountsbefore)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
-		std::make_shared<introspection::Field>("appointmentsById", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("appointmentsById", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQueryappointmentsByIdids)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Appointment")))),
-		std::make_shared<introspection::Field>("tasksById", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("tasksById", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQuerytasksByIdids)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Task")))),
-		std::make_shared<introspection::Field>("unreadCountsById", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("unreadCountsById", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQueryunreadCountsByIdids)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Folder"))))
 	});
 	typePageInfo->AddFields({
-		std::make_shared<introspection::Field>("hasNextPage", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("hasPreviousPage", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("hasNextPage", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("hasPreviousPage", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeAppointmentEdge->AddFields({
-		std::make_shared<introspection::Field>("node", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
-		std::make_shared<introspection::Field>("cursor", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<introspection::Field>("cursor", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeAppointmentConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("AppointmentEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("AppointmentEdge"))))
 	});
 	typeTaskEdge->AddFields({
-		std::make_shared<introspection::Field>("node", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<introspection::Field>("cursor", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<introspection::Field>("cursor", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeTaskConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("TaskEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("TaskEdge"))))
 	});
 	typeFolderEdge->AddFields({
-		std::make_shared<introspection::Field>("node", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
-		std::make_shared<introspection::Field>("cursor", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
+		std::make_shared<introspection::Field>("cursor", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeFolderConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("FolderEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("FolderEdge"))))
 	});
 	typeCompleteTaskPayload->AddFields({
-		std::make_shared<introspection::Field>("task", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<introspection::Field>("clientMutationId", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("task", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<introspection::Field>("clientMutationId", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
+	rapidjson::Document defaultMutationcompleteTaskinput;
+	defaultMutationcompleteTaskinput.Parse(R"js(null)js");
 	typeMutation->AddFields({
-		std::make_shared<introspection::Field>("completeTask", std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("input", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), web::json::value::parse(_XPLATSTR(R"js(null)js")))
+		std::make_shared<introspection::Field>("completeTask", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("input", R"gql()gql", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), defaultMutationcompleteTaskinput)
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
 	});
 	typeSubscription->AddFields({
-		std::make_shared<introspection::Field>("nextAppointmentChange", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment"))
+		std::make_shared<introspection::Field>("nextAppointmentChange", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment"))
 	});
 	typeAppointment->AddInterfaces({
 		typeNode
 	});
 	typeAppointment->AddFields({
-		std::make_shared<introspection::Field>("id", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("when", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("DateTime")),
-		std::make_shared<introspection::Field>("subject", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isNow", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("id", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("when", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("DateTime")),
+		std::make_shared<introspection::Field>("subject", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("isNow", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeTask->AddInterfaces({
 		typeNode
 	});
 	typeTask->AddFields({
-		std::make_shared<introspection::Field>("id", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("title", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isComplete", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("id", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("title", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("isComplete", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeFolder->AddInterfaces({
 		typeNode
 	});
 	typeFolder->AddFields({
-		std::make_shared<introspection::Field>("id", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("name", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("unreadCount", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Int")))
+		std::make_shared<introspection::Field>("id", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("name", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("unreadCount", R"gql()gql", std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 
 	schema->AddQueryType(typeQuery);
