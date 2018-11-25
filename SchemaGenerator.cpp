@@ -350,7 +350,6 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 		std::string name(child.children.back()->content());
 
 		_operationTypes.push_back({ std::move(name), std::move(operation) });
-		return true;
 	});
 }
 
@@ -361,33 +360,29 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	OutputFieldList fields;
 	std::string description;
 
-	peg::for_each_child<peg::object_name>(objectTypeDefinition,
+	peg::on_first_child<peg::object_name>(objectTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::interface_type>(objectTypeDefinition,
 		[&interfaces](const peg::ast_node& child)
 	{
 		interfaces.push_back(child.content());
-		return true;
 	});
 
-	peg::for_each_child<peg::fields_definition>(objectTypeDefinition,
+	peg::on_first_child<peg::fields_definition>(objectTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getOutputFields(child.children);
-		return false;
 	});
 
 
-	peg::for_each_child<peg::description>(objectTypeDefinition,
+	peg::on_first_child<peg::description>(objectTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Object;
@@ -401,25 +396,22 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	OutputFieldList fields;
 	std::string description;
 
-	peg::for_each_child<peg::interface_name>(interfaceTypeDefinition,
+	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
-	peg::for_each_child<peg::fields_definition>(interfaceTypeDefinition,
+	peg::on_first_child<peg::fields_definition>(interfaceTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getOutputFields(child.children);
-		return false;
 	});
 
-	peg::for_each_child<peg::description>(interfaceTypeDefinition,
+	peg::on_first_child<peg::description>(interfaceTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Interface;
@@ -433,25 +425,22 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	InputFieldList fields;
 	std::string description;
 
-	peg::for_each_child<peg::object_name>(inputObjectTypeDefinition,
+	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
-	peg::for_each_child<peg::input_fields_definition>(inputObjectTypeDefinition,
+	peg::on_first_child<peg::input_fields_definition>(inputObjectTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getInputFields(child.children);
-		return false;
 	});
 
-	peg::for_each_child<peg::description>(inputObjectTypeDefinition,
+	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Input;
@@ -465,11 +454,10 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	std::vector<EnumValueType> values;
 	std::string description;
 
-	peg::for_each_child<peg::enum_name>(enumTypeDefinition,
+	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::enum_value_definition>(enumTypeDefinition,
@@ -478,29 +466,25 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 		std::string value;
 		std::string valueDescription;
 
-		peg::for_each_child<peg::enum_value>(child,
+		peg::on_first_child<peg::enum_value>(child,
 			[&value](const peg::ast_node& enumValue)
 		{
 			value = enumValue.content();
-			return false;
 		});
 
-		peg::for_each_child<peg::description>(child,
+		peg::on_first_child<peg::description>(child,
 			[&valueDescription](const peg::ast_node& enumValue)
 		{
 			valueDescription = enumValue.children.front()->unescaped;
-			return false;
 		});
 
 		values.push_back({ std::move(value), std::move(valueDescription) });
-		return true;
 	});
 
-	peg::for_each_child<peg::description>(enumTypeDefinition,
+	peg::on_first_child<peg::description>(enumTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Enum;
@@ -513,18 +497,16 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	std::string name;
 	std::string description;
 
-	peg::for_each_child<peg::scalar_name>(scalarTypeDefinition,
+	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
-	peg::for_each_child<peg::description>(scalarTypeDefinition,
+	peg::on_first_child<peg::description>(scalarTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Scalar;
@@ -538,25 +520,22 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	std::vector<std::string> options;
 	std::string description;
 
-	peg::for_each_child<peg::union_name>(unionTypeDefinition,
+	peg::on_first_child<peg::union_name>(unionTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::union_type>(unionTypeDefinition,
 		[&options](const peg::ast_node& child)
 	{
 		options.push_back(child.content());
-		return true;
 	});
 
-	peg::for_each_child<peg::description>(unionTypeDefinition,
+	peg::on_first_child<peg::description>(unionTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
 		description = child.children.front()->unescaped;
-		return false;
 	});
 
 	_schemaTypes[name] = SchemaType::Union;

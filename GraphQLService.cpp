@@ -358,7 +358,6 @@ rapidjson::Document Request::resolve(const peg::ast_node& root, const std::strin
 		[&fragmentVisitor](const peg::ast_node& child)
 	{
 		fragmentVisitor.visit(child);
-		return true;
 	});
 
 	auto fragments = fragmentVisitor.getFragments();
@@ -368,7 +367,6 @@ rapidjson::Document Request::resolve(const peg::ast_node& root, const std::strin
 		[&operationVisitor](const peg::ast_node& child)
 	{
 		operationVisitor.visit(child);
-		return true;
 	});
 
 	return operationVisitor.getValue();
@@ -406,10 +404,28 @@ void SelectionVisitor::visit(const peg::ast_node& selection)
 
 void SelectionVisitor::visitField(const peg::ast_node& field)
 {
-	const bool hasAlias = field.children.front()->is<peg::alias_name>();
-	const std::string name(field.children[hasAlias ? 1 : 0]->content());
-	const std::string alias(hasAlias ? field.children.front()->content() : name);
-	auto itr = _resolvers.find(name);
+	std::string name;
+
+	peg::on_first_child<peg::field_name>(field,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	std::string alias;
+
+	peg::on_first_child<peg::alias_name>(field,
+		[&alias](const peg::ast_node& child)
+	{
+		alias = child.content();
+	});
+
+	if (alias.empty())
+	{
+		alias = name;
+	}
+
+	const auto itr = _resolvers.find(name);
 
 	if (itr == _resolvers.cend())
 	{
@@ -425,11 +441,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	bool skip = false;
 
-	peg::for_each_child<peg::directives>(field,
+	peg::on_first_child<peg::directives>(field,
 		[this, &skip](const peg::ast_node& child)
 	{
 		skip = shouldSkip(&child.children);
-		return false;
 	});
 
 	if (skip)
@@ -439,7 +454,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	rapidjson::Document arguments(rapidjson::Type::kObjectType);
 
-	peg::for_each_child<peg::arguments>(field,
+	peg::on_first_child<peg::arguments>(field,
 		[this, &arguments](const peg::ast_node& child)
 	{
 		ValueVisitor visitor(_variables);
@@ -454,17 +469,14 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			argumentValue.CopyFrom(visitor.getValue(), argumentAllocator);
 			arguments.AddMember(argumentName, argumentValue, argumentAllocator);
 		}
-
-		return false;
 	});
 
 	const peg::ast_node* selection = nullptr;
 
-	peg::for_each_child<peg::selection_set>(field,
+	peg::on_first_child<peg::selection_set>(field,
 		[&selection](const peg::ast_node& child)
 	{
 		selection = &child;
-		return false;;
 	});
 
 	auto& selectionAllocator = _values.GetAllocator();
@@ -497,11 +509,10 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 	if (!skip)
 	{
-		peg::for_each_child<peg::directives>(fragmentSpread,
+		peg::on_first_child<peg::directives>(fragmentSpread,
 			[this, &skip](const peg::ast_node& child)
 		{
 			skip = shouldSkip(&child.children);
-			return false;
 		});
 	}
 
@@ -510,14 +521,13 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
-	peg::for_each_child<peg::selection_set>(fragmentSpread,
+	peg::on_first_child<peg::selection_set>(fragmentSpread,
 		[this](const peg::ast_node& child)
 	{
 		for (const auto& selection : child.children)
 		{
 			visit(*selection);
 		}
-		return false;
 	});
 }
 
@@ -525,11 +535,10 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
 	bool skip = false;
 
-	peg::for_each_child<peg::directives>(inlineFragment,
+	peg::on_first_child<peg::directives>(inlineFragment,
 		[this, &skip](const peg::ast_node& child)
 	{
 		skip = shouldSkip(&child.children);
-		return false;
 	});
 
 	if (skip)
@@ -539,41 +548,23 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 
 	const peg::ast_node* typeCondition = nullptr;
 
-	for (const auto& child : inlineFragment.children)
+	peg::on_first_child<peg::type_condition>(inlineFragment,
+		[&typeCondition](const peg::ast_node& child)
 	{
-		if (child->is<peg::type_condition>())
-		{
-			typeCondition = child.get();
-			break;
-		}
-	}
+		typeCondition = &child;
+	});
 
 	if (typeCondition == nullptr
 		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
 	{
-		for (const auto& child : inlineFragment.children)
+		peg::on_first_child<peg::selection_set>(inlineFragment,
+			[this](const peg::ast_node& child)
 		{
-			if (child->is<peg::selection_set>())
+			for (const auto& selection : child.children)
 			{
-				for (const auto& selection : child->children)
-				{
-					if (selection->is<peg::field>())
-					{
-						visitField(*selection);
-					}
-					else if (selection->is<peg::fragment_spread>())
-					{
-						visitFragmentSpread(*selection);
-					}
-					else if (selection->is<peg::inline_fragment>())
-					{
-						visitInlineFragment(*selection);
-					}
-				}
-
-				break;
+				visit(*selection);
 			}
-		}
+		});
 	}
 }
 
@@ -586,7 +577,14 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 
 	for (const auto& directive : *directives)
 	{
-		const std::string name(directive->children.front()->content());
+		std::string name;
+
+		peg::on_first_child<peg::directive_name>(*directive,
+			[&name](const peg::ast_node& child)
+		{
+			name = child.content();
+		});
+
 		const bool include = (name == "include");
 		const bool skip = (!include && (name == "skip"));
 
@@ -595,10 +593,40 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 			continue;
 		}
 
-		const auto argument = (directive->children.back()->is<peg::arguments>() && directive->children.back()->children.size() == 1)
-			? directive->children.back()->children.front().get()
-			: nullptr;
-		const std::string argumentName((argument != nullptr) ? argument->children.front()->content() : "");
+		peg::ast_node* argument = nullptr;
+		std::string argumentName;
+		bool argumentTrue = false;
+		bool argumentFalse = false;
+
+		peg::on_first_child<peg::arguments>(*directive,
+			[&argument, &argumentName, &argumentTrue, &argumentFalse](const peg::ast_node& child)
+		{
+			if (child.children.size() == 1)
+			{
+				argument = child.children.front().get();
+
+				peg::on_first_child<peg::argument_name>(*argument,
+					[&argumentName](const peg::ast_node& nameArg)
+				{
+					argumentName = nameArg.content();
+				});
+
+				peg::on_first_child<peg::true_keyword>(*argument,
+					[&argumentTrue](const peg::ast_node& nameArg)
+				{
+					argumentTrue = true;
+				});
+
+				if (!argumentTrue)
+				{
+					peg::on_first_child<peg::false_keyword>(*argument,
+						[&argumentFalse](const peg::ast_node& nameArg)
+					{
+						argumentFalse = true;
+					});
+				}
+			}
+		});
 
 		if (argumentName != "if")
 		{
@@ -622,11 +650,11 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 			throw schema_exception({ error.str() });
 		}
 
-		if (argument->children.back()->is<peg::true_keyword>())
+		if (argumentTrue)
 		{
 			return skip;
 		}
-		else if (argument->children.back()->is<peg::false_keyword>())
+		else if (argumentFalse)
 		{
 			return !skip;
 		}
@@ -843,17 +871,26 @@ rapidjson::Document OperationDefinitionVisitor::getValue()
 
 void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 {
+	std::string operation;
+
+	peg::on_first_child<peg::operation_type>(operationDefinition,
+		[&operation](const peg::ast_node& child)
+	{
+		operation = child.content();
+	});
+
+	if (operation.empty())
+	{
+		operation = "query";
+	}
+
 	auto position = operationDefinition.begin();
-	auto operation = operationDefinition.children.front()->is<peg::operation_type>()
-		? operationDefinition.children.front()->content()
-		: std::string("query");
 	std::string name;
 
-	peg::for_each_child<peg::operation_name>(operationDefinition,
+	peg::on_first_child<peg::operation_name>(operationDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	if (!_operationName.empty()
@@ -910,35 +947,44 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 
 		auto operationVariables = rapidjson::Document(rapidjson::Type::kObjectType);
 
-		peg::for_each_child<peg::variable_definitions>(operationDefinition,
+		peg::on_first_child<peg::variable_definitions>(operationDefinition,
 			[this, &operationVariables](const peg::ast_node& child)
 		{
-			auto& variableAllocator = operationVariables.GetAllocator();
-
-			for (const auto& variable : child.children)
+			peg::for_each_child<peg::variable>(child,
+				[this, &operationVariables](const peg::ast_node& variable)
 			{
-				const auto& nameNode = *variable->children.front();
-				const auto& defaultValueNode = *variable->children.back();
-				rapidjson::Value nameVar(nameNode.content().c_str() + 1, variableAllocator);
-				rapidjson::Value valueVar;
+				std::string variableName;
+
+				peg::on_first_child<peg::variable_name>(variable,
+					[&variableName](const peg::ast_node& name)
+				{
+					// Skip the $ prefix
+					variableName = name.content().c_str() + 1;
+				});
+
+				rapidjson::Value nameVar(rapidjson::StringRef(variableName.c_str()));
 				auto itrVar = _variables.FindMember(nameVar);
+				auto& variableAllocator = operationVariables.GetAllocator();
+				rapidjson::Value valueVar;
 
 				if (itrVar != _variables.MemberEnd())
 				{
 					valueVar.CopyFrom(itrVar->value, variableAllocator);
 				}
-				else if (defaultValueNode.is<peg::default_value>())
+				else
 				{
-					ValueVisitor visitor(_variables);
+					peg::on_first_child<peg::default_value>(variable,
+						[this, &variableAllocator, &valueVar](const peg::ast_node& defaultValue)
+					{
+						ValueVisitor visitor(_variables);
 
-					visitor.visit(*defaultValueNode.children.front());
-					valueVar.CopyFrom(visitor.getValue(), variableAllocator);
+						visitor.visit(*defaultValue.children.front());
+						valueVar.CopyFrom(visitor.getValue(), variableAllocator);
+					});
 				}
 
 				operationVariables.AddMember(nameVar, valueVar, variableAllocator);
-			}
-
-			return false;
+			});
 		});
 
 		_result = rapidjson::Document(rapidjson::Type::kObjectType);
