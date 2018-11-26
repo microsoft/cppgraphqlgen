@@ -9,20 +9,12 @@ if(WIN32)
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
-add_library(graphqlpeg GraphQLTree.cpp)
-add_library(graphqlservice GraphQLService.cpp Introspection.cpp IntrospectionSchema.cpp)
-add_executable(schemagen SchemaGenerator.cpp)
-
 find_package(pegtl CONFIG REQUIRED)
 
-target_include_directories(graphqlpeg INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlpeg taocpp::pegtl)
-
-find_package(RapidJSON CONFIG REQUIRED)
-
-target_include_directories(graphqlservice INTERFACE ${RAPIDJSON_INCLUDE_DIRS} $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include>)
-target_link_libraries(graphqlservice graphqlpeg)
-target_link_libraries(schemagen graphqlpeg)
+add_executable(schemagen GraphQLTree.cpp SchemaGenerator.cpp)
+target_link_libraries(schemagen PRIVATE taocpp::pegtl)
+target_include_directories(schemagen SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
+target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 add_custom_command(
   OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
@@ -30,6 +22,18 @@ add_custom_command(
   DEPENDS schemagen
   COMMENT "Generating IntrospectionSchema files"
 )
+
+find_package(RapidJSON CONFIG REQUIRED)
+
+add_library(graphqlservice
+  GraphQLTree.cpp
+  GraphQLService.cpp
+  Introspection.cpp
+  IntrospectionSchema.cpp)
+target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
+target_include_directories(graphqlservice SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
+target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:include>)
+target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 if(UNIX)
   target_compile_options(graphqlpeg PRIVATE -std=c++11)
@@ -52,30 +56,41 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     add_library(todaygraphql
       TodaySchema.cpp
       Today.cpp)
+    target_link_libraries(todaygraphql
+      graphqlservice)
+    target_include_directories(todaygraphql SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+    target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
-    target_link_libraries(todaygraphql graphqlservice)
-    target_include_directories(todaygraphql SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS} ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-
-    add_executable(test_today test_today.cpp)
-
+    add_executable(test_today
+      test_today.cpp)
     target_link_libraries(test_today
-	  graphqlpeg
       graphqlservice
       todaygraphql)
-    target_include_directories(test_today SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS} ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+    target_include_directories(test_today SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+    target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
-    enable_testing()
-    add_executable(tests tests.cpp)
     find_package(GTest REQUIRED)
+
+    add_executable(tests
+      tests.cpp)
     target_link_libraries(tests
-	  graphqlpeg
       graphqlservice
       todaygraphql
       GTest::GTest
       GTest::Main)
-    target_include_directories(tests SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS} ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-    add_test(TodayServiceCase tests)
-    add_test(ArgumentsCase tests)
+    target_include_directories(tests SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+    target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+
+    enable_testing()
+    add_test(NAME TodayServiceCase
+      COMMAND tests --gtest_filter=TodayServiceCase.*
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
+    add_test(NAME ArgumentsCase
+      COMMAND tests --gtest_filter=ArgumentsCase.*
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
+    add_test(NAME PegtlCase
+      COMMAND tests --gtest_filter=PegtlCase.*
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
 
     if(UNIX)
       target_compile_options(todaygraphql PRIVATE -std=c++11)
@@ -85,26 +100,33 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   endif()
 
   if(UPDATE_SAMPLES)
-    install(FILES IntrospectionSchema.h IntrospectionSchema.cpp TodaySchema.h TodaySchema.cpp
+    install(FILES
+      ${CMAKE_BINARY_DIR}/IntrospectionSchema.h
+      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
+      ${CMAKE_BINARY_DIR}/TodaySchema.h
+      ${CMAKE_BINARY_DIR}/TodaySchema.cpp
       DESTINATION ${CMAKE_SOURCE_DIR}/samples)
   endif()
 endif()
 
-install(TARGETS graphqlpeg graphqlservice schemagen
+install(TARGETS graphqlservice
   EXPORT cppgraphqlgen-config
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-install(FILES GraphQLService.h GraphQLTree.h Introspection.h IntrospectionSchema.h
-  DESTINATION include/graphqlservice)
+install(TARGETS schemagen
+  RUNTIME DESTINATION tools/cppgraphqlgen
+  CONFIGURATIONS Release)
 
-if(WIN32)
-  set(GRAPHQLSERVICE_DIR $<TARGET_FILE_DIR:graphqlservice>)
-  install(FILES ${GRAPHQLSERVICE_DIR}/graphqlservice.lib  ${GRAPHQLSERVICE_DIR}/graphqlpeg.lib
-    DESTINATION lib)
-endif()
+install(FILES
+  GraphQLTree.h
+  GraphQLService.h
+  Introspection.h
+  ${CMAKE_BINARY_DIR}/IntrospectionSchema.h
+  DESTINATION include/graphqlservice
+  CONFIGURATIONS Release)
 
 install(EXPORT cppgraphqlgen-config
   NAMESPACE cppgraphqlgen::
-  DESTINATION lib/cppgraphqlgen)
+  DESTINATION share/cppgraphqlgen)
