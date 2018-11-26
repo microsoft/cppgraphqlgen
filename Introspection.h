@@ -142,6 +142,7 @@ struct EnumValueType
 {
 	std::string value;
 	std::string description;
+	const char* deprecationReason;
 };
 
 class EnumType : public BaseType
@@ -197,7 +198,7 @@ private:
 class Field : public object::__Field
 {
 public:
-	explicit Field(std::string name, std::string description, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
+	explicit Field(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
 
 	// Accessors
 	std::string getName() const override;
@@ -210,6 +211,7 @@ public:
 private:
 	const std::string _name;
 	const std::string _description;
+	const std::unique_ptr<std::string> _deprecationReason;
 	const std::vector<std::shared_ptr<InputValue>> _args;
 	const std::shared_ptr<object::__Type> _type;
 };
@@ -237,7 +239,7 @@ private:
 class EnumValue : public object::__EnumValue
 {
 public:
-	explicit EnumValue(std::string name, std::string description);
+	explicit EnumValue(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason);
 
 	// Accessors
 	std::string getName() const override;
@@ -248,6 +250,7 @@ public:
 private:
 	const std::string _name;
 	const std::string _description;
+	const std::unique_ptr<std::string> _deprecationReason;
 };
 
 } /* namespace facebook */

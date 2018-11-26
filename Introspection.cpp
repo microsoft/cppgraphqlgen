@@ -272,7 +272,11 @@ void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
 
 	for (auto& value : enumValues)
 	{
-		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value.value), std::move(value.description)));
+		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value.value),
+			std::move(value.description),
+			std::unique_ptr<std::string>(value.deprecationReason
+				? new std::string(value.deprecationReason)
+				: nullptr)));
 	}
 }
 
@@ -346,9 +350,10 @@ std::shared_ptr<object::__Type> WrapperType::getOfType() const
 	return _ofType;
 }
 
-Field::Field(std::string name, std::string description, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
+Field::Field(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
 	: _name(std::move(name))
 	, _description(std::move(description))
+	, _deprecationReason(std::move(deprecationReason))
 	, _args(std::move(args))
 	, _type(std::move(type))
 {
@@ -382,12 +387,14 @@ std::shared_ptr<object::__Type> Field::getType() const
 
 bool Field::getIsDeprecated() const
 {
-	return false;
+	return _deprecationReason != nullptr;
 }
 
 std::unique_ptr<std::string> Field::getDeprecationReason() const
 {
-	return nullptr;
+	return _deprecationReason
+		? std::unique_ptr<std::string>(new std::string(*_deprecationReason))
+		: nullptr;
 }
 
 InputValue::InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, const rapidjson::Value& defaultValue)
@@ -477,9 +484,10 @@ std::string InputValue::formatDefaultValue(const rapidjson::Value& defaultValue)
 	return output.str();
 }
 
-EnumValue::EnumValue(std::string name, std::string description)
+EnumValue::EnumValue(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason)
 	: _name(std::move(name))
 	, _description(std::move(description))
+	, _deprecationReason(std::move(deprecationReason))
 {
 }
 
@@ -497,12 +505,14 @@ std::unique_ptr<std::string> EnumValue::getDescription() const
 
 bool EnumValue::getIsDeprecated() const
 {
-	return false;
+	return _deprecationReason != nullptr;
 }
 
 std::unique_ptr<std::string> EnumValue::getDeprecationReason() const
 {
-	return nullptr;
+	return _deprecationReason
+		? std::unique_ptr<std::string>(new std::string(*_deprecationReason))
+		: nullptr;
 }
 
 } /* namespace facebook */

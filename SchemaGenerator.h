@@ -67,6 +67,7 @@ struct EnumValueType
 {
 	std::string value;
 	std::string description;
+	std::unique_ptr<std::string> deprecationReason;
 };
 
 struct EnumType
@@ -142,6 +143,7 @@ struct OutputField
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
+	std::unique_ptr<std::string> deprecationReason;
 };
 
 using OutputFieldList = std::vector<OutputField>;

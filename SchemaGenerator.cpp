@@ -43,90 +43,100 @@ Generator::Generator()
 	, _filenamePrefix("Introspection")
 	, _schemaNamespace(s_introspectionNamespace)
 {
-	// TODO: Double check that this still matches the spec
+	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
 	auto ast = peg::parseString(R"gql(
-		# Introspection Schema
-
 		type __Schema {
-			types: [__Type!]!
-			queryType: __Type!
-			mutationType: __Type
-			subscriptionType: __Type
-			directives: [__Directive!]!
-		}
-
-		type __Directive {
-			name: String!
-			description: String
-			locations: [__DirectiveLocation!]!
-			args: [__InputValue!]!
-		}
-
-		enum __DirectiveLocation {
-			QUERY
-			MUTATION
-			SUBSCRIPTION
-			FIELD
-			FRAGMENT_DEFINITION
-			FRAGMENT_SPREAD
-			INLINE_FRAGMENT
-			SCHEMA
-			SCALAR
-			OBJECT
-			FIELD_DEFINITION
-			ARGUMENT_DEFINITION
-			INTERFACE
-			UNION
-			ENUM
-			ENUM_VALUE
-			INPUT_OBJECT
-			INPUT_FIELD_DEFINITION
+		  types: [__Type!]!
+		  queryType: __Type!
+		  mutationType: __Type
+		  subscriptionType: __Type
+		  directives: [__Directive!]!
 		}
 
 		type __Type {
-			kind: __TypeKind!
-			name: String
-			description: String
-			fields(includeDeprecated: Boolean = false): [__Field!]
-			interfaces: [__Type!]
-			possibleTypes: [__Type!]
-			enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-			inputFields: [__InputValue!]
-			ofType: __Type
+		  kind: __TypeKind!
+		  name: String
+		  description: String
+
+		  # OBJECT and INTERFACE only
+		  fields(includeDeprecated: Boolean = false): [__Field!]
+
+		  # OBJECT only
+		  interfaces: [__Type!]
+
+		  # INTERFACE and UNION only
+		  possibleTypes: [__Type!]
+
+		  # ENUM only
+		  enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
+
+		  # INPUT_OBJECT only
+		  inputFields: [__InputValue!]
+
+		  # NON_NULL and LIST only
+		  ofType: __Type
 		}
 
 		type __Field {
-			name: String!
-			description: String
-			args: [__InputValue!]!
-			type: __Type!
-			isDeprecated: Boolean!
-			deprecationReason: String
+		  name: String!
+		  description: String
+		  args: [__InputValue!]!
+		  type: __Type!
+		  isDeprecated: Boolean!
+		  deprecationReason: String
 		}
 
 		type __InputValue {
-			name: String!
-			description: String
-			type: __Type!
-			defaultValue: String
+		  name: String!
+		  description: String
+		  type: __Type!
+		  defaultValue: String
 		}
 
 		type __EnumValue {
-			name: String!
-			description: String
-			isDeprecated: Boolean!
-			deprecationReason: String
+		  name: String!
+		  description: String
+		  isDeprecated: Boolean!
+		  deprecationReason: String
 		}
 
 		enum __TypeKind {
-			SCALAR
-			OBJECT
-			INTERFACE
-			UNION
-			ENUM
-			INPUT_OBJECT
-			LIST
-			NON_NULL
+		  SCALAR
+		  OBJECT
+		  INTERFACE
+		  UNION
+		  ENUM
+		  INPUT_OBJECT
+		  LIST
+		  NON_NULL
+		}
+
+		type __Directive {
+		  name: String!
+		  description: String
+		  locations: [__DirectiveLocation!]!
+		  args: [__InputValue!]!
+		}
+
+		enum __DirectiveLocation {
+		  QUERY
+		  MUTATION
+		  SUBSCRIPTION
+		  FIELD
+		  FRAGMENT_DEFINITION
+		  FRAGMENT_SPREAD
+		  INLINE_FRAGMENT
+		  SCHEMA
+		  SCALAR
+		  OBJECT
+		  FIELD_DEFINITION
+		  ARGUMENT_DEFINITION
+		  INTERFACE
+		  UNION
+		  ENUM
+		  ENUM_VALUE
+		  INPUT_OBJECT
+		  INPUT_FIELD_DEFINITION
 		})gql");
 
 	if (!ast)
@@ -465,6 +475,7 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	{
 		std::string value;
 		std::string valueDescription;
+		std::unique_ptr<std::string> deprecationReason;
 
 		peg::on_first_child<peg::enum_value>(child,
 			[&value](const peg::ast_node& enumValue)
@@ -478,7 +489,55 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 			valueDescription = enumValue.children.front()->unescaped;
 		});
 
-		values.push_back({ std::move(value), std::move(valueDescription) });
+		peg::on_first_child<peg::directives>(child,
+			[&deprecationReason](const peg::ast_node& directives)
+		{
+			peg::for_each_child<peg::directive>(directives,
+				[&deprecationReason](const peg::ast_node& directive)
+			{
+				std::string directiveName;
+
+				peg::on_first_child<peg::directive_name>(directive,
+					[&directiveName](const peg::ast_node& name)
+				{
+					directiveName = name.content();
+				});
+
+				if (directiveName == "deprecated")
+				{
+					std::string reason;
+
+					peg::on_first_child<peg::arguments>(directive,
+						[&reason](const peg::ast_node& arguments)
+					{
+						peg::on_first_child<peg::argument>(arguments,
+							[&reason](const peg::ast_node& argument)
+						{
+							std::string argumentName;
+
+							peg::on_first_child<peg::argument_name>(argument,
+								[&argumentName](const peg::ast_node& name)
+							{
+								argumentName = name.content();
+							});
+
+							if (argumentName == "reason")
+							{
+								peg::on_first_child<peg::string_value>(argument,
+									[&reason](const peg::ast_node& argumentValue)
+								{
+									reason = argumentValue.unescaped;
+								});
+							}
+						});
+					});
+
+					deprecationReason.reset(new std::string(std::move(reason)));
+				}
+			});
+		});
+
+		values.push_back({ std::move(value), std::move(valueDescription), std::move(deprecationReason) });
 	});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
@@ -571,6 +630,52 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 			else if (child->is<peg::description>())
 			{
 				field.description = child->children.front()->unescaped;
+			}
+			else if (child->is<peg::directives>())
+			{
+				peg::for_each_child<peg::directive>(*child,
+					[&field](const peg::ast_node& directive)
+				{
+					std::string directiveName;
+
+					peg::on_first_child<peg::directive_name>(directive,
+						[&directiveName](const peg::ast_node& name)
+					{
+						directiveName = name.content();
+					});
+
+					if (directiveName == "deprecated")
+					{
+						std::string deprecationReason;
+
+						peg::on_first_child<peg::arguments>(directive,
+							[&deprecationReason](const peg::ast_node& arguments)
+						{
+							peg::on_first_child<peg::argument>(arguments,
+								[&deprecationReason](const peg::ast_node& argument)
+							{
+								std::string argumentName;
+
+								peg::on_first_child<peg::argument_name>(argument,
+									[&argumentName](const peg::ast_node& name)
+								{
+									argumentName = name.content();
+								});
+
+								if (argumentName == "reason")
+								{
+									peg::on_first_child<peg::string_value>(argument,
+										[&deprecationReason](const peg::ast_node& reason)
+									{
+										deprecationReason = reason.unescaped;
+									});
+								}
+							});
+						});
+
+						field.deprecationReason.reset(new std::string(std::move(deprecationReason)));
+					}
+				});
 			}
 		}
 
@@ -1829,7 +1934,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	schema->AddType(")cpp" << scalarType.type
 				<< R"cpp(", std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ScalarType>(")cpp" << scalarType.type
-				<< R"cpp(", R"gql()cpp" << scalarType.description << R"cpp()gql"));
+				<< R"cpp(", R"md()cpp" << scalarType.description << R"cpp()md"));
 )cpp";
 		}
 	}
@@ -1841,7 +1946,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << enumType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::EnumType>(")cpp" << enumType.type
-				<< R"cpp(", R"gql()cpp" << enumType.description << R"cpp()gql");
+				<< R"cpp(", R"md()cpp" << enumType.description << R"cpp()md");
 	schema->AddType(")cpp" << enumType.type
 				<< R"cpp(", type)cpp" << enumType.type
 				<< R"cpp();
@@ -1856,7 +1961,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << inputType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InputObjectType>(")cpp" << inputType.type
-				<< R"cpp(", R"gql()cpp" << inputType.description << R"cpp()gql");
+				<< R"cpp(", R"md()cpp" << inputType.description << R"cpp()md");
 	schema->AddType(")cpp" << inputType.type
 				<< R"cpp(", type)cpp" << inputType.type
 				<< R"cpp();
@@ -1871,7 +1976,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << unionType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::UnionType>(")cpp" << unionType.type
-				<< R"cpp(", R"gql()cpp" << unionType.description << R"cpp()gql");
+				<< R"cpp(", R"md()cpp" << unionType.description << R"cpp()md");
 	schema->AddType(")cpp" << unionType.type
 				<< R"cpp(", type)cpp" << unionType.type
 				<< R"cpp();
@@ -1886,7 +1991,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << interfaceType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InterfaceType>(")cpp" << interfaceType.type
-				<< R"cpp(", R"gql()cpp" << interfaceType.description << R"cpp()gql");
+				<< R"cpp(", R"md()cpp" << interfaceType.description << R"cpp()md");
 	schema->AddType(")cpp" << interfaceType.type
 				<< R"cpp(", type)cpp" << interfaceType.type
 				<< R"cpp();
@@ -1901,7 +2006,7 @@ Operations::Operations()cpp";
 			sourceFile << R"cpp(	auto type)cpp" << objectType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ObjectType>(")cpp" << objectType.type
-				<< R"cpp(", R"gql()cpp" << objectType.description << R"cpp()gql");
+				<< R"cpp(", R"md()cpp" << objectType.description << R"cpp()md");
 	schema->AddType(")cpp" << objectType.type
 				<< R"cpp(", type)cpp" << objectType.type
 				<< R"cpp();
@@ -1934,7 +2039,18 @@ Operations::Operations()cpp";
 
 					firstValue = false;
 					sourceFile << R"cpp(		{ ")cpp" << enumValue.value
-						<< R"cpp(", R"gql()cpp" << enumValue.description << R"cpp()gql" })cpp";
+						<< R"cpp(", R"md()cpp" << enumValue.description << R"cpp()md", )cpp";
+
+					if (enumValue.deprecationReason)
+					{
+						sourceFile << R"cpp(R"md()cpp" << *enumValue.deprecationReason << R"cpp()md")cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp( })cpp";
 				}
 
 				sourceFile << R"cpp(
@@ -1989,8 +2105,8 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>(")cpp" << inputField.name
-						<< R"cpp(", R"gql()cpp" << inputField.description
-						<< R"cpp()gql", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
+						<< R"cpp(", R"md()cpp" << inputField.description
+						<< R"cpp()md", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
 						<< R"cpp(, default)cpp" << inputType.type << inputField.name << R"cpp())cpp";
 				}
 
@@ -2079,8 +2195,20 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
-						<< R"cpp(", R"gql()cpp" << interfaceField.description
-						<< R"cpp()gql", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"md()cpp" << interfaceField.description
+						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+
+					if (interfaceField.deprecationReason)
+					{
+						sourceFile << R"cpp(new std::string(R"md()cpp"
+							<< *interfaceField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -2106,8 +2234,8 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", R"gql()cpp" << argument.description
-								<< R"cpp()gql", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(", R"md()cpp" << argument.description
+								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
 								<< R"cpp(, default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp())cpp";
 						}
 
@@ -2194,8 +2322,20 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
-						<< R"cpp(", R"gql()cpp" << objectField.description
-						<< R"cpp()gql", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"md()cpp" << objectField.description
+						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+
+					if (objectField.deprecationReason)
+					{
+						sourceFile << R"cpp(new std::string(R"md()cpp"
+							<< *objectField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())
@@ -2221,8 +2361,8 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", R"gql()cpp" << argument.description
-								<< R"cpp()gql", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(", R"md()cpp" << argument.description
+								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
 								<< R"cpp(, default)cpp" << objectType.type << objectField.name << argument.name << R"cpp())cpp";
 						}
 

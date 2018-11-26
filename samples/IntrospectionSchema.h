@@ -15,6 +15,18 @@ namespace introspection {
 
 class Schema;
 
+enum class __TypeKind
+{
+	SCALAR,
+	OBJECT,
+	INTERFACE,
+	UNION,
+	ENUM,
+	INPUT_OBJECT,
+	LIST,
+	NON_NULL
+};
+
 enum class __DirectiveLocation
 {
 	QUERY,
@@ -37,26 +49,14 @@ enum class __DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-enum class __TypeKind
-{
-	SCALAR,
-	OBJECT,
-	INTERFACE,
-	UNION,
-	ENUM,
-	INPUT_OBJECT,
-	LIST,
-	NON_NULL
-};
-
 namespace object {
 
 class __Schema;
-class __Directive;
 class __Type;
 class __Field;
 class __InputValue;
 class __EnumValue;
+class __Directive;
 
 class __Schema
 	: public service::Object
@@ -77,27 +77,6 @@ private:
 	rapidjson::Document resolveMutationType(service::ResolverParams&& params);
 	rapidjson::Document resolveSubscriptionType(service::ResolverParams&& params);
 	rapidjson::Document resolveDirectives(service::ResolverParams&& params);
-
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
-};
-
-class __Directive
-	: public service::Object
-{
-protected:
-	__Directive();
-
-public:
-	virtual std::string getName() const = 0;
-	virtual std::unique_ptr<std::string> getDescription() const = 0;
-	virtual std::vector<__DirectiveLocation> getLocations() const = 0;
-	virtual std::vector<std::shared_ptr<__InputValue>> getArgs() const = 0;
-
-private:
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveLocations(service::ResolverParams&& params);
-	rapidjson::Document resolveArgs(service::ResolverParams&& params);
 
 	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
@@ -196,6 +175,27 @@ private:
 	rapidjson::Document resolveDescription(service::ResolverParams&& params);
 	rapidjson::Document resolveIsDeprecated(service::ResolverParams&& params);
 	rapidjson::Document resolveDeprecationReason(service::ResolverParams&& params);
+
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+};
+
+class __Directive
+	: public service::Object
+{
+protected:
+	__Directive();
+
+public:
+	virtual std::string getName() const = 0;
+	virtual std::unique_ptr<std::string> getDescription() const = 0;
+	virtual std::vector<__DirectiveLocation> getLocations() const = 0;
+	virtual std::vector<std::shared_ptr<__InputValue>> getArgs() const = 0;
+
+private:
+	rapidjson::Document resolveName(service::ResolverParams&& params);
+	rapidjson::Document resolveDescription(service::ResolverParams&& params);
+	rapidjson::Document resolveLocations(service::ResolverParams&& params);
+	rapidjson::Document resolveArgs(service::ResolverParams&& params);
 
 	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };

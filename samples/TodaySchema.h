@@ -23,7 +23,8 @@ enum class TaskState
 {
 	New,
 	Started,
-	Complete
+	Complete,
+	Unassigned
 };
 
 struct CompleteTaskInput
