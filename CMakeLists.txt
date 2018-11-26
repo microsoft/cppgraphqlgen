@@ -36,7 +36,6 @@ target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:i
 target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 if(UNIX)
-  target_compile_options(graphqlpeg PRIVATE -std=c++11)
   target_compile_options(graphqlservice PRIVATE -std=c++11)
   target_compile_options(schemagen PRIVATE -std=c++11)
 endif()
