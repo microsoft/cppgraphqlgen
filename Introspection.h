@@ -41,7 +41,7 @@ public:
 	std::vector<std::shared_ptr<object::__Directive>> getDirectives() const override;
 
 private:
-	std::weak_ptr<ObjectType> _query;
+	std::shared_ptr<ObjectType> _query;
 	std::shared_ptr<ObjectType> _mutation;
 	std::shared_ptr<ObjectType> _subscription;
 	std::unordered_map<std::string, size_t> _typeMap;
@@ -135,7 +135,7 @@ public:
 private:
 	const std::string _name;
 
-	std::vector<std::shared_ptr<object::__Type>> _possibleTypes;
+	std::vector<std::weak_ptr<object::__Type>> _possibleTypes;
 };
 
 struct EnumValueType
@@ -192,7 +192,7 @@ public:
 
 private:
 	const __TypeKind _kind;
-	const std::shared_ptr<object::__Type> _ofType;
+	const std::weak_ptr<object::__Type> _ofType;
 };
 
 class Field : public object::__Field
@@ -213,7 +213,7 @@ private:
 	const std::string _description;
 	const std::unique_ptr<std::string> _deprecationReason;
 	const std::vector<std::shared_ptr<InputValue>> _args;
-	const std::shared_ptr<object::__Type> _type;
+	const std::weak_ptr<object::__Type> _type;
 };
 
 class InputValue : public object::__InputValue
@@ -232,7 +232,7 @@ private:
 
 	const std::string _name;
 	const std::string _description;
-	const std::shared_ptr<object::__Type> _type;
+	const std::weak_ptr<object::__Type> _type;
 	const std::string _defaultValue;
 };
 

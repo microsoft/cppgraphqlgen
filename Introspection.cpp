@@ -67,7 +67,7 @@ std::vector<std::shared_ptr<object::__Type>> Schema::getTypes() const
 
 std::shared_ptr<object::__Type> Schema::getQueryType() const
 {
-	return _query.lock();
+	return _query;
 }
 
 std::shared_ptr<object::__Type> Schema::getMutationType() const
@@ -236,7 +236,12 @@ UnionType::UnionType(std::string name, std::string description)
 
 void UnionType::AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes)
 {
-	_possibleTypes = std::move(possibleTypes);
+	_possibleTypes.resize(possibleTypes.size());
+	std::transform(possibleTypes.cbegin(), possibleTypes.cend(), _possibleTypes.begin(),
+		[](const std::shared_ptr<object::__Type>& shared)
+	{
+		return shared;
+	});
 }
 
 __TypeKind UnionType::getKind() const
@@ -255,7 +260,11 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> UnionType::getPoss
 {
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> result(new std::vector<std::shared_ptr<object::__Type>>(_possibleTypes.size()));
 
-	std::copy(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin());
+	std::transform(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin(),
+		[](const std::weak_ptr<object::__Type>& weak)
+	{
+		return weak.lock();
+	});
 
 	return result;
 }
@@ -347,7 +356,7 @@ __TypeKind WrapperType::getKind() const
 
 std::shared_ptr<object::__Type> WrapperType::getOfType() const
 {
-	return _ofType;
+	return _ofType.lock();
 }
 
 Field::Field(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
@@ -382,7 +391,7 @@ std::vector<std::shared_ptr<object::__InputValue>> Field::getArgs() const
 
 std::shared_ptr<object::__Type> Field::getType() const
 {
-	return _type;
+	return _type.lock();
 }
 
 bool Field::getIsDeprecated() const
@@ -419,7 +428,7 @@ std::unique_ptr<std::string> InputValue::getDescription() const
 
 std::shared_ptr<object::__Type> InputValue::getType() const
 {
-	return _type;
+	return _type.lock();
 }
 
 std::unique_ptr<std::string> InputValue::getDefaultValue() const
