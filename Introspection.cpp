@@ -67,7 +67,7 @@ std::vector<std::shared_ptr<object::__Type>> Schema::getTypes() const
 
 std::shared_ptr<object::__Type> Schema::getQueryType() const
 {
-	return _query;
+	return _query.lock();
 }
 
 std::shared_ptr<object::__Type> Schema::getMutationType() const

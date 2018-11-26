@@ -41,7 +41,7 @@ public:
 	std::vector<std::shared_ptr<object::__Directive>> getDirectives() const override;
 
 private:
-	std::shared_ptr<ObjectType> _query;
+	std::weak_ptr<ObjectType> _query;
 	std::shared_ptr<ObjectType> _mutation;
 	std::shared_ptr<ObjectType> _subscription;
 	std::unordered_map<std::string, size_t> _typeMap;
