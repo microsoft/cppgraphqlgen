@@ -265,6 +265,7 @@ class Object : public std::enable_shared_from_this<Object>
 {
 public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
+	virtual ~Object() = default;
 
 	rapidjson::Document resolve(const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const;
 
@@ -399,6 +400,7 @@ class Request : public std::enable_shared_from_this<Request>
 {
 public:
 	explicit Request(TypeMap&& operationTypes);
+	virtual ~Request() = default;
 
 	rapidjson::Document resolve(const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const;
 
