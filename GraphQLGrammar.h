@@ -12,16 +12,28 @@ namespace facebook {
 namespace graphql {
 namespace peg {
 
-using namespace tao::pegtl;
+using namespace tao::graphqlpeg;
 
 template <typename _Rule>
-void for_each_child(const ast_node& n, std::function<bool(const ast_node&)>&& func)
+void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{
-		if (child->is<_Rule>()
-			&& !func(*child))
+		if (child->is<_Rule>())
 		{
+			func(*child);
+		}
+	}
+}
+
+template <typename _Rule>
+void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
+{
+	for (const auto& child : n.children)
+	{
+		if (child->is<_Rule>())
+		{
+			func(*child);
 			return;
 		}
 	}
@@ -94,13 +106,13 @@ struct string_escape_sequence
 };
 
 struct string_quote_character
-	: source_character
+	: plus<seq<not_at<backslash_token>, not_at<quote_token>, not_at<ascii::eol>, source_character>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#StringCharacter
 struct string_quote
-	: if_must<quote_token, star<seq<not_at<quote_token>, not_at<ascii::eol>, sor<string_escape_sequence, string_quote_character>>>, quote_token>
+	: if_must<quote_token, star<sor<string_escape_sequence, string_quote_character>>, quote_token>
 {
 };
 
@@ -110,18 +122,18 @@ struct block_quote_token
 };
 
 struct block_escape_sequence
-	: if_must<backslash_token, block_quote_token>
+	: seq<backslash_token, block_quote_token>
 {
 };
 
 struct block_quote_character
-	: source_character
+	: plus<seq<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>>
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#BlockStringCharacter
 struct block_quote
-	: if_must<block_quote_token, star<seq<not_at<block_quote_token>, sor<block_escape_sequence, block_quote_character>>>, block_quote_token>
+	: if_must<block_quote_token, star<sor<block_escape_sequence, block_quote_character>>, block_quote_token>
 {
 };
 
@@ -804,7 +816,7 @@ struct definition
 
 // https://facebook.github.io/graphql/June2018/#Document
 struct document
-	: must<bof, opt<utf8::bom>, star<ignored>, list<definition, plus<ignored>>, star<ignored>, tao::pegtl::eof>
+	: must<bof, opt<utf8::bom>, star<ignored>, list<definition, plus<ignored>>, star<ignored>, tao::graphqlpeg::eof>
 {
 };
 

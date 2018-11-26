@@ -3,17 +3,20 @@
 
 #include "Introspection.h"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 namespace facebook {
 namespace graphql {
 namespace introspection {
 
 Schema::Schema()
 {
-	AddType("Int", std::make_shared<ScalarType>("Int"));
-	AddType("Float", std::make_shared<ScalarType>("Float"));
-	AddType("String", std::make_shared<ScalarType>("String"));
-	AddType("Boolean", std::make_shared<ScalarType>("Boolean"));
-	AddType("ID", std::make_shared<ScalarType>("ID"));
+	AddType("Int", std::make_shared<ScalarType>("Int", ""));
+	AddType("Float", std::make_shared<ScalarType>("Float", ""));
+	AddType("String", std::make_shared<ScalarType>("String", ""));
+	AddType("Boolean", std::make_shared<ScalarType>("Boolean", ""));
+	AddType("ID", std::make_shared<ScalarType>("ID", ""));
 }
 
 void Schema::AddQueryType(std::shared_ptr<ObjectType> query)
@@ -82,6 +85,11 @@ std::vector<std::shared_ptr<object::__Directive>> Schema::getDirectives() const
 	return {};
 }
 
+BaseType::BaseType(std::string description)
+	: _description(std::move(description))
+{
+}
+
 std::unique_ptr<std::string> BaseType::getName() const
 {
 	return nullptr;
@@ -89,7 +97,9 @@ std::unique_ptr<std::string> BaseType::getName() const
 
 std::unique_ptr<std::string> BaseType::getDescription() const
 {
-	return nullptr;
+	std::unique_ptr<std::string> result(_description.empty() ? nullptr : new std::string(_description));
+
+	return result;
 }
 
 std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> BaseType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
@@ -122,8 +132,9 @@ std::shared_ptr<object::__Type> BaseType::getOfType() const
 	return nullptr;
 }
 
-ScalarType::ScalarType(std::string name)
-	: _name(std::move(name))
+ScalarType::ScalarType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
@@ -139,8 +150,9 @@ std::unique_ptr<std::string> ScalarType::getName() const
 	return result;
 }
 
-ObjectType::ObjectType(std::string name)
-	: _name(std::move(name))
+ObjectType::ObjectType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
@@ -184,8 +196,9 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> ObjectType::getInt
 	return result;
 }
 
-InterfaceType::InterfaceType(std::string name)
-	: _name(std::move(name))
+InterfaceType::InterfaceType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
@@ -215,14 +228,20 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> InterfaceType::ge
 	return result;
 }
 
-UnionType::UnionType(std::string name)
-	: _name(std::move(name))
+UnionType::UnionType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
 void UnionType::AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes)
 {
-	_possibleTypes = std::move(possibleTypes);
+	_possibleTypes.resize(possibleTypes.size());
+	std::transform(possibleTypes.cbegin(), possibleTypes.cend(), _possibleTypes.begin(),
+		[](const std::shared_ptr<object::__Type>& shared)
+	{
+		return shared;
+	});
 }
 
 __TypeKind UnionType::getKind() const
@@ -241,23 +260,32 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> UnionType::getPoss
 {
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> result(new std::vector<std::shared_ptr<object::__Type>>(_possibleTypes.size()));
 
-	std::copy(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin());
+	std::transform(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin(),
+		[](const std::weak_ptr<object::__Type>& weak)
+	{
+		return weak.lock();
+	});
 
 	return result;
 }
 
-EnumType::EnumType(std::string name)
-	: _name(std::move(name))
+EnumType::EnumType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
-void EnumType::AddEnumValues(std::vector<std::string> enumValues)
+void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
 {
 	_enumValues.reserve(_enumValues.size() + enumValues.size());
 
 	for (auto& value : enumValues)
 	{
-		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value)));
+		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value.value),
+			std::move(value.description),
+			std::unique_ptr<std::string>(value.deprecationReason
+				? new std::string(value.deprecationReason)
+				: nullptr)));
 	}
 }
 
@@ -282,8 +310,9 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> EnumType::get
 	return result;
 }
 
-InputObjectType::InputObjectType(std::string name)
-	: _name(std::move(name))
+InputObjectType::InputObjectType(std::string name, std::string description)
+	: BaseType(std::move(description))
+	, _name(std::move(name))
 {
 }
 
@@ -314,7 +343,8 @@ std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>> InputObjectT
 }
 
 WrapperType::WrapperType(__TypeKind kind, std::shared_ptr<object::__Type> ofType)
-	: _kind(kind)
+	: BaseType(std::string())
+	, _kind(kind)
 	, _ofType(std::move(ofType))
 {
 }
@@ -326,11 +356,13 @@ __TypeKind WrapperType::getKind() const
 
 std::shared_ptr<object::__Type> WrapperType::getOfType() const
 {
-	return _ofType;
+	return _ofType.lock();
 }
 
-Field::Field(std::string name, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
+Field::Field(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
 	: _name(std::move(name))
+	, _description(std::move(description))
+	, _deprecationReason(std::move(deprecationReason))
 	, _args(std::move(args))
 	, _type(std::move(type))
 {
@@ -343,7 +375,9 @@ std::string Field::getName() const
 
 std::unique_ptr<std::string> Field::getDescription() const
 {
-	return nullptr;
+	std::unique_ptr<std::string> result(_description.empty() ? nullptr : new std::string(_description));
+
+	return result;
 }
 
 std::vector<std::shared_ptr<object::__InputValue>> Field::getArgs() const
@@ -357,21 +391,24 @@ std::vector<std::shared_ptr<object::__InputValue>> Field::getArgs() const
 
 std::shared_ptr<object::__Type> Field::getType() const
 {
-	return _type;
+	return _type.lock();
 }
 
 bool Field::getIsDeprecated() const
 {
-	return false;
+	return _deprecationReason != nullptr;
 }
 
 std::unique_ptr<std::string> Field::getDeprecationReason() const
 {
-	return nullptr;
+	return _deprecationReason
+		? std::unique_ptr<std::string>(new std::string(*_deprecationReason))
+		: nullptr;
 }
 
-InputValue::InputValue(std::string name, std::shared_ptr<object::__Type> type, const web::json::value& defaultValue)
+InputValue::InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, const rapidjson::Value& defaultValue)
 	: _name(std::move(name))
+	, _description(std::move(description))
 	, _type(std::move(type))
 	, _defaultValue(formatDefaultValue(defaultValue))
 {
@@ -384,12 +421,14 @@ std::string InputValue::getName() const
 
 std::unique_ptr<std::string> InputValue::getDescription() const
 {
-	return nullptr;
+	std::unique_ptr<std::string> result(_description.empty() ? nullptr : new std::string(_description));
+
+	return result;
 }
 
 std::shared_ptr<object::__Type> InputValue::getType() const
 {
-	return _type;
+	return _type.lock();
 }
 
 std::unique_ptr<std::string> InputValue::getDefaultValue() const
@@ -399,60 +438,65 @@ std::unique_ptr<std::string> InputValue::getDefaultValue() const
 	return result;
 }
 
-std::string InputValue::formatDefaultValue(const web::json::value& defaultValue) noexcept
+std::string InputValue::formatDefaultValue(const rapidjson::Value& defaultValue) noexcept
 {
-	utility::ostringstream_t output;
+	std::ostringstream output;
 
-	if (defaultValue.is_object())
+	if (defaultValue.IsObject())
 	{
 		bool firstValue = true;
 
-		output << _XPLATSTR("{ ");
+		output << "{ ";
 
-		for (const auto& entry : defaultValue.as_object())
+		for (const auto& entry : defaultValue.GetObject())
 		{
 			if (!firstValue)
 			{
-				output << _XPLATSTR(", ");
+				output << ", ";
 			}
 			firstValue = false;
 
-			output << entry.first
-				<< _XPLATSTR(": ")
-				<< utility::conversions::to_string_t(formatDefaultValue(entry.second));
+			output << "\"" << entry.name.GetString()
+				<< "\": " << formatDefaultValue(entry.value);
 		}
 
-		output << _XPLATSTR(" }");
+		output << " }";
 	}
-	else if (defaultValue.is_array())
+	else if (defaultValue.IsArray())
 	{
 		bool firstValue = true;
 
-		output << _XPLATSTR("[ ");
+		output << "[ ";
 
-		for (const auto& entry : defaultValue.as_array())
+		for (const auto& entry : defaultValue.GetArray())
 		{
 			if (!firstValue)
 			{
-				output << _XPLATSTR(", ");
+				output << ", ";
 			}
 			firstValue = false;
 
-			output << utility::conversions::to_string_t(formatDefaultValue(entry));
+			output << formatDefaultValue(entry);
 		}
 
-		output << _XPLATSTR(" ]");
+		output << " ]";
 	}
 	else
 	{
-		output << defaultValue;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+
+		defaultValue.Accept(writer);
+		output << buffer.GetString();
 	}
 
-	return utility::conversions::to_utf8string(output.str());
+	return output.str();
 }
 
-EnumValue::EnumValue(std::string name)
+EnumValue::EnumValue(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason)
 	: _name(std::move(name))
+	, _description(std::move(description))
+	, _deprecationReason(std::move(deprecationReason))
 {
 }
 
@@ -463,17 +507,21 @@ std::string EnumValue::getName() const
 
 std::unique_ptr<std::string> EnumValue::getDescription() const
 {
-	return nullptr;
+	std::unique_ptr<std::string> result(_description.empty() ? nullptr : new std::string(_description));
+
+	return result;
 }
 
 bool EnumValue::getIsDeprecated() const
 {
-	return false;
+	return _deprecationReason != nullptr;
 }
 
 std::unique_ptr<std::string> EnumValue::getDeprecationReason() const
 {
-	return nullptr;
+	return _deprecationReason
+		? std::unique_ptr<std::string>(new std::string(*_deprecationReason))
+		: nullptr;
 }
 
 } /* namespace facebook */

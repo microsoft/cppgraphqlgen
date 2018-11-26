@@ -7,24 +7,27 @@
 
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 
 namespace facebook {
 namespace graphql {
 namespace service {
 
 schema_exception::schema_exception(const std::vector<std::string>& messages)
-	: _errors(web::json::value::array(messages.size()))
+	: _errors(rapidjson::Type::kArrayType)
 {
-	std::transform(messages.cbegin(), messages.cend(), _errors.as_array().begin(),
-		[](const std::string& message)
+	auto& allocator = _errors.GetAllocator();
+
+	for (const auto& message : messages)
 	{
-		return web::json::value::object({
-			{ _XPLATSTR("message"), web::json::value(utility::conversions::to_string_t(message)) }
-			}, true);
-	});
+		rapidjson::Value error(rapidjson::Type::kObjectType);
+
+		error.AddMember(rapidjson::StringRef("message"), rapidjson::Value(message.c_str(), allocator), allocator);
+		_errors.PushBack(error, allocator);
+	}
 }
 
-const web::json::value& schema_exception::getErrors() const noexcept
+const rapidjson::Document& schema_exception::getErrors() const noexcept
 {
 	return _errors;
 }
@@ -45,143 +48,260 @@ const peg::ast_node& Fragment::getSelection() const
 	return _selection;
 }
 
-template <>
-int ModifiedArgument<int>::convert(const web::json::value& value)
+uint8_t Base64::verifyFromBase64(unsigned char ch)
 {
-	if (!value.is_integer())
+	uint8_t result = fromBase64(ch);
+
+	if (result > 63)
 	{
-		throw web::json::json_exception(_XPLATSTR("not an integer"));
+		throw schema_exception({ "invalid character in base64 encoded string" });
 	}
 
-	return value.as_integer();
+	return result;
 }
 
-template <>
-double ModifiedArgument<double>::convert(const web::json::value& value)
+std::vector<unsigned char> Base64::fromBase64(const char* encoded, size_t count)
 {
-	if (!value.is_double())
+	std::vector<unsigned char> result;
+
+	if (!count)
 	{
-		throw web::json::json_exception(_XPLATSTR("not a float"));
+		return result;
 	}
 
-	return value.as_double();
-}
-
-template <>
-std::string ModifiedArgument<std::string>::convert(const web::json::value& value)
-{
-	if (!value.is_string())
+	result.reserve(count * 3 / 4);
+	while (encoded[0] && encoded[1])
 	{
-		throw web::json::json_exception(_XPLATSTR("not a string"));
+		uint16_t buffer = static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 10;
+
+		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 4;
+		result.push_back(static_cast<unsigned char>((buffer & 0xFF00) >> 8));
+		buffer = (buffer & 0xFF) << 8;
+
+		if (!*encoded || '=' == *encoded)
+		{
+			if (0 != buffer
+				|| (*encoded && (*++encoded != '=' || *++encoded)))
+			{
+				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
+			}
+
+			break;
+		}
+
+		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 6;
+		result.push_back(static_cast<unsigned char>((buffer & 0xFF00) >> 8));
+		buffer &= 0xFF;
+
+		if (!*encoded || '=' == *encoded)
+		{
+			if (0 != buffer
+				|| (*encoded && *++encoded))
+			{
+				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
+			}
+
+			break;
+		}
+
+		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++));
+		result.push_back(static_cast<unsigned char>(buffer & 0xFF));
 	}
 
-	return utility::conversions::to_utf8string(value.as_string());
+	return result;
 }
 
-template <>
-bool ModifiedArgument<bool>::convert(const web::json::value& value)
+unsigned char Base64::verifyToBase64(uint8_t i)
 {
-	if (!value.is_boolean())
+	unsigned char result = toBase64(i);
+
+	if (result == '=')
 	{
-		throw web::json::json_exception(_XPLATSTR("not a boolean"));
+		throw std::logic_error("invalid 6-bit value");
 	}
 
-	return value.as_bool();
+	return result;
 }
 
-template <>
-web::json::value ModifiedArgument<web::json::value>::convert(const web::json::value& value)
+std::string Base64::toBase64(const std::vector<unsigned char>& bytes)
 {
-	if (!value.is_object())
+	std::string result;
+
+	if (bytes.empty())
 	{
-		throw web::json::json_exception(_XPLATSTR("not an object"));
+		return result;
 	}
 
-	return value;
-}
+	auto itr = bytes.cbegin();
+	const auto itrEnd = bytes.cend();
+	const size_t count = bytes.size();
 
-template <>
-std::vector<unsigned char> ModifiedArgument<std::vector<unsigned char>>::convert(const web::json::value& value)
-{
-	if (!value.is_string())
+	result.reserve((count + (count % 3)) * 4 / 3);
+	while (itr != itrEnd)
 	{
-		throw web::json::json_exception(_XPLATSTR("not a string"));
+		uint16_t buffer = static_cast<uint8_t>(*itr++) << 8;
+
+		result.push_back(verifyToBase64((buffer & 0xFC00) >> 10));
+
+		if (itr == itrEnd)
+		{
+			result.push_back(verifyToBase64((buffer & 0x03F0) >> 4));
+			result.append("==");
+			break;
+		}
+
+		buffer |= static_cast<uint8_t>(*itr++);
+		result.push_back(verifyToBase64((buffer & 0x03F0) >> 4));
+		buffer = buffer << 8;
+
+		if (itr == itrEnd)
+		{
+			result.push_back(verifyToBase64((buffer & 0x0FC0) >> 6));
+			result.push_back('=');
+			break;
+		}
+
+		buffer |= static_cast<uint8_t>(*itr++);
+		result.push_back(verifyToBase64((buffer & 0x0FC0) >> 6));
+		result.push_back(verifyToBase64(buffer & 0x3F));
 	}
 
-	try
-	{
-		return utility::conversions::from_base64(value.as_string());
-	}
-	catch (const std::runtime_error& ex)
-	{
-		std::ostringstream error;
-
-		error << "Error decoding base64 ID: "
-			<< ex.what();
-
-		throw schema_exception({ error.str() });
-	}
-}
-
-template <>
-web::json::value ModifiedResult<int>::convert(const int& result, ResolverParams&&)
-{
-	return web::json::value::number(result);
-}
-
-template <>
-web::json::value ModifiedResult<double>::convert(const double& result, ResolverParams&&)
-{
-	return web::json::value::number(result);
-}
-
-template <>
-web::json::value ModifiedResult<std::string>::convert(const std::string& result, ResolverParams&&)
-{
-	return web::json::value::string(utility::conversions::to_string_t(result));
-}
-
-template <>
-web::json::value ModifiedResult<bool>::convert(const bool& result, ResolverParams&&)
-{
-	return web::json::value::boolean(result);
-}
-
-template <>
-web::json::value ModifiedResult<web::json::value>::convert(const web::json::value& result, ResolverParams&&)
-{
 	return result;
 }
 
 template <>
-web::json::value ModifiedResult<std::vector<unsigned char>>::convert(const std::vector<unsigned char>& result, ResolverParams&&)
+int ModifiedArgument<int>::convert(const rapidjson::Value& value)
 {
-	try
+	if (!value.IsInt())
 	{
-		return web::json::value::string(utility::conversions::to_base64(result));
+		throw schema_exception({ "not an integer" });
 	}
-	catch (const std::runtime_error& ex)
-	{
-		std::ostringstream error;
 
-		error << "Error encoding base64 ID: "
-			<< ex.what();
-
-		throw schema_exception({ error.str() });
-	}
+	return value.GetInt();
 }
 
 template <>
-web::json::value ModifiedResult<Object>::convert(const std::shared_ptr<Object>& result, ResolverParams&& params)
+double ModifiedArgument<double>::convert(const rapidjson::Value& value)
+{
+	if (!value.IsDouble())
+	{
+		throw schema_exception({ "not a float" });
+	}
+
+	return value.GetDouble();
+}
+
+template <>
+std::string ModifiedArgument<std::string>::convert(const rapidjson::Value& value)
+{
+	if (!value.IsString())
+	{
+		throw schema_exception({ "not a string" });
+	}
+
+	return value.GetString();
+}
+
+template <>
+bool ModifiedArgument<bool>::convert(const rapidjson::Value& value)
+{
+	if (!value.IsBool())
+	{
+		throw schema_exception({ "not a boolean" });
+	}
+
+	return value.GetBool();
+}
+
+template <>
+rapidjson::Document ModifiedArgument<rapidjson::Document>::convert(const rapidjson::Value& value)
+{
+	if (!value.IsObject())
+	{
+		throw schema_exception({ "not an object" });
+	}
+
+	rapidjson::Document document(rapidjson::Type::kObjectType);
+
+	document.CopyFrom(value, document.GetAllocator());
+
+	return document;
+}
+
+template <>
+std::vector<unsigned char> ModifiedArgument<std::vector<unsigned char>>::convert(const rapidjson::Value& value)
+{
+	if (!value.IsString())
+	{
+		throw schema_exception({ "not a string" });
+	}
+
+	return Base64::fromBase64(value.GetString(), value.GetStringLength());
+}
+
+template <>
+rapidjson::Document ModifiedResult<int>::convert(int&& result, ResolverParams&&)
+{
+	rapidjson::Document document(rapidjson::Type::kNumberType);
+
+	document.SetInt(result);
+
+	return document;
+}
+
+template <>
+rapidjson::Document ModifiedResult<double>::convert(double&& result, ResolverParams&&)
+{
+	rapidjson::Document document(rapidjson::Type::kNumberType);
+
+	document.SetDouble(result);
+
+	return document;
+}
+
+template <>
+rapidjson::Document ModifiedResult<std::string>::convert(std::string&& result, ResolverParams&&)
+{
+	rapidjson::Document document(rapidjson::Type::kStringType);
+
+	document.SetString(result.c_str(), document.GetAllocator());
+	
+	return document;
+}
+
+template <>
+rapidjson::Document ModifiedResult<bool>::convert(bool&& result, ResolverParams&&)
+{
+	return rapidjson::Document(result ? rapidjson::Type::kTrueType : rapidjson::Type::kFalseType);
+}
+
+template <>
+rapidjson::Document ModifiedResult<rapidjson::Document>::convert(rapidjson::Document&& result, ResolverParams&&)
+{
+	return rapidjson::Document(std::move(result));
+}
+
+template <>
+rapidjson::Document ModifiedResult<std::vector<unsigned char>>::convert(std::vector<unsigned char>&& result, ResolverParams&&)
+{
+	rapidjson::Document document(rapidjson::Type::kStringType);
+
+	document.SetString(Base64::toBase64(result).c_str(), document.GetAllocator());
+
+	return document;
+}
+
+template <>
+rapidjson::Document ModifiedResult<Object>::convert(std::shared_ptr<Object> result, ResolverParams&& params)
 {
 	if (!result)
 	{
-		return web::json::value::null();
+		return rapidjson::Document(rapidjson::Type::kNullType);
 	}
 
 	if (!params.selection)
 	{
-		return web::json::value::object();
+		return rapidjson::Document(rapidjson::Type::kObjectType);
 	}
 
 	return result->resolve(*params.selection, params.fragments, params.variables);
@@ -193,9 +313,10 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-web::json::value Object::resolve(const peg::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const
+rapidjson::Document Object::resolve(const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const
 {
-	auto result = web::json::value::object(selection.children.size());
+	rapidjson::Document result(rapidjson::Type::kObjectType);
+	auto& allocator = result.GetAllocator();
 
 	for (const auto& child : selection.children)
 	{
@@ -205,11 +326,17 @@ web::json::value Object::resolve(const peg::ast_node& selection, const FragmentM
 
 		auto values = visitor.getValues();
 
-		if (values.is_object())
+		if (values.IsObject())
 		{
-			for (auto& value : values.as_object())
+			for (const auto& entry : values.GetObject())
 			{
-				result[value.first] = std::move(value.second);
+				rapidjson::Value name;
+				rapidjson::Value value;
+
+				name.CopyFrom(entry.name, allocator);
+				value.CopyFrom(entry.value, allocator);
+
+				result.AddMember(name, value, allocator);
 			}
 		}
 	}
@@ -222,7 +349,7 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-web::json::value Request::resolve(const peg::ast_node& root, const std::string& operationName, const web::json::object& variables) const
+rapidjson::Document Request::resolve(const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const
 {
 	const auto& document = *root.children.front();
 	FragmentDefinitionVisitor fragmentVisitor;
@@ -231,7 +358,6 @@ web::json::value Request::resolve(const peg::ast_node& root, const std::string& 
 		[&fragmentVisitor](const peg::ast_node& child)
 	{
 		fragmentVisitor.visit(child);
-		return true;
 	});
 
 	auto fragments = fragmentVisitor.getFragments();
@@ -241,25 +367,23 @@ web::json::value Request::resolve(const peg::ast_node& root, const std::string& 
 		[&operationVisitor](const peg::ast_node& child)
 	{
 		operationVisitor.visit(child);
-		return true;
 	});
 
 	return operationVisitor.getValue();
 }
 
-SelectionVisitor::SelectionVisitor(const FragmentMap& fragments, const web::json::object& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
+SelectionVisitor::SelectionVisitor(const FragmentMap& fragments, const rapidjson::Document::ConstObject& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
 	: _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
-	, _values(web::json::value::object(true))
+	, _values(rapidjson::Type::kObjectType)
 {
 }
 
-web::json::value SelectionVisitor::getValues()
+rapidjson::Document SelectionVisitor::getValues()
 {
-	web::json::value result(std::move(_values));
-	return result;
+	return rapidjson::Document(std::move(_values));
 }
 
 void SelectionVisitor::visit(const peg::ast_node& selection)
@@ -280,10 +404,28 @@ void SelectionVisitor::visit(const peg::ast_node& selection)
 
 void SelectionVisitor::visitField(const peg::ast_node& field)
 {
-	const bool hasAlias = field.children.front()->is<peg::alias_name>();
-	const std::string name(field.children[hasAlias ? 1 : 0]->content());
-	const std::string alias(hasAlias ? field.children.front()->content() : name);
-	auto itr = _resolvers.find(name);
+	std::string name;
+
+	peg::on_first_child<peg::field_name>(field,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	std::string alias;
+
+	peg::on_first_child<peg::alias_name>(field,
+		[&alias](const peg::ast_node& child)
+	{
+		alias = child.content();
+	});
+
+	if (alias.empty())
+	{
+		alias = name;
+	}
+
+	const auto itr = _resolvers.find(name);
 
 	if (itr == _resolvers.cend())
 	{
@@ -299,11 +441,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	bool skip = false;
 
-	peg::for_each_child<peg::directives>(field,
+	peg::on_first_child<peg::directives>(field,
 		[this, &skip](const peg::ast_node& child)
 	{
 		skip = shouldSkip(&child.children);
-		return false;
 	});
 
 	if (skip)
@@ -311,36 +452,40 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	auto arguments = web::json::value::object(true);
+	rapidjson::Document arguments(rapidjson::Type::kObjectType);
 
-	for (const auto& child : field.children)
+	peg::on_first_child<peg::arguments>(field,
+		[this, &arguments](const peg::ast_node& child)
 	{
-		if (child->is<peg::arguments>())
+		ValueVisitor visitor(_variables);
+		auto& argumentAllocator = arguments.GetAllocator();
+
+		for (const auto& argument : child.children)
 		{
-			ValueVisitor visitor(_variables);
+			rapidjson::Value argumentName(argument->children.front()->content().c_str(), argumentAllocator);
+			rapidjson::Value argumentValue;
 
-			for (const auto& argument : child->children)
-			{
-				visitor.visit(*argument->children.back());
-				arguments[utility::conversions::to_string_t(argument->children.front()->content())] = visitor.getValue();
-			}
-
-			break;
+			visitor.visit(*argument->children.back());
+			argumentValue.CopyFrom(visitor.getValue(), argumentAllocator);
+			arguments.AddMember(argumentName, argumentValue, argumentAllocator);
 		}
-	}
+	});
 
 	const peg::ast_node* selection = nullptr;
 
-	for (const auto& child : field.children)
+	peg::on_first_child<peg::selection_set>(field,
+		[&selection](const peg::ast_node& child)
 	{
-		if (child->is<peg::selection_set>())
-		{
-			selection = child.get();
-			break;
-		}
-	}
+		selection = &child;
+	});
 
-	_values[utility::conversions::to_string_t(alias)] = itr->second({ arguments.as_object(), selection, _fragments, _variables });
+	auto& selectionAllocator = _values.GetAllocator();
+	rapidjson::Value selectionName(alias.c_str(), selectionAllocator);
+	rapidjson::Value selectionValue;
+
+	selectionValue.CopyFrom(itr->second({ const_cast<const rapidjson::Document&>(arguments).GetObject(), selection, _fragments, _variables }), selectionAllocator);
+
+	_values.AddMember(selectionName, selectionValue, selectionAllocator);
 }
 
 void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
@@ -364,11 +509,10 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 	if (!skip)
 	{
-		peg::for_each_child<peg::directives>(fragmentSpread,
+		peg::on_first_child<peg::directives>(fragmentSpread,
 			[this, &skip](const peg::ast_node& child)
 		{
 			skip = shouldSkip(&child.children);
-			return false;
 		});
 	}
 
@@ -377,14 +521,13 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
-	peg::for_each_child<peg::selection_set>(fragmentSpread,
+	peg::on_first_child<peg::selection_set>(fragmentSpread,
 		[this](const peg::ast_node& child)
 	{
 		for (const auto& selection : child.children)
 		{
 			visit(*selection);
 		}
-		return false;
 	});
 }
 
@@ -392,11 +535,10 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
 	bool skip = false;
 
-	peg::for_each_child<peg::directives>(inlineFragment,
+	peg::on_first_child<peg::directives>(inlineFragment,
 		[this, &skip](const peg::ast_node& child)
 	{
 		skip = shouldSkip(&child.children);
-		return false;
 	});
 
 	if (skip)
@@ -406,41 +548,23 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 
 	const peg::ast_node* typeCondition = nullptr;
 
-	for (const auto& child : inlineFragment.children)
+	peg::on_first_child<peg::type_condition>(inlineFragment,
+		[&typeCondition](const peg::ast_node& child)
 	{
-		if (child->is<peg::type_condition>())
-		{
-			typeCondition = child.get();
-			break;
-		}
-	}
+		typeCondition = &child;
+	});
 
 	if (typeCondition == nullptr
 		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
 	{
-		for (const auto& child : inlineFragment.children)
+		peg::on_first_child<peg::selection_set>(inlineFragment,
+			[this](const peg::ast_node& child)
 		{
-			if (child->is<peg::selection_set>())
+			for (const auto& selection : child.children)
 			{
-				for (const auto& selection : child->children)
-				{
-					if (selection->is<peg::field>())
-					{
-						visitField(*selection);
-					}
-					else if (selection->is<peg::fragment_spread>())
-					{
-						visitFragmentSpread(*selection);
-					}
-					else if (selection->is<peg::inline_fragment>())
-					{
-						visitInlineFragment(*selection);
-					}
-				}
-
-				break;
+				visit(*selection);
 			}
-		}
+		});
 	}
 }
 
@@ -453,7 +577,14 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 
 	for (const auto& directive : *directives)
 	{
-		const std::string name(directive->children.front()->content());
+		std::string name;
+
+		peg::on_first_child<peg::directive_name>(*directive,
+			[&name](const peg::ast_node& child)
+		{
+			name = child.content();
+		});
+
 		const bool include = (name == "include");
 		const bool skip = (!include && (name == "skip"));
 
@@ -462,10 +593,40 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 			continue;
 		}
 
-		const auto argument = (directive->children.back()->is<peg::arguments>() && directive->children.back()->children.size() == 1)
-			? directive->children.back()->children.front().get()
-			: nullptr;
-		const std::string argumentName((argument != nullptr) ? argument->children.front()->content() : "");
+		peg::ast_node* argument = nullptr;
+		std::string argumentName;
+		bool argumentTrue = false;
+		bool argumentFalse = false;
+
+		peg::on_first_child<peg::arguments>(*directive,
+			[&argument, &argumentName, &argumentTrue, &argumentFalse](const peg::ast_node& child)
+		{
+			if (child.children.size() == 1)
+			{
+				argument = child.children.front().get();
+
+				peg::on_first_child<peg::argument_name>(*argument,
+					[&argumentName](const peg::ast_node& nameArg)
+				{
+					argumentName = nameArg.content();
+				});
+
+				peg::on_first_child<peg::true_keyword>(*argument,
+					[&argumentTrue](const peg::ast_node& nameArg)
+				{
+					argumentTrue = true;
+				});
+
+				if (!argumentTrue)
+				{
+					peg::on_first_child<peg::false_keyword>(*argument,
+						[&argumentFalse](const peg::ast_node& nameArg)
+					{
+						argumentFalse = true;
+					});
+				}
+			}
+		});
 
 		if (argumentName != "if")
 		{
@@ -489,11 +650,11 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 			throw schema_exception({ error.str() });
 		}
 
-		if (argument->children.back()->is<peg::true_keyword>())
+		if (argumentTrue)
 		{
 			return skip;
 		}
-		else if (argument->children.back()->is<peg::false_keyword>())
+		else if (argumentFalse)
 		{
 			return !skip;
 		}
@@ -513,15 +674,14 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 	return false;
 }
 
-ValueVisitor::ValueVisitor(const web::json::object& variables)
+ValueVisitor::ValueVisitor(const rapidjson::Document::ConstObject& variables)
 	: _variables(variables)
 {
 }
 
-web::json::value ValueVisitor::getValue()
+rapidjson::Document ValueVisitor::getValue()
 {
-	web::json::value result(std::move(_value));
-	return result;
+	return rapidjson::Document(std::move(_value));
 }
 
 void ValueVisitor::visit(const peg::ast_node& value)
@@ -568,9 +728,9 @@ void ValueVisitor::visit(const peg::ast_node& value)
 void ValueVisitor::visitVariable(const peg::ast_node& variable)
 {
 	const std::string name(variable.content().c_str() + 1);
-	auto itr = _variables.find(utility::conversions::to_string_t(name));
+	auto itr = _variables.FindMember(name.c_str());
 
-	if (itr == _variables.cend())
+	if (itr == _variables.MemberEnd())
 	{
 		auto position = variable.begin();
 		std::ostringstream error;
@@ -582,66 +742,72 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 		throw schema_exception({ error.str() });
 	}
 
-	_value = itr->second;
+	_value.CopyFrom(itr->value, _value.GetAllocator());
 }
 
 void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
+	_value.SetInt(std::atoi(intValue.content().c_str()));
 }
 
 void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
+	_value.SetDouble(std::atof(floatValue.content().c_str()));
 }
 
 void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
+	_value.SetString(stringValue.unescaped.c_str(), _value.GetAllocator());
 }
 
 void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value = web::json::value::boolean(booleanValue.is<peg::true_keyword>());
+	_value.SetBool(booleanValue.is<peg::true_keyword>());
 }
 
 void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
-	_value = web::json::value::null();
+	_value.SetNull();
 }
 
 void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
+	_value.SetString(enumValue.content().c_str(), _value.GetAllocator());
 }
 
 void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.children.size());
+	_value = rapidjson::Document(rapidjson::Type::kArrayType);
 
-	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
-		[this](const std::unique_ptr<peg::ast_node>& value)
+	auto& allocator = _value.GetAllocator();
+	
+	_value.Reserve(listValue.children.size(), allocator);
+	for (const auto& child : listValue.children)
 	{
+		rapidjson::Value value;
 		ValueVisitor visitor(_variables);
 
-		visitor.visit(*value->children.back());
-
-		return visitor.getValue();
-	});
+		visitor.visit(*child->children.back());
+		value.CopyFrom(visitor.getValue(), allocator);
+		_value.PushBack(value, allocator);
+	}
 }
 
 void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = web::json::value::object(true);
+	_value = rapidjson::Document(rapidjson::Type::kObjectType);
+
+	auto& allocator = _value.GetAllocator();
 
 	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->children.front()->content());
+		rapidjson::Value name(field->children.front()->content().c_str(), allocator);
+		rapidjson::Value value;
 		ValueVisitor visitor(_variables);
 
 		visitor.visit(*field->children.back());
-
-		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
+		value.CopyFrom(visitor.getValue(), allocator);
+		_value.AddMember(name, value, allocator);
 	}
 }
 
@@ -660,7 +826,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const web::json::object& variables, const FragmentMap& fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const rapidjson::Document::ConstObject& variables, const FragmentMap& fragments)
 	: _operations(operations)
 	, _operationName(operationName)
 	, _variables(variables)
@@ -668,13 +834,13 @@ OperationDefinitionVisitor::OperationDefinitionVisitor(const TypeMap& operations
 {
 }
 
-web::json::value OperationDefinitionVisitor::getValue()
+rapidjson::Document OperationDefinitionVisitor::getValue()
 {
-	web::json::value result(std::move(_result));
+	rapidjson::Document result(std::move(_result));
 
 	try
 	{
-		if (result.is_null())
+		if (result.IsNull())
 		{
 			std::ostringstream error;
 
@@ -690,10 +856,14 @@ web::json::value OperationDefinitionVisitor::getValue()
 	}
 	catch (const schema_exception& ex)
 	{
-		result = web::json::value::object({
-			{ _XPLATSTR("data"),  web::json::value::null() },
-			{ _XPLATSTR("errors"), ex.getErrors() }
-			}, true);
+		result = rapidjson::Document(rapidjson::Type::kObjectType);
+		
+		auto& allocator = result.GetAllocator();
+		rapidjson::Value errors;
+
+		errors.CopyFrom(ex.getErrors(), allocator);
+		result.AddMember(rapidjson::StringRef("data"), rapidjson::Value(rapidjson::Type::kNullType), allocator);
+		result.AddMember(rapidjson::StringRef("errors"), errors, allocator);
 	}
 
 	return result;
@@ -701,17 +871,26 @@ web::json::value OperationDefinitionVisitor::getValue()
 
 void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 {
+	std::string operation;
+
+	peg::on_first_child<peg::operation_type>(operationDefinition,
+		[&operation](const peg::ast_node& child)
+	{
+		operation = child.content();
+	});
+
+	if (operation.empty())
+	{
+		operation = "query";
+	}
+
 	auto position = operationDefinition.begin();
-	auto operation = operationDefinition.children.front()->is<peg::operation_type>()
-		? operationDefinition.children.front()->content()
-		: std::string("query");
 	std::string name;
 
-	peg::for_each_child<peg::operation_name>(operationDefinition,
+	peg::on_first_child<peg::operation_name>(operationDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	if (!_operationName.empty()
@@ -723,7 +902,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 
 	try
 	{
-		if (!_result.is_null())
+		if (!_result.IsNull())
 		{
 			std::ostringstream error;
 
@@ -766,44 +945,66 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			throw schema_exception({ error.str() });
 		}
 
-		auto operationVariables = web::json::value::object();
+		auto operationVariables = rapidjson::Document(rapidjson::Type::kObjectType);
 
-		peg::for_each_child<peg::variable_definitions>(operationDefinition,
+		peg::on_first_child<peg::variable_definitions>(operationDefinition,
 			[this, &operationVariables](const peg::ast_node& child)
 		{
-			for (const auto& variable : child.children)
+			peg::for_each_child<peg::variable>(child,
+				[this, &operationVariables](const peg::ast_node& variable)
 			{
-				const auto& nameNode = *variable->children.front();
-				const auto& defaultValueNode = *variable->children.back();
-				auto nameVar = utility::conversions::to_string_t(nameNode.content().c_str() + 1);
-				auto itrVar = _variables.find(nameVar);
+				std::string variableName;
 
-				if (itrVar != _variables.cend())
+				peg::on_first_child<peg::variable_name>(variable,
+					[&variableName](const peg::ast_node& name)
 				{
-					operationVariables[itrVar->first] = itrVar->second;
-				}
-				else if (defaultValueNode.is<peg::default_value>())
+					// Skip the $ prefix
+					variableName = name.content().c_str() + 1;
+				});
+
+				rapidjson::Value nameVar(rapidjson::StringRef(variableName.c_str()));
+				auto itrVar = _variables.FindMember(nameVar);
+				auto& variableAllocator = operationVariables.GetAllocator();
+				rapidjson::Value valueVar;
+
+				if (itrVar != _variables.MemberEnd())
 				{
-					ValueVisitor visitor(_variables);
-
-					visitor.visit(*defaultValueNode.children.front());
-					operationVariables[std::move(nameVar)] = visitor.getValue();
+					valueVar.CopyFrom(itrVar->value, variableAllocator);
 				}
-			}
+				else
+				{
+					peg::on_first_child<peg::default_value>(variable,
+						[this, &variableAllocator, &valueVar](const peg::ast_node& defaultValue)
+					{
+						ValueVisitor visitor(_variables);
 
-			return false;
+						visitor.visit(*defaultValue.children.front());
+						valueVar.CopyFrom(visitor.getValue(), variableAllocator);
+					});
+				}
+
+				operationVariables.AddMember(nameVar, valueVar, variableAllocator);
+			});
 		});
 
-		_result = web::json::value::object({
-			{ _XPLATSTR("data"), itr->second->resolve(*operationDefinition.children.back(), _fragments, operationVariables.as_object()) }
-			}, true);
+		_result = rapidjson::Document(rapidjson::Type::kObjectType);
+
+		auto& allocator = _result.GetAllocator();
+		rapidjson::Value data;
+
+		data.CopyFrom(itr->second->resolve(*operationDefinition.children.back(), _fragments, const_cast<const rapidjson::Document&>(operationVariables).GetObject()), allocator);
+		_result.AddMember(rapidjson::StringRef("data"), data, allocator);
 	}
 	catch (const schema_exception& ex)
 	{
-		_result = web::json::value::object({
-			{ _XPLATSTR("data"),  web::json::value::null() },
-			{ _XPLATSTR("errors"), ex.getErrors() }
-			}, true);
+		_result = rapidjson::Document(rapidjson::Type::kObjectType);
+
+		auto& allocator = _result.GetAllocator();
+		rapidjson::Value errors;
+
+		errors.CopyFrom(ex.getErrors(), allocator);
+		_result.AddMember(rapidjson::StringRef("data"), rapidjson::Value(rapidjson::Type::kNullType), allocator);
+		_result.AddMember(rapidjson::StringRef("errors"), errors, allocator);
 	}
 }
 

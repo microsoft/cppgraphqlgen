@@ -11,6 +11,9 @@
 #include <sstream>
 #include <cctype>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 namespace facebook {
 namespace graphql {
 namespace schema {
@@ -33,97 +36,107 @@ const CppTypeMap Generator::s_builtinCppTypes= {
 		"std::vector<unsigned char>",
 	};
 
-const std::string Generator::s_scalarCppType = R"cpp(web::json::value)cpp";
+const std::string Generator::s_scalarCppType = R"cpp(rapidjson::Document)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
 	, _filenamePrefix("Introspection")
 	, _schemaNamespace(s_introspectionNamespace)
 {
-	// TODO: Double check that this still matches the spec
+	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
 	auto ast = peg::parseString(R"gql(
-		# Introspection Schema
-
 		type __Schema {
-			types: [__Type!]!
-			queryType: __Type!
-			mutationType: __Type
-			subscriptionType: __Type
-			directives: [__Directive!]!
-		}
-
-		type __Directive {
-			name: String!
-			description: String
-			locations: [__DirectiveLocation!]!
-			args: [__InputValue!]!
-		}
-
-		enum __DirectiveLocation {
-			QUERY
-			MUTATION
-			SUBSCRIPTION
-			FIELD
-			FRAGMENT_DEFINITION
-			FRAGMENT_SPREAD
-			INLINE_FRAGMENT
-			SCHEMA
-			SCALAR
-			OBJECT
-			FIELD_DEFINITION
-			ARGUMENT_DEFINITION
-			INTERFACE
-			UNION
-			ENUM
-			ENUM_VALUE
-			INPUT_OBJECT
-			INPUT_FIELD_DEFINITION
+		  types: [__Type!]!
+		  queryType: __Type!
+		  mutationType: __Type
+		  subscriptionType: __Type
+		  directives: [__Directive!]!
 		}
 
 		type __Type {
-			kind: __TypeKind!
-			name: String
-			description: String
-			fields(includeDeprecated: Boolean = false): [__Field!]
-			interfaces: [__Type!]
-			possibleTypes: [__Type!]
-			enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-			inputFields: [__InputValue!]
-			ofType: __Type
+		  kind: __TypeKind!
+		  name: String
+		  description: String
+
+		  # OBJECT and INTERFACE only
+		  fields(includeDeprecated: Boolean = false): [__Field!]
+
+		  # OBJECT only
+		  interfaces: [__Type!]
+
+		  # INTERFACE and UNION only
+		  possibleTypes: [__Type!]
+
+		  # ENUM only
+		  enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
+
+		  # INPUT_OBJECT only
+		  inputFields: [__InputValue!]
+
+		  # NON_NULL and LIST only
+		  ofType: __Type
 		}
 
 		type __Field {
-			name: String!
-			description: String
-			args: [__InputValue!]!
-			type: __Type!
-			isDeprecated: Boolean!
-			deprecationReason: String
+		  name: String!
+		  description: String
+		  args: [__InputValue!]!
+		  type: __Type!
+		  isDeprecated: Boolean!
+		  deprecationReason: String
 		}
 
 		type __InputValue {
-			name: String!
-			description: String
-			type: __Type!
-			defaultValue: String
+		  name: String!
+		  description: String
+		  type: __Type!
+		  defaultValue: String
 		}
 
 		type __EnumValue {
-			name: String!
-			description: String
-			isDeprecated: Boolean!
-			deprecationReason: String
+		  name: String!
+		  description: String
+		  isDeprecated: Boolean!
+		  deprecationReason: String
 		}
 
 		enum __TypeKind {
-			SCALAR
-			OBJECT
-			INTERFACE
-			UNION
-			ENUM
-			INPUT_OBJECT
-			LIST
-			NON_NULL
+		  SCALAR
+		  OBJECT
+		  INTERFACE
+		  UNION
+		  ENUM
+		  INPUT_OBJECT
+		  LIST
+		  NON_NULL
+		}
+
+		type __Directive {
+		  name: String!
+		  description: String
+		  locations: [__DirectiveLocation!]!
+		  args: [__InputValue!]!
+		}
+
+		enum __DirectiveLocation {
+		  QUERY
+		  MUTATION
+		  SUBSCRIPTION
+		  FIELD
+		  FRAGMENT_DEFINITION
+		  FRAGMENT_SPREAD
+		  INLINE_FRAGMENT
+		  SCHEMA
+		  SCALAR
+		  OBJECT
+		  FIELD_DEFINITION
+		  ARGUMENT_DEFINITION
+		  INTERFACE
+		  UNION
+		  ENUM
+		  ENUM_VALUE
+		  INPUT_OBJECT
+		  INPUT_FIELD_DEFINITION
 		})gql");
 
 	if (!ast)
@@ -147,7 +160,7 @@ Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
 {
-	tao::pegtl::file_input<> in(schemaFileName.c_str());
+	tao::graphqlpeg::file_input<> in(schemaFileName.c_str());
 	auto ast = peg::parseFile(std::move(in));
 
 	if (!ast)
@@ -347,7 +360,6 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 		std::string name(child.children.back()->content());
 
 		_operationTypes.push_back({ std::move(name), std::move(operation) });
-		return true;
 	});
 }
 
@@ -356,148 +368,238 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	std::string name;
 	std::vector<std::string> interfaces;
 	OutputFieldList fields;
+	std::string description;
 
-	peg::for_each_child<peg::object_name>(objectTypeDefinition,
+	peg::on_first_child<peg::object_name>(objectTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::interface_type>(objectTypeDefinition,
 		[&interfaces](const peg::ast_node& child)
 	{
 		interfaces.push_back(child.content());
-		return true;
 	});
 
-	peg::for_each_child<peg::fields_definition>(objectTypeDefinition,
+	peg::on_first_child<peg::fields_definition>(objectTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getOutputFields(child.children);
-		return false;
+	});
+
+
+	peg::on_first_child<peg::description>(objectTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Object;
 	_objectNames[name] = _objectTypes.size();
-	_objectTypes.push_back({ std::move(name), std::move(interfaces), std::move(fields) });
+	_objectTypes.push_back({ std::move(name), std::move(interfaces), std::move(fields), std::move(description) });
 }
 
 void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition)
 {
 	std::string name;
 	OutputFieldList fields;
+	std::string description;
 
-	peg::for_each_child<peg::interface_name>(interfaceTypeDefinition,
+	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
-	peg::for_each_child<peg::fields_definition>(interfaceTypeDefinition,
+	peg::on_first_child<peg::fields_definition>(interfaceTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getOutputFields(child.children);
-		return false;
+	});
+
+	peg::on_first_child<peg::description>(interfaceTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Interface;
 	_interfaceNames[name] = _interfaceTypes.size();
-	_interfaceTypes.push_back({ std::move(name), std::move(fields) });
+	_interfaceTypes.push_back({ std::move(name), std::move(fields), std::move(description) });
 }
 
 void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition)
 {
 	std::string name;
 	InputFieldList fields;
+	std::string description;
 
-	peg::for_each_child<peg::object_name>(inputObjectTypeDefinition,
+	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
-	peg::for_each_child<peg::input_fields_definition>(inputObjectTypeDefinition,
+	peg::on_first_child<peg::input_fields_definition>(inputObjectTypeDefinition,
 		[&fields](const peg::ast_node& child)
 	{
 		fields = getInputFields(child.children);
-		return false;
+	});
+
+	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Input;
 	_inputNames[name] = _inputTypes.size();
-	_inputTypes.push_back({ std::move(name), std::move(fields) });
+	_inputTypes.push_back({ std::move(name), std::move(fields), std::move(description) });
 }
 
 void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 {
 	std::string name;
-	std::vector<std::string> values;
+	std::vector<EnumValueType> values;
+	std::string description;
 
-	peg::for_each_child<peg::enum_name>(enumTypeDefinition,
+	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::enum_value_definition>(enumTypeDefinition,
 		[&values](const peg::ast_node& child)
 	{
-		peg::for_each_child<peg::enum_value>(child,
-			[&values](const peg::ast_node& enumValue)
+		std::string value;
+		std::string valueDescription;
+		std::unique_ptr<std::string> deprecationReason;
+
+		peg::on_first_child<peg::enum_value>(child,
+			[&value](const peg::ast_node& enumValue)
 		{
-			values.push_back(enumValue.content());
-			return false;
+			value = enumValue.content();
 		});
-		return true;
+
+		peg::on_first_child<peg::description>(child,
+			[&valueDescription](const peg::ast_node& enumValue)
+		{
+			valueDescription = enumValue.children.front()->unescaped;
+		});
+
+		peg::on_first_child<peg::directives>(child,
+			[&deprecationReason](const peg::ast_node& directives)
+		{
+			peg::for_each_child<peg::directive>(directives,
+				[&deprecationReason](const peg::ast_node& directive)
+			{
+				std::string directiveName;
+
+				peg::on_first_child<peg::directive_name>(directive,
+					[&directiveName](const peg::ast_node& name)
+				{
+					directiveName = name.content();
+				});
+
+				if (directiveName == "deprecated")
+				{
+					std::string reason;
+
+					peg::on_first_child<peg::arguments>(directive,
+						[&reason](const peg::ast_node& arguments)
+					{
+						peg::on_first_child<peg::argument>(arguments,
+							[&reason](const peg::ast_node& argument)
+						{
+							std::string argumentName;
+
+							peg::on_first_child<peg::argument_name>(argument,
+								[&argumentName](const peg::ast_node& name)
+							{
+								argumentName = name.content();
+							});
+
+							if (argumentName == "reason")
+							{
+								peg::on_first_child<peg::string_value>(argument,
+									[&reason](const peg::ast_node& argumentValue)
+								{
+									reason = argumentValue.unescaped;
+								});
+							}
+						});
+					});
+
+					deprecationReason.reset(new std::string(std::move(reason)));
+				}
+			});
+		});
+
+		values.push_back({ std::move(value), std::move(valueDescription), std::move(deprecationReason) });
+	});
+
+	peg::on_first_child<peg::description>(enumTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Enum;
 	_enumNames[name] = _enumTypes.size();
-	_enumTypes.push_back({ std::move(name), std::move(values) });
+	_enumTypes.push_back({ std::move(name), std::move(values), std::move(description) });
 }
 
 void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition)
 {
 	std::string name;
+	std::string description;
 
-	peg::for_each_child<peg::scalar_name>(scalarTypeDefinition,
+	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
+	});
+
+	peg::on_first_child<peg::description>(scalarTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Scalar;
 	_scalarNames[name] = _scalarTypes.size();
-	_scalarTypes.push_back(std::move(name));
+	_scalarTypes.push_back({ std::move(name), std::move(description) });
 }
 
 void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
 {
 	std::string name;
 	std::vector<std::string> options;
+	std::string description;
 
-	peg::for_each_child<peg::union_name>(unionTypeDefinition,
+	peg::on_first_child<peg::union_name>(unionTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-		return false;
 	});
 
 	peg::for_each_child<peg::union_type>(unionTypeDefinition,
 		[&options](const peg::ast_node& child)
 	{
 		options.push_back(child.content());
-		return true;
+	});
+
+	peg::on_first_child<peg::description>(unionTypeDefinition,
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
 	});
 
 	_schemaTypes[name] = SchemaType::Union;
 	_unionNames[name] = _unionTypes.size();
-	_unionTypes.push_back({ std::move(name), std::move(options) });
+	_unionTypes.push_back({ std::move(name), std::move(options), std::move(description) });
 }
 
 OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
@@ -524,6 +626,56 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 				|| child->is<peg::nonnull_type>())
 			{
 				fieldType.visit(*child);
+			}
+			else if (child->is<peg::description>())
+			{
+				field.description = child->children.front()->unescaped;
+			}
+			else if (child->is<peg::directives>())
+			{
+				peg::for_each_child<peg::directive>(*child,
+					[&field](const peg::ast_node& directive)
+				{
+					std::string directiveName;
+
+					peg::on_first_child<peg::directive_name>(directive,
+						[&directiveName](const peg::ast_node& name)
+					{
+						directiveName = name.content();
+					});
+
+					if (directiveName == "deprecated")
+					{
+						std::string deprecationReason;
+
+						peg::on_first_child<peg::arguments>(directive,
+							[&deprecationReason](const peg::ast_node& arguments)
+						{
+							peg::on_first_child<peg::argument>(arguments,
+								[&deprecationReason](const peg::ast_node& argument)
+							{
+								std::string argumentName;
+
+								peg::on_first_child<peg::argument_name>(argument,
+									[&argumentName](const peg::ast_node& name)
+								{
+									argumentName = name.content();
+								});
+
+								if (argumentName == "reason")
+								{
+									peg::on_first_child<peg::string_value>(argument,
+										[&deprecationReason](const peg::ast_node& reason)
+									{
+										deprecationReason = reason.unescaped;
+									});
+								}
+							});
+						});
+
+						field.deprecationReason.reset(new std::string(std::move(deprecationReason)));
+					}
+				});
 			}
 		}
 
@@ -561,6 +713,10 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
+			}
+			else if (child->is<peg::description>())
+			{
+				field.description = child->children.front()->unescaped;
 			}
 		}
 
@@ -661,67 +817,73 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 
 void Generator::DefaultValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = web::json::value::number(std::atoi(intValue.content().c_str()));
+	_value.SetInt(std::atoi(intValue.content().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = web::json::value::number(std::atof(floatValue.content().c_str()));
+	_value.SetDouble(std::atof(floatValue.content().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(stringValue.unescaped));
+	_value.SetString(stringValue.unescaped.c_str(), _value.GetAllocator());
 }
 
 void Generator::DefaultValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value = web::json::value::boolean(booleanValue.is<peg::true_keyword>());
+	_value.SetBool(booleanValue.is<peg::true_keyword>());
 }
 
 void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
-	_value = web::json::value::null();
+	_value.SetNull();
 }
 
 void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value = web::json::value::string(utility::conversions::to_string_t(enumValue.content()));
+	_value.SetString(enumValue.content().c_str(), _value.GetAllocator());
 }
 
 void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = web::json::value::array(listValue.children.size());
+	_value = rapidjson::Document(rapidjson::Type::kArrayType);
 
-	std::transform(listValue.children.cbegin(), listValue.children.cend(), _value.as_array().begin(),
-		[this](const std::unique_ptr<peg::ast_node>& value)
+	auto& allocator = _value.GetAllocator();
+
+	_value.Reserve(listValue.children.size(), allocator);
+	for (const auto& child : listValue.children)
 	{
+		rapidjson::Value value;
 		DefaultValueVisitor visitor;
 
-		visitor.visit(*value);
-
-		return visitor.getValue();
-	});
+		visitor.visit(*child->children.back());
+		value.CopyFrom(visitor.getValue(), allocator);
+		_value.PushBack(value, allocator);
+	}
 }
 
 void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = web::json::value::object(true);
+	_value = rapidjson::Document(rapidjson::Type::kObjectType);
+
+	auto& allocator = _value.GetAllocator();
 
 	for (const auto& field : objectValue.children)
 	{
-		const std::string name(field->children.front()->content());
+		rapidjson::Value name(field->children.front()->content().c_str(), allocator);
+		rapidjson::Value value;
 		DefaultValueVisitor visitor;
 
 		visitor.visit(*field->children.back());
-		_value[utility::conversions::to_string_t(name)] = visitor.getValue();
+		value.CopyFrom(visitor.getValue(), allocator);
+		_value.AddMember(name, value, allocator);
 	}
 }
 
-web::json::value Generator::DefaultValueVisitor::getValue()
+rapidjson::Document Generator::DefaultValueVisitor::getValue()
 {
-	web::json::value result(std::move(_value));
-	return result;
+	return rapidjson::Document(std::move(_value));
 }
 
 std::vector<std::string> Generator::Build() const noexcept
@@ -886,8 +1048,6 @@ bool Generator::outputHeader() const noexcept
 #include <string>
 #include <vector>
 
-#include <cpprest/json.h>
-
 #include "GraphQLService.h"
 
 namespace facebook {
@@ -937,7 +1097,7 @@ enum class )cpp" << enumType.type << R"cpp(
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(	)cpp" << value;
+				headerFile << R"cpp(	)cpp" << value.value;
 			}
 			headerFile << R"cpp(
 };
@@ -1092,13 +1252,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	web::json::value resolve__schema(service::ResolverParams&& params);
-	web::json::value resolve__type(service::ResolverParams&& params);
+					headerFile << R"cpp(	rapidjson::Document resolve__schema(service::ResolverParams&& params);
+	rapidjson::Document resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1209,7 +1369,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	web::json::value resolve)cpp" << fieldName
+	output << R"cpp(	rapidjson::Document resolve)cpp" << fieldName
 		<< R"cpp((service::ResolverParams&& params);
 )cpp";
 
@@ -1249,7 +1409,7 @@ namespace service {
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert(const web::json::value& value)
+<< R"cpp(>::convert(const rapidjson::Value& value)
 {
 	static const std::unordered_map<std::string, )cpp"
 				<< _schemaNamespace << R"cpp(::)cpp" << enumType.type << R"cpp(> s_names = {
@@ -1264,28 +1424,28 @@ template <>
 				}
 
 				firstValue = false;
-				sourceFile << R"cpp(		{ ")cpp" << value << R"cpp(", )cpp"
+				sourceFile << R"cpp(		{ ")cpp" << value.value << R"cpp(", )cpp"
 					<< _schemaNamespace << R"cpp(::)cpp" << enumType.type
-					<< R"cpp(::)cpp" << value << R"cpp( })cpp";
+					<< R"cpp(::)cpp" << value.value << R"cpp( })cpp";
 			}
 
 			sourceFile << R"cpp(
 	};
 
-	auto itr = s_names.find(utility::conversions::to_utf8string(value.as_string()));
+	auto itr = s_names.find(value.GetString());
 
 	if (itr == s_names.cend())
 	{
-		throw web::json::json_exception(_XPLATSTR("not a valid )cpp" << enumType.type << R"cpp( value"));
+		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
 	}
 
 	return itr->second;
 }
 
 template <>
-web::json::value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert(const )cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(& value, ResolverParams&&)
+rapidjson::Document service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+<< R"cpp(>::convert()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+<< R"cpp(&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 )cpp";
@@ -1301,13 +1461,17 @@ web::json::value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)c
 				}
 
 				firstValue = false;
-				sourceFile << R"cpp(		")cpp" << value << R"cpp(")cpp";
+				sourceFile << R"cpp(		")cpp" << value.value << R"cpp(")cpp";
 			}
 
 			sourceFile << R"cpp(
 	};
 
-	return web::json::value::string(utility::conversions::to_string_t(s_names[static_cast<size_t>(value)]));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
+
+	return result;
 }
 )cpp";
 		}
@@ -1320,39 +1484,45 @@ web::json::value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)c
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
-<< R"cpp(>::convert(const web::json::value& value)
+<< R"cpp(>::convert(const rapidjson::Value& value)
 {
 )cpp";
 
 			for (const auto& inputField : inputType.fields)
 			{
-				if (!inputField.defaultValue.is_null())
+				if (!inputField.defaultValue.IsNull())
 				{
 					if (firstField)
 					{
 						firstField = false;
-						sourceFile << R"cpp(	static const auto defaultValue = web::json::value::object({
-)cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(,
+						sourceFile << R"cpp(	static const auto defaultValue = []() -> rapidjson::Document
+	{
+		rapidjson::Document values(rapidjson::Type::kObjectType);
+		auto& allocator = values.GetAllocator();
+		rapidjson::Document parsed;
+		rapidjson::Value entry;
+
 )cpp";
 					}
 
-					utility::ostringstream_t defaultValue;
+					rapidjson::StringBuffer defaultValue;
+					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
 
-					defaultValue << inputField.defaultValue;
-					sourceFile << R"cpp(		{ _XPLATSTR(")cpp"
-						<< inputField.name << R"cpp("), web::json::value::parse(_XPLATSTR(R"js()cpp"
-						<< utility::conversions::to_utf8string(defaultValue.str()) << R"cpp()js")) })cpp";
+					inputField.defaultValue.Accept(writer);
+					sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
+						<< defaultValue.GetString() << R"cpp()js");
+		entry.CopyFrom(parsed, allocator);
+		values.AddMember(rapidjson::StringRef(")cpp"
+						<< inputField.name << R"cpp("), entry, allocator);
+)cpp";
 				}
 			}
 
 			if (!firstField)
 			{
 				sourceFile << R"cpp(
-	});
+		return values;
+	}();
 
 )cpp";
 			}
@@ -1362,13 +1532,13 @@ template <>
 				std::string fieldName(inputField.name);
 
 				fieldName[0] = std::toupper(fieldName[0]);
-				if (inputField.defaultValue.is_null())
+				if (inputField.defaultValue.IsNull())
 				{
 					sourceFile << R"cpp(	auto value)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
 						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", value.as_object());
+						<< R"cpp(", value.GetObject());
 )cpp";
 				}
 				else
@@ -1377,13 +1547,13 @@ template <>
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::find)cpp" << getTypeModifiers(inputField.modifiers)
 						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", value.as_object());
+						<< R"cpp(", value.GetObject());
 	auto value)cpp" << fieldName << R"cpp( = (pair)cpp" << fieldName << R"cpp(.second
 		? std::move(pair)cpp" << fieldName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
 						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", defaultValue.as_object()));
+						<< R"cpp(", defaultValue.GetObject()));
 )cpp";
 				}
 			}
@@ -1538,7 +1708,7 @@ namespace object {
 
 				fieldName[0] = std::toupper(fieldName[0]);
 				sourceFile << R"cpp(
-web::json::value )cpp" << objectType.type
+rapidjson::Document )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
 {
@@ -1551,34 +1721,39 @@ web::json::value )cpp" << objectType.type
 
 					for (const auto& argument : outputField.arguments)
 					{
-						if (!argument.defaultValue.is_null())
+						if (!argument.defaultValue.IsNull())
 						{
 							if (firstArgument)
 							{
 								firstArgument = false;
-								sourceFile << R"cpp(	static const auto defaultArguments = web::json::value::object({
+								sourceFile << R"cpp(	static const auto defaultArguments = []() -> rapidjson::Document
+	{
+		rapidjson::Document values(rapidjson::Type::kObjectType);
+		auto& allocator = values.GetAllocator();
+		rapidjson::Document parsed;
+		rapidjson::Value entry;
+
 )cpp";
 							}
-							else
-							{
-								sourceFile << R"cpp(,
+
+							rapidjson::StringBuffer defaultValue;
+							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
+
+							argument.defaultValue.Accept(writer);
+							sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
+								<< defaultValue.GetString() << R"cpp()js");
+		entry.CopyFrom(parsed, allocator);
+		values.AddMember(rapidjson::StringRef(")cpp"
+								<< argument.name << R"cpp("), entry, allocator);
 )cpp";
-							}
-
-
-							utility::ostringstream_t defaultArguments;
-
-							defaultArguments << argument.defaultValue;
-							sourceFile << R"cpp(		{ _XPLATSTR(")cpp"
-								<< argument.name << R"cpp("), web::json::value::parse(_XPLATSTR(R"js()cpp"
-								<< utility::conversions::to_utf8string(defaultArguments.str()) << R"cpp()js")) })cpp";
 						}
 					}
 
 					if (!firstArgument)
 					{
 						sourceFile << R"cpp(
-	});
+		return values;
+	}();
 
 )cpp";
 					}
@@ -1588,7 +1763,7 @@ web::json::value )cpp" << objectType.type
 						std::string argumentName(argument.name);
 
 						argumentName[0] = std::toupper(argumentName[0]);
-						if (argument.defaultValue.is_null())
+						if (argument.defaultValue.IsNull())
 						{
 							sourceFile << R"cpp(	auto arg)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
@@ -1609,7 +1784,7 @@ web::json::value )cpp" << objectType.type
 		: )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
 								<< R"cpp((")cpp" << argument.name
-								<< R"cpp(", defaultArguments.as_object()));
+								<< R"cpp(", defaultArguments.GetObject()));
 )cpp";
 						}
 					}
@@ -1641,31 +1816,33 @@ web::json::value )cpp" << objectType.type
 
 	return )cpp" << getResultAccessType(outputField)
 					<< R"cpp(::convert)cpp" << getTypeModifiers(outputField.modifiers)
-					<< R"cpp((result, std::move(params));
+					<< R"cpp((std::move(result), std::move(params));
 }
 )cpp";
 			}
 
 			sourceFile << R"cpp(
-web::json::value )cpp" << objectType.type
+rapidjson::Document )cpp" << objectType.type
 << R"cpp(::resolve__typename(service::ResolverParams&&)
 {
-	return web::json::value::string(_XPLATSTR(")cpp" << objectType.type << R"cpp("));
+	rapidjson::Document result(rapidjson::Type::kStringType);
+
+	result.SetString(rapidjson::StringRef(")cpp" << objectType.type << R"cpp("));
+
+	return result;
 }
 )cpp";
 
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(
-web::json::value )cpp" << objectType.type
+rapidjson::Document )cpp" << objectType.type
 << R"cpp(::resolve__schema(service::ResolverParams&& params)
 {
-	auto result = service::ModifiedResult<introspection::Schema>::convert(_schema, std::move(params));
-
-	return result;
+	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
 }
 
-web::json::value )cpp" << objectType.type
+rapidjson::Document )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
@@ -1754,9 +1931,10 @@ Operations::Operations()cpp";
 	{
 		for (const auto& scalarType : _scalarTypes)
 		{
-			sourceFile << R"cpp(	schema->AddType(")cpp" << scalarType
+			sourceFile << R"cpp(	schema->AddType(")cpp" << scalarType.type
 				<< R"cpp(", std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::ScalarType>(")cpp" << scalarType << R"cpp("));
+				<< R"cpp(::ScalarType>(")cpp" << scalarType.type
+				<< R"cpp(", R"md()cpp" << scalarType.description << R"cpp()md"));
 )cpp";
 		}
 	}
@@ -1767,7 +1945,8 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << enumType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::EnumType>(")cpp" << enumType.type << R"cpp(");
+				<< R"cpp(::EnumType>(")cpp" << enumType.type
+				<< R"cpp(", R"md()cpp" << enumType.description << R"cpp()md");
 	schema->AddType(")cpp" << enumType.type
 				<< R"cpp(", type)cpp" << enumType.type
 				<< R"cpp();
@@ -1781,7 +1960,8 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << inputType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::InputObjectType>(")cpp" << inputType.type << R"cpp(");
+				<< R"cpp(::InputObjectType>(")cpp" << inputType.type
+				<< R"cpp(", R"md()cpp" << inputType.description << R"cpp()md");
 	schema->AddType(")cpp" << inputType.type
 				<< R"cpp(", type)cpp" << inputType.type
 				<< R"cpp();
@@ -1795,7 +1975,8 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << unionType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::UnionType>(")cpp" << unionType.type << R"cpp(");
+				<< R"cpp(::UnionType>(")cpp" << unionType.type
+				<< R"cpp(", R"md()cpp" << unionType.description << R"cpp()md");
 	schema->AddType(")cpp" << unionType.type
 				<< R"cpp(", type)cpp" << unionType.type
 				<< R"cpp();
@@ -1809,7 +1990,8 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << interfaceType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::InterfaceType>(")cpp" << interfaceType.type << R"cpp(");
+				<< R"cpp(::InterfaceType>(")cpp" << interfaceType.type
+				<< R"cpp(", R"md()cpp" << interfaceType.description << R"cpp()md");
 	schema->AddType(")cpp" << interfaceType.type
 				<< R"cpp(", type)cpp" << interfaceType.type
 				<< R"cpp();
@@ -1823,7 +2005,8 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << objectType.type
 				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
-				<< R"cpp(::ObjectType>(")cpp" << objectType.type << R"cpp(");
+				<< R"cpp(::ObjectType>(")cpp" << objectType.type
+				<< R"cpp(", R"md()cpp" << objectType.description << R"cpp()md");
 	schema->AddType(")cpp" << objectType.type
 				<< R"cpp(", type)cpp" << objectType.type
 				<< R"cpp();
@@ -1855,7 +2038,19 @@ Operations::Operations()cpp";
 					}
 
 					firstValue = false;
-					sourceFile << R"cpp(		")cpp" << enumValue << R"cpp(")cpp";
+					sourceFile << R"cpp(		{ ")cpp" << enumValue.value
+						<< R"cpp(", R"md()cpp" << enumValue.description << R"cpp()md", )cpp";
+
+					if (enumValue.deprecationReason)
+					{
+						sourceFile << R"cpp(R"md()cpp" << *enumValue.deprecationReason << R"cpp()md")cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp( })cpp";
 				}
 
 				sourceFile << R"cpp(
@@ -1874,6 +2069,20 @@ Operations::Operations()cpp";
 		{
 			if (!inputType.fields.empty())
 			{
+				for (const auto& inputField : inputType.fields)
+				{
+					rapidjson::StringBuffer defaultValue;
+					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
+
+					inputField.defaultValue.Accept(writer);
+
+					sourceFile << R"cpp(	rapidjson::Document default)cpp" << inputType.type << inputField.name << R"cpp(;
+	default)cpp" << inputType.type << inputField.name << R"cpp(.Parse(R"js()cpp"
+						<< defaultValue.GetString()
+						<< R"cpp()js");
+)cpp";
+				}
+
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << inputType.type
@@ -1882,9 +2091,10 @@ Operations::Operations()cpp";
 
 				for (const auto& inputField : inputType.fields)
 				{
-					utility::ostringstream_t defaultValue;
+					rapidjson::StringBuffer defaultValue;
+					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
 
-					defaultValue << inputField.defaultValue;
+					inputField.defaultValue.Accept(writer);
 
 					if (!firstValue)
 					{
@@ -1895,10 +2105,9 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>(")cpp" << inputField.name
-						<< R"cpp(", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
-						<< R"cpp(, web::json::value::parse(_XPLATSTR(R"js()cpp"
-						<< utility::conversions::to_utf8string(defaultValue.str())
-						<< R"cpp()js"))))cpp";
+						<< R"cpp(", R"md()cpp" << inputField.description
+						<< R"cpp()md", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
+						<< R"cpp(, default)cpp" << inputType.type << inputField.name << R"cpp())cpp";
 				}
 
 				sourceFile << R"cpp(
@@ -1952,6 +2161,23 @@ Operations::Operations()cpp";
 		{
 			if (!interfaceType.fields.empty())
 			{
+				for (const auto& interfaceField : interfaceType.fields)
+				{
+					for (const auto& argument : interfaceField.arguments)
+					{
+						rapidjson::StringBuffer defaultValue;
+						rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
+
+						argument.defaultValue.Accept(writer);
+
+						sourceFile << R"cpp(	rapidjson::Document default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp(;
+	default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp(.Parse(R"js()cpp"
+							<< defaultValue.GetString()
+							<< R"cpp()js");
+)cpp";
+					}
+				}
+
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << interfaceType.type
@@ -1969,7 +2195,20 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
-						<< R"cpp(", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"md()cpp" << interfaceField.description
+						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+
+					if (interfaceField.deprecationReason)
+					{
+						sourceFile << R"cpp(new std::string(R"md()cpp"
+							<< *interfaceField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -1981,9 +2220,10 @@ Operations::Operations()cpp";
 
 						for (const auto& argument : interfaceField.arguments)
 						{
-							utility::ostringstream_t defaultValue;
+							rapidjson::StringBuffer defaultValue;
+							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
 
-							defaultValue << argument.defaultValue;
+							argument.defaultValue.Accept(writer);
 
 							if (!firstArgument)
 							{
@@ -1994,10 +2234,9 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, web::json::value::parse(_XPLATSTR(R"js()cpp"
-								<< utility::conversions::to_utf8string(defaultValue.str())
-								<< R"cpp()js"))))cpp";
+								<< R"cpp(", R"md()cpp" << argument.description
+								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(, default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp())cpp";
 						}
 
 						sourceFile << R"cpp(
@@ -2049,6 +2288,23 @@ Operations::Operations()cpp";
 
 			if (!objectType.fields.empty())
 			{
+				for (const auto& objectField : objectType.fields)
+				{
+					for (const auto& argument : objectField.arguments)
+					{
+						rapidjson::StringBuffer defaultValue;
+						rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
+
+						argument.defaultValue.Accept(writer);
+
+						sourceFile << R"cpp(	rapidjson::Document default)cpp" << objectType.type << objectField.name << argument.name << R"cpp(;
+	default)cpp" << objectType.type << objectField.name << argument.name << R"cpp(.Parse(R"js()cpp"
+							<< defaultValue.GetString()
+							<< R"cpp()js");
+)cpp";
+					}
+				}
+
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << objectType.type
@@ -2066,7 +2322,20 @@ Operations::Operations()cpp";
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
-						<< R"cpp(", std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+						<< R"cpp(", R"md()cpp" << objectField.description
+						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+
+					if (objectField.deprecationReason)
+					{
+						sourceFile << R"cpp(new std::string(R"md()cpp"
+							<< *objectField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(nullptr)cpp";
+					}
+
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())
@@ -2078,9 +2347,10 @@ Operations::Operations()cpp";
 
 						for (const auto& argument : objectField.arguments)
 						{
-							utility::ostringstream_t defaultValue;
+							rapidjson::StringBuffer defaultValue;
+							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
 
-							defaultValue << argument.defaultValue;
+							argument.defaultValue.Accept(writer);
 
 							if (!firstArgument)
 							{
@@ -2091,10 +2361,9 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
 								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, web::json::value::parse(_XPLATSTR(R"js()cpp"
-								<< utility::conversions::to_utf8string(defaultValue.str())
-								<< R"cpp()js"))))cpp";
+								<< R"cpp(", R"md()cpp" << argument.description
+								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+								<< R"cpp(, default)cpp" << objectType.type << objectField.name << argument.name << R"cpp())cpp";
 						}
 
 						sourceFile << R"cpp(
@@ -2153,7 +2422,7 @@ std::string Generator::getArgumentAccessType(const InputField& argument) const n
 			break;
 
 		case InputFieldType::Scalar:
-			argumentType << R"cpp(web::json::value)cpp";
+			argumentType << R"cpp(rapidjson::Document)cpp";
 			break;
 	}
 
@@ -2177,7 +2446,7 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 
 		case OutputFieldType::Scalar:
-			resultType << R"cpp(web::json::value)cpp";
+			resultType << R"cpp(rapidjson::Document)cpp";
 			break;
 
 		case OutputFieldType::Union:

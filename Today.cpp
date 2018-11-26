@@ -154,18 +154,14 @@ struct EdgeConstraints
 	{
 	}
 
-	std::shared_ptr<_Connection> operator()(const int* first, const web::json::value* after, const int* last, const web::json::value* before) const
+	std::shared_ptr<_Connection> operator()(const int* first, const rapidjson::Document* after, const int* last, const rapidjson::Document* before) const
 	{
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
 
 		if (after)
 		{
-			auto value = web::json::value::object({
-				{ _XPLATSTR("after"), *after }
-				});
-
-			auto afterId = service::IdArgument::require("after", value.as_object());
+			auto afterId = service::Base64::fromBase64(after->GetString(), after->GetStringLength());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
 				[&afterId](const std::shared_ptr<_Object>& entry)
 			{
@@ -180,11 +176,7 @@ struct EdgeConstraints
 
 		if (before)
 		{
-			auto value = web::json::value::object({
-				{ _XPLATSTR("before"), *before }
-				});
-
-			auto beforeId = service::IdArgument::require("before", value.as_object());
+			auto beforeId = service::Base64::fromBase64(before->GetString(), before->GetStringLength());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
 				[&beforeId](const std::shared_ptr<_Object>& entry)
 			{
@@ -241,7 +233,7 @@ private:
 	const vec_type& _objects;
 };
 
-std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
+std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
 {
 	loadAppointments();
 
@@ -251,7 +243,7 @@ std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::uniqu
 	return std::static_pointer_cast<object::AppointmentConnection>(connection);
 }
 
-std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
+std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
 {
 	loadTasks();
 
@@ -261,7 +253,7 @@ std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& f
 	return std::static_pointer_cast<object::TaskConnection>(connection);
 }
 
-std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const
+std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
 {
 	loadUnreadCounts();
 

@@ -16,7 +16,7 @@ namespace facebook {
 namespace graphql {
 namespace peg {
 
-using namespace tao::pegtl;
+using namespace tao::graphqlpeg;
 
 template <typename _Rule>
 struct ast_selector

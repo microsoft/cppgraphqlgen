@@ -15,9 +15,10 @@
 #include <exception>
 #include <type_traits>
 
-#include <cpprest/json.h>
-
-#include <tao/pegtl/contrib/parse_tree.hpp>
+#define RAPIDJSON_NAMESPACE facebook::graphql::rapidjson
+#define RAPIDJSON_NAMESPACE_BEGIN namespace facebook { namespace graphql { namespace rapidjson {
+#define RAPIDJSON_NAMESPACE_END } /* namespace rapidjson */ } /* namespace graphql */ } /* namespace facebook */
+#include <rapidjson/document.h>
 
 namespace facebook {
 namespace graphql {
@@ -29,10 +30,10 @@ class schema_exception : public std::exception
 public:
 	schema_exception(const std::vector<std::string>& messages);
 
-	const web::json::value& getErrors() const noexcept;
+	const rapidjson::Document& getErrors() const noexcept;
 
 private:
-	web::json::value _errors;
+	rapidjson::Document _errors;
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
@@ -61,14 +62,52 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams
 {
-	const web::json::object& arguments;
+	const rapidjson::Value::ConstObject& arguments;
 	const peg::ast_node* selection;
 	const FragmentMap& fragments;
-	const web::json::object& variables;
+	const rapidjson::Value::ConstObject& variables;
 };
 
-using Resolver = std::function<web::json::value(ResolverParams&&)>;
+using Resolver = std::function<rapidjson::Document(ResolverParams&&)>;
 using ResolverMap = std::unordered_map<std::string, Resolver>;
+
+// Binary data and opaque strings like IDs are encoded in Base64.
+class Base64
+{
+public:
+	// Map a single Base64-encoded character to its 6-bit integer value.
+	static constexpr uint8_t fromBase64(unsigned char ch) noexcept
+	{
+		return (ch >= 'A' && ch <= 'Z' ? ch - 'A'
+			: (ch >= 'a' && ch <= 'z' ? ch - 'a' + 26
+				: (ch >= '0' && ch <= '9' ? ch - '0' + 52
+					: (ch == '+' ? 62
+						: (ch == '/' ? 63 : 0xFF)))));
+	}
+
+	// Convert a Base64-encoded string to a vector of bytes.
+	static std::vector<unsigned char> fromBase64(const char* encoded, size_t count);
+
+	// Map a single 6-bit integer value to its Base64-encoded character.
+	static constexpr unsigned char toBase64(uint8_t i) noexcept
+	{
+		return (i < 26 ? i + static_cast<uint8_t>('A')
+			: (i < 52 ? i - 26 + static_cast<uint8_t>('a')
+				: (i < 62 ? i - 52 + static_cast<uint8_t>('0')
+					: (i == 62 ? '+'
+						: (i == 63 ? '/' : '=')))));
+	}
+
+	// Convert a set of bytes to Base64.
+	static std::string toBase64(const std::vector<unsigned char>& bytes);
+
+private:
+	// Throw a schema_exception if the character is out of range.
+	static uint8_t verifyFromBase64(unsigned char ch);
+
+	// Throw a logic_error if the integer is out of range.
+	static unsigned char verifyToBase64(uint8_t i);
+};
 
 // Types be wrapped non-null or list types in GraphQL. Since nullability is a more special case
 // in C++, we invert the default and apply that modifier instead when the non-null wrapper is
@@ -107,26 +146,26 @@ struct ModifiedArgument
 	};
 
 	// Convert a single value to the specified type.
-	static _Type convert(const web::json::value& value);
+	static _Type convert(const rapidjson::Value& value);
 
 	// Call convert on this type without any modifiers.
-	static _Type require(const std::string& name, const web::json::object& arguments)
+	static _Type require(const std::string& name, const rapidjson::Value::ConstObject& arguments)
 	{
 		try
 		{
-			return convert(arguments.at(utility::conversions::to_string_t(name)));
+			return convert(arguments[name.c_str()]);
 		}
-		catch (const web::json::json_exception& ex)
+		catch (const schema_exception& ex)
 		{
 			std::ostringstream error;
 
-			error << "Invalid argument: " << name << " message: " << ex.what();
+			error << "Invalid argument: " << name << " message: " << ex.getErrors()[0]["message"].GetString();
 			throw schema_exception({ error.str() });
 		}
 	}
 
 	// Wrap require in a try/catch block.
-	static std::pair<_Type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
+	static std::pair<_Type, bool> find(const std::string& name, const rapidjson::Value::ConstObject& arguments) noexcept
 	{
 		try
 		{
@@ -141,7 +180,7 @@ struct ModifiedArgument
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None , TypeModifier... _Other >
 	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0, _Type>::type require(
-		const std::string& name, const web::json::object& arguments)
+		const std::string& name, const rapidjson::Value::ConstObject& arguments)
 	{
 		// Just call through to the non-template method without the modifiers.
 		return require(name, arguments);
@@ -150,65 +189,48 @@ struct ModifiedArgument
 	// Peel off nullable modifiers.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
-		const std::string& name, const web::json::object& arguments)
+		const std::string& name, const rapidjson::Value::ConstObject& arguments)
 	{
-		try
+		const auto& valueItr = arguments.FindMember(name.c_str());
+
+		if (valueItr == arguments.MemberEnd()
+			|| valueItr->value.IsNull())
 		{
-			const auto& valueItr = arguments.find(utility::conversions::to_string_t(name));
-
-			if (valueItr == arguments.cend()
-				|| valueItr->second.is_null())
-			{
-				return nullptr;
-			}
-
-			auto result = require<_Other...>(name, arguments);
-
-			return std::unique_ptr<decltype(result)> { new decltype(result)(std::move(result)) };
+			return nullptr;
 		}
-		catch (const web::json::json_exception& ex)
-		{
-			std::ostringstream error;
 
-			error << "Invalid argument: " << name << " message: " << ex.what();
-			throw schema_exception({ error.str() });
-		}
+		auto result = require<_Other...>(name, arguments);
+
+		return std::unique_ptr<decltype(result)> { new decltype(result)(std::move(result)) };
 	}
 
 	// Peel off list modifiers.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::List == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
-		const std::string& name, const web::json::object& arguments)
+		const std::string& name, const rapidjson::Value::ConstObject& arguments)
 	{
-		try
+		const auto& values = arguments[name.c_str()].GetArray();
+		typename ArgumentTraits<_Type, _Modifier, _Other...>::type result(values.Size());
+
+		std::transform(values.begin(), values.end(), result.begin(),
+			[&name](const rapidjson::Value& element)
 		{
-			const auto& values = arguments.at(utility::conversions::to_string_t(name)).as_array();
-			typename ArgumentTraits<_Type, _Modifier, _Other...>::type result(values.size());
+			rapidjson::Document single(rapidjson::Type::kObjectType);
+			auto& allocator = single.GetAllocator();
+			rapidjson::Value value;
 
-			std::transform(values.cbegin(), values.cend(), result.begin(),
-				[](const web::json::value& element)
-			{
-				auto single = web::json::value::object({
-					{ _XPLATSTR("value"), element }
-				});
+			value.CopyFrom(element, allocator);
+			single.AddMember(rapidjson::StringRef(name.c_str()), value, allocator);
 
-				return require<_Other...>("value", single.as_object());
-			});
+			return require<_Other...>(name.c_str(), const_cast<const rapidjson::Document&>(single).GetObject());
+		});
 
-			return result;
-		}
-		catch (const web::json::json_exception& ex)
-		{
-			std::ostringstream error;
-
-			error << "Invalid argument: " << name << " message: " << ex.what();
-			throw schema_exception({ error.str() });
-		}
+		return result;
 	}
 
 	// Wrap require with modifiers in a try/catch block.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static std::pair<typename ArgumentTraits<_Type, _Modifier, _Other...>::type, bool> find(const std::string& name, const web::json::object& arguments) noexcept
+	static std::pair<typename ArgumentTraits<_Type, _Modifier, _Other...>::type, bool> find(const std::string& name, const rapidjson::Value::ConstObject& arguments) noexcept
 	{
 		try
 		{
@@ -229,7 +251,7 @@ using FloatArgument = ModifiedArgument<double>;
 using StringArgument = ModifiedArgument<std::string>;
 using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<std::vector<unsigned char>>;
-using ScalarArgument = ModifiedArgument<web::json::value>;
+using ScalarArgument = ModifiedArgument<rapidjson::Document>;
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -243,8 +265,9 @@ class Object : public std::enable_shared_from_this<Object>
 {
 public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
+	virtual ~Object() = default;
 
-	web::json::value resolve(const peg::ast_node& selection, const FragmentMap& fragments, const web::json::object& variables) const;
+	rapidjson::Document resolve(const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const;
 
 private:
 	TypeNames _typeNames;
@@ -286,13 +309,13 @@ struct ModifiedResult
 	};
 
 	// Convert a single value of the specified type to JSON.
-	static web::json::value convert(const typename std::conditional<std::is_base_of<Object, _Type>::value, std::shared_ptr<Object>, typename ResultTraits<_Type>::type>::type& result,
+	static rapidjson::Document convert(typename std::conditional<std::is_base_of<Object, _Type>::value, std::shared_ptr<Object>, typename ResultTraits<_Type>::type&&>::type result,
 		ResolverParams&& params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		web::json::value>::type convert(const typename ResultTraits<_Type>::type& result, ResolverParams&& params)
+		rapidjson::Document>::type convert(typename ResultTraits<_Type>::type&& result, ResolverParams&& params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
 		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type>::type>::value, "this is the derived object type");
@@ -302,53 +325,58 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && (std::is_same<Object, _Type>::value || !std::is_base_of<Object, _Type>::value),
-		web::json::value>::type convert(const typename ResultTraits<_Type>::type& result, ResolverParams&& params)
+		rapidjson::Document>::type convert(typename ResultTraits<_Type>::type&& result, ResolverParams&& params)
 	{
 		// Just call through to the partial specialization without the modifier.
-		return convert(result, std::move(params));
+		return convert(std::move(result), std::move(params));
 	}
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
+		rapidjson::Document>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
 	{
 		if (!result)
 		{
-			return web::json::value::null();
+			return rapidjson::Document(rapidjson::Type::kNullType);
 		}
 
-		return convert<_Other...>(result, std::move(params));
+		return convert<_Other...>(std::move(result), std::move(params));
 	}
 
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
+		rapidjson::Document>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
 	{
 		static_assert(std::is_same<std::unique_ptr<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
 			"this is the unique_ptr version");
 
 		if (!result)
 		{
-			return web::json::value::null();
+			return rapidjson::Document(rapidjson::Type::kNullType);
 		}
 
-		return convert<_Other...>(*result, std::move(params));
+		return convert<_Other...>(std::move(*result), std::move(params));
 	}
 
 	// Peel off list modifiers.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::List == _Modifier,
-		web::json::value>::type convert(const typename ResultTraits<_Type, _Modifier, _Other...>::type& result, ResolverParams&& params)
+		rapidjson::Document>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
 	{
-		auto value = web::json::value::array(result.size());
+		auto value = rapidjson::Document(rapidjson::Type::kArrayType);
+		auto& allocator = value.GetAllocator();
+		
+		value.Reserve(result.size(), allocator);
 
-		std::transform(result.cbegin(), result.cend(), value.as_array().begin(),
-			[params](const typename ResultTraits<_Type, _Other...>::type& element)
+		for (auto& entry : result)
 		{
-			return convert<_Other...>(element, ResolverParams(params));
-		});
+			rapidjson::Value element;
+
+			element.CopyFrom(convert<_Other...>(std::move(entry), ResolverParams(params)), allocator);
+			value.PushBack(element, allocator);
+		}
 
 		return value;
 	}
@@ -362,7 +390,7 @@ using FloatResult = ModifiedResult<double>;
 using StringResult = ModifiedResult<std::string>;
 using BooleanResult = ModifiedResult<bool>;
 using IdResult = ModifiedResult<std::vector<unsigned char>>;
-using ScalarResult = ModifiedResult<web::json::value>;
+using ScalarResult = ModifiedResult<rapidjson::Document>;
 using ObjectResult = ModifiedResult<Object>;
 
 // Request scans the fragment definitions and finds the right operation definition to interpret
@@ -372,8 +400,9 @@ class Request : public std::enable_shared_from_this<Request>
 {
 public:
 	explicit Request(TypeMap&& operationTypes);
+	virtual ~Request() = default;
 
-	web::json::value resolve(const peg::ast_node& root, const std::string& operationName, const web::json::object& variables) const;
+	rapidjson::Document resolve(const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const;
 
 private:
 	TypeMap _operations;
@@ -384,11 +413,11 @@ private:
 class SelectionVisitor
 {
 public:
-	SelectionVisitor(const FragmentMap& fragments, const web::json::object& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
+	SelectionVisitor(const FragmentMap& fragments, const rapidjson::Document::ConstObject& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
 
-	web::json::value getValues();
+	rapidjson::Document getValues();
 
 private:
 	bool shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const;
@@ -398,10 +427,10 @@ private:
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
 	const FragmentMap& _fragments;
-	const web::json::object& _variables;
+	const rapidjson::Document::ConstObject& _variables;
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
-	web::json::value _values;
+	rapidjson::Document _values;
 };
 
 // ValueVisitor visits the AST and builds a JSON representation of any value
@@ -409,11 +438,11 @@ private:
 class ValueVisitor
 {
 public:
-	ValueVisitor(const web::json::object& variables);
+	ValueVisitor(const rapidjson::Document::ConstObject& variables);
 
 	void visit(const peg::ast_node& value);
 
-	web::json::value getValue();
+	rapidjson::Document getValue();
 
 private:
 	void visitVariable(const peg::ast_node& variable);
@@ -426,8 +455,8 @@ private:
 	void visitListValue(const peg::ast_node& listValue);
 	void visitObjectValue(const peg::ast_node& objectValue);
 
-	const web::json::object& _variables;
-	web::json::value _value;
+	const rapidjson::Document::ConstObject& _variables;
+	rapidjson::Document _value;
 };
 
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment
@@ -450,18 +479,18 @@ private:
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const web::json::object& variables, const FragmentMap& fragments);
+	OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const rapidjson::Document::ConstObject& variables, const FragmentMap& fragments);
 
-	web::json::value getValue();
+	rapidjson::Document getValue();
 
 	void visit(const peg::ast_node& operationDefinition);
 
 private:
 	const TypeMap& _operations;
 	const std::string& _operationName;
-	const web::json::object& _variables;
+	const rapidjson::Document::ConstObject& _variables;
 	const FragmentMap& _fragments;
-	web::json::value _result;
+	rapidjson::Document _result;
 };
 
 } /* namespace service */

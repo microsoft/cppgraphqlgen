@@ -9,11 +9,16 @@ schema {
 
 scalar ItemCursor
 
+"Root Query type"
 type Query {
+	"""[Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification)"""
     node(id: ID!) : Node
 
+	"""Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     appointments(first: Int, after: ItemCursor, last: Int, before: ItemCursor): AppointmentConnection!
+	"""Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     tasks(first: Int, after: ItemCursor, last: Int, before: ItemCursor): TaskConnection!
+	"""Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
 
     appointmentsById(ids: [ID!]!) : [Appointment]!
@@ -21,6 +26,7 @@ type Query {
     unreadCountsById(ids: [ID!]!): [Folder]!
 }
 
+"Node interface for Relay support"
 interface Node {
     id: ID!
 }
@@ -76,7 +82,7 @@ type Mutation {
 }
 
 type Subscription {
-    nextAppointmentChange : Appointment
+    nextAppointmentChange : Appointment @deprecated(reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
 }
 
 scalar DateTime
@@ -85,6 +91,7 @@ enum TaskState {
     New
     Started
     Complete
+	Unassigned @deprecated(reason:"""Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
 }
 
 type Appointment implements Node {

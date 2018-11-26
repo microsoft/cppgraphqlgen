@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-#include <cpprest/json.h>
-
 #include "GraphQLService.h"
 
 namespace facebook {
@@ -25,7 +23,8 @@ enum class TaskState
 {
 	New,
 	Started,
-	Complete
+	Complete,
+	Unassigned
 };
 
 struct CompleteTaskInput
@@ -65,25 +64,25 @@ protected:
 
 public:
 	virtual std::shared_ptr<service::Object> getNode(std::vector<unsigned char>&& id) const = 0;
-	virtual std::shared_ptr<AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const = 0;
-	virtual std::shared_ptr<TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const = 0;
-	virtual std::shared_ptr<FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<web::json::value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<web::json::value>&& before) const = 0;
+	virtual std::shared_ptr<AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
+	virtual std::shared_ptr<TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
+	virtual std::shared_ptr<FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
 	virtual std::vector<std::shared_ptr<Appointment>> getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
 	virtual std::vector<std::shared_ptr<Task>> getTasksById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
 	virtual std::vector<std::shared_ptr<Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
 
 private:
-	web::json::value resolveNode(service::ResolverParams&& params);
-	web::json::value resolveAppointments(service::ResolverParams&& params);
-	web::json::value resolveTasks(service::ResolverParams&& params);
-	web::json::value resolveUnreadCounts(service::ResolverParams&& params);
-	web::json::value resolveAppointmentsById(service::ResolverParams&& params);
-	web::json::value resolveTasksById(service::ResolverParams&& params);
-	web::json::value resolveUnreadCountsById(service::ResolverParams&& params);
+	rapidjson::Document resolveNode(service::ResolverParams&& params);
+	rapidjson::Document resolveAppointments(service::ResolverParams&& params);
+	rapidjson::Document resolveTasks(service::ResolverParams&& params);
+	rapidjson::Document resolveUnreadCounts(service::ResolverParams&& params);
+	rapidjson::Document resolveAppointmentsById(service::ResolverParams&& params);
+	rapidjson::Document resolveTasksById(service::ResolverParams&& params);
+	rapidjson::Document resolveUnreadCountsById(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
-	web::json::value resolve__schema(service::ResolverParams&& params);
-	web::json::value resolve__type(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__schema(service::ResolverParams&& params);
+	rapidjson::Document resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
 };
@@ -99,10 +98,10 @@ public:
 	virtual bool getHasPreviousPage() const = 0;
 
 private:
-	web::json::value resolveHasNextPage(service::ResolverParams&& params);
-	web::json::value resolveHasPreviousPage(service::ResolverParams&& params);
+	rapidjson::Document resolveHasNextPage(service::ResolverParams&& params);
+	rapidjson::Document resolveHasPreviousPage(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class AppointmentEdge
@@ -113,13 +112,13 @@ protected:
 
 public:
 	virtual std::shared_ptr<Appointment> getNode() const = 0;
-	virtual web::json::value getCursor() const = 0;
+	virtual rapidjson::Document getCursor() const = 0;
 
 private:
-	web::json::value resolveNode(service::ResolverParams&& params);
-	web::json::value resolveCursor(service::ResolverParams&& params);
+	rapidjson::Document resolveNode(service::ResolverParams&& params);
+	rapidjson::Document resolveCursor(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class AppointmentConnection
@@ -133,10 +132,10 @@ public:
 	virtual std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>> getEdges() const = 0;
 
 private:
-	web::json::value resolvePageInfo(service::ResolverParams&& params);
-	web::json::value resolveEdges(service::ResolverParams&& params);
+	rapidjson::Document resolvePageInfo(service::ResolverParams&& params);
+	rapidjson::Document resolveEdges(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class TaskEdge
@@ -147,13 +146,13 @@ protected:
 
 public:
 	virtual std::shared_ptr<Task> getNode() const = 0;
-	virtual web::json::value getCursor() const = 0;
+	virtual rapidjson::Document getCursor() const = 0;
 
 private:
-	web::json::value resolveNode(service::ResolverParams&& params);
-	web::json::value resolveCursor(service::ResolverParams&& params);
+	rapidjson::Document resolveNode(service::ResolverParams&& params);
+	rapidjson::Document resolveCursor(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class TaskConnection
@@ -167,10 +166,10 @@ public:
 	virtual std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>> getEdges() const = 0;
 
 private:
-	web::json::value resolvePageInfo(service::ResolverParams&& params);
-	web::json::value resolveEdges(service::ResolverParams&& params);
+	rapidjson::Document resolvePageInfo(service::ResolverParams&& params);
+	rapidjson::Document resolveEdges(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class FolderEdge
@@ -181,13 +180,13 @@ protected:
 
 public:
 	virtual std::shared_ptr<Folder> getNode() const = 0;
-	virtual web::json::value getCursor() const = 0;
+	virtual rapidjson::Document getCursor() const = 0;
 
 private:
-	web::json::value resolveNode(service::ResolverParams&& params);
-	web::json::value resolveCursor(service::ResolverParams&& params);
+	rapidjson::Document resolveNode(service::ResolverParams&& params);
+	rapidjson::Document resolveCursor(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class FolderConnection
@@ -201,10 +200,10 @@ public:
 	virtual std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>> getEdges() const = 0;
 
 private:
-	web::json::value resolvePageInfo(service::ResolverParams&& params);
-	web::json::value resolveEdges(service::ResolverParams&& params);
+	rapidjson::Document resolvePageInfo(service::ResolverParams&& params);
+	rapidjson::Document resolveEdges(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class CompleteTaskPayload
@@ -218,10 +217,10 @@ public:
 	virtual std::unique_ptr<std::string> getClientMutationId() const = 0;
 
 private:
-	web::json::value resolveTask(service::ResolverParams&& params);
-	web::json::value resolveClientMutationId(service::ResolverParams&& params);
+	rapidjson::Document resolveTask(service::ResolverParams&& params);
+	rapidjson::Document resolveClientMutationId(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class Mutation
@@ -234,9 +233,9 @@ public:
 	virtual std::shared_ptr<CompleteTaskPayload> getCompleteTask(CompleteTaskInput&& input) const = 0;
 
 private:
-	web::json::value resolveCompleteTask(service::ResolverParams&& params);
+	rapidjson::Document resolveCompleteTask(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class Subscription
@@ -249,9 +248,9 @@ public:
 	virtual std::shared_ptr<Appointment> getNextAppointmentChange() const = 0;
 
 private:
-	web::json::value resolveNextAppointmentChange(service::ResolverParams&& params);
+	rapidjson::Document resolveNextAppointmentChange(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class Appointment
@@ -262,17 +261,17 @@ protected:
 	Appointment();
 
 public:
-	virtual std::unique_ptr<web::json::value> getWhen() const = 0;
+	virtual std::unique_ptr<rapidjson::Document> getWhen() const = 0;
 	virtual std::unique_ptr<std::string> getSubject() const = 0;
 	virtual bool getIsNow() const = 0;
 
 private:
-	web::json::value resolveId(service::ResolverParams&& params);
-	web::json::value resolveWhen(service::ResolverParams&& params);
-	web::json::value resolveSubject(service::ResolverParams&& params);
-	web::json::value resolveIsNow(service::ResolverParams&& params);
+	rapidjson::Document resolveId(service::ResolverParams&& params);
+	rapidjson::Document resolveWhen(service::ResolverParams&& params);
+	rapidjson::Document resolveSubject(service::ResolverParams&& params);
+	rapidjson::Document resolveIsNow(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class Task
@@ -287,11 +286,11 @@ public:
 	virtual bool getIsComplete() const = 0;
 
 private:
-	web::json::value resolveId(service::ResolverParams&& params);
-	web::json::value resolveTitle(service::ResolverParams&& params);
-	web::json::value resolveIsComplete(service::ResolverParams&& params);
+	rapidjson::Document resolveId(service::ResolverParams&& params);
+	rapidjson::Document resolveTitle(service::ResolverParams&& params);
+	rapidjson::Document resolveIsComplete(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 class Folder
@@ -306,11 +305,11 @@ public:
 	virtual int getUnreadCount() const = 0;
 
 private:
-	web::json::value resolveId(service::ResolverParams&& params);
-	web::json::value resolveName(service::ResolverParams&& params);
-	web::json::value resolveUnreadCount(service::ResolverParams&& params);
+	rapidjson::Document resolveId(service::ResolverParams&& params);
+	rapidjson::Document resolveName(service::ResolverParams&& params);
+	rapidjson::Document resolveUnreadCount(service::ResolverParams&& params);
 
-	web::json::value resolve__typename(service::ResolverParams&& params);
+	rapidjson::Document resolve__typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

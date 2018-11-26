@@ -8,6 +8,9 @@
 #include <stdexcept>
 #include <cstdio>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 using namespace facebook::graphql;
 
 int main(int argc, char** argv)
@@ -58,12 +61,12 @@ int main(int argc, char** argv)
 	try
 	{
 		std::string input;
-		std::unique_ptr<tao::pegtl::file_input<>> file;
+		std::unique_ptr<tao::graphqlpeg::file_input<>> file;
 		std::unique_ptr<peg::ast_node> ast;
 
 		if (argc > 1)
 		{
-			file.reset(new tao::pegtl::file_input<>(argv[1]));
+			file.reset(new tao::graphqlpeg::file_input<>(argv[1]));
 			ast = peg::parseFile(std::move(*file));
 		}
 		else
@@ -87,9 +90,12 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		utility::ostringstream_t output;
-		output << service->resolve(*ast, ((argc > 2) ? argv[2] : ""), web::json::value::object().as_object());
-		std::cout << utility::conversions::to_utf8string(output.str()) << std::endl;
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		const rapidjson::Document variables(rapidjson::Type::kObjectType);
+		
+		service->resolve(*ast, ((argc > 2) ? argv[2] : ""), variables.GetObject()).Accept(writer);
+		std::cout << buffer.GetString() << std::endl;
 	}
 	catch (const std::runtime_error& ex)
 	{

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define TAO_PEGTL_NAMESPACE graphqlpeg
+
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 
@@ -13,7 +15,7 @@ namespace facebook {
 namespace graphql {
 namespace peg {
 
-using namespace tao::pegtl;
+using namespace tao::graphqlpeg;
 
 struct ast_node
 	: parse_tree::basic_node<ast_node>
