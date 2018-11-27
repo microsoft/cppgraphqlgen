@@ -569,5 +569,11 @@ std::unique_ptr<ast_node> parseFile(file_input<>&& in)
 }
 
 } /* namespace peg */
+
+std::unique_ptr<peg::ast_node> operator "" _graphql(const char* text, size_t size)
+{
+	return tao::graphqlpeg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector>(tao::graphqlpeg::memory_input<>(text, size, "GraphQL"));
+}
+
 } /* namespace graphql */
 } /* namespace facebook */

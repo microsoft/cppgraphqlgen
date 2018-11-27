@@ -27,5 +27,8 @@ std::unique_ptr<ast_node> parseString(const char* text);
 std::unique_ptr<ast_node> parseFile(file_input<>&& in);
 
 } /* namespace peg */
+
+std::unique_ptr<peg::ast_node> operator "" _graphql(const char* text, size_t size);
+
 } /* namespace graphql */
 } /* namespace facebook */

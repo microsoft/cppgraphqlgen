@@ -228,7 +228,7 @@ rapidjson::Document __Type::resolveDescription(service::ResolverParams&& params)
 
 rapidjson::Document __Type::resolveFields(service::ResolverParams&& params)
 {
-	static const auto defaultArguments = []() -> rapidjson::Document
+	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
 		auto& allocator = values.GetAllocator();
@@ -267,7 +267,7 @@ rapidjson::Document __Type::resolvePossibleTypes(service::ResolverParams&& param
 
 rapidjson::Document __Type::resolveEnumValues(service::ResolverParams&& params)
 {
-	static const auto defaultArguments = []() -> rapidjson::Document
+	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
 		auto& allocator = values.GetAllocator();

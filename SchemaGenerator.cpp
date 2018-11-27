@@ -44,7 +44,7 @@ Generator::Generator()
 	, _schemaNamespace(s_introspectionNamespace)
 {
 	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
-	auto ast = peg::parseString(R"gql(
+	auto ast = R"(
 		type __Schema {
 		  types: [__Type!]!
 		  queryType: __Type!
@@ -137,7 +137,7 @@ Generator::Generator()
 		  ENUM_VALUE
 		  INPUT_OBJECT
 		  INPUT_FIELD_DEFINITION
-		})gql");
+		})"_graphql;
 
 	if (!ast)
 	{
@@ -1627,7 +1627,7 @@ template <>
 					if (firstField)
 					{
 						firstField = false;
-						sourceFile << R"cpp(	static const auto defaultValue = []() -> rapidjson::Document
+						sourceFile << R"cpp(	const auto defaultValue = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
 		auto& allocator = values.GetAllocator();
@@ -1858,7 +1858,7 @@ rapidjson::Document )cpp" << objectType.type
 							if (firstArgument)
 							{
 								firstArgument = false;
-								sourceFile << R"cpp(	static const auto defaultArguments = []() -> rapidjson::Document
+								sourceFile << R"cpp(	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
 		auto& allocator = values.GetAllocator();
