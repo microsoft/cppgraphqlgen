@@ -19,8 +19,8 @@ using namespace tao::graphqlpeg;
 
 class TodayServiceCase : public ::testing::Test
 {
-protected:
-	void SetUp() override
+public:
+	static void SetUpTestCase()
 	{
 		std::string fakeAppointmentId("fakeAppointmentId");
 		_fakeAppointmentId.resize(fakeAppointmentId.size());
@@ -35,15 +35,15 @@ protected:
 		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
 
 		auto query = std::make_shared<today::Query>(
-			[this]() -> std::vector<std::shared_ptr<today::Appointment>>
+			[]() -> std::vector<std::shared_ptr<today::Appointment>>
 		{
 			++_getAppointmentsCount;
 			return { std::make_shared<today::Appointment>(std::vector<unsigned char>(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
-		}, [this]() -> std::vector<std::shared_ptr<today::Task>>
+		}, []() -> std::vector<std::shared_ptr<today::Task>>
 		{
 			++_getTasksCount;
 			return { std::make_shared<today::Task>(std::vector<unsigned char>(_fakeTaskId), "Don't forget", true) };
-		}, [this]() -> std::vector<std::shared_ptr<today::Folder>>
+		}, []() -> std::vector<std::shared_ptr<today::Folder>>
 		{
 			++_getUnreadCountsCount;
 			return { std::make_shared<today::Folder>(std::vector<unsigned char>(_fakeFolderId), "\"Fake\" Inbox", 3) };
@@ -61,15 +61,33 @@ protected:
 		_service = std::make_shared<today::Operations>(query, mutation, subscription);
 	}
 
-	std::vector<unsigned char> _fakeAppointmentId;
-	std::vector<unsigned char> _fakeTaskId;
-	std::vector<unsigned char> _fakeFolderId;
+	static void TearDownTestCase()
+	{
+		_fakeAppointmentId.clear();
+		_fakeTaskId.clear();
+		_fakeFolderId.clear();
+		_service.reset();
+	}
 
-	std::shared_ptr<today::Operations> _service;
-	size_t _getAppointmentsCount = 0;
-	size_t _getTasksCount = 0;
-	size_t _getUnreadCountsCount = 0;
+protected:
+	static std::vector<unsigned char> _fakeAppointmentId;
+	static std::vector<unsigned char> _fakeTaskId;
+	static std::vector<unsigned char> _fakeFolderId;
+
+	static std::shared_ptr<today::Operations> _service;
+	static size_t _getAppointmentsCount;
+	static size_t _getTasksCount;
+	static size_t _getUnreadCountsCount;
 };
+
+std::vector<unsigned char> TodayServiceCase::_fakeAppointmentId;
+std::vector<unsigned char> TodayServiceCase::_fakeTaskId;
+std::vector<unsigned char> TodayServiceCase::_fakeFolderId;
+
+std::shared_ptr<today::Operations> TodayServiceCase::_service;
+size_t TodayServiceCase::_getAppointmentsCount = 0;
+size_t TodayServiceCase::_getTasksCount = 0;
+size_t TodayServiceCase::_getUnreadCountsCount = 0;
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
