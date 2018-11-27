@@ -200,10 +200,15 @@ private:
 	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
 	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
 	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
+	void visitEnumTypeExtension(const peg::ast_node& enumTypeExtension);
 	void visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition);
+	void visitInputObjectTypeExtension(const peg::ast_node& inputObjectTypeExtension);
 	void visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition);
+	void visitUnionTypeExtension(const peg::ast_node& unionTypeExtension);
 	void visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition);
+	void visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeExtension);
 	void visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition);
+	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 
 	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);

@@ -321,7 +321,8 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 
 void Generator::visitDefinition(const peg::ast_node& definition)
 {
-	if (definition.is<peg::schema_definition>())
+	if (definition.is<peg::schema_definition>()
+		|| definition.is<peg::schema_extension>())
 	{
 		visitSchemaDefinition(definition);
 	}
@@ -333,21 +334,41 @@ void Generator::visitDefinition(const peg::ast_node& definition)
 	{
 		visitEnumTypeDefinition(definition);
 	}
+	else if (definition.is<peg::enum_type_extension>())
+	{
+		visitEnumTypeExtension(definition);
+	}
 	else if (definition.is<peg::input_object_type_definition>())
 	{
 		visitInputObjectTypeDefinition(definition);
 	}
-	else if (definition.is<peg::input_object_type_definition>())
+	else if (definition.is<peg::input_object_type_extension>())
+	{
+		visitInputObjectTypeExtension(definition);
+	}
+	else if (definition.is<peg::union_type_definition>())
 	{
 		visitUnionTypeDefinition(definition);
+	}
+	else if (definition.is<peg::union_type_extension>())
+	{
+		visitUnionTypeExtension(definition);
 	}
 	else if (definition.is<peg::interface_type_definition>())
 	{
 		visitInterfaceTypeDefinition(definition);
 	}
+	else if (definition.is<peg::interface_type_extension>())
+	{
+		visitInterfaceTypeExtension(definition);
+	}
 	else if (definition.is<peg::object_type_definition>())
 	{
 		visitObjectTypeDefinition(definition);
+	}
+	else if (definition.is<peg::object_type_extension>())
+	{
+		visitObjectTypeExtension(definition);
 	}
 }
 
@@ -366,8 +387,6 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition)
 {
 	std::string name;
-	std::vector<std::string> interfaces;
-	OutputFieldList fields;
 	std::string description;
 
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
@@ -375,19 +394,6 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	{
 		name = child.content();
 	});
-
-	peg::for_each_child<peg::interface_type>(objectTypeDefinition,
-		[&interfaces](const peg::ast_node& child)
-	{
-		interfaces.push_back(child.content());
-	});
-
-	peg::on_first_child<peg::fields_definition>(objectTypeDefinition,
-		[&fields](const peg::ast_node& child)
-	{
-		fields = getOutputFields(child.children);
-	});
-
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
 		[&description](const peg::ast_node& child)
@@ -397,25 +403,56 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 
 	_schemaTypes[name] = SchemaType::Object;
 	_objectNames[name] = _objectTypes.size();
-	_objectTypes.push_back({ std::move(name), std::move(interfaces), std::move(fields), std::move(description) });
+	_objectTypes.push_back({ std::move(name), {}, {}, std::move(description) });
+
+	visitObjectTypeExtension(objectTypeDefinition);
+}
+
+void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtension)
+{
+	std::string name;
+
+	peg::on_first_child<peg::object_name>(objectTypeExtension,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	const auto itrType = _objectNames.find(name);
+
+	if (itrType != _objectNames.cend())
+	{
+		auto& objectType = _objectTypes[itrType->second];
+
+		peg::for_each_child<peg::interface_type>(objectTypeExtension,
+			[&objectType](const peg::ast_node& child)
+		{
+			objectType.interfaces.push_back(child.content());
+		});
+
+		peg::on_first_child<peg::fields_definition>(objectTypeExtension,
+			[&objectType](const peg::ast_node& child)
+		{
+			auto fields = getOutputFields(child.children);
+
+			objectType.fields.reserve(objectType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				objectType.fields.push_back(std::move(field));
+			}
+		});
+	}
 }
 
 void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition)
 {
 	std::string name;
-	OutputFieldList fields;
 	std::string description;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-	});
-
-	peg::on_first_child<peg::fields_definition>(interfaceTypeDefinition,
-		[&fields](const peg::ast_node& child)
-	{
-		fields = getOutputFields(child.children);
 	});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
@@ -426,25 +463,50 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 
 	_schemaTypes[name] = SchemaType::Interface;
 	_interfaceNames[name] = _interfaceTypes.size();
-	_interfaceTypes.push_back({ std::move(name), std::move(fields), std::move(description) });
+	_interfaceTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	visitInterfaceTypeExtension(interfaceTypeDefinition);
+}
+
+void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeExtension)
+{
+	std::string name;
+
+	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	const auto itrType = _interfaceNames.find(name);
+
+	if (itrType != _interfaceNames.cend())
+	{
+		auto& interfaceType = _interfaceTypes[itrType->second];
+
+		peg::on_first_child<peg::fields_definition>(interfaceTypeExtension,
+			[&interfaceType](const peg::ast_node& child)
+		{
+			auto fields = getOutputFields(child.children);
+
+			interfaceType.fields.reserve(interfaceType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				interfaceType.fields.push_back(std::move(field));
+			}
+		});
+	}
 }
 
 void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition)
 {
 	std::string name;
-	InputFieldList fields;
 	std::string description;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-	});
-
-	peg::on_first_child<peg::input_fields_definition>(inputObjectTypeDefinition,
-		[&fields](const peg::ast_node& child)
-	{
-		fields = getInputFields(child.children);
 	});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
@@ -455,89 +517,50 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 
 	_schemaTypes[name] = SchemaType::Input;
 	_inputNames[name] = _inputTypes.size();
-	_inputTypes.push_back({ std::move(name), std::move(fields), std::move(description) });
+	_inputTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	visitInputObjectTypeExtension(inputObjectTypeDefinition);
+}
+
+void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTypeExtension)
+{
+	std::string name;
+
+	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	const auto itrType = _inputNames.find(name);
+
+	if (itrType != _inputNames.cend())
+	{
+		auto& inputType = _inputTypes[itrType->second];
+
+		peg::on_first_child<peg::input_fields_definition>(inputObjectTypeExtension,
+			[&inputType](const peg::ast_node& child)
+		{
+			auto fields = getInputFields(child.children);
+
+			inputType.fields.reserve(inputType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				inputType.fields.push_back(std::move(field));
+			}
+		});
+	}
 }
 
 void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 {
 	std::string name;
-	std::vector<EnumValueType> values;
 	std::string description;
 
 	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-	});
-
-	peg::for_each_child<peg::enum_value_definition>(enumTypeDefinition,
-		[&values](const peg::ast_node& child)
-	{
-		std::string value;
-		std::string valueDescription;
-		std::unique_ptr<std::string> deprecationReason;
-
-		peg::on_first_child<peg::enum_value>(child,
-			[&value](const peg::ast_node& enumValue)
-		{
-			value = enumValue.content();
-		});
-
-		peg::on_first_child<peg::description>(child,
-			[&valueDescription](const peg::ast_node& enumValue)
-		{
-			valueDescription = enumValue.children.front()->unescaped;
-		});
-
-		peg::on_first_child<peg::directives>(child,
-			[&deprecationReason](const peg::ast_node& directives)
-		{
-			peg::for_each_child<peg::directive>(directives,
-				[&deprecationReason](const peg::ast_node& directive)
-			{
-				std::string directiveName;
-
-				peg::on_first_child<peg::directive_name>(directive,
-					[&directiveName](const peg::ast_node& name)
-				{
-					directiveName = name.content();
-				});
-
-				if (directiveName == "deprecated")
-				{
-					std::string reason;
-
-					peg::on_first_child<peg::arguments>(directive,
-						[&reason](const peg::ast_node& arguments)
-					{
-						peg::on_first_child<peg::argument>(arguments,
-							[&reason](const peg::ast_node& argument)
-						{
-							std::string argumentName;
-
-							peg::on_first_child<peg::argument_name>(argument,
-								[&argumentName](const peg::ast_node& name)
-							{
-								argumentName = name.content();
-							});
-
-							if (argumentName == "reason")
-							{
-								peg::on_first_child<peg::string_value>(argument,
-									[&reason](const peg::ast_node& argumentValue)
-								{
-									reason = argumentValue.unescaped;
-								});
-							}
-						});
-					});
-
-					deprecationReason.reset(new std::string(std::move(reason)));
-				}
-			});
-		});
-
-		values.push_back({ std::move(value), std::move(valueDescription), std::move(deprecationReason) });
 	});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
@@ -548,7 +571,97 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 
 	_schemaTypes[name] = SchemaType::Enum;
 	_enumNames[name] = _enumTypes.size();
-	_enumTypes.push_back({ std::move(name), std::move(values), std::move(description) });
+	_enumTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	visitEnumTypeExtension(enumTypeDefinition);
+}
+
+void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
+{
+	std::string name;
+
+	peg::on_first_child<peg::enum_name>(enumTypeExtension,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	const auto itrType = _enumNames.find(name);
+
+	if (itrType != _enumNames.cend())
+	{
+		auto& enumType = _enumTypes[itrType->second];
+
+		peg::for_each_child<peg::enum_value_definition>(enumTypeExtension,
+			[&enumType](const peg::ast_node& child)
+		{
+			std::string value;
+			std::string valueDescription;
+			std::unique_ptr<std::string> deprecationReason;
+
+			peg::on_first_child<peg::enum_value>(child,
+				[&value](const peg::ast_node& enumValue)
+			{
+				value = enumValue.content();
+			});
+
+			peg::on_first_child<peg::description>(child,
+				[&valueDescription](const peg::ast_node& enumValue)
+			{
+				valueDescription = enumValue.children.front()->unescaped;
+			});
+
+			peg::on_first_child<peg::directives>(child,
+				[&deprecationReason](const peg::ast_node& directives)
+			{
+				peg::for_each_child<peg::directive>(directives,
+					[&deprecationReason](const peg::ast_node& directive)
+				{
+					std::string directiveName;
+
+					peg::on_first_child<peg::directive_name>(directive,
+						[&directiveName](const peg::ast_node& name)
+					{
+						directiveName = name.content();
+					});
+
+					if (directiveName == "deprecated")
+					{
+						std::string reason;
+
+						peg::on_first_child<peg::arguments>(directive,
+							[&reason](const peg::ast_node& arguments)
+						{
+							peg::on_first_child<peg::argument>(arguments,
+								[&reason](const peg::ast_node& argument)
+							{
+								std::string argumentName;
+
+								peg::on_first_child<peg::argument_name>(argument,
+									[&argumentName](const peg::ast_node& name)
+								{
+									argumentName = name.content();
+								});
+
+								if (argumentName == "reason")
+								{
+									peg::on_first_child<peg::string_value>(argument,
+										[&reason](const peg::ast_node& argumentValue)
+									{
+										reason = argumentValue.unescaped;
+									});
+								}
+							});
+						});
+
+						deprecationReason.reset(new std::string(std::move(reason)));
+					}
+				});
+			});
+
+			enumType.values.push_back({ std::move(value), std::move(valueDescription), std::move(deprecationReason) });
+		});
+	}
 }
 
 void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition)
@@ -576,19 +689,12 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
 {
 	std::string name;
-	std::vector<std::string> options;
 	std::string description;
 
 	peg::on_first_child<peg::union_name>(unionTypeDefinition,
 		[&name](const peg::ast_node& child)
 	{
 		name = child.content();
-	});
-
-	peg::for_each_child<peg::union_type>(unionTypeDefinition,
-		[&options](const peg::ast_node& child)
-	{
-		options.push_back(child.content());
 	});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
@@ -599,7 +705,33 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 
 	_schemaTypes[name] = SchemaType::Union;
 	_unionNames[name] = _unionTypes.size();
-	_unionTypes.push_back({ std::move(name), std::move(options), std::move(description) });
+	_unionTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	visitUnionTypeExtension(unionTypeDefinition);
+}
+
+void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
+{
+	std::string name;
+
+	peg::on_first_child<peg::union_name>(unionTypeExtension,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.content();
+	});
+
+	const auto itrType = _unionNames.find(name);
+
+	if (itrType != _unionNames.cend())
+	{
+		auto& unionType = _unionTypes[itrType->second];
+
+		peg::for_each_child<peg::union_type>(unionTypeExtension,
+			[&unionType](const peg::ast_node& child)
+		{
+			unionType.options.push_back(child.content());
+		});
+	}
 }
 
 OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
