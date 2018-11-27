@@ -91,7 +91,7 @@ size_t TodayServiceCase::_getUnreadCountsCount = 0;
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
-	auto ast = peg::parseString(R"gql(
+	auto ast = R"(
 		query Everything {
 			appointments {
 				edges {
@@ -121,7 +121,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 					}
 				}
 			}
-		})gql");
+		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "Everything", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
@@ -184,7 +184,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 TEST_F(TodayServiceCase, QueryAppointments)
 {
-	auto ast = peg::parseString(R"gql({
+	auto ast = R"({
 			appointments {
 				edges {
 					node {
@@ -195,7 +195,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 					}
 				}
 			}
-		})gql");
+		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
@@ -240,7 +240,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 
 TEST_F(TodayServiceCase, QueryTasks)
 {
-	auto ast = peg::parseString(R"gql({
+	auto ast = R"gql({
 			tasks {
 				edges {
 					node {
@@ -250,7 +250,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 					}
 				}
 			}
-		})gql");
+		})gql"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
@@ -294,7 +294,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 
 TEST_F(TodayServiceCase, QueryUnreadCounts)
 {
-	auto ast = peg::parseString(R"gql({
+	auto ast = R"({
 			unreadCounts {
 				edges {
 					node {
@@ -304,7 +304,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 					}
 				}
 			}
-		})gql");
+		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
@@ -348,7 +348,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 
 TEST_F(TodayServiceCase, MutateCompleteTask)
 {
-	auto ast = peg::parseString(R"gql(mutation {
+	auto ast = R"(mutation {
 			completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
 				completedTask: task {
 					completedTaskId: id
@@ -357,7 +357,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 				}
 				clientMutationId
 			}
-		})gql");
+		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "", variables.GetObject());
 
@@ -401,7 +401,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 TEST_F(TodayServiceCase, Introspection)
 {
-	auto ast = peg::parseString(R"gql({
+	auto ast = R"({
 			__schema {
 				types {
 					kind
@@ -432,7 +432,7 @@ TEST_F(TodayServiceCase, Introspection)
 					name
 				}
 			}
-		})gql");
+		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
 	const auto result = _service->resolve(*ast, "", variables.GetObject());
 

@@ -54,7 +54,7 @@ rapidjson::Document service::ModifiedResult<today::TaskState>::convert(today::Ta
 template <>
 today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const rapidjson::Value& value)
 {
-	static const auto defaultValue = []() -> rapidjson::Document
+	const auto defaultValue = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
 		auto& allocator = values.GetAllocator();
