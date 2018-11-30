@@ -68,7 +68,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 		return values;
 	}();
 
-	auto valueId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", value.GetObject());
+	auto valueId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", value.GetObject());
 	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("isComplete", value.GetObject());
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
@@ -110,7 +110,7 @@ Query::Query()
 
 rapidjson::Document Query::resolveNode(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<std::vector<unsigned char>>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
 	auto result = getNode(std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -151,7 +151,7 @@ rapidjson::Document Query::resolveUnreadCounts(service::ResolverParams&& params)
 
 rapidjson::Document Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getAppointmentsById(std::move(argIds));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -159,7 +159,7 @@ rapidjson::Document Query::resolveAppointmentsById(service::ResolverParams&& par
 
 rapidjson::Document Query::resolveTasksById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(std::move(argIds));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -167,7 +167,7 @@ rapidjson::Document Query::resolveTasksById(service::ResolverParams&& params)
 
 rapidjson::Document Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<unsigned char>>::require<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getUnreadCountsById(std::move(argIds));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -538,7 +538,7 @@ rapidjson::Document Appointment::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 rapidjson::Document Appointment::resolveWhen(service::ResolverParams&& params)
@@ -588,7 +588,7 @@ rapidjson::Document Task::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 rapidjson::Document Task::resolveTitle(service::ResolverParams&& params)
@@ -631,7 +631,7 @@ rapidjson::Document Folder::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId();
 
-	return service::ModifiedResult<std::vector<unsigned char>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 rapidjson::Document Folder::resolveName(service::ResolverParams&& params)

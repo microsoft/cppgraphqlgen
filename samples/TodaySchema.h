@@ -29,14 +29,14 @@ enum class TaskState
 
 struct CompleteTaskInput
 {
-	std::vector<unsigned char> id;
+	std::vector<uint8_t> id;
 	std::unique_ptr<bool> isComplete;
 	std::unique_ptr<std::string> clientMutationId;
 };
 
 struct Node
 {
-	virtual std::vector<unsigned char> getId() const = 0;
+	virtual std::vector<uint8_t> getId() const = 0;
 };
 
 namespace object {
@@ -63,13 +63,13 @@ protected:
 	Query();
 
 public:
-	virtual std::shared_ptr<service::Object> getNode(std::vector<unsigned char>&& id) const = 0;
+	virtual std::shared_ptr<service::Object> getNode(std::vector<uint8_t>&& id) const = 0;
 	virtual std::shared_ptr<AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
 	virtual std::shared_ptr<TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
 	virtual std::shared_ptr<FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const = 0;
-	virtual std::vector<std::shared_ptr<Appointment>> getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
-	virtual std::vector<std::shared_ptr<Task>> getTasksById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
-	virtual std::vector<std::shared_ptr<Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const = 0;
+	virtual std::vector<std::shared_ptr<Appointment>> getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const = 0;
+	virtual std::vector<std::shared_ptr<Task>> getTasksById(std::vector<std::vector<uint8_t>>&& ids) const = 0;
+	virtual std::vector<std::shared_ptr<Folder>> getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const = 0;
 
 private:
 	rapidjson::Document resolveNode(service::ResolverParams&& params);
