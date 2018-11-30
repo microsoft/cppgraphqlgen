@@ -33,7 +33,7 @@ const CppTypeMap Generator::s_builtinCppTypes= {
 		"double",
 		"std::string",
 		"bool",
-		"std::vector<unsigned char>",
+		"std::vector<uint8_t>",
 	};
 
 const std::string Generator::s_scalarCppType = R"cpp(rapidjson::Document)cpp";

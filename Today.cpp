@@ -10,7 +10,7 @@ namespace facebook {
 namespace graphql {
 namespace today {
 
-Appointment::Appointment(std::vector<unsigned char>&& id, std::string&& when, std::string&& subject, bool isNow)
+Appointment::Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
 	, _when(std::move(when))
 	, _subject(std::move(subject))
@@ -18,14 +18,14 @@ Appointment::Appointment(std::vector<unsigned char>&& id, std::string&& when, st
 {
 }
 
-Task::Task(std::vector<unsigned char>&& id, std::string&& title, bool isComplete)
+Task::Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete)
 	: _id(std::move(id))
 	, _title(std::move(title))
 	, _isComplete(isComplete)
 {
 }
 
-Folder::Folder(std::vector<unsigned char>&& id, std::string&& name, int unreadCount)
+Folder::Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount)
 	: _id(std::move(id))
 	, _name(std::move(name))
 	, _unreadCount(unreadCount)
@@ -48,7 +48,7 @@ void Query::loadAppointments() const
 	}
 }
 
-std::shared_ptr<Appointment> Query::findAppointment(const std::vector<unsigned char>& id) const
+std::shared_ptr<Appointment> Query::findAppointment(const std::vector<uint8_t>& id) const
 {
 	loadAppointments();
 
@@ -74,7 +74,7 @@ void Query::loadTasks() const
 	}
 }
 
-std::shared_ptr<Task> Query::findTask(const std::vector<unsigned char>& id) const
+std::shared_ptr<Task> Query::findTask(const std::vector<uint8_t>& id) const
 {
 	loadTasks();
 
@@ -100,7 +100,7 @@ void Query::loadUnreadCounts() const
 	}
 }
 
-std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<unsigned char>& id) const
+std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<uint8_t>& id) const
 {
 	loadUnreadCounts();
 
@@ -117,7 +117,7 @@ std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<unsigned char>&
 	return nullptr;
 }
 
-std::shared_ptr<service::Object> Query::getNode(std::vector<unsigned char>&& id) const
+std::shared_ptr<service::Object> Query::getNode(std::vector<uint8_t>&& id) const
 {
 	auto appointment = findAppointment(id);
 
@@ -263,12 +263,12 @@ std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr
 	return std::static_pointer_cast<object::FolderConnection>(connection);
 }
 
-std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const
+std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<unsigned char>& id)
+		[this](const std::vector<uint8_t>& id)
 	{
 		return std::static_pointer_cast<object::Appointment>(findAppointment(id));
 	});
@@ -276,12 +276,12 @@ std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std
 	return result;
 }
 
-std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::vector<unsigned char>>&& ids) const
+std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<unsigned char>& id)
+		[this](const std::vector<uint8_t>& id)
 	{
 		return std::static_pointer_cast<object::Task>(findTask(id));
 	});
@@ -289,12 +289,12 @@ std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::
 	return result;
 }
 
-std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const
+std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<unsigned char>& id)
+		[this](const std::vector<uint8_t>& id)
 	{
 		return std::static_pointer_cast<object::Folder>(findUnreadCount(id));
 	});

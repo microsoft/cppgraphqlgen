@@ -76,7 +76,7 @@ class Base64
 {
 public:
 	// Map a single Base64-encoded character to its 6-bit integer value.
-	static constexpr uint8_t fromBase64(unsigned char ch) noexcept
+	static constexpr uint8_t fromBase64(char ch) noexcept
 	{
 		return (ch >= 'A' && ch <= 'Z' ? ch - 'A'
 			: (ch >= 'a' && ch <= 'z' ? ch - 'a' + 26
@@ -86,27 +86,29 @@ public:
 	}
 
 	// Convert a Base64-encoded string to a vector of bytes.
-	static std::vector<unsigned char> fromBase64(const char* encoded, size_t count);
+	static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
 
 	// Map a single 6-bit integer value to its Base64-encoded character.
-	static constexpr unsigned char toBase64(uint8_t i) noexcept
+	static constexpr char toBase64(uint8_t i) noexcept
 	{
-		return (i < 26 ? i + static_cast<uint8_t>('A')
-			: (i < 52 ? i - 26 + static_cast<uint8_t>('a')
-				: (i < 62 ? i - 52 + static_cast<uint8_t>('0')
+		return (i < 26 ? static_cast<char>(i + static_cast<uint8_t>('A'))
+			: (i < 52 ? static_cast<char>(i - 26 + static_cast<uint8_t>('a'))
+				: (i < 62 ? static_cast<char>(i - 52 + static_cast<uint8_t>('0'))
 					: (i == 62 ? '+'
-						: (i == 63 ? '/' : '=')))));
+						: (i == 63 ? '/' : padding)))));
 	}
 
 	// Convert a set of bytes to Base64.
-	static std::string toBase64(const std::vector<unsigned char>& bytes);
+	static std::string toBase64(const std::vector<uint8_t>& bytes);
 
 private:
+	static constexpr char padding = '=';
+
 	// Throw a schema_exception if the character is out of range.
-	static uint8_t verifyFromBase64(unsigned char ch);
+	static uint8_t verifyFromBase64(char ch);
 
 	// Throw a logic_error if the integer is out of range.
-	static unsigned char verifyToBase64(uint8_t i);
+	static char verifyToBase64(uint8_t i);
 };
 
 // Types be wrapped non-null or list types in GraphQL. Since nullability is a more special case
@@ -250,7 +252,7 @@ using IntArgument = ModifiedArgument<int>;
 using FloatArgument = ModifiedArgument<double>;
 using StringArgument = ModifiedArgument<std::string>;
 using BooleanArgument = ModifiedArgument<bool>;
-using IdArgument = ModifiedArgument<std::vector<unsigned char>>;
+using IdArgument = ModifiedArgument<std::vector<uint8_t>>;
 using ScalarArgument = ModifiedArgument<rapidjson::Document>;
 
 // Each type should handle fragments with type conditions matching its own

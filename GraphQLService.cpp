@@ -8,6 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <array>
 
 namespace facebook {
 namespace graphql {
@@ -48,7 +49,7 @@ const peg::ast_node& Fragment::getSelection() const
 	return _selection;
 }
 
-uint8_t Base64::verifyFromBase64(unsigned char ch)
+uint8_t Base64::verifyFromBase64(char ch)
 {
 	uint8_t result = fromBase64(ch);
 
@@ -60,62 +61,86 @@ uint8_t Base64::verifyFromBase64(unsigned char ch)
 	return result;
 }
 
-std::vector<unsigned char> Base64::fromBase64(const char* encoded, size_t count)
+std::vector<uint8_t> Base64::fromBase64(const char* encoded, size_t count)
 {
-	std::vector<unsigned char> result;
+	std::vector<uint8_t> result;
 
 	if (!count)
 	{
 		return result;
 	}
 
-	result.reserve(count * 3 / 4);
-	while (encoded[0] && encoded[1])
+	result.reserve((count + (count % 4)) * 3 / 4);
+
+	// First decode all of the full unpadded segments 24 bits at a time
+	while (count >= 4
+		&& encoded[3] != padding)
 	{
-		uint16_t buffer = static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 10;
+		const uint32_t segment = (static_cast<uint32_t>(verifyFromBase64(encoded[0])) << 18)
+			| (static_cast<uint32_t>(verifyFromBase64(encoded[1])) << 12)
+			| (static_cast<uint32_t>(verifyFromBase64(encoded[2])) << 6)
+			| static_cast<uint32_t>(verifyFromBase64(encoded[3]));
 
-		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 4;
-		result.push_back(static_cast<unsigned char>((buffer & 0xFF00) >> 8));
-		buffer = (buffer & 0xFF) << 8;
+		result.emplace_back(static_cast<uint8_t>((segment & 0xFF0000) >> 16));
+		result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
+		result.emplace_back(static_cast<uint8_t>(segment & 0xFF));
 
-		if (!*encoded || '=' == *encoded)
+		encoded += 4;
+		count -= 4;
+	}
+
+	// Get any leftover partial segment with 2 or 3 non-padding characters
+	if (count > 1)
+	{
+		const bool triplet = (count > 2 && padding != encoded[2]);
+		const uint8_t tail = (triplet ? verifyFromBase64(encoded[2]) : 0);
+		const uint16_t segment = (static_cast<uint16_t>(verifyFromBase64(encoded[0])) << 10)
+			| (static_cast<uint16_t>(verifyFromBase64(encoded[1])) << 4)
+			| (static_cast<uint16_t>(tail) >> 2);
+
+		if (triplet)
 		{
-			if (0 != buffer
-				|| (*encoded && (*++encoded != '=' || *++encoded)))
+			if (tail & 0x3)
 			{
 				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
 			}
 
-			break;
+			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
+			result.emplace_back(static_cast<uint8_t>(segment & 0xFF));
+
+			encoded += 3;
+			count -= 3;
 		}
-
-		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++)) << 6;
-		result.push_back(static_cast<unsigned char>((buffer & 0xFF00) >> 8));
-		buffer &= 0xFF;
-
-		if (!*encoded || '=' == *encoded)
+		else
 		{
-			if (0 != buffer
-				|| (*encoded && *++encoded))
+			if (segment & 0xFF)
 			{
 				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
 			}
 
-			break;
-		}
+			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
 
-		buffer |= static_cast<uint16_t>(verifyFromBase64(*encoded++));
-		result.push_back(static_cast<unsigned char>(buffer & 0xFF));
+			encoded += 2;
+			count -= 2;
+		}
+	}
+
+	// Make sure anything that's left is 0 - 2 characters of padding
+	if ((count > 0 && padding != encoded[0])
+		|| (count > 1 && padding != encoded[1])
+		|| count > 2)
+	{
+		throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
 	}
 
 	return result;
 }
 
-unsigned char Base64::verifyToBase64(uint8_t i)
+char Base64::verifyToBase64(uint8_t i)
 {
 	unsigned char result = toBase64(i);
 
-	if (result == '=')
+	if (result == padding)
 	{
 		throw std::logic_error("invalid 6-bit value");
 	}
@@ -123,7 +148,7 @@ unsigned char Base64::verifyToBase64(uint8_t i)
 	return result;
 }
 
-std::string Base64::toBase64(const std::vector<unsigned char>& bytes)
+std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
 {
 	std::string result;
 
@@ -132,38 +157,43 @@ std::string Base64::toBase64(const std::vector<unsigned char>& bytes)
 		return result;
 	}
 
-	auto itr = bytes.cbegin();
-	const auto itrEnd = bytes.cend();
-	const size_t count = bytes.size();
+	size_t count = bytes.size();
+	const uint8_t* data = bytes.data();
 
 	result.reserve((count + (count % 3)) * 4 / 3);
-	while (itr != itrEnd)
+
+	// First encode all of the full unpadded segments 24 bits at a time
+	while (count >= 3)
 	{
-		uint16_t buffer = static_cast<uint8_t>(*itr++) << 8;
+		const uint32_t segment = (static_cast<uint32_t>(data[0]) << 16)
+			| (static_cast<uint32_t>(data[1]) << 8)
+			| static_cast<uint32_t>(data[2]);
 
-		result.push_back(verifyToBase64((buffer & 0xFC00) >> 10));
+		result.append({
+			verifyToBase64((segment & 0xFC0000) >> 18),
+			verifyToBase64((segment & 0x3F000) >> 12),
+			verifyToBase64((segment & 0xFC0) >> 6),
+			verifyToBase64(segment & 0x3F)
+			});
 
-		if (itr == itrEnd)
-		{
-			result.push_back(verifyToBase64((buffer & 0x03F0) >> 4));
-			result.append("==");
-			break;
-		}
+		data += 3;
+		count -= 3;
+	}
 
-		buffer |= static_cast<uint8_t>(*itr++);
-		result.push_back(verifyToBase64((buffer & 0x03F0) >> 4));
-		buffer = buffer << 8;
+	// Get any leftover partial segment with 1 or 2 bytes
+	if (count > 0)
+	{
+		const bool pair = (count > 1);
+		const uint16_t segment = (static_cast<uint16_t>(data[0]) << 8)
+			| (pair ? static_cast<uint16_t>(data[1]) : 0);
+		const std::array<char, 4> remainder {
+			verifyToBase64((segment & 0xFC00) >> 10),
+			verifyToBase64((segment & 0x3F0) >> 4),
+			(pair ? verifyToBase64((segment & 0xF) << 2) : padding),
+			padding
+		};
 
-		if (itr == itrEnd)
-		{
-			result.push_back(verifyToBase64((buffer & 0x0FC0) >> 6));
-			result.push_back('=');
-			break;
-		}
-
-		buffer |= static_cast<uint8_t>(*itr++);
-		result.push_back(verifyToBase64((buffer & 0x0FC0) >> 6));
-		result.push_back(verifyToBase64(buffer & 0x3F));
+		result.append(remainder.data(), remainder.size());
 	}
 
 	return result;
@@ -229,7 +259,7 @@ rapidjson::Document ModifiedArgument<rapidjson::Document>::convert(const rapidjs
 }
 
 template <>
-std::vector<unsigned char> ModifiedArgument<std::vector<unsigned char>>::convert(const rapidjson::Value& value)
+std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const rapidjson::Value& value)
 {
 	if (!value.IsString())
 	{
@@ -282,7 +312,7 @@ rapidjson::Document ModifiedResult<rapidjson::Document>::convert(rapidjson::Docu
 }
 
 template <>
-rapidjson::Document ModifiedResult<std::vector<unsigned char>>::convert(std::vector<unsigned char>&& result, ResolverParams&&)
+rapidjson::Document ModifiedResult<std::vector<uint8_t>>::convert(std::vector<uint8_t>&& result, ResolverParams&&)
 {
 	rapidjson::Document document(rapidjson::Type::kStringType);
 

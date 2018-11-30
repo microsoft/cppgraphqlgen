@@ -22,18 +22,18 @@ public:
 
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::shared_ptr<service::Object> getNode(std::vector<unsigned char>&& id) const override;
+	std::shared_ptr<service::Object> getNode(std::vector<uint8_t>&& id) const override;
 	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
 	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
 	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
-	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<unsigned char>>&& ids) const override;
-	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<unsigned char>>&& ids) const override;
-	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<unsigned char>>&& ids) const override;
+	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const override;
 
 private:
-	std::shared_ptr<Appointment> findAppointment(const std::vector<unsigned char>& id) const;
-	std::shared_ptr<Task> findTask(const std::vector<unsigned char>& id) const;
-	std::shared_ptr<Folder> findUnreadCount(const std::vector<unsigned char>& id) const;
+	std::shared_ptr<Appointment> findAppointment(const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Task> findTask(const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Folder> findUnreadCount(const std::vector<uint8_t>& id) const;
 
 	// Lazy load the fields in each query
 	void loadAppointments() const;
@@ -76,9 +76,9 @@ private:
 class Appointment : public object::Appointment
 {
 public:
-	explicit Appointment(std::vector<unsigned char>&& id, std::string&& when, std::string&& subject, bool isNow);
+	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
 
-	std::vector<unsigned char> getId() const override { return _id; }
+	std::vector<uint8_t> getId() const override { return _id; }
 	std::unique_ptr<rapidjson::Document> getWhen() const override
 	{
 		std::unique_ptr<rapidjson::Document> result(new rapidjson::Document(rapidjson::Type::kStringType));
@@ -91,7 +91,7 @@ public:
 	bool getIsNow() const override { return _isNow; }
 
 private:
-	std::vector<unsigned char> _id;
+	std::vector<uint8_t> _id;
 	std::string _when;
 	std::string _subject;
 	bool _isNow;
@@ -158,14 +158,14 @@ private:
 class Task : public object::Task
 {
 public:
-	explicit Task(std::vector<unsigned char>&& id, std::string&& title, bool isComplete);
+	explicit Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete);
 
-	std::vector<unsigned char> getId() const override { return _id; }
+	std::vector<uint8_t> getId() const override { return _id; }
 	std::unique_ptr<std::string> getTitle() const override { return std::unique_ptr<std::string>(new std::string(_title)); }
 	bool getIsComplete() const override { return _isComplete; }
 
 private:
-	std::vector<unsigned char> _id;
+	std::vector<uint8_t> _id;
 	std::string _title;
 	bool _isComplete;
 	TaskState _state = TaskState::New;
@@ -232,14 +232,14 @@ private:
 class Folder : public object::Folder
 {
 public:
-	explicit Folder(std::vector<unsigned char>&& id, std::string&& name, int unreadCount);
+	explicit Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount);
 
-	std::vector<unsigned char> getId() const override { return _id; }
+	std::vector<uint8_t> getId() const override { return _id; }
 	std::unique_ptr<std::string> getName() const override { return std::unique_ptr<std::string>(new std::string(_name)); }
 	int getUnreadCount() const override { return _unreadCount; }
 
 private:
-	std::vector<unsigned char> _id;
+	std::vector<uint8_t> _id;
 	std::string _name;
 	int _unreadCount;
 };

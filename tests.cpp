@@ -38,15 +38,15 @@ public:
 			[]() -> std::vector<std::shared_ptr<today::Appointment>>
 		{
 			++_getAppointmentsCount;
-			return { std::make_shared<today::Appointment>(std::vector<unsigned char>(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
+			return { std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
 		}, []() -> std::vector<std::shared_ptr<today::Task>>
 		{
 			++_getTasksCount;
-			return { std::make_shared<today::Task>(std::vector<unsigned char>(_fakeTaskId), "Don't forget", true) };
+			return { std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true) };
 		}, []() -> std::vector<std::shared_ptr<today::Folder>>
 		{
 			++_getUnreadCountsCount;
-			return { std::make_shared<today::Folder>(std::vector<unsigned char>(_fakeFolderId), "\"Fake\" Inbox", 3) };
+			return { std::make_shared<today::Folder>(std::vector<uint8_t>(_fakeFolderId), "\"Fake\" Inbox", 3) };
 		});
 		auto mutation = std::make_shared<today::Mutation>(
 			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload>
@@ -70,9 +70,9 @@ public:
 	}
 
 protected:
-	static std::vector<unsigned char> _fakeAppointmentId;
-	static std::vector<unsigned char> _fakeTaskId;
-	static std::vector<unsigned char> _fakeFolderId;
+	static std::vector<uint8_t> _fakeAppointmentId;
+	static std::vector<uint8_t> _fakeTaskId;
+	static std::vector<uint8_t> _fakeFolderId;
 
 	static std::shared_ptr<today::Operations> _service;
 	static size_t _getAppointmentsCount;
@@ -80,9 +80,9 @@ protected:
 	static size_t _getUnreadCountsCount;
 };
 
-std::vector<unsigned char> TodayServiceCase::_fakeAppointmentId;
-std::vector<unsigned char> TodayServiceCase::_fakeTaskId;
-std::vector<unsigned char> TodayServiceCase::_fakeFolderId;
+std::vector<uint8_t> TodayServiceCase::_fakeAppointmentId;
+std::vector<uint8_t> TodayServiceCase::_fakeTaskId;
+std::vector<uint8_t> TodayServiceCase::_fakeFolderId;
 
 std::shared_ptr<today::Operations> TodayServiceCase::_service;
 size_t TodayServiceCase::_getAppointmentsCount = 0;
