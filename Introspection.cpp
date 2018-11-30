@@ -178,11 +178,18 @@ std::unique_ptr<std::string> ObjectType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> ObjectType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> ObjectType::getFields(std::unique_ptr<bool>&& includeDeprecated) const
 {
-	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>(_fields.size()));
+	const bool deprecated = includeDeprecated && *includeDeprecated;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>());
 
-	std::copy(_fields.cbegin(), _fields.cend(), result->begin());
+	result->reserve(_fields.size());
+	std::copy_if(_fields.cbegin(), _fields.cend(), std::back_inserter(*result),
+		[deprecated](const std::shared_ptr<Field>& field)
+	{
+		return deprecated
+			|| !field->getIsDeprecated();
+	});
 
 	return result;
 }
@@ -219,11 +226,18 @@ std::unique_ptr<std::string> InterfaceType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> InterfaceType::getFields(std::unique_ptr<bool>&& /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> InterfaceType::getFields(std::unique_ptr<bool>&& includeDeprecated) const
 {
-	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>(_fields.size()));
+	const bool deprecated = includeDeprecated && *includeDeprecated;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>());
 
-	std::copy(_fields.cbegin(), _fields.cend(), result->begin());
+	result->reserve(_fields.size());
+	std::copy_if(_fields.cbegin(), _fields.cend(), std::back_inserter(*result),
+		[deprecated](const std::shared_ptr<Field>& field)
+	{
+		return deprecated
+			|| !field->getIsDeprecated();
+	});
 
 	return result;
 }
@@ -301,11 +315,18 @@ std::unique_ptr<std::string> EnumType::getName() const
 	return result;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> EnumType::getEnumValues(std::unique_ptr<bool>&& /*includeDeprecated*/) const
+std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> EnumType::getEnumValues(std::unique_ptr<bool>&& includeDeprecated) const
 {
-	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> result(new std::vector<std::shared_ptr<object::__EnumValue>>(_enumValues.size()));
+	const bool deprecated = includeDeprecated && *includeDeprecated;
+	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> result(new std::vector<std::shared_ptr<object::__EnumValue>>());
 
-	std::copy(_enumValues.cbegin(), _enumValues.cend(), result->begin());
+	result->reserve(_enumValues.size());
+	std::copy_if(_enumValues.cbegin(), _enumValues.cend(), std::back_inserter(*result),
+		[deprecated](const std::shared_ptr<object::__EnumValue>& value)
+	{
+		return deprecated
+			|| !value->getIsDeprecated();
+	});
 
 	return result;
 }
