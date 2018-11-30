@@ -144,7 +144,7 @@ Generator::Generator()
 		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->children.front()->children)
+	for (const auto& child : ast->root->children.front()->children)
 	{
 		visitDefinition(*child);
 	}
@@ -160,15 +160,14 @@ Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
 {
-	tao::graphqlpeg::file_input<> in(schemaFileName.c_str());
-	auto ast = peg::parseFile(std::move(in));
+	auto ast = peg::parseFile(schemaFileName.c_str());
 
 	if (!ast)
 	{
 		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->children.front()->children)
+	for (const auto& child : ast->root->children.front()->children)
 	{
 		visitDefinition(*child);
 	}

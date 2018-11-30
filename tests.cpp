@@ -123,7 +123,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "Everything", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "Everything", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -197,7 +197,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "", variables.GetObject());
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -252,7 +252,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 			}
 		})gql"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -306,7 +306,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "", variables.GetObject());
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -359,7 +359,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "", variables.GetObject());
 
 	try
 	{
@@ -434,7 +434,7 @@ TEST_F(TodayServiceCase, Introspection)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	const auto result = _service->resolve(*ast, "", variables.GetObject());
+	const auto result = _service->resolve(*ast->root, "", variables.GetObject());
 
 	try
 	{
