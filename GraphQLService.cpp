@@ -381,10 +381,9 @@ Request::Request(TypeMap&& operationTypes)
 
 rapidjson::Document Request::resolve(const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const
 {
-	const auto& document = *root.children.front();
 	FragmentDefinitionVisitor fragmentVisitor;
 
-	peg::for_each_child<peg::fragment_definition>(document,
+	peg::for_each_child<peg::fragment_definition>(root,
 		[&fragmentVisitor](const peg::ast_node& child)
 	{
 		fragmentVisitor.visit(child);
@@ -393,7 +392,7 @@ rapidjson::Document Request::resolve(const peg::ast_node& root, const std::strin
 	auto fragments = fragmentVisitor.getFragments();
 	OperationDefinitionVisitor operationVisitor(_operations, operationName, variables, fragments);
 
-	peg::for_each_child<peg::operation_definition>(document,
+	peg::for_each_child<peg::operation_definition>(root,
 		[&operationVisitor](const peg::ast_node& child)
 	{
 		operationVisitor.visit(child);

@@ -60,17 +60,18 @@ int main(int argc, char** argv)
 
 	try
 	{
-		std::string input;
-		std::unique_ptr<tao::graphqlpeg::file_input<>> file;
-		std::unique_ptr<peg::ast_node> ast;
+		const peg::ast_node* ast = nullptr;
+		std::unique_ptr<peg::ast<std::string>> ast_input;
+		std::unique_ptr<peg::ast<std::unique_ptr<peg::file_input<>>>> ast_file;
 
 		if (argc > 1)
 		{
-			file.reset(new tao::graphqlpeg::file_input<>(argv[1]));
-			ast = peg::parseFile(std::move(*file));
+			ast_file = peg::parseFile(argv[1]);
+			ast = ast_file->root.get();
 		}
 		else
 		{
+			std::string input;
 			std::string line;
 
 			while (std::getline(std::cin, line))
@@ -78,7 +79,8 @@ int main(int argc, char** argv)
 				input.append(line);
 			}
 
-			ast = peg::parseString(input.c_str());
+			ast_input = peg::parseString(std::move(input));
+			ast = ast_input->root.get();
 		}
 
 		if (!ast)

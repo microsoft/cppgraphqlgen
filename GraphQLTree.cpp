@@ -552,27 +552,38 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
-template <>
-struct ast_selector<document>
-	: std::true_type
+std::unique_ptr<ast<std::string>> parseString(std::string&& input)
 {
-};
+	std::unique_ptr<ast<std::string>> result(new ast<std::string> { std::move(input), nullptr });
+	memory_input<> in(result->input.c_str(), result->input.size(), "GraphQL");
 
-std::unique_ptr<ast_node> parseString(const char* text)
-{
-	return parse_tree::parse<document, ast_node, ast_selector>(memory_input<>(text, "GraphQL"));
+	result->root = parse_tree::parse<document, ast_node, ast_selector>(std::move(in));
+
+	return result;
 }
 
-std::unique_ptr<ast_node> parseFile(file_input<>&& in)
+std::unique_ptr<ast<std::unique_ptr<file_input<>>>> parseFile(const char* filename)
 {
-	return parse_tree::parse<document, ast_node, ast_selector>(std::move(in));
+	std::unique_ptr<ast<std::unique_ptr<file_input<>>>> result(new ast<std::unique_ptr<file_input<>>> {
+		std::unique_ptr<file_input<>>(new file_input<>(std::string(filename))),
+		nullptr
+		});
+
+	result->root = parse_tree::parse<document, ast_node, ast_selector>(std::move(*result->input));
+
+	return result;
 }
 
 } /* namespace peg */
 
-std::unique_ptr<peg::ast_node> operator "" _graphql(const char* text, size_t size)
+std::unique_ptr<peg::ast<const char*>> operator "" _graphql(const char* text, size_t size)
 {
-	return tao::graphqlpeg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector>(tao::graphqlpeg::memory_input<>(text, size, "GraphQL"));
+	std::unique_ptr<peg::ast<const char*>> result(new peg::ast<const char*> { text, nullptr });
+	peg::memory_input<> in(text, size, "GraphQL");
+
+	result->root = peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector>(std::move(in));
+
+	return result;
 }
 
 } /* namespace graphql */
