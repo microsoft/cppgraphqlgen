@@ -552,12 +552,6 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
-template <>
-struct ast_selector<document>
-	: std::true_type
-{
-};
-
 std::unique_ptr<ast<std::string>> parseString(std::string&& input)
 {
 	std::unique_ptr<ast<std::string>> result(new ast<std::string> { std::move(input), nullptr });

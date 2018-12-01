@@ -144,7 +144,7 @@ Generator::Generator()
 		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->root->children.front()->children)
+	for (const auto& child : ast->root->children)
 	{
 		visitDefinition(*child);
 	}
@@ -167,7 +167,7 @@ Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std
 		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->root->children.front()->children)
+	for (const auto& child : ast->root->children)
 	{
 		visitDefinition(*child);
 	}
