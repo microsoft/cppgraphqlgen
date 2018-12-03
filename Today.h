@@ -23,9 +23,9 @@ public:
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
 	std::shared_ptr<service::Object> getNode(std::vector<uint8_t>&& id) const override;
-	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
-	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
-	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const override;
+	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
+	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
+	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
 	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const override;
@@ -79,11 +79,11 @@ public:
 	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
 
 	std::vector<uint8_t> getId() const override { return _id; }
-	std::unique_ptr<rapidjson::Document> getWhen() const override
+	std::unique_ptr<rapidjson::Value> getWhen(rapidjson::Document::AllocatorType& allocator) const override
 	{
-		std::unique_ptr<rapidjson::Document> result(new rapidjson::Document(rapidjson::Type::kStringType));
+		std::unique_ptr<rapidjson::Value> result(new rapidjson::Value(rapidjson::Type::kStringType));
 
-		result->SetString(_when.c_str(), result->GetAllocator());
+		result->SetString(_when.c_str(), allocator);
 
 		return result;
 	}
@@ -110,11 +110,11 @@ public:
 		return std::static_pointer_cast<object::Appointment>(_appointment);
 	}
 
-	rapidjson::Document getCursor() const override
+	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
 	{
-		rapidjson::Document result(rapidjson::Type::kStringType);
+		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_appointment->getId()).c_str(), result.GetAllocator());
+		result.SetString(service::Base64::toBase64(_appointment->getId()).c_str(), allocator);
 
 		return result;
 	}
@@ -184,11 +184,11 @@ public:
 		return std::static_pointer_cast<object::Task>(_task);
 	}
 
-	rapidjson::Document getCursor() const override
+	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
 	{
-		rapidjson::Document result(rapidjson::Type::kStringType);
+		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_task->getId()).c_str(), result.GetAllocator());
+		result.SetString(service::Base64::toBase64(_task->getId()).c_str(), allocator);
 
 		return result;
 	}
@@ -257,11 +257,11 @@ public:
 		return std::static_pointer_cast<object::Folder>(_folder);
 	}
 
-	rapidjson::Document getCursor() const override
+	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
 	{
-		rapidjson::Document result(rapidjson::Type::kStringType);
+		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_folder->getId()).c_str(), result.GetAllocator());
+		result.SetString(service::Base64::toBase64(_folder->getId()).c_str(), allocator);
 
 		return result;
 	}

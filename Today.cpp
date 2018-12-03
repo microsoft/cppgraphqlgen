@@ -154,7 +154,7 @@ struct EdgeConstraints
 	{
 	}
 
-	std::shared_ptr<_Connection> operator()(const int* first, const rapidjson::Document* after, const int* last, const rapidjson::Document* before) const
+	std::shared_ptr<_Connection> operator()(const int* first, const rapidjson::Value* after, const int* last, const rapidjson::Value* before) const
 	{
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
@@ -233,7 +233,7 @@ private:
 	const vec_type& _objects;
 };
 
-std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
+std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
 	loadAppointments();
 
@@ -243,7 +243,7 @@ std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::uniqu
 	return std::static_pointer_cast<object::AppointmentConnection>(connection);
 }
 
-std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
+std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
 	loadTasks();
 
@@ -253,7 +253,7 @@ std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& f
 	return std::static_pointer_cast<object::TaskConnection>(connection);
 }
 
-std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Document>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Document>&& before) const
+std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
 	loadUnreadCounts();
 

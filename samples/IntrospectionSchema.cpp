@@ -15,7 +15,7 @@ namespace graphql {
 namespace service {
 
 template <>
-introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(const rapidjson::Value& value)
+introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
 {
 	static const std::unordered_map<std::string, introspection::__TypeKind> s_names = {
 		{ "SCALAR", introspection::__TypeKind::SCALAR },
@@ -39,7 +39,7 @@ introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(c
 }
 
 template <>
-rapidjson::Document service::ModifiedResult<introspection::__TypeKind>::convert(introspection::__TypeKind&& value, ResolverParams&&)
+rapidjson::Value service::ModifiedResult<introspection::__TypeKind>::convert(introspection::__TypeKind&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"SCALAR",
@@ -52,7 +52,7 @@ rapidjson::Document service::ModifiedResult<introspection::__TypeKind>::convert(
 		"NON_NULL"
 	};
 
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
 
@@ -60,7 +60,7 @@ rapidjson::Document service::ModifiedResult<introspection::__TypeKind>::convert(
 }
 
 template <>
-introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLocation>::convert(const rapidjson::Value& value)
+introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLocation>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
 {
 	static const std::unordered_map<std::string, introspection::__DirectiveLocation> s_names = {
 		{ "QUERY", introspection::__DirectiveLocation::QUERY },
@@ -94,7 +94,7 @@ introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLo
 }
 
 template <>
-rapidjson::Document service::ModifiedResult<introspection::__DirectiveLocation>::convert(introspection::__DirectiveLocation&& value, ResolverParams&&)
+rapidjson::Value service::ModifiedResult<introspection::__DirectiveLocation>::convert(introspection::__DirectiveLocation&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"QUERY",
@@ -117,7 +117,7 @@ rapidjson::Document service::ModifiedResult<introspection::__DirectiveLocation>:
 		"INPUT_FIELD_DEFINITION"
 	};
 
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
 
@@ -143,44 +143,44 @@ __Schema::__Schema()
 {
 }
 
-rapidjson::Document __Schema::resolveTypes(service::ResolverParams&& params)
+rapidjson::Value __Schema::resolveTypes(service::ResolverParams&& params)
 {
 	auto result = getTypes();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Schema::resolveQueryType(service::ResolverParams&& params)
+rapidjson::Value __Schema::resolveQueryType(service::ResolverParams&& params)
 {
 	auto result = getQueryType();
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Schema::resolveMutationType(service::ResolverParams&& params)
+rapidjson::Value __Schema::resolveMutationType(service::ResolverParams&& params)
 {
 	auto result = getMutationType();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Schema::resolveSubscriptionType(service::ResolverParams&& params)
+rapidjson::Value __Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
 	auto result = getSubscriptionType();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Schema::resolveDirectives(service::ResolverParams&& params)
+rapidjson::Value __Schema::resolveDirectives(service::ResolverParams&& params)
 {
 	auto result = getDirectives();
 
 	return service::ModifiedResult<__Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Schema::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __Schema::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__Schema"));
 
@@ -205,108 +205,108 @@ __Type::__Type()
 {
 }
 
-rapidjson::Document __Type::resolveKind(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveKind(service::ResolverParams&& params)
 {
 	auto result = getKind();
 
 	return service::ModifiedResult<__TypeKind>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveName(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveDescription(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveFields(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveFields(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& allocator = values.GetAllocator();
+		auto& valuesAllocator = values.GetAllocator();
 		rapidjson::Document parsed;
 		rapidjson::Value entry;
 
 		parsed.Parse(R"js(false)js");
-		entry.CopyFrom(parsed, allocator);
-		values.AddMember(rapidjson::StringRef("includeDeprecated"), entry, allocator);
+		entry.CopyFrom(parsed, valuesAllocator);
+		values.AddMember(rapidjson::StringRef("includeDeprecated"), entry, valuesAllocator);
 
 		return values;
 	}();
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>(params.allocator, "includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments.GetObject()));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>(params.allocator, "includeDeprecated", defaultArguments.GetObject()));
 	auto result = getFields(std::move(argIncludeDeprecated));
 
 	return service::ModifiedResult<__Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveInterfaces(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveInterfaces(service::ResolverParams&& params)
 {
 	auto result = getInterfaces();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolvePossibleTypes(service::ResolverParams&& params)
+rapidjson::Value __Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
 	auto result = getPossibleTypes();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveEnumValues(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveEnumValues(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& allocator = values.GetAllocator();
+		auto& valuesAllocator = values.GetAllocator();
 		rapidjson::Document parsed;
 		rapidjson::Value entry;
 
 		parsed.Parse(R"js(false)js");
-		entry.CopyFrom(parsed, allocator);
-		values.AddMember(rapidjson::StringRef("includeDeprecated"), entry, allocator);
+		entry.CopyFrom(parsed, valuesAllocator);
+		values.AddMember(rapidjson::StringRef("includeDeprecated"), entry, valuesAllocator);
 
 		return values;
 	}();
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>(params.allocator, "includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments.GetObject()));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>(params.allocator, "includeDeprecated", defaultArguments.GetObject()));
 	auto result = getEnumValues(std::move(argIncludeDeprecated));
 
 	return service::ModifiedResult<__EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveInputFields(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveInputFields(service::ResolverParams&& params)
 {
 	auto result = getInputFields();
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolveOfType(service::ResolverParams&& params)
+rapidjson::Value __Type::resolveOfType(service::ResolverParams&& params)
 {
 	auto result = getOfType();
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Type::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __Type::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__Type"));
 
@@ -328,51 +328,51 @@ __Field::__Field()
 {
 }
 
-rapidjson::Document __Field::resolveName(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolveDescription(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolveArgs(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveArgs(service::ResolverParams&& params)
 {
 	auto result = getArgs();
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolveType(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveType(service::ResolverParams&& params)
 {
 	auto result = getType();
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolveIsDeprecated(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	auto result = getIsDeprecated();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolveDeprecationReason(service::ResolverParams&& params)
+rapidjson::Value __Field::resolveDeprecationReason(service::ResolverParams&& params)
 {
 	auto result = getDeprecationReason();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Field::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __Field::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__Field"));
 
@@ -392,37 +392,37 @@ __InputValue::__InputValue()
 {
 }
 
-rapidjson::Document __InputValue::resolveName(service::ResolverParams&& params)
+rapidjson::Value __InputValue::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __InputValue::resolveDescription(service::ResolverParams&& params)
+rapidjson::Value __InputValue::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __InputValue::resolveType(service::ResolverParams&& params)
+rapidjson::Value __InputValue::resolveType(service::ResolverParams&& params)
 {
 	auto result = getType();
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __InputValue::resolveDefaultValue(service::ResolverParams&& params)
+rapidjson::Value __InputValue::resolveDefaultValue(service::ResolverParams&& params)
 {
 	auto result = getDefaultValue();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __InputValue::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __InputValue::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__InputValue"));
 
@@ -442,37 +442,37 @@ __EnumValue::__EnumValue()
 {
 }
 
-rapidjson::Document __EnumValue::resolveName(service::ResolverParams&& params)
+rapidjson::Value __EnumValue::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __EnumValue::resolveDescription(service::ResolverParams&& params)
+rapidjson::Value __EnumValue::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
+rapidjson::Value __EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	auto result = getIsDeprecated();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
+rapidjson::Value __EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
 {
 	auto result = getDeprecationReason();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __EnumValue::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __EnumValue::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__EnumValue"));
 
@@ -492,37 +492,37 @@ __Directive::__Directive()
 {
 }
 
-rapidjson::Document __Directive::resolveName(service::ResolverParams&& params)
+rapidjson::Value __Directive::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Directive::resolveDescription(service::ResolverParams&& params)
+rapidjson::Value __Directive::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Directive::resolveLocations(service::ResolverParams&& params)
+rapidjson::Value __Directive::resolveLocations(service::ResolverParams&& params)
 {
 	auto result = getLocations();
 
 	return service::ModifiedResult<__DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Directive::resolveArgs(service::ResolverParams&& params)
+rapidjson::Value __Directive::resolveArgs(service::ResolverParams&& params)
 {
 	auto result = getArgs();
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-rapidjson::Document __Directive::resolve__typename(service::ResolverParams&&)
+rapidjson::Value __Directive::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef("__Directive"));
 

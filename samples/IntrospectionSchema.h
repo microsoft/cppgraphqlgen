@@ -72,13 +72,13 @@ public:
 	virtual std::vector<std::shared_ptr<__Directive>> getDirectives() const = 0;
 
 private:
-	rapidjson::Document resolveTypes(service::ResolverParams&& params);
-	rapidjson::Document resolveQueryType(service::ResolverParams&& params);
-	rapidjson::Document resolveMutationType(service::ResolverParams&& params);
-	rapidjson::Document resolveSubscriptionType(service::ResolverParams&& params);
-	rapidjson::Document resolveDirectives(service::ResolverParams&& params);
+	rapidjson::Value resolveTypes(service::ResolverParams&& params);
+	rapidjson::Value resolveQueryType(service::ResolverParams&& params);
+	rapidjson::Value resolveMutationType(service::ResolverParams&& params);
+	rapidjson::Value resolveSubscriptionType(service::ResolverParams&& params);
+	rapidjson::Value resolveDirectives(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 class __Type
@@ -99,17 +99,17 @@ public:
 	virtual std::shared_ptr<__Type> getOfType() const = 0;
 
 private:
-	rapidjson::Document resolveKind(service::ResolverParams&& params);
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveFields(service::ResolverParams&& params);
-	rapidjson::Document resolveInterfaces(service::ResolverParams&& params);
-	rapidjson::Document resolvePossibleTypes(service::ResolverParams&& params);
-	rapidjson::Document resolveEnumValues(service::ResolverParams&& params);
-	rapidjson::Document resolveInputFields(service::ResolverParams&& params);
-	rapidjson::Document resolveOfType(service::ResolverParams&& params);
+	rapidjson::Value resolveKind(service::ResolverParams&& params);
+	rapidjson::Value resolveName(service::ResolverParams&& params);
+	rapidjson::Value resolveDescription(service::ResolverParams&& params);
+	rapidjson::Value resolveFields(service::ResolverParams&& params);
+	rapidjson::Value resolveInterfaces(service::ResolverParams&& params);
+	rapidjson::Value resolvePossibleTypes(service::ResolverParams&& params);
+	rapidjson::Value resolveEnumValues(service::ResolverParams&& params);
+	rapidjson::Value resolveInputFields(service::ResolverParams&& params);
+	rapidjson::Value resolveOfType(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 class __Field
@@ -127,14 +127,14 @@ public:
 	virtual std::unique_ptr<std::string> getDeprecationReason() const = 0;
 
 private:
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveArgs(service::ResolverParams&& params);
-	rapidjson::Document resolveType(service::ResolverParams&& params);
-	rapidjson::Document resolveIsDeprecated(service::ResolverParams&& params);
-	rapidjson::Document resolveDeprecationReason(service::ResolverParams&& params);
+	rapidjson::Value resolveName(service::ResolverParams&& params);
+	rapidjson::Value resolveDescription(service::ResolverParams&& params);
+	rapidjson::Value resolveArgs(service::ResolverParams&& params);
+	rapidjson::Value resolveType(service::ResolverParams&& params);
+	rapidjson::Value resolveIsDeprecated(service::ResolverParams&& params);
+	rapidjson::Value resolveDeprecationReason(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 class __InputValue
@@ -150,12 +150,12 @@ public:
 	virtual std::unique_ptr<std::string> getDefaultValue() const = 0;
 
 private:
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveType(service::ResolverParams&& params);
-	rapidjson::Document resolveDefaultValue(service::ResolverParams&& params);
+	rapidjson::Value resolveName(service::ResolverParams&& params);
+	rapidjson::Value resolveDescription(service::ResolverParams&& params);
+	rapidjson::Value resolveType(service::ResolverParams&& params);
+	rapidjson::Value resolveDefaultValue(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 class __EnumValue
@@ -171,12 +171,12 @@ public:
 	virtual std::unique_ptr<std::string> getDeprecationReason() const = 0;
 
 private:
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveIsDeprecated(service::ResolverParams&& params);
-	rapidjson::Document resolveDeprecationReason(service::ResolverParams&& params);
+	rapidjson::Value resolveName(service::ResolverParams&& params);
+	rapidjson::Value resolveDescription(service::ResolverParams&& params);
+	rapidjson::Value resolveIsDeprecated(service::ResolverParams&& params);
+	rapidjson::Value resolveDeprecationReason(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 class __Directive
@@ -192,12 +192,12 @@ public:
 	virtual std::vector<std::shared_ptr<__InputValue>> getArgs() const = 0;
 
 private:
-	rapidjson::Document resolveName(service::ResolverParams&& params);
-	rapidjson::Document resolveDescription(service::ResolverParams&& params);
-	rapidjson::Document resolveLocations(service::ResolverParams&& params);
-	rapidjson::Document resolveArgs(service::ResolverParams&& params);
+	rapidjson::Value resolveName(service::ResolverParams&& params);
+	rapidjson::Value resolveDescription(service::ResolverParams&& params);
+	rapidjson::Value resolveLocations(service::ResolverParams&& params);
+	rapidjson::Value resolveArgs(service::ResolverParams&& params);
 
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

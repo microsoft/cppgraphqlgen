@@ -36,7 +36,7 @@ const CppTypeMap Generator::s_builtinCppTypes= {
 		"std::vector<uint8_t>",
 	};
 
-const std::string Generator::s_scalarCppType = R"cpp(rapidjson::Document)cpp";
+const std::string Generator::s_scalarCppType = R"cpp(rapidjson::Value)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
@@ -1383,13 +1383,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	rapidjson::Document resolve__typename(service::ResolverParams&& params);
+	rapidjson::Value resolve__typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	rapidjson::Document resolve__schema(service::ResolverParams&& params);
-	rapidjson::Document resolve__type(service::ResolverParams&& params);
+					headerFile << R"cpp(	rapidjson::Value resolve__schema(service::ResolverParams&& params);
+	rapidjson::Value resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1476,6 +1476,12 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	output << R"cpp(	virtual )cpp" << getOutputCppType(outputField)
 		<< R"cpp( get)cpp" << fieldName << R"cpp(()cpp";
 
+	if (outputField.fieldType == OutputFieldType::Scalar)
+	{
+		output << R"cpp(rapidjson::Document::AllocatorType& allocator)cpp";
+		firstArgument = false;
+	}
+
 	for (const auto& argument : outputField.arguments)
 	{
 		if (!firstArgument)
@@ -1500,7 +1506,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	rapidjson::Document resolve)cpp" << fieldName
+	output << R"cpp(	rapidjson::Value resolve)cpp" << fieldName
 		<< R"cpp((service::ResolverParams&& params);
 )cpp";
 
@@ -1540,7 +1546,7 @@ namespace service {
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert(const rapidjson::Value& value)
+<< R"cpp(>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
 {
 	static const std::unordered_map<std::string, )cpp"
 				<< _schemaNamespace << R"cpp(::)cpp" << enumType.type << R"cpp(> s_names = {
@@ -1574,7 +1580,7 @@ template <>
 }
 
 template <>
-rapidjson::Document service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+rapidjson::Value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>::convert()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(&& value, ResolverParams&&)
 {
@@ -1598,7 +1604,7 @@ rapidjson::Document service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 			sourceFile << R"cpp(
 	};
 
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
 
@@ -1615,7 +1621,7 @@ rapidjson::Document service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
-<< R"cpp(>::convert(const rapidjson::Value& value)
+<< R"cpp(>::convert(rapidjson::Document::AllocatorType& allocator, const rapidjson::Value& value)
 {
 )cpp";
 
@@ -1629,7 +1635,7 @@ template <>
 						sourceFile << R"cpp(	const auto defaultValue = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& allocator = values.GetAllocator();
+		auto& valuesAllocator = values.GetAllocator();
 		rapidjson::Document parsed;
 		rapidjson::Value entry;
 
@@ -1642,9 +1648,9 @@ template <>
 					inputField.defaultValue.Accept(writer);
 					sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
 						<< defaultValue.GetString() << R"cpp()js");
-		entry.CopyFrom(parsed, allocator);
+		entry.CopyFrom(parsed, valuesAllocator);
 		values.AddMember(rapidjson::StringRef(")cpp"
-						<< inputField.name << R"cpp("), entry, allocator);
+						<< inputField.name << R"cpp("), entry, valuesAllocator);
 )cpp";
 				}
 			}
@@ -1668,7 +1674,7 @@ template <>
 					sourceFile << R"cpp(	auto value)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp((allocator, ")cpp" << inputField.name
 						<< R"cpp(", value.GetObject());
 )cpp";
 				}
@@ -1677,13 +1683,13 @@ template <>
 					sourceFile << R"cpp(	auto pair)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::find)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp((allocator, ")cpp" << inputField.name
 						<< R"cpp(", value.GetObject());
 	auto value)cpp" << fieldName << R"cpp( = (pair)cpp" << fieldName << R"cpp(.second
 		? std::move(pair)cpp" << fieldName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp((allocator, ")cpp" << inputField.name
 						<< R"cpp(", defaultValue.GetObject()));
 )cpp";
 				}
@@ -1839,7 +1845,7 @@ namespace object {
 
 				fieldName[0] = std::toupper(fieldName[0]);
 				sourceFile << R"cpp(
-rapidjson::Document )cpp" << objectType.type
+rapidjson::Value )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
 {
@@ -1860,7 +1866,7 @@ rapidjson::Document )cpp" << objectType.type
 								sourceFile << R"cpp(	const auto defaultArguments = []()
 	{
 		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& allocator = values.GetAllocator();
+		auto& valuesAllocator = values.GetAllocator();
 		rapidjson::Document parsed;
 		rapidjson::Value entry;
 
@@ -1873,9 +1879,9 @@ rapidjson::Document )cpp" << objectType.type
 							argument.defaultValue.Accept(writer);
 							sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
 								<< defaultValue.GetString() << R"cpp()js");
-		entry.CopyFrom(parsed, allocator);
+		entry.CopyFrom(parsed, valuesAllocator);
 		values.AddMember(rapidjson::StringRef(")cpp"
-								<< argument.name << R"cpp("), entry, allocator);
+								<< argument.name << R"cpp("), entry, valuesAllocator);
 )cpp";
 						}
 					}
@@ -1899,7 +1905,7 @@ rapidjson::Document )cpp" << objectType.type
 							sourceFile << R"cpp(	auto arg)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
+								<< R"cpp((params.allocator, ")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 )cpp";
 						}
@@ -1908,25 +1914,31 @@ rapidjson::Document )cpp" << objectType.type
 							sourceFile << R"cpp(	auto pair)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::find)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
+								<< R"cpp((params.allocator, ")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 	auto arg)cpp" << argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
 		? std::move(pair)cpp" << argumentName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
+								<< R"cpp((params.allocator, ")cpp" << argument.name
 								<< R"cpp(", defaultArguments.GetObject()));
 )cpp";
 						}
 					}
 				}
 
+				bool firstArgument = true;
+
 				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp(()cpp";
+
+				if (outputField.fieldType == OutputFieldType::Scalar)
+				{
+					sourceFile << R"cpp(params.allocator)cpp";
+					firstArgument = false;
+				}
 
 				if (!outputField.arguments.empty())
 				{
-					bool firstArgument = true;
-
 					for (const auto& argument : outputField.arguments)
 					{
 						if (!firstArgument)
@@ -1953,10 +1965,10 @@ rapidjson::Document )cpp" << objectType.type
 			}
 
 			sourceFile << R"cpp(
-rapidjson::Document )cpp" << objectType.type
+rapidjson::Value )cpp" << objectType.type
 << R"cpp(::resolve__typename(service::ResolverParams&&)
 {
-	rapidjson::Document result(rapidjson::Type::kStringType);
+	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef(")cpp" << objectType.type << R"cpp("));
 
@@ -1967,16 +1979,16 @@ rapidjson::Document )cpp" << objectType.type
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(
-rapidjson::Document )cpp" << objectType.type
+rapidjson::Value )cpp" << objectType.type
 << R"cpp(::resolve__schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
 }
 
-rapidjson::Document )cpp" << objectType.type
+rapidjson::Value )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require(params.allocator, "name", params.arguments);
 	auto result = service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 
 	return result;
@@ -2553,7 +2565,7 @@ std::string Generator::getArgumentAccessType(const InputField& argument) const n
 			break;
 
 		case InputFieldType::Scalar:
-			argumentType << R"cpp(rapidjson::Document)cpp";
+			argumentType << R"cpp(rapidjson::Value)cpp";
 			break;
 	}
 
@@ -2577,7 +2589,7 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 
 		case OutputFieldType::Scalar:
-			resultType << R"cpp(rapidjson::Document)cpp";
+			resultType << R"cpp(rapidjson::Value)cpp";
 			break;
 
 		case OutputFieldType::Union:
