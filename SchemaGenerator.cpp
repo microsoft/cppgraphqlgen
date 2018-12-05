@@ -982,7 +982,7 @@ void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listVal
 
 	auto& allocator = _value.GetAllocator();
 
-	_value.Reserve(listValue.children.size(), allocator);
+	_value.Reserve(static_cast<rapidjson::SizeType>(listValue.children.size()), allocator);
 	for (const auto& child : listValue.children)
 	{
 		rapidjson::Value value;

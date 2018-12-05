@@ -370,7 +370,7 @@ struct ModifiedResult
 	{
 		auto value = rapidjson::Value(rapidjson::Type::kArrayType);
 		
-		value.Reserve(result.size(), params.allocator);
+		value.Reserve(static_cast<rapidjson::SizeType>(result.size()), params.allocator);
 
 		for (auto& entry : result)
 		{

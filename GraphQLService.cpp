@@ -804,7 +804,7 @@ void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
 	_value = rapidjson::Value(rapidjson::Type::kArrayType);
-	_value.Reserve(listValue.children.size(), _allocator);
+	_value.Reserve(static_cast<rapidjson::SizeType>(listValue.children.size()), _allocator);
 
 	ValueVisitor visitor(_allocator, _variables);
 
