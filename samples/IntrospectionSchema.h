@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "GraphQLService.h"
+#include <graphqlservice/GraphQLService.h>
 
 namespace facebook {
 namespace graphql {

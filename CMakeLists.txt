@@ -11,6 +11,8 @@ endif()
 
 find_package(Threads MODULE REQUIRED)
 
+include(CMakePackageConfigHelpers)
+
 find_package(pegtl CONFIG REQUIRED)
 
 add_executable(schemagen
@@ -18,12 +20,16 @@ add_executable(schemagen
   GraphQLResponse.cpp
   SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE taocpp::pegtl)
-target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR})
 set_property(TARGET schemagen PROPERTY CXX_STANDARD 11)
 
 add_custom_command(
-  OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
+  OUTPUT
+    graphqlservice/IntrospectionSchema.cpp
+    graphqlservice/IntrospectionSchema.h
   COMMAND schemagen
+  COMMAND ${CMAKE_COMMAND} -E rename IntrospectionSchema.cpp graphqlservice/IntrospectionSchema.cpp
+  COMMAND ${CMAKE_COMMAND} -E rename IntrospectionSchema.h graphqlservice/IntrospectionSchema.h
   DEPENDS schemagen
   COMMENT "Generating IntrospectionSchema files"
 )
@@ -33,11 +39,15 @@ add_library(graphqlservice
   GraphQLResponse.cpp
   GraphQLService.cpp
   Introspection.cpp
-  IntrospectionSchema.cpp)
+  ${CMAKE_BINARY_DIR}/graphqlservice/IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
 target_link_libraries(graphqlservice PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:include>)
-target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+target_include_directories(graphqlservice
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
 set_property(TARGET graphqlservice PROPERTY CXX_STANDARD 11)
 
 option(BUILD_TESTS "Build the tests and sample schema library." ON)
@@ -61,8 +71,8 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     add_library(todaygraphql
        ${CMAKE_BINARY_DIR}/TodaySchema.cpp
-      Today.cpp
-	  JSONResponse.cpp)
+       Today.cpp
+       JSONResponse.cpp)
     target_link_libraries(todaygraphql PUBLIC
       graphqlservice)
     target_include_directories(todaygraphql SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
@@ -101,8 +111,8 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
   if(UPDATE_SAMPLES)
     install(FILES
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.h
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
+      ${CMAKE_BINARY_DIR}/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_BINARY_DIR}/graphqlservice/IntrospectionSchema.cpp
       ${CMAKE_BINARY_DIR}/TodaySchema.h
       ${CMAKE_BINARY_DIR}/TodaySchema.cpp
       DESTINATION ${CMAKE_SOURCE_DIR}/samples)
@@ -110,25 +120,32 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 endif()
 
 install(TARGETS graphqlservice
-  EXPORT cppgraphqlgen-config
+  EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
 install(TARGETS schemagen
+  EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION tools/cppgraphqlgen
   CONFIGURATIONS Release)
 
 install(FILES
-  GraphQLTree.h
-  GraphQLResponse.h
-  GraphQLService.h
-  Introspection.h
-  ${CMAKE_BINARY_DIR}/IntrospectionSchema.h
-  JSONResponse.h
+  include/graphqlservice/GraphQLTree.h
+  include/graphqlservice/GraphQLResponse.h
+  include/graphqlservice/GraphQLService.h
+  include/graphqlservice/Introspection.h
+  ${CMAKE_BINARY_DIR}/graphqlservice/IntrospectionSchema.h
+  include/graphqlservice/JSONResponse.h
   DESTINATION include/graphqlservice
   CONFIGURATIONS Release)
 
-install(EXPORT cppgraphqlgen-config
+set(CMAKE_INSTALL_CONFIGDIR lib/cmake/${PROJECT_NAME})
+install(FILES cmake/${PROJECT_NAME}-config.cmake
+  DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
+)
+
+install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::
-  DESTINATION share/cppgraphqlgen)
+  DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
+)

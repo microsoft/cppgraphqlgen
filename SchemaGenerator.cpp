@@ -1168,7 +1168,7 @@ bool Generator::outputHeader() const noexcept
 #include <string>
 #include <vector>
 
-#include "GraphQLService.h"
+#include <graphqlservice/GraphQLService.h>
 
 namespace facebook {
 namespace graphql {
@@ -1497,7 +1497,7 @@ bool Generator::outputSource() const noexcept
 // Licensed under the MIT License.
 
 #include ")cpp" << _filenamePrefix << R"cpp(Schema.h"
-#include "Introspection.h"
+#include <graphqlservice/Introspection.h>
 
 #include <algorithm>
 #include <functional>
