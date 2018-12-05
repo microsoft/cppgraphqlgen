@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.8)
 project(cppgraphqlgen)
 
 if(WIN32)
@@ -15,7 +15,7 @@ add_executable(schemagen GraphQLTree.cpp SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE taocpp::pegtl)
 target_include_directories(schemagen SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-set_property(TARGET schemagen PROPERTY CXX_STANDARD 11)
+target_compile_features(schemagen PRIVATE cxx_std_11)
 
 add_custom_command(
   OUTPUT IntrospectionSchema.cpp IntrospectionSchema.h
@@ -35,7 +35,7 @@ target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
 target_include_directories(graphqlservice SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-set_property(TARGET graphqlservice PROPERTY CXX_STANDARD 11)
+target_compile_features(graphqlservice PUBLIC cxx_std_11)
 
 option(BUILD_TESTS "Build the tests and sample schema library." ON)
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
@@ -56,7 +56,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       graphqlservice)
     target_include_directories(todaygraphql SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET todaygraphql PROPERTY CXX_STANDARD 11)
+    target_compile_features(todaygraphql PRIVATE cxx_std_11)
 
     add_executable(test_today
       test_today.cpp)
@@ -65,7 +65,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       todaygraphql)
     target_include_directories(test_today SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET test_today PROPERTY CXX_STANDARD 11)
+    target_compile_features(test_today PRIVATE cxx_std_11)
 
     find_package(GTest REQUIRED)
 
@@ -78,7 +78,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       GTest::Main)
     target_include_directories(tests SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET tests PROPERTY CXX_STANDARD 11)
+    target_compile_features(tests PRIVATE cxx_std_11)
 
     enable_testing()
     add_test(NAME TodayServiceCase
