@@ -48,9 +48,14 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     COMMENT "Generating mock TodaySchema files"
   )
 
+  # force the generation of samples on the default build target
+  add_custom_target(update_samples ALL
+    DEPENDS ${CMAKE_BINARY_DIR}/TodaySchema.cpp
+  )
+
   if(BUILD_TESTS)
     add_library(todaygraphql
-      TodaySchema.cpp
+       ${CMAKE_BINARY_DIR}/TodaySchema.cpp
       Today.cpp)
     target_link_libraries(todaygraphql
       graphqlservice)
