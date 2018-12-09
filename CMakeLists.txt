@@ -9,6 +9,8 @@ if(WIN32)
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
+find_package(Threads MODULE REQUIRED)
+
 find_package(pegtl CONFIG REQUIRED)
 
 add_executable(schemagen GraphQLTree.cpp SchemaGenerator.cpp)
@@ -32,6 +34,7 @@ add_library(graphqlservice
   Introspection.cpp
   IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
+target_link_libraries(graphqlservice PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(graphqlservice SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
@@ -54,16 +57,11 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   )
 
   if(BUILD_TESTS)
-    if(UNIX)
-      find_package(Threads CONFIG REQUIRED)
-    endif()
-
     add_library(todaygraphql
        ${CMAKE_BINARY_DIR}/TodaySchema.cpp
       Today.cpp)
     target_link_libraries(todaygraphql
-      graphqlservice
-      ${CMAKE_THREAD_LIBS_INIT})
+      graphqlservice)
     target_include_directories(todaygraphql SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET todaygraphql PROPERTY CXX_STANDARD 11)
@@ -72,13 +70,13 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       test_today.cpp)
     target_link_libraries(test_today
       graphqlservice
-      todaygraphql
-      ${CMAKE_THREAD_LIBS_INIT})
+      todaygraphql)
     target_include_directories(test_today SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET test_today PROPERTY CXX_STANDARD 11)
 
-    find_package(GTest REQUIRED)
+    enable_testing()
+    find_package(GTest MODULE REQUIRED)
 
     add_executable(tests
       tests.cpp)
@@ -91,7 +89,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET tests PROPERTY CXX_STANDARD 11)
 
-    enable_testing()
     add_test(NAME TodayServiceCase
       COMMAND tests --gtest_filter=TodayServiceCase.*
       WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)

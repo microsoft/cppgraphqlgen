@@ -387,7 +387,8 @@ std::future<rapidjson::Value> Object::resolve(RequestId requestId, rapidjson::Do
 
 	endSelectionSet(requestId);
 
-	return std::async(std::launch::deferred, [&allocator](std::queue<std::future<rapidjson::Value>>&& promises)
+	return std::async(std::launch::deferred,
+		[&allocator](std::queue<std::future<rapidjson::Value>>&& promises)
 	{
 		rapidjson::Value result(rapidjson::Type::kObjectType);
 
@@ -1041,7 +1042,8 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 
 		auto operationObject = itr->second;
 
-		_result = std::async(std::launch::deferred, [this, &operationDefinition, operationObject]()
+		_result = std::async(std::launch::deferred,
+			[this, &operationDefinition, operationObject]()
 		{
 			rapidjson::Document operationVariables(rapidjson::Type::kObjectType);
 
