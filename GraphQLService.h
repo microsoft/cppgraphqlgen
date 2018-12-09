@@ -14,6 +14,8 @@
 #include <unordered_set>
 #include <exception>
 #include <type_traits>
+#include <future>
+#include <queue>
 
 #define RAPIDJSON_NAMESPACE facebook::graphql::rapidjson
 #define RAPIDJSON_NAMESPACE_BEGIN namespace facebook { namespace graphql { namespace rapidjson {
@@ -35,6 +37,11 @@ public:
 private:
 	rapidjson::Document _errors;
 };
+
+// The RequestId is optional, but if you have multiple threads processing requests and there's any
+// per-request state that you want to maintain throughout the request (e.g. optimizing or batching
+// backend requests), you can use the RequestId to correlate the asynchronous/recursive callbacks.
+using RequestId = size_t;
 
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
@@ -62,6 +69,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams
 {
+	RequestId requestId;
 	rapidjson::Document::AllocatorType& allocator;
 	const rapidjson::Value::ConstObject& arguments;
 	const peg::ast_node* selection;
@@ -69,7 +77,7 @@ struct ResolverParams
 	const rapidjson::Value::ConstObject& variables;
 };
 
-using Resolver = std::function<rapidjson::Value(ResolverParams&&)>;
+using Resolver = std::function<std::future<rapidjson::Value>(ResolverParams&&)>;
 using ResolverMap = std::unordered_map<std::string, Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
@@ -270,7 +278,14 @@ public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	virtual ~Object() = default;
 
-	rapidjson::Value resolve(rapidjson::Document::AllocatorType& allocator, const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const;
+	std::future<rapidjson::Value> resolve(RequestId requestId, rapidjson::Document::AllocatorType& allocator,
+		const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const;
+
+protected:
+	// It's up to sub-classes to decide if they want to use const_cast, mutable, or separate storage
+	// to accumulate state. By default these callbacks should treat the Object itself as const.
+	virtual void beginSelectionSet(RequestId requestId) const;
+	virtual void endSelectionSet(RequestId requestId) const;
 
 private:
 	TypeNames _typeNames;
@@ -312,23 +327,32 @@ struct ModifiedResult
 	};
 
 	// Convert a single value of the specified type to JSON.
-	static rapidjson::Value convert(typename std::conditional<std::is_base_of<Object, _Type>::value, std::shared_ptr<Object>, typename ResultTraits<_Type>::type&&>::type result,
+	static std::future<rapidjson::Value> convert(
+		typename std::conditional<std::is_base_of<Object, _Type>::value,
+			std::future<std::shared_ptr<Object>>,
+			std::future<typename ResultTraits<_Type>::type>&&>::type result,
 		ResolverParams&& params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		rapidjson::Value>::type convert(typename ResultTraits<_Type>::type&& result, ResolverParams&& params)
+		std::future<rapidjson::Value>>::type convert(std::future<typename ResultTraits<_Type>::type>&& result, ResolverParams&& params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
 		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type>::type>::value, "this is the derived object type");
-		return ModifiedResult<Object>::convert(std::static_pointer_cast<Object>(result), std::move(params));
+		auto resultFuture = std::async(std::launch::deferred,
+			[](std::future<std::shared_ptr<_Type>>&& objectType)
+		{
+			return std::static_pointer_cast<Object>(objectType.get());
+		}, std::move(result));
+
+		return ModifiedResult<Object>::convert(std::move(resultFuture), std::move(params));
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && (std::is_same<Object, _Type>::value || !std::is_base_of<Object, _Type>::value),
-		rapidjson::Value>::type convert(typename ResultTraits<_Type>::type&& result, ResolverParams&& params)
+		std::future<rapidjson::Value>>::type convert(std::future<typename ResultTraits<_Type>::type>&& result, ResolverParams&& params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
@@ -337,47 +361,84 @@ struct ModifiedResult
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		rapidjson::Value>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
+		std::future<rapidjson::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& result, ResolverParams&& params)
 	{
-		if (!result)
+		return std::async(std::launch::deferred,
+			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& wrappedFuture, ResolverParams&& wrappedParams)
 		{
-			return rapidjson::Value(rapidjson::Type::kNullType);
-		}
+			auto wrappedResult = wrappedFuture.get();
 
-		return convert<_Other...>(std::move(result), std::move(params));
+			if (!wrappedResult)
+			{
+				return rapidjson::Value(rapidjson::Type::kNullType);
+			}
+
+			std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
+
+			promise.set_value(std::move(wrappedResult));
+
+			return convert<_Other...>(promise.get_future(), std::move(wrappedParams)).get();
+		}, std::move(result), std::move(params));
 	}
 
 	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		rapidjson::Value>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
+		std::future<rapidjson::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& result, ResolverParams&& params)
 	{
 		static_assert(std::is_same<std::unique_ptr<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
 			"this is the unique_ptr version");
 
-		if (!result)
+		return std::async(std::launch::deferred,
+			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& wrappedFuture, ResolverParams&& wrappedParams)
 		{
-			return rapidjson::Value(rapidjson::Type::kNullType);
-		}
+			auto wrappedResult = wrappedFuture.get();
 
-		return convert<_Other...>(std::move(*result), std::move(params));
+			if (!wrappedResult)
+			{
+				return rapidjson::Value(rapidjson::Type::kNullType);
+			}
+
+			std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
+
+			promise.set_value(std::move(*wrappedResult));
+
+			return convert<_Other...>(promise.get_future(), std::move(wrappedParams)).get();
+		}, std::move(result), std::move(params));
 	}
 
 	// Peel off list modifiers.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::List == _Modifier,
-		rapidjson::Value>::type convert(typename ResultTraits<_Type, _Modifier, _Other...>::type&& result, ResolverParams&& params)
+		std::future<rapidjson::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& result, ResolverParams&& params)
 	{
-		auto value = rapidjson::Value(rapidjson::Type::kArrayType);
-		
-		value.Reserve(static_cast<rapidjson::SizeType>(result.size()), params.allocator);
-
-		for (auto& entry : result)
+		return std::async(std::launch::deferred,
+			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type>&& wrappedFuture, ResolverParams&& wrappedParams)
 		{
-			value.PushBack(convert<_Other...>(std::move(entry), ResolverParams(params)), params.allocator);
-		}
+			auto wrappedResult = wrappedFuture.get();
+			std::queue<std::future<rapidjson::Value>> children;
 
-		return value;
+			for (auto& entry : wrappedResult)
+			{
+				std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
+
+				promise.set_value(std::move(entry));
+
+				children.push(convert<_Other...>(promise.get_future(), ResolverParams(wrappedParams)));
+			}
+
+			auto value = rapidjson::Value(rapidjson::Type::kArrayType);
+
+			value.Reserve(static_cast<rapidjson::SizeType>(wrappedResult.size()), wrappedParams.allocator);
+
+			while (!children.empty())
+			{
+				value.PushBack(children.front().get(), wrappedParams.allocator);
+				children.pop();
+			}
+
+			return value;
+		}, std::move(result), std::move(params));
 	}
 };
 
@@ -401,7 +462,7 @@ public:
 	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
 
-	rapidjson::Document resolve(const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const;
+	std::future<rapidjson::Document> resolve(RequestId requestId, const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const;
 
 private:
 	TypeMap _operations;
@@ -412,11 +473,12 @@ private:
 class SelectionVisitor
 {
 public:
-	SelectionVisitor(rapidjson::Document::AllocatorType& allocator, const FragmentMap& fragments, const rapidjson::Document::ConstObject& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
+	SelectionVisitor(RequestId requestId, rapidjson::Document::AllocatorType& allocator,
+		const FragmentMap& fragments, const rapidjson::Document::ConstObject& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
 
-	rapidjson::Value getValues();
+	std::future<rapidjson::Value> getValues();
 
 private:
 	bool shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const;
@@ -425,13 +487,14 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
+	const RequestId _requestId;
 	rapidjson::Document::AllocatorType& _allocator;
 	const FragmentMap& _fragments;
 	const rapidjson::Document::ConstObject& _variables;
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
-	rapidjson::Value _values;
+	std::queue<std::pair<rapidjson::Value, std::future<rapidjson::Value>>> _values;
 };
 
 // ValueVisitor visits the AST and builds a JSON representation of any value
@@ -481,18 +544,19 @@ private:
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(const TypeMap& operations, const std::string& operationName, const rapidjson::Document::ConstObject& variables, const FragmentMap& fragments);
+	OperationDefinitionVisitor(RequestId requestId, const TypeMap& operations, const std::string& operationName, const rapidjson::Document::ConstObject& variables, const FragmentMap& fragments);
 
-	rapidjson::Document getValue();
+	std::future<rapidjson::Document> getValue();
 
 	void visit(const peg::ast_node& operationDefinition);
 
 private:
+	const RequestId _requestId;
 	const TypeMap& _operations;
 	const std::string& _operationName;
 	const rapidjson::Document::ConstObject& _variables;
 	const FragmentMap& _fragments;
-	rapidjson::Document _result;
+	std::future<rapidjson::Document> _result;
 };
 
 } /* namespace service */

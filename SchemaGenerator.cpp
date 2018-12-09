@@ -1383,13 +1383,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	rapidjson::Value resolve__typename(service::ResolverParams&& params);
+	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	rapidjson::Value resolve__schema(service::ResolverParams&& params);
-	rapidjson::Value resolve__type(service::ResolverParams&& params);
+					headerFile << R"cpp(	std::future<rapidjson::Value> resolve__schema(service::ResolverParams&& params);
+	std::future<rapidjson::Value> resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1469,29 +1469,21 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
-	bool firstArgument = true;
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	virtual )cpp" << getOutputCppType(outputField)
-		<< R"cpp( get)cpp" << fieldName << R"cpp(()cpp";
+	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
+		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::RequestId requestId)cpp";
 
 	if (outputField.fieldType == OutputFieldType::Scalar)
 	{
-		output << R"cpp(rapidjson::Document::AllocatorType& allocator)cpp";
-		firstArgument = false;
+		output << R"cpp(, rapidjson::Document::AllocatorType& allocator)cpp";
 	}
 
 	for (const auto& argument : outputField.arguments)
 	{
-		if (!firstArgument)
-		{
-			output << R"cpp(, )cpp";
-		}
-
-		firstArgument = false;
-		output << getInputCppType(argument) << R"cpp(&& )cpp"
-			<< argument.name;
+		output << R"cpp(, )cpp" << getInputCppType(argument)
+			<< R"cpp(&& )cpp" << argument.name;
 	}
 
 	output << R"cpp() const = 0;
@@ -1506,7 +1498,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	rapidjson::Value resolve)cpp" << fieldName
+	output << R"cpp(	std::future<rapidjson::Value> resolve)cpp" << fieldName
 		<< R"cpp((service::ResolverParams&& params);
 )cpp";
 
@@ -1580,9 +1572,9 @@ template <>
 }
 
 template <>
-rapidjson::Value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(&& value, ResolverParams&&)
+std::future<rapidjson::Value> service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+<< R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+<< R"cpp(>&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 )cpp";
@@ -1604,11 +1596,13 @@ rapidjson::Value service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)c
 			sourceFile << R"cpp(
 	};
 
+	std::promise<rapidjson::Value> promise;
 	rapidjson::Value result(rapidjson::Type::kStringType);
 
-	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value)].c_str()));
+	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value.get())].c_str()));
+	promise.set_value(std::move(result));
 
-	return result;
+	return promise.get_future();
 }
 )cpp";
 		}
@@ -1845,7 +1839,7 @@ namespace object {
 
 				fieldName[0] = std::toupper(fieldName[0]);
 				sourceFile << R"cpp(
-rapidjson::Value )cpp" << objectType.type
+std::future<rapidjson::Value> )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
 {
@@ -1927,31 +1921,21 @@ rapidjson::Value )cpp" << objectType.type
 					}
 				}
 
-				bool firstArgument = true;
-
-				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp(()cpp";
+				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp((params.requestId)cpp";
 
 				if (outputField.fieldType == OutputFieldType::Scalar)
 				{
-					sourceFile << R"cpp(params.allocator)cpp";
-					firstArgument = false;
+					sourceFile << R"cpp(, params.allocator)cpp";
 				}
 
 				if (!outputField.arguments.empty())
 				{
 					for (const auto& argument : outputField.arguments)
 					{
-						if (!firstArgument)
-						{
-							sourceFile << R"cpp(, )cpp";
-						}
-
-						firstArgument = false;
-
 						std::string argumentName(argument.name);
 
 						argumentName[0] = std::toupper(argumentName[0]);
-						sourceFile << R"cpp(std::move(arg)cpp" << argumentName << R"cpp())cpp";
+						sourceFile << R"cpp(, std::move(arg)cpp" << argumentName << R"cpp())cpp";
 					}
 				}
 
@@ -1965,33 +1949,41 @@ rapidjson::Value )cpp" << objectType.type
 			}
 
 			sourceFile << R"cpp(
-rapidjson::Value )cpp" << objectType.type
+std::future<rapidjson::Value> )cpp" << objectType.type
 << R"cpp(::resolve__typename(service::ResolverParams&&)
 {
+	std::promise<rapidjson::Value> promise;
 	rapidjson::Value result(rapidjson::Type::kStringType);
 
 	result.SetString(rapidjson::StringRef(")cpp" << objectType.type << R"cpp("));
+	promise.set_value(std::move(result));
 
-	return result;
+	return promise.get_future();
 }
 )cpp";
 
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(
-rapidjson::Value )cpp" << objectType.type
+std::future<rapidjson::Value> )cpp" << objectType.type
 << R"cpp(::resolve__schema(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
+	std::promise<std::shared_ptr<service::Object>> promise;
+
+	promise.set_value(std::static_pointer_cast<service::Object>(_schema));
+
+	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
 }
 
-rapidjson::Value )cpp" << objectType.type
+std::future<rapidjson::Value> )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<std::string>::require(params.allocator, "name", params.arguments);
-	auto result = service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
+	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>> promise;
 
-	return result;
+	promise.set_value(_schema->LookupType(argName));
+
+	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
 }
 )cpp";
 			}

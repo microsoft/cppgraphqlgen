@@ -48,13 +48,13 @@ void Query::loadAppointments() const
 	}
 }
 
-std::shared_ptr<Appointment> Query::findAppointment(const std::vector<uint8_t>& id) const
+std::shared_ptr<Appointment> Query::findAppointment(service::RequestId requestId, const std::vector<uint8_t>& id) const
 {
 	loadAppointments();
 
 	for (const auto& appointment : _appointments)
 	{
-		auto appointmentId = appointment->getId();
+		auto appointmentId = appointment->getId(requestId).get();
 
 		if (appointmentId == id)
 		{
@@ -74,13 +74,13 @@ void Query::loadTasks() const
 	}
 }
 
-std::shared_ptr<Task> Query::findTask(const std::vector<uint8_t>& id) const
+std::shared_ptr<Task> Query::findTask(service::RequestId requestId, const std::vector<uint8_t>& id) const
 {
 	loadTasks();
 
 	for (const auto& task : _tasks)
 	{
-		auto taskId = task->getId();
+		auto taskId = task->getId(requestId).get();
 
 		if (taskId == id)
 		{
@@ -100,13 +100,13 @@ void Query::loadUnreadCounts() const
 	}
 }
 
-std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<uint8_t>& id) const
+std::shared_ptr<Folder> Query::findUnreadCount(service::RequestId requestId, const std::vector<uint8_t>& id) const
 {
 	loadUnreadCounts();
 
 	for (const auto& folder : _unreadCounts)
 	{
-		auto folderId = folder->getId();
+		auto folderId = folder->getId(requestId).get();
 
 		if (folderId == id)
 		{
@@ -117,30 +117,35 @@ std::shared_ptr<Folder> Query::findUnreadCount(const std::vector<uint8_t>& id) c
 	return nullptr;
 }
 
-std::shared_ptr<service::Object> Query::getNode(std::vector<uint8_t>&& id) const
+std::future<std::shared_ptr<service::Object>> Query::getNode(service::RequestId requestId, std::vector<uint8_t>&& id) const
 {
-	auto appointment = findAppointment(id);
+	std::promise<std::shared_ptr<service::Object>> promise;
+	auto appointment = findAppointment(requestId, id);
 
 	if (appointment)
 	{
-		return appointment;
+		promise.set_value(appointment);
+		return promise.get_future();
 	}
 
-	auto task = findTask(id);
+	auto task = findTask(requestId, id);
 
 	if (task)
 	{
-		return task;
+		promise.set_value(task);
+		return promise.get_future();
 	}
 
-	auto folder = findUnreadCount(id);
+	auto folder = findUnreadCount(requestId, id);
 
 	if (folder)
 	{
-		return folder;
+		promise.set_value(folder);
+		return promise.get_future();
 	}
 
-	return nullptr;
+	promise.set_value(nullptr);
+	return promise.get_future();
 }
 
 template <class _Object, class _Connection>
@@ -149,8 +154,9 @@ struct EdgeConstraints
 	using vec_type = std::vector<std::shared_ptr<_Object>>;
 	using itr_type = typename vec_type::const_iterator;
 
-	EdgeConstraints(const vec_type& objects)
-		: _objects(objects)
+	EdgeConstraints(service::RequestId requestId, const vec_type& objects)
+		: _requestId(requestId)
+		, _objects(objects)
 	{
 	}
 
@@ -163,9 +169,9 @@ struct EdgeConstraints
 		{
 			auto afterId = service::Base64::fromBase64(after->GetString(), after->GetStringLength());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
-				[&afterId](const std::shared_ptr<_Object>& entry)
+				[this, &afterId](const std::shared_ptr<_Object>& entry)
 			{
-				return entry->getId() == afterId;
+				return entry->getId(_requestId).get() == afterId;
 			});
 
 			if (itrAfter != itrLast)
@@ -178,9 +184,9 @@ struct EdgeConstraints
 		{
 			auto beforeId = service::Base64::fromBase64(before->GetString(), before->GetStringLength());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
-				[&beforeId](const std::shared_ptr<_Object>& entry)
+				[this, &beforeId](const std::shared_ptr<_Object>& entry)
 			{
-				return entry->getId() == beforeId;
+				return entry->getId(_requestId).get() == beforeId;
 			});
 
 			if (itrBefore != itrLast)
@@ -230,76 +236,98 @@ struct EdgeConstraints
 	}
 
 private:
+	const service::RequestId _requestId;
 	const vec_type& _objects;
 };
 
-std::shared_ptr<object::AppointmentConnection> Query::getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadAppointments();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadAppointments();
 
-	EdgeConstraints<Appointment, AppointmentConnection> constraints(_appointments);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Appointment, AppointmentConnection> constraints(requestIdWrapped, _appointments);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	return std::static_pointer_cast<object::AppointmentConnection>(connection);
+		return std::static_pointer_cast<object::AppointmentConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::shared_ptr<object::TaskConnection> Query::getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadTasks();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadTasks();
 
-	EdgeConstraints<Task, TaskConnection> constraints(_tasks);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Task, TaskConnection> constraints(requestIdWrapped, _tasks);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	return std::static_pointer_cast<object::TaskConnection>(connection);
+		return std::static_pointer_cast<object::TaskConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::shared_ptr<object::FolderConnection> Query::getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadUnreadCounts();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadUnreadCounts();
 
-	EdgeConstraints<Folder, FolderConnection> constraints(_unreadCounts);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Folder, FolderConnection> constraints(requestIdWrapped, _unreadCounts);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	return std::static_pointer_cast<object::FolderConnection>(connection);
+		return std::static_pointer_cast<object::FolderConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const
 {
+	std::promise<std::vector<std::shared_ptr<object::Appointment>>> promise;
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<uint8_t>& id)
+		[this, requestId](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Appointment>(findAppointment(id));
+		return std::static_pointer_cast<object::Appointment>(findAppointment(requestId, id));
 	});
+	promise.set_value(std::move(result));
 
-	return result;
+	return promise.get_future();
 }
 
-std::vector<std::shared_ptr<object::Task>> Query::getTasksById(std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Task>>> Query::getTasksById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const
 {
+	std::promise<std::vector<std::shared_ptr<object::Task>>> promise;
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<uint8_t>& id)
+		[this, requestId](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Task>(findTask(id));
+		return std::static_pointer_cast<object::Task>(findTask(requestId, id));
 	});
+	promise.set_value(std::move(result));
 
-	return result;
+	return promise.get_future();
 }
 
-std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Folder>>> Query::getUnreadCountsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const
 {
+	std::promise<std::vector<std::shared_ptr<object::Folder>>> promise;
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this](const std::vector<uint8_t>& id)
+		[this, requestId](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Folder>(findUnreadCount(id));
+		return std::static_pointer_cast<object::Folder>(findUnreadCount(requestId, id));
 	});
+	promise.set_value(std::move(result));
 
-	return result;
+	return promise.get_future();
 }
 
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
@@ -307,9 +335,13 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 {
 }
 
-std::shared_ptr<object::CompleteTaskPayload> Mutation::getCompleteTask(CompleteTaskInput&& input) const
+std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::getCompleteTask(service::RequestId requestId, CompleteTaskInput&& input) const
 {
-	return _mutateCompleteTask(std::move(input));
+	std::promise<std::shared_ptr<object::CompleteTaskPayload>> promise;
+
+	promise.set_value(_mutateCompleteTask(std::move(input)));
+
+	return promise.get_future();
 }
 
 } /* namespace today */
