@@ -1039,7 +1039,9 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			throw schema_exception({ error.str() });
 		}
 
-		_result = std::async(std::launch::deferred, [this, &operationDefinition, operationObject = itr->second]()
+		auto operationObject = itr->second;
+
+		_result = std::async(std::launch::deferred, [this, &operationDefinition, operationObject]()
 		{
 			rapidjson::Document operationVariables(rapidjson::Type::kObjectType);
 

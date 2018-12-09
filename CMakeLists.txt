@@ -54,11 +54,16 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   )
 
   if(BUILD_TESTS)
+    if(UNIX)
+      find_package(Threads CONFIG REQUIRED)
+    endif()
+
     add_library(todaygraphql
        ${CMAKE_BINARY_DIR}/TodaySchema.cpp
       Today.cpp)
     target_link_libraries(todaygraphql
-      graphqlservice)
+      graphqlservice
+      ${CMAKE_THREAD_LIBS_INIT})
     target_include_directories(todaygraphql SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET todaygraphql PROPERTY CXX_STANDARD 11)
@@ -67,7 +72,8 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       test_today.cpp)
     target_link_libraries(test_today
       graphqlservice
-      todaygraphql)
+      todaygraphql
+      ${CMAKE_THREAD_LIBS_INIT})
     target_include_directories(test_today SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET test_today PROPERTY CXX_STANDARD 11)
