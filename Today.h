@@ -22,18 +22,18 @@ public:
 
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::shared_ptr<service::Object> getNode(std::vector<uint8_t>&& id) const override;
-	std::shared_ptr<object::AppointmentConnection> getAppointments(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
-	std::shared_ptr<object::TaskConnection> getTasks(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
-	std::shared_ptr<object::FolderConnection> getUnreadCounts(std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
-	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::vector<std::shared_ptr<object::Task>> getTasksById(std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::shared_ptr<service::Object>> getNode(service::RequestId requestId, std::vector<uint8_t>&& id) const override;
+	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
+	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
+	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const override;
+	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
 
 private:
-	std::shared_ptr<Appointment> findAppointment(const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Task> findTask(const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Folder> findUnreadCount(const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Appointment> findAppointment(service::RequestId requestId, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Task> findTask(service::RequestId requestId, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Folder> findUnreadCount(service::RequestId requestId, const std::vector<uint8_t>& id) const;
 
 	// Lazy load the fields in each query
 	void loadAppointments() const;
@@ -58,14 +58,22 @@ public:
 	{
 	}
 
-	bool getHasNextPage() const override
+	std::future<bool> getHasNextPage(service::RequestId) const override
 	{
-		return _hasNextPage;
+		std::promise<bool> promise;
+
+		promise.set_value(_hasNextPage);
+
+		return promise.get_future();
 	}
 
-	bool getHasPreviousPage() const override
+	std::future<bool> getHasPreviousPage(service::RequestId) const override
 	{
-		return _hasPreviousPage;
+		std::promise<bool> promise;
+
+		promise.set_value(_hasPreviousPage);
+
+		return promise.get_future();
 	}
 
 private:
@@ -78,17 +86,43 @@ class Appointment : public object::Appointment
 public:
 	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
 
-	std::vector<uint8_t> getId() const override { return _id; }
-	std::unique_ptr<rapidjson::Value> getWhen(rapidjson::Document::AllocatorType& allocator) const override
+	std::future<std::vector<uint8_t>> getId(service::RequestId) const override
 	{
+		std::promise<std::vector<uint8_t>> promise;
+
+		promise.set_value(_id);
+
+		return promise.get_future();
+	}
+
+	std::future<std::unique_ptr<rapidjson::Value>> getWhen(service::RequestId, rapidjson::Document::AllocatorType& allocator) const override
+	{
+		std::promise<std::unique_ptr<rapidjson::Value>> promise;
 		std::unique_ptr<rapidjson::Value> result(new rapidjson::Value(rapidjson::Type::kStringType));
 
 		result->SetString(_when.c_str(), allocator);
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
-	std::unique_ptr<std::string> getSubject() const override { return std::unique_ptr<std::string>(new std::string(_subject)); }
-	bool getIsNow() const override { return _isNow; }
+
+	std::future<std::unique_ptr<std::string>> getSubject(service::RequestId) const override
+	{
+		std::promise<std::unique_ptr<std::string>> promise;
+
+		promise.set_value(std::unique_ptr<std::string>(new std::string(_subject)));
+
+		return promise.get_future();
+	}
+
+	std::future<bool> getIsNow(service::RequestId) const override
+	{
+		std::promise<bool> promise;
+
+		promise.set_value(_isNow);
+
+		return promise.get_future();
+	}
 
 private:
 	std::vector<uint8_t> _id;
@@ -105,18 +139,24 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::Appointment> getNode() const override
+	std::future<std::shared_ptr<object::Appointment>> getNode(service::RequestId) const override
 	{
-		return std::static_pointer_cast<object::Appointment>(_appointment);
+		std::promise<std::shared_ptr<object::Appointment>> promise;
+
+		promise.set_value(std::static_pointer_cast<object::Appointment>(_appointment));
+
+		return promise.get_future();
 	}
 
-	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
+	std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const override
 	{
+		std::promise<rapidjson::Value> promise;
 		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_appointment->getId()).c_str(), allocator);
+		result.SetString(service::Base64::toBase64(_appointment->getId(requestId).get()).c_str(), allocator);
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -132,13 +172,18 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::RequestId) const override
 	{
-		return _pageInfo;
+		std::promise<std::shared_ptr<object::PageInfo>> promise;
+
+		promise.set_value(_pageInfo);
+
+		return promise.get_future();
 	}
 
-	std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>> getEdges() const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(service::RequestId) const override
 	{
+		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>(new std::vector<std::shared_ptr<object::AppointmentEdge>>(_appointments.size()));
 
 		std::transform(_appointments.cbegin(), _appointments.cend(), result->begin(),
@@ -146,8 +191,9 @@ public:
 		{
 			return std::make_shared<AppointmentEdge>(node);
 		});
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -160,9 +206,32 @@ class Task : public object::Task
 public:
 	explicit Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete);
 
-	std::vector<uint8_t> getId() const override { return _id; }
-	std::unique_ptr<std::string> getTitle() const override { return std::unique_ptr<std::string>(new std::string(_title)); }
-	bool getIsComplete() const override { return _isComplete; }
+	std::future<std::vector<uint8_t>> getId(service::RequestId) const override
+	{
+		std::promise<std::vector<uint8_t>> promise;
+
+		promise.set_value(_id);
+
+		return promise.get_future();
+	}
+
+	std::future<std::unique_ptr<std::string>> getTitle(service::RequestId) const override
+	{
+		std::promise<std::unique_ptr<std::string>> promise;
+
+		promise.set_value(std::unique_ptr<std::string>(new std::string(_title)));
+
+		return promise.get_future();
+	}
+
+	std::future<bool> getIsComplete(service::RequestId) const override
+	{
+		std::promise<bool> promise;
+
+		promise.set_value(_isComplete);
+
+		return promise.get_future();
+	}
 
 private:
 	std::vector<uint8_t> _id;
@@ -179,18 +248,24 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::Task> getNode() const override
+	std::future<std::shared_ptr<object::Task>> getNode(service::RequestId) const override
 	{
-		return std::static_pointer_cast<object::Task>(_task);
+		std::promise<std::shared_ptr<object::Task>> promise;
+
+		promise.set_value(std::static_pointer_cast<object::Task>(_task));
+
+		return promise.get_future();
 	}
 
-	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
+	std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const override
 	{
+		std::promise<rapidjson::Value> promise;
 		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_task->getId()).c_str(), allocator);
+		result.SetString(service::Base64::toBase64(_task->getId(requestId).get()).c_str(), allocator);
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -206,13 +281,18 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::RequestId) const override
 	{
-		return _pageInfo;
+		std::promise<std::shared_ptr<object::PageInfo>> promise;
+
+		promise.set_value(_pageInfo);
+
+		return promise.get_future();
 	}
 
-	std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>> getEdges() const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(service::RequestId) const override
 	{
+		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>(new std::vector<std::shared_ptr<object::TaskEdge>>(_tasks.size()));
 
 		std::transform(_tasks.cbegin(), _tasks.cend(), result->begin(),
@@ -220,8 +300,9 @@ public:
 		{
 			return std::make_shared<TaskEdge>(node);
 		});
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -234,9 +315,32 @@ class Folder : public object::Folder
 public:
 	explicit Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount);
 
-	std::vector<uint8_t> getId() const override { return _id; }
-	std::unique_ptr<std::string> getName() const override { return std::unique_ptr<std::string>(new std::string(_name)); }
-	int getUnreadCount() const override { return _unreadCount; }
+	std::future<std::vector<uint8_t>> getId(service::RequestId) const override
+	{
+		std::promise<std::vector<uint8_t>> promise;
+
+		promise.set_value(_id);
+
+		return promise.get_future();
+	}
+
+	std::future<std::unique_ptr<std::string>> getName(service::RequestId) const override
+	{
+		std::promise<std::unique_ptr<std::string>> promise;
+
+		promise.set_value(std::unique_ptr<std::string>(new std::string(_name)));
+
+		return promise.get_future();
+	}
+
+	std::future<int> getUnreadCount(service::RequestId) const override
+	{
+		std::promise<int> promise;
+
+		promise.set_value(_unreadCount);
+
+		return promise.get_future();
+	}
 
 private:
 	std::vector<uint8_t> _id;
@@ -252,18 +356,24 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::Folder> getNode() const override
+	std::future<std::shared_ptr<object::Folder>> getNode(service::RequestId) const override
 	{
-		return std::static_pointer_cast<object::Folder>(_folder);
+		std::promise<std::shared_ptr<object::Folder>> promise;
+
+		promise.set_value(std::static_pointer_cast<object::Folder>(_folder));
+
+		return promise.get_future();
 	}
 
-	rapidjson::Value getCursor(rapidjson::Document::AllocatorType& allocator) const override
+	std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const override
 	{
+		std::promise<rapidjson::Value> promise;
 		rapidjson::Value result(rapidjson::Type::kStringType);
 
-		result.SetString(service::Base64::toBase64(_folder->getId()).c_str(), allocator);
+		result.SetString(service::Base64::toBase64(_folder->getId(requestId).get()).c_str(), allocator);
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -279,13 +389,18 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::RequestId) const override
 	{
-		return _pageInfo;
+		std::promise<std::shared_ptr<object::PageInfo>> promise;
+
+		promise.set_value(_pageInfo);
+
+		return promise.get_future();
 	}
 
-	std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>> getEdges() const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(service::RequestId) const override
 	{
+		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>(new std::vector<std::shared_ptr<object::FolderEdge>>(_folders.size()));
 
 		std::transform(_folders.cbegin(), _folders.cend(), result->begin(),
@@ -293,8 +408,9 @@ public:
 		{
 			return std::make_shared<FolderEdge>(node);
 		});
+		promise.set_value(std::move(result));
 
-		return result;
+		return promise.get_future();
 	}
 
 private:
@@ -311,16 +427,24 @@ public:
 	{
 	}
 
-	std::shared_ptr<object::Task> getTask() const override
+	std::future<std::shared_ptr<object::Task>> getTask(service::RequestId) const override
 	{
-		return std::static_pointer_cast<object::Task>(_task);
+		std::promise<std::shared_ptr<object::Task>> promise;
+
+		promise.set_value(std::static_pointer_cast<object::Task>(_task));
+
+		return promise.get_future();
 	}
 
-	std::unique_ptr<std::string> getClientMutationId() const override
+	std::future<std::unique_ptr<std::string>> getClientMutationId(service::RequestId) const override
 	{
-		return std::unique_ptr<std::string>(_clientMutationId
+		std::promise<std::unique_ptr<std::string>> promise;
+
+		promise.set_value(std::unique_ptr<std::string>(_clientMutationId
 			? new std::string(*_clientMutationId)
-			: nullptr);
+			: nullptr));
+
+		return promise.get_future();
 	}
 
 private:
@@ -335,7 +459,7 @@ public:
 
 	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
-	std::shared_ptr<object::CompleteTaskPayload> getCompleteTask(CompleteTaskInput&& input) const override;
+	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(service::RequestId requestId, CompleteTaskInput&& input) const override;
 
 private:
 	completeTaskMutation _mutateCompleteTask;
@@ -346,9 +470,13 @@ class Subscription : public object::Subscription
 public:
 	explicit Subscription() = default;
 
-	std::shared_ptr<object::Appointment> getNextAppointmentChange() const override
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(service::RequestId) const override
 	{
-		return nullptr;
+		std::promise<std::shared_ptr<object::Appointment>> promise;
+
+		promise.set_value(nullptr);
+
+		return promise.get_future();
 	}
 };
 

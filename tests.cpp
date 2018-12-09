@@ -123,7 +123,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "Everything", variables.GetObject());
+	auto result = _service->resolve(0, *ast->root, "Everything", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -198,7 +198,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "", variables.GetObject());
+	auto result = _service->resolve(1, *ast->root, "", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -254,7 +254,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 			}
 		})gql"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "", variables.GetObject());
+	auto result = _service->resolve(2, *ast->root, "", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -309,7 +309,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "", variables.GetObject());
+	auto result = _service->resolve(3, *ast->root, "", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -363,7 +363,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "", variables.GetObject());
+	auto result = _service->resolve(4, *ast->root, "", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 
 	try
@@ -439,7 +439,7 @@ TEST_F(TodayServiceCase, Introspection)
 			}
 		})"_graphql;
 	const rapidjson::Document variables(rapidjson::Type::kObjectType);
-	auto result = _service->resolve(*ast->root, "", variables.GetObject());
+	auto result = _service->resolve(5, *ast->root, "", variables.GetObject()).get();
 	auto& allocator = result.GetAllocator();
 
 	try
