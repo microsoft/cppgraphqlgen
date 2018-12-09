@@ -242,41 +242,47 @@ private:
 
 std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadAppointments();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadAppointments();
 
-	std::promise<std::shared_ptr<object::AppointmentConnection>> promise;
-	EdgeConstraints<Appointment, AppointmentConnection> constraints(requestId, _appointments);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Appointment, AppointmentConnection> constraints(requestIdWrapped, _appointments);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	promise.set_value(std::static_pointer_cast<object::AppointmentConnection>(connection));
-
-	return promise.get_future();
+		return std::static_pointer_cast<object::AppointmentConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
 std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadTasks();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadTasks();
 
-	std::promise<std::shared_ptr<object::TaskConnection>> promise;
-	EdgeConstraints<Task, TaskConnection> constraints(requestId, _tasks);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Task, TaskConnection> constraints(requestIdWrapped, _tasks);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	promise.set_value(std::static_pointer_cast<object::TaskConnection>(connection));
-
-	return promise.get_future();
+		return std::static_pointer_cast<object::TaskConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
 std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
 {
-	loadUnreadCounts();
+	auto spThis = shared_from_this();
+	return std::async(std::launch::async,
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+	{
+		loadUnreadCounts();
 
-	std::promise<std::shared_ptr<object::FolderConnection>> promise;
-	EdgeConstraints<Folder, FolderConnection> constraints(requestId, _unreadCounts);
-	auto connection = constraints(first.get(), after.get(), last.get(), before.get());
+		EdgeConstraints<Folder, FolderConnection> constraints(requestIdWrapped, _unreadCounts);
+		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
-	promise.set_value(std::static_pointer_cast<object::FolderConnection>(connection));
-
-	return promise.get_future();
+		return std::static_pointer_cast<object::FolderConnection>(connection);
+	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
 std::future<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const
