@@ -160,14 +160,15 @@ struct EdgeConstraints
 	{
 	}
 
-	std::shared_ptr<_Connection> operator()(const int* first, const rapidjson::Value* after, const int* last, const rapidjson::Value* before) const
+	std::shared_ptr<_Connection> operator()(const int* first, const response::Value* after, const int* last, const response::Value* before) const
 	{
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
 
 		if (after)
 		{
-			auto afterId = service::Base64::fromBase64(after->GetString(), after->GetStringLength());
+			const auto& encoded = after->get<const response::StringType&>();
+			auto afterId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
 				[this, &afterId](const std::shared_ptr<_Object>& entry)
 			{
@@ -182,7 +183,8 @@ struct EdgeConstraints
 
 		if (before)
 		{
-			auto beforeId = service::Base64::fromBase64(before->GetString(), before->GetStringLength());
+			const auto& encoded = before->get<const response::StringType&>();
+			auto beforeId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
 				[this, &beforeId](const std::shared_ptr<_Object>& entry)
 			{
@@ -240,11 +242,11 @@ private:
 	const vec_type& _objects;
 };
 
-std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	return std::async(std::launch::async,
-		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
 		loadAppointments();
 
@@ -255,11 +257,11 @@ std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointmen
 	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	return std::async(std::launch::async,
-		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
 		loadTasks();
 
@@ -270,11 +272,11 @@ std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::Re
 	}, requestId, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const
+std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	return std::async(std::launch::async,
-		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<rapidjson::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<rapidjson::Value>&& beforeWrapped)
+		[this, spThis](service::RequestId requestIdWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
 		loadUnreadCounts();
 

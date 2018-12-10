@@ -72,13 +72,13 @@ public:
 	virtual std::future<std::vector<std::shared_ptr<__Directive>>> getDirectives(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveTypes(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveQueryType(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveMutationType(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveSubscriptionType(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDirectives(service::ResolverParams&& params);
+	std::future<response::Value> resolveTypes(service::ResolverParams&& params);
+	std::future<response::Value> resolveQueryType(service::ResolverParams&& params);
+	std::future<response::Value> resolveMutationType(service::ResolverParams&& params);
+	std::future<response::Value> resolveSubscriptionType(service::ResolverParams&& params);
+	std::future<response::Value> resolveDirectives(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class __Type
@@ -89,27 +89,27 @@ protected:
 
 public:
 	virtual std::future<__TypeKind> getKind(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDescription(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> getFields(service::RequestId requestId, std::unique_ptr<bool>&& includeDeprecated) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> getFields(service::RequestId requestId, std::unique_ptr<response::BooleanType>&& includeDeprecated) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getInterfaces(service::RequestId requestId) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getPossibleTypes(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::RequestId requestId, std::unique_ptr<bool>&& includeDeprecated) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::RequestId requestId, std::unique_ptr<response::BooleanType>&& includeDeprecated) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__InputValue>>>> getInputFields(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getOfType(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveKind(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveFields(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveInterfaces(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolvePossibleTypes(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveEnumValues(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveInputFields(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveOfType(service::ResolverParams&& params);
+	std::future<response::Value> resolveKind(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
+	std::future<response::Value> resolveFields(service::ResolverParams&& params);
+	std::future<response::Value> resolveInterfaces(service::ResolverParams&& params);
+	std::future<response::Value> resolvePossibleTypes(service::ResolverParams&& params);
+	std::future<response::Value> resolveEnumValues(service::ResolverParams&& params);
+	std::future<response::Value> resolveInputFields(service::ResolverParams&& params);
+	std::future<response::Value> resolveOfType(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class __Field
@@ -119,22 +119,22 @@ protected:
 	__Field();
 
 public:
-	virtual std::future<std::string> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::RequestId requestId) const = 0;
-	virtual std::future<bool> getIsDeprecated(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDeprecationReason(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveArgs(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveType(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDeprecationReason(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
+	std::future<response::Value> resolveArgs(service::ResolverParams&& params);
+	std::future<response::Value> resolveType(service::ResolverParams&& params);
+	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
+	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class __InputValue
@@ -144,18 +144,18 @@ protected:
 	__InputValue();
 
 public:
-	virtual std::future<std::string> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDefaultValue(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDefaultValue(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveType(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDefaultValue(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
+	std::future<response::Value> resolveType(service::ResolverParams&& params);
+	std::future<response::Value> resolveDefaultValue(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class __EnumValue
@@ -165,18 +165,18 @@ protected:
 	__EnumValue();
 
 public:
-	virtual std::future<std::string> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDescription(service::RequestId requestId) const = 0;
-	virtual std::future<bool> getIsDeprecated(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDeprecationReason(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDeprecationReason(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
+	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
+	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class __Directive
@@ -186,18 +186,18 @@ protected:
 	__Directive();
 
 public:
-	virtual std::future<std::string> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<__DirectiveLocation>> getLocations(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveLocations(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveArgs(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
+	std::future<response::Value> resolveLocations(service::ResolverParams&& params);
+	std::future<response::Value> resolveArgs(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

@@ -7,7 +7,6 @@
 #include <cstdio>
 
 #include "GraphQLService.h"
-#include "GraphQLTree.h"
 
 namespace facebook {
 namespace graphql {
@@ -94,7 +93,8 @@ struct InputField
 {
 	std::string type;
 	std::string name;
-	rapidjson::Document defaultValue;
+	std::string defaultValueString;
+	response::Value defaultValue;
 	InputFieldType fieldType = InputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
@@ -237,7 +237,7 @@ private:
 	class DefaultValueVisitor
 	{
 	public:
-		rapidjson::Document getValue();
+		response::Value getValue();
 
 		void visit(const peg::ast_node& value);
 
@@ -251,7 +251,7 @@ private:
 		void visitListValue(const peg::ast_node& listValue);
 		void visitObjectValue(const peg::ast_node& objectValue);
 
-		rapidjson::Document _value;
+		response::Value _value;
 	};
 
 	bool validateSchema();
@@ -268,6 +268,7 @@ private:
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
+	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;

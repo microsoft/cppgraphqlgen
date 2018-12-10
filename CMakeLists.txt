@@ -13,9 +13,11 @@ find_package(Threads MODULE REQUIRED)
 
 find_package(pegtl CONFIG REQUIRED)
 
-add_executable(schemagen GraphQLTree.cpp SchemaGenerator.cpp)
+add_executable(schemagen
+  GraphQLTree.cpp
+  GraphQLResponse.cpp
+  SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE taocpp::pegtl)
-target_include_directories(schemagen SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 set_property(TARGET schemagen PROPERTY CXX_STANDARD 11)
 
@@ -26,16 +28,14 @@ add_custom_command(
   COMMENT "Generating IntrospectionSchema files"
 )
 
-find_package(RapidJSON CONFIG REQUIRED)
-
 add_library(graphqlservice
   GraphQLTree.cpp
+  GraphQLResponse.cpp
   GraphQLService.cpp
   Introspection.cpp
   IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
 target_link_libraries(graphqlservice PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(graphqlservice SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(graphqlservice SYSTEM INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(graphqlservice PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 set_property(TARGET graphqlservice PROPERTY CXX_STANDARD 11)
@@ -57,21 +57,22 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   )
 
   if(BUILD_TESTS)
+    find_package(RapidJSON CONFIG REQUIRED)
+
     add_library(todaygraphql
        ${CMAKE_BINARY_DIR}/TodaySchema.cpp
-      Today.cpp)
-    target_link_libraries(todaygraphql
+      Today.cpp
+	  JSONResponse.cpp)
+    target_link_libraries(todaygraphql PUBLIC
       graphqlservice)
-    target_include_directories(todaygraphql SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+    target_include_directories(todaygraphql SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET todaygraphql PROPERTY CXX_STANDARD 11)
 
     add_executable(test_today
       test_today.cpp)
-    target_link_libraries(test_today
-      graphqlservice
+    target_link_libraries(test_today PRIVATE
       todaygraphql)
-    target_include_directories(test_today SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET test_today PROPERTY CXX_STANDARD 11)
 
@@ -80,12 +81,10 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
     add_executable(tests
       tests.cpp)
-    target_link_libraries(tests
-      graphqlservice
+    target_link_libraries(tests PRIVATE
       todaygraphql
       GTest::GTest
       GTest::Main)
-    target_include_directories(tests SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     set_property(TARGET tests PROPERTY CXX_STANDARD 11)
 
@@ -122,9 +121,11 @@ install(TARGETS schemagen
 
 install(FILES
   GraphQLTree.h
+  GraphQLResponse.h
   GraphQLService.h
   Introspection.h
   ${CMAKE_BINARY_DIR}/IntrospectionSchema.h
+  JSONResponse.h
   DESTINATION include/graphqlservice
   CONFIGURATIONS Release)
 

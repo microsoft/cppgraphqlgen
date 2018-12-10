@@ -15,7 +15,7 @@ namespace graphql {
 namespace service {
 
 template <>
-today::TaskState ModifiedArgument<today::TaskState>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)
 {
 	static const std::unordered_map<std::string, today::TaskState> s_names = {
 		{ "New", today::TaskState::New },
@@ -24,7 +24,12 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(rapidjson::Document
 		{ "Unassigned", today::TaskState::Unassigned }
 	};
 
-	auto itr = s_names.find(value.GetString());
+	if (value.type() != response::Type::EnumValue)
+	{
+		throw service::schema_exception({ "not a valid TaskState value" });
+	}
+
+	auto itr = s_names.find(value.get<const response::StringType&>());
 
 	if (itr == s_names.cend())
 	{
@@ -35,7 +40,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(rapidjson::Document
 }
 
 template <>
-std::future<rapidjson::Value> service::ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& value, ResolverParams&&)
+std::future<response::Value> service::ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"New",
@@ -44,38 +49,33 @@ std::future<rapidjson::Value> service::ModifiedResult<today::TaskState>::convert
 		"Unassigned"
 	};
 
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value.get())].c_str()));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value(std::string(s_names[static_cast<size_t>(value.get())])));
 
 	return promise.get_future();
 }
 
 template <>
-today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(rapidjson::Document::AllocatorType& allocator, const rapidjson::Value& value)
+today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const response::Value& value)
 {
 	const auto defaultValue = []()
 	{
-		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& valuesAllocator = values.GetAllocator();
-		rapidjson::Document parsed;
-		rapidjson::Value entry;
+		response::Value values(response::Type::Map);
+		response::Value entry;
 
-		parsed.Parse(R"js(true)js");
-		entry.CopyFrom(parsed, valuesAllocator);
-		values.AddMember(rapidjson::StringRef("isComplete"), entry, valuesAllocator);
+		entry = response::Value(true);
+		values.emplace_back("isComplete", std::move(entry));
 
 		return values;
 	}();
 
-	auto valueId = service::ModifiedArgument<std::vector<uint8_t>>::require(allocator, "id", value.GetObject());
-	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>(allocator, "isComplete", value.GetObject());
+	auto valueId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", value);
+	auto pairIsComplete = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
-		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>(allocator, "isComplete", defaultValue.GetObject()));
-	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>(allocator, "clientMutationId", value.GetObject());
+		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
+	auto valueClientMutationId = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("clientMutationId", value);
 
 	return {
 		std::move(valueId),
@@ -110,83 +110,81 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
-std::future<rapidjson::Value> Query::resolveNode(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require(params.allocator, "id", params.arguments);
+	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
 	auto result = getNode(params.requestId, std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveAppointments(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveAppointments(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "first", params.arguments);
-	auto argAfter = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "after", params.arguments);
-	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "last", params.arguments);
-	auto argBefore = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "before", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getAppointments(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveTasks(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveTasks(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "first", params.arguments);
-	auto argAfter = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "after", params.arguments);
-	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "last", params.arguments);
-	auto argBefore = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "before", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getTasks(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveUnreadCounts(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "first", params.arguments);
-	auto argAfter = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "after", params.arguments);
-	auto argLast = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>(params.allocator, "last", params.arguments);
-	auto argBefore = service::ModifiedArgument<rapidjson::Value>::require<service::TypeModifier::Nullable>(params.allocator, "before", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getUnreadCounts(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>(params.allocator, "ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getAppointmentsById(params.requestId, std::move(argIds));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveTasksById(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>(params.allocator, "ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(params.requestId, std::move(argIds));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
+std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>(params.allocator, "ids", params.arguments);
+	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getUnreadCountsById(params.requestId, std::move(argIds));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Query::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Query"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Query"));
 
 	return promise.get_future();
 }
 
-std::future<rapidjson::Value> Query::resolve__schema(service::ResolverParams&& params)
+std::future<response::Value> Query::resolve__schema(service::ResolverParams&& params)
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
 
@@ -195,9 +193,9 @@ std::future<rapidjson::Value> Query::resolve__schema(service::ResolverParams&& p
 	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
 }
 
-std::future<rapidjson::Value> Query::resolve__type(service::ResolverParams&& params)
+std::future<response::Value> Query::resolve__type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<std::string>::require(params.allocator, "name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	std::promise<std::shared_ptr<introspection::object::__Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));
@@ -216,27 +214,25 @@ PageInfo::PageInfo()
 {
 }
 
-std::future<rapidjson::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
+std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	auto result = getHasNextPage(params.requestId);
 
-	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
+std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
 	auto result = getHasPreviousPage(params.requestId);
 
-	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> PageInfo::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("PageInfo"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("PageInfo"));
 
 	return promise.get_future();
 }
@@ -252,27 +248,25 @@ AppointmentEdge::AppointmentEdge()
 {
 }
 
-std::future<rapidjson::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
+std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(params.requestId);
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
+std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId, params.allocator);
+	auto result = getCursor(params.requestId);
 
-	return service::ModifiedResult<rapidjson::Value>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> AppointmentEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> AppointmentEdge::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("AppointmentEdge"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("AppointmentEdge"));
 
 	return promise.get_future();
 }
@@ -288,27 +282,25 @@ AppointmentConnection::AppointmentConnection()
 {
 }
 
-std::future<rapidjson::Value> AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
+std::future<response::Value> AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(params.requestId);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> AppointmentConnection::resolveEdges(service::ResolverParams&& params)
+std::future<response::Value> AppointmentConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges(params.requestId);
 
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> AppointmentConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> AppointmentConnection::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("AppointmentConnection"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("AppointmentConnection"));
 
 	return promise.get_future();
 }
@@ -324,27 +316,25 @@ TaskEdge::TaskEdge()
 {
 }
 
-std::future<rapidjson::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
+std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(params.requestId);
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
+std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId, params.allocator);
+	auto result = getCursor(params.requestId);
 
-	return service::ModifiedResult<rapidjson::Value>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> TaskEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> TaskEdge::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("TaskEdge"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("TaskEdge"));
 
 	return promise.get_future();
 }
@@ -360,27 +350,25 @@ TaskConnection::TaskConnection()
 {
 }
 
-std::future<rapidjson::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
+std::future<response::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(params.requestId);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
+std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges(params.requestId);
 
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> TaskConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> TaskConnection::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("TaskConnection"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("TaskConnection"));
 
 	return promise.get_future();
 }
@@ -396,27 +384,25 @@ FolderEdge::FolderEdge()
 {
 }
 
-std::future<rapidjson::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
+std::future<response::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(params.requestId);
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
+std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId, params.allocator);
+	auto result = getCursor(params.requestId);
 
-	return service::ModifiedResult<rapidjson::Value>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> FolderEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> FolderEdge::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("FolderEdge"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("FolderEdge"));
 
 	return promise.get_future();
 }
@@ -432,27 +418,25 @@ FolderConnection::FolderConnection()
 {
 }
 
-std::future<rapidjson::Value> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
+std::future<response::Value> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(params.requestId);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> FolderConnection::resolveEdges(service::ResolverParams&& params)
+std::future<response::Value> FolderConnection::resolveEdges(service::ResolverParams&& params)
 {
 	auto result = getEdges(params.requestId);
 
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> FolderConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> FolderConnection::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("FolderConnection"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("FolderConnection"));
 
 	return promise.get_future();
 }
@@ -468,27 +452,25 @@ CompleteTaskPayload::CompleteTaskPayload()
 {
 }
 
-std::future<rapidjson::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
+std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	auto result = getTask(params.requestId);
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
+std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
 	auto result = getClientMutationId(params.requestId);
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("CompleteTaskPayload"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("CompleteTaskPayload"));
 
 	return promise.get_future();
 }
@@ -503,21 +485,19 @@ Mutation::Mutation()
 {
 }
 
-std::future<rapidjson::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
+std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
-	auto argInput = service::ModifiedArgument<CompleteTaskInput>::require(params.allocator, "input", params.arguments);
+	auto argInput = service::ModifiedArgument<CompleteTaskInput>::require("input", params.arguments);
 	auto result = getCompleteTask(params.requestId, std::move(argInput));
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Mutation::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Mutation::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Mutation"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Mutation"));
 
 	return promise.get_future();
 }
@@ -532,20 +512,18 @@ Subscription::Subscription()
 {
 }
 
-std::future<rapidjson::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
+std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	auto result = getNextAppointmentChange(params.requestId);
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Subscription::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Subscription::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Subscription"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Subscription"));
 
 	return promise.get_future();
 }
@@ -564,41 +542,39 @@ Appointment::Appointment()
 {
 }
 
-std::future<rapidjson::Value> Appointment::resolveId(service::ResolverParams&& params)
+std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(params.requestId);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Appointment::resolveWhen(service::ResolverParams&& params)
+std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
 {
-	auto result = getWhen(params.requestId, params.allocator);
+	auto result = getWhen(params.requestId);
 
-	return service::ModifiedResult<rapidjson::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Appointment::resolveSubject(service::ResolverParams&& params)
+std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	auto result = getSubject(params.requestId);
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
+std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	auto result = getIsNow(params.requestId);
 
-	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Appointment::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Appointment::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Appointment"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Appointment"));
 
 	return promise.get_future();
 }
@@ -616,34 +592,32 @@ Task::Task()
 {
 }
 
-std::future<rapidjson::Value> Task::resolveId(service::ResolverParams&& params)
+std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(params.requestId);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Task::resolveTitle(service::ResolverParams&& params)
+std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
 {
 	auto result = getTitle(params.requestId);
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Task::resolveIsComplete(service::ResolverParams&& params)
+std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
 {
 	auto result = getIsComplete(params.requestId);
 
-	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Task::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Task::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Task"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Task"));
 
 	return promise.get_future();
 }
@@ -661,34 +635,32 @@ Folder::Folder()
 {
 }
 
-std::future<rapidjson::Value> Folder::resolveId(service::ResolverParams&& params)
+std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(params.requestId);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Folder::resolveName(service::ResolverParams&& params)
+std::future<response::Value> Folder::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(params.requestId);
 
-	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
+std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
 	auto result = getUnreadCount(params.requestId);
 
-	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
-std::future<rapidjson::Value> Folder::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Folder::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef("Folder"));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value("Folder"));
 
 	return promise.get_future();
 }
@@ -753,84 +725,46 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		{ "Unassigned", R"md()md", R"md(Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md" }
 	});
 
-	rapidjson::Document defaultCompleteTaskInputid;
-	defaultCompleteTaskInputid.Parse(R"js(null)js");
-	rapidjson::Document defaultCompleteTaskInputisComplete;
-	defaultCompleteTaskInputisComplete.Parse(R"js(true)js");
-	rapidjson::Document defaultCompleteTaskInputclientMutationId;
-	defaultCompleteTaskInputclientMutationId.Parse(R"js(null)js");
 	typeCompleteTaskInput->AddInputValues({
-		std::make_shared<introspection::InputValue>("id", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), defaultCompleteTaskInputid),
-		std::make_shared<introspection::InputValue>("isComplete", R"md()md", schema->LookupType("Boolean"), defaultCompleteTaskInputisComplete),
-		std::make_shared<introspection::InputValue>("clientMutationId", R"md()md", schema->LookupType("String"), defaultCompleteTaskInputclientMutationId)
+		std::make_shared<introspection::InputValue>("id", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"),
+		std::make_shared<introspection::InputValue>("isComplete", R"md()md", schema->LookupType("Boolean"), R"gql(true)gql"),
+		std::make_shared<introspection::InputValue>("clientMutationId", R"md()md", schema->LookupType("String"), R"gql()gql")
 	});
 
 	typeNode->AddFields({
 		std::make_shared<introspection::Field>("id", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 
-	rapidjson::Document defaultQuerynodeid;
-	defaultQuerynodeid.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryappointmentsfirst;
-	defaultQueryappointmentsfirst.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryappointmentsafter;
-	defaultQueryappointmentsafter.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryappointmentslast;
-	defaultQueryappointmentslast.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryappointmentsbefore;
-	defaultQueryappointmentsbefore.Parse(R"js(null)js");
-	rapidjson::Document defaultQuerytasksfirst;
-	defaultQuerytasksfirst.Parse(R"js(null)js");
-	rapidjson::Document defaultQuerytasksafter;
-	defaultQuerytasksafter.Parse(R"js(null)js");
-	rapidjson::Document defaultQuerytaskslast;
-	defaultQuerytaskslast.Parse(R"js(null)js");
-	rapidjson::Document defaultQuerytasksbefore;
-	defaultQuerytasksbefore.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryunreadCountsfirst;
-	defaultQueryunreadCountsfirst.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryunreadCountsafter;
-	defaultQueryunreadCountsafter.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryunreadCountslast;
-	defaultQueryunreadCountslast.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryunreadCountsbefore;
-	defaultQueryunreadCountsbefore.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryappointmentsByIdids;
-	defaultQueryappointmentsByIdids.Parse(R"js(null)js");
-	rapidjson::Document defaultQuerytasksByIdids;
-	defaultQuerytasksByIdids.Parse(R"js(null)js");
-	rapidjson::Document defaultQueryunreadCountsByIdids;
-	defaultQueryunreadCountsByIdids.Parse(R"js(null)js");
 	typeQuery->AddFields({
 		std::make_shared<introspection::Field>("node", R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("id", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), defaultQuerynodeid)
+			std::make_shared<introspection::InputValue>("id", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
 		}), schema->LookupType("Node")),
 		std::make_shared<introspection::Field>("appointments", R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), defaultQueryappointmentsfirst),
-			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), defaultQueryappointmentsafter),
-			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), defaultQueryappointmentslast),
-			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), defaultQueryappointmentsbefore)
+			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("AppointmentConnection"))),
 		std::make_shared<introspection::Field>("tasks", R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), defaultQuerytasksfirst),
-			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), defaultQuerytasksafter),
-			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), defaultQuerytaskslast),
-			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), defaultQuerytasksbefore)
+			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("TaskConnection"))),
 		std::make_shared<introspection::Field>("unreadCounts", R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), defaultQueryunreadCountsfirst),
-			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), defaultQueryunreadCountsafter),
-			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), defaultQueryunreadCountslast),
-			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), defaultQueryunreadCountsbefore)
+			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
 		std::make_shared<introspection::Field>("appointmentsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQueryappointmentsByIdids)
+			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Appointment")))),
 		std::make_shared<introspection::Field>("tasksById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQuerytasksByIdids)
+			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Task")))),
 		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), defaultQueryunreadCountsByIdids)
+			std::make_shared<introspection::InputValue>("ids", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, std::make_shared<introspection::WrapperType>(introspection::__TypeKind::LIST, schema->LookupType("Folder"))))
 	});
 	typePageInfo->AddFields({
@@ -865,11 +799,9 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::Field>("task", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
 		std::make_shared<introspection::Field>("clientMutationId", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
-	rapidjson::Document defaultMutationcompleteTaskinput;
-	defaultMutationcompleteTaskinput.Parse(R"js(null)js");
 	typeMutation->AddFields({
 		std::make_shared<introspection::Field>("completeTask", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("input", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), defaultMutationcompleteTaskinput)
+			std::make_shared<introspection::InputValue>("input", R"md()md", std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql")
 		}), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
 	});
 	typeSubscription->AddFields({

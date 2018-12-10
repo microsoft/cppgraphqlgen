@@ -181,15 +181,25 @@ struct ast_selector<string_value>
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped.reserve(std::accumulate(n->children.cbegin(), n->children.cend(), size_t(0),
-			[](size_t total, const std::unique_ptr<ast_node>& child)
+		if (!n->children.empty())
 		{
-			return total + child->unescaped.size();
-		}));
+			if (n->children.size() > 1)
+			{
+				n->unescaped.reserve(std::accumulate(n->children.cbegin(), n->children.cend(), size_t(0),
+					[](size_t total, const std::unique_ptr<ast_node>& child)
+				{
+					return total + child->unescaped.size();
+				}));
 
-		for (const auto& child : n->children)
-		{
-			n->unescaped.append(child->unescaped);
+				for (const auto& child : n->children)
+				{
+					n->unescaped.append(child->unescaped);
+				}
+			}
+			else
+			{
+				n->unescaped = std::move(n->children.front()->unescaped);
+			}
 		}
 
 		n->remove_content();
