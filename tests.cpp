@@ -122,7 +122,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 				}
 			}
 		})"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(0, *ast->root, "Everything", variables).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -130,9 +130,9 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -146,7 +146,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].type() == response::Value::Type::Map) << "appointment should be an object";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map) << "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
 		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
@@ -156,7 +156,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
-		ASSERT_TRUE(taskEdges[0].type() == response::Value::Type::Map) << "task should be an object";
+		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
@@ -165,7 +165,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].type() == response::Value::Type::Map) << "unreadCount should be an object";
+		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map) << "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
 		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
@@ -196,7 +196,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 				}
 			}
 		})"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(1, *ast->root, "", variables).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -204,9 +204,9 @@ TEST_F(TodayServiceCase, QueryAppointments)
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -220,7 +220,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].type() == response::Value::Type::Map) << "appointment should be an object";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map) << "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
 		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
@@ -251,7 +251,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 				}
 			}
 		})gql"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(2, *ast->root, "", variables).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -259,9 +259,9 @@ TEST_F(TodayServiceCase, QueryTasks)
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -275,7 +275,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
-		ASSERT_TRUE(taskEdges[0].type() == response::Value::Type::Map) << "task should be an object";
+		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
@@ -305,7 +305,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 				}
 			}
 		})"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(3, *ast->root, "", variables).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
@@ -313,9 +313,9 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -329,7 +329,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].type() == response::Value::Type::Map) << "unreadCount should be an object";
+		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map) << "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
 		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", unreadCountNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
@@ -358,14 +358,14 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 				clientMutationId
 			}
 		})"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(4, *ast->root, "", variables).get();
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -377,10 +377,10 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto completedTask = service::ScalarArgument::require("completedTask", data);
-		ASSERT_TRUE(completedTask.type() == response::Value::Type::Map) << "payload should be an object";
+		ASSERT_TRUE(completedTask.type() == response::Type::Map) << "payload should be an object";
 
 		const auto task = service::ScalarArgument::require("completedTask", completedTask);
-		EXPECT_TRUE(task.type() == response::Value::Type::Map) << "should get back a task";
+		EXPECT_TRUE(task.type() == response::Type::Map) << "should get back a task";
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task)) << "id should match in base64 encoding";
 		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
@@ -433,14 +433,14 @@ TEST_F(TodayServiceCase, Introspection)
 				}
 			}
 		})"_graphql;
-	response::Value variables(response::Value::Type::Map);
+	response::Value variables(response::Type::Map);
 	auto result = _service->resolve(5, *ast->root, "", variables).get();
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Value::Type::Map);
+		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::Value::MapType&>().cend())
+		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
 			rapidjson::StringBuffer buffer;
 			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -456,8 +456,8 @@ TEST_F(TodayServiceCase, Introspection)
 		const auto mutationType = service::ScalarArgument::require("mutationType", schema);
 
 		ASSERT_FALSE(types.empty());
-		ASSERT_TRUE(queryType.type() == response::Value::Type::Map);
-		ASSERT_TRUE(mutationType.type() == response::Value::Type::Map);
+		ASSERT_TRUE(queryType.type() == response::Type::Map);
+		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -640,9 +640,9 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 
 TEST(ArgumentsCase, TaskStateEnum)
 {
-	response::Value response(response::Value::Type::Map);
-	response::Value status(response::Value::Type::EnumValue);
-	status.set<response::Value::StringType>("Started");
+	response::Value response(response::Type::Map);
+	response::Value status(response::Type::EnumValue);
+	status.set<response::StringType>("Started");
 	response.emplace_back("status", std::move(status));
 	today::TaskState actual = static_cast<today::TaskState>(-1);
 

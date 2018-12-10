@@ -25,10 +25,10 @@ const BuiltinTypeMap Generator::s_builtinTypes= {
 	};
 
 const CppTypeMap Generator::s_builtinCppTypes= {
-		"response::Value::IntType",
-		"response::Value::FloatType",
-		"response::Value::StringType",
-		"response::Value::BooleanType",
+		"response::IntType",
+		"response::FloatType",
+		"response::StringType",
+		"response::BooleanType",
 		"std::vector<uint8_t>",
 	};
 
@@ -975,7 +975,7 @@ void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumVal
 
 void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = response::Value(response::Value::Type::List);
+	_value = response::Value(response::Type::List);
 	_value.reserve(listValue.children.size());
 
 	for (const auto& child : listValue.children)
@@ -989,7 +989,7 @@ void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listVal
 
 void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = response::Value(response::Value::Type::Map);
+	_value = response::Value(response::Type::Map);
 	_value.reserve(objectValue.children.size());
 
 	for (const auto& field : objectValue.children)
@@ -1545,12 +1545,12 @@ template <>
 			sourceFile << R"cpp(
 	};
 
-	if (value.type() != response::Value::Type::EnumValue)
+	if (value.type() != response::Type::EnumValue)
 	{
 		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
 	}
 
-	auto itr = s_names.find(value.get<const response::Value::StringType&>());
+	auto itr = s_names.find(value.get<const response::StringType&>());
 
 	if (itr == s_names.cend())
 	{
@@ -1608,14 +1608,14 @@ template <>
 
 			for (const auto& inputField : inputType.fields)
 			{
-				if (inputField.defaultValue.type() != response::Value::Type::Null)
+				if (inputField.defaultValue.type() != response::Type::Null)
 				{
 					if (firstField)
 					{
 						firstField = false;
 						sourceFile << R"cpp(	const auto defaultValue = []()
 	{
-		response::Value values(response::Value::Type::Map);
+		response::Value values(response::Type::Map);
 		response::Value entry;
 
 )cpp";
@@ -1642,7 +1642,7 @@ template <>
 				std::string fieldName(inputField.name);
 
 				fieldName[0] = std::toupper(fieldName[0]);
-				if (inputField.defaultValue.type() == response::Value::Type::Null)
+				if (inputField.defaultValue.type() == response::Type::Null)
 				{
 					sourceFile << R"cpp(	auto value)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
@@ -1831,14 +1831,14 @@ std::future<response::Value> )cpp" << objectType.type
 
 					for (const auto& argument : outputField.arguments)
 					{
-						if (argument.defaultValue.type() != response::Value::Type::Null)
+						if (argument.defaultValue.type() != response::Type::Null)
 						{
 							if (firstArgument)
 							{
 								firstArgument = false;
 								sourceFile << R"cpp(	const auto defaultArguments = []()
 	{
-		response::Value values(response::Value::Type::Map);
+		response::Value values(response::Type::Map);
 		response::Value entry;
 
 )cpp";
@@ -1865,7 +1865,7 @@ std::future<response::Value> )cpp" << objectType.type
 						std::string argumentName(argument.name);
 
 						argumentName[0] = std::toupper(argumentName[0]);
-						if (argument.defaultValue.type() == response::Value::Type::Null)
+						if (argument.defaultValue.type() == response::Type::Null)
 						{
 							sourceFile << R"cpp(	auto arg)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
@@ -2450,13 +2450,13 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 
 	switch (defaultValue.type())
 	{
-		case response::Value::Type::Map:
+		case response::Type::Map:
 		{
-			const auto& members = defaultValue.get<const response::Value::MapType&>();
+			const auto& members = defaultValue.get<const response::MapType&>();
 
 			argumentDefaultValue << padding << R"cpp(		entry = []()
 )cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value members(response::Value::Type::Map);
+)cpp" << padding << R"cpp(			response::Value members(response::Type::Map);
 )cpp" << padding << R"cpp(			response::Value entry;
 
 )cpp";
@@ -2474,13 +2474,13 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 			break;
 		}
 
-		case response::Value::Type::List:
+		case response::Type::List:
 		{
-			const auto& elements = defaultValue.get<const response::Value::ListType&>();
+			const auto& elements = defaultValue.get<const response::ListType&>();
 
 			argumentDefaultValue << padding << R"cpp(		entry = []()
 )cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value elements(response::Value::Type::List);
+)cpp" << padding << R"cpp(			response::Value elements(response::Type::List);
 )cpp" << padding << R"cpp(			response::Value entry;
 
 )cpp";
@@ -2498,25 +2498,25 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 			break;
 		}
 
-		case response::Value::Type::String:
+		case response::Type::String:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value(R"gql()cpp"
-				<< defaultValue.get<const response::Value::StringType&>() << R"cpp()gql");
+				<< defaultValue.get<const response::StringType&>() << R"cpp()gql");
 )cpp";
 			break;
 		}
 
-		case response::Value::Type::Null:
+		case response::Type::Null:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = {};
 )cpp";
 			break;
 		}
 
-		case response::Value::Type::Boolean:
+		case response::Type::Boolean:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value()cpp"
-				<< (defaultValue.get<response::Value::BooleanType>()
+				<< (defaultValue.get<response::BooleanType>()
 					? R"cpp(true)cpp"
 					: R"cpp(false)cpp")
 				<< R"cpp();
@@ -2524,40 +2524,40 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 			break;
 		}
 
-		case response::Value::Type::Int:
+		case response::Type::Int:
 		{
-			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::Value::IntType>()cpp"
-				<< defaultValue.get<response::Value::IntType>() << R"cpp());
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::IntType>()cpp"
+				<< defaultValue.get<response::IntType>() << R"cpp());
 )cpp";
 			break;
 		}
 
-		case response::Value::Type::Float:
+		case response::Type::Float:
 		{
-			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::Value::FloatType>()cpp"
-				<< defaultValue.get<response::Value::FloatType>() << R"cpp());
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::FloatType>()cpp"
+				<< defaultValue.get<response::FloatType>() << R"cpp());
 )cpp";
 			break;
 		}
 
-		case response::Value::Type::EnumValue:
+		case response::Type::EnumValue:
 		{
-			argumentDefaultValue << padding << R"cpp(		entry = response::Value(response::Value::Type::EnumValue);
-		entry.set<response::Value::StringType>(R"gql()cpp" << defaultValue.get<const response::Value::StringType&>() << R"cpp()gql");
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(response::Type::EnumValue);
+		entry.set<response::StringType>(R"gql()cpp" << defaultValue.get<const response::StringType&>() << R"cpp()gql");
 )cpp";
 			break;
 		}
 
-		case response::Value::Type::Scalar:
+		case response::Type::Scalar:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = []()
 )cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value scalar(response::Value::Type::Scalar);
+)cpp" << padding << R"cpp(			response::Value scalar(response::Type::Scalar);
 )cpp" << padding << R"cpp(			response::Value entry;
 
 )cpp";
-			argumentDefaultValue << padding << R"cpp(	)cpp" << getArgumentDefaultValue(level + 1, defaultValue.get<const response::Value::ScalarType&>())
-				<< padding << R"cpp(			scalar.set<response::Value::ScalarType>(std::move(entry));
+			argumentDefaultValue << padding << R"cpp(	)cpp" << getArgumentDefaultValue(level + 1, defaultValue.get<const response::ScalarType&>())
+				<< padding << R"cpp(			scalar.set<response::ScalarType>(std::move(entry));
 
 )cpp" << padding << R"cpp(			return scalar;
 )cpp" << padding << R"cpp(		}();

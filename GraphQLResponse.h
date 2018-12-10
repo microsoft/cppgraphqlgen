@@ -12,33 +12,35 @@ namespace facebook {
 namespace graphql {
 namespace response {
 
+// GraphQL responses are not technically JSON-specific, although that is probably the most common
+// way of representing them. These are the primitive types that may be represented in GraphQL, as
+// of the [June 2018 spec](https://facebook.github.io/graphql/June2018/#sec-Serialization-Format).
+enum class Type : uint8_t
+{
+	Map,		// JSON Object
+	List,		// JSON Array
+	String,		// JSON String
+	Null,		// JSON null
+	Boolean,	// JSON true or false
+	Int,		// JSON Number
+	Float,		// JSON Number
+	EnumValue,	// JSON String
+	Scalar,		// JSON any type
+};
+
+struct Value;
+
+using MapType = std::vector<std::pair<std::string, Value>>;
+using ListType = std::vector<Value>;
+using StringType = std::string;
+using BooleanType = bool;
+using IntType = int;
+using FloatType = double;
+using ScalarType = Value;
+
 // Represent a discriminated union of GraphQL response value types.
 struct Value
 {
-	// GraphQL responses are not technically JSON-specific, although that is probably the most common
-	// way of representing them. These are the primitive types that may be represented in GraphQL, as
-	// of the [June 2018 spec](https://facebook.github.io/graphql/June2018/#sec-Serialization-Format).
-	enum class Type : uint8_t
-	{
-		Map,		// JSON Object
-		List,		// JSON Array
-		String,		// JSON String
-		Null,		// JSON null
-		Boolean,	// JSON true or false
-		Int,		// JSON Number
-		Float,		// JSON Number
-		EnumValue,	// JSON String
-		Scalar,		// JSON any type
-	};
-
-	using MapType = std::vector<std::pair<std::string, Value>>;
-	using ListType = std::vector<Value>;
-	using StringType = std::string;
-	using BooleanType = bool;
-	using IntType = int;
-	using FloatType = double;
-	using ScalarType = Value;
-
 	Value(Type type = Type::Null);
 
 	explicit Value(StringType&& value);

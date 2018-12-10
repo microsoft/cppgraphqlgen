@@ -89,12 +89,12 @@ protected:
 
 public:
 	virtual std::future<__TypeKind> getKind(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDescription(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> getFields(service::RequestId requestId, std::unique_ptr<response::Value::BooleanType>&& includeDeprecated) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> getFields(service::RequestId requestId, std::unique_ptr<response::BooleanType>&& includeDeprecated) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getInterfaces(service::RequestId requestId) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getPossibleTypes(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::RequestId requestId, std::unique_ptr<response::Value::BooleanType>&& includeDeprecated) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::RequestId requestId, std::unique_ptr<response::BooleanType>&& includeDeprecated) const = 0;
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__InputValue>>>> getInputFields(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getOfType(service::RequestId requestId) const = 0;
 
@@ -119,12 +119,12 @@ protected:
 	__Field();
 
 public:
-	virtual std::future<response::Value::StringType> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -144,10 +144,10 @@ protected:
 	__InputValue();
 
 public:
-	virtual std::future<response::Value::StringType> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDefaultValue(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDefaultValue(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -165,10 +165,10 @@ protected:
 	__EnumValue();
 
 public:
-	virtual std::future<response::Value::StringType> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDescription(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsDeprecated(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -186,8 +186,8 @@ protected:
 	__Directive();
 
 public:
-	virtual std::future<response::Value::StringType> getName(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getDescription(service::RequestId requestId) const = 0;
+	virtual std::future<response::StringType> getName(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<__DirectiveLocation>> getLocations(service::RequestId requestId) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::RequestId requestId) const = 0;
 

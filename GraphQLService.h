@@ -166,7 +166,7 @@ struct ModifiedArgument
 			std::ostringstream error;
 
 			error << "Invalid argument: " << name
-				<< " message: " << ex.getErrors()[0]["message"].get<const response::Value::StringType&>();
+				<< " message: " << ex.getErrors()[0]["message"].get<const response::StringType&>();
 			throw schema_exception({ error.str() });
 		}
 	}
@@ -200,8 +200,8 @@ struct ModifiedArgument
 	{
 		const auto& valueItr = arguments.find(name);
 
-		if (valueItr == arguments.get<const response::Value::MapType&>().cend()
-			|| valueItr->second.type() == response::Value::Type::Null)
+		if (valueItr == arguments.get<const response::MapType&>().cend()
+			|| valueItr->second.type() == response::Type::Null)
 		{
 			return nullptr;
 		}
@@ -218,12 +218,12 @@ struct ModifiedArgument
 	{
 		const auto& values = arguments[name];
 		typename ArgumentTraits<_Type, _Modifier, _Other...>::type result(values.size());
-		const auto& elements = values.get<const response::Value::ListType&>();
+		const auto& elements = values.get<const response::ListType&>();
 
 		std::transform(elements.cbegin(), elements.cend(), result.begin(),
 			[&name](const response::Value& element)
 		{
-			response::Value single(response::Value::Type::Map);
+			response::Value single(response::Type::Map);
 
 			single.emplace_back(std::string(name), response::Value(element));
 
@@ -252,10 +252,10 @@ struct ModifiedArgument
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for input types should be generated in schemagen.
-using IntArgument = ModifiedArgument<response::Value::IntType>;
-using FloatArgument = ModifiedArgument<response::Value::FloatType>;
-using StringArgument = ModifiedArgument<response::Value::StringType>;
-using BooleanArgument = ModifiedArgument<response::Value::BooleanType>;
+using IntArgument = ModifiedArgument<response::IntType>;
+using FloatArgument = ModifiedArgument<response::FloatType>;
+using StringArgument = ModifiedArgument<response::StringType>;
+using BooleanArgument = ModifiedArgument<response::BooleanType>;
 using IdArgument = ModifiedArgument<std::vector<uint8_t>>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
@@ -421,7 +421,7 @@ struct ModifiedResult
 				children.push(convert<_Other...>(promise.get_future(), ResolverParams(wrappedParams)));
 			}
 
-			auto value = response::Value(response::Value::Type::List);
+			auto value = response::Value(response::Type::List);
 
 			value.reserve(wrappedResult.size());
 
@@ -439,10 +439,10 @@ struct ModifiedResult
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for output types should be generated in schemagen.
-using IntResult = ModifiedResult<response::Value::IntType>;
-using FloatResult = ModifiedResult<response::Value::FloatType>;
-using StringResult = ModifiedResult<response::Value::StringType>;
-using BooleanResult = ModifiedResult<response::Value::BooleanType>;
+using IntResult = ModifiedResult<response::IntType>;
+using FloatResult = ModifiedResult<response::FloatType>;
+using StringResult = ModifiedResult<response::StringType>;
+using BooleanResult = ModifiedResult<response::BooleanType>;
 using IdResult = ModifiedResult<std::vector<uint8_t>>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;

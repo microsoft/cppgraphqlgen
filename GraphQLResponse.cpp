@@ -172,7 +172,7 @@ Value& Value::operator=(Value&& rhs)
 	return *this;
 }
 
-Value::Type Value::type() const
+Type Value::type() const
 {
 	return _type;
 }
@@ -226,7 +226,7 @@ void Value::emplace_back(std::string&& name, Value&& value)
 	_map->emplace_back(std::make_pair(std::move(name), std::move(value)));
 }
 
-Value::MapType::const_iterator Value::find(const std::string& name) const
+MapType::const_iterator Value::find(const std::string& name) const
 {
 	if (_type != Type::Map)
 	{
@@ -276,7 +276,7 @@ const Value& Value::operator[](size_t index) const
 }
 
 template <>
-void Value::set<Value::StringType>(StringType&& value)
+void Value::set<StringType>(StringType&& value)
 {
 	if (_type != Type::String
 		&& _type != Type::EnumValue)
@@ -288,7 +288,7 @@ void Value::set<Value::StringType>(StringType&& value)
 }
 
 template <>
-void Value::set<Value::BooleanType>(BooleanType&& value)
+void Value::set<BooleanType>(BooleanType&& value)
 {
 	if (_type != Type::Boolean)
 	{
@@ -299,7 +299,7 @@ void Value::set<Value::BooleanType>(BooleanType&& value)
 }
 
 template <>
-void Value::set<Value::IntType>(IntType&& value)
+void Value::set<IntType>(IntType&& value)
 {
 	if (_type != Type::Int)
 	{
@@ -310,7 +310,7 @@ void Value::set<Value::IntType>(IntType&& value)
 }
 
 template <>
-void Value::set<Value::FloatType>(FloatType&& value)
+void Value::set<FloatType>(FloatType&& value)
 {
 	if (_type != Type::Float)
 	{
@@ -321,7 +321,7 @@ void Value::set<Value::FloatType>(FloatType&& value)
 }
 
 template <>
-void Value::set<Value::ScalarType>(ScalarType&& value)
+void Value::set<ScalarType>(ScalarType&& value)
 {
 	if (_type != Type::Scalar)
 	{
@@ -332,7 +332,7 @@ void Value::set<Value::ScalarType>(ScalarType&& value)
 }
 
 template <>
-const Value::MapType& Value::get<const Value::MapType&>() const
+const MapType& Value::get<const MapType&>() const
 {
 	if (_type != Type::Map)
 	{
@@ -343,7 +343,7 @@ const Value::MapType& Value::get<const Value::MapType&>() const
 }
 
 template <>
-const Value::ListType& Value::get<const Value::ListType&>() const
+const ListType& Value::get<const ListType&>() const
 {
 	if (_type != Type::List)
 	{
@@ -354,7 +354,7 @@ const Value::ListType& Value::get<const Value::ListType&>() const
 }
 
 template <>
-const Value::StringType& Value::get<const Value::StringType&>() const
+const StringType& Value::get<const StringType&>() const
 {
 	if (_type != Type::String
 		&& _type != Type::EnumValue)
@@ -366,7 +366,7 @@ const Value::StringType& Value::get<const Value::StringType&>() const
 }
 
 template <>
-Value::BooleanType Value::get<Value::BooleanType>() const
+BooleanType Value::get<BooleanType>() const
 {
 	if (_type != Type::Boolean)
 	{
@@ -377,7 +377,7 @@ Value::BooleanType Value::get<Value::BooleanType>() const
 }
 
 template <>
-Value::IntType Value::get<Value::IntType>() const
+IntType Value::get<IntType>() const
 {
 	if (_type != Type::Int)
 	{
@@ -388,7 +388,7 @@ Value::IntType Value::get<Value::IntType>() const
 }
 
 template <>
-Value::FloatType Value::get<Value::FloatType>() const
+FloatType Value::get<FloatType>() const
 {
 	if (_type != Type::Float)
 	{
@@ -399,7 +399,7 @@ Value::FloatType Value::get<Value::FloatType>() const
 }
 
 template <>
-const Value::ScalarType& Value::get<const Value::ScalarType&>() const
+const ScalarType& Value::get<const ScalarType&>() const
 {
 	if (_type != Type::Scalar)
 	{
@@ -410,7 +410,7 @@ const Value::ScalarType& Value::get<const Value::ScalarType&>() const
 }
 
 template <>
-Value::MapType Value::release<Value::MapType>()
+MapType Value::release<MapType>()
 {
 	if (_type != Type::Map)
 	{
@@ -425,7 +425,7 @@ Value::MapType Value::release<Value::MapType>()
 }
 
 template <>
-Value::ListType Value::release<Value::ListType>()
+ListType Value::release<ListType>()
 {
 	if (_type != Type::List)
 	{
@@ -438,7 +438,7 @@ Value::ListType Value::release<Value::ListType>()
 }
 
 template <>
-Value::StringType Value::release<Value::StringType>()
+StringType Value::release<StringType>()
 {
 	if (_type != Type::String
 		&& _type != Type::EnumValue)
@@ -452,7 +452,7 @@ Value::StringType Value::release<Value::StringType>()
 }
 
 template <>
-Value::ScalarType Value::release<Value::ScalarType>()
+ScalarType Value::release<ScalarType>()
 {
 	if (_type != Type::Scalar)
 	{

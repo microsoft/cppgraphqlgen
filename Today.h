@@ -23,9 +23,9 @@ public:
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
 	std::future<std::shared_ptr<service::Object>> getNode(service::RequestId requestId, std::vector<uint8_t>&& id) const override;
-	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
 	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const override;
@@ -104,11 +104,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value::StringType>> getSubject(service::RequestId) const override
+	std::future<std::unique_ptr<response::StringType>> getSubject(service::RequestId) const override
 	{
-		std::promise<std::unique_ptr<response::Value::StringType>> promise;
+		std::promise<std::unique_ptr<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::Value::StringType>(new std::string(_subject)));
+		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_subject)));
 
 		return promise.get_future();
 	}
@@ -211,11 +211,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value::StringType>> getTitle(service::RequestId) const override
+	std::future<std::unique_ptr<response::StringType>> getTitle(service::RequestId) const override
 	{
-		std::promise<std::unique_ptr<response::Value::StringType>> promise;
+		std::promise<std::unique_ptr<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::Value::StringType>(new std::string(_title)));
+		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_title)));
 
 		return promise.get_future();
 	}
@@ -318,11 +318,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value::StringType>> getName(service::RequestId) const override
+	std::future<std::unique_ptr<response::StringType>> getName(service::RequestId) const override
 	{
-		std::promise<std::unique_ptr<response::Value::StringType>> promise;
+		std::promise<std::unique_ptr<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::Value::StringType>(new std::string(_name)));
+		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_name)));
 
 		return promise.get_future();
 	}
@@ -413,7 +413,7 @@ private:
 class CompleteTaskPayload : public object::CompleteTaskPayload
 {
 public:
-	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::unique_ptr<response::Value::StringType>&& clientMutationId)
+	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::unique_ptr<response::StringType>&& clientMutationId)
 		: _task(std::move(task))
 		, _clientMutationId(std::move(clientMutationId))
 	{
@@ -428,11 +428,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value::StringType>> getClientMutationId(service::RequestId) const override
+	std::future<std::unique_ptr<response::StringType>> getClientMutationId(service::RequestId) const override
 	{
-		std::promise<std::unique_ptr<response::Value::StringType>> promise;
+		std::promise<std::unique_ptr<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::Value::StringType>(_clientMutationId
+		promise.set_value(std::unique_ptr<response::StringType>(_clientMutationId
 			? new std::string(*_clientMutationId)
 			: nullptr));
 
@@ -441,7 +441,7 @@ public:
 
 private:
 	std::shared_ptr<Task> _task;
-	std::unique_ptr<response::Value::StringType> _clientMutationId;
+	std::unique_ptr<response::StringType> _clientMutationId;
 };
 
 class Mutation : public object::Mutation

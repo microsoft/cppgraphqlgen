@@ -13,11 +13,11 @@ namespace graphql {
 namespace service {
 
 schema_exception::schema_exception(std::vector<std::string>&& messages)
-	: _errors(response::Value::Type::List)
+	: _errors(response::Type::List)
 {
 	for (auto& message : messages)
 	{
-		response::Value error(response::Value::Type::Map);
+		response::Value error(response::Type::Map);
 
 		error.emplace_back("message", response::Value(std::move(message)));
 		_errors.emplace_back(std::move(error));
@@ -198,53 +198,53 @@ std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
 }
 
 template <>
-response::Value::IntType ModifiedArgument<response::Value::IntType>::convert(const response::Value& value)
+response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::Int)
+	if (value.type() != response::Type::Int)
 	{
 		throw schema_exception({ "not an integer" });
 	}
 
-	return value.get<response::Value::IntType>();
+	return value.get<response::IntType>();
 }
 
 template <>
-response::Value::FloatType ModifiedArgument<response::Value::FloatType>::convert(const response::Value& value)
+response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::Float)
+	if (value.type() != response::Type::Float)
 	{
 		throw schema_exception({ "not a float" });
 	}
 
-	return value.get<response::Value::FloatType>();
+	return value.get<response::FloatType>();
 }
 
 template <>
-response::Value::StringType ModifiedArgument<response::Value::StringType>::convert(const response::Value& value)
+response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::String)
+	if (value.type() != response::Type::String)
 	{
 		throw schema_exception({ "not a string" });
 	}
 
-	return value.get<const response::Value::StringType&>();
+	return value.get<const response::StringType&>();
 }
 
 template <>
-response::Value::BooleanType ModifiedArgument<response::Value::BooleanType>::convert(const response::Value& value)
+response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::Boolean)
+	if (value.type() != response::Type::Boolean)
 	{
 		throw schema_exception({ "not a boolean" });
 	}
 
-	return value.get<response::Value::BooleanType>();
+	return value.get<response::BooleanType>();
 }
 
 template <>
 response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::Map)
+	if (value.type() != response::Type::Map)
 	{
 		throw schema_exception({ "not an object" });
 	}
@@ -255,51 +255,51 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 template <>
 std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const response::Value& value)
 {
-	if (value.type() != response::Value::Type::String)
+	if (value.type() != response::Type::String)
 	{
 		throw schema_exception({ "not a string" });
 	}
 
-	const auto& encoded = value.get<const response::Value::StringType&>();
+	const auto& encoded = value.get<const response::StringType&>();
 
 	return Base64::fromBase64(encoded.c_str(), encoded.size());
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value::IntType>::convert(std::future<response::Value::IntType>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::IntType>::convert(std::future<response::IntType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<response::Value::IntType>&& resultFuture)
+		[](std::future<response::IntType>&& resultFuture)
 	{
 		return response::Value(resultFuture.get());
 	}, std::move(result));
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value::FloatType>::convert(std::future<response::Value::FloatType>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::FloatType>::convert(std::future<response::FloatType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<response::Value::FloatType>&& resultFuture)
+		[](std::future<response::FloatType>&& resultFuture)
 	{
 		return response::Value(resultFuture.get());
 	}, std::move(result));
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value::StringType>::convert(std::future<response::Value::StringType>&& result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<response::StringType>::convert(std::future<response::StringType>&& result, ResolverParams&& params)
 {
 	return std::async(std::launch::deferred,
-		[&](std::future<response::Value::StringType>&& resultFuture, ResolverParams&& paramsFuture)
+		[&](std::future<response::StringType>&& resultFuture, ResolverParams&& paramsFuture)
 	{
 		return response::Value(resultFuture.get());
 	}, std::move(result), std::move(params));
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value::BooleanType>::convert(std::future<response::Value::BooleanType>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::BooleanType>::convert(std::future<response::BooleanType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<response::Value::BooleanType>&& resultFuture)
+		[](std::future<response::BooleanType>&& resultFuture)
 	{
 		return response::Value(resultFuture.get());
 	}, std::move(result));
@@ -332,8 +332,8 @@ std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::sh
 		if (!wrappedResult || !paramsFuture.selection)
 		{
 			return response::Value(!wrappedResult
-				? response::Value::Type::Null
-				: response::Value::Type::Map);
+				? response::Type::Null
+				: response::Type::Map);
 		}
 
 		return wrappedResult->resolve(paramsFuture.requestId, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
@@ -365,7 +365,7 @@ std::future<response::Value> Object::resolve(RequestId requestId, const peg::ast
 	return std::async(std::launch::deferred,
 		[](std::queue<std::future<response::Value>>&& promises)
 	{
-		response::Value result(response::Value::Type::Map);
+		response::Value result(response::Type::Map);
 
 		while (!promises.empty())
 		{
@@ -373,9 +373,9 @@ std::future<response::Value> Object::resolve(RequestId requestId, const peg::ast
 
 			promises.pop();
 
-			if (values.type() == response::Value::Type::Map)
+			if (values.type() == response::Type::Map)
 			{
-				auto members = values.release<response::Value::MapType>();
+				auto members = values.release<response::MapType>();
 
 				for (auto& entry : members)
 				{
@@ -437,7 +437,7 @@ std::future<response::Value> SelectionVisitor::getValues()
 	return std::async(std::launch::deferred,
 		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& values)
 	{
-		response::Value result(response::Value::Type::Map);
+		response::Value result(response::Type::Map);
 
 		while (!values.empty())
 		{
@@ -517,7 +517,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	response::Value arguments(response::Value::Type::Map);
+	response::Value arguments(response::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &arguments](const peg::ast_node& child)
@@ -790,7 +790,7 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 	const std::string name(variable.content().c_str() + 1);
 	auto itr = _variables.find(name);
 
-	if (itr == _variables.get<const response::Value::MapType&>().cend())
+	if (itr == _variables.get<const response::MapType&>().cend())
 	{
 		auto position = variable.begin();
 		std::ostringstream error;
@@ -837,7 +837,7 @@ void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 
 void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = response::Value(response::Value::Type::List);
+	_value = response::Value(response::Type::List);
 	_value.reserve(listValue.children.size());
 
 	ValueVisitor visitor(_variables);
@@ -851,7 +851,7 @@ void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 
 void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = response::Value(response::Value::Type::Map);
+	_value = response::Value(response::Type::Map);
 	_value.reserve(objectValue.children.size());
 
 	ValueVisitor visitor(_variables);
@@ -910,7 +910,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	catch (const schema_exception& ex)
 	{
 		std::promise<response::Value> promise;
-		response::Value document(response::Value::Type::Map);
+		response::Value document(response::Type::Map);
 
 		document.emplace_back("data", response::Value());
 		document.emplace_back("errors", response::Value(ex.getErrors()));
@@ -1003,7 +1003,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		_result = std::async(std::launch::deferred,
 			[this, &operationDefinition, operationObject]()
 		{
-			response::Value operationVariables(response::Value::Type::Map);
+			response::Value operationVariables(response::Type::Map);
 
 			peg::on_first_child<peg::variable_definitions>(operationDefinition,
 				[this, &operationVariables](const peg::ast_node& child)
@@ -1023,7 +1023,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 					auto itrVar = _variables.find(variableName);
 					response::Value valueVar;
 
-					if (itrVar != _variables.get<const response::Value::MapType&>().cend())
+					if (itrVar != _variables.get<const response::MapType&>().cend())
 					{
 						valueVar = response::Value(itrVar->second);
 					}
@@ -1043,7 +1043,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 				});
 			});
 
-			response::Value document(response::Value::Type::Map);
+			response::Value document(response::Type::Map);
 			auto data = operationObject->resolve(_requestId, *operationDefinition.children.back(), _fragments, operationVariables);
 
 			document.emplace_back("data", data.get());
@@ -1054,7 +1054,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 	catch (const schema_exception& ex)
 	{
 		std::promise<response::Value> promise;
-		response::Value document(response::Value::Type::Map);
+		response::Value document(response::Type::Map);
 
 		document.emplace_back("data", response::Value());
 		document.emplace_back("errors", response::Value(ex.getErrors()));

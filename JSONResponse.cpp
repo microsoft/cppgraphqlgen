@@ -11,10 +11,10 @@ Value convertResponse(Document::AllocatorType& allocator, response::Value&& resp
 {
 	switch (response.type())
 	{
-		case response::Value::Type::Map:
+		case response::Type::Map:
 		{
 			Value result(Type::kObjectType);
-			auto members = response.release<response::Value::MapType>();
+			auto members = response.release<response::MapType>();
 
 			for (auto& entry : members)
 			{
@@ -26,10 +26,10 @@ Value convertResponse(Document::AllocatorType& allocator, response::Value&& resp
 			return result;
 		}
 
-		case response::Value::Type::List:
+		case response::Type::List:
 		{
 			Value result(Type::kArrayType);
-			auto elements = response.release<response::Value::ListType>();
+			auto elements = response.release<response::ListType>();
 
 			result.Reserve(static_cast<SizeType>(elements.size()), allocator);
 			for (auto& entry : elements)
@@ -40,54 +40,54 @@ Value convertResponse(Document::AllocatorType& allocator, response::Value&& resp
 			return result;
 		}
 
-		case response::Value::Type::String:
-		case response::Value::Type::EnumValue:
+		case response::Type::String:
+		case response::Type::EnumValue:
 		{
 			Value result(Type::kStringType);
-			auto value = response.release<response::Value::StringType>();
+			auto value = response.release<response::StringType>();
 
 			result.SetString(value.c_str(), static_cast<SizeType>(value.size()), allocator);
 
 			return result;
 		}
 
-		case response::Value::Type::Null:
+		case response::Type::Null:
 		{
 			Value result(Type::kNullType);
 
 			return result;
 		}
 
-		case response::Value::Type::Boolean:
+		case response::Type::Boolean:
 		{
-			Value result(response.get<response::Value::BooleanType>()
+			Value result(response.get<response::BooleanType>()
 				? Type::kTrueType
 				: Type::kFalseType);
 
 			return result;
 		}
 
-		case response::Value::Type::Int:
+		case response::Type::Int:
 		{
 			Value result(Type::kNumberType);
 
-			result.SetInt(response.get<response::Value::IntType>());
+			result.SetInt(response.get<response::IntType>());
 
 			return result;
 		}
 
-		case response::Value::Type::Float:
+		case response::Type::Float:
 		{
 			Value result(Type::kNumberType);
 
-			result.SetDouble(response.get<response::Value::FloatType>());
+			result.SetDouble(response.get<response::FloatType>());
 
 			return result;
 		}
 
-		case response::Value::Type::Scalar:
+		case response::Type::Scalar:
 		{
-			return convertResponse(allocator, response.release<response::Value::ScalarType>());
+			return convertResponse(allocator, response.release<response::ScalarType>());
 		}
 
 		default:
@@ -123,7 +123,7 @@ response::Value convertResponse(const Value& value)
 
 		case Type::kObjectType:
 		{
-			response::Value response(response::Value::Type::Map);
+			response::Value response(response::Type::Map);
 
 			response.reserve(static_cast<size_t>(value.MemberCount()));
 			for (const auto& member : value.GetObject())
@@ -137,7 +137,7 @@ response::Value convertResponse(const Value& value)
 
 		case Type::kArrayType:
 		{
-			response::Value response(response::Value::Type::List);
+			response::Value response(response::Type::List);
 
 			response.reserve(static_cast<size_t>(value.Size()));
 			for (const auto& element : value.GetArray())
@@ -154,16 +154,16 @@ response::Value convertResponse(const Value& value)
 		case Type::kNumberType:
 		{
 			response::Value response(value.IsInt()
-				? response::Value::Type::Int
-				: response::Value::Type::Float);
+				? response::Type::Int
+				: response::Type::Float);
 
 			if (value.IsInt())
 			{
-				response.set<response::Value::IntType>(value.GetInt());
+				response.set<response::IntType>(value.GetInt());
 			}
 			else
 			{
-				response.set<response::Value::FloatType>(value.GetDouble());
+				response.set<response::FloatType>(value.GetDouble());
 			}
 
 			return response;

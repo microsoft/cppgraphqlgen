@@ -24,12 +24,12 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		{ "Unassigned", today::TaskState::Unassigned }
 	};
 
-	if (value.type() != response::Value::Type::EnumValue)
+	if (value.type() != response::Type::EnumValue)
 	{
 		throw service::schema_exception({ "not a valid TaskState value" });
 	}
 
-	auto itr = s_names.find(value.get<const response::Value::StringType&>());
+	auto itr = s_names.find(value.get<const response::StringType&>());
 
 	if (itr == s_names.cend())
 	{
@@ -61,7 +61,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 {
 	const auto defaultValue = []()
 	{
-		response::Value values(response::Value::Type::Map);
+		response::Value values(response::Type::Map);
 		response::Value entry;
 
 		entry = response::Value(true);
@@ -71,11 +71,11 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 	}();
 
 	auto valueId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", value);
-	auto pairIsComplete = service::ModifiedArgument<response::Value::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
+	auto pairIsComplete = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
-		: service::ModifiedArgument<response::Value::BooleanType>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
-	auto valueClientMutationId = service::ModifiedArgument<response::Value::StringType>::require<service::TypeModifier::Nullable>("clientMutationId", value);
+		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
+	auto valueClientMutationId = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("clientMutationId", value);
 
 	return {
 		std::move(valueId),
@@ -120,9 +120,9 @@ std::future<response::Value> Query::resolveNode(service::ResolverParams&& params
 
 std::future<response::Value> Query::resolveAppointments(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
-	auto argLast = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getAppointments(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
@@ -131,9 +131,9 @@ std::future<response::Value> Query::resolveAppointments(service::ResolverParams&
 
 std::future<response::Value> Query::resolveTasks(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
-	auto argLast = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getTasks(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
@@ -142,9 +142,9 @@ std::future<response::Value> Query::resolveTasks(service::ResolverParams&& param
 
 std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
-	auto argFirst = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
+	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
-	auto argLast = service::ModifiedArgument<response::Value::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
+	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
 	auto result = getUnreadCounts(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
@@ -218,14 +218,14 @@ std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParam
 {
 	auto result = getHasNextPage(params.requestId);
 
-	return service::ModifiedResult<response::Value::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
 	auto result = getHasPreviousPage(params.requestId);
 
-	return service::ModifiedResult<response::Value::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams&&)
@@ -463,7 +463,7 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 {
 	auto result = getClientMutationId(params.requestId);
 
-	return service::ModifiedResult<response::Value::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
@@ -560,14 +560,14 @@ std::future<response::Value> Appointment::resolveSubject(service::ResolverParams
 {
 	auto result = getSubject(params.requestId);
 
-	return service::ModifiedResult<response::Value::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	auto result = getIsNow(params.requestId);
 
-	return service::ModifiedResult<response::Value::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Appointment::resolve__typename(service::ResolverParams&&)
@@ -603,14 +603,14 @@ std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params
 {
 	auto result = getTitle(params.requestId);
 
-	return service::ModifiedResult<response::Value::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
 {
 	auto result = getIsComplete(params.requestId);
 
-	return service::ModifiedResult<response::Value::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Task::resolve__typename(service::ResolverParams&&)
@@ -646,14 +646,14 @@ std::future<response::Value> Folder::resolveName(service::ResolverParams&& param
 {
 	auto result = getName(params.requestId);
 
-	return service::ModifiedResult<response::Value::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
 	auto result = getUnreadCount(params.requestId);
 
-	return service::ModifiedResult<response::Value::IntType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Folder::resolve__typename(service::ResolverParams&&)

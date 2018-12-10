@@ -167,7 +167,7 @@ struct EdgeConstraints
 
 		if (after)
 		{
-			const auto& encoded = after->get<const response::Value::StringType&>();
+			const auto& encoded = after->get<const response::StringType&>();
 			auto afterId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
 				[this, &afterId](const std::shared_ptr<_Object>& entry)
@@ -183,7 +183,7 @@ struct EdgeConstraints
 
 		if (before)
 		{
-			const auto& encoded = before->get<const response::Value::StringType&>();
+			const auto& encoded = before->get<const response::StringType&>();
 			auto beforeId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
 				[this, &beforeId](const std::shared_ptr<_Object>& entry)

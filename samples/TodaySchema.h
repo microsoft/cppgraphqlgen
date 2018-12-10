@@ -30,8 +30,8 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	std::vector<uint8_t> id;
-	std::unique_ptr<response::Value::BooleanType> isComplete;
-	std::unique_ptr<response::Value::StringType> clientMutationId;
+	std::unique_ptr<response::BooleanType> isComplete;
+	std::unique_ptr<response::StringType> clientMutationId;
 };
 
 struct Node
@@ -64,9 +64,9 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<service::Object>> getNode(service::RequestId requestId, std::vector<uint8_t>&& id) const = 0;
-	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
@@ -94,8 +94,8 @@ protected:
 	PageInfo();
 
 public:
-	virtual std::future<response::Value::BooleanType> getHasNextPage(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::BooleanType> getHasPreviousPage(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getHasNextPage(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getHasPreviousPage(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveHasNextPage(service::ResolverParams&& params);
@@ -214,7 +214,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Task>> getTask(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getClientMutationId(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getClientMutationId(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveTask(service::ResolverParams&& params);
@@ -262,8 +262,8 @@ protected:
 
 public:
 	virtual std::future<std::unique_ptr<response::Value>> getWhen(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getSubject(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::BooleanType> getIsNow(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getSubject(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsNow(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);
@@ -282,8 +282,8 @@ protected:
 	Task();
 
 public:
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getTitle(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::BooleanType> getIsComplete(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getTitle(service::RequestId requestId) const = 0;
+	virtual std::future<response::BooleanType> getIsComplete(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);
@@ -301,8 +301,8 @@ protected:
 	Folder();
 
 public:
-	virtual std::future<std::unique_ptr<response::Value::StringType>> getName(service::RequestId requestId) const = 0;
-	virtual std::future<response::Value::IntType> getUnreadCount(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getName(service::RequestId requestId) const = 0;
+	virtual std::future<response::IntType> getUnreadCount(service::RequestId requestId) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);
