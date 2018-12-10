@@ -15,4 +15,5 @@ The following import targets are created
 
 include(CMakeFindDependencyMacro)
 find_package(pegtl REQUIRED)
+find_package(Threads REQUIRED)
 include("${CMAKE_CURRENT_LIST_DIR}/cppgraphqlgen-targets.cmake")

@@ -41,7 +41,7 @@ add_library(graphqlservice
   Introspection.cpp
   ${CMAKE_BINARY_DIR}/graphqlservice/IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
-target_link_libraries(graphqlservice PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(graphqlservice PUBLIC Threads::Threads)
 target_include_directories(graphqlservice
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
