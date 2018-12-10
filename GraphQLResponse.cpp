@@ -275,6 +275,195 @@ const Value& Value::operator[](size_t index) const
 	return _list->at(index);
 }
 
+template <>
+void Value::set<Value::StringType>(StringType&& value)
+{
+	if (_type != Type::String
+		&& _type != Type::EnumValue)
+	{
+		throw std::logic_error("Invalid call to Value::set for StringType");
+	}
+
+	*_string = std::move(value);
+}
+
+template <>
+void Value::set<Value::BooleanType>(BooleanType&& value)
+{
+	if (_type != Type::Boolean)
+	{
+		throw std::logic_error("Invalid call to Value::set for BooleanType");
+	}
+
+	_boolean = value;
+}
+
+template <>
+void Value::set<Value::IntType>(IntType&& value)
+{
+	if (_type != Type::Int)
+	{
+		throw std::logic_error("Invalid call to Value::set for IntType");
+	}
+
+	_int = value;
+}
+
+template <>
+void Value::set<Value::FloatType>(FloatType&& value)
+{
+	if (_type != Type::Float)
+	{
+		throw std::logic_error("Invalid call to Value::set for FloatType");
+	}
+
+	_float = value;
+}
+
+template <>
+void Value::set<Value::ScalarType>(ScalarType&& value)
+{
+	if (_type != Type::Scalar)
+	{
+		throw std::logic_error("Invalid call to Value::set for ScalarType");
+	}
+
+	*_scalar = std::move(value);
+}
+
+template <>
+const Value::MapType& Value::get<const Value::MapType&>() const
+{
+	if (_type != Type::Map)
+	{
+		throw std::logic_error("Invalid call to Value::get for MapType");
+	}
+
+	return *_map;
+}
+
+template <>
+const Value::ListType& Value::get<const Value::ListType&>() const
+{
+	if (_type != Type::List)
+	{
+		throw std::logic_error("Invalid call to Value::get for ListType");
+	}
+
+	return *_list;
+}
+
+template <>
+const Value::StringType& Value::get<const Value::StringType&>() const
+{
+	if (_type != Type::String
+		&& _type != Type::EnumValue)
+	{
+		throw std::logic_error("Invalid call to Value::get for StringType");
+	}
+
+	return *_string;
+}
+
+template <>
+Value::BooleanType Value::get<Value::BooleanType>() const
+{
+	if (_type != Type::Boolean)
+	{
+		throw std::logic_error("Invalid call to Value::get for BooleanType");
+	}
+
+	return _boolean;
+}
+
+template <>
+Value::IntType Value::get<Value::IntType>() const
+{
+	if (_type != Type::Int)
+	{
+		throw std::logic_error("Invalid call to Value::get for IntType");
+	}
+
+	return _int;
+}
+
+template <>
+Value::FloatType Value::get<Value::FloatType>() const
+{
+	if (_type != Type::Float)
+	{
+		throw std::logic_error("Invalid call to Value::get for FloatType");
+	}
+
+	return _float;
+}
+
+template <>
+const Value::ScalarType& Value::get<const Value::ScalarType&>() const
+{
+	if (_type != Type::Scalar)
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	return *_scalar;
+}
+
+template <>
+Value::MapType Value::release<Value::MapType>()
+{
+	if (_type != Type::Map)
+	{
+		throw std::logic_error("Invalid call to Value::release for MapType");
+	}
+
+	MapType result = std::move(*_map);
+
+	_members->clear();
+
+	return result;
+}
+
+template <>
+Value::ListType Value::release<Value::ListType>()
+{
+	if (_type != Type::List)
+	{
+		throw std::logic_error("Invalid call to Value::release for ListType");
+	}
+
+	ListType result = std::move(*_list);
+
+	return result;
+}
+
+template <>
+Value::StringType Value::release<Value::StringType>()
+{
+	if (_type != Type::String
+		&& _type != Type::EnumValue)
+	{
+		throw std::logic_error("Invalid call to Value::release for StringType");
+	}
+
+	StringType result = std::move(*_string);
+
+	return result;
+}
+
+template <>
+Value::ScalarType Value::release<Value::ScalarType>()
+{
+	if (_type != Type::Scalar)
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	ScalarType result = std::move(*_scalar);
+
+	return result;
+}
+
 } /* namespace response */
 } /* namespace graphql */
 } /* namespace facebook */
