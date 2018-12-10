@@ -3,9 +3,6 @@
 
 #include "Introspection.h"
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 namespace facebook {
 namespace graphql {
 namespace introspection {
@@ -558,11 +555,11 @@ std::future<std::unique_ptr<std::string>> Field::getDeprecationReason(service::R
 	return promise.get_future();
 }
 
-InputValue::InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, const rapidjson::Value& defaultValue)
+InputValue::InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, std::string defaultValue)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _type(std::move(type))
-	, _defaultValue(formatDefaultValue(defaultValue))
+	, _defaultValue(std::move(defaultValue))
 {
 }
 
@@ -599,64 +596,11 @@ std::future<std::unique_ptr<std::string>> InputValue::getDefaultValue(service::R
 {
 	std::promise<std::unique_ptr<std::string>> promise;
 
-	promise.set_value(std::unique_ptr<std::string>(new std::string(_defaultValue)));
+	promise.set_value(std::unique_ptr<std::string>(_defaultValue.empty()
+		? nullptr
+		: new std::string(_defaultValue)));
 
 	return promise.get_future();
-}
-
-std::string InputValue::formatDefaultValue(const rapidjson::Value& defaultValue) noexcept
-{
-	std::ostringstream output;
-
-	if (defaultValue.IsObject())
-	{
-		bool firstValue = true;
-
-		output << "{ ";
-
-		for (const auto& entry : defaultValue.GetObject())
-		{
-			if (!firstValue)
-			{
-				output << ", ";
-			}
-			firstValue = false;
-
-			output << "\"" << entry.name.GetString()
-				<< "\": " << formatDefaultValue(entry.value);
-		}
-
-		output << " }";
-	}
-	else if (defaultValue.IsArray())
-	{
-		bool firstValue = true;
-
-		output << "[ ";
-
-		for (const auto& entry : defaultValue.GetArray())
-		{
-			if (!firstValue)
-			{
-				output << ", ";
-			}
-			firstValue = false;
-
-			output << formatDefaultValue(entry);
-		}
-
-		output << " ]";
-	}
-	else
-	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		defaultValue.Accept(writer);
-		output << buffer.GetString();
-	}
-
-	return output.str();
 }
 
 EnumValue::EnumValue(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason)

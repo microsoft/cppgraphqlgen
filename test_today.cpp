@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "Today.h"
-#include "GraphQLTree.h"
+#include "JSONResponse.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -94,9 +94,9 @@ int main(int argc, char** argv)
 
 		rapidjson::StringBuffer buffer;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-		const rapidjson::Document variables(rapidjson::Type::kObjectType);
+		response::Value variables(response::Value::Type::Map);
 		
-		service->resolve(0, *ast, ((argc > 2) ? argv[2] : ""), variables.GetObject()).get().Accept(writer);
+		rapidjson::convertResponse(service->resolve(0, *ast, ((argc > 2) ? argv[2] : ""), variables).get()).Accept(writer);
 		std::cout << buffer.GetString() << std::endl;
 	}
 	catch (const std::runtime_error& ex)

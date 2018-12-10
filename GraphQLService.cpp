@@ -2,12 +2,10 @@
 // Licensed under the MIT License.
 
 #include "GraphQLService.h"
-#include "GraphQLTree.h"
 #include "GraphQLGrammar.h"
 
 #include <iostream>
 #include <algorithm>
-#include <stdexcept>
 #include <array>
 
 namespace facebook {
@@ -15,22 +13,20 @@ namespace graphql {
 namespace service {
 
 schema_exception::schema_exception(std::vector<std::string>&& messages)
-	: _errors(rapidjson::Type::kArrayType)
+	: _errors(response::Value::Type::List)
 {
-	auto& allocator = _errors.GetAllocator();
-
-	for (const auto& message : messages)
+	for (auto& message : messages)
 	{
-		rapidjson::Value error(rapidjson::Type::kObjectType);
+		response::Value error(response::Value::Type::Map);
 
-		error.AddMember(rapidjson::StringRef("message"), rapidjson::Value(message.c_str(), allocator), allocator);
-		_errors.PushBack(error, allocator);
+		error.emplace_back("message", response::Value(std::move(message)));
+		_errors.emplace_back(std::move(error));
 	}
 
 	messages.clear();
 }
 
-const rapidjson::Document& schema_exception::getErrors() const noexcept
+const response::Value& schema_exception::getErrors() const noexcept
 {
 	return _errors;
 }
@@ -202,151 +198,131 @@ std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
 }
 
 template <>
-int ModifiedArgument<int>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+response::Value::IntType ModifiedArgument<response::Value::IntType>::convert(const response::Value& value)
 {
-	if (!value.IsInt())
+	if (value.type() != response::Value::Type::Int)
 	{
 		throw schema_exception({ "not an integer" });
 	}
 
-	return value.GetInt();
+	return value.get<response::Value::IntType>();
 }
 
 template <>
-double ModifiedArgument<double>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+response::Value::FloatType ModifiedArgument<response::Value::FloatType>::convert(const response::Value& value)
 {
-	if (!value.IsDouble())
+	if (value.type() != response::Value::Type::Float)
 	{
 		throw schema_exception({ "not a float" });
 	}
 
-	return value.GetDouble();
+	return value.get<response::Value::FloatType>();
 }
 
 template <>
-std::string ModifiedArgument<std::string>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+response::Value::StringType ModifiedArgument<response::Value::StringType>::convert(const response::Value& value)
 {
-	if (!value.IsString())
+	if (value.type() != response::Value::Type::String)
 	{
 		throw schema_exception({ "not a string" });
 	}
 
-	return value.GetString();
+	return value.get<const response::Value::StringType&>();
 }
 
 template <>
-bool ModifiedArgument<bool>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+response::Value::BooleanType ModifiedArgument<response::Value::BooleanType>::convert(const response::Value& value)
 {
-	if (!value.IsBool())
+	if (value.type() != response::Value::Type::Boolean)
 	{
 		throw schema_exception({ "not a boolean" });
 	}
 
-	return value.GetBool();
+	return value.get<response::Value::BooleanType>();
 }
 
 template <>
-rapidjson::Value ModifiedArgument<rapidjson::Value>::convert(rapidjson::Document::AllocatorType& allocator, const rapidjson::Value& value)
+response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
 {
-	if (!value.IsObject())
+	if (value.type() != response::Value::Type::Map)
 	{
 		throw schema_exception({ "not an object" });
 	}
 
-	rapidjson::Value result(rapidjson::Type::kObjectType);
-
-	result.CopyFrom(value, allocator);
-
-	return result;
+	return response::Value(value);
 }
 
 template <>
-std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const response::Value& value)
 {
-	if (!value.IsString())
+	if (value.type() != response::Value::Type::String)
 	{
 		throw schema_exception({ "not a string" });
 	}
 
-	return Base64::fromBase64(value.GetString(), value.GetStringLength());
+	const auto& encoded = value.get<const response::Value::StringType&>();
+
+	return Base64::fromBase64(encoded.c_str(), encoded.size());
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<int>::convert(std::future<int>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::Value::IntType>::convert(std::future<response::Value::IntType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<int>&& resultFuture)
+		[](std::future<response::Value::IntType>&& resultFuture)
 	{
-		rapidjson::Value value(rapidjson::Type::kNumberType);
-
-		value.SetInt(resultFuture.get());
-
-		return value;
+		return response::Value(resultFuture.get());
 	}, std::move(result));
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<double>::convert(std::future<double>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::Value::FloatType>::convert(std::future<response::Value::FloatType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<double>&& resultFuture)
+		[](std::future<response::Value::FloatType>&& resultFuture)
 	{
-		rapidjson::Value value(rapidjson::Type::kNumberType);
-
-		value.SetDouble(resultFuture.get());
-
-		return value;
+		return response::Value(resultFuture.get());
 	}, std::move(result));
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<std::string>::convert(std::future<std::string>&& result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<response::Value::StringType>::convert(std::future<response::Value::StringType>&& result, ResolverParams&& params)
 {
 	return std::async(std::launch::deferred,
-		[&](std::future<std::string>&& resultFuture, ResolverParams&& paramsFuture)
+		[&](std::future<response::Value::StringType>&& resultFuture, ResolverParams&& paramsFuture)
 	{
-		rapidjson::Value value(rapidjson::Type::kStringType);
-
-		value.SetString(resultFuture.get().c_str(), paramsFuture.allocator);
-
-		return value;
+		return response::Value(resultFuture.get());
 	}, std::move(result), std::move(params));
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<bool>::convert(std::future<bool>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::Value::BooleanType>::convert(std::future<response::Value::BooleanType>&& result, ResolverParams&&)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<bool>&& resultFuture)
+		[](std::future<response::Value::BooleanType>&& resultFuture)
 	{
-		return rapidjson::Value(resultFuture.get()
-			? rapidjson::Type::kTrueType
-			: rapidjson::Type::kFalseType);
+		return response::Value(resultFuture.get());
 	}, std::move(result));
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<rapidjson::Value>::convert(std::future<rapidjson::Value>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::Value>::convert(std::future<response::Value>&& result, ResolverParams&&)
 {
 	return std::move(result);
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<std::vector<uint8_t>>::convert(std::future<std::vector<uint8_t>>&& result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<std::vector<uint8_t>>::convert(std::future<std::vector<uint8_t>>&& result, ResolverParams&& params)
 {
 	return std::async(std::launch::deferred,
 		[](std::future<std::vector<uint8_t>>&& resultFuture, ResolverParams&& paramsFuture)
 	{
-		rapidjson::Value value(rapidjson::Type::kStringType);
-
-		value.SetString(Base64::toBase64(resultFuture.get()).c_str(), paramsFuture.allocator);
-
-		return value;
+		return response::Value(Base64::toBase64(resultFuture.get()));
 	}, std::move(result), std::move(params));
 }
 
 template <>
-std::future<rapidjson::Value> ModifiedResult<Object>::convert(std::future<std::shared_ptr<Object>> result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::shared_ptr<Object>> result, ResolverParams&& params)
 {
 	return std::async(std::launch::deferred,
 		[](std::future<std::shared_ptr<Object>>&& resultFuture, ResolverParams&& paramsFuture)
@@ -355,12 +331,12 @@ std::future<rapidjson::Value> ModifiedResult<Object>::convert(std::future<std::s
 
 		if (!wrappedResult || !paramsFuture.selection)
 		{
-			return rapidjson::Value(!wrappedResult
-				? rapidjson::Type::kNullType
-				: rapidjson::Type::kObjectType);
+			return response::Value(!wrappedResult
+				? response::Value::Type::Null
+				: response::Value::Type::Map);
 		}
 
-		return wrappedResult->resolve(paramsFuture.requestId, paramsFuture.allocator, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
+		return wrappedResult->resolve(paramsFuture.requestId, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
 	}, std::move(result), std::move(params));
 }
 
@@ -370,16 +346,15 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<rapidjson::Value> Object::resolve(RequestId requestId, rapidjson::Document::AllocatorType& allocator,
-	const peg::ast_node& selection, const FragmentMap& fragments, const rapidjson::Value::ConstObject& variables) const
+std::future<response::Value> Object::resolve(RequestId requestId, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
-	std::queue<std::future<rapidjson::Value>> selections;
+	std::queue<std::future<response::Value>> selections;
 
 	beginSelectionSet(requestId);
 
 	for (const auto& child : selection.children)
 	{
-		SelectionVisitor visitor(requestId, allocator, fragments, variables, _typeNames, _resolvers);
+		SelectionVisitor visitor(requestId, fragments, variables, _typeNames, _resolvers);
 
 		visitor.visit(*child);
 		selections.push(visitor.getValues());
@@ -388,9 +363,9 @@ std::future<rapidjson::Value> Object::resolve(RequestId requestId, rapidjson::Do
 	endSelectionSet(requestId);
 
 	return std::async(std::launch::deferred,
-		[&allocator](std::queue<std::future<rapidjson::Value>>&& promises)
+		[](std::queue<std::future<response::Value>>&& promises)
 	{
-		rapidjson::Value result(rapidjson::Type::kObjectType);
+		response::Value result(response::Value::Type::Map);
 
 		while (!promises.empty())
 		{
@@ -398,11 +373,13 @@ std::future<rapidjson::Value> Object::resolve(RequestId requestId, rapidjson::Do
 
 			promises.pop();
 
-			if (values.IsObject())
+			if (values.type() == response::Value::Type::Map)
 			{
-				for (auto& entry : values.GetObject())
+				auto members = values.release<response::Value::MapType>();
+
+				for (auto& entry : members)
 				{
-					result.AddMember(entry.name, entry.value, allocator);
+					result.emplace_back(std::move(entry.first), std::move(entry.second));
 				}
 			}
 		}
@@ -424,7 +401,7 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-std::future<rapidjson::Document> Request::resolve(RequestId requestId, const peg::ast_node& root, const std::string& operationName, const rapidjson::Document::ConstObject& variables) const
+std::future<response::Value> Request::resolve(RequestId requestId, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor;
 
@@ -446,10 +423,8 @@ std::future<rapidjson::Document> Request::resolve(RequestId requestId, const peg
 	return operationVisitor.getValue();
 }
 
-SelectionVisitor::SelectionVisitor(RequestId requestId, rapidjson::Document::AllocatorType& allocator,
-	const FragmentMap& fragments, const rapidjson::Document::ConstObject& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
+SelectionVisitor::SelectionVisitor(RequestId requestId, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
 	: _requestId(requestId)
-	, _allocator(allocator)
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -457,22 +432,18 @@ SelectionVisitor::SelectionVisitor(RequestId requestId, rapidjson::Document::All
 {
 }
 
-std::future<rapidjson::Value> SelectionVisitor::getValues()
+std::future<response::Value> SelectionVisitor::getValues()
 {
-	auto& allocator = _allocator;
-
 	return std::async(std::launch::deferred,
-		[&allocator](std::queue<std::pair<rapidjson::Value, std::future<rapidjson::Value>>>&& values)
+		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& values)
 	{
-		rapidjson::Value result(rapidjson::Type::kObjectType);
+		response::Value result(response::Value::Type::Map);
 
 		while (!values.empty())
 		{
 			auto& entry = values.front();
-			auto selectionName = std::move(entry.first);
-			auto selectionValue = entry.second.get();
 
-			result.AddMember(selectionName, selectionValue, allocator);
+			result.emplace_back(std::move(entry.first), entry.second.get());
 			values.pop();
 		}
 
@@ -546,21 +517,18 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	rapidjson::Value arguments(rapidjson::Type::kObjectType);
+	response::Value arguments(response::Value::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &arguments](const peg::ast_node& child)
 	{
-		ValueVisitor visitor(_allocator, _variables);
+		ValueVisitor visitor(_variables);
 
 		for (auto& argument : child.children)
 		{
 			visitor.visit(*argument->children.back());
 
-			rapidjson::Value argumentName(argument->children.front()->content().c_str(), _allocator);
-			auto argumentValue = visitor.getValue();
-
-			arguments.AddMember(argumentName, argumentValue, _allocator);
+			arguments.emplace_back(argument->children.front()->content(), visitor.getValue());
 		}
 	});
 
@@ -573,8 +541,8 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	});
 
 	_values.push({
-		rapidjson::Value(alias.c_str(), _allocator),
-		itr->second({ _requestId, _allocator, const_cast<const rapidjson::Value&>(arguments).GetObject(), selection, _fragments, _variables })
+		std::move(alias),
+		itr->second({ _requestId, arguments, selection, _fragments, _variables })
 		});
 }
 
@@ -764,13 +732,12 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 	return false;
 }
 
-ValueVisitor::ValueVisitor(rapidjson::Document::AllocatorType& allocator, const rapidjson::Document::ConstObject& variables)
-	: _allocator(allocator)
-	, _variables(variables)
+ValueVisitor::ValueVisitor(const response::Value& variables)
+	: _variables(variables)
 {
 }
 
-rapidjson::Value ValueVisitor::getValue()
+response::Value ValueVisitor::getValue()
 {
 	auto result = std::move(_value);
 
@@ -821,9 +788,9 @@ void ValueVisitor::visit(const peg::ast_node& value)
 void ValueVisitor::visitVariable(const peg::ast_node& variable)
 {
 	const std::string name(variable.content().c_str() + 1);
-	auto itr = _variables.FindMember(name.c_str());
+	auto itr = _variables.find(name);
 
-	if (itr == _variables.MemberEnd())
+	if (itr == _variables.get<const response::Value::MapType&>().cend())
 	{
 		auto position = variable.begin();
 		std::ostringstream error;
@@ -835,70 +802,64 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 		throw schema_exception({ error.str() });
 	}
 
-	_value.CopyFrom(itr->value, _allocator);
+	_value = response::Value(itr->second);
 }
 
 void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value.SetInt(std::atoi(intValue.content().c_str()));
+	_value = response::Value(std::atoi(intValue.content().c_str()));
 }
 
 void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value.SetDouble(std::atof(floatValue.content().c_str()));
+	_value = response::Value(std::atof(floatValue.content().c_str()));
 }
 
 void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value.SetString(stringValue.unescaped.c_str(), _allocator);
+	_value = response::Value(std::string(stringValue.unescaped));
 }
 
 void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value.SetBool(booleanValue.is<peg::true_keyword>());
+	_value = response::Value(booleanValue.is<peg::true_keyword>());
 }
 
 void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
-	_value.SetNull();
+	_value = {};
 }
 
 void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value.SetString(enumValue.content().c_str(), _allocator);
+	_value = response::Value(enumValue.content());
 }
 
 void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = rapidjson::Value(rapidjson::Type::kArrayType);
-	_value.Reserve(static_cast<rapidjson::SizeType>(listValue.children.size()), _allocator);
+	_value = response::Value(response::Value::Type::List);
+	_value.reserve(listValue.children.size());
 
-	ValueVisitor visitor(_allocator, _variables);
+	ValueVisitor visitor(_variables);
 
 	for (const auto& child : listValue.children)
 	{
 		visitor.visit(*child->children.back());
-
-		auto value = visitor.getValue();
-
-		_value.PushBack(value, _allocator);
+		_value.emplace_back(visitor.getValue());
 	}
 }
 
 void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = rapidjson::Value(rapidjson::Type::kObjectType);
+	_value = response::Value(response::Value::Type::Map);
+	_value.reserve(objectValue.children.size());
 
-	ValueVisitor visitor(_allocator, _variables);
+	ValueVisitor visitor(_variables);
 
 	for (const auto& field : objectValue.children)
 	{
 		visitor.visit(*field->children.back());
-
-		rapidjson::Value name(field->children.front()->content().c_str(), _allocator);
-		auto value = visitor.getValue();
-
-		_value.AddMember(name, value, _allocator);
+		_value.emplace_back(field->children.front()->content(), visitor.getValue());
 	}
 }
 
@@ -917,7 +878,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(RequestId requestId, const TypeMap& operations, const std::string& operationName, const rapidjson::Document::ConstObject& variables, const FragmentMap& fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(RequestId requestId, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
 	: _requestId(requestId)
 	, _operations(operations)
 	, _operationName(operationName)
@@ -926,7 +887,7 @@ OperationDefinitionVisitor::OperationDefinitionVisitor(RequestId requestId, cons
 {
 }
 
-std::future<rapidjson::Document> OperationDefinitionVisitor::getValue()
+std::future<response::Value> OperationDefinitionVisitor::getValue()
 {
 	auto result = std::move(_result);
 
@@ -948,14 +909,11 @@ std::future<rapidjson::Document> OperationDefinitionVisitor::getValue()
 	}
 	catch (const schema_exception& ex)
 	{
-		std::promise<rapidjson::Document> promise;
-		rapidjson::Document document(rapidjson::Type::kObjectType);
-		auto& allocator = document.GetAllocator();
-		rapidjson::Value errors;
+		std::promise<response::Value> promise;
+		response::Value document(response::Value::Type::Map);
 
-		errors.CopyFrom(ex.getErrors(), allocator);
-		document.AddMember(rapidjson::StringRef("data"), rapidjson::Value(rapidjson::Type::kNullType), allocator);
-		document.AddMember(rapidjson::StringRef("errors"), errors, allocator);
+		document.emplace_back("data", response::Value());
+		document.emplace_back("errors", response::Value(ex.getErrors()));
 		promise.set_value(std::move(document));
 
 		result = promise.get_future();
@@ -1045,7 +1003,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		_result = std::async(std::launch::deferred,
 			[this, &operationDefinition, operationObject]()
 		{
-			rapidjson::Document operationVariables(rapidjson::Type::kObjectType);
+			response::Value operationVariables(response::Value::Type::Map);
 
 			peg::on_first_child<peg::variable_definitions>(operationDefinition,
 				[this, &operationVariables](const peg::ast_node& child)
@@ -1062,51 +1020,44 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 						variableName = name.content().c_str() + 1;
 					});
 
-					auto& variableAllocator = operationVariables.GetAllocator();
-					rapidjson::Value nameVar(rapidjson::StringRef(variableName.c_str()));
-					auto itrVar = _variables.FindMember(nameVar);
-					rapidjson::Value valueVar;
+					auto itrVar = _variables.find(variableName);
+					response::Value valueVar;
 
-					if (itrVar != _variables.MemberEnd())
+					if (itrVar != _variables.get<const response::Value::MapType&>().cend())
 					{
-						valueVar.CopyFrom(itrVar->value, variableAllocator);
+						valueVar = response::Value(itrVar->second);
 					}
 					else
 					{
 						peg::on_first_child<peg::default_value>(variable,
-							[this, &variableAllocator, &valueVar](const peg::ast_node& defaultValue)
+							[this, &valueVar](const peg::ast_node& defaultValue)
 						{
-							ValueVisitor visitor(variableAllocator, _variables);
+							ValueVisitor visitor(_variables);
 
 							visitor.visit(*defaultValue.children.front());
 							valueVar = visitor.getValue();
 						});
 					}
 
-					operationVariables.AddMember(nameVar, valueVar, variableAllocator);
+					operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
 				});
 			});
 
-			rapidjson::Document document(rapidjson::Type::kObjectType);
-			auto& allocator = document.GetAllocator();
-			auto data = operationObject->resolve(_requestId, allocator, *operationDefinition.children.back(),
-				_fragments, const_cast<const rapidjson::Document&>(operationVariables).GetObject());
+			response::Value document(response::Value::Type::Map);
+			auto data = operationObject->resolve(_requestId, *operationDefinition.children.back(), _fragments, operationVariables);
 
-			document.AddMember(rapidjson::StringRef("data"), data.get(), allocator);
+			document.emplace_back("data", data.get());
 
 			return document;
 		});
 	}
 	catch (const schema_exception& ex)
 	{
-		std::promise<rapidjson::Document> promise;
-		rapidjson::Document document(rapidjson::Type::kObjectType);
-		auto& allocator = document.GetAllocator();
-		rapidjson::Value errors;
+		std::promise<response::Value> promise;
+		response::Value document(response::Value::Type::Map);
 
-		errors.CopyFrom(ex.getErrors(), allocator);
-		document.AddMember(rapidjson::StringRef("data"), rapidjson::Value(rapidjson::Type::kNullType), allocator);
-		document.AddMember(rapidjson::StringRef("errors"), errors, allocator);
+		document.emplace_back("data", response::Value());
+		document.emplace_back("errors", response::Value(ex.getErrors()));
 		promise.set_value(std::move(document));
 
 		_result = promise.get_future();

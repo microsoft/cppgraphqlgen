@@ -30,8 +30,8 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	std::vector<uint8_t> id;
-	std::unique_ptr<bool> isComplete;
-	std::unique_ptr<std::string> clientMutationId;
+	std::unique_ptr<response::Value::BooleanType> isComplete;
+	std::unique_ptr<response::Value::StringType> clientMutationId;
 };
 
 struct Node
@@ -64,25 +64,25 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<service::Object>> getNode(service::RequestId requestId, std::vector<uint8_t>&& id) const = 0;
-	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<int>&& first, std::unique_ptr<rapidjson::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<rapidjson::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
+	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::RequestId requestId, std::unique_ptr<response::Value::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::Value::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::RequestId requestId, std::vector<std::vector<uint8_t>>&& ids) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveNode(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveAppointments(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveTasks(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveUnreadCounts(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveAppointmentsById(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveTasksById(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveUnreadCountsById(service::ResolverParams&& params);
+	std::future<response::Value> resolveNode(service::ResolverParams&& params);
+	std::future<response::Value> resolveAppointments(service::ResolverParams&& params);
+	std::future<response::Value> resolveTasks(service::ResolverParams&& params);
+	std::future<response::Value> resolveUnreadCounts(service::ResolverParams&& params);
+	std::future<response::Value> resolveAppointmentsById(service::ResolverParams&& params);
+	std::future<response::Value> resolveTasksById(service::ResolverParams&& params);
+	std::future<response::Value> resolveUnreadCountsById(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolve__schema(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolve__type(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__schema(service::ResolverParams&& params);
+	std::future<response::Value> resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
 };
@@ -94,14 +94,14 @@ protected:
 	PageInfo();
 
 public:
-	virtual std::future<bool> getHasNextPage(service::RequestId requestId) const = 0;
-	virtual std::future<bool> getHasPreviousPage(service::RequestId requestId) const = 0;
+	virtual std::future<response::Value::BooleanType> getHasNextPage(service::RequestId requestId) const = 0;
+	virtual std::future<response::Value::BooleanType> getHasPreviousPage(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveHasNextPage(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveHasPreviousPage(service::ResolverParams&& params);
+	std::future<response::Value> resolveHasNextPage(service::ResolverParams&& params);
+	std::future<response::Value> resolveHasPreviousPage(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class AppointmentEdge
@@ -112,13 +112,13 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Appointment>> getNode(service::RequestId requestId) const = 0;
-	virtual std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const = 0;
+	virtual std::future<response::Value> getCursor(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveNode(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveCursor(service::ResolverParams&& params);
+	std::future<response::Value> resolveNode(service::ResolverParams&& params);
+	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class AppointmentConnection
@@ -132,10 +132,10 @@ public:
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolvePageInfo(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveEdges(service::ResolverParams&& params);
+	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
+	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class TaskEdge
@@ -146,13 +146,13 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Task>> getNode(service::RequestId requestId) const = 0;
-	virtual std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const = 0;
+	virtual std::future<response::Value> getCursor(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveNode(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveCursor(service::ResolverParams&& params);
+	std::future<response::Value> resolveNode(service::ResolverParams&& params);
+	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class TaskConnection
@@ -166,10 +166,10 @@ public:
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolvePageInfo(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveEdges(service::ResolverParams&& params);
+	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
+	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class FolderEdge
@@ -180,13 +180,13 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Folder>> getNode(service::RequestId requestId) const = 0;
-	virtual std::future<rapidjson::Value> getCursor(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const = 0;
+	virtual std::future<response::Value> getCursor(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveNode(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveCursor(service::ResolverParams&& params);
+	std::future<response::Value> resolveNode(service::ResolverParams&& params);
+	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class FolderConnection
@@ -200,10 +200,10 @@ public:
 	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolvePageInfo(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveEdges(service::ResolverParams&& params);
+	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
+	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class CompleteTaskPayload
@@ -214,13 +214,13 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Task>> getTask(service::RequestId requestId) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getClientMutationId(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::Value::StringType>> getClientMutationId(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveTask(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveClientMutationId(service::ResolverParams&& params);
+	std::future<response::Value> resolveTask(service::ResolverParams&& params);
+	std::future<response::Value> resolveClientMutationId(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class Mutation
@@ -233,9 +233,9 @@ public:
 	virtual std::future<std::shared_ptr<CompleteTaskPayload>> getCompleteTask(service::RequestId requestId, CompleteTaskInput&& input) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveCompleteTask(service::ResolverParams&& params);
+	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class Subscription
@@ -248,9 +248,9 @@ public:
 	virtual std::future<std::shared_ptr<Appointment>> getNextAppointmentChange(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
+	std::future<response::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class Appointment
@@ -261,17 +261,17 @@ protected:
 	Appointment();
 
 public:
-	virtual std::future<std::unique_ptr<rapidjson::Value>> getWhen(service::RequestId requestId, rapidjson::Document::AllocatorType& allocator) const = 0;
-	virtual std::future<std::unique_ptr<std::string>> getSubject(service::RequestId requestId) const = 0;
-	virtual std::future<bool> getIsNow(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::Value>> getWhen(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::Value::StringType>> getSubject(service::RequestId requestId) const = 0;
+	virtual std::future<response::Value::BooleanType> getIsNow(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveId(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveWhen(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveSubject(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveIsNow(service::ResolverParams&& params);
+	std::future<response::Value> resolveId(service::ResolverParams&& params);
+	std::future<response::Value> resolveWhen(service::ResolverParams&& params);
+	std::future<response::Value> resolveSubject(service::ResolverParams&& params);
+	std::future<response::Value> resolveIsNow(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class Task
@@ -282,15 +282,15 @@ protected:
 	Task();
 
 public:
-	virtual std::future<std::unique_ptr<std::string>> getTitle(service::RequestId requestId) const = 0;
-	virtual std::future<bool> getIsComplete(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::Value::StringType>> getTitle(service::RequestId requestId) const = 0;
+	virtual std::future<response::Value::BooleanType> getIsComplete(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveId(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveTitle(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveIsComplete(service::ResolverParams&& params);
+	std::future<response::Value> resolveId(service::ResolverParams&& params);
+	std::future<response::Value> resolveTitle(service::ResolverParams&& params);
+	std::future<response::Value> resolveIsComplete(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 class Folder
@@ -301,15 +301,15 @@ protected:
 	Folder();
 
 public:
-	virtual std::future<std::unique_ptr<std::string>> getName(service::RequestId requestId) const = 0;
-	virtual std::future<int> getUnreadCount(service::RequestId requestId) const = 0;
+	virtual std::future<std::unique_ptr<response::Value::StringType>> getName(service::RequestId requestId) const = 0;
+	virtual std::future<response::Value::IntType> getUnreadCount(service::RequestId requestId) const = 0;
 
 private:
-	std::future<rapidjson::Value> resolveId(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveName(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolveUnreadCount(service::ResolverParams&& params);
+	std::future<response::Value> resolveId(service::ResolverParams&& params);
+	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolveUnreadCount(service::ResolverParams&& params);
 
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

@@ -219,7 +219,7 @@ private:
 class InputValue : public object::__InputValue
 {
 public:
-	explicit InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, const rapidjson::Value& defaultValue);
+	explicit InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, std::string defaultValue);
 
 	// Accessors
 	std::future<std::string> getName(service::RequestId requestId) const override;
@@ -228,8 +228,6 @@ public:
 	std::future<std::unique_ptr<std::string>> getDefaultValue(service::RequestId requestId) const override;
 
 private:
-	static std::string formatDefaultValue(const rapidjson::Value& defaultValue) noexcept;
-
 	const std::string _name;
 	const std::string _description;
 	const std::weak_ptr<object::__Type> _type;

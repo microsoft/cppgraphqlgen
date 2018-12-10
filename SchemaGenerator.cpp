@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #include "SchemaGenerator.h"
-#include "GraphQLTree.h"
 #include "GraphQLGrammar.h"
 
 #include <stdexcept>
@@ -10,9 +9,6 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
-
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 
 namespace facebook {
 namespace graphql {
@@ -29,14 +25,14 @@ const BuiltinTypeMap Generator::s_builtinTypes= {
 	};
 
 const CppTypeMap Generator::s_builtinCppTypes= {
-		"int",
-		"double",
-		"std::string",
-		"bool",
+		"response::Value::IntType",
+		"response::Value::FloatType",
+		"response::Value::StringType",
+		"response::Value::BooleanType",
 		"std::vector<uint8_t>",
 	};
 
-const std::string Generator::s_scalarCppType = R"cpp(rapidjson::Value)cpp";
+const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
@@ -844,6 +840,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
+				field.defaultValueString = child->children.back()->content();
 			}
 			else if (child->is<peg::description>())
 			{
@@ -948,73 +945,65 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 
 void Generator::DefaultValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value.SetInt(std::atoi(intValue.content().c_str()));
+	_value = response::Value(std::atoi(intValue.content().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value.SetDouble(std::atof(floatValue.content().c_str()));
+	_value = response::Value(std::atof(floatValue.content().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value.SetString(stringValue.unescaped.c_str(), _value.GetAllocator());
+	_value = response::Value(std::string(stringValue.unescaped));
 }
 
 void Generator::DefaultValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value.SetBool(booleanValue.is<peg::true_keyword>());
+	_value = response::Value(booleanValue.is<peg::true_keyword>());
 }
 
 void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 {
-	_value.SetNull();
+	_value = {};
 }
 
 void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	_value.SetString(enumValue.content().c_str(), _value.GetAllocator());
+	_value = response::Value(enumValue.content());
 }
 
 void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
-	_value = rapidjson::Document(rapidjson::Type::kArrayType);
+	_value = response::Value(response::Value::Type::List);
+	_value.reserve(listValue.children.size());
 
-	auto& allocator = _value.GetAllocator();
-
-	_value.Reserve(static_cast<rapidjson::SizeType>(listValue.children.size()), allocator);
 	for (const auto& child : listValue.children)
 	{
-		rapidjson::Value value;
 		DefaultValueVisitor visitor;
 
 		visitor.visit(*child->children.back());
-		value.CopyFrom(visitor.getValue(), allocator);
-		_value.PushBack(value, allocator);
+		_value.emplace_back(visitor.getValue());
 	}
 }
 
 void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
-	_value = rapidjson::Document(rapidjson::Type::kObjectType);
-
-	auto& allocator = _value.GetAllocator();
+	_value = response::Value(response::Value::Type::Map);
+	_value.reserve(objectValue.children.size());
 
 	for (const auto& field : objectValue.children)
 	{
-		rapidjson::Value name(field->children.front()->content().c_str(), allocator);
-		rapidjson::Value value;
 		DefaultValueVisitor visitor;
 
 		visitor.visit(*field->children.back());
-		value.CopyFrom(visitor.getValue(), allocator);
-		_value.AddMember(name, value, allocator);
+		_value.emplace_back(field->children.front()->content(), visitor.getValue());
 	}
 }
 
-rapidjson::Document Generator::DefaultValueVisitor::getValue()
+response::Value Generator::DefaultValueVisitor::getValue()
 {
-	return rapidjson::Document(std::move(_value));
+	return response::Value(std::move(_value));
 }
 
 std::vector<std::string> Generator::Build() const noexcept
@@ -1383,13 +1372,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	std::future<rapidjson::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	std::future<rapidjson::Value> resolve__schema(service::ResolverParams&& params);
-	std::future<rapidjson::Value> resolve__type(service::ResolverParams&& params);
+					headerFile << R"cpp(	std::future<response::Value> resolve__schema(service::ResolverParams&& params);
+	std::future<response::Value> resolve__type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1475,11 +1464,6 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
 		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::RequestId requestId)cpp";
 
-	if (outputField.fieldType == OutputFieldType::Scalar)
-	{
-		output << R"cpp(, rapidjson::Document::AllocatorType& allocator)cpp";
-	}
-
 	for (const auto& argument : outputField.arguments)
 	{
 		output << R"cpp(, )cpp" << getInputCppType(argument)
@@ -1498,7 +1482,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	std::future<rapidjson::Value> resolve)cpp" << fieldName
+	output << R"cpp(	std::future<response::Value> resolve)cpp" << fieldName
 		<< R"cpp((service::ResolverParams&& params);
 )cpp";
 
@@ -1538,7 +1522,7 @@ namespace service {
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert(rapidjson::Document::AllocatorType&, const rapidjson::Value& value)
+<< R"cpp(>::convert(const response::Value& value)
 {
 	static const std::unordered_map<std::string, )cpp"
 				<< _schemaNamespace << R"cpp(::)cpp" << enumType.type << R"cpp(> s_names = {
@@ -1561,7 +1545,12 @@ template <>
 			sourceFile << R"cpp(
 	};
 
-	auto itr = s_names.find(value.GetString());
+	if (value.type() != response::Value::Type::EnumValue)
+	{
+		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
+	}
+
+	auto itr = s_names.find(value.get<const response::Value::StringType&>());
 
 	if (itr == s_names.cend())
 	{
@@ -1572,7 +1561,7 @@ template <>
 }
 
 template <>
-std::future<rapidjson::Value> service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+std::future<response::Value> service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>&& value, ResolverParams&&)
 {
@@ -1596,11 +1585,9 @@ std::future<rapidjson::Value> service::ModifiedResult<)cpp" << _schemaNamespace 
 			sourceFile << R"cpp(
 	};
 
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef(s_names[static_cast<size_t>(value.get())].c_str()));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value(std::string(s_names[static_cast<size_t>(value.get())])));
 
 	return promise.get_future();
 }
@@ -1615,36 +1602,28 @@ std::future<rapidjson::Value> service::ModifiedResult<)cpp" << _schemaNamespace 
 template <>
 )cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
 << R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
-<< R"cpp(>::convert(rapidjson::Document::AllocatorType& allocator, const rapidjson::Value& value)
+<< R"cpp(>::convert(const response::Value& value)
 {
 )cpp";
 
 			for (const auto& inputField : inputType.fields)
 			{
-				if (!inputField.defaultValue.IsNull())
+				if (inputField.defaultValue.type() != response::Value::Type::Null)
 				{
 					if (firstField)
 					{
 						firstField = false;
 						sourceFile << R"cpp(	const auto defaultValue = []()
 	{
-		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& valuesAllocator = values.GetAllocator();
-		rapidjson::Document parsed;
-		rapidjson::Value entry;
+		response::Value values(response::Value::Type::Map);
+		response::Value entry;
 
 )cpp";
 					}
 
-					rapidjson::StringBuffer defaultValue;
-					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-					inputField.defaultValue.Accept(writer);
-					sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
-						<< defaultValue.GetString() << R"cpp()js");
-		entry.CopyFrom(parsed, valuesAllocator);
-		values.AddMember(rapidjson::StringRef(")cpp"
-						<< inputField.name << R"cpp("), entry, valuesAllocator);
+					sourceFile << getArgumentDefaultValue(0, inputField.defaultValue)
+						<< R"cpp(		values.emplace_back(")cpp" << inputField.name
+						<< R"cpp(", std::move(entry));
 )cpp";
 				}
 			}
@@ -1663,13 +1642,13 @@ template <>
 				std::string fieldName(inputField.name);
 
 				fieldName[0] = std::toupper(fieldName[0]);
-				if (inputField.defaultValue.IsNull())
+				if (inputField.defaultValue.type() == response::Value::Type::Null)
 				{
 					sourceFile << R"cpp(	auto value)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((allocator, ")cpp" << inputField.name
-						<< R"cpp(", value.GetObject());
+						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp(", value);
 )cpp";
 				}
 				else
@@ -1677,14 +1656,14 @@ template <>
 					sourceFile << R"cpp(	auto pair)cpp" << fieldName
 						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::find)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((allocator, ")cpp" << inputField.name
-						<< R"cpp(", value.GetObject());
+						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp(", value);
 	auto value)cpp" << fieldName << R"cpp( = (pair)cpp" << fieldName << R"cpp(.second
 		? std::move(pair)cpp" << fieldName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(inputField)
 						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((allocator, ")cpp" << inputField.name
-						<< R"cpp(", defaultValue.GetObject()));
+						<< R"cpp((")cpp" << inputField.name
+						<< R"cpp(", defaultValue));
 )cpp";
 				}
 			}
@@ -1839,7 +1818,7 @@ namespace object {
 
 				fieldName[0] = std::toupper(fieldName[0]);
 				sourceFile << R"cpp(
-std::future<rapidjson::Value> )cpp" << objectType.type
+std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
 {
@@ -1852,30 +1831,22 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 
 					for (const auto& argument : outputField.arguments)
 					{
-						if (!argument.defaultValue.IsNull())
+						if (argument.defaultValue.type() != response::Value::Type::Null)
 						{
 							if (firstArgument)
 							{
 								firstArgument = false;
 								sourceFile << R"cpp(	const auto defaultArguments = []()
 	{
-		rapidjson::Document values(rapidjson::Type::kObjectType);
-		auto& valuesAllocator = values.GetAllocator();
-		rapidjson::Document parsed;
-		rapidjson::Value entry;
+		response::Value values(response::Value::Type::Map);
+		response::Value entry;
 
 )cpp";
 							}
 
-							rapidjson::StringBuffer defaultValue;
-							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-							argument.defaultValue.Accept(writer);
-							sourceFile << R"cpp(		parsed.Parse(R"js()cpp"
-								<< defaultValue.GetString() << R"cpp()js");
-		entry.CopyFrom(parsed, valuesAllocator);
-		values.AddMember(rapidjson::StringRef(")cpp"
-								<< argument.name << R"cpp("), entry, valuesAllocator);
+							sourceFile << getArgumentDefaultValue(0, argument.defaultValue)
+								<< R"cpp(		values.emplace_back(")cpp" << argument.name
+								<< R"cpp(", std::move(entry));
 )cpp";
 						}
 					}
@@ -1894,12 +1865,12 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 						std::string argumentName(argument.name);
 
 						argumentName[0] = std::toupper(argumentName[0]);
-						if (argument.defaultValue.IsNull())
+						if (argument.defaultValue.type() == response::Value::Type::Null)
 						{
 							sourceFile << R"cpp(	auto arg)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((params.allocator, ")cpp" << argument.name
+								<< R"cpp((")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 )cpp";
 						}
@@ -1908,25 +1879,20 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 							sourceFile << R"cpp(	auto pair)cpp" << argumentName
 								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::find)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((params.allocator, ")cpp" << argument.name
+								<< R"cpp((")cpp" << argument.name
 								<< R"cpp(", params.arguments);
 	auto arg)cpp" << argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
 		? std::move(pair)cpp" << argumentName << R"cpp(.first)
 		: )cpp" << getArgumentAccessType(argument)
 								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((params.allocator, ")cpp" << argument.name
-								<< R"cpp(", defaultArguments.GetObject()));
+								<< R"cpp((")cpp" << argument.name
+								<< R"cpp(", defaultArguments));
 )cpp";
 						}
 					}
 				}
 
 				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp((params.requestId)cpp";
-
-				if (outputField.fieldType == OutputFieldType::Scalar)
-				{
-					sourceFile << R"cpp(, params.allocator)cpp";
-				}
 
 				if (!outputField.arguments.empty())
 				{
@@ -1949,14 +1915,12 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 			}
 
 			sourceFile << R"cpp(
-std::future<rapidjson::Value> )cpp" << objectType.type
+std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve__typename(service::ResolverParams&&)
 {
-	std::promise<rapidjson::Value> promise;
-	rapidjson::Value result(rapidjson::Type::kStringType);
+	std::promise<response::Value> promise;
 
-	result.SetString(rapidjson::StringRef(")cpp" << objectType.type << R"cpp("));
-	promise.set_value(std::move(result));
+	promise.set_value(response::Value(")cpp" << objectType.type << R"cpp("));
 
 	return promise.get_future();
 }
@@ -1965,7 +1929,7 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(
-std::future<rapidjson::Value> )cpp" << objectType.type
+std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve__schema(service::ResolverParams&& params)
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
@@ -1975,10 +1939,10 @@ std::future<rapidjson::Value> )cpp" << objectType.type
 	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
 }
 
-std::future<rapidjson::Value> )cpp" << objectType.type
+std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<std::string>::require(params.allocator, "name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));
@@ -2204,20 +2168,6 @@ Operations::Operations()cpp";
 		{
 			if (!inputType.fields.empty())
 			{
-				for (const auto& inputField : inputType.fields)
-				{
-					rapidjson::StringBuffer defaultValue;
-					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-					inputField.defaultValue.Accept(writer);
-
-					sourceFile << R"cpp(	rapidjson::Document default)cpp" << inputType.type << inputField.name << R"cpp(;
-	default)cpp" << inputType.type << inputField.name << R"cpp(.Parse(R"js()cpp"
-						<< defaultValue.GetString()
-						<< R"cpp()js");
-)cpp";
-				}
-
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << inputType.type
@@ -2226,11 +2176,6 @@ Operations::Operations()cpp";
 
 				for (const auto& inputField : inputType.fields)
 				{
-					rapidjson::StringBuffer defaultValue;
-					rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-					inputField.defaultValue.Accept(writer);
-
 					if (!firstValue)
 					{
 						sourceFile << R"cpp(,
@@ -2242,7 +2187,7 @@ Operations::Operations()cpp";
 						<< R"cpp(::InputValue>(")cpp" << inputField.name
 						<< R"cpp(", R"md()cpp" << inputField.description
 						<< R"cpp()md", )cpp" << getIntrospectionType(inputField.type, inputField.modifiers)
-						<< R"cpp(, default)cpp" << inputType.type << inputField.name << R"cpp())cpp";
+						<< R"cpp(, R"gql()cpp" << inputField.defaultValueString << R"cpp()gql"))cpp";
 				}
 
 				sourceFile << R"cpp(
@@ -2296,23 +2241,6 @@ Operations::Operations()cpp";
 		{
 			if (!interfaceType.fields.empty())
 			{
-				for (const auto& interfaceField : interfaceType.fields)
-				{
-					for (const auto& argument : interfaceField.arguments)
-					{
-						rapidjson::StringBuffer defaultValue;
-						rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-						argument.defaultValue.Accept(writer);
-
-						sourceFile << R"cpp(	rapidjson::Document default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp(;
-	default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp(.Parse(R"js()cpp"
-							<< defaultValue.GetString()
-							<< R"cpp()js");
-)cpp";
-					}
-				}
-
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << interfaceType.type
@@ -2355,11 +2283,6 @@ Operations::Operations()cpp";
 
 						for (const auto& argument : interfaceField.arguments)
 						{
-							rapidjson::StringBuffer defaultValue;
-							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-							argument.defaultValue.Accept(writer);
-
 							if (!firstArgument)
 							{
 								sourceFile << R"cpp(,
@@ -2371,7 +2294,7 @@ Operations::Operations()cpp";
 								<< R"cpp(::InputValue>(")cpp" << argument.name
 								<< R"cpp(", R"md()cpp" << argument.description
 								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, default)cpp" << interfaceType.type << interfaceField.name << argument.name << R"cpp())cpp";
+								<< R"cpp(, R"gql()cpp" << argument.defaultValueString << R"cpp()gql"))cpp";
 						}
 
 						sourceFile << R"cpp(
@@ -2423,23 +2346,6 @@ Operations::Operations()cpp";
 
 			if (!objectType.fields.empty())
 			{
-				for (const auto& objectField : objectType.fields)
-				{
-					for (const auto& argument : objectField.arguments)
-					{
-						rapidjson::StringBuffer defaultValue;
-						rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-						argument.defaultValue.Accept(writer);
-
-						sourceFile << R"cpp(	rapidjson::Document default)cpp" << objectType.type << objectField.name << argument.name << R"cpp(;
-	default)cpp" << objectType.type << objectField.name << argument.name << R"cpp(.Parse(R"js()cpp"
-							<< defaultValue.GetString()
-							<< R"cpp()js");
-)cpp";
-					}
-				}
-
 				bool firstValue = true;
 
 				sourceFile << R"cpp(	type)cpp" << objectType.type
@@ -2482,11 +2388,6 @@ Operations::Operations()cpp";
 
 						for (const auto& argument : objectField.arguments)
 						{
-							rapidjson::StringBuffer defaultValue;
-							rapidjson::Writer<rapidjson::StringBuffer> writer(defaultValue);
-
-							argument.defaultValue.Accept(writer);
-
 							if (!firstArgument)
 							{
 								sourceFile << R"cpp(,
@@ -2498,7 +2399,7 @@ Operations::Operations()cpp";
 								<< R"cpp(::InputValue>(")cpp" << argument.name
 								<< R"cpp(", R"md()cpp" << argument.description
 								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, default)cpp" << objectType.type << objectField.name << argument.name << R"cpp())cpp";
+								<< R"cpp(, R"gql()cpp" << argument.defaultValueString << R"cpp()gql"))cpp";
 						}
 
 						sourceFile << R"cpp(
@@ -2542,6 +2443,132 @@ Operations::Operations()cpp";
 	return true;
 }
 
+std::string Generator::getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept
+{
+	const std::string padding(level, '\t');
+	std::ostringstream argumentDefaultValue;
+
+	switch (defaultValue.type())
+	{
+		case response::Value::Type::Map:
+		{
+			const auto& members = defaultValue.get<const response::Value::MapType&>();
+
+			argumentDefaultValue << padding << R"cpp(		entry = []()
+)cpp" << padding << R"cpp(		{
+)cpp" << padding << R"cpp(			response::Value members(response::Value::Type::Map);
+)cpp" << padding << R"cpp(			response::Value entry;
+
+)cpp";
+
+			for (const auto& entry : members)
+			{
+				argumentDefaultValue << getArgumentDefaultValue(level + 1, entry.second)
+					<< padding << R"cpp(			members.emplace_back(")cpp" << entry.first << R"cpp(", std::move(entry));
+)cpp";
+			}
+
+			argumentDefaultValue << padding << R"cpp(			return members;
+)cpp" << padding << R"cpp(		}();
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::List:
+		{
+			const auto& elements = defaultValue.get<const response::Value::ListType&>();
+
+			argumentDefaultValue << padding << R"cpp(		entry = []()
+)cpp" << padding << R"cpp(		{
+)cpp" << padding << R"cpp(			response::Value elements(response::Value::Type::List);
+)cpp" << padding << R"cpp(			response::Value entry;
+
+)cpp";
+
+			for (const auto& entry : elements)
+			{
+				argumentDefaultValue << getArgumentDefaultValue(level + 1, entry)
+					<< padding << R"cpp(			elements.emplace_back(std::move(entry));
+)cpp";
+			}
+
+			argumentDefaultValue << padding << R"cpp(			return elements;
+)cpp" << padding << R"cpp(		}();
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::String:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(R"gql()cpp"
+				<< defaultValue.get<const response::Value::StringType&>() << R"cpp()gql");
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::Null:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = {};
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::Boolean:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value()cpp"
+				<< (defaultValue.get<response::Value::BooleanType>()
+					? R"cpp(true)cpp"
+					: R"cpp(false)cpp")
+				<< R"cpp();
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::Int:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::Value::IntType>()cpp"
+				<< defaultValue.get<response::Value::IntType>() << R"cpp());
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::Float:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(static_cast<response::Value::FloatType>()cpp"
+				<< defaultValue.get<response::Value::FloatType>() << R"cpp());
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::EnumValue:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(response::Value::Type::EnumValue);
+		entry.set<response::Value::StringType>(R"gql()cpp" << defaultValue.get<const response::Value::StringType&>() << R"cpp()gql");
+)cpp";
+			break;
+		}
+
+		case response::Value::Type::Scalar:
+		{
+			argumentDefaultValue << padding << R"cpp(		entry = []()
+)cpp" << padding << R"cpp(		{
+)cpp" << padding << R"cpp(			response::Value scalar(response::Value::Type::Scalar);
+)cpp" << padding << R"cpp(			response::Value entry;
+
+)cpp";
+			argumentDefaultValue << padding << R"cpp(	)cpp" << getArgumentDefaultValue(level + 1, defaultValue.get<const response::Value::ScalarType&>())
+				<< padding << R"cpp(			scalar.set<response::Value::ScalarType>(std::move(entry));
+
+)cpp" << padding << R"cpp(			return scalar;
+)cpp" << padding << R"cpp(		}();
+)cpp";
+			break;
+		}
+	}
+
+	return argumentDefaultValue.str();
+}
+
 std::string Generator::getArgumentAccessType(const InputField& argument) const noexcept
 {
 	std::ostringstream argumentType;
@@ -2557,7 +2584,7 @@ std::string Generator::getArgumentAccessType(const InputField& argument) const n
 			break;
 
 		case InputFieldType::Scalar:
-			argumentType << R"cpp(rapidjson::Value)cpp";
+			argumentType << R"cpp(response::Value)cpp";
 			break;
 	}
 
@@ -2581,7 +2608,7 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 
 		case OutputFieldType::Scalar:
-			resultType << R"cpp(rapidjson::Value)cpp";
+			resultType << R"cpp(response::Value)cpp";
 			break;
 
 		case OutputFieldType::Union:
