@@ -15,13 +15,28 @@ include(CMakePackageConfigHelpers)
 
 find_package(pegtl CONFIG REQUIRED)
 
+# Set the minimum C++ standard required for compiling,
+# but allow for user to override on the command line using:
+#     cmake -DCMAKE_CXX_STANDARD=[11|14|17|...] -DCMAKE_CXX_EXTENSIONS=[ON|OFF]
+function(cppgraphqlgen_target_set_cxx_standard target)
+  if (CMAKE_VERSION VERSION_LESS "3.8")
+    # The cxx_std_11 abstract compile feature
+    # is available only starting from CMake 3.8.
+    # We assume the availability of lambdas
+    # indicates a C++11-compatible compiler mode.
+    target_compile_features(${target} PUBLIC cxx_lambdas)
+  else()
+    target_compile_features(${target} PUBLIC cxx_std_11)
+  endif()
+endfunction()
+
 add_executable(schemagen
   GraphQLTree.cpp
   GraphQLResponse.cpp
   SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE taocpp::pegtl)
 target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR})
-set_property(TARGET schemagen PROPERTY CXX_STANDARD 11)
+cppgraphqlgen_target_set_cxx_standard(schemagen)
 
 add_custom_command(
   OUTPUT
@@ -48,7 +63,7 @@ target_include_directories(graphqlservice
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
 )
-set_property(TARGET graphqlservice PROPERTY CXX_STANDARD 11)
+cppgraphqlgen_target_set_cxx_standard(graphqlservice)
 
 option(BUILD_TESTS "Build the tests and sample schema library." ON)
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
@@ -77,14 +92,14 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       graphqlservice)
     target_include_directories(todaygraphql SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
     target_include_directories(todaygraphql PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET todaygraphql PROPERTY CXX_STANDARD 11)
+    cppgraphqlgen_target_set_cxx_standard(todaygraphql)
 
     add_executable(test_today
       test_today.cpp)
     target_link_libraries(test_today PRIVATE
       todaygraphql)
     target_include_directories(test_today PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET test_today PROPERTY CXX_STANDARD 11)
+    cppgraphqlgen_target_set_cxx_standard(test_today)
 
     enable_testing()
     find_package(GTest MODULE REQUIRED)
@@ -96,7 +111,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       GTest::GTest
       GTest::Main)
     target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-    set_property(TARGET tests PROPERTY CXX_STANDARD 11)
+    cppgraphqlgen_target_set_cxx_standard(tests)
 
     add_test(NAME TodayServiceCase
       COMMAND tests --gtest_filter=TodayServiceCase.*
