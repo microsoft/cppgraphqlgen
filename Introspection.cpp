@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "Introspection.h"
+#include <graphqlservice/Introspection.h>
 
 namespace facebook {
 namespace graphql {

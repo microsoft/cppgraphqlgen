@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "Today.h"
-#include "JSONResponse.h"
+#include "graphqlservice/JSONResponse.h"
 
 #include <iostream>
 #include <stdexcept>

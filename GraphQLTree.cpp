@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "GraphQLTree.h"
 #include "GraphQLGrammar.h"
 
 #include <tao/pegtl/contrib/unescape.hpp>

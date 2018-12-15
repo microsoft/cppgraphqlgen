@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <tao/pegtl.hpp>
+#include <graphqlservice/GraphQLTree.h>
 
 namespace facebook {
 namespace graphql {

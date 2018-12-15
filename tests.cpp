@@ -5,7 +5,8 @@
 
 #include "Today.h"
 #include "GraphQLGrammar.h"
-#include "JSONResponse.h"
+
+#include <graphqlservice/JSONResponse.h>
 
 #include <tao/pegtl/analyze.hpp>
 

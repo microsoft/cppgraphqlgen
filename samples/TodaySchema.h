@@ -3,11 +3,11 @@
 
 #pragma once
 
+#include <graphqlservice/GraphQLService.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "GraphQLService.h"
 
 namespace facebook {
 namespace graphql {

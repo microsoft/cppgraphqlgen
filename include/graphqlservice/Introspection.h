@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "IntrospectionSchema.h"
+#include <graphqlservice/IntrospectionSchema.h>
 
 namespace facebook {
 namespace graphql {

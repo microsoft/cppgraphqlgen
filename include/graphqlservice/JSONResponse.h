@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "GraphQLResponse.h"
+#include <graphqlservice/GraphQLResponse.h>
 
 #define RAPIDJSON_NAMESPACE facebook::graphql::rapidjson
 #define RAPIDJSON_NAMESPACE_BEGIN namespace facebook { namespace graphql { namespace rapidjson {
