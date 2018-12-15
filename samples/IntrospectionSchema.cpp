@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "IntrospectionSchema.h"
 #include <graphqlservice/Introspection.h>
 
 #include <algorithm>

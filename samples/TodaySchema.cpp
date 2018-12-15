@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "TodaySchema.h"
+
 #include <graphqlservice/Introspection.h>
 
 #include <algorithm>

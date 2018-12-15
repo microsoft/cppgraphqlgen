@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 
 #include "Today.h"
-#include "graphqlservice/GraphQLTree.h"
-#include "graphqlservice/JSONResponse.h"
 #include "GraphQLGrammar.h"
+
+#include <graphqlservice/JSONResponse.h>
 
 #include <tao/pegtl/analyze.hpp>
 
