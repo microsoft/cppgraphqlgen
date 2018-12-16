@@ -9,6 +9,24 @@ namespace facebook {
 namespace graphql {
 namespace today {
 
+struct RequestState : service::RequestState
+{
+	RequestState(size_t id)
+		: requestId(id)
+	{
+	}
+
+	const size_t requestId;
+
+	size_t appointmentsRequestId = 0;
+	size_t tasksRequestId = 0;
+	size_t unreadCountsRequestId = 0;
+
+	size_t loadAppointmentsCount = 0;
+	size_t loadTasksCount = 0;
+	size_t loadUnreadCountsCount = 0;
+};
+
 class Appointment;
 class Task;
 class Folder;
@@ -36,9 +54,9 @@ private:
 	std::shared_ptr<Folder> findUnreadCount(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const;
 
 	// Lazy load the fields in each query
-	void loadAppointments() const;
-	void loadTasks() const;
-	void loadUnreadCounts() const;
+	void loadAppointments(const std::shared_ptr<service::RequestState>& state) const;
+	void loadTasks(const std::shared_ptr<service::RequestState>& state) const;
+	void loadUnreadCounts(const std::shared_ptr<service::RequestState>& state) const;
 
 	mutable appointmentsLoader _getAppointments;
 	mutable tasksLoader _getTasks;

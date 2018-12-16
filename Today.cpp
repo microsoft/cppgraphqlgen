@@ -39,8 +39,16 @@ Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unrea
 {
 }
 
-void Query::loadAppointments() const
+void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state) const
 {
+	if (state)
+	{
+		auto todayState = std::static_pointer_cast<RequestState>(state);
+
+		todayState->appointmentsRequestId = todayState->requestId;
+		todayState->loadAppointmentsCount++;
+	}
+
 	if (_getAppointments)
 	{
 		_appointments = _getAppointments();
@@ -50,7 +58,7 @@ void Query::loadAppointments() const
 
 std::shared_ptr<Appointment> Query::findAppointment(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
 {
-	loadAppointments();
+	loadAppointments(state);
 
 	for (const auto& appointment : _appointments)
 	{
@@ -65,8 +73,16 @@ std::shared_ptr<Appointment> Query::findAppointment(const std::shared_ptr<servic
 	return nullptr;
 }
 
-void Query::loadTasks() const
+void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
 {
+	if (state)
+	{
+		auto todayState = std::static_pointer_cast<RequestState>(state);
+
+		todayState->tasksRequestId = todayState->requestId;
+		todayState->loadTasksCount++;
+	}
+
 	if (_getTasks)
 	{
 		_tasks = _getTasks();
@@ -76,7 +92,7 @@ void Query::loadTasks() const
 
 std::shared_ptr<Task> Query::findTask(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
 {
-	loadTasks();
+	loadTasks(state);
 
 	for (const auto& task : _tasks)
 	{
@@ -91,8 +107,16 @@ std::shared_ptr<Task> Query::findTask(const std::shared_ptr<service::RequestStat
 	return nullptr;
 }
 
-void Query::loadUnreadCounts() const
+void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state) const
 {
+	if (state)
+	{
+		auto todayState = std::static_pointer_cast<RequestState>(state);
+
+		todayState->unreadCountsRequestId = todayState->requestId;
+		todayState->loadUnreadCountsCount++;
+	}
+
 	if (_getUnreadCounts)
 	{
 		_unreadCounts = _getUnreadCounts();
@@ -102,7 +126,7 @@ void Query::loadUnreadCounts() const
 
 std::shared_ptr<Folder> Query::findUnreadCount(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
 {
-	loadUnreadCounts();
+	loadUnreadCounts(state);
 
 	for (const auto& folder : _unreadCounts)
 	{
@@ -248,7 +272,7 @@ std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointmen
 	return std::async(std::launch::async,
 		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadAppointments();
+		loadAppointments(stateWrapped);
 
 		EdgeConstraints<Appointment, AppointmentConnection> constraints(stateWrapped, _appointments);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
@@ -263,7 +287,7 @@ std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(const std::
 	return std::async(std::launch::async,
 		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadTasks();
+		loadTasks(stateWrapped);
 
 		EdgeConstraints<Task, TaskConnection> constraints(stateWrapped, _tasks);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
@@ -278,7 +302,7 @@ std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(co
 	return std::async(std::launch::async,
 		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadUnreadCounts();
+		loadUnreadCounts(stateWrapped);
 
 		EdgeConstraints<Folder, FolderConnection> constraints(stateWrapped, _unreadCounts);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());

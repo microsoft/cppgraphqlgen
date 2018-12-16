@@ -90,17 +90,6 @@ size_t TodayServiceCase::_getAppointmentsCount = 0;
 size_t TodayServiceCase::_getTasksCount = 0;
 size_t TodayServiceCase::_getUnreadCountsCount = 0;
 
-struct TestRequestId
-	: service::RequestState
-{
-	TestRequestId(size_t id)
-		: _id(id)
-	{
-	}
-
-	size_t _id;
-};
-
 TEST_F(TodayServiceCase, QueryEverything)
 {
 	auto ast = R"(
@@ -135,11 +124,18 @@ TEST_F(TodayServiceCase, QueryEverything)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(0);
+	auto state = std::make_shared<today::RequestState>(1);
 	auto result = _service->resolve(state, *ast->root, "Everything", variables).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), state->tasksRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), state->unreadCountsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(1), state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
+
 
 	try
 	{
@@ -210,11 +206,17 @@ TEST_F(TodayServiceCase, QueryAppointments)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(1);
+	auto state = std::make_shared<today::RequestState>(2);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(2), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
 
 	try
 	{
@@ -266,11 +268,17 @@ TEST_F(TodayServiceCase, QueryTasks)
 			}
 		})gql"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(2);
+	auto state = std::make_shared<today::RequestState>(3);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(0), state->appointmentsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(3), state->tasksRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
 
 	try
 	{
@@ -321,11 +329,17 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(3);
+	auto state = std::make_shared<today::RequestState>(4);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(0), state->appointmentsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(4), state->unreadCountsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once"; 
 
 	try
 	{
@@ -375,7 +389,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(4);
+	auto state = std::make_shared<today::RequestState>(5);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 
 	try
@@ -451,7 +465,7 @@ TEST_F(TodayServiceCase, Introspection)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<TestRequestId>(5);
+	auto state = std::make_shared<today::RequestState>(6);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 
 	try
