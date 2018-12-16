@@ -347,7 +347,7 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
+std::future<response::Value> Object::resolve(std::shared_ptr<RequestState> state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
 	std::queue<std::future<response::Value>> selections;
 
@@ -389,11 +389,11 @@ std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>
 	}, std::move(selections));
 }
 
-void Object::beginSelectionSet(const std::shared_ptr<RequestState>&) const
+void Object::beginSelectionSet(std::shared_ptr<RequestState>) const
 {
 }
 
-void Object::endSelectionSet(const std::shared_ptr<RequestState>&) const
+void Object::endSelectionSet(std::shared_ptr<RequestState>) const
 {
 }
 
@@ -424,7 +424,7 @@ std::future<response::Value> Request::resolve(std::shared_ptr<RequestState> stat
 	return operationVisitor.getValue();
 }
 
-SelectionVisitor::SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
+SelectionVisitor::SelectionVisitor(std::shared_ptr<RequestState> state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
 	: _state(state)
 	, _fragments(fragments)
 	, _variables(variables)
@@ -879,7 +879,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(const std::shared_ptr<RequestState>& state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
 	: _state(state)
 	, _operations(operations)
 	, _operationName(operationName)
@@ -999,10 +999,8 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			throw schema_exception({ error.str() });
 		}
 
-		auto operationObject = itr->second;
-
 		_result = std::async(std::launch::deferred,
-			[this, &operationDefinition, operationObject]()
+			[this, &operationDefinition](std::shared_ptr<RequestState> state, std::shared_ptr<Object> operationObject)
 		{
 			response::Value operationVariables(response::Type::Map);
 
@@ -1045,12 +1043,12 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			});
 
 			response::Value document(response::Type::Map);
-			auto data = operationObject->resolve(_state, *operationDefinition.children.back(), _fragments, operationVariables);
+			auto data = operationObject->resolve(state, *operationDefinition.children.back(), _fragments, operationVariables);
 
 			document.emplace_back("data", data.get());
 
 			return document;
-		});
+		}, _state, itr->second);
 	}
 	catch (const schema_exception& ex)
 	{

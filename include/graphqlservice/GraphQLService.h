@@ -68,7 +68,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams
 {
-	const std::shared_ptr<RequestState>& state;
+	std::shared_ptr<RequestState> state;
 	const response::Value& arguments;
 	const peg::ast_node* selection;
 	const FragmentMap& fragments;
@@ -276,13 +276,13 @@ public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	virtual ~Object() = default;
 
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	std::future<response::Value> resolve(std::shared_ptr<RequestState> state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
 protected:
 	// It's up to sub-classes to decide if they want to use const_cast, mutable, or separate storage
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(const std::shared_ptr<RequestState>& state) const;
-	virtual void endSelectionSet(const std::shared_ptr<RequestState>& state) const;
+	virtual void beginSelectionSet(std::shared_ptr<RequestState> state) const;
+	virtual void endSelectionSet(std::shared_ptr<RequestState> state) const;
 
 private:
 	TypeNames _typeNames;
@@ -470,7 +470,7 @@ private:
 class SelectionVisitor
 {
 public:
-	SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
+	SelectionVisitor(std::shared_ptr<RequestState> state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
 
@@ -483,7 +483,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	const std::shared_ptr<RequestState>& _state;
+	std::shared_ptr<RequestState> _state;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -538,14 +538,14 @@ private:
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(const std::shared_ptr<RequestState>& state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments);
+	OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments);
 
 	std::future<response::Value> getValue();
 
 	void visit(const peg::ast_node& operationDefinition);
 
 private:
-	const std::shared_ptr<RequestState>& _state;
+	std::shared_ptr<RequestState> _state;
 	const TypeMap& _operations;
 	const std::string& _operationName;
 	const response::Value& _variables;
