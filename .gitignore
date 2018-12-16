@@ -22,6 +22,8 @@ LastTest.log
 lib*.a
 lib*.so
 Makefile
+*.ninja
+.ninja_*
 schemagen
 settings.json
 test_today
