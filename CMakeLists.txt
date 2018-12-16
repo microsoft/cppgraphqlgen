@@ -142,7 +142,7 @@ install(TARGETS graphqlservice
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-set(CMAKE_INSTALL_TOOLSDIR tools/${PROJECT_NAME}
+set(CMAKE_INSTALL_TOOLSDIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME}
   CACHE PATH "Install schemagen to this directory.")
 
 install(TARGETS schemagen
@@ -160,7 +160,7 @@ install(FILES
   DESTINATION include/graphqlservice
   CONFIGURATIONS Release)
 
-set(CMAKE_INSTALL_CONFIGDIR lib/cmake/${PROJECT_NAME}
+set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME}
   CACHE PATH "Install the CMake config files to this directory.")
 
 install(FILES cmake/${PROJECT_NAME}-config.cmake
