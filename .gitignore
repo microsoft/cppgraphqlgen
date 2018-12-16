@@ -6,8 +6,10 @@ Debug/
 Release/
 Testing/
 Win32/
-/IntrospectionSchema.*
-/TodaySchema.*
+/include/graphqlservice/IntrospectionSchema.h
+/IntrospectionSchema.cpp
+/include/TodaySchema.h
+/TodaySchema.cpp
 *.filters
 *.vcxproj
 *.vcxproj.user
