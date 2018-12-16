@@ -114,7 +114,7 @@ Query::Query()
 std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
-	auto result = getNode(params.requestId, std::move(argId));
+	auto result = getNode(params.state, std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -125,7 +125,7 @@ std::future<response::Value> Query::resolveAppointments(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
-	auto result = getAppointments(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	auto result = getAppointments(params.state, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
@@ -136,7 +136,7 @@ std::future<response::Value> Query::resolveTasks(service::ResolverParams&& param
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
-	auto result = getTasks(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	auto result = getTasks(params.state, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
@@ -147,7 +147,7 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
-	auto result = getUnreadCounts(params.requestId, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	auto result = getUnreadCounts(params.state, std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
@@ -155,7 +155,7 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 std::future<response::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
-	auto result = getAppointmentsById(params.requestId, std::move(argIds));
+	auto result = getAppointmentsById(params.state, std::move(argIds));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -163,7 +163,7 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
-	auto result = getTasksById(params.requestId, std::move(argIds));
+	auto result = getTasksById(params.state, std::move(argIds));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -171,7 +171,7 @@ std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& p
 std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
-	auto result = getUnreadCountsById(params.requestId, std::move(argIds));
+	auto result = getUnreadCountsById(params.state, std::move(argIds));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -217,14 +217,14 @@ PageInfo::PageInfo()
 
 std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
-	auto result = getHasNextPage(params.requestId);
+	auto result = getHasNextPage(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
-	auto result = getHasPreviousPage(params.requestId);
+	auto result = getHasPreviousPage(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -251,14 +251,14 @@ AppointmentEdge::AppointmentEdge()
 
 std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
-	auto result = getNode(params.requestId);
+	auto result = getNode(params.state);
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId);
+	auto result = getCursor(params.state);
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -285,14 +285,14 @@ AppointmentConnection::AppointmentConnection()
 
 std::future<response::Value> AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
-	auto result = getPageInfo(params.requestId);
+	auto result = getPageInfo(params.state);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> AppointmentConnection::resolveEdges(service::ResolverParams&& params)
 {
-	auto result = getEdges(params.requestId);
+	auto result = getEdges(params.state);
 
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -319,14 +319,14 @@ TaskEdge::TaskEdge()
 
 std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
-	auto result = getNode(params.requestId);
+	auto result = getNode(params.state);
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId);
+	auto result = getCursor(params.state);
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -353,14 +353,14 @@ TaskConnection::TaskConnection()
 
 std::future<response::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
-	auto result = getPageInfo(params.requestId);
+	auto result = getPageInfo(params.state);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
-	auto result = getEdges(params.requestId);
+	auto result = getEdges(params.state);
 
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -387,14 +387,14 @@ FolderEdge::FolderEdge()
 
 std::future<response::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
 {
-	auto result = getNode(params.requestId);
+	auto result = getNode(params.state);
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
-	auto result = getCursor(params.requestId);
+	auto result = getCursor(params.state);
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -421,14 +421,14 @@ FolderConnection::FolderConnection()
 
 std::future<response::Value> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
-	auto result = getPageInfo(params.requestId);
+	auto result = getPageInfo(params.state);
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> FolderConnection::resolveEdges(service::ResolverParams&& params)
 {
-	auto result = getEdges(params.requestId);
+	auto result = getEdges(params.state);
 
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -455,14 +455,14 @@ CompleteTaskPayload::CompleteTaskPayload()
 
 std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
-	auto result = getTask(params.requestId);
+	auto result = getTask(params.state);
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
-	auto result = getClientMutationId(params.requestId);
+	auto result = getClientMutationId(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -489,7 +489,7 @@ Mutation::Mutation()
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<CompleteTaskInput>::require("input", params.arguments);
-	auto result = getCompleteTask(params.requestId, std::move(argInput));
+	auto result = getCompleteTask(params.state, std::move(argInput));
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
@@ -515,7 +515,7 @@ Subscription::Subscription()
 
 std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
-	auto result = getNextAppointmentChange(params.requestId);
+	auto result = getNextAppointmentChange(params.state);
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -545,28 +545,28 @@ Appointment::Appointment()
 
 std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
 {
-	auto result = getId(params.requestId);
+	auto result = getId(params.state);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
 {
-	auto result = getWhen(params.requestId);
+	auto result = getWhen(params.state);
 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
 {
-	auto result = getSubject(params.requestId);
+	auto result = getSubject(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
-	auto result = getIsNow(params.requestId);
+	auto result = getIsNow(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -595,21 +595,21 @@ Task::Task()
 
 std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
-	auto result = getId(params.requestId);
+	auto result = getId(params.state);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
 {
-	auto result = getTitle(params.requestId);
+	auto result = getTitle(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
 {
-	auto result = getIsComplete(params.requestId);
+	auto result = getIsComplete(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -638,21 +638,21 @@ Folder::Folder()
 
 std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
-	auto result = getId(params.requestId);
+	auto result = getId(params.state);
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Folder::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
-	auto result = getUnreadCount(params.requestId);
+	auto result = getUnreadCount(params.state);
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }

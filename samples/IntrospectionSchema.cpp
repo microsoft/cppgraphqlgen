@@ -154,35 +154,35 @@ __Schema::__Schema()
 
 std::future<response::Value> __Schema::resolveTypes(service::ResolverParams&& params)
 {
-	auto result = getTypes(params.requestId);
+	auto result = getTypes(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Schema::resolveQueryType(service::ResolverParams&& params)
 {
-	auto result = getQueryType(params.requestId);
+	auto result = getQueryType(params.state);
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Schema::resolveMutationType(service::ResolverParams&& params)
 {
-	auto result = getMutationType(params.requestId);
+	auto result = getMutationType(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
-	auto result = getSubscriptionType(params.requestId);
+	auto result = getSubscriptionType(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Schema::resolveDirectives(service::ResolverParams&& params)
 {
-	auto result = getDirectives(params.requestId);
+	auto result = getDirectives(params.state);
 
 	return service::ModifiedResult<__Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
@@ -216,21 +216,21 @@ __Type::__Type()
 
 std::future<response::Value> __Type::resolveKind(service::ResolverParams&& params)
 {
-	auto result = getKind(params.requestId);
+	auto result = getKind(params.state);
 
 	return service::ModifiedResult<__TypeKind>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolveDescription(service::ResolverParams&& params)
 {
-	auto result = getDescription(params.requestId);
+	auto result = getDescription(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -252,21 +252,21 @@ std::future<response::Value> __Type::resolveFields(service::ResolverParams&& par
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
-	auto result = getFields(params.requestId, std::move(argIncludeDeprecated));
+	auto result = getFields(params.state, std::move(argIncludeDeprecated));
 
 	return service::ModifiedResult<__Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolveInterfaces(service::ResolverParams&& params)
 {
-	auto result = getInterfaces(params.requestId);
+	auto result = getInterfaces(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
-	auto result = getPossibleTypes(params.requestId);
+	auto result = getPossibleTypes(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
@@ -288,21 +288,21 @@ std::future<response::Value> __Type::resolveEnumValues(service::ResolverParams&&
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
-	auto result = getEnumValues(params.requestId, std::move(argIncludeDeprecated));
+	auto result = getEnumValues(params.state, std::move(argIncludeDeprecated));
 
 	return service::ModifiedResult<__EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolveInputFields(service::ResolverParams&& params)
 {
-	auto result = getInputFields(params.requestId);
+	auto result = getInputFields(params.state);
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Type::resolveOfType(service::ResolverParams&& params)
 {
-	auto result = getOfType(params.requestId);
+	auto result = getOfType(params.state);
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -333,42 +333,42 @@ __Field::__Field()
 
 std::future<response::Value> __Field::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Field::resolveDescription(service::ResolverParams&& params)
 {
-	auto result = getDescription(params.requestId);
+	auto result = getDescription(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Field::resolveArgs(service::ResolverParams&& params)
 {
-	auto result = getArgs(params.requestId);
+	auto result = getArgs(params.state);
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Field::resolveType(service::ResolverParams&& params)
 {
-	auto result = getType(params.requestId);
+	auto result = getType(params.state);
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Field::resolveIsDeprecated(service::ResolverParams&& params)
 {
-	auto result = getIsDeprecated(params.requestId);
+	auto result = getIsDeprecated(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Field::resolveDeprecationReason(service::ResolverParams&& params)
 {
-	auto result = getDeprecationReason(params.requestId);
+	auto result = getDeprecationReason(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -397,28 +397,28 @@ __InputValue::__InputValue()
 
 std::future<response::Value> __InputValue::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __InputValue::resolveDescription(service::ResolverParams&& params)
 {
-	auto result = getDescription(params.requestId);
+	auto result = getDescription(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __InputValue::resolveType(service::ResolverParams&& params)
 {
-	auto result = getType(params.requestId);
+	auto result = getType(params.state);
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __InputValue::resolveDefaultValue(service::ResolverParams&& params)
 {
-	auto result = getDefaultValue(params.requestId);
+	auto result = getDefaultValue(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -447,28 +447,28 @@ __EnumValue::__EnumValue()
 
 std::future<response::Value> __EnumValue::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __EnumValue::resolveDescription(service::ResolverParams&& params)
 {
-	auto result = getDescription(params.requestId);
+	auto result = getDescription(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
 {
-	auto result = getIsDeprecated(params.requestId);
+	auto result = getIsDeprecated(params.state);
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
 {
-	auto result = getDeprecationReason(params.requestId);
+	auto result = getDeprecationReason(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -497,28 +497,28 @@ __Directive::__Directive()
 
 std::future<response::Value> __Directive::resolveName(service::ResolverParams&& params)
 {
-	auto result = getName(params.requestId);
+	auto result = getName(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Directive::resolveDescription(service::ResolverParams&& params)
 {
-	auto result = getDescription(params.requestId);
+	auto result = getDescription(params.state);
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Directive::resolveLocations(service::ResolverParams&& params)
 {
-	auto result = getLocations(params.requestId);
+	auto result = getLocations(params.state);
 
 	return service::ModifiedResult<__DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> __Directive::resolveArgs(service::ResolverParams&& params)
 {
-	auto result = getArgs(params.requestId);
+	auto result = getArgs(params.state);
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }

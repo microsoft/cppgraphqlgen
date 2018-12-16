@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 		response::Value variables(response::Type::Map);
 		
-		rapidjson::convertResponse(service->resolve(0, *ast, ((argc > 2) ? argv[2] : ""), variables).get()).Accept(writer);
+		rapidjson::convertResponse(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get()).Accept(writer);
 		std::cout << buffer.GetString() << std::endl;
 	}
 	catch (const std::runtime_error& ex)

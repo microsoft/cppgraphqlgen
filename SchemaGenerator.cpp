@@ -1462,7 +1462,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 
 	fieldName[0] = std::toupper(fieldName[0]);
 	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
-		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::RequestId requestId)cpp";
+		<< R"cpp(> get)cpp" << fieldName << R"cpp((const std::shared_ptr<service::RequestState>& state)cpp";
 
 	for (const auto& argument : outputField.arguments)
 	{
@@ -1899,7 +1899,7 @@ std::future<response::Value> )cpp" << objectType.type
 					}
 				}
 
-				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp((params.requestId)cpp";
+				sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp((params.state)cpp";
 
 				if (!outputField.arguments.empty())
 				{

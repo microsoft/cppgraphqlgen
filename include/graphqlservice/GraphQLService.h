@@ -34,10 +34,13 @@ private:
 	response::Value _errors;
 };
 
-// The RequestId is optional, but if you have multiple threads processing requests and there's any
+// The RequestState is optional, but if you have multiple threads processing requests and there's any
 // per-request state that you want to maintain throughout the request (e.g. optimizing or batching
-// backend requests), you can use the RequestId to correlate the asynchronous/recursive callbacks.
-using RequestId = size_t;
+// backend requests), you can subclass RequestState and pass it to Request::resolve to correlate the
+// asynchronous/recursive callbacks and accumulate state in it.
+struct RequestState : std::enable_shared_from_this<RequestState>
+{
+};
 
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
@@ -65,7 +68,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams
 {
-	RequestId requestId;
+	const std::shared_ptr<RequestState>& state;
 	const response::Value& arguments;
 	const peg::ast_node* selection;
 	const FragmentMap& fragments;
@@ -273,13 +276,13 @@ public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	virtual ~Object() = default;
 
-	std::future<response::Value> resolve(RequestId requestId, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
 protected:
 	// It's up to sub-classes to decide if they want to use const_cast, mutable, or separate storage
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(RequestId requestId) const;
-	virtual void endSelectionSet(RequestId requestId) const;
+	virtual void beginSelectionSet(const std::shared_ptr<RequestState>& state) const;
+	virtual void endSelectionSet(const std::shared_ptr<RequestState>& state) const;
 
 private:
 	TypeNames _typeNames;
@@ -456,7 +459,7 @@ public:
 	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
 
-	std::future<response::Value> resolve(RequestId requestId, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
+	std::future<response::Value> resolve(std::shared_ptr<RequestState> state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
 
 private:
 	TypeMap _operations;
@@ -467,7 +470,7 @@ private:
 class SelectionVisitor
 {
 public:
-	SelectionVisitor(RequestId requestId, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
+	SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
 
@@ -480,7 +483,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	const RequestId _requestId;
+	const std::shared_ptr<RequestState>& _state;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -535,14 +538,14 @@ private:
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(RequestId requestId, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments);
+	OperationDefinitionVisitor(const std::shared_ptr<RequestState>& state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments);
 
 	std::future<response::Value> getValue();
 
 	void visit(const peg::ast_node& operationDefinition);
 
 private:
-	const RequestId _requestId;
+	const std::shared_ptr<RequestState>& _state;
 	const TypeMap& _operations;
 	const std::string& _operationName;
 	const response::Value& _variables;

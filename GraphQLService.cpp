@@ -337,7 +337,7 @@ std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::sh
 				: response::Type::Map);
 		}
 
-		return wrappedResult->resolve(paramsFuture.requestId, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
+		return wrappedResult->resolve(paramsFuture.state, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
 	}, std::move(result), std::move(params));
 }
 
@@ -347,21 +347,21 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<response::Value> Object::resolve(RequestId requestId, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
+std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
 	std::queue<std::future<response::Value>> selections;
 
-	beginSelectionSet(requestId);
+	beginSelectionSet(state);
 
 	for (const auto& child : selection.children)
 	{
-		SelectionVisitor visitor(requestId, fragments, variables, _typeNames, _resolvers);
+		SelectionVisitor visitor(state, fragments, variables, _typeNames, _resolvers);
 
 		visitor.visit(*child);
 		selections.push(visitor.getValues());
 	}
 
-	endSelectionSet(requestId);
+	endSelectionSet(state);
 
 	return std::async(std::launch::deferred,
 		[](std::queue<std::future<response::Value>>&& promises)
@@ -389,11 +389,11 @@ std::future<response::Value> Object::resolve(RequestId requestId, const peg::ast
 	}, std::move(selections));
 }
 
-void Object::beginSelectionSet(RequestId) const
+void Object::beginSelectionSet(const std::shared_ptr<RequestState>&) const
 {
 }
 
-void Object::endSelectionSet(RequestId) const
+void Object::endSelectionSet(const std::shared_ptr<RequestState>&) const
 {
 }
 
@@ -402,7 +402,7 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-std::future<response::Value> Request::resolve(RequestId requestId, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const
+std::future<response::Value> Request::resolve(std::shared_ptr<RequestState> state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor;
 
@@ -413,7 +413,7 @@ std::future<response::Value> Request::resolve(RequestId requestId, const peg::as
 	});
 
 	auto fragments = fragmentVisitor.getFragments();
-	OperationDefinitionVisitor operationVisitor(requestId, _operations, operationName, variables, fragments);
+	OperationDefinitionVisitor operationVisitor(state, _operations, operationName, variables, fragments);
 
 	peg::for_each_child<peg::operation_definition>(root,
 		[&operationVisitor](const peg::ast_node& child)
@@ -424,8 +424,8 @@ std::future<response::Value> Request::resolve(RequestId requestId, const peg::as
 	return operationVisitor.getValue();
 }
 
-SelectionVisitor::SelectionVisitor(RequestId requestId, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
-	: _requestId(requestId)
+SelectionVisitor::SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
+	: _state(state)
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -543,7 +543,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	_values.push({
 		std::move(alias),
-		itr->second({ _requestId, arguments, selection, _fragments, _variables })
+		itr->second({ _state, arguments, selection, _fragments, _variables })
 		});
 }
 
@@ -879,8 +879,8 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(RequestId requestId, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
-	: _requestId(requestId)
+OperationDefinitionVisitor::OperationDefinitionVisitor(const std::shared_ptr<RequestState>& state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
+	: _state(state)
 	, _operations(operations)
 	, _operationName(operationName)
 	, _variables(variables)
@@ -1045,7 +1045,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			});
 
 			response::Value document(response::Type::Map);
-			auto data = operationObject->resolve(_requestId, *operationDefinition.children.back(), _fragments, operationVariables);
+			auto data = operationObject->resolve(_state, *operationDefinition.children.back(), _fragments, operationVariables);
 
 			document.emplace_back("data", data.get());
 
