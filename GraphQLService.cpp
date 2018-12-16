@@ -347,7 +347,7 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<response::Value> Object::resolve(std::shared_ptr<RequestState> state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
+std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
 	std::queue<std::future<response::Value>> selections;
 
@@ -389,11 +389,11 @@ std::future<response::Value> Object::resolve(std::shared_ptr<RequestState> state
 	}, std::move(selections));
 }
 
-void Object::beginSelectionSet(std::shared_ptr<RequestState>) const
+void Object::beginSelectionSet(const std::shared_ptr<RequestState>&) const
 {
 }
 
-void Object::endSelectionSet(std::shared_ptr<RequestState>) const
+void Object::endSelectionSet(const std::shared_ptr<RequestState>&) const
 {
 }
 
@@ -402,7 +402,7 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-std::future<response::Value> Request::resolve(std::shared_ptr<RequestState> state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const
+std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor;
 
@@ -425,7 +425,7 @@ std::future<response::Value> Request::resolve(std::shared_ptr<RequestState> stat
 }
 
 SelectionVisitor::SelectionVisitor(std::shared_ptr<RequestState> state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
-	: _state(state)
+	: _state(std::move(state))
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -880,7 +880,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 }
 
 OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, const response::Value& variables, const FragmentMap& fragments)
-	: _state(state)
+	: _state(std::move(state))
 	, _operations(operations)
 	, _operationName(operationName)
 	, _variables(variables)

@@ -22,18 +22,18 @@ public:
 
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::future<std::shared_ptr<service::Object>> getNode(std::shared_ptr<service::RequestState> state, std::vector<uint8_t>&& id) const override;
-	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(std::shared_ptr<service::RequestState> state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::TaskConnection>> getTasks(std::shared_ptr<service::RequestState> state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(std::shared_ptr<service::RequestState> state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(std::shared_ptr<service::RequestState> state, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(std::shared_ptr<service::RequestState> state, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(std::shared_ptr<service::RequestState> state, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::shared_ptr<service::Object>> getNode(const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& id) const override;
+	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::TaskConnection>> getTasks(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const override;
 
 private:
-	std::shared_ptr<Appointment> findAppointment(std::shared_ptr<service::RequestState> state, const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Task> findTask(std::shared_ptr<service::RequestState> state, const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Folder> findUnreadCount(std::shared_ptr<service::RequestState> state, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Appointment> findAppointment(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Task> findTask(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Folder> findUnreadCount(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const;
 
 	// Lazy load the fields in each query
 	void loadAppointments() const;
@@ -58,7 +58,7 @@ public:
 	{
 	}
 
-	std::future<bool> getHasNextPage(std::shared_ptr<service::RequestState>) const override
+	std::future<bool> getHasNextPage(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<bool> promise;
 
@@ -67,7 +67,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getHasPreviousPage(std::shared_ptr<service::RequestState>) const override
+	std::future<bool> getHasPreviousPage(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<bool> promise;
 
@@ -86,7 +86,7 @@ class Appointment : public object::Appointment
 public:
 	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
 
-	std::future<std::vector<uint8_t>> getId(std::shared_ptr<service::RequestState>) const override
+	std::future<std::vector<uint8_t>> getId(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -95,7 +95,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value>> getWhen(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<response::Value>> getWhen(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<response::Value>> promise;
 
@@ -104,7 +104,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getSubject(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<response::StringType>> getSubject(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -113,7 +113,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getIsNow(std::shared_ptr<service::RequestState>) const override
+	std::future<bool> getIsNow(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<bool> promise;
 
@@ -137,7 +137,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Appointment>> getNode(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::Appointment>> getNode(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::Appointment>> promise;
 
@@ -146,7 +146,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(std::shared_ptr<service::RequestState> state) const override
+	std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const override
 	{
 		std::promise<response::Value> promise;
 
@@ -168,7 +168,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -177,7 +177,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>(new std::vector<std::shared_ptr<object::AppointmentEdge>>(_appointments.size()));
@@ -202,7 +202,7 @@ class Task : public object::Task
 public:
 	explicit Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete);
 
-	std::future<std::vector<uint8_t>> getId(std::shared_ptr<service::RequestState>) const override
+	std::future<std::vector<uint8_t>> getId(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -211,7 +211,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getTitle(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<response::StringType>> getTitle(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -220,7 +220,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getIsComplete(std::shared_ptr<service::RequestState>) const override
+	std::future<bool> getIsComplete(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<bool> promise;
 
@@ -244,7 +244,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Task>> getNode(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::Task>> getNode(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::Task>> promise;
 
@@ -253,7 +253,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(std::shared_ptr<service::RequestState> state) const override
+	std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const override
 	{
 		std::promise<response::Value> promise;
 
@@ -275,7 +275,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -284,7 +284,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>(new std::vector<std::shared_ptr<object::TaskEdge>>(_tasks.size()));
@@ -309,7 +309,7 @@ class Folder : public object::Folder
 public:
 	explicit Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount);
 
-	std::future<std::vector<uint8_t>> getId(std::shared_ptr<service::RequestState>) const override
+	std::future<std::vector<uint8_t>> getId(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -318,7 +318,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getName(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<response::StringType>> getName(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -327,7 +327,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<int> getUnreadCount(std::shared_ptr<service::RequestState>) const override
+	std::future<int> getUnreadCount(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<int> promise;
 
@@ -350,7 +350,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Folder>> getNode(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::Folder>> getNode(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::Folder>> promise;
 
@@ -359,7 +359,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(std::shared_ptr<service::RequestState> state) const override
+	std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const override
 	{
 		std::promise<response::Value> promise;
 
@@ -381,7 +381,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -390,7 +390,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>(new std::vector<std::shared_ptr<object::FolderEdge>>(_folders.size()));
@@ -419,7 +419,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Task>> getTask(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::Task>> getTask(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::Task>> promise;
 
@@ -428,7 +428,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getClientMutationId(std::shared_ptr<service::RequestState>) const override
+	std::future<std::unique_ptr<response::StringType>> getClientMutationId(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -451,7 +451,7 @@ public:
 
 	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
-	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(std::shared_ptr<service::RequestState> state, CompleteTaskInput&& input) const override;
+	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(const std::shared_ptr<service::RequestState>& state, CompleteTaskInput&& input) const override;
 
 private:
 	completeTaskMutation _mutateCompleteTask;
@@ -462,7 +462,7 @@ class Subscription : public object::Subscription
 public:
 	explicit Subscription() = default;
 
-	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(std::shared_ptr<service::RequestState>) const override
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(const std::shared_ptr<service::RequestState>&) const override
 	{
 		std::promise<std::shared_ptr<object::Appointment>> promise;
 

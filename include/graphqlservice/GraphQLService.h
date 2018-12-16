@@ -36,7 +36,7 @@ private:
 
 // The RequestState is optional, but if you have multiple threads processing requests and there's any
 // per-request state that you want to maintain throughout the request (e.g. optimizing or batching
-// backend requests), you can subclass RequestState and pass it to Request::resolve to correlate the
+// backend requests), you can inherit from RequestState and pass it to Request::resolve to correlate the
 // asynchronous/recursive callbacks and accumulate state in it.
 struct RequestState : std::enable_shared_from_this<RequestState>
 {
@@ -276,13 +276,13 @@ public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	virtual ~Object() = default;
 
-	std::future<response::Value> resolve(std::shared_ptr<RequestState> state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
 protected:
 	// It's up to sub-classes to decide if they want to use const_cast, mutable, or separate storage
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(std::shared_ptr<RequestState> state) const;
-	virtual void endSelectionSet(std::shared_ptr<RequestState> state) const;
+	virtual void beginSelectionSet(const std::shared_ptr<RequestState>& state) const;
+	virtual void endSelectionSet(const std::shared_ptr<RequestState>& state) const;
 
 private:
 	TypeNames _typeNames;
@@ -459,7 +459,7 @@ public:
 	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
 
-	std::future<response::Value> resolve(std::shared_ptr<RequestState> state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
 
 private:
 	TypeMap _operations;
