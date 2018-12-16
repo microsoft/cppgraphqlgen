@@ -2,14 +2,12 @@
 // Licensed under the MIT License.
 
 #include "Today.h"
-#include "graphqlservice/JSONResponse.h"
+
+#include <graphqlservice/JSONResponse.h>
 
 #include <iostream>
 #include <stdexcept>
 #include <cstdio>
-
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 
 using namespace facebook::graphql;
 
@@ -92,12 +90,10 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 		response::Value variables(response::Type::Map);
-		
-		rapidjson::convertResponse(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get()).Accept(writer);
-		std::cout << buffer.GetString() << std::endl;
+
+		response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get());
+		std::cout << response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get()) << std::endl;
 	}
 	catch (const std::runtime_error& ex)
 	{
