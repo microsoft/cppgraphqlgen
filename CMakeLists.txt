@@ -35,7 +35,8 @@ add_executable(schemagen
   GraphQLResponse.cpp
   SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE taocpp::pegtl)
-target_include_directories(schemagen PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR})
+target_include_directories(schemagen PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
 cppgraphqlgen_target_set_cxx_standard(schemagen)
 
 add_custom_command(
@@ -56,15 +57,10 @@ add_library(graphqlservice
   IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
 target_link_libraries(graphqlservice PUBLIC Threads::Threads)
-# Make system includes (e.g. <graphqlservice/public.h>) work relative to the build/install generator expressions
-target_include_directories(graphqlservice SYSTEM PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+target_include_directories(graphqlservice PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-# Make local includes (e.g. "private.h") work while building graphqlservice, but don't export them
-target_include_directories(graphqlservice PRIVATE
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_BINARY_DIR}/include)
 cppgraphqlgen_target_set_cxx_standard(graphqlservice)
 
 option(BUILD_TESTS "Build the tests and sample schema library." ON)
@@ -75,15 +71,15 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     OUTPUT
       TodaySchema.cpp
       include/TodaySchema.h
-    COMMAND schemagen ${CMAKE_SOURCE_DIR}/schema.today.graphql Today today
+    COMMAND schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql Today today
     COMMAND ${CMAKE_COMMAND} -E rename TodaySchema.h include/TodaySchema.h
-    DEPENDS schemagen schema.today.graphql
+    DEPENDS schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql
     COMMENT "Generating mock TodaySchema files"
   )
 
   # force the generation of samples on the default build target
   add_custom_target(update_samples ALL
-    DEPENDS ${CMAKE_BINARY_DIR}/TodaySchema.cpp
+    DEPENDS TodaySchema.cpp
   )
 
   if(BUILD_TESTS)
@@ -95,11 +91,11 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
        JSONResponse.cpp)
     target_link_libraries(todaygraphql PUBLIC
       graphqlservice)
-    target_include_directories(todaygraphql SYSTEM PUBLIC ${RAPIDJSON_INCLUDE_DIRS})
-    target_include_directories(todaygraphql
-      PUBLIC
-        ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_BINARY_DIR}/include)
+    target_include_directories(todaygraphql SYSTEM PUBLIC
+      ${RAPIDJSON_INCLUDE_DIRS})
+    target_include_directories(todaygraphql PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${CMAKE_CURRENT_BINARY_DIR}/include)
     cppgraphqlgen_target_set_cxx_standard(todaygraphql)
 
     add_executable(test_today
@@ -132,11 +128,11 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 
   if(UPDATE_SAMPLES)
     install(FILES
-      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
-      ${CMAKE_BINARY_DIR}/include/TodaySchema.h
-      ${CMAKE_BINARY_DIR}/TodaySchema.cpp
-      DESTINATION ${CMAKE_SOURCE_DIR}/samples)
+      ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/IntrospectionSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/include/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/TodaySchema.cpp
+      DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/samples)
   endif()
 endif()
 
@@ -146,9 +142,12 @@ install(TARGETS graphqlservice
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
+set(CMAKE_INSTALL_TOOLSDIR tools/${PROJECT_NAME}
+  CACHE PATH "Install schemagen to this directory.")
+
 install(TARGETS schemagen
   EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION tools/cppgraphqlgen
+  RUNTIME DESTINATION ${CMAKE_INSTALL_TOOLSDIR}
   CONFIGURATIONS Release)
 
 install(FILES
@@ -157,11 +156,13 @@ install(FILES
   include/graphqlservice/GraphQLService.h
   include/graphqlservice/JSONResponse.h
   include/graphqlservice/Introspection.h
-  ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
   DESTINATION include/graphqlservice
   CONFIGURATIONS Release)
 
-set(CMAKE_INSTALL_CONFIGDIR lib/cmake/${PROJECT_NAME})
+set(CMAKE_INSTALL_CONFIGDIR lib/cmake/${PROJECT_NAME}
+  CACHE PATH "Install the CMake config files to this directory.")
+
 install(FILES cmake/${PROJECT_NAME}-config.cmake
   DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
 )
