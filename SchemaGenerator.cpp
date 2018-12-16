@@ -1462,7 +1462,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 
 	fieldName[0] = std::toupper(fieldName[0]);
 	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
-		<< R"cpp(> get)cpp" << fieldName << R"cpp((std::shared_ptr<service::RequestState> state)cpp";
+		<< R"cpp(> get)cpp" << fieldName << R"cpp((const std::shared_ptr<service::RequestState>& state)cpp";
 
 	for (const auto& argument : outputField.arguments)
 	{

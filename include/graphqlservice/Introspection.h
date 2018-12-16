@@ -34,11 +34,11 @@ public:
 	std::shared_ptr<object::__Type> LookupType(const std::string& name) const;
 
 	// Accessors
-	std::future<std::vector<std::shared_ptr<object::__Type>>> getTypes(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getQueryType(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getMutationType(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getSubscriptionType(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::vector<std::shared_ptr<object::__Directive>>> getDirectives(std::shared_ptr<service::RequestState> state) const override;
+	std::future<std::vector<std::shared_ptr<object::__Type>>> getTypes(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getQueryType(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getMutationType(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getSubscriptionType(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::vector<std::shared_ptr<object::__Directive>>> getDirectives(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	std::shared_ptr<ObjectType> _query;
@@ -52,14 +52,14 @@ class BaseType : public object::__Type
 {
 public:
 	// Accessors
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDescription(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(std::shared_ptr<service::RequestState> state, std::unique_ptr<bool>&& includeDeprecated) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(std::shared_ptr<service::RequestState> state, std::unique_ptr<bool>&& includeDeprecated) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getOfType(std::shared_ptr<service::RequestState> state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDescription(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<bool>&& includeDeprecated) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<bool>&& includeDeprecated) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getOfType(const std::shared_ptr<service::RequestState>& state) const override;
 
 protected:
 	BaseType(std::string description);
@@ -74,8 +74,8 @@ public:
 	explicit ScalarType(std::string name, std::string description);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -90,10 +90,10 @@ public:
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(std::shared_ptr<service::RequestState> state, std::unique_ptr<bool>&& includeDeprecated) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(std::shared_ptr<service::RequestState> state) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<bool>&& includeDeprecated) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -110,9 +110,9 @@ public:
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(std::shared_ptr<service::RequestState> state, std::unique_ptr<bool>&& includeDeprecated) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<bool>&& includeDeprecated) const override;
 
 private:
 	const std::string _name;
@@ -128,9 +128,9 @@ public:
 	void AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(std::shared_ptr<service::RequestState> state) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -153,9 +153,9 @@ public:
 	void AddEnumValues(std::vector<EnumValueType> enumValues);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(std::shared_ptr<service::RequestState> state, std::unique_ptr<bool>&& includeDeprecated) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<bool>&& includeDeprecated) const override;
 
 private:
 	const std::string _name;
@@ -171,9 +171,9 @@ public:
 	void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(std::shared_ptr<service::RequestState> state) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -187,8 +187,8 @@ public:
 	explicit WrapperType(__TypeKind kind, std::shared_ptr<object::__Type> ofType);
 
 	// Accessors
-	std::future<__TypeKind> getKind(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getOfType(std::shared_ptr<service::RequestState> state) const override;
+	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getOfType(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const __TypeKind _kind;
@@ -201,12 +201,12 @@ public:
 	explicit Field(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
 
 	// Accessors
-	std::future<std::string> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDescription(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getType(std::shared_ptr<service::RequestState> state) const override;
-	std::future<bool> getIsDeprecated(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDeprecationReason(std::shared_ptr<service::RequestState> state) const override;
+	std::future<std::string> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDescription(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getType(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<bool> getIsDeprecated(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDeprecationReason(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -222,10 +222,10 @@ public:
 	explicit InputValue(std::string name, std::string description, std::shared_ptr<object::__Type> type, std::string defaultValue);
 
 	// Accessors
-	std::future<std::string> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDescription(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::shared_ptr<object::__Type>> getType(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDefaultValue(std::shared_ptr<service::RequestState> state) const override;
+	std::future<std::string> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDescription(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::shared_ptr<object::__Type>> getType(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDefaultValue(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
@@ -240,10 +240,10 @@ public:
 	explicit EnumValue(std::string name, std::string description, std::unique_ptr<std::string>&& deprecationReason);
 
 	// Accessors
-	std::future<std::string> getName(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDescription(std::shared_ptr<service::RequestState> state) const override;
-	std::future<bool> getIsDeprecated(std::shared_ptr<service::RequestState> state) const override;
-	std::future<std::unique_ptr<std::string>> getDeprecationReason(std::shared_ptr<service::RequestState> state) const override;
+	std::future<std::string> getName(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDescription(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<bool> getIsDeprecated(const std::shared_ptr<service::RequestState>& state) const override;
+	std::future<std::unique_ptr<std::string>> getDeprecationReason(const std::shared_ptr<service::RequestState>& state) const override;
 
 private:
 	const std::string _name;
