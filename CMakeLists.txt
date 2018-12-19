@@ -150,7 +150,9 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   endif()
 endif()
 
-install(TARGETS graphqlservice
+install(TARGETS
+    graphqlservice
+    graphqljson
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
