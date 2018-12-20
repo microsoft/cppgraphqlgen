@@ -3,10 +3,10 @@
 
 #pragma once
 
+#include <graphqlservice/GraphQLService.h>
+
 #include <array>
 #include <cstdio>
-
-#include <graphqlservice/GraphQLService.h>
 
 namespace facebook {
 namespace graphql {
