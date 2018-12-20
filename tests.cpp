@@ -10,9 +10,6 @@
 
 #include <tao/pegtl/analyze.hpp>
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 using namespace facebook::graphql;
 using namespace facebook::graphql::peg;
 
@@ -143,12 +140,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 		
@@ -182,12 +174,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
@@ -224,12 +211,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
@@ -245,12 +227,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
@@ -286,12 +263,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
@@ -306,12 +278,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
@@ -347,12 +314,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
@@ -367,12 +329,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
@@ -398,12 +355,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
@@ -421,12 +373,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
@@ -474,12 +421,7 @@ TEST_F(TodayServiceCase, Introspection)
 		auto errorsItr = result.find("errors");
 		if (errorsItr != result.get<const response::MapType&>().cend())
 		{
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-			rapidjson::convertResponse(response::Value(errorsItr->second)).Accept(writer);
-
-			FAIL() << buffer.GetString();
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 		const auto schema = service::ScalarArgument::require("__schema", data);
@@ -493,19 +435,13 @@ TEST_F(TodayServiceCase, Introspection)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
 
 TEST(ArgumentsCase, ListArgumentStrings)
 {
-	rapidjson::Document parsed;
-	parsed.Parse(R"js({"value":[
+	auto parsed = response::parseJSON(R"js({"value":[
 		"string1",
 		"string2",
 		"string3"
@@ -514,16 +450,11 @@ TEST(ArgumentsCase, ListArgumentStrings)
 
 	try
 	{
-		actual = service::StringArgument::require<service::TypeModifier::List>("value", rapidjson::convertResponse(parsed));
+		actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 
 	ASSERT_EQ(3, actual.size()) << "should get 3 entries";
@@ -534,8 +465,7 @@ TEST(ArgumentsCase, ListArgumentStrings)
 
 TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 {
-	rapidjson::Document parsed;
-	parsed.Parse(R"js({"value":[
+	auto parsed = response::parseJSON(R"js({"value":[
 		"string1",
 		null,
 		"string2",
@@ -546,16 +476,11 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 
 	try
 	{
-		service::StringArgument::require<service::TypeModifier::List>("value", rapidjson::convertResponse(parsed));
+		service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		exceptionWhat = buffer.GetString();
+		exceptionWhat = response::toJSON(response::Value(ex.getErrors()));
 		caughtException = true;
 	}
 
@@ -565,8 +490,7 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 
 TEST(ArgumentsCase, ListArgumentStringsNullable)
 {
-	rapidjson::Document parsed;
-	parsed.Parse(R"js({"value":[
+	auto parsed = response::parseJSON(R"js({"value":[
 		"string1",
 		"string2",
 		null,
@@ -579,16 +503,11 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 		actual = service::StringArgument::require<
 			service::TypeModifier::List,
 			service::TypeModifier::Nullable
-		>("value", rapidjson::convertResponse(parsed));
+		>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 
 	ASSERT_EQ(4, actual.size()) << "should get 4 entries";
@@ -603,8 +522,7 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 
 TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 {
-	rapidjson::Document parsed;
-	parsed.Parse(R"js({"value":[
+	auto parsed = response::parseJSON(R"js({"value":[
 		["list1string1", "list1string2"],
 		["list2string1", "list2string2"]
 	]})js");
@@ -615,16 +533,11 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 		actual = service::StringArgument::require<
 			service::TypeModifier::List,
 			service::TypeModifier::List
-		>("value", rapidjson::convertResponse(parsed));
+		>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -638,8 +551,7 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 
 TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 {
-	rapidjson::Document parsed;
-	parsed.Parse(R"js({"value":[
+	auto parsed = response::parseJSON(R"js({"value":[
 		null,
 		["list2string1", "list2string2"]
 	]})js");
@@ -651,16 +563,11 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 			service::TypeModifier::List,
 			service::TypeModifier::Nullable,
 			service::TypeModifier::List
-		>("value", rapidjson::convertResponse(parsed));
+		>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -684,12 +591,7 @@ TEST(ArgumentsCase, TaskStateEnum)
 	}
 	catch (const service::schema_exception& ex)
 	{
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
-		rapidjson::convertResponse(response::Value(ex.getErrors())).Accept(writer);
-
-		FAIL() << buffer.GetString();
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";

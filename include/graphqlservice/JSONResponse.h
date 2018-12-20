@@ -5,19 +5,14 @@
 
 #include <graphqlservice/GraphQLResponse.h>
 
-#define RAPIDJSON_NAMESPACE facebook::graphql::rapidjson
-#define RAPIDJSON_NAMESPACE_BEGIN namespace facebook { namespace graphql { namespace rapidjson {
-#define RAPIDJSON_NAMESPACE_END } /* namespace rapidjson */ } /* namespace graphql */ } /* namespace facebook */
-#include <rapidjson/document.h>
-
 namespace facebook {
 namespace graphql {
-namespace rapidjson {
+namespace response {
 
-Document convertResponse(response::Value&& response);
+std::string toJSON(Value&& response);
 
-response::Value convertResponse(const Document& document);
+Value parseJSON(const std::string& json);
 
-} /* namespace rapidjson */
+} /* namespace response */
 } /* namespace graphql */
 } /* namespace facebook */

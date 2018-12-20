@@ -55,13 +55,31 @@ add_library(graphqlservice
   GraphQLService.cpp
   Introspection.cpp
   IntrospectionSchema.cpp)
-target_link_libraries(graphqlservice PRIVATE taocpp::pegtl)
-target_link_libraries(graphqlservice PUBLIC Threads::Threads)
+target_link_libraries(graphqlservice PUBLIC
+  taocpp::pegtl
+  Threads::Threads)
 target_include_directories(graphqlservice PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 cppgraphqlgen_target_set_cxx_standard(graphqlservice)
+
+# RapidJSON is the only option for JSON serialization used in this project, but if you want
+# to use another JSON library you can implement an alternate version of the functions in
+# JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
+option(USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
+
+if(USE_RAPIDJSON)
+  find_package(RapidJSON CONFIG REQUIRED)
+
+  add_library(graphqljson
+    JSONResponse.cpp)
+  target_link_libraries(graphqljson PUBLIC
+    graphqlservice)
+  target_include_directories(graphqljson SYSTEM PRIVATE
+    ${RAPIDJSON_INCLUDE_DIRS})
+  cppgraphqlgen_target_set_cxx_standard(graphqljson)
+endif()
 
 option(BUILD_TESTS "Build the tests and sample schema library." ON)
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
@@ -83,16 +101,12 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   )
 
   if(BUILD_TESTS)
-    find_package(RapidJSON CONFIG REQUIRED)
-
     add_library(todaygraphql
-       Today.cpp
-       TodaySchema.cpp
-       JSONResponse.cpp)
+      Today.cpp
+      TodaySchema.cpp)
     target_link_libraries(todaygraphql PUBLIC
-      graphqlservice)
-    target_include_directories(todaygraphql SYSTEM PUBLIC
-      ${RAPIDJSON_INCLUDE_DIRS})
+      graphqlservice
+      graphqljson)
     target_include_directories(todaygraphql PUBLIC
       ${CMAKE_CURRENT_SOURCE_DIR}/include
       ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -136,7 +150,9 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   endif()
 endif()
 
-install(TARGETS graphqlservice
+install(TARGETS
+    graphqlservice
+    graphqljson
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
