@@ -48,10 +48,10 @@ struct Value
 	explicit Value(IntType value);
 	explicit Value(FloatType value);
 
-	Value(Value&& other);
+	Value(Value&& other) noexcept;
 	explicit Value(const Value& other);
 
-	Value& operator=(Value&& rhs);
+	Value& operator=(Value&& rhs) noexcept;
 	Value& operator=(const Value& rhs) = delete;
 
 	// Check the Type
