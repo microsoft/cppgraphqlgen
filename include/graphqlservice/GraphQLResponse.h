@@ -48,10 +48,10 @@ struct Value
 	explicit Value(IntType value);
 	explicit Value(FloatType value);
 
-	Value(Value&& other);
+	Value(Value&& other) noexcept;
 	explicit Value(const Value& other);
 
-	Value& operator=(Value&& rhs);
+	Value& operator=(Value&& rhs) noexcept;
 	Value& operator=(const Value& rhs) = delete;
 
 	// Check the Type
@@ -95,17 +95,14 @@ private:
 	// Type::String or Type::EnumValue
 	std::unique_ptr<StringType> _string;
 
-	union
-	{
-		// Type::Boolean
-		BooleanType _boolean;
+	// Type::Boolean
+	BooleanType _boolean = false;
 
-		// Type::Int
-		IntType _int;
+	// Type::Int
+	IntType _int = 0;
 
-		// Type::Float
-		FloatType _float;
-	};
+	// Type::Float
+	FloatType _float = 0.0;
 
 	// Type::Scalar
 	std::unique_ptr<ScalarType> _scalar;

@@ -28,18 +28,6 @@ Value::Value(Type type /*= Type::Null*/)
 			_string.reset(new StringType());
 			break;
 
-		case Type::Boolean:
-			_boolean = false;
-			break;
-
-		case Type::Int:
-			_int = 0;
-			break;
-
-		case Type::Float:
-			_float = 0;
-			break;
-
 		case Type::Scalar:
 			_scalar.reset(new Value());
 			break;
@@ -73,35 +61,28 @@ Value::Value(FloatType value)
 {
 }
 
-Value::Value(Value&& other)
+Value::Value(Value&& other) noexcept
 	: _type(other._type)
 	, _members(std::move(other._members))
 	, _map(std::move(other._map))
 	, _list(std::move(other._list))
 	, _string(std::move(other._string))
 	, _scalar(std::move(other._scalar))
+	, _boolean(other._boolean)
+	, _int(other._int)
+	, _float(other._float)
 {
-	switch (_type)
-	{
-		case Type::Boolean:
-			_boolean = other._boolean;
-			break;
-
-		case Type::Int:
-			_int = other._int;
-			break;
-
-		case Type::Float:
-			_float = other._float;
-			break;
-
-		default:
-			break;
-	}
+	const_cast<Type&>(other._type) = Type::Null;
+	other._boolean = false;
+	other._int = 0;
+	other._float = 0.0;
 }
 
 Value::Value(const Value& other)
 	: _type(other._type)
+	, _boolean(other._boolean)
+	, _int(other._int)
+	, _float(other._float)
 {
 	switch (_type)
 	{
@@ -119,18 +100,6 @@ Value::Value(const Value& other)
 			_string.reset(new StringType(*other._string));
 			break;
 
-		case Type::Boolean:
-			_boolean = other._boolean;
-			break;
-
-		case Type::Int:
-			_int = other._int;
-			break;
-
-		case Type::Float:
-			_float = other._float;
-			break;
-
 		case Type::Scalar:
 			_scalar.reset(new Value(*other._scalar));
 			break;
@@ -140,7 +109,7 @@ Value::Value(const Value& other)
 	}
 }
 
-Value& Value::operator=(Value&& rhs)
+Value& Value::operator=(Value&& rhs) noexcept
 {
 	const_cast<Type&>(_type) = rhs._type;
 	const_cast<Type&>(rhs._type) = Type::Null;
@@ -150,24 +119,12 @@ Value& Value::operator=(Value&& rhs)
 	_list = std::move(rhs._list);
 	_string = std::move(rhs._string);
 	_scalar = std::move(rhs._scalar);
-
-	switch (_type)
-	{
-		case Type::Boolean:
-			_boolean = rhs._boolean;
-			break;
-
-		case Type::Int:
-			_int = rhs._int;
-			break;
-
-		case Type::Float:
-			_float = rhs._float;
-			break;
-
-		default:
-			break;
-	}
+	_boolean = rhs._boolean;
+	rhs._boolean = false;
+	_int = rhs._int;
+	rhs._int = 0;
+	_float = rhs._float;
+	rhs._float = 0.0;
 
 	return *this;
 }

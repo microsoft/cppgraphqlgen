@@ -13,6 +13,8 @@
 #include <rapidjson/reader.h>
 
 #include <stack>
+#include <limits>
+#include <stdexcept>
 
 namespace facebook {
 namespace graphql {
@@ -141,6 +143,8 @@ struct ResponseHandler
 
 	bool Int(int i)
 	{
+		// https://facebook.github.io/graphql/June2018/#sec-Int
+		static_assert(sizeof(i) == 4, "GraphQL only supports 32-bit signed integers");
 		auto value = Value(Type::Int);
 
 		value.set<IntType>(std::move(i));
@@ -150,17 +154,24 @@ struct ResponseHandler
 
 	bool Uint(unsigned int i)
 	{
+		if (i > static_cast<unsigned int>(std::numeric_limits<int>::max()))
+		{
+			// https://facebook.github.io/graphql/June2018/#sec-Int
+			throw std::overflow_error("GraphQL only supports 32-bit signed integers");
+		}
 		return Int(static_cast<int>(i));
 	}
 
-	bool Int64(int64_t i)
+	bool Int64(int64_t /*i*/)
 	{
-		return Int(static_cast<int>(i));
+		// https://facebook.github.io/graphql/June2018/#sec-Int
+		throw std::overflow_error("GraphQL only supports 32-bit signed integers");
 	}
 
-	bool Uint64(uint64_t i)
+	bool Uint64(uint64_t /*i*/)
 	{
-		return Int(static_cast<int>(i));
+		// https://facebook.github.io/graphql/June2018/#sec-Int
+		throw std::overflow_error("GraphQL only supports 32-bit signed integers");
 	}
 
 	bool Double(double d)
