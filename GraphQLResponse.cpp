@@ -11,9 +11,6 @@ namespace response {
 
 Value::Value(Type type /*= Type::Null*/)
 	: _type(type)
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
 {
 	switch (type)
 	{
@@ -43,37 +40,25 @@ Value::Value(Type type /*= Type::Null*/)
 Value::Value(StringType&& value)
 	: _type(Type::String)
 	, _string(new StringType(std::move(value)))
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
 {
 }
 
 Value::Value(BooleanType value)
 	: _type(Type::Boolean)
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
+	, _boolean(value)
 {
-	_boolean = value;
 }
 
 Value::Value(IntType value)
 	: _type(Type::Int)
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
+	, _int(value)
 {
-	_int = value;
 }
 
 Value::Value(FloatType value)
 	: _type(Type::Float)
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
+	, _float(value)
 {
-	_float = value;
 }
 
 Value::Value(Value&& other) noexcept
@@ -83,28 +68,10 @@ Value::Value(Value&& other) noexcept
 	, _list(std::move(other._list))
 	, _string(std::move(other._string))
 	, _scalar(std::move(other._scalar))
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
+	, _boolean(other._boolean)
+	, _int(other._int)
+	, _float(other._float)
 {
-	switch (_type)
-	{
-		case Type::Boolean:
-			_boolean = other._boolean;
-			break;
-
-		case Type::Int:
-			_int = other._int;
-			break;
-
-		case Type::Float:
-			_float = other._float;
-			break;
-
-		default:
-			break;
-	}
-
 	const_cast<Type&>(other._type) = Type::Null;
 	other._boolean = false;
 	other._int = 0;
@@ -113,9 +80,9 @@ Value::Value(Value&& other) noexcept
 
 Value::Value(const Value& other)
 	: _type(other._type)
-	, _boolean(false)
-	, _int(0)
-	, _float(0.0)
+	, _boolean(other._boolean)
+	, _int(other._int)
+	, _float(other._float)
 {
 	switch (_type)
 	{
@@ -131,18 +98,6 @@ Value::Value(const Value& other)
 		case Type::String:
 		case Type::EnumValue:
 			_string.reset(new StringType(*other._string));
-			break;
-
-		case Type::Boolean:
-			_boolean = other._boolean;
-			break;
-
-		case Type::Int:
-			_int = other._int;
-			break;
-
-		case Type::Float:
-			_float = other._float;
 			break;
 
 		case Type::Scalar:
@@ -164,30 +119,12 @@ Value& Value::operator=(Value&& rhs) noexcept
 	_list = std::move(rhs._list);
 	_string = std::move(rhs._string);
 	_scalar = std::move(rhs._scalar);
-	_boolean = false;
-	_int = 0;
-	_float = 0.0;
-
-	switch (_type)
-	{
-		case Type::Boolean:
-			_boolean = rhs._boolean;
-			rhs._boolean = false;
-			break;
-
-		case Type::Int:
-			_int = rhs._int;
-			rhs._int = 0;
-			break;
-
-		case Type::Float:
-			_float = rhs._float;
-			rhs._float = 0.0;
-			break;
-
-		default:
-			break;
-	}
+	_boolean = rhs._boolean;
+	rhs._boolean = false;
+	_int = rhs._int;
+	rhs._int = 0;
+	_float = rhs._float;
+	rhs._float = 0.0;
 
 	return *this;
 }
