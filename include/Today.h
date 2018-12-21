@@ -482,12 +482,31 @@ public:
 
 	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(const std::shared_ptr<service::RequestState>&) const override
 	{
+		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
+	}
+};
+
+class NextAppointmentChange : public object::Subscription
+{
+public:
+	using nextAppointmentChange = std::function<std::shared_ptr<Appointment>(const std::shared_ptr<service::RequestState>&)>;
+
+	explicit NextAppointmentChange(nextAppointmentChange&& changeNextAppointment)
+		: _changeNextAppointment(std::move(changeNextAppointment))
+	{
+	}
+
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(const std::shared_ptr<service::RequestState>& state) const override
+	{
 		std::promise<std::shared_ptr<object::Appointment>> promise;
 
-		promise.set_value(nullptr);
+		promise.set_value(std::static_pointer_cast<object::Appointment>(_changeNextAppointment(state)));
 
 		return promise.get_future();
 	}
+
+private:
+	nextAppointmentChange _changeNextAppointment;
 };
 
 } /* namespace today */
