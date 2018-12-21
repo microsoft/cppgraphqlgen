@@ -17,6 +17,8 @@
 #include <type_traits>
 #include <future>
 #include <queue>
+#include <map>
+#include <set>
 
 namespace facebook {
 namespace graphql {
@@ -69,7 +71,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 struct ResolverParams
 {
 	std::shared_ptr<RequestState> state;
-	const response::Value& arguments;
+	response::Value arguments;
 	const peg::ast_node* selection;
 	const FragmentMap& fragments;
 	const response::Value& variables;
@@ -289,8 +291,6 @@ private:
 	ResolverMap _resolvers;
 };
 
-using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
-
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
 template <typename _Type>
@@ -450,9 +450,40 @@ using IdResult = ModifiedResult<std::vector<uint8_t>>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
+using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
+
+// You can still sub-class RequestState and use that in the state parameter to Request::subscribe
+// to add your own state to the service callbacks that you receive while executing the subscription
+// query.
+struct SubscriptionParams
+{
+	std::shared_ptr<RequestState> state;
+	std::unique_ptr<peg::ast<std::string>> query;
+	std::string operationName;
+	response::Value variables;
+};
+
+// Subscription callbacks receive a reference to the SubscriptionParams and the response::Value
+// representing the result of evaluating the SelectionSet against the payload.
+using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
+
+// Subscriptions are stored in maps using these keys.
+using SubscriptionKey = size_t;
+using SubscriptionName = std::string;
+
+// Registration information for subscription, cached in the Request::subscribe call.
+struct SubscriptionRegistration
+{
+	SubscriptionParams params;
+	SubscriptionCallback callback;
+	const peg::ast_node& selection;
+	std::unordered_set<SubscriptionName> fieldNames;
+	FragmentMap fragments;
+};
+
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
-// also needs the values of hte request variables.
+// also needs the values of the request variables.
 class Request : public std::enable_shared_from_this<Request>
 {
 public:
@@ -461,8 +492,16 @@ public:
 
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
 
+	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
+	void unsubscribe(SubscriptionKey key);
+
+	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+
 private:
 	TypeMap _operations;
+	std::map<SubscriptionKey, SubscriptionRegistration> _subscriptions;
+	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;
+	SubscriptionKey _nextKey = 0;
 };
 
 } /* namespace service */

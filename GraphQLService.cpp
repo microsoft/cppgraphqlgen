@@ -644,7 +644,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	_values.push({
 		std::move(alias),
-		itr->second({ _state, arguments, selection, _fragments, _variables })
+		itr->second({ _state, std::move(arguments), selection, _fragments, _variables })
 		});
 }
 
@@ -998,6 +998,11 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 	{
 		operation = "query";
 	}
+	else if (operation == "subscription")
+	{
+		// Skip subscription operations, they should use subscribe instead of resolve.
+		return;
+	}
 
 	auto position = operationDefinition.begin();
 	std::string name;
@@ -1060,56 +1065,55 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 			throw schema_exception({ error.str() });
 		}
 
-		_result = std::async(std::launch::deferred,
-			[this, &operationDefinition](std::shared_ptr<RequestState> state, std::shared_ptr<Object> operationObject)
+		response::Value operationVariables(response::Type::Map);
+
+		peg::on_first_child<peg::variable_definitions>(operationDefinition,
+			[this, &operationVariables](const peg::ast_node& child)
 			{
-				response::Value operationVariables(response::Type::Map);
-
-				peg::on_first_child<peg::variable_definitions>(operationDefinition,
-					[this, &operationVariables](const peg::ast_node& child)
+				peg::for_each_child<peg::variable>(child,
+					[this, &operationVariables](const peg::ast_node& variable)
 					{
-						peg::for_each_child<peg::variable>(child,
-							[this, &operationVariables](const peg::ast_node& variable)
+						std::string variableName;
+
+						peg::on_first_child<peg::variable_name>(variable,
+							[&variableName](const peg::ast_node& name)
 							{
-								std::string variableName;
-
-								peg::on_first_child<peg::variable_name>(variable,
-									[&variableName](const peg::ast_node& name)
-									{
-										// Skip the $ prefix
-										variableName = name.content().c_str() + 1;
-									});
-
-								auto itrVar = _variables.find(variableName);
-								response::Value valueVar;
-
-								if (itrVar != _variables.get<const response::MapType&>().cend())
-								{
-									valueVar = response::Value(itrVar->second);
-								}
-								else
-								{
-									peg::on_first_child<peg::default_value>(variable,
-										[this, &valueVar](const peg::ast_node& defaultValue)
-										{
-											ValueVisitor visitor(_variables);
-
-											visitor.visit(*defaultValue.children.front());
-											valueVar = visitor.getValue();
-										});
-								}
-
-								operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+								// Skip the $ prefix
+								variableName = name.content().c_str() + 1;
 							});
-					});
 
+						auto itrVar = _variables.find(variableName);
+						response::Value valueVar;
+
+						if (itrVar != _variables.get<const response::MapType&>().cend())
+						{
+							valueVar = response::Value(itrVar->second);
+						}
+						else
+						{
+							peg::on_first_child<peg::default_value>(variable,
+								[this, &valueVar](const peg::ast_node& defaultValue)
+								{
+									ValueVisitor visitor(_variables);
+
+									visitor.visit(*defaultValue.children.front());
+									valueVar = visitor.getValue();
+								});
+						}
+
+						operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+					});
+			});
+
+		_result = std::async(std::launch::deferred,
+			[](std::future<response::Value> data)
+			{
 				response::Value document(response::Type::Map);
-				auto data = operationObject->resolve(state, *operationDefinition.children.back(), _fragments, operationVariables);
 
 				document.emplace_back("data", data.get());
 
 				return document;
-			}, _state, itr->second);
+			}, itr->second->resolve(_state, *operationDefinition.children.back(), _fragments, operationVariables));
 	}
 	catch (const schema_exception& ex)
 	{
@@ -1122,6 +1126,138 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 
 		_result = promise.get_future();
 	}
+}
+
+// SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the subscription at the point
+// where we create a subscription.
+class SubscriptionDefinitionVisitor
+{
+public:
+	SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments);
+
+	const peg::ast_node& getRoot() const;
+	SubscriptionRegistration getRegistration();
+
+	void visit(const peg::ast_node& operationDefinition);
+
+private:
+	SubscriptionParams _params;
+	SubscriptionCallback _callback;
+	FragmentMap _fragments;
+	std::unique_ptr<SubscriptionRegistration> _result;
+};
+
+SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments)
+	: _params(std::move(params))
+	, _callback(std::move(callback))
+	, _fragments(std::move(fragments))
+{
+}
+
+const peg::ast_node& SubscriptionDefinitionVisitor::getRoot() const
+{
+	return *_params.query->root;
+}
+
+SubscriptionRegistration SubscriptionDefinitionVisitor::getRegistration()
+{
+	if (!_result)
+	{
+		std::ostringstream error;
+
+		error << "Missing operation";
+
+		if (!_params.operationName.empty())
+		{
+			error << " name: " << _params.operationName;
+		}
+
+		throw schema_exception({ error.str() });
+	}
+
+	auto result = std::move(*_result);
+
+	_result.reset();
+
+	return result;
+}
+
+void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
+{
+	std::string operation;
+
+	peg::on_first_child<peg::operation_type>(operationDefinition,
+		[&operation](const peg::ast_node& child)
+		{
+			operation = child.content();
+		});
+
+	if (operation != "subscription")
+	{
+		// Skip operations other than subscription.
+		return;
+	}
+
+	auto position = operationDefinition.begin();
+	std::string name;
+
+	peg::on_first_child<peg::operation_name>(operationDefinition,
+		[&name](const peg::ast_node& child)
+		{
+			name = child.content();
+		});
+
+	if (!_params.operationName.empty()
+		&& name != _params.operationName)
+	{
+		// Skip the subscriptions that don't match the name
+		return;
+	}
+
+	if (_result)
+	{
+		std::ostringstream error;
+
+		if (_params.operationName.empty())
+		{
+			error << "No operationName specified with extra subscription";
+		}
+		else
+		{
+			error << "Duplicate subscription";
+		}
+
+		if (!name.empty())
+		{
+			error << " name: " << name;
+		}
+
+		error << " line: " << position.line
+			<< " column: " << position.byte_in_line;
+
+		throw schema_exception({ error.str() });
+	}
+
+	const auto& selection = *operationDefinition.children.back();
+	std::unordered_set<SubscriptionName> fieldNames;
+
+	peg::for_each_child<peg::field>(selection,
+		[this, &fieldNames](const peg::ast_node& field)
+		{
+			peg::on_first_child<peg::field_name>(field,
+				[&fieldNames](const peg::ast_node& child)
+				{
+					fieldNames.insert(child.content());
+				});
+		});
+
+	_result.reset(new SubscriptionRegistration {
+		std::move(_params),
+		std::move(_callback),
+		selection,
+		std::move(fieldNames),
+		std::move(_fragments)
+		});
 }
 
 Request::Request(TypeMap&& operationTypes)
@@ -1149,6 +1285,112 @@ std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState
 	});
 
 	return operationVisitor.getValue();
+}
+
+SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
+{
+	FragmentDefinitionVisitor fragmentVisitor;
+
+	peg::for_each_child<peg::fragment_definition>(*params.query->root,
+		[&fragmentVisitor](const peg::ast_node& child)
+		{
+			fragmentVisitor.visit(child);
+		});
+
+	auto fragments = fragmentVisitor.getFragments();
+	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params), std::move(callback), std::move(fragments));
+
+	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
+		[&subscriptionVisitor](const peg::ast_node& child)
+		{
+			subscriptionVisitor.visit(child);
+		});
+
+	auto registration = subscriptionVisitor.getRegistration();
+	auto key = _nextKey++;
+
+	for (const auto& name : registration.fieldNames)
+	{
+		_listeners[name].insert(key);
+	}
+
+	_subscriptions.emplace(key, std::move(registration));
+
+	return key;
+}
+
+void Request::unsubscribe(SubscriptionKey key)
+{
+	auto itrSubscription = _subscriptions.find(key);
+
+	if (itrSubscription == _subscriptions.cend())
+	{
+		return;
+	}
+
+	for (const auto& name : itrSubscription->second.fieldNames)
+	{
+		auto itrListener = _listeners.find(name);
+		
+		itrListener->second.erase(key);
+		if (itrListener->second.empty())
+		{
+			_listeners.erase(itrListener);
+		}
+	}
+
+	_subscriptions.erase(itrSubscription);
+
+	if (_subscriptions.empty())
+	{
+		_nextKey = 0;
+	}
+	else
+	{
+		_nextKey = _subscriptions.crbegin()->first + 1;
+	}
+}
+
+void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
+{
+	auto itrListeners = _listeners.find(name);
+
+	if (itrListeners == _listeners.cend())
+	{
+		return;
+	}
+
+	for (const auto& key : itrListeners->second)
+	{
+		auto itrSubscription = _subscriptions.find(key);
+		const auto& registration = itrSubscription->second;
+		std::future<response::Value> result;
+
+		try
+		{
+			result = std::async(std::launch::deferred,
+				[](std::future<response::Value> data)
+				{
+					response::Value document(response::Type::Map);
+
+					document.emplace_back("data", data.get());
+
+					return document;
+				}, subscriptionObject->resolve(registration.params.state, registration.selection, registration.fragments, registration.params.variables));
+		}
+		catch (const schema_exception& ex)
+		{
+			std::promise<response::Value> promise;
+			response::Value document(response::Type::Map);
+
+			document.emplace_back("data", response::Value());
+			document.emplace_back("errors", response::Value(ex.getErrors()));
+
+			result = promise.get_future();
+		}
+
+		registration.callback(std::move(result));
+	}
 }
 
 } /* namespace service */
