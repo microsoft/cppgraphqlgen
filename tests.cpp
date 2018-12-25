@@ -54,7 +54,11 @@ public:
 				std::move(input.clientMutationId)
 				);
 		});
-		auto subscription = std::make_shared<today::Subscription>();
+		auto subscription = std::make_shared<today::NextAppointmentChange>(
+			[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<today::Appointment>
+		{
+			return { std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "tomorrow", "Lunch?", true) };
+		});
 
 		_service = std::make_shared<today::Operations>(query, mutation, subscription);
 	}
@@ -377,7 +381,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 	}
 }
 
-TEST_F(TodayServiceCase, SubscribeNextAppointmentChange)
+TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 {
 	auto ast = peg::parseString(R"(subscription TestSubscription {
 			nextAppointment: nextAppointmentChange {
@@ -389,19 +393,13 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChange)
 		})");
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
-	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
-		[this](const std::shared_ptr<service::RequestState>& state) -> std::shared_ptr<today::Appointment>
-		{
-			EXPECT_EQ(6, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-			return std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "tomorrow", "Lunch?", true);
-		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(variables) },
 		[&result](std::future<response::Value> response)
 		{
 			result = response.get();
 		});
-	_service->deliver("nextAppointmentChange", std::static_pointer_cast<service::Object>(subscriptionObject));
+	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
 	
 	try
@@ -418,6 +416,55 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChange)
 		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
+TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
+{
+	auto ast = peg::parseString(R"(subscription TestSubscription {
+			nextAppointment: nextAppointmentChange {
+				nextAppointmentId: id
+				when
+				subject
+				isNow
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(7);
+	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
+		[this](const std::shared_ptr<service::RequestState>& state) -> std::shared_ptr<today::Appointment>
+	{
+		EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
+		return std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "today", "Dinner Time!", true);
+	});
+	response::Value result;
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(variables) },
+		[&result](std::future<response::Value> response)
+	{
+		result = response.get();
+	});
+	_service->deliver("nextAppointmentChange", std::static_pointer_cast<service::Object>(subscriptionObject));
+	_service->unsubscribe(key);
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
+		EXPECT_EQ("Dinner Time!", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
+		EXPECT_EQ("today", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
 	catch (const service::schema_exception& ex)
@@ -461,7 +508,7 @@ TEST_F(TodayServiceCase, Introspection)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<today::RequestState>(7);
+	auto state = std::make_shared<today::RequestState>(8);
 	auto result = _service->resolve(state, *ast->root, "", variables).get();
 
 	try

@@ -1353,6 +1353,10 @@ void Request::unsubscribe(SubscriptionKey key)
 
 void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
 {
+	const auto& optionalOrDefaultSubscription = subscriptionObject
+		? subscriptionObject
+		: _operations.find("subscription")->second;
+
 	auto itrListeners = _listeners.find(name);
 
 	if (itrListeners == _listeners.cend())
@@ -1376,7 +1380,7 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 					document.emplace_back("data", data.get());
 
 					return document;
-				}, subscriptionObject->resolve(registration.params.state, registration.selection, registration.fragments, registration.params.variables));
+				}, optionalOrDefaultSubscription->resolve(registration.params.state, registration.selection, registration.fragments, registration.params.variables));
 		}
 		catch (const schema_exception& ex)
 		{
