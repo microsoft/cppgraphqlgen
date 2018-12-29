@@ -111,6 +111,17 @@ struct InputType
 
 using InputTypeList = std::vector<InputType>;
 
+// Directives are defined with arguments and a list of valid locations.
+struct Directive
+{
+	std::string name;
+	std::vector<std::string> locations;
+	InputFieldList arguments;
+	std::string description;
+};
+
+using DirectiveList = std::vector<Directive>;
+
 // Union types map a type name to a set of potential concrete type names.
 struct UnionType
 {
@@ -209,6 +220,7 @@ private:
 	void visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeExtension);
 	void visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition);
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
+	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
 	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
@@ -296,6 +308,7 @@ private:
 	InterfaceTypeList _interfaceTypes;
 	TypeNameMap _objectNames;
 	ObjectTypeList _objectTypes;
+	DirectiveList _directives;
 	OperationTypeList _operationTypes;
 };
 
