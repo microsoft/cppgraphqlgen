@@ -200,6 +200,26 @@ MapType::const_iterator Value::find(const std::string& name) const
 	return _map->cbegin() + itr->second;
 }
 
+MapType::const_iterator Value::begin() const
+{
+	if (_type != Type::Map)
+	{
+		throw std::logic_error("Invalid call to Value::end for MapType");
+	}
+
+	return _map->cbegin();
+}
+
+MapType::const_iterator Value::end() const
+{
+	if (_type != Type::Map)
+	{
+		throw std::logic_error("Invalid call to Value::end for MapType");
+	}
+
+	return _map->cend();
+}
+
 const Value& Value::operator[](const std::string& name) const
 {
 	const auto itr = find(name);

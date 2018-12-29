@@ -72,6 +72,7 @@ struct ResolverParams
 {
 	std::shared_ptr<RequestState> state;
 	response::Value arguments;
+	response::Value directives;
 	const peg::ast_node* selection;
 	const FragmentMap& fragments;
 	const response::Value& variables;
@@ -183,9 +184,9 @@ struct ModifiedArgument
 		{
 			return { require(name, arguments), true };
 		}
-		catch (const schema_exception&)
+		catch (const std::exception&)
 		{
-			return { {}, false };
+			return { _Type{}, false };
 		}
 	}
 
@@ -247,7 +248,7 @@ struct ModifiedArgument
 		{
 			return { require<_Modifier, _Other...>(name, arguments), true };
 		}
-		catch (const schema_exception&)
+		catch (const std::exception&)
 		{
 			return { typename ArgumentTraits<_Type, _Modifier, _Other...>::type{}, false };
 		}
