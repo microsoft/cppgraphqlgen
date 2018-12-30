@@ -2467,6 +2467,9 @@ Operations::Operations()cpp";
 
 	if (!_directives.empty())
 	{
+		sourceFile << R"cpp(
+)cpp";
+
 		for (const auto& directive : _directives)
 		{
 			sourceFile << R"cpp(	schema->AddDirective(std::make_shared<)cpp" << s_introspectionNamespace
@@ -2486,17 +2489,17 @@ Operations::Operations()cpp";
 				{
 					if (!firstLocation)
 					{
-						sourceFile << R"cpp(,)cpp";
+						sourceFile << R"cpp(,
+)cpp";
 					}
 
 					firstLocation = false;
-					sourceFile << R"cpp(
-			R"gql()cpp" << location << R"cpp()gql")cpp";
+					sourceFile << R"cpp(		R"gql()cpp" << location << R"cpp()gql")cpp";
 				}
 
 
 				sourceFile << R"cpp(
-		})cpp";
+	})cpp";
 			}
 
 			sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
@@ -2518,7 +2521,7 @@ Operations::Operations()cpp";
 					}
 
 					firstArgument = false;
-					sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>(")cpp" << argument.name
 						<< R"cpp(", R"md()cpp" << argument.description
 						<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
@@ -2526,7 +2529,7 @@ Operations::Operations()cpp";
 				}
 
 				sourceFile << R"cpp(
-		})cpp";
+	})cpp";
 			}
 			sourceFile << R"cpp()));
 )cpp";

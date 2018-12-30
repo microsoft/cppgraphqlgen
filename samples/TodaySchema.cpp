@@ -834,6 +834,12 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::Field>("unreadCount", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), std::make_shared<introspection::WrapperType>(introspection::__TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 
+	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
+		R"gql(SUBSCRIPTION)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("field", R"md()md", schema->LookupType("String"), R"gql()gql")
+	})));
+
 	schema->AddQueryType(typeQuery);
 	schema->AddMutationType(typeMutation);
 	schema->AddSubscriptionType(typeSubscription);
