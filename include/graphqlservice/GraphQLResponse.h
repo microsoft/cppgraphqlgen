@@ -64,6 +64,8 @@ struct Value
 	// Valid for Type::Map
 	void emplace_back(std::string&& name, Value&& value);
 	MapType::const_iterator find(const std::string& name) const;
+	MapType::const_iterator begin() const;
+	MapType::const_iterator end() const;
 	const Value& operator[](const std::string& name) const;
 
 	// Valid for Type::List

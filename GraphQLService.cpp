@@ -510,7 +510,8 @@ public:
 	std::future<response::Value> getValues();
 
 private:
-	bool shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const;
+	response::Value getDirectives(const peg::ast_node& directives) const;
+	bool shouldSkip(const response::Value& directives) const;
 
 	void visitField(const peg::ast_node& field);
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
@@ -608,13 +609,15 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	bool skip = false;
 
+	response::Value directives(response::Type::Map);
+
 	peg::on_first_child<peg::directives>(field,
-		[this, &skip](const peg::ast_node& child)
+		[this, &directives](const peg::ast_node& child)
 		{
-			skip = shouldSkip(&child.children);
+			directives = getDirectives(child);
 		});
 
-	if (skip)
+	if (shouldSkip(directives))
 	{
 		return;
 	}
@@ -644,7 +647,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	_values.push({
 		std::move(alias),
-		itr->second({ _state, std::move(arguments), selection, _fragments, _variables })
+		itr->second({ _state, std::move(arguments), std::move(directives), selection, _fragments, _variables })
 		});
 }
 
@@ -669,11 +672,15 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 	if (!skip)
 	{
+		response::Value directives(response::Type::Map);
+
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[this, &skip](const peg::ast_node& child)
+			[this, &directives](const peg::ast_node& child)
 			{
-				skip = shouldSkip(&child.children);
+				directives = getDirectives(child);
 			});
+
+		skip = shouldSkip(directives);
 	}
 
 	if (skip)
@@ -693,15 +700,15 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
-	bool skip = false;
+	response::Value directives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[this, &skip](const peg::ast_node& child)
+		[this, &directives](const peg::ast_node& child)
 		{
-			skip = shouldSkip(&child.children);
+			directives = getDirectives(child);
 		});
 
-	if (skip)
+	if (shouldSkip(directives))
 	{
 		return;
 	}
@@ -728,86 +735,94 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 	}
 }
 
-bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_node>>* directives) const
+response::Value SelectionVisitor::getDirectives(const peg::ast_node& directives) const
 {
-	if (directives == nullptr)
-	{
-		return false;
-	}
+	response::Value result(response::Type::Map);
 
-	for (const auto& directive : *directives)
+	for (const auto& directive : directives.children)
 	{
-		std::string name;
+		std::string directiveName;
 
 		peg::on_first_child<peg::directive_name>(*directive,
-			[&name](const peg::ast_node& child)
+			[&directiveName](const peg::ast_node& child)
 			{
-				name = child.content();
+				directiveName = child.content();
 			});
 
-		const bool include = (name == "include");
-		const bool skip = (!include && (name == "skip"));
-
-		if (!include && !skip)
+		if (directiveName.empty())
 		{
 			continue;
 		}
 
-		peg::ast_node* argument = nullptr;
-		std::string argumentName;
-		bool argumentTrue = false;
-		bool argumentFalse = false;
+		response::Value directiveArguments(response::Type::Map);
 
 		peg::on_first_child<peg::arguments>(*directive,
-			[&argument, &argumentName, &argumentTrue, &argumentFalse](const peg::ast_node& child)
+			[this, &directiveArguments](const peg::ast_node& child)
 			{
-				if (child.children.size() == 1)
+				ValueVisitor visitor(_variables);
+
+				for (auto& argument : child.children)
 				{
-					argument = child.children.front().get();
+					visitor.visit(*argument->children.back());
 
-					peg::on_first_child<peg::argument_name>(*argument,
-						[&argumentName](const peg::ast_node& nameArg)
-						{
-							argumentName = nameArg.content();
-						});
-
-					peg::on_first_child<peg::true_keyword>(*argument,
-						[&argumentTrue](const peg::ast_node& nameArg)
-						{
-							argumentTrue = true;
-						});
-
-					if (!argumentTrue)
-					{
-						peg::on_first_child<peg::false_keyword>(*argument,
-							[&argumentFalse](const peg::ast_node& nameArg)
-							{
-								argumentFalse = true;
-							});
-					}
+					directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
 				}
 			});
 
-		if (argumentName != "if")
+		result.emplace_back(std::move(directiveName), std::move(directiveArguments));
+	}
+
+	return result;
+}
+
+bool SelectionVisitor::shouldSkip(const response::Value& directives) const
+{
+	static const std::array<std::pair<bool, std::string>, 2> skippedNames = {
+		std::make_pair<bool, std::string>(true, "skip"),
+		std::make_pair<bool, std::string>(false, "include"),
+	};
+
+	for (const auto& entry : skippedNames)
+	{
+		const bool skip = entry.first;
+		auto itrDirective = directives.find(entry.second);
+
+		if (itrDirective == directives.end())
+		{
+			continue;
+		}
+
+		auto& arguments = itrDirective->second;
+
+		if (arguments.type() != response::Type::Map)
 		{
 			std::ostringstream error;
 
-			error << "Unknown argument to directive: " << name;
-
-			if (!argumentName.empty())
-			{
-				error << " name: " << argumentName;
-			}
-
-			if (argument != nullptr)
-			{
-				auto position = argument->begin();
-
-				error << " line: " << position.line
-					<< " column: " << position.byte_in_line;
-			}
+			error << "Invalid arguments to directive: " << entry.second;
 
 			throw schema_exception({ error.str() });
+		}
+
+		bool argumentTrue = false;
+		bool argumentFalse = false;
+
+		for (auto& argument : arguments)
+		{
+			if (argumentTrue
+				|| argumentFalse
+				|| argument.second.type() != response::Type::Boolean
+				|| argument.first != "if")
+			{
+				std::ostringstream error;
+
+				error << "Invalid argument to directive: " << entry.second
+					<< " name: " << argument.first;
+
+				throw schema_exception({ error.str() });
+			}
+
+			argumentTrue = argument.second.get<response::BooleanType>();
+			argumentFalse = !argumentTrue;
 		}
 
 		if (argumentTrue)
@@ -820,12 +835,10 @@ bool SelectionVisitor::shouldSkip(const std::vector<std::unique_ptr<peg::ast_nod
 		}
 		else
 		{
-			auto position = argument->begin();
 			std::ostringstream error;
 
-			error << "Unknown argument to directive: " << name
-				<< " line: " << position.line
-				<< " column: " << position.byte_in_line;
+			error << "Missing argument to directive: " << entry.second
+				<< " name: if";
 
 			throw schema_exception({ error.str() });
 		}

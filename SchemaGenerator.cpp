@@ -365,6 +365,10 @@ void Generator::visitDefinition(const peg::ast_node& definition)
 	{
 		visitObjectTypeExtension(definition);
 	}
+	else if (definition.is<peg::directive_definition>())
+	{
+		visitDirectiveDefinition(definition);
+	}
 }
 
 void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
@@ -727,6 +731,43 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 			unionType.options.push_back(child.content());
 		});
 	}
+}
+
+void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinition)
+{
+	Directive directive;
+
+	peg::on_first_child<peg::directive_name>(directiveDefinition,
+		[&directive](const peg::ast_node& child)
+		{
+			directive.name = child.content();
+		});
+
+	peg::on_first_child<peg::description>(directiveDefinition,
+		[&directive](const peg::ast_node& child)
+		{
+			directive.description = child.children.front()->unescaped;
+		});
+
+	peg::for_each_child<peg::directive_location>(directiveDefinition,
+		[&directive](const peg::ast_node& child)
+		{
+			directive.locations.push_back(child.content());
+		});
+
+	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
+		[&directive](const peg::ast_node& child)
+		{
+			auto fields = getInputFields(child.children);
+
+			directive.arguments.reserve(directive.arguments.size() + fields.size());
+			for (auto& field : fields)
+			{
+				directive.arguments.push_back(std::move(field));
+			}
+		});
+
+	_directives.push_back(std::move(directive));
 }
 
 OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
@@ -2421,6 +2462,77 @@ Operations::Operations()cpp";
 	});
 )cpp";
 			}
+		}
+	}
+
+	if (!_directives.empty())
+	{
+		sourceFile << R"cpp(
+)cpp";
+
+		for (const auto& directive : _directives)
+		{
+			sourceFile << R"cpp(	schema->AddDirective(std::make_shared<)cpp" << s_introspectionNamespace
+				<< R"cpp(::Directive>(")cpp" << directive.name
+				<< R"cpp(", R"md()cpp" << directive.description
+				<< R"cpp()md", std::vector<response::StringType>()cpp";
+
+			if (!directive.locations.empty())
+			{
+				bool firstLocation = true;
+
+
+				sourceFile << R"cpp({
+)cpp";
+
+				for (const auto& location : directive.locations)
+				{
+					if (!firstLocation)
+					{
+						sourceFile << R"cpp(,
+)cpp";
+					}
+
+					firstLocation = false;
+					sourceFile << R"cpp(		R"gql()cpp" << location << R"cpp()gql")cpp";
+				}
+
+
+				sourceFile << R"cpp(
+	})cpp";
+			}
+
+			sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+				<< R"cpp(::InputValue>>()cpp";
+
+			if (!directive.arguments.empty())
+			{
+				bool firstArgument = true;
+
+				sourceFile << R"cpp({
+)cpp";
+
+				for (const auto& argument : directive.arguments)
+				{
+					if (!firstArgument)
+					{
+						sourceFile << R"cpp(,
+)cpp";
+					}
+
+					firstArgument = false;
+					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
+						<< R"cpp(::InputValue>(")cpp" << argument.name
+						<< R"cpp(", R"md()cpp" << argument.description
+						<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+						<< R"cpp(, R"gql()cpp" << argument.defaultValueString << R"cpp()gql"))cpp";
+				}
+
+				sourceFile << R"cpp(
+	})cpp";
+			}
+			sourceFile << R"cpp()));
+)cpp";
 		}
 	}
 

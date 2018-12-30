@@ -85,6 +85,8 @@ type Subscription {
     nextAppointmentChange : Appointment @deprecated(reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
 }
 
+directive @subscriptionTag(field: String) on SUBSCRIPTION
+
 scalar DateTime
 
 enum TaskState {

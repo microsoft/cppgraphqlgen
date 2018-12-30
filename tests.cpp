@@ -535,6 +535,130 @@ TEST_F(TodayServiceCase, Introspection)
 	}
 }
 
+TEST_F(TodayServiceCase, SkipDirective)
+{
+	auto ast = R"({
+			__schema {
+				types {
+					kind
+					name
+					description
+					ofType
+				}
+				queryType @skip(if: false) {
+					kind
+					name
+					fields {
+						name
+						args {
+							name
+							type {
+								kind
+								name
+								ofType {
+									kind
+									name
+								}
+							}
+						}
+					}
+				}
+				mutationType @skip(if: true) {
+					kind
+					name
+				}
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(8);
+	auto result = _service->resolve(state, *ast->root, "", variables).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+		const auto schema = service::ScalarArgument::require("__schema", data);
+		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
+		const auto queryType = service::ScalarArgument::require("queryType", schema);
+		const auto mutationType = service::ScalarArgument::find("mutationType", schema);
+
+		ASSERT_FALSE(types.empty());
+		ASSERT_TRUE(queryType.type() == response::Type::Map);
+		ASSERT_FALSE(mutationType.second);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
+TEST_F(TodayServiceCase, IncludeDirective)
+{
+	auto ast = R"({
+			__schema {
+				types {
+					kind
+					name
+					description
+					ofType
+				}
+				queryType @include(if: false) {
+					kind
+					name
+					fields {
+						name
+						args {
+							name
+							type {
+								kind
+								name
+								ofType {
+									kind
+									name
+								}
+							}
+						}
+					}
+				}
+				mutationType @include(if: true) {
+					kind
+					name
+				}
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(9);
+	auto result = _service->resolve(state, *ast->root, "", variables).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+		const auto schema = service::ScalarArgument::require("__schema", data);
+		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
+		const auto queryType = service::ScalarArgument::find("queryType", schema);
+		const auto mutationType = service::ScalarArgument::require("mutationType", schema);
+
+		ASSERT_FALSE(types.empty());
+		ASSERT_FALSE(queryType.second);
+		ASSERT_TRUE(mutationType.type() == response::Type::Map);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
 TEST(ArgumentsCase, ListArgumentStrings)
 {
 	auto parsed = response::parseJSON(R"js({"value":[
