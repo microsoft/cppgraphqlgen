@@ -92,7 +92,6 @@ int main(int argc, char** argv)
 
 		response::Value variables(response::Type::Map);
 
-		response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get());
 		std::cout << response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get()) << std::endl;
 	}
 	catch (const std::runtime_error& ex)

@@ -696,7 +696,7 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 
 	try
 	{
-		service::StringArgument::require<service::TypeModifier::List>("value", parsed);
+		auto actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
 	catch (const service::schema_exception& ex)
 	{
