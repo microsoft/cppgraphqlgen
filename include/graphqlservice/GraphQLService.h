@@ -70,7 +70,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams
 {
-	std::shared_ptr<RequestState> state;
+	const std::shared_ptr<RequestState>& state;
 	response::Value arguments;
 	response::Value directives;
 	const peg::ast_node* selection;
@@ -491,7 +491,7 @@ public:
 	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
 
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, const response::Value& variables) const;
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
 	void unsubscribe(SubscriptionKey key);

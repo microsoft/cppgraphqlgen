@@ -126,7 +126,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	auto result = _service->resolve(state, *ast->root, "Everything", variables).get();
+	auto result = _service->resolve(state, *ast->root, "Everything", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -198,7 +198,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -250,7 +250,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		})gql"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(3);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -301,7 +301,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(4);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -351,7 +351,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(5);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
 	{
@@ -394,7 +394,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(variables) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 		{
 			result = response.get();
@@ -443,7 +443,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		return std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "today", "Dinner Time!", true);
 	});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(variables) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -509,7 +509,7 @@ TEST_F(TodayServiceCase, Introspection)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
 	{
@@ -571,7 +571,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
 	{
@@ -633,7 +633,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(9);
-	auto result = _service->resolve(state, *ast->root, "", variables).get();
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
 	{

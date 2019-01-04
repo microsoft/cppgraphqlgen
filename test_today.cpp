@@ -90,9 +90,7 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		response::Value variables(response::Type::Map);
-
-		std::cout << response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), variables).get()) << std::endl;
+		std::cout << response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), response::Value(response::Type::Map)).get()) << std::endl;
 	}
 	catch (const std::runtime_error& ex)
 	{
