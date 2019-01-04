@@ -688,14 +688,10 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
-	peg::on_first_child<peg::selection_set>(fragmentSpread,
-		[this](const peg::ast_node& child)
-		{
-			for (const auto& selection : child.children)
-			{
-				visit(*selection);
-			}
-		});
+	for (const auto& selection : itr->second.getSelection().children)
+	{
+		visit(*selection);
+	}
 }
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
