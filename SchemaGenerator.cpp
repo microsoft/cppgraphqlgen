@@ -2074,6 +2074,19 @@ Operations::Operations()cpp";
 {
 )cpp";
 
+	if (_isIntrospection)
+	{
+		// Add SCALAR types for each of the built-in types
+		for (const auto& builtinType : s_builtinTypes)
+		{
+			sourceFile << R"cpp(	schema->AddType(")cpp" << builtinType.first
+				<< R"cpp(", std::make_shared<)cpp" << s_introspectionNamespace
+				<< R"cpp(::ScalarType>(")cpp" << builtinType.first
+				<< R"cpp(", R"md(Built-in type)md"));
+)cpp";
+		}
+	}
+
 	if (!_scalarTypes.empty())
 	{
 		for (const auto& scalarType : _scalarTypes)
