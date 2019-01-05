@@ -899,6 +899,13 @@ void Object::endSelectionSet(const std::shared_ptr<RequestState>&) const
 {
 }
 
+OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments)
+	: state(std::move(state))
+	, variables(std::move(variables))
+	, fragments(std::move(fragments))
+{
+}
+
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment
 // definitions in the document.
 class FragmentDefinitionVisitor
@@ -929,22 +936,6 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
 }
 
-struct OperationParams : public std::enable_shared_from_this<OperationParams>
-{
-	explicit OperationParams(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments);
-
-	std::shared_ptr<RequestState> state;
-	response::Value variables;
-	FragmentMap fragments;
-};
-
-OperationParams::OperationParams(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments)
-	: state(std::move(state))
-	, variables(std::move(variables))
-	, fragments(std::move(fragments))
-{
-}
-
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
 // operation name.
 class OperationDefinitionVisitor
@@ -957,14 +948,17 @@ public:
 	void visit(const peg::ast_node& operationDefinition);
 
 private:
-	std::shared_ptr<OperationParams> _params;
+	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
 	const std::string& _operationName;
 	std::future<response::Value> _result;
 };
 
 OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, response::Value&& variables, FragmentMap&& fragments)
-	: _params(std::make_shared<OperationParams>(std::move(state), std::move(variables), std::move(fragments)))
+	: _params(std::make_shared<OperationData>(
+		std::move(state),
+		std::move(variables),
+		std::move(fragments)))
 	, _operations(operations)
 	, _operationName(operationName)
 {
@@ -1151,6 +1145,18 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 	}
 }
 
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_set<SubscriptionName>&& fieldNames,
+	std::unique_ptr<peg::ast<std::string>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+	const peg::ast_node& selection)
+	: data(std::move(data))
+	, fieldNames(std::move(fieldNames))
+	, query(std::move(query))
+	, operationName(std::move(operationName))
+	, callback(std::move(callback))
+	, selection(selection)
+{
+}
+
 // SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the subscription at the point
 // where we create a subscription.
 class SubscriptionDefinitionVisitor
@@ -1159,7 +1165,7 @@ public:
 	SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments);
 
 	const peg::ast_node& getRoot() const;
-	SubscriptionRegistration getRegistration();
+	std::shared_ptr<SubscriptionData> getRegistration();
 
 	void visit(const peg::ast_node& operationDefinition);
 
@@ -1167,7 +1173,7 @@ private:
 	SubscriptionParams _params;
 	SubscriptionCallback _callback;
 	FragmentMap _fragments;
-	std::unique_ptr<SubscriptionRegistration> _result;
+	std::shared_ptr<SubscriptionData> _result;
 };
 
 SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments)
@@ -1182,7 +1188,7 @@ const peg::ast_node& SubscriptionDefinitionVisitor::getRoot() const
 	return *_params.query->root;
 }
 
-SubscriptionRegistration SubscriptionDefinitionVisitor::getRegistration()
+std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration()
 {
 	if (!_result)
 	{
@@ -1198,7 +1204,7 @@ SubscriptionRegistration SubscriptionDefinitionVisitor::getRegistration()
 		throw schema_exception({ error.str() });
 	}
 
-	auto result = std::move(*_result);
+	auto result = std::move(_result);
 
 	_result.reset();
 
@@ -1274,13 +1280,16 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 				});
 		});
 
-	_result.reset(new SubscriptionRegistration {
-		std::move(_params),
-		std::move(_callback),
-		selection,
+	_result = std::make_shared<SubscriptionData>(
+		std::make_shared<OperationData>(
+			std::move(_params.state),
+			std::move(_params.variables),
+			std::move(_fragments)),
 		std::move(fieldNames),
-		std::move(_fragments)
-		});
+		std::move(_params.query),
+		std::move(_params.operationName),
+		std::move(_callback),
+		selection);
 }
 
 Request::Request(TypeMap&& operationTypes)
@@ -1332,7 +1341,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	auto registration = subscriptionVisitor.getRegistration();
 	auto key = _nextKey++;
 
-	for (const auto& name : registration.fieldNames)
+	for (const auto& name : registration->fieldNames)
 	{
 		_listeners[name].insert(key);
 	}
@@ -1351,7 +1360,7 @@ void Request::unsubscribe(SubscriptionKey key)
 		return;
 	}
 
-	for (const auto& name : itrSubscription->second.fieldNames)
+	for (const auto& name : itrSubscription->second->fieldNames)
 	{
 		auto itrListener = _listeners.find(name);
 		
@@ -1390,20 +1399,20 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 	for (const auto& key : itrListeners->second)
 	{
 		auto itrSubscription = _subscriptions.find(key);
-		const auto& registration = itrSubscription->second;
+		auto registration = itrSubscription->second;
 		std::future<response::Value> result;
 
 		try
 		{
 			result = std::async(std::launch::deferred,
-				[](std::future<response::Value> data)
+				[registration](std::future<response::Value> data)
 				{
 					response::Value document(response::Type::Map);
 
 					document.emplace_back("data", data.get());
 
 					return document;
-				}, optionalOrDefaultSubscription->resolve(registration.params.state, registration.selection, registration.fragments, registration.params.variables));
+				}, optionalOrDefaultSubscription->resolve(registration->data->state, registration->selection, registration->data->fragments, registration->data->variables));
 		}
 		catch (const schema_exception& ex)
 		{
@@ -1416,7 +1425,7 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 			result = promise.get_future();
 		}
 
-		registration.callback(std::move(result));
+		registration->callback(std::move(result));
 	}
 }
 

@@ -464,8 +464,23 @@ struct SubscriptionParams
 	response::Value variables;
 };
 
-// Subscription callbacks receive a reference to the SubscriptionParams and the response::Value
-// representing the result of evaluating the SelectionSet against the payload.
+// State which is captured and kept alive until all pending futures have been resolved for an operation.
+// Note: SelectionSet is the other parameter that gets passed to the top level Object, it's a borrowed
+// reference to an element in the AST. In the case of query and mutation operations, it's up to the caller
+// to guarantee the lifetime of the AST exceeds the futures we return. Subscription operations need to
+// hold onto the queries in SubscriptionData, so the lifetime is already tied to the registration and
+// any pending futures passed to callbacks.
+struct OperationData : std::enable_shared_from_this<OperationData>
+{
+	explicit OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments);
+
+	std::shared_ptr<RequestState> state;
+	response::Value variables;
+	FragmentMap fragments;
+};
+
+// Subscription callbacks receive the response::Value representing the result of evaluating the
+// SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
 
 // Subscriptions are stored in maps using these keys.
@@ -473,13 +488,18 @@ using SubscriptionKey = size_t;
 using SubscriptionName = std::string;
 
 // Registration information for subscription, cached in the Request::subscribe call.
-struct SubscriptionRegistration
+struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
-	SubscriptionParams params;
+	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_set<SubscriptionName>&& fieldNames,
+		std::unique_ptr<peg::ast<std::string>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+		const peg::ast_node& selection);
+
+	std::shared_ptr<OperationData> data;
+	std::unordered_set<SubscriptionName> fieldNames;
+	std::unique_ptr<peg::ast<std::string>> query;
+	std::string operationName;
 	SubscriptionCallback callback;
 	const peg::ast_node& selection;
-	std::unordered_set<SubscriptionName> fieldNames;
-	FragmentMap fragments;
 };
 
 // Request scans the fragment definitions and finds the right operation definition to interpret
@@ -500,7 +520,7 @@ public:
 
 private:
 	TypeMap _operations;
-	std::map<SubscriptionKey, SubscriptionRegistration> _subscriptions;
+	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
