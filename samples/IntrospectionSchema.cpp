@@ -536,6 +536,11 @@ std::future<response::Value> __Directive::resolve__typename(service::ResolverPar
 
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 {
+	schema->AddType("Int", std::make_shared<introspection::ScalarType>("Int", R"md(Built-in type)md"));
+	schema->AddType("Float", std::make_shared<introspection::ScalarType>("Float", R"md(Built-in type)md"));
+	schema->AddType("ID", std::make_shared<introspection::ScalarType>("ID", R"md(Built-in type)md"));
+	schema->AddType("String", std::make_shared<introspection::ScalarType>("String", R"md(Built-in type)md"));
+	schema->AddType("Boolean", std::make_shared<introspection::ScalarType>("Boolean", R"md(Built-in type)md"));
 	auto type__TypeKind= std::make_shared<introspection::EnumType>("__TypeKind", R"md()md");
 	schema->AddType("__TypeKind", type__TypeKind);
 	auto type__DirectiveLocation= std::make_shared<introspection::EnumType>("__DirectiveLocation", R"md()md");

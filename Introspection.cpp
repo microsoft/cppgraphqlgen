@@ -9,11 +9,6 @@ namespace introspection {
 
 Schema::Schema()
 {
-	AddType("Int", std::make_shared<ScalarType>("Int", ""));
-	AddType("Float", std::make_shared<ScalarType>("Float", ""));
-	AddType("String", std::make_shared<ScalarType>("String", ""));
-	AddType("Boolean", std::make_shared<ScalarType>("Boolean", ""));
-	AddType("ID", std::make_shared<ScalarType>("ID", ""));
 }
 
 void Schema::AddQueryType(std::shared_ptr<ObjectType> query)
