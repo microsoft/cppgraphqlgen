@@ -51,8 +51,10 @@ void Schema::AddDirective(std::shared_ptr<object::__Directive> directive)
 
 std::future<std::vector<std::shared_ptr<object::__Type>>> Schema::getTypes(const std::shared_ptr<service::RequestState>&) const
 {
+	auto keepAlive = shared_from_this();
+
 	return std::async(std::launch::deferred,
-		[this]()
+		[this, keepAlive]()
 	{
 		std::vector<std::shared_ptr<object::__Type>> result(_types.size());
 
