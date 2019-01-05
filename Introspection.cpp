@@ -34,14 +34,7 @@ void Schema::AddType(response::StringType name, std::shared_ptr<object::__Type> 
 
 const std::shared_ptr<object::__Type>& Schema::LookupType(const response::StringType& name) const
 {
-	auto itr = _typeMap.find(name);
-
-	if (itr == _typeMap.cend())
-	{
-		return nullptr;
-	}
-
-	return _types[itr->second].second;
+	return _types[_typeMap.find(name)->second].second;
 }
 
 void Schema::AddDirective(std::shared_ptr<object::__Directive> directive)
