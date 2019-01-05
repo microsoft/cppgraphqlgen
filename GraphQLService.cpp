@@ -1089,42 +1089,38 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		// Filter the variable definitions down to the ones referenced in this operation
 		response::Value operationVariables(response::Type::Map);
 
-		peg::on_first_child<peg::variable_definitions>(operationDefinition,
-			[this, &operationVariables](const peg::ast_node& child)
+		peg::for_each_child<peg::variable>(operationDefinition,
+			[this, &operationVariables](const peg::ast_node& variable)
 			{
-				peg::for_each_child<peg::variable>(child,
-					[this, &operationVariables](const peg::ast_node& variable)
+				std::string variableName;
+
+				peg::on_first_child<peg::variable_name>(variable,
+					[&variableName](const peg::ast_node& name)
 					{
-						std::string variableName;
-
-						peg::on_first_child<peg::variable_name>(variable,
-							[&variableName](const peg::ast_node& name)
-							{
-								// Skip the $ prefix
-								variableName = name.content().c_str() + 1;
-							});
-
-						auto itrVar = _params->variables.find(variableName);
-						response::Value valueVar;
-
-						if (itrVar != _params->variables.get<const response::MapType&>().cend())
-						{
-							valueVar = response::Value(itrVar->second);
-						}
-						else
-						{
-							peg::on_first_child<peg::default_value>(variable,
-								[this, &valueVar](const peg::ast_node& defaultValue)
-								{
-									ValueVisitor visitor(_params->variables);
-
-									visitor.visit(*defaultValue.children.front());
-									valueVar = visitor.getValue();
-								});
-						}
-
-						operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+						// Skip the $ prefix
+						variableName = name.content().c_str() + 1;
 					});
+
+				auto itrVar = _params->variables.find(variableName);
+				response::Value valueVar;
+
+				if (itrVar != _params->variables.get<const response::MapType&>().cend())
+				{
+					valueVar = response::Value(itrVar->second);
+				}
+				else
+				{
+					peg::on_first_child<peg::default_value>(variable,
+						[this, &valueVar](const peg::ast_node& defaultValue)
+						{
+							ValueVisitor visitor(_params->variables);
+
+							visitor.visit(*defaultValue.children.front());
+							valueVar = visitor.getValue();
+						});
+				}
+
+				operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
 			});
 
 		_params->variables = std::move(operationVariables);
