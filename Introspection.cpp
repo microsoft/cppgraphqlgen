@@ -32,7 +32,7 @@ void Schema::AddType(response::StringType name, std::shared_ptr<object::__Type> 
 	_types.push_back({ std::move(name), std::move(type) });
 }
 
-std::shared_ptr<object::__Type> Schema::LookupType(const response::StringType& name) const
+const std::shared_ptr<object::__Type>& Schema::LookupType(const response::StringType& name) const
 {
 	auto itr = _typeMap.find(name);
 
@@ -323,14 +323,9 @@ UnionType::UnionType(response::StringType name, response::StringType description
 {
 }
 
-void UnionType::AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes)
+void UnionType::AddPossibleTypes(std::vector<std::weak_ptr<object::__Type>> possibleTypes)
 {
-	_possibleTypes.resize(possibleTypes.size());
-	std::transform(possibleTypes.cbegin(), possibleTypes.cend(), _possibleTypes.begin(),
-		[](const std::shared_ptr<object::__Type>& shared)
-	{
-		return shared;
-	});
+	_possibleTypes = std::move(possibleTypes);
 }
 
 std::future<__TypeKind> UnionType::getKind(const std::shared_ptr<service::RequestState>&) const
@@ -462,10 +457,10 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>>
 	return promise.get_future();
 }
 
-WrapperType::WrapperType(__TypeKind kind, std::shared_ptr<object::__Type> ofType)
+WrapperType::WrapperType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType)
 	: BaseType(response::StringType())
 	, _kind(kind)
-	, _ofType(std::move(ofType))
+	, _ofType(ofType)
 {
 }
 
@@ -487,12 +482,12 @@ std::future<std::shared_ptr<object::__Type>> WrapperType::getOfType(const std::s
 	return promise.get_future();
 }
 
-Field::Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type)
+Field::Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, const std::shared_ptr<object::__Type>& type)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _deprecationReason(std::move(deprecationReason))
 	, _args(std::move(args))
-	, _type(std::move(type))
+	, _type(type)
 {
 }
 
@@ -556,10 +551,10 @@ std::future<std::unique_ptr<response::StringType>> Field::getDeprecationReason(c
 	return promise.get_future();
 }
 
-InputValue::InputValue(response::StringType name, response::StringType description, std::shared_ptr<object::__Type> type, response::StringType defaultValue)
+InputValue::InputValue(response::StringType name, response::StringType description, const std::shared_ptr<object::__Type>& type, response::StringType defaultValue)
 	: _name(std::move(name))
 	, _description(std::move(description))
-	, _type(std::move(type))
+	, _type(type)
 	, _defaultValue(std::move(defaultValue))
 {
 }

@@ -31,7 +31,7 @@ public:
 	void AddMutationType(std::shared_ptr<ObjectType> mutation);
 	void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
 	void AddType(response::StringType name, std::shared_ptr<object::__Type> type);
-	std::shared_ptr<object::__Type> LookupType(const response::StringType& name) const;
+	const std::shared_ptr<object::__Type>& LookupType(const response::StringType& name) const;
 	void AddDirective(std::shared_ptr<object::__Directive> directive);
 
 	// Accessors
@@ -127,7 +127,7 @@ class UnionType : public BaseType
 public:
 	explicit UnionType(response::StringType name, response::StringType description);
 
-	void AddPossibleTypes(std::vector<std::shared_ptr<object::__Type>> possibleTypes);
+	void AddPossibleTypes(std::vector<std::weak_ptr<object::__Type>> possibleTypes);
 
 	// Accessors
 	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
@@ -186,7 +186,7 @@ private:
 class WrapperType : public BaseType
 {
 public:
-	explicit WrapperType(__TypeKind kind, std::shared_ptr<object::__Type> ofType);
+	explicit WrapperType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType);
 
 	// Accessors
 	std::future<__TypeKind> getKind(const std::shared_ptr<service::RequestState>& state) const override;
@@ -200,7 +200,7 @@ private:
 class Field : public object::__Field
 {
 public:
-	explicit Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, std::shared_ptr<object::__Type> type);
+	explicit Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, const std::shared_ptr<object::__Type>& type);
 
 	// Accessors
 	std::future<response::StringType> getName(const std::shared_ptr<service::RequestState>& state) const override;
@@ -221,7 +221,7 @@ private:
 class InputValue : public object::__InputValue
 {
 public:
-	explicit InputValue(response::StringType name, response::StringType description, std::shared_ptr<object::__Type> type, response::StringType defaultValue);
+	explicit InputValue(response::StringType name, response::StringType description, const std::shared_ptr<object::__Type>& type, response::StringType defaultValue);
 
 	// Accessors
 	std::future<response::StringType> getName(const std::shared_ptr<service::RequestState>& state) const override;
