@@ -445,7 +445,7 @@ struct operation_name
 
 // https://facebook.github.io/graphql/June2018/#OperationDefinition
 struct operation_definition
-	: sor<if_must<operation_type, seq<opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, star<ignored>, selection_set>>
+	: sor<if_must<operation_type, seq<opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>>
 	, selection_set>
 {
 };
