@@ -32,6 +32,7 @@ public:
 	void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
 	void AddType(response::StringType name, std::shared_ptr<object::__Type> type);
 	const std::shared_ptr<object::__Type>& LookupType(const response::StringType& name) const;
+	const std::shared_ptr<object::__Type>& WrapType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType);
 	void AddDirective(std::shared_ptr<object::__Directive> directive);
 
 	// Accessors
@@ -48,6 +49,8 @@ private:
 	std::unordered_map<response::StringType, size_t> _typeMap;
 	std::vector<std::pair<response::StringType, std::shared_ptr<object::__Type>>> _types;
 	std::vector<std::shared_ptr<object::__Directive>> _directives;
+	std::unordered_map<std::shared_ptr<object::__Type>, std::shared_ptr<object::__Type>> _nonNullWrappers;
+	std::unordered_map<std::shared_ptr<object::__Type>, std::shared_ptr<object::__Type>> _listWrappers;
 };
 
 class BaseType : public object::__Type

@@ -2821,8 +2821,7 @@ std::string Generator::getIntrospectionType(const std::string& type, const TypeM
 				case service::TypeModifier::None:
 				case service::TypeModifier::List:
 				{
-					introspectionType << R"cpp(std::make_shared<)cpp" << s_introspectionNamespace
-						<< R"cpp(::WrapperType>()cpp" << s_introspectionNamespace
+					introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
 						<< R"cpp(::__TypeKind::NON_NULL, )cpp";
 					++wrapperCount;
 					break;
@@ -2843,8 +2842,7 @@ std::string Generator::getIntrospectionType(const std::string& type, const TypeM
 
 			case service::TypeModifier::List:
 			{
-				introspectionType << R"cpp(std::make_shared<)cpp" << s_introspectionNamespace
-					<< R"cpp(::WrapperType>()cpp" << s_introspectionNamespace
+				introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
 					<< R"cpp(::__TypeKind::LIST, )cpp";
 				++wrapperCount;
 				break;
@@ -2854,8 +2852,7 @@ std::string Generator::getIntrospectionType(const std::string& type, const TypeM
 
 	if (nonNull)
 	{
-		introspectionType << R"cpp(std::make_shared<)cpp" << s_introspectionNamespace
-			<< R"cpp(::WrapperType>()cpp" << s_introspectionNamespace
+		introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
 			<< R"cpp(::__TypeKind::NON_NULL, )cpp";
 		++wrapperCount;
 	}

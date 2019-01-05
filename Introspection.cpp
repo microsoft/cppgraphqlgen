@@ -37,6 +37,21 @@ const std::shared_ptr<object::__Type>& Schema::LookupType(const response::String
 	return _types[_typeMap.find(name)->second].second;
 }
 
+const std::shared_ptr<object::__Type>& Schema::WrapType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType)
+{
+	auto& wrappers = (kind == __TypeKind::LIST)
+		? _listWrappers
+		: _nonNullWrappers;
+	auto itr = wrappers.find(ofType);
+
+	if (itr == wrappers.cend())
+	{
+		std::tie(itr, std::ignore) = wrappers.insert({ ofType, std::make_shared<WrapperType>(kind, ofType) });
+	}
+
+	return itr->second;
+}
+
 void Schema::AddDirective(std::shared_ptr<object::__Directive> directive)
 {
 	_directives.emplace_back(std::move(directive));
