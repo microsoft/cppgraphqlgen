@@ -605,9 +605,9 @@ std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::sh
 // overwritten by the innermost fragment.
 struct FragmentDirectives
 {
-	response::Value fragmentDefinitionDirectives { response::Type::Map };
-	response::Value fragmentSpreadDirectives { response::Type::Map };
-	response::Value inlineFragmentDirectives { response::Type::Map };
+	response::Value fragmentDefinitionDirectives;
+	response::Value fragmentSpreadDirectives;
+	response::Value inlineFragmentDirectives;
 };
 
 // SelectionVisitor visits the AST and resolves a field or fragment, unless it's skipped by
@@ -649,7 +649,11 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
 {
-	_fragmentDirectives.push({});
+	_fragmentDirectives.push({
+		response::Value(response::Type::Map),
+		response::Value(response::Type::Map),
+		response::Value(response::Type::Map)
+		});
 }
 
 std::future<response::Value> SelectionVisitor::getValues()
