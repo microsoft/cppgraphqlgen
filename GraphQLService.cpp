@@ -8,6 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <stack>
 
 namespace facebook {
 namespace graphql {
@@ -32,10 +33,251 @@ const response::Value& schema_exception::getErrors() const noexcept
 	return _errors;
 }
 
-Fragment::Fragment(const peg::ast_node& fragmentDefinition)
+FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
+	: SelectionSetParams(selectionSetParams)
+	, fieldDirectives(std::move(directives))
+{
+}
+
+// ValueVisitor visits the AST and builds a response::Value representation of any value
+// hardcoded or referencing a variable in an operation.
+class ValueVisitor
+{
+public:
+	ValueVisitor(const response::Value& variables);
+
+	void visit(const peg::ast_node& value);
+
+	response::Value getValue();
+
+private:
+	void visitVariable(const peg::ast_node& variable);
+	void visitIntValue(const peg::ast_node& intValue);
+	void visitFloatValue(const peg::ast_node& floatValue);
+	void visitStringValue(const peg::ast_node& stringValue);
+	void visitBooleanValue(const peg::ast_node& booleanValue);
+	void visitNullValue(const peg::ast_node& nullValue);
+	void visitEnumValue(const peg::ast_node& enumValue);
+	void visitListValue(const peg::ast_node& listValue);
+	void visitObjectValue(const peg::ast_node& objectValue);
+
+	const response::Value& _variables;
+	response::Value _value;
+};
+
+ValueVisitor::ValueVisitor(const response::Value& variables)
+	: _variables(variables)
+{
+}
+
+response::Value ValueVisitor::getValue()
+{
+	auto result = std::move(_value);
+
+	return result;
+}
+
+void ValueVisitor::visit(const peg::ast_node& value)
+{
+	if (value.is<peg::variable_value>())
+	{
+		visitVariable(value);
+	}
+	else if (value.is<peg::integer_value>())
+	{
+		visitIntValue(value);
+	}
+	else if (value.is<peg::float_value>())
+	{
+		visitFloatValue(value);
+	}
+	else if (value.is<peg::string_value>())
+	{
+		visitStringValue(value);
+	}
+	else if (value.is<peg::true_keyword>()
+		|| value.is<peg::false_keyword>())
+	{
+		visitBooleanValue(value);
+	}
+	else if (value.is<peg::null_keyword>())
+	{
+		visitNullValue(value);
+	}
+	else if (value.is<peg::enum_value>())
+	{
+		visitEnumValue(value);
+	}
+	else if (value.is<peg::list_value>())
+	{
+		visitListValue(value);
+	}
+	else if (value.is<peg::object_value>())
+	{
+		visitObjectValue(value);
+	}
+}
+
+void ValueVisitor::visitVariable(const peg::ast_node& variable)
+{
+	const std::string name(variable.content().c_str() + 1);
+	auto itr = _variables.find(name);
+
+	if (itr == _variables.get<const response::MapType&>().cend())
+	{
+		auto position = variable.begin();
+		std::ostringstream error;
+
+		error << "Unknown variable name: " << name
+			<< " line: " << position.line
+			<< " column: " << position.byte_in_line;
+
+		throw schema_exception({ error.str() });
+	}
+
+	_value = response::Value(itr->second);
+}
+
+void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
+{
+	_value = response::Value(std::atoi(intValue.content().c_str()));
+}
+
+void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
+{
+	_value = response::Value(std::atof(floatValue.content().c_str()));
+}
+
+void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
+{
+	_value = response::Value(std::string(stringValue.unescaped));
+}
+
+void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
+{
+	_value = response::Value(booleanValue.is<peg::true_keyword>());
+}
+
+void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
+{
+	_value = {};
+}
+
+void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
+{
+	_value = response::Value(enumValue.content());
+}
+
+void ValueVisitor::visitListValue(const peg::ast_node& listValue)
+{
+	_value = response::Value(response::Type::List);
+	_value.reserve(listValue.children.size());
+
+	ValueVisitor visitor(_variables);
+
+	for (const auto& child : listValue.children)
+	{
+		visitor.visit(*child->children.back());
+		_value.emplace_back(visitor.getValue());
+	}
+}
+
+void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
+{
+	_value = response::Value(response::Type::Map);
+	_value.reserve(objectValue.children.size());
+
+	ValueVisitor visitor(_variables);
+
+	for (const auto& field : objectValue.children)
+	{
+		visitor.visit(*field->children.back());
+		_value.emplace_back(field->children.front()->content(), visitor.getValue());
+	}
+}
+
+// DirectiveVisitor visits the AST and builds a 2-level map of directive names to argument
+// name/value pairs.
+class DirectiveVisitor
+{
+public:
+	explicit DirectiveVisitor(const response::Value& variables);
+
+	void visit(const peg::ast_node& directives);
+
+	response::Value getDirectives();
+
+private:
+	const response::Value& _variables;
+
+	response::Value _directives;
+};
+
+DirectiveVisitor::DirectiveVisitor(const response::Value& variables)
+	: _variables(variables)
+{
+}
+
+void DirectiveVisitor::visit(const peg::ast_node& directives)
+{
+	response::Value result(response::Type::Map);
+
+	for (const auto& directive : directives.children)
+	{
+		std::string directiveName;
+
+		peg::on_first_child<peg::directive_name>(*directive,
+			[&directiveName](const peg::ast_node& child)
+		{
+			directiveName = child.content();
+		});
+
+		if (directiveName.empty())
+		{
+			continue;
+		}
+
+		response::Value directiveArguments(response::Type::Map);
+
+		peg::on_first_child<peg::arguments>(*directive,
+			[this, &directiveArguments](const peg::ast_node& child)
+		{
+			ValueVisitor visitor(_variables);
+
+			for (auto& argument : child.children)
+			{
+				visitor.visit(*argument->children.back());
+
+				directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+			}
+		});
+
+		result.emplace_back(std::move(directiveName), std::move(directiveArguments));
+	}
+
+	_directives = std::move(result);
+}
+
+response::Value DirectiveVisitor::getDirectives()
+{
+	auto result = std::move(_directives);
+
+	return result;
+}
+
+Fragment::Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables)
 	: _type(fragmentDefinition.children[1]->children.front()->content())
+	, _directives(response::Type::Map)
 	, _selection(*(fragmentDefinition.children.back()))
 {
+	peg::on_first_child<peg::directives>(fragmentDefinition,
+		[this, &variables](const peg::ast_node& child)
+	{
+		DirectiveVisitor directiveVisitor(variables);
+
+		directiveVisitor.visit(child);
+		_directives = directiveVisitor.getDirectives();
+	});
 }
 
 const std::string& Fragment::getType() const
@@ -46,6 +288,22 @@ const std::string& Fragment::getType() const
 const peg::ast_node& Fragment::getSelection() const
 {
 	return _selection;
+}
+
+const response::Value& Fragment::getDirectives() const
+{
+	return _directives;
+}
+
+ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams, response::Value&& arguments, response::Value&& fieldDirectives,
+	const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables)
+	: SelectionSetParams(selectionSetParams)
+	, arguments(std::move(arguments))
+	, fieldDirectives(std::move(fieldDirectives))
+	, selection(selection)
+	, fragments(fragments)
+	, variables(variables)
+{
 }
 
 uint8_t Base64::verifyFromBase64(char ch)
@@ -337,180 +595,34 @@ std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::sh
 				: response::Type::Map);
 		}
 
-		return wrappedResult->resolve(paramsFuture.state, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
+		return wrappedResult->resolve(paramsFuture, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
 	}, std::move(result), std::move(params));
 }
 
-// ValueVisitor visits the AST and builds a response::Value representation of any value
-// hardcoded or referencing a variable in an operation.
-class ValueVisitor
+// As we recursively expand fragment spreads and inline fragments, we want to accumulate the directives
+// at each location and merge them with any directives included in outer fragments to build the complete
+// set of directives for nested fragments. Directives with the same name at the same location will be
+// overwritten by the innermost fragment.
+struct FragmentDirectives
 {
-public:
-	ValueVisitor(const response::Value& variables);
-
-	void visit(const peg::ast_node& value);
-
-	response::Value getValue();
-
-private:
-	void visitVariable(const peg::ast_node& variable);
-	void visitIntValue(const peg::ast_node& intValue);
-	void visitFloatValue(const peg::ast_node& floatValue);
-	void visitStringValue(const peg::ast_node& stringValue);
-	void visitBooleanValue(const peg::ast_node& booleanValue);
-	void visitNullValue(const peg::ast_node& nullValue);
-	void visitEnumValue(const peg::ast_node& enumValue);
-	void visitListValue(const peg::ast_node& listValue);
-	void visitObjectValue(const peg::ast_node& objectValue);
-
-	const response::Value& _variables;
-	response::Value _value;
+	response::Value fragmentDefinitionDirectives { response::Type::Map };
+	response::Value fragmentSpreadDirectives { response::Type::Map };
+	response::Value inlineFragmentDirectives { response::Type::Map };
 };
-
-ValueVisitor::ValueVisitor(const response::Value& variables)
-	: _variables(variables)
-{
-}
-
-response::Value ValueVisitor::getValue()
-{
-	auto result = std::move(_value);
-
-	return result;
-}
-
-void ValueVisitor::visit(const peg::ast_node& value)
-{
-	if (value.is<peg::variable_value>())
-	{
-		visitVariable(value);
-	}
-	else if (value.is<peg::integer_value>())
-	{
-		visitIntValue(value);
-	}
-	else if (value.is<peg::float_value>())
-	{
-		visitFloatValue(value);
-	}
-	else if (value.is<peg::string_value>())
-	{
-		visitStringValue(value);
-	}
-	else if (value.is<peg::true_keyword>()
-		|| value.is<peg::false_keyword>())
-	{
-		visitBooleanValue(value);
-	}
-	else if (value.is<peg::null_keyword>())
-	{
-		visitNullValue(value);
-	}
-	else if (value.is<peg::enum_value>())
-	{
-		visitEnumValue(value);
-	}
-	else if (value.is<peg::list_value>())
-	{
-		visitListValue(value);
-	}
-	else if (value.is<peg::object_value>())
-	{
-		visitObjectValue(value);
-	}
-}
-
-void ValueVisitor::visitVariable(const peg::ast_node& variable)
-{
-	const std::string name(variable.content().c_str() + 1);
-	auto itr = _variables.find(name);
-
-	if (itr == _variables.get<const response::MapType&>().cend())
-	{
-		auto position = variable.begin();
-		std::ostringstream error;
-
-		error << "Unknown variable name: " << name
-			<< " line: " << position.line
-			<< " column: " << position.byte_in_line;
-
-		throw schema_exception({ error.str() });
-	}
-
-	_value = response::Value(itr->second);
-}
-
-void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
-{
-	_value = response::Value(std::atoi(intValue.content().c_str()));
-}
-
-void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
-{
-	_value = response::Value(std::atof(floatValue.content().c_str()));
-}
-
-void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
-{
-	_value = response::Value(std::string(stringValue.unescaped));
-}
-
-void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
-{
-	_value = response::Value(booleanValue.is<peg::true_keyword>());
-}
-
-void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
-{
-	_value = {};
-}
-
-void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
-{
-	_value = response::Value(enumValue.content());
-}
-
-void ValueVisitor::visitListValue(const peg::ast_node& listValue)
-{
-	_value = response::Value(response::Type::List);
-	_value.reserve(listValue.children.size());
-
-	ValueVisitor visitor(_variables);
-
-	for (const auto& child : listValue.children)
-	{
-		visitor.visit(*child->children.back());
-		_value.emplace_back(visitor.getValue());
-	}
-}
-
-void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
-{
-	_value = response::Value(response::Type::Map);
-	_value.reserve(objectValue.children.size());
-
-	ValueVisitor visitor(_variables);
-
-	for (const auto& field : objectValue.children)
-	{
-		visitor.visit(*field->children.back());
-		_value.emplace_back(field->children.front()->content(), visitor.getValue());
-	}
-}
 
 // SelectionVisitor visits the AST and resolves a field or fragment, unless it's skipped by
 // a directive or type condition.
 class SelectionVisitor
 {
 public:
-	SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers);
+	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams, const FragmentMap& fragments, const response::Value& variables,
+		const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
 
 	std::future<response::Value> getValues();
 
 private:
-	response::Value getDirectives(const peg::ast_node& directives) const;
 	bool shouldSkip(const response::Value& directives) const;
 
 	void visitField(const peg::ast_node& field);
@@ -520,19 +632,24 @@ private:
 	const std::shared_ptr<RequestState>& _state;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
+	const response::Value& _operationDirectives;
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
+	std::stack<FragmentDirectives> _fragmentDirectives;
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
-SelectionVisitor::SelectionVisitor(const std::shared_ptr<RequestState>& state, const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames, const ResolverMap& resolvers)
-	: _state(state)
+SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams, const FragmentMap& fragments, const response::Value& variables,
+	const TypeNames& typeNames, const ResolverMap& resolvers)
+	: _state(selectionSetParams.state)
 	, _fragments(fragments)
 	, _variables(variables)
+	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
 {
+	_fragmentDirectives.push({});
 }
 
 std::future<response::Value> SelectionVisitor::getValues()
@@ -614,7 +731,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	peg::on_first_child<peg::directives>(field,
 		[this, &directives](const peg::ast_node& child)
 		{
-			directives = getDirectives(child);
+			DirectiveVisitor directiveVisitor(_variables);
+
+			directiveVisitor.visit(child);
+			directives = directiveVisitor.getDirectives();
 		});
 
 	if (shouldSkip(directives))
@@ -645,9 +765,17 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			selection = &child;
 		});
 
+	SelectionSetParams selectionSetParams {
+		_state,
+		_operationDirectives,
+		_fragmentDirectives.top().fragmentDefinitionDirectives,
+		_fragmentDirectives.top().fragmentSpreadDirectives,
+		_fragmentDirectives.top().inlineFragmentDirectives
+	};
+
 	_values.push({
 		std::move(alias),
-		itr->second({ _state, std::move(arguments), std::move(directives), selection, _fragments, _variables })
+		itr->second(ResolverParams(selectionSetParams, std::move(arguments), std::move(directives), selection, _fragments, _variables))
 		});
 }
 
@@ -669,18 +797,20 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
+	response::Value fragmentSpreadDirectives(response::Type::Map);
 
 	if (!skip)
 	{
-		response::Value directives(response::Type::Map);
-
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[this, &directives](const peg::ast_node& child)
+			[this, &fragmentSpreadDirectives](const peg::ast_node& child)
 			{
-				directives = getDirectives(child);
+				DirectiveVisitor directiveVisitor(_variables);
+
+				directiveVisitor.visit(child);
+				fragmentSpreadDirectives = directiveVisitor.getDirectives();
 			});
 
-		skip = shouldSkip(directives);
+		skip = shouldSkip(fragmentSpreadDirectives);
 	}
 
 	if (skip)
@@ -688,23 +818,54 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
+	// Merge outer fragment spread directives as long as they don't conflict.
+	for (const auto& entry : _fragmentDirectives.top().fragmentSpreadDirectives)
+	{
+		if (fragmentSpreadDirectives.find(entry.first) == fragmentSpreadDirectives.end())
+		{
+			fragmentSpreadDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+		}
+	}
+
+	response::Value fragmentDefinitionDirectives(itr->second.getDirectives());
+
+	// Merge outer fragment definition directives as long as they don't conflict.
+	for (const auto& entry : _fragmentDirectives.top().fragmentDefinitionDirectives)
+	{
+		if (fragmentDefinitionDirectives.find(entry.first) == fragmentDefinitionDirectives.end())
+		{
+			fragmentDefinitionDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+		}
+	}
+
+	_fragmentDirectives.push({
+		std::move(fragmentDefinitionDirectives),
+		std::move(fragmentSpreadDirectives),
+		response::Value(_fragmentDirectives.top().inlineFragmentDirectives)
+		});
+
 	for (const auto& selection : itr->second.getSelection().children)
 	{
 		visit(*selection);
 	}
+
+	_fragmentDirectives.pop();
 }
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
-	response::Value directives(response::Type::Map);
+	response::Value inlineFragmentDirectives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[this, &directives](const peg::ast_node& child)
+		[this, &inlineFragmentDirectives](const peg::ast_node& child)
 		{
-			directives = getDirectives(child);
+			DirectiveVisitor directiveVisitor(_variables);
+
+			directiveVisitor.visit(child);
+			inlineFragmentDirectives = directiveVisitor.getDirectives();
 		});
 
-	if (shouldSkip(directives))
+	if (shouldSkip(inlineFragmentDirectives))
 	{
 		return;
 	}
@@ -721,54 +882,22 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
-			[this](const peg::ast_node& child)
-			{
-				for (const auto& selection : child.children)
-				{
-					visit(*selection);
-				}
-			});
-	}
-}
-
-response::Value SelectionVisitor::getDirectives(const peg::ast_node& directives) const
-{
-	response::Value result(response::Type::Map);
-
-	for (const auto& directive : directives.children)
-	{
-		std::string directiveName;
-
-		peg::on_first_child<peg::directive_name>(*directive,
-			[&directiveName](const peg::ast_node& child)
-			{
-				directiveName = child.content();
-			});
-
-		if (directiveName.empty())
+			[this, &inlineFragmentDirectives](const peg::ast_node& child)
 		{
-			continue;
-		}
+			_fragmentDirectives.push({
+				response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
+				response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
+				std::move(inlineFragmentDirectives)
+				});
 
-		response::Value directiveArguments(response::Type::Map);
-
-		peg::on_first_child<peg::arguments>(*directive,
-			[this, &directiveArguments](const peg::ast_node& child)
+			for (const auto& selection : child.children)
 			{
-				ValueVisitor visitor(_variables);
+				visit(*selection);
+			}
 
-				for (auto& argument : child.children)
-				{
-					visitor.visit(*argument->children.back());
-
-					directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
-				}
-			});
-
-		result.emplace_back(std::move(directiveName), std::move(directiveArguments));
+			_fragmentDirectives.pop();
+		});
 	}
-
-	return result;
 }
 
 bool SelectionVisitor::shouldSkip(const response::Value& directives) const
@@ -849,21 +978,21 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
+std::future<response::Value> Object::resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
 	std::queue<std::future<response::Value>> selections;
 
-	beginSelectionSet(state);
+	beginSelectionSet(selectionSetParams);
 
 	for (const auto& child : selection.children)
 	{
-		SelectionVisitor visitor(state, fragments, variables, _typeNames, _resolvers);
+		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
 
 		visitor.visit(*child);
 		selections.push(visitor.getValues());
 	}
 
-	endSelectionSet(state);
+	endSelectionSet(selectionSetParams);
 
 	return std::async(std::launch::deferred,
 		[](std::queue<std::future<response::Value>>&& promises)
@@ -891,17 +1020,19 @@ std::future<response::Value> Object::resolve(const std::shared_ptr<RequestState>
 	}, std::move(selections));
 }
 
-void Object::beginSelectionSet(const std::shared_ptr<RequestState>&) const
+void Object::beginSelectionSet(const SelectionSetParams& params) const
 {
 }
 
-void Object::endSelectionSet(const std::shared_ptr<RequestState>&) const
+void Object::endSelectionSet(const SelectionSetParams& params) const
 {
 }
 
-OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments)
+OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables,
+	response::Value&& directives, FragmentMap&& fragments)
 	: state(std::move(state))
 	, variables(std::move(variables))
+	, directives(std::move(directives))
 	, fragments(std::move(fragments))
 {
 }
@@ -911,17 +1042,20 @@ OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Va
 class FragmentDefinitionVisitor
 {
 public:
-	FragmentDefinitionVisitor();
+	FragmentDefinitionVisitor(const response::Value& variables);
 
 	FragmentMap getFragments();
 
 	void visit(const peg::ast_node& fragmentDefinition);
 
 private:
+	const response::Value& _variables;
+
 	FragmentMap _fragments;
 };
 
-FragmentDefinitionVisitor::FragmentDefinitionVisitor()
+FragmentDefinitionVisitor::FragmentDefinitionVisitor(const response::Value& variables)
+	: _variables(variables)
 {
 }
 
@@ -933,7 +1067,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition) });
+	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition, _variables) });
 }
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
@@ -958,6 +1092,7 @@ OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestSt
 	: _params(std::make_shared<OperationData>(
 		std::move(state),
 		std::move(variables),
+		response::Value(),
 		std::move(fragments)))
 	, _operations(operations)
 	, _operationName(operationName)
@@ -1119,8 +1254,31 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 
 		_params->variables = std::move(operationVariables);
 
+		response::Value operationDirectives(response::Type::Map);
+
+		peg::on_first_child<peg::directives>(operationDefinition,
+			[this, &operationDirectives](const peg::ast_node& child)
+		{
+			DirectiveVisitor directiveVisitor(_params->variables);
+
+			directiveVisitor.visit(child);
+			operationDirectives = directiveVisitor.getDirectives();
+		});
+
+		_params->directives = std::move(operationDirectives);
+
 		// Keep the params alive until the deferred lambda has executed
 		auto params = std::move(_params);
+
+		// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
+		response::Value emptyFragmentDirectives(response::Type::Map);
+		const SelectionSetParams selectionSetParams {
+			params->state,
+			params->directives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives
+		};
 
 		_result = std::async(std::launch::deferred,
 			[params](std::future<response::Value> data)
@@ -1130,7 +1288,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 				document.emplace_back("data", data.get());
 
 				return document;
-			}, itr->second->resolve(params->state, *operationDefinition.children.back(), params->fragments, params->variables));
+		}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
 	}
 	catch (const schema_exception& ex)
 	{
@@ -1280,10 +1438,22 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 				});
 		});
 
+	response::Value directives(response::Type::Map);
+
+	peg::on_first_child<peg::directives>(operationDefinition,
+		[this, &directives](const peg::ast_node& child)
+	{
+		DirectiveVisitor directiveVisitor(_params.variables);
+
+		directiveVisitor.visit(child);
+		directives = directiveVisitor.getDirectives();
+	});
+
 	_result = std::make_shared<SubscriptionData>(
 		std::make_shared<OperationData>(
 			std::move(_params.state),
 			std::move(_params.variables),
+			std::move(directives),
 			std::move(_fragments)),
 		std::move(fieldNames),
 		std::move(_params.query),
@@ -1299,7 +1469,7 @@ Request::Request(TypeMap&& operationTypes)
 
 std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
 {
-	FragmentDefinitionVisitor fragmentVisitor;
+	FragmentDefinitionVisitor fragmentVisitor(variables);
 
 	peg::for_each_child<peg::fragment_definition>(root,
 		[&fragmentVisitor](const peg::ast_node& child)
@@ -1321,7 +1491,7 @@ std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState
 
 SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
-	FragmentDefinitionVisitor fragmentVisitor;
+	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
 	peg::for_each_child<peg::fragment_definition>(*params.query->root,
 		[&fragmentVisitor](const peg::ast_node& child)
@@ -1401,6 +1571,14 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 		auto itrSubscription = _subscriptions.find(key);
 		auto registration = itrSubscription->second;
 		std::future<response::Value> result;
+		response::Value emptyFragmentDirectives(response::Type::Map);
+		const SelectionSetParams selectionSetParams {
+			registration->data->state,
+			registration->data->directives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives
+		};
 
 		try
 		{
@@ -1412,7 +1590,7 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 					document.emplace_back("data", data.get());
 
 					return document;
-				}, optionalOrDefaultSubscription->resolve(registration->data->state, registration->selection, registration->data->fragments, registration->data->variables));
+				}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
 		}
 		catch (const schema_exception& ex)
 		{

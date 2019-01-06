@@ -56,13 +56,13 @@ void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state
 	}
 }
 
-std::shared_ptr<Appointment> Query::findAppointment(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
+std::shared_ptr<Appointment> Query::findAppointment(const service::FieldParams& params, const std::vector<uint8_t>& id) const
 {
-	loadAppointments(state);
+	loadAppointments(params.state);
 
 	for (const auto& appointment : _appointments)
 	{
-		auto appointmentId = appointment->getId(state).get();
+		auto appointmentId = appointment->getId(params).get();
 
 		if (appointmentId == id)
 		{
@@ -90,13 +90,13 @@ void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
 	}
 }
 
-std::shared_ptr<Task> Query::findTask(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
+std::shared_ptr<Task> Query::findTask(const service::FieldParams& params, const std::vector<uint8_t>& id) const
 {
-	loadTasks(state);
+	loadTasks(params.state);
 
 	for (const auto& task : _tasks)
 	{
-		auto taskId = task->getId(state).get();
+		auto taskId = task->getId(params).get();
 
 		if (taskId == id)
 		{
@@ -124,13 +124,13 @@ void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state
 	}
 }
 
-std::shared_ptr<Folder> Query::findUnreadCount(const std::shared_ptr<service::RequestState>& state, const std::vector<uint8_t>& id) const
+std::shared_ptr<Folder> Query::findUnreadCount(const service::FieldParams& params, const std::vector<uint8_t>& id) const
 {
-	loadUnreadCounts(state);
+	loadUnreadCounts(params.state);
 
 	for (const auto& folder : _unreadCounts)
 	{
-		auto folderId = folder->getId(state).get();
+		auto folderId = folder->getId(params).get();
 
 		if (folderId == id)
 		{
@@ -141,10 +141,10 @@ std::shared_ptr<Folder> Query::findUnreadCount(const std::shared_ptr<service::Re
 	return nullptr;
 }
 
-std::future<std::shared_ptr<service::Object>> Query::getNode(const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& id) const
+std::future<std::shared_ptr<service::Object>> Query::getNode(const service::FieldParams& params, std::vector<uint8_t>&& id) const
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
-	auto appointment = findAppointment(state, id);
+	auto appointment = findAppointment(params, id);
 
 	if (appointment)
 	{
@@ -152,7 +152,7 @@ std::future<std::shared_ptr<service::Object>> Query::getNode(const std::shared_p
 		return promise.get_future();
 	}
 
-	auto task = findTask(state, id);
+	auto task = findTask(params, id);
 
 	if (task)
 	{
@@ -160,7 +160,7 @@ std::future<std::shared_ptr<service::Object>> Query::getNode(const std::shared_p
 		return promise.get_future();
 	}
 
-	auto folder = findUnreadCount(state, id);
+	auto folder = findUnreadCount(params, id);
 
 	if (folder)
 	{
@@ -189,14 +189,24 @@ struct EdgeConstraints
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
 
+		const response::Value unusedDirectives;
+		const service::SelectionSetParams selectionSetParams {
+			_state,
+			unusedDirectives,
+			unusedDirectives,
+			unusedDirectives,
+			unusedDirectives,
+		};
+		const service::FieldParams fieldParams(selectionSetParams, {});
+
 		if (after)
 		{
 			const auto& encoded = after->get<const response::StringType&>();
 			auto afterId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrAfter = std::find_if(itrFirst, itrLast,
-				[this, &afterId](const std::shared_ptr<_Object>& entry)
+				[this, &fieldParams, &afterId](const std::shared_ptr<_Object>& entry)
 			{
-				return entry->getId(_state).get() == afterId;
+				return entry->getId(fieldParams).get() == afterId;
 			});
 
 			if (itrAfter != itrLast)
@@ -210,9 +220,9 @@ struct EdgeConstraints
 			const auto& encoded = before->get<const response::StringType&>();
 			auto beforeId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
 			auto itrBefore = std::find_if(itrFirst, itrLast,
-				[this, &beforeId](const std::shared_ptr<_Object>& entry)
+				[this, &fieldParams, &beforeId](const std::shared_ptr<_Object>& entry)
 			{
-				return entry->getId(_state).get() == beforeId;
+				return entry->getId(fieldParams).get() == beforeId;
 			});
 
 			if (itrBefore != itrLast)
@@ -262,94 +272,97 @@ struct EdgeConstraints
 	}
 
 private:
-	std::shared_ptr<service::RequestState> _state;
+	const std::shared_ptr<service::RequestState>& _state;
 	const vec_type& _objects;
 };
 
-std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(const service::FieldParams& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
+	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadAppointments(stateWrapped);
+		loadAppointments(state);
 
-		EdgeConstraints<Appointment, AppointmentConnection> constraints(stateWrapped, _appointments);
+		EdgeConstraints<Appointment, AppointmentConnection> constraints(state, _appointments);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
 		return std::static_pointer_cast<object::AppointmentConnection>(connection);
-	}, std::move(state), std::move(first), std::move(after), std::move(last), std::move(before));
+	}, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(const service::FieldParams& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
+	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadTasks(stateWrapped);
+		loadTasks(state);
 
-		EdgeConstraints<Task, TaskConnection> constraints(stateWrapped, _tasks);
+		EdgeConstraints<Task, TaskConnection> constraints(state, _tasks);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
 		return std::static_pointer_cast<object::TaskConnection>(connection);
-	}, std::move(state), std::move(first), std::move(after), std::move(last), std::move(before));
+	}, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(const service::FieldParams& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
+	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis](const std::shared_ptr<service::RequestState>& stateWrapped, std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
 	{
-		loadUnreadCounts(stateWrapped);
+		loadUnreadCounts(state);
 
-		EdgeConstraints<Folder, FolderConnection> constraints(stateWrapped, _unreadCounts);
+		EdgeConstraints<Folder, FolderConnection> constraints(state, _unreadCounts);
 		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
 
 		return std::static_pointer_cast<object::FolderConnection>(connection);
-	}, std::move(state), std::move(first), std::move(after), std::move(last), std::move(before));
+	}, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::promise<std::vector<std::shared_ptr<object::Appointment>>> promise;
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this, &state](const std::vector<uint8_t>& id)
+		[this, &params](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Appointment>(findAppointment(state, id));
+		return std::static_pointer_cast<object::Appointment>(findAppointment(params, id));
 	});
 	promise.set_value(std::move(result));
 
 	return promise.get_future();
 }
 
-std::future<std::vector<std::shared_ptr<object::Task>>> Query::getTasksById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Task>>> Query::getTasksById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::promise<std::vector<std::shared_ptr<object::Task>>> promise;
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this, &state](const std::vector<uint8_t>& id)
+		[this, &params](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Task>(findTask(state, id));
+		return std::static_pointer_cast<object::Task>(findTask(params, id));
 	});
 	promise.set_value(std::move(result));
 
 	return promise.get_future();
 }
 
-std::future<std::vector<std::shared_ptr<object::Folder>>> Query::getUnreadCountsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Folder>>> Query::getUnreadCountsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const
 {
 	std::promise<std::vector<std::shared_ptr<object::Folder>>> promise;
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
 	std::transform(ids.cbegin(), ids.cend(), result.begin(),
-		[this, &state](const std::vector<uint8_t>& id)
+		[this, &params](const std::vector<uint8_t>& id)
 	{
-		return std::static_pointer_cast<object::Folder>(findUnreadCount(state, id));
+		return std::static_pointer_cast<object::Folder>(findUnreadCount(params, id));
 	});
 	promise.set_value(std::move(result));
 
@@ -361,7 +374,7 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 {
 }
 
-std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::getCompleteTask(const std::shared_ptr<service::RequestState>& state, CompleteTaskInput&& input) const
+std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::getCompleteTask(const service::FieldParams& params, CompleteTaskInput&& input) const
 {
 	std::promise<std::shared_ptr<object::CompleteTaskPayload>> promise;
 

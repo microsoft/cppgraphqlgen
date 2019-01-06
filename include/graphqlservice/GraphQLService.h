@@ -36,12 +36,38 @@ private:
 	response::Value _errors;
 };
 
-// The RequestState is optional, but if you have multiple threads processing requests and there's any
+// The RequestState is nullable, but if you have multiple threads processing requests and there's any
 // per-request state that you want to maintain throughout the request (e.g. optimizing or batching
 // backend requests), you can inherit from RequestState and pass it to Request::resolve to correlate the
 // asynchronous/recursive callbacks and accumulate state in it.
 struct RequestState : std::enable_shared_from_this<RequestState>
 {
+};
+
+// Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
+struct SelectionSetParams
+{
+	// The lifetime of each of these borrowed references is guaranteed until the future returned
+	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer. 
+	const std::shared_ptr<RequestState>& state;
+	const response::Value& operationDirectives;
+	const response::Value& fragmentDefinitionDirectives;
+
+	// Fragment directives are shared for all fields in that fragment, but they aren't kept alive
+	// after the call to the last accessor in the fragment. If you need to keep them alive longer,
+	// you'll need to explicitly copy them into other instances of response::Value.
+	const response::Value& fragmentSpreadDirectives;
+	const response::Value& inlineFragmentDirectives;
+};
+
+// Pass a common bundle of parameters to all of the generated Object::getField accessors.
+struct FieldParams : SelectionSetParams
+{
+	explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
+
+	// Each field owns its own field-specific directives. Once the accessor returns it will be destroyed,
+	// but you can move it into another instance of response::Value to keep it alive longer.
+	response::Value fieldDirectives;
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
@@ -50,13 +76,15 @@ struct RequestState : std::enable_shared_from_this<RequestState>
 class Fragment
 {
 public:
-	explicit Fragment(const peg::ast_node& fragmentDefinition);
+	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
 
 	const std::string& getType() const;
 	const peg::ast_node& getSelection() const;
+	const response::Value& getDirectives() const;
 
 private:
 	std::string _type;
+	response::Value _directives;
 
 	const peg::ast_node& _selection;
 };
@@ -68,12 +96,18 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
 // a single field.
-struct ResolverParams
+struct ResolverParams : SelectionSetParams
 {
-	const std::shared_ptr<RequestState>& state;
-	response::Value arguments;
-	response::Value directives;
+	explicit ResolverParams(const SelectionSetParams& selectionSetParams, response::Value&& arguments, response::Value&& fieldDirectives,
+		const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables);
+
+	// These values are different for each resolver.
+	response::Value arguments { response::Type::Map };
+	response::Value fieldDirectives { response::Type::Map };
 	const peg::ast_node* selection;
+
+	// These values remain unchanged for the entire operation, but they're passed to each of the
+	// resolvers recursively through ResolverParams.
 	const FragmentMap& fragments;
 	const response::Value& variables;
 };
@@ -279,13 +313,16 @@ public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	virtual ~Object() = default;
 
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
 protected:
-	// It's up to sub-classes to decide if they want to use const_cast, mutable, or separate storage
+	// These callbacks are optional, you may override either, both, or neither of them. The implementer
+	// can use these to to accumulate state for the entire SelectionSet on this object, as well as
+	// testing directives which were included at the operation or fragment level. It's up to sub-classes
+	// to decide if they want to use const_cast, mutable members, or separate storage in the RequestState
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(const std::shared_ptr<RequestState>& state) const;
-	virtual void endSelectionSet(const std::shared_ptr<RequestState>& state) const;
+	virtual void beginSelectionSet(const SelectionSetParams& params) const;
+	virtual void endSelectionSet(const SelectionSetParams& params) const;
 
 private:
 	TypeNames _typeNames;
@@ -472,10 +509,12 @@ struct SubscriptionParams
 // any pending futures passed to callbacks.
 struct OperationData : std::enable_shared_from_this<OperationData>
 {
-	explicit OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables, FragmentMap&& fragments);
+	explicit OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables,
+		response::Value&& directives, FragmentMap&& fragments);
 
 	std::shared_ptr<RequestState> state;
 	response::Value variables;
+	response::Value directives;
 	FragmentMap fragments;
 };
 

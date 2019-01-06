@@ -36,7 +36,7 @@ struct CompleteTaskInput
 
 struct Node
 {
-	virtual std::future<std::vector<uint8_t>> getId(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::vector<uint8_t>> getId(const service::FieldParams& params) const = 0;
 };
 
 namespace object {
@@ -63,13 +63,13 @@ protected:
 	Query();
 
 public:
-	virtual std::future<std::shared_ptr<service::Object>> getNode(const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& id) const = 0;
-	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
-	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(const std::shared_ptr<service::RequestState>& state, std::vector<std::vector<uint8_t>>&& ids) const = 0;
+	virtual std::future<std::shared_ptr<service::Object>> getNode(const service::FieldParams& params, std::vector<uint8_t>&& idArg) const = 0;
+	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(const service::FieldParams& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const = 0;
+	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(const service::FieldParams& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const = 0;
+	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(const service::FieldParams& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& idsArg) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& idsArg) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& idsArg) const = 0;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -94,8 +94,8 @@ protected:
 	PageInfo();
 
 public:
-	virtual std::future<response::BooleanType> getHasNextPage(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::BooleanType> getHasPreviousPage(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<response::BooleanType> getHasNextPage(const service::FieldParams& params) const = 0;
+	virtual std::future<response::BooleanType> getHasPreviousPage(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveHasNextPage(service::ResolverParams&& params);
@@ -111,8 +111,8 @@ protected:
 	AppointmentEdge();
 
 public:
-	virtual std::future<std::shared_ptr<Appointment>> getNode(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<Appointment>> getNode(const service::FieldParams& params) const = 0;
+	virtual std::future<response::Value> getCursor(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -128,8 +128,8 @@ protected:
 	AppointmentConnection();
 
 public:
-	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const service::FieldParams& params) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -145,8 +145,8 @@ protected:
 	TaskEdge();
 
 public:
-	virtual std::future<std::shared_ptr<Task>> getNode(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<Task>> getNode(const service::FieldParams& params) const = 0;
+	virtual std::future<response::Value> getCursor(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -162,8 +162,8 @@ protected:
 	TaskConnection();
 
 public:
-	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const service::FieldParams& params) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -179,8 +179,8 @@ protected:
 	FolderEdge();
 
 public:
-	virtual std::future<std::shared_ptr<Folder>> getNode(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::Value> getCursor(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<Folder>> getNode(const service::FieldParams& params) const = 0;
+	virtual std::future<response::Value> getCursor(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -196,8 +196,8 @@ protected:
 	FolderConnection();
 
 public:
-	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(const service::FieldParams& params) const = 0;
+	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -213,8 +213,8 @@ protected:
 	CompleteTaskPayload();
 
 public:
-	virtual std::future<std::shared_ptr<Task>> getTask(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getClientMutationId(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<Task>> getTask(const service::FieldParams& params) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getClientMutationId(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveTask(service::ResolverParams&& params);
@@ -230,7 +230,7 @@ protected:
 	Mutation();
 
 public:
-	virtual std::future<std::shared_ptr<CompleteTaskPayload>> getCompleteTask(const std::shared_ptr<service::RequestState>& state, CompleteTaskInput&& input) const = 0;
+	virtual std::future<std::shared_ptr<CompleteTaskPayload>> getCompleteTask(const service::FieldParams& params, CompleteTaskInput&& inputArg) const = 0;
 
 private:
 	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
@@ -245,7 +245,7 @@ protected:
 	Subscription();
 
 public:
-	virtual std::future<std::shared_ptr<Appointment>> getNextAppointmentChange(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::shared_ptr<Appointment>> getNextAppointmentChange(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
@@ -261,9 +261,9 @@ protected:
 	Appointment();
 
 public:
-	virtual std::future<std::unique_ptr<response::Value>> getWhen(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getSubject(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::BooleanType> getIsNow(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::unique_ptr<response::Value>> getWhen(const service::FieldParams& params) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getSubject(const service::FieldParams& params) const = 0;
+	virtual std::future<response::BooleanType> getIsNow(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);
@@ -282,8 +282,8 @@ protected:
 	Task();
 
 public:
-	virtual std::future<std::unique_ptr<response::StringType>> getTitle(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::BooleanType> getIsComplete(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getTitle(const service::FieldParams& params) const = 0;
+	virtual std::future<response::BooleanType> getIsComplete(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);
@@ -301,8 +301,8 @@ protected:
 	Folder();
 
 public:
-	virtual std::future<std::unique_ptr<response::StringType>> getName(const std::shared_ptr<service::RequestState>& state) const = 0;
-	virtual std::future<response::IntType> getUnreadCount(const std::shared_ptr<service::RequestState>& state) const = 0;
+	virtual std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const = 0;
+	virtual std::future<response::IntType> getUnreadCount(const service::FieldParams& params) const = 0;
 
 private:
 	std::future<response::Value> resolveId(service::ResolverParams&& params);

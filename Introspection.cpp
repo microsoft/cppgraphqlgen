@@ -57,12 +57,12 @@ void Schema::AddDirective(std::shared_ptr<object::__Directive> directive)
 	_directives.emplace_back(std::move(directive));
 }
 
-std::future<std::vector<std::shared_ptr<object::__Type>>> Schema::getTypes(const std::shared_ptr<service::RequestState>&) const
+std::future<std::vector<std::shared_ptr<object::__Type>>> Schema::getTypes(const service::FieldParams&) const
 {
-	auto keepAlive = shared_from_this();
+	auto spThis = shared_from_this();
 
 	return std::async(std::launch::deferred,
-		[this, keepAlive]()
+		[this, spThis]()
 	{
 		std::vector<std::shared_ptr<object::__Type>> result(_types.size());
 
@@ -76,7 +76,7 @@ std::future<std::vector<std::shared_ptr<object::__Type>>> Schema::getTypes(const
 	});
 }
 
-std::future<std::shared_ptr<object::__Type>> Schema::getQueryType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> Schema::getQueryType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -85,7 +85,7 @@ std::future<std::shared_ptr<object::__Type>> Schema::getQueryType(const std::sha
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> Schema::getMutationType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> Schema::getMutationType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -94,7 +94,7 @@ std::future<std::shared_ptr<object::__Type>> Schema::getMutationType(const std::
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> Schema::getSubscriptionType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> Schema::getSubscriptionType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -103,7 +103,7 @@ std::future<std::shared_ptr<object::__Type>> Schema::getSubscriptionType(const s
 	return promise.get_future();
 }
 
-std::future<std::vector<std::shared_ptr<object::__Directive>>> Schema::getDirectives(const std::shared_ptr<service::RequestState>&) const
+std::future<std::vector<std::shared_ptr<object::__Directive>>> Schema::getDirectives(const service::FieldParams&) const
 {
 	std::promise<std::vector<std::shared_ptr<object::__Directive>>> promise;
 
@@ -117,7 +117,7 @@ BaseType::BaseType(response::StringType description)
 {
 }
 
-std::future<std::unique_ptr<response::StringType>> BaseType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> BaseType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -126,7 +126,7 @@ std::future<std::unique_ptr<response::StringType>> BaseType::getName(const std::
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> BaseType::getDescription(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> BaseType::getDescription(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -137,7 +137,7 @@ std::future<std::unique_ptr<response::StringType>> BaseType::getDescription(cons
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> BaseType::getFields(const std::shared_ptr<service::RequestState>&, std::unique_ptr<response::BooleanType>&& /*includeDeprecated*/) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> BaseType::getFields(const service::FieldParams&, std::unique_ptr<response::BooleanType>&& /*includeDeprecatedArg*/) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> promise;
 
@@ -146,7 +146,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> Base
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseType::getInterfaces(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseType::getInterfaces(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> promise;
 
@@ -155,7 +155,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseT
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseType::getPossibleTypes(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseType::getPossibleTypes(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> promise;
 
@@ -164,7 +164,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> BaseT
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> BaseType::getEnumValues(const std::shared_ptr<service::RequestState>&, std::unique_ptr<response::BooleanType>&& /*includeDeprecated*/) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> BaseType::getEnumValues(const service::FieldParams&, std::unique_ptr<response::BooleanType>&& /*includeDeprecatedArg*/) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> promise;
 
@@ -173,7 +173,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> 
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> BaseType::getInputFields(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> BaseType::getInputFields(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> promise;
 
@@ -182,7 +182,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>>
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> BaseType::getOfType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> BaseType::getOfType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -197,7 +197,7 @@ ScalarType::ScalarType(response::StringType name, response::StringType descripti
 {
 }
 
-std::future<__TypeKind> ScalarType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> ScalarType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -206,7 +206,7 @@ std::future<__TypeKind> ScalarType::getKind(const std::shared_ptr<service::Reque
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> ScalarType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> ScalarType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -231,7 +231,7 @@ void ObjectType::AddFields(std::vector<std::shared_ptr<Field>> fields)
 	_fields = std::move(fields);
 }
 
-std::future<__TypeKind> ObjectType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> ObjectType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -240,7 +240,7 @@ std::future<__TypeKind> ObjectType::getKind(const std::shared_ptr<service::Reque
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> ObjectType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> ObjectType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -249,25 +249,25 @@ std::future<std::unique_ptr<response::StringType>> ObjectType::getName(const std
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> ObjectType::getFields(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::BooleanType>&& includeDeprecated) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> ObjectType::getFields(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const
 {
-	const bool deprecated = includeDeprecated && *includeDeprecated;
+	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>());
 
 	result->reserve(_fields.size());
 	std::copy_if(_fields.cbegin(), _fields.cend(), std::back_inserter(*result),
-		[state, deprecated](const std::shared_ptr<Field>& field)
+		[&params, deprecated](const std::shared_ptr<Field>& field)
 	{
 		return deprecated
-			|| !field->getIsDeprecated(state).get();
+			|| !field->getIsDeprecated(params).get();
 	});
 	promise.set_value(std::move(result));
 
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> ObjectType::getInterfaces(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> ObjectType::getInterfaces(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> result(new std::vector<std::shared_ptr<object::__Type>>(_interfaces.size()));
@@ -289,7 +289,7 @@ void InterfaceType::AddFields(std::vector<std::shared_ptr<Field>> fields)
 	_fields = std::move(fields);
 }
 
-std::future<__TypeKind> InterfaceType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> InterfaceType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -298,7 +298,7 @@ std::future<__TypeKind> InterfaceType::getKind(const std::shared_ptr<service::Re
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> InterfaceType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> InterfaceType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -307,9 +307,9 @@ std::future<std::unique_ptr<response::StringType>> InterfaceType::getName(const 
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> InterfaceType::getFields(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::BooleanType>&& includeDeprecated) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> InterfaceType::getFields(const service::FieldParams& state, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const
 {
-	const bool deprecated = includeDeprecated && *includeDeprecated;
+	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>> result(new std::vector<std::shared_ptr<object::__Field>>());
 
@@ -336,7 +336,7 @@ void UnionType::AddPossibleTypes(std::vector<std::weak_ptr<object::__Type>> poss
 	_possibleTypes = std::move(possibleTypes);
 }
 
-std::future<__TypeKind> UnionType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> UnionType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -345,7 +345,7 @@ std::future<__TypeKind> UnionType::getKind(const std::shared_ptr<service::Reques
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> UnionType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> UnionType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -354,7 +354,7 @@ std::future<std::unique_ptr<response::StringType>> UnionType::getName(const std:
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> UnionType::getPossibleTypes(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> UnionType::getPossibleTypes(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>> result(new std::vector<std::shared_ptr<object::__Type>>(_possibleTypes.size()));
@@ -389,7 +389,7 @@ void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
 	}
 }
 
-std::future<__TypeKind> EnumType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> EnumType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -398,7 +398,7 @@ std::future<__TypeKind> EnumType::getKind(const std::shared_ptr<service::Request
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> EnumType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> EnumType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -407,9 +407,9 @@ std::future<std::unique_ptr<response::StringType>> EnumType::getName(const std::
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> EnumType::getEnumValues(const std::shared_ptr<service::RequestState>& state, std::unique_ptr<response::BooleanType>&& includeDeprecated) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> EnumType::getEnumValues(const service::FieldParams& state, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const
 {
-	const bool deprecated = includeDeprecated && *includeDeprecated;
+	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>> result(new std::vector<std::shared_ptr<object::__EnumValue>>());
 
@@ -436,7 +436,7 @@ void InputObjectType::AddInputValues(std::vector<std::shared_ptr<InputValue>> in
 	_inputValues = std::move(inputValues);
 }
 
-std::future<__TypeKind> InputObjectType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> InputObjectType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -445,7 +445,7 @@ std::future<__TypeKind> InputObjectType::getKind(const std::shared_ptr<service::
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> InputObjectType::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> InputObjectType::getName(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -454,7 +454,7 @@ std::future<std::unique_ptr<response::StringType>> InputObjectType::getName(cons
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> InputObjectType::getInputFields(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> InputObjectType::getInputFields(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> promise;
 	std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>> result(new std::vector<std::shared_ptr<object::__InputValue>>(_inputValues.size()));
@@ -472,7 +472,7 @@ WrapperType::WrapperType(__TypeKind kind, const std::shared_ptr<object::__Type>&
 {
 }
 
-std::future<__TypeKind> WrapperType::getKind(const std::shared_ptr<service::RequestState>&) const
+std::future<__TypeKind> WrapperType::getKind(const service::FieldParams&) const
 {
 	std::promise<__TypeKind> promise;
 
@@ -481,7 +481,7 @@ std::future<__TypeKind> WrapperType::getKind(const std::shared_ptr<service::Requ
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> WrapperType::getOfType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> WrapperType::getOfType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -499,7 +499,7 @@ Field::Field(response::StringType name, response::StringType description, std::u
 {
 }
 
-std::future<response::StringType> Field::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<response::StringType> Field::getName(const service::FieldParams&) const
 {
 	std::promise<response::StringType> promise;
 
@@ -508,7 +508,7 @@ std::future<response::StringType> Field::getName(const std::shared_ptr<service::
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> Field::getDescription(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> Field::getDescription(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -519,7 +519,7 @@ std::future<std::unique_ptr<response::StringType>> Field::getDescription(const s
 	return promise.get_future();
 }
 
-std::future<std::vector<std::shared_ptr<object::__InputValue>>> Field::getArgs(const std::shared_ptr<service::RequestState>&) const
+std::future<std::vector<std::shared_ptr<object::__InputValue>>> Field::getArgs(const service::FieldParams&) const
 {
 	std::promise<std::vector<std::shared_ptr<object::__InputValue>>> promise;
 	std::vector<std::shared_ptr<object::__InputValue>> result(_args.size());
@@ -530,7 +530,7 @@ std::future<std::vector<std::shared_ptr<object::__InputValue>>> Field::getArgs(c
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> Field::getType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> Field::getType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -539,7 +539,7 @@ std::future<std::shared_ptr<object::__Type>> Field::getType(const std::shared_pt
 	return promise.get_future();
 }
 
-std::future<response::BooleanType> Field::getIsDeprecated(const std::shared_ptr<service::RequestState>&) const
+std::future<response::BooleanType> Field::getIsDeprecated(const service::FieldParams&) const
 {
 	std::promise<response::BooleanType> promise;
 
@@ -548,7 +548,7 @@ std::future<response::BooleanType> Field::getIsDeprecated(const std::shared_ptr<
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> Field::getDeprecationReason(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> Field::getDeprecationReason(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -567,7 +567,7 @@ InputValue::InputValue(response::StringType name, response::StringType descripti
 {
 }
 
-std::future<response::StringType> InputValue::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<response::StringType> InputValue::getName(const service::FieldParams&) const
 {
 	std::promise<response::StringType> promise;
 
@@ -576,7 +576,7 @@ std::future<response::StringType> InputValue::getName(const std::shared_ptr<serv
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> InputValue::getDescription(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> InputValue::getDescription(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -587,7 +587,7 @@ std::future<std::unique_ptr<response::StringType>> InputValue::getDescription(co
 	return promise.get_future();
 }
 
-std::future<std::shared_ptr<object::__Type>> InputValue::getType(const std::shared_ptr<service::RequestState>&) const
+std::future<std::shared_ptr<object::__Type>> InputValue::getType(const service::FieldParams&) const
 {
 	std::promise<std::shared_ptr<object::__Type>> promise;
 
@@ -596,7 +596,7 @@ std::future<std::shared_ptr<object::__Type>> InputValue::getType(const std::shar
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> InputValue::getDefaultValue(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> InputValue::getDefaultValue(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -614,7 +614,7 @@ EnumValue::EnumValue(response::StringType name, response::StringType description
 {
 }
 
-std::future<response::StringType> EnumValue::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<response::StringType> EnumValue::getName(const service::FieldParams&) const
 {
 	std::promise<response::StringType> promise;
 
@@ -623,7 +623,7 @@ std::future<response::StringType> EnumValue::getName(const std::shared_ptr<servi
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> EnumValue::getDescription(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> EnumValue::getDescription(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -634,7 +634,7 @@ std::future<std::unique_ptr<response::StringType>> EnumValue::getDescription(con
 	return promise.get_future();
 }
 
-std::future<response::BooleanType> EnumValue::getIsDeprecated(const std::shared_ptr<service::RequestState>&) const
+std::future<response::BooleanType> EnumValue::getIsDeprecated(const service::FieldParams&) const
 {
 	std::promise<response::BooleanType> promise;
 
@@ -643,7 +643,7 @@ std::future<response::BooleanType> EnumValue::getIsDeprecated(const std::shared_
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> EnumValue::getDeprecationReason(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> EnumValue::getDeprecationReason(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -676,7 +676,7 @@ Directive::Directive(response::StringType name, response::StringType description
 {
 }
 
-std::future<response::StringType> Directive::getName(const std::shared_ptr<service::RequestState>&) const
+std::future<response::StringType> Directive::getName(const service::FieldParams&) const
 {
 	std::promise<response::StringType> promise;
 
@@ -685,7 +685,7 @@ std::future<response::StringType> Directive::getName(const std::shared_ptr<servi
 	return promise.get_future();
 }
 
-std::future<std::unique_ptr<response::StringType>> Directive::getDescription(const std::shared_ptr<service::RequestState>&) const
+std::future<std::unique_ptr<response::StringType>> Directive::getDescription(const service::FieldParams&) const
 {
 	std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -696,7 +696,7 @@ std::future<std::unique_ptr<response::StringType>> Directive::getDescription(con
 	return promise.get_future();
 }
 
-std::future<std::vector<__DirectiveLocation>> Directive::getLocations(const std::shared_ptr<service::RequestState>&) const
+std::future<std::vector<__DirectiveLocation>> Directive::getLocations(const service::FieldParams&) const
 {
 	std::promise<std::vector<__DirectiveLocation>> promise;
 	std::vector< __DirectiveLocation> result(_locations.size());
@@ -707,7 +707,7 @@ std::future<std::vector<__DirectiveLocation>> Directive::getLocations(const std:
 	return promise.get_future();
 }
 
-std::future<std::vector<std::shared_ptr<object::__InputValue>>> Directive::getArgs(const std::shared_ptr<service::RequestState>&) const
+std::future<std::vector<std::shared_ptr<object::__InputValue>>> Directive::getArgs(const service::FieldParams&) const
 {
 	std::promise<std::vector<std::shared_ptr<object::__InputValue>>> promise;
 	std::vector<std::shared_ptr<object::__InputValue>> result(_args.size());
