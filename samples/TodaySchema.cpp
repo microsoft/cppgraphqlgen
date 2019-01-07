@@ -101,6 +101,7 @@ Query::Query()
 		{ "appointmentsById", [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
 		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
 		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
+		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } }
@@ -174,6 +175,13 @@ std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverPar
 	auto result = getUnreadCountsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Query::resolveNested(service::ResolverParams&& params)
+{
+	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+
+	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve__typename(service::ResolverParams&&)
@@ -666,6 +674,40 @@ std::future<response::Value> Folder::resolve__typename(service::ResolverParams&&
 	return promise.get_future();
 }
 
+NestedType::NestedType()
+	: service::Object({
+		"NestedType"
+	}, {
+		{ "depth", [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
+		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+	})
+{
+}
+
+std::future<response::Value> NestedType::resolveDepth(service::ResolverParams&& params)
+{
+	auto result = getDepth(service::FieldParams(params, std::move(params.fieldDirectives)));
+
+	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> NestedType::resolveNested(service::ResolverParams&& params)
+{
+	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+
+	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> NestedType::resolve__typename(service::ResolverParams&&)
+{
+	std::promise<response::Value> promise;
+
+	promise.set_value(response::Value("NestedType"));
+
+	return promise.get_future();
+}
+
 } /* namespace object */
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
@@ -688,6 +730,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("TaskState", typeTaskState);
 	auto typeCompleteTaskInput= std::make_shared<introspection::InputObjectType>("CompleteTaskInput", R"md()md");
 	schema->AddType("CompleteTaskInput", typeCompleteTaskInput);
+	auto typeUnionType= std::make_shared<introspection::UnionType>("UnionType", R"md()md");
+	schema->AddType("UnionType", typeUnionType);
 	auto typeNode= std::make_shared<introspection::InterfaceType>("Node", R"md(Node interface for Relay support)md");
 	schema->AddType("Node", typeNode);
 	auto typeQuery= std::make_shared<introspection::ObjectType>("Query", R"md(Root Query type)md");
@@ -718,6 +762,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("Task", typeTask);
 	auto typeFolder= std::make_shared<introspection::ObjectType>("Folder", R"md()md");
 	schema->AddType("Folder", typeFolder);
+	auto typeNestedType= std::make_shared<introspection::ObjectType>("NestedType", R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	schema->AddType("NestedType", typeNestedType);
 
 	typeTaskState->AddEnumValues({
 		{ "New", R"md()md", nullptr },
@@ -730,6 +776,12 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"),
 		std::make_shared<introspection::InputValue>("isComplete", R"md()md", schema->LookupType("Boolean"), R"gql(true)gql"),
 		std::make_shared<introspection::InputValue>("clientMutationId", R"md()md", schema->LookupType("String"), R"gql()gql")
+	});
+
+	typeUnionType->AddPossibleTypes({
+		schema->LookupType("Appointment"),
+		schema->LookupType("Task"),
+		schema->LookupType("Folder")
 	});
 
 	typeNode->AddFields({
@@ -766,7 +818,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Task")))),
 		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Folder"))))
+		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Folder")))),
+		std::make_shared<introspection::Field>("nested", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType")))
 	});
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
@@ -833,11 +886,40 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
 		std::make_shared<introspection::Field>("unreadCount", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
+	typeNestedType->AddFields({
+		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Int"))),
+		std::make_shared<introspection::Field>("nested", R"md(Link to the next level)md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType")))
+	});
 
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
 		R"gql(SUBSCRIPTION)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
 		std::make_shared<introspection::InputValue>("field", R"md()md", schema->LookupType("String"), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("queryTag", R"md()md", std::vector<response::StringType>({
+		R"gql(QUERY)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("query", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("fieldTag", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("field", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("fragmentDefinitionTag", R"md()md", std::vector<response::StringType>({
+		R"gql(FRAGMENT_DEFINITION)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("fragmentDefinition", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("fragmentSpreadTag", R"md()md", std::vector<response::StringType>({
+		R"gql(FRAGMENT_SPREAD)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("fragmentSpread", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("inlineFragmentTag", R"md()md", std::vector<response::StringType>({
+		R"gql(INLINE_FRAGMENT)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("inlineFragment", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 
 	schema->AddQueryType(typeQuery);

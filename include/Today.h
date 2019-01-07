@@ -5,6 +5,8 @@
 
 #include "TodaySchema.h"
 
+#include <stack>
+
 namespace facebook {
 namespace graphql {
 namespace today {
@@ -40,13 +42,14 @@ public:
 
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::future<std::shared_ptr<service::Object>> getNode(const service::FieldParams& params, std::vector<uint8_t>&& id) const override;
-	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(const service::FieldParams& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::TaskConnection>> getTasks(const service::FieldParams& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(const service::FieldParams& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(const service::FieldParams& params, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, std::vector<uint8_t>&& id) const override;
+	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::shared_ptr<object::NestedType>> getNested(service::FieldParams&& params) const override;
 
 private:
 	std::shared_ptr<Appointment> findAppointment(const service::FieldParams& params, const std::vector<uint8_t>& id) const;
@@ -76,7 +79,7 @@ public:
 	{
 	}
 
-	std::future<bool> getHasNextPage(const service::FieldParams&) const override
+	std::future<bool> getHasNextPage(service::FieldParams&&) const override
 	{
 		std::promise<bool> promise;
 
@@ -85,7 +88,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getHasPreviousPage(const service::FieldParams&) const override
+	std::future<bool> getHasPreviousPage(service::FieldParams&&) const override
 	{
 		std::promise<bool> promise;
 
@@ -104,7 +107,7 @@ class Appointment : public object::Appointment
 public:
 	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
 
-	std::future<std::vector<uint8_t>> getId(const service::FieldParams&) const override
+	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -113,7 +116,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value>> getWhen(const service::FieldParams&) const override
+	std::future<std::unique_ptr<response::Value>> getWhen(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<response::Value>> promise;
 
@@ -122,7 +125,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getSubject(const service::FieldParams&) const override
+	std::future<std::unique_ptr<response::StringType>> getSubject(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -131,7 +134,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getIsNow(const service::FieldParams&) const override
+	std::future<bool> getIsNow(service::FieldParams&&) const override
 	{
 		std::promise<bool> promise;
 
@@ -155,7 +158,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Appointment>> getNode(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::Appointment>> getNode(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::Appointment>> promise;
 
@@ -164,11 +167,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(const service::FieldParams& params) const override
+	std::future<response::Value> getCursor(service::FieldParams&& params) const override
 	{
 		std::promise<response::Value> promise;
 
-		promise.set_value(response::Value(service::Base64::toBase64(_appointment->getId(params).get())));
+		promise.set_value(response::Value(service::Base64::toBase64(_appointment->getId(std::move(params)).get())));
 
 		return promise.get_future();
 	}
@@ -186,7 +189,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -195,7 +198,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(const service::FieldParams&) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>(new std::vector<std::shared_ptr<object::AppointmentEdge>>(_appointments.size()));
@@ -220,7 +223,7 @@ class Task : public object::Task
 public:
 	explicit Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete);
 
-	std::future<std::vector<uint8_t>> getId(const service::FieldParams&) const override
+	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -229,7 +232,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getTitle(const service::FieldParams&) const override
+	std::future<std::unique_ptr<response::StringType>> getTitle(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -238,7 +241,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<bool> getIsComplete(const service::FieldParams&) const override
+	std::future<bool> getIsComplete(service::FieldParams&&) const override
 	{
 		std::promise<bool> promise;
 
@@ -262,7 +265,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Task>> getNode(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::Task>> getNode(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::Task>> promise;
 
@@ -271,11 +274,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(const service::FieldParams& params) const override
+	std::future<response::Value> getCursor(service::FieldParams&& params) const override
 	{
 		std::promise<response::Value> promise;
 
-		promise.set_value(response::Value(service::Base64::toBase64(_task->getId(params).get())));
+		promise.set_value(response::Value(service::Base64::toBase64(_task->getId(std::move(params)).get())));
 
 		return promise.get_future();
 	}
@@ -293,7 +296,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -302,7 +305,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(const service::FieldParams&) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>(new std::vector<std::shared_ptr<object::TaskEdge>>(_tasks.size()));
@@ -327,7 +330,7 @@ class Folder : public object::Folder
 public:
 	explicit Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount);
 
-	std::future<std::vector<uint8_t>> getId(const service::FieldParams&) const override
+	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
 	{
 		std::promise<std::vector<uint8_t>> promise;
 
@@ -336,7 +339,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams&) const override
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -345,7 +348,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<int> getUnreadCount(const service::FieldParams&) const override
+	std::future<int> getUnreadCount(service::FieldParams&&) const override
 	{
 		std::promise<int> promise;
 
@@ -368,7 +371,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Folder>> getNode(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::Folder>> getNode(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::Folder>> promise;
 
@@ -377,11 +380,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<response::Value> getCursor(const service::FieldParams& params) const override
+	std::future<response::Value> getCursor(service::FieldParams&& params) const override
 	{
 		std::promise<response::Value> promise;
 
-		promise.set_value(response::Value(service::Base64::toBase64(_folder->getId(params).get())));
+		promise.set_value(response::Value(service::Base64::toBase64(_folder->getId(std::move(params)).get())));
 
 		return promise.get_future();
 	}
@@ -399,7 +402,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::PageInfo>> getPageInfo(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::PageInfo>> promise;
 
@@ -408,7 +411,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(const service::FieldParams&) const override
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> promise;
 		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>(new std::vector<std::shared_ptr<object::FolderEdge>>(_folders.size()));
@@ -437,7 +440,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Task>> getTask(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::Task>> getTask(service::FieldParams&&) const override
 	{
 		std::promise<std::shared_ptr<object::Task>> promise;
 
@@ -446,7 +449,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getClientMutationId(const service::FieldParams&) const override
+	std::future<std::unique_ptr<response::StringType>> getClientMutationId(service::FieldParams&&) const override
 	{
 		std::promise<std::unique_ptr<response::StringType>> promise;
 
@@ -469,7 +472,7 @@ public:
 
 	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
-	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(const service::FieldParams& params, CompleteTaskInput&& input) const override;
+	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const override;
 
 private:
 	completeTaskMutation _mutateCompleteTask;
@@ -480,7 +483,7 @@ class Subscription : public object::Subscription
 public:
 	explicit Subscription() = default;
 
-	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(const service::FieldParams&) const override
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(service::FieldParams&&) const override
 	{
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
@@ -496,7 +499,7 @@ public:
 	{
 	}
 
-	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(const service::FieldParams& params) const override
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(service::FieldParams&& params) const override
 	{
 		std::promise<std::shared_ptr<object::Appointment>> promise;
 
@@ -507,6 +510,35 @@ public:
 
 private:
 	nextAppointmentChange _changeNextAppointment;
+};
+
+struct CapturedParams
+{
+	// Copied in the constructor
+	const response::Value operationDirectives;
+	const response::Value fragmentDefinitionDirectives;
+	const response::Value fragmentSpreadDirectives;
+	const response::Value inlineFragmentDirectives;
+
+	// Moved in the constructor
+	const response::Value fieldDirectives;
+};
+
+class NestedType : public object::NestedType
+{
+public:
+	explicit NestedType(service::FieldParams&& params, int depth);
+
+	std::future<response::IntType> getDepth(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::NestedType>> getNested(service::FieldParams&& params) const override;
+
+	static std::stack<CapturedParams> getCapturedParams();
+
+private:
+	static std::stack<CapturedParams> _capturedParams;
+
+	// Initialized in the constructor
+	const int depth;
 };
 
 } /* namespace today */

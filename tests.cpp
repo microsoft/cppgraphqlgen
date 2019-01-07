@@ -570,7 +570,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<today::RequestState>(8);
+	auto state = std::make_shared<today::RequestState>(9);
 	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
@@ -632,7 +632,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto state = std::make_shared<today::RequestState>(9);
+	auto state = std::make_shared<today::RequestState>(10);
 	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
 
 	try
@@ -652,6 +652,132 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		ASSERT_FALSE(types.empty());
 		ASSERT_FALSE(queryType.second);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
+TEST_F(TodayServiceCase, NestedFragmentDirectives)
+{
+	auto ast = R"(
+		query NestedFragmentsQuery @queryTag(query: "nested") {
+			nested @fieldTag(field: "nested1") {
+				...Fragment1 @fragmentSpreadTag(fragmentSpread: "fragmentSpread1")
+			}
+		}
+		fragment Fragment1 on NestedType @fragmentDefinitionTag(fragmentDefinition: "fragmentDefinition1") {
+			fragmentDefinitionNested: nested @fieldTag(field: "nested2") {
+				...Fragment2 @fragmentSpreadTag(fragmentSpread: "fragmentSpread2")
+			}
+			depth @fieldTag(field: "depth1")
+		}
+		fragment Fragment2 on NestedType @fragmentDefinitionTag(fragmentDefinition: "fragmentDefinition2") {
+			...on NestedType @inlineFragmentTag(inlineFragment: "inlineFragment3") {
+				inlineFragmentNested: nested @fieldTag(field: "nested3") {
+					...on NestedType @inlineFragmentTag(inlineFragment: "inlineFragment4") {
+						...on NestedType @inlineFragmentTag(inlineFragment: "inlineFragment5") {
+							inlineFragmentNested: nested @fieldTag(field: "nested4") {
+								depth @fieldTag(field: "depth4")
+							}
+						}
+					}
+					depth @fieldTag(field: "depth3")
+				}
+			}
+			depth @fieldTag(field: "depth2")
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(11);
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+		const auto nested1 = service::ScalarArgument::require("nested", data);
+		const auto depth1 = service::IntArgument::require("depth", nested1);
+		const auto nested2 = service::ScalarArgument::require("fragmentDefinitionNested", nested1);
+		const auto depth2 = service::IntArgument::require("depth", nested2);
+		const auto nested3 = service::ScalarArgument::require("inlineFragmentNested", nested2);
+		const auto depth3 = service::IntArgument::require("depth", nested3);
+		const auto nested4 = service::ScalarArgument::require("inlineFragmentNested", nested3);
+		const auto depth4 = service::IntArgument::require("depth", nested4);
+		auto capturedParams = today::NestedType::getCapturedParams();
+		const auto params4 = std::move(capturedParams.top());
+		capturedParams.pop();
+		const auto params3 = std::move(capturedParams.top());
+		capturedParams.pop();
+		const auto params2 = std::move(capturedParams.top());
+		capturedParams.pop();
+		const auto params1 = std::move(capturedParams.top());
+		capturedParams.pop();
+		const auto queryTag1 = service::ScalarArgument::require("queryTag", params1.operationDirectives);
+		const auto query1 = service::StringArgument::require("query", queryTag1);
+		const auto fragmentDefinitionCount1 = params1.fragmentDefinitionDirectives.size();
+		const auto fragmentSpreadCount1 = params1.fragmentSpreadDirectives.size();
+		const auto inlineFragmentCount1 = params1.inlineFragmentDirectives.size();
+		const auto fieldTag1 = service::ScalarArgument::require("fieldTag", params1.fieldDirectives);
+		const auto field1 = service::StringArgument::require("field", fieldTag1);
+		const auto queryTag2 = service::ScalarArgument::require("queryTag", params2.operationDirectives);
+		const auto query2 = service::StringArgument::require("query", queryTag2);
+		const auto fragmentDefinitionTag2 = service::ScalarArgument::require("fragmentDefinitionTag", params2.fragmentDefinitionDirectives);
+		const auto fragmentDefinition2 = service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag2);
+		const auto fragmentSpreadTag2 = service::ScalarArgument::require("fragmentSpreadTag", params2.fragmentSpreadDirectives);
+		const auto fragmentSpread2 = service::StringArgument::require("fragmentSpread", fragmentSpreadTag2);
+		const auto inlineFragmentCount2 = params2.inlineFragmentDirectives.size();
+		const auto fieldTag2 = service::ScalarArgument::require("fieldTag", params2.fieldDirectives);
+		const auto field2 = service::StringArgument::require("field", fieldTag2);
+		const auto queryTag3 = service::ScalarArgument::require("queryTag", params3.operationDirectives);
+		const auto query3 = service::StringArgument::require("query", queryTag3);
+		const auto fragmentDefinitionTag3 = service::ScalarArgument::require("fragmentDefinitionTag", params3.fragmentDefinitionDirectives);
+		const auto fragmentDefinition3 = service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag3);
+		const auto fragmentSpreadTag3 = service::ScalarArgument::require("fragmentSpreadTag", params3.fragmentSpreadDirectives);
+		const auto fragmentSpread3 = service::StringArgument::require("fragmentSpread", fragmentSpreadTag3);
+		const auto inlineFragmentTag3 = service::ScalarArgument::require("inlineFragmentTag", params3.inlineFragmentDirectives);
+		const auto inlineFragment3 = service::StringArgument::require("inlineFragment", inlineFragmentTag3);
+		const auto fieldTag3 = service::ScalarArgument::require("fieldTag", params3.fieldDirectives);
+		const auto field3 = service::StringArgument::require("field", fieldTag3);
+		const auto queryTag4 = service::ScalarArgument::require("queryTag", params4.operationDirectives);
+		const auto query4 = service::StringArgument::require("query", queryTag4);
+		const auto fragmentDefinitionCount4 = params4.fragmentDefinitionDirectives.size();
+		const auto fragmentSpreadCount4 = params4.fragmentSpreadDirectives.size();
+		const auto inlineFragmentTag4 = service::ScalarArgument::require("inlineFragmentTag", params4.inlineFragmentDirectives);
+		const auto inlineFragment4 = service::StringArgument::require("inlineFragment", inlineFragmentTag4);
+		const auto fieldTag4 = service::ScalarArgument::require("fieldTag", params4.fieldDirectives);
+		const auto field4 = service::StringArgument::require("field", fieldTag4);
+
+		ASSERT_EQ(1, depth1);
+		ASSERT_EQ(2, depth2);
+		ASSERT_EQ(3, depth3);
+		ASSERT_EQ(4, depth4);
+		ASSERT_TRUE(capturedParams.empty());
+		ASSERT_EQ("nested", query1) << "remember the operation directives";
+		ASSERT_EQ(size_t(0), fragmentDefinitionCount1);
+		ASSERT_EQ(size_t(0), fragmentSpreadCount1);
+		ASSERT_EQ(size_t(0), inlineFragmentCount1);
+		ASSERT_EQ("nested1", field1) << "remember the field directives";
+		ASSERT_EQ("nested", query2) << "remember the operation directives";
+		ASSERT_EQ("fragmentDefinition1", fragmentDefinition2) << "remember the directives from the fragment definition";
+		ASSERT_EQ("fragmentSpread1", fragmentSpread2) << "remember the directives from the fragment spread";
+		ASSERT_EQ(size_t(0), inlineFragmentCount2);
+		ASSERT_EQ("nested2", field2) << "remember the field directives";
+		ASSERT_EQ("nested", query3) << "remember the operation directives";
+		ASSERT_EQ("fragmentDefinition2", fragmentDefinition3) << "outer fragement definition directives are preserved with inline fragments";
+		ASSERT_EQ("fragmentSpread2", fragmentSpread3) << "outer fragement spread directives are preserved with inline fragments";
+		ASSERT_EQ("inlineFragment3", inlineFragment3) << "remember the directives from the inline fragment";
+		ASSERT_EQ("nested3", field3) << "remember the field directives";
+		ASSERT_EQ("nested", query4) << "remember the operation directives";
+		ASSERT_EQ(size_t(0), fragmentDefinitionCount4) << "traversing a field to a nested object SelectionSet resets the fragment directives";
+		ASSERT_EQ(size_t(0), fragmentSpreadCount4) << "traversing a field to a nested object SelectionSet resets the fragment directives";
+		ASSERT_EQ("inlineFragment5", inlineFragment4) << "nested inline fragments don't reset, but do overwrite on collision";
+		ASSERT_EQ("nested4", field4) << "remember the field directives";
 	}
 	catch (const service::schema_exception& ex)
 	{

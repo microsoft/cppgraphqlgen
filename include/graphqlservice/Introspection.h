@@ -36,11 +36,11 @@ public:
 	void AddDirective(std::shared_ptr<object::__Directive> directive);
 
 	// Accessors
-	std::future<std::vector<std::shared_ptr<object::__Type>>> getTypes(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getQueryType(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getMutationType(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getSubscriptionType(const service::FieldParams& params) const override;
-	std::future<std::vector<std::shared_ptr<object::__Directive>>> getDirectives(const service::FieldParams& params) const override;
+	std::future<std::vector<std::shared_ptr<object::__Type>>> getTypes(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getQueryType(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getMutationType(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getSubscriptionType(service::FieldParams&& params) const override;
+	std::future<std::vector<std::shared_ptr<object::__Directive>>> getDirectives(service::FieldParams&& params) const override;
 
 private:
 	std::shared_ptr<ObjectType> _query;
@@ -57,14 +57,14 @@ class BaseType : public object::__Type
 {
 public:
 	// Accessors
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDescription(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getOfType(const service::FieldParams& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getOfType(service::FieldParams&& params) const override;
 
 protected:
 	BaseType(response::StringType description);
@@ -79,8 +79,8 @@ public:
 	explicit ScalarType(response::StringType name, response::StringType description);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -95,10 +95,10 @@ public:
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(const service::FieldParams& params) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getInterfaces(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -115,9 +115,9 @@ public:
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> getFields(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
 
 private:
 	const response::StringType _name;
@@ -133,9 +133,9 @@ public:
 	void AddPossibleTypes(std::vector<std::weak_ptr<object::__Type>> possibleTypes);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(const service::FieldParams& params) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> getPossibleTypes(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -158,9 +158,9 @@ public:
 	void AddEnumValues(std::vector<EnumValueType> enumValues);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(const service::FieldParams& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> getEnumValues(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const override;
 
 private:
 	const response::StringType _name;
@@ -176,9 +176,9 @@ public:
 	void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(const service::FieldParams& params) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__InputValue>>>> getInputFields(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -192,8 +192,8 @@ public:
 	explicit WrapperType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType);
 
 	// Accessors
-	std::future<__TypeKind> getKind(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getOfType(const service::FieldParams& params) const override;
+	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getOfType(service::FieldParams&& params) const override;
 
 private:
 	const __TypeKind _kind;
@@ -206,12 +206,12 @@ public:
 	explicit Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, const std::shared_ptr<object::__Type>& type);
 
 	// Accessors
-	std::future<response::StringType> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDescription(const service::FieldParams& params) const override;
-	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getType(const service::FieldParams& params) const override;
-	std::future<response::BooleanType> getIsDeprecated(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDeprecationReason(const service::FieldParams& params) const override;
+	std::future<response::StringType> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const override;
+	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getType(service::FieldParams&& params) const override;
+	std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -227,10 +227,10 @@ public:
 	explicit InputValue(response::StringType name, response::StringType description, const std::shared_ptr<object::__Type>& type, response::StringType defaultValue);
 
 	// Accessors
-	std::future<response::StringType> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDescription(const service::FieldParams& params) const override;
-	std::future<std::shared_ptr<object::__Type>> getType(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDefaultValue(const service::FieldParams& params) const override;
+	std::future<response::StringType> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const override;
+	std::future<std::shared_ptr<object::__Type>> getType(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDefaultValue(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -245,10 +245,10 @@ public:
 	explicit EnumValue(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason);
 
 	// Accessors
-	std::future<response::StringType> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDescription(const service::FieldParams& params) const override;
-	std::future<response::BooleanType> getIsDeprecated(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDeprecationReason(const service::FieldParams& params) const override;
+	std::future<response::StringType> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const override;
+	std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
@@ -262,10 +262,10 @@ public:
 	explicit Directive(response::StringType name, response::StringType description, std::vector<response::StringType> locations, std::vector<std::shared_ptr<InputValue>> args);
 
 	// Accessors
-	std::future<response::StringType> getName(const service::FieldParams& params) const override;
-	std::future<std::unique_ptr<response::StringType>> getDescription(const service::FieldParams& params) const override;
-	std::future<std::vector<__DirectiveLocation>> getLocations(const service::FieldParams& params) const override;
-	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(const service::FieldParams& params) const override;
+	std::future<response::StringType> getName(service::FieldParams&& params) const override;
+	std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const override;
+	std::future<std::vector<__DirectiveLocation>> getLocations(service::FieldParams&& params) const override;
+	std::future<std::vector<std::shared_ptr<object::__InputValue>>> getArgs(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;

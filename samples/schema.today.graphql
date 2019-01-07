@@ -24,6 +24,8 @@ type Query {
     appointmentsById(ids: [ID!]!) : [Appointment]!
     tasksById(ids: [ID!]!): [Task]!
     unreadCountsById(ids: [ID!]!): [Folder]!
+
+    nested: NestedType!
 }
 
 "Node interface for Relay support"
@@ -113,4 +115,20 @@ type Folder implements Node {
     id: ID!
     name: String
     unreadCount: Int!
+}
+
+union UnionType = Appointment | Task | Folder
+
+directive @queryTag(query: String!) on QUERY
+directive @fieldTag(field: String!) on FIELD
+directive @fragmentDefinitionTag(fragmentDefinition: String!) on FRAGMENT_DEFINITION
+directive @fragmentSpreadTag(fragmentSpread: String!) on FRAGMENT_SPREAD
+directive @inlineFragmentTag(inlineFragment: String!) on INLINE_FRAGMENT
+
+"Infinitely nestable type which can be used with nested fragments to test directive handling"
+type NestedType {
+    "Depth of the nested element"
+    depth: Int!
+    "Link to the next level"
+    nested: NestedType!
 }

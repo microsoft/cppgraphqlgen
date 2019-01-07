@@ -630,9 +630,9 @@ private:
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
 	const std::shared_ptr<RequestState>& _state;
+	const response::Value& _operationDirectives;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
-	const response::Value& _operationDirectives;
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
@@ -643,9 +643,9 @@ private:
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams, const FragmentMap& fragments, const response::Value& variables,
 	const TypeNames& typeNames, const ResolverMap& resolvers)
 	: _state(selectionSetParams.state)
+	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _fragments(fragments)
 	, _variables(variables)
-	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
 {
@@ -730,18 +730,18 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	bool skip = false;
 
-	response::Value directives(response::Type::Map);
+	response::Value fieldDirectives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(field,
-		[this, &directives](const peg::ast_node& child)
+		[this, &fieldDirectives](const peg::ast_node& child)
 		{
 			DirectiveVisitor directiveVisitor(_variables);
 
 			directiveVisitor.visit(child);
-			directives = directiveVisitor.getDirectives();
+			fieldDirectives = directiveVisitor.getDirectives();
 		});
 
-	if (shouldSkip(directives))
+	if (shouldSkip(fieldDirectives))
 	{
 		return;
 	}
@@ -779,7 +779,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	_values.push({
 		std::move(alias),
-		itr->second(ResolverParams(selectionSetParams, std::move(arguments), std::move(directives), selection, _fragments, _variables))
+		itr->second(ResolverParams(selectionSetParams, std::move(arguments), std::move(fieldDirectives), selection, _fragments, _variables))
 		});
 }
 
