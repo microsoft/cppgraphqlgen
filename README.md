@@ -21,6 +21,18 @@ app and your native/hybrid app.
 
 # Getting Started
 
+## Related projects
+
+I created a couple of sample projects to demonstrate integrating the [schema.today.graphql](./samples/schema.today.graphql)
+service into an Electron app. They're available under my personal account, feel free to use either or both of these as a
+starting point to integrate your own generated service with Node or Electron:
+* [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
+against the version of the Node headers included in Electron.
+* [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
+exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of it.
+
+
+
 ## Installation process
 
 First, clone this repo, then make sure you have the dependencies. Acquiring the dependencies is a
