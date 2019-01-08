@@ -785,6 +785,54 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 	}
 }
 
+TEST_F(TodayServiceCase, QueryAppointmentsById)
+{
+	auto ast = R"(query SpecificAppointment($appointmentId: ID!) {
+			appointmentsById(ids: [$appointmentId]) {
+				appointmentId: id
+				subject
+				when
+				isNow
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
+	auto state = std::make_shared<today::RequestState>(12);
+	auto result = _service->resolve(state, *ast->root, "", std::move(variables)).get();
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(12), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto appointmentsById = service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
+		ASSERT_EQ(size_t(1), appointmentsById.size());
+		const auto& appointmentEntry = appointmentsById.front();
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentEntry)) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry)) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
 TEST(ArgumentsCase, ListArgumentStrings)
 {
 	auto parsed = response::parseJSON(R"js({"value":[

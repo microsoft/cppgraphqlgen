@@ -177,7 +177,7 @@ void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 
 	for (const auto& child : listValue.children)
 	{
-		visitor.visit(*child->children.back());
+		visitor.visit(*child);
 		_value.emplace_back(visitor.getValue());
 	}
 }
