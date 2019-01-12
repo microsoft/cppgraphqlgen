@@ -31,8 +31,6 @@ against the version of the Node headers included in Electron.
 * [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
 exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of it.
 
-
-
 ## Installation process
 
 First, clone this repo, then make sure you have the dependencies. Acquiring the dependencies is a
@@ -41,7 +39,7 @@ bit different depending on your platform.
 I've tested this on Windows with Visual Studio 2017 and Linux using an Ubuntu instance running in
 WSL.
 
-I plan on adding a vcpkg package for this project, and then you can install everything with `vcpkg install cppgraphqlgen`.
+I added a vcpkg port for this project, if you have vcpkg you can also install everything with `vcpkg install cppgraphqlgen`.
 
 ## Software dependencies
 
