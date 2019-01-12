@@ -155,7 +155,29 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 
 std::future<response::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
+	const auto defaultArguments = []()
+	{
+		response::Value values(response::Type::Map);
+		response::Value entry;
+
+		entry = []()
+		{
+			response::Value elements(response::Type::List);
+			response::Value entry;
+
+			entry = response::Value(R"gql(ZmFrZUFwcG9pbnRtZW50SWQ=)gql");
+			elements.emplace_back(std::move(entry));
+			return elements;
+		}();
+		values.emplace_back("ids", std::move(entry));
+
+		return values;
+	}();
+
+	auto pairIds = service::ModifiedArgument<std::vector<uint8_t>>::find<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = (pairIds.second
+		? std::move(pairIds.first)
+		: service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", defaultArguments));
 	auto result = getAppointmentsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -811,7 +833,7 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
 		std::make_shared<introspection::Field>("appointmentsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
+			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Appointment")))),
 		std::make_shared<introspection::Field>("tasksById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")

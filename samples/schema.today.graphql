@@ -21,7 +21,7 @@ type Query {
 	"""Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
 
-    appointmentsById(ids: [ID!]!) : [Appointment]!
+    appointmentsById(ids: [ID!]! = ["ZmFrZUFwcG9pbnRtZW50SWQ="]) : [Appointment]!
     tasksById(ids: [ID!]!): [Task]!
     unreadCountsById(ids: [ID!]!): [Folder]!
 

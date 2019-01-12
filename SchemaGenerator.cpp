@@ -1023,7 +1023,7 @@ void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listVal
 	{
 		DefaultValueVisitor visitor;
 
-		visitor.visit(*child->children.back());
+		visitor.visit(*child);
 		_value.emplace_back(visitor.getValue());
 	}
 }
