@@ -2632,8 +2632,8 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 
 		case response::Type::String:
 		{
-			argumentDefaultValue << padding << R"cpp(		entry = response::Value(R"gql()cpp"
-				<< defaultValue.get<const response::StringType&>() << R"cpp()gql");
+			argumentDefaultValue << padding << R"cpp(		entry = response::Value(std::string(R"gql()cpp"
+				<< defaultValue.get<const response::StringType&>() << R"cpp()gql"));
 )cpp";
 			break;
 		}

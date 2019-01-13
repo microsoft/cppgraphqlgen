@@ -165,7 +165,7 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 			response::Value elements(response::Type::List);
 			response::Value entry;
 
-			entry = response::Value(R"gql(ZmFrZUFwcG9pbnRtZW50SWQ=)gql");
+			entry = response::Value(std::string(R"gql(ZmFrZUFwcG9pbnRtZW50SWQ=)gql"));
 			elements.emplace_back(std::move(entry));
 			return elements;
 		}();
