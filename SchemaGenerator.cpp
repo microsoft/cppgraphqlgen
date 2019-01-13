@@ -1300,6 +1300,25 @@ struct )cpp" << inputType.type << R"cpp(
 
 	if (!_interfaceTypes.empty())
 	{
+		if (!_objectTypes.empty())
+		{
+			headerFile << R"cpp(
+namespace object {
+)cpp";
+
+			// Forward declare all of the object types so the interface types can reference them
+			for (const auto& objectType : _objectTypes)
+			{
+				headerFile << R"cpp(
+class )cpp" << objectType.type << R"cpp(;)cpp";
+			}
+
+			headerFile << R"cpp(
+
+} /* namespace object */
+)cpp";
+		}
+
 		// Forward declare all of the interface types
 		if (_interfaceTypes.size() > 1)
 		{
@@ -1337,9 +1356,11 @@ struct )cpp" << interfaceType.type << R"cpp(
 		headerFile << R"cpp(namespace object {
 )cpp";
 
-		if (_objectTypes.size() > 1)
+		if (_interfaceTypes.empty()
+			&& _objectTypes.size() > 1)
 		{
-			// Forward declare all of the object types
+			// Forward declare all of the object types if there were no interfaces so the
+			// object types can reference one another
 			for (const auto& objectType : _objectTypes)
 			{
 				headerFile << R"cpp(

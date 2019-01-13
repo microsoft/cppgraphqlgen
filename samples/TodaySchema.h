@@ -34,11 +34,6 @@ struct CompleteTaskInput
 	std::unique_ptr<response::StringType> clientMutationId;
 };
 
-struct Node
-{
-	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const = 0;
-};
-
 namespace object {
 
 class Query;
@@ -56,6 +51,15 @@ class Appointment;
 class Task;
 class Folder;
 class NestedType;
+
+} /* namespace object */
+
+struct Node
+{
+	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const = 0;
+};
+
+namespace object {
 
 class Query
 	: public service::Object
