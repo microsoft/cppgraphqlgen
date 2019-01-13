@@ -1122,7 +1122,7 @@ std::string Generator::getInputCppType(const InputField& field) const noexcept
 	return inputType.str();
 }
 
-std::string Generator::getOutputCppType(const OutputField& field) const noexcept
+std::string Generator::getOutputCppType(const OutputField& field, bool interfaceField) const noexcept
 {
 	bool nonNull = true;
 	size_t templateCount = 0;
@@ -1178,8 +1178,16 @@ std::string Generator::getOutputCppType(const OutputField& field) const noexcept
 		case OutputFieldType::Builtin:
 		case OutputFieldType::Scalar:
 		case OutputFieldType::Enum:
-		case OutputFieldType::Object:
 			outputType << getCppType(field.type);
+			break;
+
+		case OutputFieldType::Object:
+			if (interfaceField)
+			{
+				outputType << R"cpp(object::)cpp";
+			}
+
+			outputType << field.type;
 			break;
 
 		case OutputFieldType::Union:
@@ -1341,7 +1349,7 @@ struct )cpp" << interfaceType.type << R"cpp(
 )cpp";
 			for (const auto& outputField : interfaceType.fields)
 			{
-				headerFile << getFieldDeclaration(outputField);
+				headerFile << getFieldDeclaration(outputField, true);
 			}
 			headerFile << R"cpp(};
 )cpp";
@@ -1421,7 +1429,7 @@ public:
 						firstField = false;
 					}
 
-					headerFile << getFieldDeclaration(outputField);
+					headerFile << getFieldDeclaration(outputField, false);
 				}
 
 				headerFile << R"cpp(
@@ -1517,13 +1525,13 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 	return output.str();
 }
 
-std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
+std::string Generator::getFieldDeclaration(const OutputField& outputField, bool interfaceField) const noexcept
 {
 	std::ostringstream output;
 	std::string fieldName(outputField.name);
 
 	fieldName[0] = std::toupper(fieldName[0]);
-	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
+	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField, interfaceField)
 		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
 	for (const auto& argument : outputField.arguments)
