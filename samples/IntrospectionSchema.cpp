@@ -43,7 +43,7 @@ introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(c
 }
 
 template <>
-std::future<response::Value> service::ModifiedResult<introspection::__TypeKind>::convert(std::future<introspection::__TypeKind>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<introspection::__TypeKind>::convert(std::future<introspection::__TypeKind>&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"SCALAR",
@@ -103,7 +103,7 @@ introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLo
 }
 
 template <>
-std::future<response::Value> service::ModifiedResult<introspection::__DirectiveLocation>::convert(std::future<introspection::__DirectiveLocation>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<introspection::__DirectiveLocation>::convert(std::future<introspection::__DirectiveLocation>&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"QUERY",

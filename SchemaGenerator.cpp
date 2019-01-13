@@ -1638,7 +1638,7 @@ template <>
 }
 
 template <>
-std::future<response::Value> service::ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
 << R"cpp(>&& value, ResolverParams&&)
 {

@@ -41,7 +41,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 }
 
 template <>
-std::future<response::Value> service::ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& value, ResolverParams&&)
 {
 	static const std::string s_names[] = {
 		"New",
