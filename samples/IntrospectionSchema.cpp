@@ -57,8 +57,10 @@ std::future<response::Value> ModifiedResult<introspection::__TypeKind>::convert(
 	};
 
 	std::promise<response::Value> promise;
+	response::Value result(response::Type::EnumValue);
 
-	promise.set_value(response::Value(std::string(s_names[static_cast<size_t>(value.get())])));
+	result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value.get())]));
+	promise.set_value(std::move(result));
 
 	return promise.get_future();
 }
@@ -127,8 +129,10 @@ std::future<response::Value> ModifiedResult<introspection::__DirectiveLocation>:
 	};
 
 	std::promise<response::Value> promise;
+	response::Value result(response::Type::EnumValue);
 
-	promise.set_value(response::Value(std::string(s_names[static_cast<size_t>(value.get())])));
+	result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value.get())]));
+	promise.set_value(std::move(result));
 
 	return promise.get_future();
 }
