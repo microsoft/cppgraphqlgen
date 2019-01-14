@@ -197,7 +197,7 @@ struct ResponseHandler
 
 	bool Key(const Ch* str, rapidjson::SizeType /*length*/, bool /*copy*/)
 	{
-		_key = str;
+		_keyStack.push(str);
 		return true;
 	}
 
@@ -225,7 +225,8 @@ private:
 		switch (_responseStack.top().type())
 		{
 			case Type::Map:
-				_responseStack.top().emplace_back(std::move(_key), std::move(value));
+				_responseStack.top().emplace_back(std::move(_keyStack.top()), std::move(value));
+				_keyStack.pop();
 				break;
 
 			case Type::List:
@@ -238,7 +239,7 @@ private:
 		}
 	}
 
-	std::string _key;
+	std::stack<std::string> _keyStack;
 	std::stack<Value> _responseStack;
 };
 
