@@ -37,6 +37,13 @@ Value::Value(Type type /*= Type::Null*/)
 	}
 }
 
+Value::~Value()
+{
+	// The default destructor gets inlined and may use a different allocator to free Value's member
+	// variables than the graphqlservice module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlservice.
+}
+
 Value::Value(StringType&& value)
 	: _type(Type::String)
 	, _string(new StringType(std::move(value)))
@@ -127,6 +134,50 @@ Value& Value::operator=(Value&& rhs) noexcept
 	rhs._float = 0.0;
 
 	return *this;
+}
+
+bool Value::operator==(const Value& rhs) const noexcept
+{
+	if (rhs.type() != _type)
+	{
+		return false;
+	}
+
+	switch (_type)
+	{
+		case Type::Map:
+			return *_map == *rhs._map;
+
+		case Type::List:
+			return *_list == *rhs._list;
+
+		case Type::String:
+		case Type::EnumValue:
+			return _string == rhs._string;
+
+		case Type::Null:
+			return true;
+
+		case Type::Boolean:
+			return _boolean == rhs._boolean;
+
+		case Type::Int:
+			return _int == rhs._int;
+
+		case Type::Float:
+			return _float == rhs._float;
+
+		case Type::Scalar:
+			return *_scalar == *rhs._scalar;
+
+		default:
+			return false;
+	}
+}
+
+bool Value::operator!=(const Value& rhs) const noexcept
+{
+	return !(*this == rhs);
 }
 
 Type Value::type() const
