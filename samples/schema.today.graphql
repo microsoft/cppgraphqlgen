@@ -85,6 +85,7 @@ type Mutation {
 
 type Subscription {
     nextAppointmentChange : Appointment @deprecated(reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
+	nodeChange(id: ID!): Node!
 }
 
 directive @subscriptionTag(field: String) on SUBSCRIPTION

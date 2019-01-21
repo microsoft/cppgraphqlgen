@@ -540,6 +540,7 @@ Subscription::Subscription()
 		"Subscription"
 	}, {
 		{ "nextAppointmentChange", [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } },
+		{ "nodeChange", [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
 	})
 {
@@ -550,6 +551,14 @@ std::future<response::Value> Subscription::resolveNextAppointmentChange(service:
 	auto result = getNextAppointmentChange(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
+{
+	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
+	auto result = getNodeChange(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
+
+	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Subscription::resolve__typename(service::ResolverParams&&)
@@ -883,7 +892,10 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
 	});
 	typeSubscription->AddFields({
-		std::make_shared<introspection::Field>("nextAppointmentChange", R"md()md", std::unique_ptr<std::string>(new std::string(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md")), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment"))
+		std::make_shared<introspection::Field>("nextAppointmentChange", R"md()md", std::unique_ptr<std::string>(new std::string(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md")), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<introspection::Field>("nodeChange", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
+		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Node")))
 	});
 	typeAppointment->AddInterfaces({
 		typeNode

@@ -253,9 +253,11 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const = 0;
 
 private:
 	std::future<response::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
+	std::future<response::Value> resolveNodeChange(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 };

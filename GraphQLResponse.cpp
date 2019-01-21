@@ -153,7 +153,7 @@ bool Value::operator==(const Value& rhs) const noexcept
 
 		case Type::String:
 		case Type::EnumValue:
-			return _string == rhs._string;
+			return *_string == *rhs._string;
 
 		case Type::Null:
 			return true;
