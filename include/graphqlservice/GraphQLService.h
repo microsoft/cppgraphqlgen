@@ -315,6 +315,8 @@ public:
 
 	std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
+	bool matchesType(const std::string& typeName) const;
+
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The implementer
 	// can use these to to accumulate state for the entire SelectionSet on this object, as well as
@@ -529,12 +531,12 @@ using SubscriptionName = std::string;
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
-	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_set<SubscriptionName>&& fieldNames,
+	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
 		std::unique_ptr<peg::ast<std::string>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
-	std::unordered_set<SubscriptionName> fieldNames;
+	std::unordered_map<SubscriptionName, std::vector<response::Value>> fieldNamesAndArgs;
 	std::unique_ptr<peg::ast<std::string>> query;
 	std::string operationName;
 	SubscriptionCallback callback;
@@ -556,6 +558,7 @@ public:
 	void unsubscribe(SubscriptionKey key);
 
 	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	void deliver(const SubscriptionName& name, const std::unordered_map<std::string, response::Value>& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
 
 private:
 	TypeMap _operations;

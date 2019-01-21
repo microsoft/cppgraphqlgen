@@ -42,6 +42,7 @@ using ScalarType = Value;
 struct Value
 {
 	Value(Type type = Type::Null);
+	~Value();
 
 	explicit Value(StringType&& value);
 	explicit Value(BooleanType value);
@@ -53,6 +54,10 @@ struct Value
 
 	Value& operator=(Value&& rhs) noexcept;
 	Value& operator=(const Value& rhs) = delete;
+
+	// Comparison
+	bool operator==(const Value& rhs) const noexcept;
+	bool operator!=(const Value& rhs) const noexcept;
 
 	// Check the Type
 	Type type() const;

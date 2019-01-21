@@ -487,6 +487,11 @@ public:
 	{
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
+
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const override
+	{
+		throw std::runtime_error("Unexpected call to getNodeChange");
+	}
 };
 
 class NextAppointmentChange : public object::Subscription
@@ -508,8 +513,41 @@ public:
 		return promise.get_future();
 	}
 
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const override
+	{
+		throw std::runtime_error("Unexpected call to getNodeChange");
+	}
+
 private:
 	nextAppointmentChange _changeNextAppointment;
+};
+
+class NodeChange : public object::Subscription
+{
+public:
+	using nodeChange = std::function<std::shared_ptr<service::Object>(const std::shared_ptr<service::RequestState>&, std::vector<uint8_t>&&)>;
+
+	explicit NodeChange(nodeChange&& changeNode)
+		: _changeNode(std::move(changeNode))
+	{
+	}
+
+	std::future<std::shared_ptr<object::Appointment>> getNextAppointmentChange(service::FieldParams&&) const override
+	{
+		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
+	}
+
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const override
+	{
+		std::promise<std::shared_ptr<service::Object>> promise;
+
+		promise.set_value(std::static_pointer_cast<service::Object>(_changeNode(params.state, std::move(idArg))));
+
+		return promise.get_future();
+	}
+
+private:
+	nodeChange _changeNode;
 };
 
 struct CapturedParams
