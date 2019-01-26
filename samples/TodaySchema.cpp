@@ -212,7 +212,7 @@ std::future<response::Value> Query::resolve__typename(service::ResolverParams&&)
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Query"));
+	promise.set_value(response::Value(std::string("Query")));
 
 	return promise.get_future();
 }
@@ -265,7 +265,7 @@ std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("PageInfo"));
+	promise.set_value(response::Value(std::string("PageInfo")));
 
 	return promise.get_future();
 }
@@ -299,7 +299,7 @@ std::future<response::Value> AppointmentEdge::resolve__typename(service::Resolve
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("AppointmentEdge"));
+	promise.set_value(response::Value(std::string("AppointmentEdge")));
 
 	return promise.get_future();
 }
@@ -333,7 +333,7 @@ std::future<response::Value> AppointmentConnection::resolve__typename(service::R
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("AppointmentConnection"));
+	promise.set_value(response::Value(std::string("AppointmentConnection")));
 
 	return promise.get_future();
 }
@@ -367,7 +367,7 @@ std::future<response::Value> TaskEdge::resolve__typename(service::ResolverParams
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("TaskEdge"));
+	promise.set_value(response::Value(std::string("TaskEdge")));
 
 	return promise.get_future();
 }
@@ -401,7 +401,7 @@ std::future<response::Value> TaskConnection::resolve__typename(service::Resolver
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("TaskConnection"));
+	promise.set_value(response::Value(std::string("TaskConnection")));
 
 	return promise.get_future();
 }
@@ -435,7 +435,7 @@ std::future<response::Value> FolderEdge::resolve__typename(service::ResolverPara
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("FolderEdge"));
+	promise.set_value(response::Value(std::string("FolderEdge")));
 
 	return promise.get_future();
 }
@@ -469,7 +469,7 @@ std::future<response::Value> FolderConnection::resolve__typename(service::Resolv
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("FolderConnection"));
+	promise.set_value(response::Value(std::string("FolderConnection")));
 
 	return promise.get_future();
 }
@@ -503,7 +503,7 @@ std::future<response::Value> CompleteTaskPayload::resolve__typename(service::Res
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("CompleteTaskPayload"));
+	promise.set_value(response::Value(std::string("CompleteTaskPayload")));
 
 	return promise.get_future();
 }
@@ -530,7 +530,7 @@ std::future<response::Value> Mutation::resolve__typename(service::ResolverParams
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Mutation"));
+	promise.set_value(response::Value(std::string("Mutation")));
 
 	return promise.get_future();
 }
@@ -565,7 +565,7 @@ std::future<response::Value> Subscription::resolve__typename(service::ResolverPa
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Subscription"));
+	promise.set_value(response::Value(std::string("Subscription")));
 
 	return promise.get_future();
 }
@@ -616,7 +616,7 @@ std::future<response::Value> Appointment::resolve__typename(service::ResolverPar
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Appointment"));
+	promise.set_value(response::Value(std::string("Appointment")));
 
 	return promise.get_future();
 }
@@ -659,7 +659,7 @@ std::future<response::Value> Task::resolve__typename(service::ResolverParams&&)
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Task"));
+	promise.set_value(response::Value(std::string("Task")));
 
 	return promise.get_future();
 }
@@ -702,7 +702,7 @@ std::future<response::Value> Folder::resolve__typename(service::ResolverParams&&
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("Folder"));
+	promise.set_value(response::Value(std::string("Folder")));
 
 	return promise.get_future();
 }
@@ -736,7 +736,7 @@ std::future<response::Value> NestedType::resolve__typename(service::ResolverPara
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("NestedType"));
+	promise.set_value(response::Value(std::string("NestedType")));
 
 	return promise.get_future();
 }

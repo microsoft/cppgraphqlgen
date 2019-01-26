@@ -195,7 +195,7 @@ std::future<response::Value> __Schema::resolve__typename(service::ResolverParams
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__Schema"));
+	promise.set_value(response::Value(std::string("__Schema")));
 
 	return promise.get_future();
 }
@@ -315,7 +315,7 @@ std::future<response::Value> __Type::resolve__typename(service::ResolverParams&&
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__Type"));
+	promise.set_value(response::Value(std::string("__Type")));
 
 	return promise.get_future();
 }
@@ -381,7 +381,7 @@ std::future<response::Value> __Field::resolve__typename(service::ResolverParams&
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__Field"));
+	promise.set_value(response::Value(std::string("__Field")));
 
 	return promise.get_future();
 }
@@ -431,7 +431,7 @@ std::future<response::Value> __InputValue::resolve__typename(service::ResolverPa
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__InputValue"));
+	promise.set_value(response::Value(std::string("__InputValue")));
 
 	return promise.get_future();
 }
@@ -481,7 +481,7 @@ std::future<response::Value> __EnumValue::resolve__typename(service::ResolverPar
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__EnumValue"));
+	promise.set_value(response::Value(std::string("__EnumValue")));
 
 	return promise.get_future();
 }
@@ -531,7 +531,7 @@ std::future<response::Value> __Directive::resolve__typename(service::ResolverPar
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value("__Directive"));
+	promise.set_value(response::Value(std::string("__Directive")));
 
 	return promise.get_future();
 }

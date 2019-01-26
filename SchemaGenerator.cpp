@@ -2000,7 +2000,7 @@ std::future<response::Value> )cpp" << objectType.type
 {
 	std::promise<response::Value> promise;
 
-	promise.set_value(response::Value(")cpp" << objectType.type << R"cpp("));
+	promise.set_value(response::Value(std::string(")cpp" << objectType.type << R"cpp(")));
 
 	return promise.get_future();
 }
