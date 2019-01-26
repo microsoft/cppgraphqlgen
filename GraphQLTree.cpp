@@ -561,38 +561,54 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
-std::unique_ptr<ast<std::string>> parseString(std::string&& input)
+template <>
+ast<std::string>::~ast()
 {
-	std::unique_ptr<ast<std::string>> result(new ast<std::string> { std::move(input), nullptr });
-	memory_input<> in(result->input.c_str(), result->input.size(), "GraphQL");
-
-	result->root = parse_tree::parse<document, ast_node, ast_selector>(std::move(in));
-
-	return result;
+	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
+	// variables than the graphqlservice module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlservice.
 }
 
-std::unique_ptr<ast<std::unique_ptr<file_input<>>>> parseFile(const char* filename)
+template <>
+ast<std::unique_ptr<file_input<>>>::~ast()
 {
-	std::unique_ptr<ast<std::unique_ptr<file_input<>>>> result(new ast<std::unique_ptr<file_input<>>> {
-		std::unique_ptr<file_input<>>(new file_input<>(std::string(filename))),
-		nullptr
-		});
+	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
+	// variables than the graphqlservice module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlservice.
+}
 
-	result->root = parse_tree::parse<document, ast_node, ast_selector>(std::move(*result->input));
+template <>
+ast<const char*>::~ast()
+{
+	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
+	// variables than the graphqlservice module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlservice.
+}
+
+ast<std::string> parseString(std::string&& input)
+{
+	memory_input<> in(input.c_str(), input.size(), "GraphQL");
+
+	return { std::move(input), parse_tree::parse<document, ast_node, ast_selector>(std::move(in)) };
+}
+
+ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
+{
+	std::unique_ptr<file_input<>> in(new file_input<>(std::string(filename)));
+	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };
+
+	result.root = parse_tree::parse<document, ast_node, ast_selector>(std::move(*result.input));
 
 	return result;
 }
 
 } /* namespace peg */
 
-std::unique_ptr<peg::ast<const char*>> operator "" _graphql(const char* text, size_t size)
+peg::ast<const char*> operator "" _graphql(const char* text, size_t size)
 {
-	std::unique_ptr<peg::ast<const char*>> result(new peg::ast<const char*> { text, nullptr });
 	peg::memory_input<> in(text, size, "GraphQL");
 
-	result->root = peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector>(std::move(in));
-
-	return result;
+	return { text, peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector>(std::move(in)) };
 }
 
 } /* namespace graphql */

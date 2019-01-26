@@ -26,16 +26,22 @@ struct ast_node
 template <typename _Input>
 struct ast
 {
+	ast() = default;
+	ast(ast&& other) = default;
+	~ast();
+
+	ast& operator=(ast&& other) = default;
+
 	_Input input;
 	std::unique_ptr<ast_node> root;
 };
 
-std::unique_ptr<ast<std::string>> parseString(std::string&& input);
-std::unique_ptr<ast<std::unique_ptr<file_input<>>>> parseFile(const char* filename);
+ast<std::string> parseString(std::string&& input);
+ast<std::unique_ptr<file_input<>>> parseFile(const char* filename);
 
 } /* namespace peg */
 
-std::unique_ptr<peg::ast<const char*>> operator "" _graphql(const char* text, size_t size);
+peg::ast<const char*> operator "" _graphql(const char* text, size_t size);
 
 } /* namespace graphql */
 } /* namespace facebook */

@@ -135,12 +135,12 @@ Generator::Generator()
 		  INPUT_FIELD_DEFINITION
 		})"_graphql;
 
-	if (!ast)
+	if (!ast.root)
 	{
 		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->root->children)
+	for (const auto& child : ast.root->children)
 	{
 		visitDefinition(*child);
 	}
@@ -158,12 +158,12 @@ Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std
 {
 	auto ast = peg::parseFile(schemaFileName.c_str());
 
-	if (!ast)
+	if (!ast.root)
 	{
 		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
 	}
 
-	for (const auto& child : ast->root->children)
+	for (const auto& child : ast.root->children)
 	{
 		visitDefinition(*child);
 	}
