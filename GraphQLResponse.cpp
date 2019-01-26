@@ -44,6 +44,12 @@ Value::~Value()
 	// omitted, declare it explicitly and define it in graphqlservice.
 }
 
+Value::Value(const char* value)
+	: _type(Type::String)
+	, _string(new StringType(value))
+{
+}
+
 Value::Value(StringType&& value)
 	: _type(Type::String)
 	, _string(new StringType(std::move(value)))

@@ -44,6 +44,7 @@ struct Value
 	Value(Type type = Type::Null);
 	~Value();
 
+	explicit Value(const char* value);
 	explicit Value(StringType&& value);
 	explicit Value(BooleanType value);
 	explicit Value(IntType value);

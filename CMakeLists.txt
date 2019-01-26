@@ -138,6 +138,9 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     add_test(NAME PegtlCase
       COMMAND tests --gtest_filter=PegtlCase.*
       WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
+    add_test(NAME ResponseCase
+      COMMAND tests --gtest_filter=ResponseCase.*
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
   endif()
 
   if(UPDATE_SAMPLES)
