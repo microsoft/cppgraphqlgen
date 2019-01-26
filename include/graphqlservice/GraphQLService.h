@@ -523,6 +523,8 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
+using SubscriptionArguments = std::unordered_map<std::string, response::Value>;
+using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference) noexcept>;
 
 // Subscriptions are stored in maps using these keys.
 using SubscriptionKey = size_t;
@@ -558,7 +560,8 @@ public:
 	void unsubscribe(SubscriptionKey key);
 
 	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(const SubscriptionName& name, const std::unordered_map<std::string, response::Value>& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
 private:
 	TypeMap _operations;

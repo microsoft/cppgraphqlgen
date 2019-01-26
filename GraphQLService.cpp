@@ -1707,10 +1707,23 @@ void Request::unsubscribe(SubscriptionKey key)
 
 void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
 {
-	deliver(name, {}, subscriptionObject);
+	deliver(name, SubscriptionArguments {}, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName& name, const std::unordered_map<std::string, response::Value>& arguments, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
+{
+	SubscriptionFilterCallback exactMatch = [&arguments](response::MapType::const_reference required) noexcept -> bool
+	{
+		auto itrArgument = arguments.find(required.first);
+
+		return (itrArgument != arguments.cend()
+			&& itrArgument->second == required.second);
+	};
+
+	deliver(name, exactMatch, subscriptionObject);
+}
+
+void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
@@ -1738,10 +1751,7 @@ void Request::deliver(const SubscriptionName& name, const std::unordered_map<std
 
 			for (auto itrRequired = required.begin(); itrRequired != required.end(); ++itrRequired)
 			{
-				auto itrArgument = arguments.find(itrRequired->first);
-
-				if (itrArgument == arguments.cend()
-					|| itrArgument->second != itrRequired->second)
+				if (!apply(*itrRequired))
 				{
 					matchedArguments = false;
 					break;
@@ -1773,13 +1783,13 @@ void Request::deliver(const SubscriptionName& name, const std::unordered_map<std
 		{
 			result = std::async(std::launch::deferred,
 				[registration](std::future<response::Value> data)
-			{
-				response::Value document(response::Type::Map);
+				{
+					response::Value document(response::Type::Map);
 
-				document.emplace_back("data", data.get());
+					document.emplace_back("data", data.get());
 
-				return document;
-			}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
+					return document;
+				}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
 		}
 		catch (const schema_exception& ex)
 		{

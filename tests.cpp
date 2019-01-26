@@ -922,6 +922,117 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	}
 }
 
+TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
+{
+	auto ast = peg::parseString(R"(subscription TestSubscription {
+			changedNode: nodeChange(id: "ZmFr") {
+				changedId: id
+				...on Task {
+					title
+					isComplete
+				}
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(14);
+	bool filterCalled = false;
+	auto filterCallback = [&filterCalled](response::MapType::const_reference fuzzy) noexcept -> bool
+	{
+		EXPECT_FALSE(filterCalled);
+		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
+		EXPECT_EQ("ZmFr", fuzzy.second.get<const response::StringType&>());
+		filterCalled = true;
+		return true;
+	};
+	auto subscriptionObject = std::make_shared<today::NodeChange>(
+		[this](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		{
+			const std::vector<uint8_t> fuzzyId { 'f', 'a', 'k' };
+
+			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(fuzzyId, idArg);
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true));
+		});
+	response::Value result;
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response)
+		{
+			result = response.get();
+		});
+	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
+	_service->unsubscribe(key);
+
+	try
+	{
+		ASSERT_TRUE(filterCalled) << "should match the id parameter in the subscription";
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<const response::MapType&>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto taskNode = service::ScalarArgument::require("changedNode", data);
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode)) << "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
+TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
+{
+	auto ast = peg::parseString(R"(subscription TestSubscription {
+			changedNode: nodeChange(id: "ZmFrZVRhc2tJZA==") {
+				changedId: id
+				...on Task {
+					title
+					isComplete
+				}
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	bool filterCalled = false;
+	auto filterCallback = [&filterCalled](response::MapType::const_reference fuzzy) noexcept -> bool
+	{
+		EXPECT_FALSE(filterCalled);
+		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
+		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<const response::StringType&>());
+		filterCalled = true;
+		return false;
+	};
+	bool calledResolver = false;
+	auto subscriptionObject = std::make_shared<today::NodeChange>(
+		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		{
+			calledResolver = true;
+			return nullptr;
+		});
+	bool calledGet = false;
+	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+		[&calledGet](std::future<response::Value>)
+		{
+			calledGet = true;
+		});
+	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
+	_service->unsubscribe(key);
+
+	try
+	{
+		ASSERT_TRUE(filterCalled) << "should not match the id parameter in the subscription";
+		ASSERT_FALSE(calledResolver);
+		ASSERT_FALSE(calledGet);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
 TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 {
 	auto ast = peg::parseString(R"(subscription TestSubscription($taskId: ID!) {
