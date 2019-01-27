@@ -574,120 +574,63 @@ struct ast_control
 	}
 };
 
-template <> const std::string ast_control<bof>::error_message = "Expected beginning of file";
-template <> const std::string ast_control<opt<utf8::bom>>::error_message = "Expected optional UTF8 byte-order-mark";
-template <> const std::string ast_control<star<ignored>>::error_message = "Expected optional ignored characters";
-template <> const std::string ast_control<plus<ignored>>::error_message = "Expected ignored characters";
-template <> const std::string ast_control<until<ascii::eolf>>::error_message = "Expected Comment";
-template <> const std::string ast_control<eof>::error_message = "Expected end of file";
-template <> const std::string ast_control<list<definition, plus<ignored>>>::error_message = "Expected list of Definitions";
-template <> const std::string ast_control<selection_set>::error_message = "Expected SelectionSet";
-template <> const std::string ast_control<fragment_name>::error_message = "Expected FragmentName";
-template <> const std::string ast_control<type_condition>::error_message = "Expected TypeCondition";
-template <> const std::string ast_control<opt<seq<star<ignored>, directives>>>::error_message = "Expected optional Directives";
-template <> const std::string ast_control<one<'{'>>::error_message = "Expected {";
-template <> const std::string ast_control<list<root_operation_definition, plus<ignored>>>::error_message = "Expected RootOperationTypeDefinition";
 template <> const std::string ast_control<one<'}'>>::error_message = "Expected }";
-template <> const std::string ast_control<one<'@'>>::error_message = "Expected @";
-template <> const std::string ast_control<directive_name>::error_message = "Expected Directive Name";
-template <> const std::string ast_control<arguments_definition>::error_message = "Expected ArgumentsDefinition";
-template <> const std::string ast_control<on_keyword>::error_message = "Expected \"on\" keyword";
-template <> const std::string ast_control<directive_locations>::error_message = "Expected DirectiveLocations";
-template <> const std::string ast_control<schema_extension>::error_message = "Expected SchemaExtension";
-template <> const std::string ast_control<
-	seq<opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>>::error_message = "Expected OperationDefinition";
-template <> const std::string ast_control<list<selection, plus<ignored>>>::error_message = "Expected Selections";
-template <> const std::string ast_control<scalar_name>::error_message = "Expected ScalarType Name";
-template <> const std::string ast_control<object_name>::error_message = "Expected ObjectType Name";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
-	, seq<opt<seq<plus<ignored>, implements_interfaces>>, seq<star<ignored>, directives>>
-	, opt<seq<plus<ignored>, implements_interfaces>>>>::error_message = "Expected ObjectTypeDefinition";
-template <> const std::string ast_control<interface_name>::error_message = "Expected InterfaceType Name";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
-	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected InterfaceTypeDefinition";
-template <> const std::string ast_control<
-	sor<seq<opt<directives>, one<'{'>, star<ignored>, list<operation_type_definition, plus<ignored>>, star<ignored>, one<'}'>>
-	, directives>>::error_message = "Expected SchemaExtension";
-template <> const std::string ast_control<union_name>::error_message = "Expected UnionType Name";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>
-	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected UnionTypeDefinition";
-template <> const std::string ast_control<enum_name>::error_message = "Expected EnumType Name";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, enum_values_definition>>
-	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected EnumTypeDefinition";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, input_fields_definition>>
-	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected InputObjectTypeDefinition";
-template <> const std::string ast_control<directives>::error_message = "Expected list of Directives";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
-	, seq<opt<seq<plus<ignored>, implements_interfaces>>, star<ignored>, directives>
-	, seq<plus<ignored>, implements_interfaces>>>::error_message = "Expected ObjectTypeExtension";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<directives, star<ignored>>>, fields_definition>
-	, directives>>::error_message = "Expected InterfaceTypeExtension";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<directives, star<ignored>>>, union_member_types>
-	, directives>>::error_message = "Expected UnionTypeExtension";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<directives, star<ignored>>>, enum_values_definition>
-	, directives>>::error_message = "Expected EnumTypeExtension";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<directives, star<ignored>>>, input_fields_definition>
-	, directives>>::error_message = "Expected InputObjectTypeExtension";
-template <> const std::string ast_control<name>::error_message = "Expected Name";
-template <> const std::string ast_control<named_type>::error_message = "Expected NamedType";
-template <> const std::string ast_control<list<input_field_definition, plus<ignored>>>::error_message = "Expected InputValueDefinitions";
-template <> const std::string ast_control<one<')'>>::error_message = "Expected )";
-template <> const std::string ast_control<one<':'>>::error_message = "Expected :";
-template <> const std::string ast_control<
-	sor<executable_directive_location
-	, type_system_directive_location>>::error_message = "Expected DirectiveLocation";
-template <> const std::string ast_control<opt<seq<star<ignored>, arguments>>>::error_message = "Expected optional Arguments";
-template <> const std::string ast_control<block_quote_token>::error_message = "Expected \"\"\"";
-template <> const std::string ast_control<quote_token>::error_message = "Expected \"";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, arguments>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, selection_set>>
-	, seq<opt<seq<star<ignored>, arguments>>, seq<star<ignored>, directives>>
-	, opt<seq<star<ignored>, arguments>>>>::error_message = "Expected Field";
-template <> const std::string ast_control<type_name>::error_message = "Expected Type";
-template <> const std::string ast_control<
-	sor<seq<opt<seq<star<ignored>, default_value>>, seq<star<ignored>, directives>>
-	, opt<seq<star<ignored>, default_value>>>>::error_message = "Expected InputValueDefinition";
-template <> const std::string ast_control<list<field_definition, plus<ignored>>>::error_message = "Expected FieldsDefinitions";
-template <> const std::string ast_control<opt<seq<star<ignored>, one<'&'>>>>::error_message = "Expected optional '&'";
-template <> const std::string ast_control<list<interface_type, seq<star<ignored>, one<'&'>, star<ignored>>>>::error_message = "Expected ImplementsInterfaces";
-template <> const std::string ast_control<opt<seq<star<ignored>, one<'|'>>>>::error_message = "Expected optional '|'";
-template <> const std::string ast_control<list<union_type, seq<star<ignored>, one<'|'>, star<ignored>>>>::error_message = "Expected UnionMemberTypes";
-template <> const std::string ast_control<list<enum_value_definition, plus<ignored>>>::error_message = "Expected EnumValuesDefinition";
-template <> const std::string ast_control<star<sor<block_escape_sequence, block_quote_character>>>::error_message = "Expected optional BlockStringCharacters";
-template <> const std::string ast_control<star<sor<string_escape_sequence, string_quote_character>>>::error_message = "Expected optional StringCharacters";
-template <> const std::string ast_control<sor<nonnull_type, list_type, named_type>>::error_message = "Expected Type";
-template <> const std::string ast_control<opt<seq<star<ignored>, default_value>>>::error_message = "Expected optional DefaultValue";
-template <> const std::string ast_control<list<variable, plus<ignored>>>::error_message = "Expected VariableDefinitions";
-template <> const std::string ast_control<opt<seq<star<ignored>, arguments_definition>>>::error_message = "Expected optional ArgumentsDefinition";
-template <> const std::string ast_control<list<argument, plus<ignored>>>::error_message = "Expected Arguments";
 template <> const std::string ast_control<one<']'>>::error_message = "Expected ]";
-template <> const std::string ast_control<sor<escaped_unicode, escaped_char>>::error_message = "Expected EscapeSequence";
-template <> const std::string ast_control<input_value>::error_message = "Expected Value";
-template <> const std::string ast_control<
-	sor<list_value
-	, object_value
-	, variable_value
-	, integer_value
-	, float_value
-	, string_value
-	, bool_value
-	, null_keyword
-	, enum_value>>::error_message = "Expected Value";
-template <> const std::string ast_control<rep<4, xdigit>>::error_message = "Expected EscapedUnicode";
-template <> const std::string ast_control<opt<list<list_entry, plus<ignored>>>>::error_message = "Expected optional ListValues";
-template <> const std::string ast_control<opt<list<object_field, plus<ignored>>>>::error_message = "Expected optional ObjectValues";
-template <> const std::string ast_control<plus<digit>>::error_message = "Expected Digits";
-template <> const std::string ast_control<opt<sign>>::error_message = "Expected optional Sign";
+template <> const std::string ast_control<one<')'>>::error_message = "Expected )";
+template <> const std::string ast_control<quote_token>::error_message = "Expected \"";
+template <> const std::string ast_control<block_quote_token>::error_message = "Expected \"\"\"";
+
+template <> const std::string ast_control<variable_name_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Variable";
+template <> const std::string ast_control<escaped_unicode_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EscapedUnicode";
+template <> const std::string ast_control<string_escape_sequence_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EscapedCharacter";
+template <> const std::string ast_control<string_quote_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#StringCharacter";
+template <> const std::string ast_control<block_quote_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#BlockStringCharacter";
+template <> const std::string ast_control<fractional_part_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#FractionalPart";
+template <> const std::string ast_control<exponent_part_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ExponentPart";
+template <> const std::string ast_control<argument_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Argument";
+template <> const std::string ast_control<arguments_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Arguments";
+template <> const std::string ast_control<list_value_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ListValue";
+template <> const std::string ast_control<object_field_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ObjectField";
+template <> const std::string ast_control<object_value_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ObjectValue";
+template <> const std::string ast_control<input_value_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Value";
+template <> const std::string ast_control<default_value_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#DefaultValue";
+template <> const std::string ast_control<list_type_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ListType";
+template <> const std::string ast_control<type_name_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Type";
+template <> const std::string ast_control<variable_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#VariableDefinition";
+template <> const std::string ast_control<variable_definitions_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#VariableDefinitions";
+template <> const std::string ast_control<directive_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Directive";
+template <> const std::string ast_control<field_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Field";
+template <> const std::string ast_control<type_condition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#TypeCondition";
+template <> const std::string ast_control<fragement_spread_or_inline_fragment_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#FragmentSpread or https://facebook.github.io/graphql/June2018/#InlineFragment";
+template <> const std::string ast_control<selection_set_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#SelectionSet";
+template <> const std::string ast_control<operation_definition_operation_type_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#OperationDefinition";
+template <> const std::string ast_control<fragment_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#FragmentDefinition";
+template <> const std::string ast_control<root_operation_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#RootOperationTypeDefinition";
+template <> const std::string ast_control<schema_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#SchemaDefinition";
+template <> const std::string ast_control<scalar_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ScalarTypeDefinition";
+template <> const std::string ast_control<arguments_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ArgumentsDefinition";
+template <> const std::string ast_control<field_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#FieldDefinition";
+template <> const std::string ast_control<fields_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#FieldsDefinition";
+template <> const std::string ast_control<implements_interfaces_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ImplementsInterfaces";
+template <> const std::string ast_control<object_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ObjectTypeDefinition";
+template <> const std::string ast_control<interface_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InterfaceTypeDefinition";
+template <> const std::string ast_control<union_member_types_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#UnionMemberTypes";
+template <> const std::string ast_control<union_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#UnionTypeDefinition";
+template <> const std::string ast_control<enum_value_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EnumValueDefinition";
+template <> const std::string ast_control<enum_values_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EnumValuesDefinition";
+template <> const std::string ast_control<enum_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EnumTypeDefinition";
+template <> const std::string ast_control<input_field_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InputValueDefinition";
+template <> const std::string ast_control<input_fields_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InputFieldsDefinition";
+template <> const std::string ast_control<input_object_type_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InputObjectTypeDefinition";
+template <> const std::string ast_control<directive_definition_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#DirectiveDefinition";
+template <> const std::string ast_control<schema_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#SchemaExtension";
+template <> const std::string ast_control<scalar_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ScalarTypeExtension";
+template <> const std::string ast_control<object_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#ObjectTypeExtension";
+template <> const std::string ast_control<interface_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InterfaceTypeExtension";
+template <> const std::string ast_control<union_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#UnionTypeExtension";
+template <> const std::string ast_control<enum_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#EnumTypeExtension";
+template <> const std::string ast_control<input_object_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InputObjectTypeExtension";
+template <> const std::string ast_control<document_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Document";
 
 std::unique_ptr<ast<std::string>> parseString(std::string&& input)
 {
