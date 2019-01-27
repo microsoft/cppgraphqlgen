@@ -1317,7 +1317,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 }
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
-	std::unique_ptr<peg::ast<std::string>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+	peg::ast<std::string>&& query, std::string&& operationName, SubscriptionCallback&& callback,
 	const peg::ast_node& selection)
 	: data(std::move(data))
 	, fieldNamesAndArgs(std::move(fieldNamesAndArgs))
@@ -1363,7 +1363,7 @@ SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&
 
 const peg::ast_node& SubscriptionDefinitionVisitor::getRoot() const
 {
-	return *_params.query->root;
+	return *_params.query.root;
 }
 
 std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration()
@@ -1645,7 +1645,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 
 	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
-	peg::for_each_child<peg::fragment_definition>(*params.query->root,
+	peg::for_each_child<peg::fragment_definition>(*params.query.root,
 		[&fragmentVisitor](const peg::ast_node& child)
 		{
 			fragmentVisitor.visit(child);

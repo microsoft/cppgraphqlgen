@@ -59,13 +59,13 @@ int main(int argc, char** argv)
 	try
 	{
 		const peg::ast_node* ast = nullptr;
-		std::unique_ptr<peg::ast<std::string>> ast_input;
-		std::unique_ptr<peg::ast<std::unique_ptr<peg::file_input<>>>> ast_file;
+		peg::ast<std::string> ast_input;
+		peg::ast<std::unique_ptr<peg::file_input<>>> ast_file;
 
 		if (argc > 1)
 		{
 			ast_file = peg::parseFile(argv[1]);
-			ast = ast_file->root.get();
+			ast = ast_file.root.get();
 		}
 		else
 		{
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 			}
 
 			ast_input = peg::parseString(std::move(input));
-			ast = ast_input->root.get();
+			ast = ast_input.root.get();
 		}
 
 		if (!ast)
