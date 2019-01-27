@@ -185,7 +185,7 @@ struct ResponseHandler
 
 	bool String(const Ch* str, rapidjson::SizeType /*length*/, bool /*copy*/)
 	{
-		setValue(Value(std::string(str)));
+		setValue(Value(std::string(str)).from_json());
 		return true;
 	}
 

@@ -1242,6 +1242,50 @@ TEST(ArgumentsCase, TaskStateEnum)
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
 }
 
+TEST(ArgumentsCase, TaskStateEnumFromString)
+{
+	response::Value response(response::Type::Map);
+	response::Value status("Started");
+	response.emplace_back("status", std::move(status));
+	today::TaskState actual = static_cast<today::TaskState>(-1);
+	bool caughtException = false;
+	std::string exceptionWhat;
+
+	try
+	{
+		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		caughtException = true;
+		exceptionWhat = response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	EXPECT_NE(today::TaskState::Started, actual) << "should not parse the enum from a known string value";
+	ASSERT_TRUE(caughtException);
+	EXPECT_EQ(R"js([{"message":"Invalid argument: status message: not a valid TaskState value"}])js", exceptionWhat) << "exception should match";
+}
+
+TEST(ArgumentsCase, TaskStateEnumFromJSONString)
+{
+	response::Value response(response::Type::Map);
+	response::Value status("Started");
+	response.emplace_back("status", status.from_json());
+	today::TaskState actual = static_cast<today::TaskState>(-1);
+
+
+	try
+	{
+		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
+}
+
 TEST(PegtlCase, ParseKitchenSinkQuery)
 {
 	memory_input<> input(R"gql(
@@ -1623,4 +1667,13 @@ TEST(PegtlCase, ParseTodaySchema)
 TEST(PegtlCase, AnalyzeGrammar)
 {
 	ASSERT_EQ(0, analyze<document>(true)) << "there shuldn't be any infinite loops in the PEG version of the grammar";
+}
+
+TEST(ResponseCase, ValueConstructorFromStringLiteral)
+{
+	auto expected = "Test String";
+	auto actual = response::Value(expected);
+
+	ASSERT_TRUE(response::Type::String == actual.type());
+	ASSERT_EQ(expected, actual.release<response::StringType>());
 }

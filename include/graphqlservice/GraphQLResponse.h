@@ -44,6 +44,7 @@ struct Value
 	Value(Type type = Type::Null);
 	~Value();
 
+	explicit Value(const char* value);
 	explicit Value(StringType&& value);
 	explicit Value(BooleanType value);
 	explicit Value(IntType value);
@@ -60,7 +61,12 @@ struct Value
 	bool operator!=(const Value& rhs) const noexcept;
 
 	// Check the Type
-	Type type() const;
+	Type type() const noexcept;
+
+	// JSON doesn't distinguish between Type::String and Type::EnumValue, so if this value comes
+	// from JSON and it's a string we need to track the fact that it can be interpreted as either.
+	Value&& from_json() noexcept;
+	bool maybe_enum() const noexcept;
 
 	// Valid for Type::Map or Type::List
 	void reserve(size_t count);
@@ -101,6 +107,7 @@ private:
 
 	// Type::String or Type::EnumValue
 	std::unique_ptr<StringType> _string;
+	bool _from_json = false;
 
 	// Type::Boolean
 	BooleanType _boolean = false;

@@ -44,6 +44,12 @@ Value::~Value()
 	// omitted, declare it explicitly and define it in graphqlservice.
 }
 
+Value::Value(const char* value)
+	: _type(Type::String)
+	, _string(new StringType(value))
+{
+}
+
 Value::Value(StringType&& value)
 	: _type(Type::String)
 	, _string(new StringType(std::move(value)))
@@ -74,12 +80,14 @@ Value::Value(Value&& other) noexcept
 	, _map(std::move(other._map))
 	, _list(std::move(other._list))
 	, _string(std::move(other._string))
+	, _from_json(other._from_json)
 	, _scalar(std::move(other._scalar))
 	, _boolean(other._boolean)
 	, _int(other._int)
 	, _float(other._float)
 {
 	const_cast<Type&>(other._type) = Type::Null;
+	other._from_json = false;
 	other._boolean = false;
 	other._int = 0;
 	other._float = 0.0;
@@ -125,6 +133,8 @@ Value& Value::operator=(Value&& rhs) noexcept
 	_map = std::move(rhs._map);
 	_list = std::move(rhs._list);
 	_string = std::move(rhs._string);
+	_from_json = rhs._from_json;
+	rhs._from_json = false;
 	_scalar = std::move(rhs._scalar);
 	_boolean = rhs._boolean;
 	rhs._boolean = false;
@@ -180,9 +190,22 @@ bool Value::operator!=(const Value& rhs) const noexcept
 	return !(*this == rhs);
 }
 
-Type Value::type() const
+Type Value::type() const  noexcept
 {
 	return _type;
+}
+
+Value&& Value::from_json() noexcept
+{
+	_from_json = true;
+
+	return std::move(*this);
+}
+
+bool Value::maybe_enum() const noexcept
+{
+	return _type == Type::EnumValue
+		|| (_from_json && _type == Type::String);
 }
 
 void Value::reserve(size_t count)

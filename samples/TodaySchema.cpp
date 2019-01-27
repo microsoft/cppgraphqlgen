@@ -25,7 +25,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		{ "Unassigned", today::TaskState::Unassigned }
 	};
 
-	if (value.type() != response::Type::EnumValue)
+	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid TaskState value" });
 	}
