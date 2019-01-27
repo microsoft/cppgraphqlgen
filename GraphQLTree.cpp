@@ -561,6 +561,134 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
+template <typename _Rule>
+struct ast_control
+	: normal<_Rule>
+{
+	static const std::string error_message;
+
+	template <typename _Input, typename... _States>
+	static void raise(const _Input& in, _States&&...)
+	{
+		throw parse_error(error_message, in);
+	}
+};
+
+template <> const std::string ast_control<bof>::error_message = "Expected beginning of file";
+template <> const std::string ast_control<opt<utf8::bom>>::error_message = "Expected optional UTF8 byte-order-mark";
+template <> const std::string ast_control<star<ignored>>::error_message = "Expected optional ignored characters";
+template <> const std::string ast_control<plus<ignored>>::error_message = "Expected ignored characters";
+template <> const std::string ast_control<until<ascii::eolf>>::error_message = "Expected Comment";
+template <> const std::string ast_control<eof>::error_message = "Expected end of file";
+template <> const std::string ast_control<list<definition, plus<ignored>>>::error_message = "Expected list of Definitions";
+template <> const std::string ast_control<selection_set>::error_message = "Expected SelectionSet";
+template <> const std::string ast_control<fragment_name>::error_message = "Expected FragmentName";
+template <> const std::string ast_control<type_condition>::error_message = "Expected TypeCondition";
+template <> const std::string ast_control<opt<seq<star<ignored>, directives>>>::error_message = "Expected optional Directives";
+template <> const std::string ast_control<one<'{'>>::error_message = "Expected {";
+template <> const std::string ast_control<list<root_operation_definition, plus<ignored>>>::error_message = "Expected RootOperationTypeDefinition";
+template <> const std::string ast_control<one<'}'>>::error_message = "Expected }";
+template <> const std::string ast_control<one<'@'>>::error_message = "Expected @";
+template <> const std::string ast_control<directive_name>::error_message = "Expected Directive Name";
+template <> const std::string ast_control<arguments_definition>::error_message = "Expected ArgumentsDefinition";
+template <> const std::string ast_control<on_keyword>::error_message = "Expected \"on\" keyword";
+template <> const std::string ast_control<directive_locations>::error_message = "Expected DirectiveLocations";
+template <> const std::string ast_control<schema_extension>::error_message = "Expected SchemaExtension";
+template <> const std::string ast_control<
+	seq<opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>>::error_message = "Expected OperationDefinition";
+template <> const std::string ast_control<list<selection, plus<ignored>>>::error_message = "Expected Selections";
+template <> const std::string ast_control<scalar_name>::error_message = "Expected ScalarType Name";
+template <> const std::string ast_control<object_name>::error_message = "Expected ObjectType Name";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
+	, seq<opt<seq<plus<ignored>, implements_interfaces>>, seq<star<ignored>, directives>>
+	, opt<seq<plus<ignored>, implements_interfaces>>>>::error_message = "Expected ObjectTypeDefinition";
+template <> const std::string ast_control<interface_name>::error_message = "Expected InterfaceType Name";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, fields_definition>>
+	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected InterfaceTypeDefinition";
+template <> const std::string ast_control<
+	sor<seq<opt<directives>, one<'{'>, star<ignored>, list<operation_type_definition, plus<ignored>>, star<ignored>, one<'}'>>
+	, directives>>::error_message = "Expected SchemaExtension";
+template <> const std::string ast_control<union_name>::error_message = "Expected UnionType Name";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>
+	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected UnionTypeDefinition";
+template <> const std::string ast_control<enum_name>::error_message = "Expected EnumType Name";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, enum_values_definition>>
+	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected EnumTypeDefinition";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, input_fields_definition>>
+	, opt<seq<star<ignored>, directives>>>>::error_message = "Expected InputObjectTypeDefinition";
+template <> const std::string ast_control<directives>::error_message = "Expected list of Directives";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<plus<ignored>, implements_interfaces>>, opt<seq<star<ignored>, directives>>, star<ignored>, fields_definition>
+	, seq<opt<seq<plus<ignored>, implements_interfaces>>, star<ignored>, directives>
+	, seq<plus<ignored>, implements_interfaces>>>::error_message = "Expected ObjectTypeExtension";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<directives, star<ignored>>>, fields_definition>
+	, directives>>::error_message = "Expected InterfaceTypeExtension";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<directives, star<ignored>>>, union_member_types>
+	, directives>>::error_message = "Expected UnionTypeExtension";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<directives, star<ignored>>>, enum_values_definition>
+	, directives>>::error_message = "Expected EnumTypeExtension";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<directives, star<ignored>>>, input_fields_definition>
+	, directives>>::error_message = "Expected InputObjectTypeExtension";
+template <> const std::string ast_control<name>::error_message = "Expected Name";
+template <> const std::string ast_control<named_type>::error_message = "Expected NamedType";
+template <> const std::string ast_control<list<input_field_definition, plus<ignored>>>::error_message = "Expected InputValueDefinitions";
+template <> const std::string ast_control<one<')'>>::error_message = "Expected )";
+template <> const std::string ast_control<one<':'>>::error_message = "Expected :";
+template <> const std::string ast_control<
+	sor<executable_directive_location
+	, type_system_directive_location>>::error_message = "Expected DirectiveLocation";
+template <> const std::string ast_control<opt<seq<star<ignored>, arguments>>>::error_message = "Expected optional Arguments";
+template <> const std::string ast_control<block_quote_token>::error_message = "Expected \"\"\"";
+template <> const std::string ast_control<quote_token>::error_message = "Expected \"";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, arguments>>, opt<seq<star<ignored>, directives>>, seq<star<ignored>, selection_set>>
+	, seq<opt<seq<star<ignored>, arguments>>, seq<star<ignored>, directives>>
+	, opt<seq<star<ignored>, arguments>>>>::error_message = "Expected Field";
+template <> const std::string ast_control<type_name>::error_message = "Expected Type";
+template <> const std::string ast_control<
+	sor<seq<opt<seq<star<ignored>, default_value>>, seq<star<ignored>, directives>>
+	, opt<seq<star<ignored>, default_value>>>>::error_message = "Expected InputValueDefinition";
+template <> const std::string ast_control<list<field_definition, plus<ignored>>>::error_message = "Expected FieldsDefinitions";
+template <> const std::string ast_control<opt<seq<star<ignored>, one<'&'>>>>::error_message = "Expected optional '&'";
+template <> const std::string ast_control<list<interface_type, seq<star<ignored>, one<'&'>, star<ignored>>>>::error_message = "Expected ImplementsInterfaces";
+template <> const std::string ast_control<opt<seq<star<ignored>, one<'|'>>>>::error_message = "Expected optional '|'";
+template <> const std::string ast_control<list<union_type, seq<star<ignored>, one<'|'>, star<ignored>>>>::error_message = "Expected UnionMemberTypes";
+template <> const std::string ast_control<list<enum_value_definition, plus<ignored>>>::error_message = "Expected EnumValuesDefinition";
+template <> const std::string ast_control<star<sor<block_escape_sequence, block_quote_character>>>::error_message = "Expected optional BlockStringCharacters";
+template <> const std::string ast_control<star<sor<string_escape_sequence, string_quote_character>>>::error_message = "Expected optional StringCharacters";
+template <> const std::string ast_control<sor<nonnull_type, list_type, named_type>>::error_message = "Expected Type";
+template <> const std::string ast_control<opt<seq<star<ignored>, default_value>>>::error_message = "Expected optional DefaultValue";
+template <> const std::string ast_control<list<variable, plus<ignored>>>::error_message = "Expected VariableDefinitions";
+template <> const std::string ast_control<opt<seq<star<ignored>, arguments_definition>>>::error_message = "Expected optional ArgumentsDefinition";
+template <> const std::string ast_control<list<argument, plus<ignored>>>::error_message = "Expected Arguments";
+template <> const std::string ast_control<one<']'>>::error_message = "Expected ]";
+template <> const std::string ast_control<sor<escaped_unicode, escaped_char>>::error_message = "Expected EscapeSequence";
+template <> const std::string ast_control<input_value>::error_message = "Expected Value";
+template <> const std::string ast_control<
+	sor<list_value
+	, object_value
+	, variable_value
+	, integer_value
+	, float_value
+	, string_value
+	, bool_value
+	, null_keyword
+	, enum_value>>::error_message = "Expected Value";
+template <> const std::string ast_control<rep<4, xdigit>>::error_message = "Expected EscapedUnicode";
+template <> const std::string ast_control<opt<list<list_entry, plus<ignored>>>>::error_message = "Expected optional ListValues";
+template <> const std::string ast_control<opt<list<object_field, plus<ignored>>>>::error_message = "Expected optional ObjectValues";
+template <> const std::string ast_control<plus<digit>>::error_message = "Expected Digits";
+template <> const std::string ast_control<opt<sign>>::error_message = "Expected optional Sign";
+
 std::unique_ptr<ast<std::string>> parseString(std::string&& input)
 {
 	std::unique_ptr<ast<std::string>> result(new ast<std::string> { std::move(input), nullptr });

@@ -594,8 +594,8 @@ struct union_member_types
 // https://facebook.github.io/graphql/June2018/#UnionTypeDefinition
 struct union_type_definition
 	: if_must<seq<opt<seq<description, star<ignored>>>, union_keyword>, plus<ignored>, union_name,
-		sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>,
-		opt<seq<star<ignored>, directives>>>>
+		sor<seq<opt<seq<star<ignored>, directives>>, seq<star<ignored>, union_member_types>>
+		, opt<seq<star<ignored>, directives>>>>
 {
 };
 
