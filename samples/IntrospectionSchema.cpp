@@ -27,7 +27,7 @@ introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(c
 		{ "NON_NULL", introspection::__TypeKind::NON_NULL }
 	};
 
-	if (value.type() != response::Type::EnumValue)
+	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid __TypeKind value" });
 	}
@@ -89,7 +89,7 @@ introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLo
 		{ "INPUT_FIELD_DEFINITION", introspection::__DirectiveLocation::INPUT_FIELD_DEFINITION }
 	};
 
-	if (value.type() != response::Type::EnumValue)
+	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid __DirectiveLocation value" });
 	}

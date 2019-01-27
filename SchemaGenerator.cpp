@@ -1623,7 +1623,7 @@ template <>
 			sourceFile << R"cpp(
 	};
 
-	if (value.type() != response::Type::EnumValue)
+	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
 	}
