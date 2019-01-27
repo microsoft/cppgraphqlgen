@@ -658,9 +658,12 @@ ast<const char*>::~ast()
 
 ast<std::string> parseString(std::string&& input)
 {
-	memory_input<> in(input.c_str(), input.size(), "GraphQL");
+	ast<std::string> result { std::move(input), nullptr };
+	memory_input<> in(result.input.c_str(), result.input.size(), "GraphQL");
 
-	return { std::move(input), parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in)) };
+	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
+
+	return result;
 }
 
 ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
