@@ -281,6 +281,7 @@ private:
 
 	bool outputSource() const noexcept;
 	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
+	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;

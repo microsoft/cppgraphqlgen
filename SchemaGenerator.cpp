@@ -1719,33 +1719,7 @@ template <>
 
 			for (const auto& inputField : inputType.fields)
 			{
-				std::string fieldName(inputField.name);
-
-				fieldName[0] = std::toupper(fieldName[0]);
-				if (inputField.defaultValue.type() == response::Type::Null)
-				{
-					sourceFile << R"cpp(	auto value)cpp" << fieldName
-						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", value);
-)cpp";
-				}
-				else
-				{
-					sourceFile << R"cpp(	auto pair)cpp" << fieldName
-						<< R"cpp( = )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::find)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", value);
-	auto value)cpp" << fieldName << R"cpp( = (pair)cpp" << fieldName << R"cpp(.second
-		? std::move(pair)cpp" << fieldName << R"cpp(.first)
-		: )cpp" << getArgumentAccessType(inputField)
-						<< R"cpp(::require)cpp" << getTypeModifiers(inputField.modifiers)
-						<< R"cpp((")cpp" << inputField.name
-						<< R"cpp(", defaultValue));
-)cpp";
-				}
+				sourceFile << getArgumentDeclaration(inputField, "value", "value", "defaultValue");
 			}
 
 			if (!inputType.fields.empty())
@@ -1942,33 +1916,7 @@ std::future<response::Value> )cpp" << objectType.type
 
 					for (const auto& argument : outputField.arguments)
 					{
-						std::string argumentName(argument.name);
-
-						argumentName[0] = std::toupper(argumentName[0]);
-						if (argument.defaultValue.type() == response::Type::Null)
-						{
-							sourceFile << R"cpp(	auto arg)cpp" << argumentName
-								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
-								<< R"cpp(", params.arguments);
-)cpp";
-						}
-						else
-						{
-							sourceFile << R"cpp(	auto pair)cpp" << argumentName
-								<< R"cpp( = )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::find)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
-								<< R"cpp(", params.arguments);
-	auto arg)cpp" << argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
-		? std::move(pair)cpp" << argumentName << R"cpp(.first)
-		: )cpp" << getArgumentAccessType(argument)
-								<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-								<< R"cpp((")cpp" << argument.name
-								<< R"cpp(", defaultArguments));
-)cpp";
-						}
+						sourceFile << getArgumentDeclaration(argument, "arg", "params.arguments", "defaultArguments");
 					}
 				}
 
@@ -2731,6 +2679,43 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 	}
 
 	return argumentDefaultValue.str();
+}
+
+std::string Generator::getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept
+{
+	std::ostringstream argumentDeclaration;
+	std::string argumentName(argument.name);
+
+	argumentName[0] = std::toupper(argumentName[0]);
+	if (argument.defaultValue.type() == response::Type::Null)
+	{
+		argumentDeclaration << R"cpp(	auto )cpp" << prefixToken << argumentName
+			<< R"cpp( = )cpp" << getArgumentAccessType(argument)
+			<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
+			<< R"cpp((")cpp" << argument.name
+			<< R"cpp(", )cpp" << argumentsToken
+			<< R"cpp();
+)cpp";
+	}
+	else
+	{
+		argumentDeclaration << R"cpp(	auto pair)cpp" << argumentName
+			<< R"cpp( = )cpp" << getArgumentAccessType(argument)
+			<< R"cpp(::find)cpp" << getTypeModifiers(argument.modifiers)
+			<< R"cpp((")cpp" << argument.name
+			<< R"cpp(", )cpp" << argumentsToken
+			<< R"cpp();
+	auto )cpp" << prefixToken << argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
+		? std::move(pair)cpp" << argumentName << R"cpp(.first)
+		: )cpp" << getArgumentAccessType(argument)
+			<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
+			<< R"cpp((")cpp" << argument.name
+			<< R"cpp(", )cpp" << defaultToken
+			<< R"cpp());
+)cpp";
+	}
+
+	return argumentDeclaration.str();
 }
 
 std::string Generator::getArgumentAccessType(const InputField& argument) const noexcept
