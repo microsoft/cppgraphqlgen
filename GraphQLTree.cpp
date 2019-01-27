@@ -717,7 +717,7 @@ ast<std::string> parseString(std::string&& input)
 {
 	memory_input<> in(input.c_str(), input.size(), "GraphQL");
 
-	return { std::move(input), parse_tree::parse<document, ast_node, ast_selector, ast_control>(std::move(in)) };
+	return { std::move(input), parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in)) };
 }
 
 ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
@@ -725,7 +725,7 @@ ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
 	std::unique_ptr<file_input<>> in(new file_input<>(std::string(filename)));
 	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };
 
-	result.root = parse_tree::parse<document, ast_node, ast_selector, ast_control>(std::move(*result.input));
+	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(*result.input));
 
 	return result;
 }
@@ -736,7 +736,7 @@ peg::ast<const char*> operator "" _graphql(const char* text, size_t size)
 {
 	peg::memory_input<> in(text, size, "GraphQL");
 
-	return { text, peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector, peg::ast_control>(std::move(in)) };
+	return { text, peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector, peg::nothing, peg::ast_control>(std::move(in)) };
 }
 
 } /* namespace graphql */
