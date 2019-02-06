@@ -191,8 +191,8 @@ struct ModifiedArgument
 		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
 			std::unique_ptr<typename ArgumentTraits<U, _Other...>::type>,
 			typename std::conditional<TypeModifier::List == _Modifier,
-			std::vector<typename ArgumentTraits<U, _Other...>::type>,
-			U>::type
+				std::vector<typename ArgumentTraits<U, _Other...>::type>,
+				U>::type
 		>::type;
 	};
 
@@ -365,15 +365,15 @@ struct ModifiedResult
 	{
 		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
 			typename std::conditional<std::is_base_of<Object, U>::value
-			&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
-			std::shared_ptr<U>,
-			std::unique_ptr<typename ResultTraits<U, _Other...>::type>
+				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
+				std::shared_ptr<U>,
+				std::unique_ptr<typename ResultTraits<U, _Other...>::type>
 			>::type,
 			typename std::conditional<TypeModifier::List == _Modifier,
-			std::vector<typename ResultTraits<U, _Other...>::type>,
-			typename std::conditional<std::is_base_of<Object, U>::value,
-			std::shared_ptr<U>,
-			U>::type
+				std::vector<typename ResultTraits<U, _Other...>::type>,
+				typename std::conditional<std::is_base_of<Object, U>::value,
+					std::shared_ptr<U>,
+					U>::type
 			>::type
 		>::type;
 	};
@@ -395,7 +395,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value&& std::is_base_of<Object, _Type>::value,
+	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
 		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type>::type> && result, ResolverParams && params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
@@ -560,6 +560,7 @@ private:
 
 	static std::future<response::Value> resolve(typename ResultTraits<_Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
 	{
+		static_assert(!std::is_base_of<Object, _Type>::value, "ModfiedResult<Object> needs special handling");
 		return std::async(std::launch::deferred,
 			[](typename ResultTraits<_Type>::future_type resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
 			{
@@ -661,6 +662,8 @@ class Request : public std::enable_shared_from_this<Request>
 public:
 	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
+
+	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
