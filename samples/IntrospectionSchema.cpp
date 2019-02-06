@@ -195,13 +195,13 @@ std::future<response::Value> __Schema::resolveDirectives(service::ResolverParams
 	return service::ModifiedResult<__Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __Schema::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __Schema::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__Schema")));
+	promise.set_value("__Schema");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 __Type::__Type()
@@ -315,13 +315,13 @@ std::future<response::Value> __Type::resolveOfType(service::ResolverParams&& par
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __Type::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __Type::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__Type")));
+	promise.set_value("__Type");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 __Field::__Field()
@@ -381,13 +381,13 @@ std::future<response::Value> __Field::resolveDeprecationReason(service::Resolver
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __Field::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __Field::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__Field")));
+	promise.set_value("__Field");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 __InputValue::__InputValue()
@@ -431,13 +431,13 @@ std::future<response::Value> __InputValue::resolveDefaultValue(service::Resolver
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __InputValue::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __InputValue::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__InputValue")));
+	promise.set_value("__InputValue");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 __EnumValue::__EnumValue()
@@ -481,13 +481,13 @@ std::future<response::Value> __EnumValue::resolveDeprecationReason(service::Reso
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __EnumValue::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __EnumValue::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__EnumValue")));
+	promise.set_value("__EnumValue");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 __Directive::__Directive()
@@ -531,13 +531,13 @@ std::future<response::Value> __Directive::resolveArgs(service::ResolverParams&& 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> __Directive::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> __Directive::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("__Directive")));
+	promise.set_value("__Directive");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 } /* namespace object */

@@ -102,6 +102,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 						subject
 						when
 						isNow
+						__typename
 					}
 				}
 			}
@@ -111,6 +112,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 						id
 						title
 						isComplete
+						__typename
 					}
 				}
 			}
@@ -120,6 +122,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 						id
 						name
 						unreadCount
+						__typename
 					}
 				}
 			}
@@ -156,6 +159,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ("Appointment", service::StringArgument::require("__typename", appointmentNode)) << "__typename should match";
 
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
@@ -165,6 +169,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+		EXPECT_EQ("Task", service::StringArgument::require("__typename", taskNode)) << "__typename should match";
 
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
@@ -174,6 +179,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode)) << "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
 		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
+		EXPECT_EQ("Folder", service::StringArgument::require("__typename", unreadCountNode)) << "__typename should match";
 	}
 	catch (const service::schema_exception& ex)
 	{
