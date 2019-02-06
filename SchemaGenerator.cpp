@@ -1947,13 +1947,13 @@ std::future<response::Value> )cpp" << objectType.type
 
 			sourceFile << R"cpp(
 std::future<response::Value> )cpp" << objectType.type
-<< R"cpp(::resolve__typename(service::ResolverParams&&)
+<< R"cpp(::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string(")cpp" << objectType.type << R"cpp(")));
+	promise.set_value(")cpp" << objectType.type << R"cpp(");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 )cpp";
 
