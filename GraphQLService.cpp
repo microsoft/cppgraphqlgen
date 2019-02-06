@@ -21,11 +21,18 @@ schema_exception::schema_exception(std::vector<std::string>&& messages)
 	{
 		response::Value error(response::Type::Map);
 
-		error.emplace_back("message", response::Value(std::move(message)));
+		error.emplace_back(strMessage, response::Value(std::move(message)));
 		_errors.emplace_back(std::move(error));
 	}
 
 	messages.clear();
+}
+
+const char* schema_exception::what() const noexcept
+{
+	return (_errors.size() < 1 || _errors[0].type() != response::Type::String)
+		? "Unknown schema error"
+		: _errors[0].get<const response::StringType&>().c_str();
 }
 
 const response::Value& schema_exception::getErrors() const noexcept
@@ -33,7 +40,14 @@ const response::Value& schema_exception::getErrors() const noexcept
 	return _errors;
 }
 
-FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
+response::Value schema_exception::getErrors() noexcept
+{
+	auto errors = std::move(_errors);
+
+	return errors;
+}
+
+FieldParams::FieldParams(const SelectionSetParams & selectionSetParams, response::Value && directives)
 	: SelectionSetParams(selectionSetParams)
 	, fieldDirectives(std::move(directives))
 {
@@ -65,7 +79,7 @@ private:
 	response::Value _value;
 };
 
-ValueVisitor::ValueVisitor(const response::Value& variables)
+ValueVisitor::ValueVisitor(const response::Value & variables)
 	: _variables(variables)
 {
 }
@@ -77,7 +91,7 @@ response::Value ValueVisitor::getValue()
 	return result;
 }
 
-void ValueVisitor::visit(const peg::ast_node& value)
+void ValueVisitor::visit(const peg::ast_node & value)
 {
 	if (value.is<peg::variable_value>())
 	{
@@ -118,7 +132,7 @@ void ValueVisitor::visit(const peg::ast_node& value)
 	}
 }
 
-void ValueVisitor::visitVariable(const peg::ast_node& variable)
+void ValueVisitor::visitVariable(const peg::ast_node & variable)
 {
 	const std::string name(variable.content().c_str() + 1);
 	auto itr = _variables.find(name);
@@ -138,22 +152,22 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 	_value = response::Value(itr->second);
 }
 
-void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
+void ValueVisitor::visitIntValue(const peg::ast_node & intValue)
 {
 	_value = response::Value(std::atoi(intValue.content().c_str()));
 }
 
-void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
+void ValueVisitor::visitFloatValue(const peg::ast_node & floatValue)
 {
 	_value = response::Value(std::atof(floatValue.content().c_str()));
 }
 
-void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
+void ValueVisitor::visitStringValue(const peg::ast_node & stringValue)
 {
 	_value = response::Value(std::string(stringValue.unescaped));
 }
 
-void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
+void ValueVisitor::visitBooleanValue(const peg::ast_node & booleanValue)
 {
 	_value = response::Value(booleanValue.is<peg::true_keyword>());
 }
@@ -163,13 +177,13 @@ void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 	_value = {};
 }
 
-void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
+void ValueVisitor::visitEnumValue(const peg::ast_node & enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
 	_value.set<response::StringType>(enumValue.content());
 }
 
-void ValueVisitor::visitListValue(const peg::ast_node& listValue)
+void ValueVisitor::visitListValue(const peg::ast_node & listValue)
 {
 	_value = response::Value(response::Type::List);
 	_value.reserve(listValue.children.size());
@@ -183,7 +197,7 @@ void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 	}
 }
 
-void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
+void ValueVisitor::visitObjectValue(const peg::ast_node & objectValue)
 {
 	_value = response::Value(response::Type::Map);
 	_value.reserve(objectValue.children.size());
@@ -215,13 +229,13 @@ private:
 	response::Value _directives;
 };
 
-DirectiveVisitor::DirectiveVisitor(const response::Value& variables)
+DirectiveVisitor::DirectiveVisitor(const response::Value & variables)
 	: _variables(variables)
 	, _directives(response::Type::Map)
 {
 }
 
-void DirectiveVisitor::visit(const peg::ast_node& directives)
+void DirectiveVisitor::visit(const peg::ast_node & directives)
 {
 	response::Value result(response::Type::Map);
 
@@ -230,10 +244,10 @@ void DirectiveVisitor::visit(const peg::ast_node& directives)
 		std::string directiveName;
 
 		peg::on_first_child<peg::directive_name>(*directive,
-			[&directiveName](const peg::ast_node& child)
-		{
-			directiveName = child.content();
-		});
+			[&directiveName](const peg::ast_node & child)
+			{
+				directiveName = child.content();
+			});
 
 		if (directiveName.empty())
 		{
@@ -243,17 +257,17 @@ void DirectiveVisitor::visit(const peg::ast_node& directives)
 		response::Value directiveArguments(response::Type::Map);
 
 		peg::on_first_child<peg::arguments>(*directive,
-			[this, &directiveArguments](const peg::ast_node& child)
-		{
-			ValueVisitor visitor(_variables);
-
-			for (auto& argument : child.children)
+			[this, &directiveArguments](const peg::ast_node & child)
 			{
-				visitor.visit(*argument->children.back());
+				ValueVisitor visitor(_variables);
 
-				directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
-			}
-		});
+				for (auto& argument : child.children)
+				{
+					visitor.visit(*argument->children.back());
+
+					directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+				}
+			});
 
 		result.emplace_back(std::move(directiveName), std::move(directiveArguments));
 	}
@@ -340,19 +354,19 @@ bool DirectiveVisitor::shouldSkip() const
 	return false;
 }
 
-Fragment::Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables)
+Fragment::Fragment(const peg::ast_node & fragmentDefinition, const response::Value & variables)
 	: _type(fragmentDefinition.children[1]->children.front()->content())
 	, _directives(response::Type::Map)
 	, _selection(*(fragmentDefinition.children.back()))
 {
 	peg::on_first_child<peg::directives>(fragmentDefinition,
-		[this, &variables](const peg::ast_node& child)
-	{
-		DirectiveVisitor directiveVisitor(variables);
+		[this, &variables](const peg::ast_node & child)
+		{
+			DirectiveVisitor directiveVisitor(variables);
 
-		directiveVisitor.visit(child);
-		_directives = directiveVisitor.getDirectives();
-	});
+			directiveVisitor.visit(child);
+			_directives = directiveVisitor.getDirectives();
+		});
 }
 
 const std::string& Fragment::getType() const
@@ -370,9 +384,10 @@ const response::Value& Fragment::getDirectives() const
 	return _directives;
 }
 
-ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams, response::Value&& arguments, response::Value&& fieldDirectives,
-	const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables)
+ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
+	const peg::ast_node * selection, const FragmentMap & fragments, const response::Value & variables)
 	: SelectionSetParams(selectionSetParams)
+	, fieldName(std::move(fieldName))
 	, arguments(std::move(arguments))
 	, fieldDirectives(std::move(fieldDirectives))
 	, selection(selection)
@@ -480,7 +495,7 @@ char Base64::verifyToBase64(uint8_t i)
 	return result;
 }
 
-std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
+std::string Base64::toBase64(const std::vector<uint8_t> & bytes)
 {
 	std::string result;
 
@@ -532,7 +547,7 @@ std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
 }
 
 template <>
-response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value)
+response::IntType ModifiedArgument<response::IntType>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -543,7 +558,7 @@ response::IntType ModifiedArgument<response::IntType>::convert(const response::V
 }
 
 template <>
-response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value)
+response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::Float)
 	{
@@ -554,7 +569,7 @@ response::FloatType ModifiedArgument<response::FloatType>::convert(const respons
 }
 
 template <>
-response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value)
+response::StringType ModifiedArgument<response::StringType>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -565,7 +580,7 @@ response::StringType ModifiedArgument<response::StringType>::convert(const respo
 }
 
 template <>
-response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value)
+response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -576,7 +591,7 @@ response::BooleanType ModifiedArgument<response::BooleanType>::convert(const res
 }
 
 template <>
-response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
+response::Value ModifiedArgument<response::Value>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::Map)
 	{
@@ -587,7 +602,7 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 }
 
 template <>
-std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const response::Value& value)
+std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -600,78 +615,86 @@ std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const respo
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IntType>::convert(std::future<response::IntType>&& result, ResolverParams&&)
+std::future<response::Value> ModifiedResult<response::IntType>::convert(std::future<response::IntType> && result, ResolverParams && params)
 {
-	return std::async(std::launch::deferred,
-		[](std::future<response::IntType>&& resultFuture)
-	{
-		return response::Value(resultFuture.get());
-	}, std::move(result));
-}
-
-template <>
-std::future<response::Value> ModifiedResult<response::FloatType>::convert(std::future<response::FloatType>&& result, ResolverParams&&)
-{
-	return std::async(std::launch::deferred,
-		[](std::future<response::FloatType>&& resultFuture)
-	{
-		return response::Value(resultFuture.get());
-	}, std::move(result));
-}
-
-template <>
-std::future<response::Value> ModifiedResult<response::StringType>::convert(std::future<response::StringType>&& result, ResolverParams&& params)
-{
-	return std::async(std::launch::deferred,
-		[&](std::future<response::StringType>&& resultFuture, ResolverParams&& paramsFuture)
-	{
-		return response::Value(resultFuture.get());
-	}, std::move(result), std::move(params));
-}
-
-template <>
-std::future<response::Value> ModifiedResult<response::BooleanType>::convert(std::future<response::BooleanType>&& result, ResolverParams&&)
-{
-	return std::async(std::launch::deferred,
-		[](std::future<response::BooleanType>&& resultFuture)
-	{
-		return response::Value(resultFuture.get());
-	}, std::move(result));
-}
-
-template <>
-std::future<response::Value> ModifiedResult<response::Value>::convert(std::future<response::Value>&& result, ResolverParams&&)
-{
-	return std::move(result);
-}
-
-template <>
-std::future<response::Value> ModifiedResult<std::vector<uint8_t>>::convert(std::future<std::vector<uint8_t>>&& result, ResolverParams&& params)
-{
-	return std::async(std::launch::deferred,
-		[](std::future<std::vector<uint8_t>>&& resultFuture, ResolverParams&& paramsFuture)
-	{
-		return response::Value(Base64::toBase64(resultFuture.get()));
-	}, std::move(result), std::move(params));
-}
-
-template <>
-std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::shared_ptr<Object>> result, ResolverParams&& params)
-{
-	return std::async(std::launch::deferred,
-		[](std::future<std::shared_ptr<Object>>&& resultFuture, ResolverParams&& paramsFuture)
-	{
-		auto wrappedResult = resultFuture.get();
-
-		if (!wrappedResult || !paramsFuture.selection)
+	return resolve(std::move(result), std::move(params),
+		[](response::IntType && value, const ResolverParams&)
 		{
-			return response::Value(!wrappedResult
-				? response::Type::Null
-				: response::Type::Map);
-		}
+			return response::Value(value);
+		});
+}
 
-		return wrappedResult->resolve(paramsFuture, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
-	}, std::move(result), std::move(params));
+template <>
+std::future<response::Value> ModifiedResult<response::FloatType>::convert(std::future<response::FloatType> && result, ResolverParams && params)
+{
+	return resolve(std::move(result), std::move(params),
+		[](response::FloatType && value, const ResolverParams&)
+		{
+			return response::Value(value);
+		});
+}
+
+template <>
+std::future<response::Value> ModifiedResult<response::StringType>::convert(std::future<response::StringType> && result, ResolverParams && params)
+{
+	return resolve(std::move(result), std::move(params),
+		[](response::StringType && value, const ResolverParams&)
+		{
+			return response::Value(std::move(value));
+		});
+}
+
+template <>
+std::future<response::Value> ModifiedResult<response::BooleanType>::convert(std::future<response::BooleanType> && result, ResolverParams && params)
+{
+	return resolve(std::move(result), std::move(params),
+		[](response::BooleanType && value, const ResolverParams&)
+		{
+			return response::Value(value);
+		});
+}
+
+template <>
+std::future<response::Value> ModifiedResult<response::Value>::convert(std::future<response::Value> && result, ResolverParams && params)
+{
+	return resolve(std::move(result), std::move(params),
+		[](response::Value && value, const ResolverParams&)
+		{
+			return response::Value(std::move(value));
+		});
+}
+
+template <>
+std::future<response::Value> ModifiedResult<std::vector<uint8_t>>::convert(std::future<std::vector<uint8_t>> && result, ResolverParams && params)
+{
+	return resolve(std::move(result), std::move(params),
+		[](std::vector<uint8_t> && value, const ResolverParams&)
+		{
+			return response::Value(Base64::toBase64(value));
+		});
+}
+
+template <>
+std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::shared_ptr<Object>> result, ResolverParams && params)
+{
+	return std::async(std::launch::deferred,
+		[](std::future<std::shared_ptr<Object>> && resultFuture, ResolverParams && paramsFuture)
+		{
+			auto wrappedResult = resultFuture.get();
+
+			if (!wrappedResult || !paramsFuture.selection)
+			{
+				response::Value document(response::Type::Map);
+
+				document.emplace_back(strData, response::Value(!wrappedResult
+					? response::Type::Null
+					: response::Type::Map));
+
+				return document;
+			}
+
+			return wrappedResult->resolve(paramsFuture, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
+		}, std::move(result), std::move(params));
 }
 
 // As we recursively expand fragment spreads and inline fragments, we want to accumulate the directives
@@ -695,7 +718,7 @@ public:
 
 	void visit(const peg::ast_node& selection);
 
-	std::future<response::Value> getValues();
+	std::queue<std::pair<std::string, std::future<response::Value>>> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -713,8 +736,8 @@ private:
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
-SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams, const FragmentMap& fragments, const response::Value& variables,
-	const TypeNames& typeNames, const ResolverMap& resolvers)
+SelectionVisitor::SelectionVisitor(const SelectionSetParams & selectionSetParams, const FragmentMap & fragments, const response::Value & variables,
+	const TypeNames & typeNames, const ResolverMap & resolvers)
 	: _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _fragments(fragments)
@@ -729,26 +752,14 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		});
 }
 
-std::future<response::Value> SelectionVisitor::getValues()
+std::queue<std::pair<std::string, std::future<response::Value>>> SelectionVisitor::getValues()
 {
-	return std::async(std::launch::deferred,
-		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& values)
-		{
-			response::Value result(response::Type::Map);
+	auto values = std::move(_values);
 
-			while (!values.empty())
-			{
-				auto& entry = values.front();
-
-				result.emplace_back(std::move(entry.first), entry.second.get());
-				values.pop();
-			}
-
-			return result;
-		}, std::move(_values));
+	return values;
 }
 
-void SelectionVisitor::visit(const peg::ast_node& selection)
+void SelectionVisitor::visit(const peg::ast_node & selection)
 {
 	if (selection.is<peg::field>())
 	{
@@ -764,12 +775,12 @@ void SelectionVisitor::visit(const peg::ast_node& selection)
 	}
 }
 
-void SelectionVisitor::visitField(const peg::ast_node& field)
+void SelectionVisitor::visitField(const peg::ast_node & field)
 {
 	std::string name;
 
 	peg::on_first_child<peg::field_name>(field,
-		[&name](const peg::ast_node& child)
+		[&name](const peg::ast_node & child)
 		{
 			name = child.content();
 		});
@@ -777,7 +788,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	std::string alias;
 
 	peg::on_first_child<peg::alias_name>(field,
-		[&alias](const peg::ast_node& child)
+		[&alias](const peg::ast_node & child)
 		{
 			alias = child.content();
 		});
@@ -804,7 +815,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	DirectiveVisitor directiveVisitor(_variables);
 
 	peg::on_first_child<peg::directives>(field,
-		[&directiveVisitor](const peg::ast_node& child)
+		[&directiveVisitor](const peg::ast_node & child)
 		{
 			directiveVisitor.visit(child);
 		});
@@ -817,7 +828,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	response::Value arguments(response::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &arguments](const peg::ast_node& child)
+		[this, &arguments](const peg::ast_node & child)
 		{
 			ValueVisitor visitor(_variables);
 
@@ -832,7 +843,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	const peg::ast_node* selection = nullptr;
 
 	peg::on_first_child<peg::selection_set>(field,
-		[&selection](const peg::ast_node& child)
+		[&selection](const peg::ast_node & child)
 		{
 			selection = &child;
 		});
@@ -845,13 +856,15 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		_fragmentDirectives.top().inlineFragmentDirectives
 	};
 
+	auto result = itr->second(ResolverParams(selectionSetParams, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(), selection, _fragments, _variables));
+
 	_values.push({
 		std::move(alias),
-		itr->second(ResolverParams(selectionSetParams, std::move(arguments), directiveVisitor.getDirectives(), selection, _fragments, _variables))
+		std::move(result)
 		});
 }
 
-void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
+void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 {
 	const std::string name(fragmentSpread.children.front()->content());
 	auto itr = _fragments.find(name);
@@ -874,7 +887,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	if (!skip)
 	{
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[&directiveVisitor](const peg::ast_node& child)
+			[&directiveVisitor](const peg::ast_node & child)
 			{
 
 				directiveVisitor.visit(child);
@@ -924,12 +937,12 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	_fragmentDirectives.pop();
 }
 
-void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
+void SelectionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
 {
 	DirectiveVisitor directiveVisitor(_variables);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[&directiveVisitor](const peg::ast_node& child)
+		[&directiveVisitor](const peg::ast_node & child)
 		{
 			directiveVisitor.visit(child);
 		});
@@ -942,7 +955,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 	const peg::ast_node* typeCondition = nullptr;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&typeCondition](const peg::ast_node& child)
+		[&typeCondition](const peg::ast_node & child)
 		{
 			typeCondition = &child;
 		});
@@ -951,44 +964,44 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
-			[this, &directiveVisitor](const peg::ast_node& child)
-		{
-			auto inlineFragmentDirectives = directiveVisitor.getDirectives();
-
-			// Merge outer inline fragment directives as long as they don't conflict.
-			for (const auto& entry : _fragmentDirectives.top().inlineFragmentDirectives)
+			[this, &directiveVisitor](const peg::ast_node & child)
 			{
-				if (inlineFragmentDirectives.find(entry.first) == inlineFragmentDirectives.end())
+				auto inlineFragmentDirectives = directiveVisitor.getDirectives();
+
+				// Merge outer inline fragment directives as long as they don't conflict.
+				for (const auto& entry : _fragmentDirectives.top().inlineFragmentDirectives)
 				{
-					inlineFragmentDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+					if (inlineFragmentDirectives.find(entry.first) == inlineFragmentDirectives.end())
+					{
+						inlineFragmentDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+					}
 				}
-			}
 
-			_fragmentDirectives.push({
-				response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
-				response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
-				std::move(inlineFragmentDirectives)
-				});
+				_fragmentDirectives.push({
+					response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
+					response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
+					std::move(inlineFragmentDirectives)
+					});
 
-			for (const auto& selection : child.children)
-			{
-				visit(*selection);
-			}
+				for (const auto& selection : child.children)
+				{
+					visit(*selection);
+				}
 
-			_fragmentDirectives.pop();
-		});
+				_fragmentDirectives.pop();
+			});
 	}
 }
 
-Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
+Object::Object(TypeNames && typeNames, ResolverMap && resolvers)
 	: _typeNames(std::move(typeNames))
 	, _resolvers(std::move(resolvers))
 {
 }
 
-std::future<response::Value> Object::resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
+std::future<response::Value> Object::resolve(const SelectionSetParams & selectionSetParams, const peg::ast_node & selection, const FragmentMap & fragments, const response::Value & variables) const
 {
-	std::queue<std::future<response::Value>> selections;
+	std::queue<std::pair<std::string, std::future<response::Value>>> selections;
 
 	beginSelectionSet(selectionSetParams);
 
@@ -997,52 +1010,107 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
 
 		visitor.visit(*child);
-		selections.push(visitor.getValues());
+
+		auto values = visitor.getValues();
+
+		while (!values.empty())
+		{
+			selections.push(std::move(values.front()));
+			values.pop();
+		}
 	}
 
 	endSelectionSet(selectionSetParams);
 
 	return std::async(std::launch::deferred,
-		[](std::queue<std::future<response::Value>>&& promises)
-	{
-		response::Value result(response::Type::Map);
-
-		while (!promises.empty())
+		[](std::queue<std::pair<std::string, std::future<response::Value>>> && children)
 		{
-			auto values = promises.front().get();
+			response::Value data(response::Type::Map);
+			response::Value errors(response::Type::List);
 
-			promises.pop();
-
-			if (values.type() == response::Type::Map)
+			while (!children.empty())
 			{
-				auto members = values.release<response::MapType>();
+				auto name = std::move(children.front().first);
 
-				for (auto& entry : members)
+				try
 				{
-					result.emplace_back(std::move(entry.first), std::move(entry.second));
-				}
-			}
-		}
+					auto value = children.front().second.get();
+					auto members = value.release<response::MapType>();
 
-		return result;
-	}, std::move(selections));
+					for (auto& entry : members)
+					{
+						if (entry.second.type() == response::Type::List
+							&& entry.first == strErrors)
+						{
+							auto errorEntries = entry.second.release<response::ListType>();
+
+							for (auto& errorEntry : errorEntries)
+							{
+								errors.emplace_back(std::move(errorEntry));
+							}
+						}
+						else if (entry.first == strData)
+						{
+							if (data.find(name) != data.end())
+							{
+								std::ostringstream message;
+
+								message << "Field error name: " << name
+									<< " error: duplicate field";
+
+								errors.emplace_back(response::Value(message.str()));
+							}
+							else
+							{
+								data.emplace_back(std::move(name), std::move(entry.second));
+							}
+						}
+					}
+				}
+				catch (const std::exception & ex)
+				{
+					std::ostringstream message;
+
+					message << "Field error name: " << name
+						<< " unknown error: " << ex.what();
+
+					errors.emplace_back(response::Value(message.str()));
+				}
+
+				children.pop();
+			}
+
+			response::Value result(response::Type::Map);
+
+			if (data.size() > 0)
+			{
+				result.emplace_back(strData, std::move(data));
+			}
+
+			if (errors.size() > 0)
+			{
+				result.emplace_back(strErrors, std::move(errors));
+			}
+
+			return result;
+		}, std::move(selections));
 }
 
-bool Object::matchesType(const std::string& typeName) const
+bool Object::matchesType(const std::string & typeName) const
 {
 	return _typeNames.find(typeName) != _typeNames.cend();
 }
 
-void Object::beginSelectionSet(const SelectionSetParams& params) const
+void Object::beginSelectionSet(const SelectionSetParams & params) const
 {
 }
 
-void Object::endSelectionSet(const SelectionSetParams& params) const
+void Object::endSelectionSet(const SelectionSetParams & params) const
 {
 }
 
-OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables,
-	response::Value&& directives, FragmentMap&& fragments)
+OperationData::OperationData(std::shared_ptr<RequestState> && state, response::Value && variables,
+	response::Value && directives, FragmentMap && fragments)
 	: state(std::move(state))
 	, variables(std::move(variables))
 	, directives(std::move(directives))
@@ -1067,7 +1135,7 @@ private:
 	FragmentMap _fragments;
 };
 
-FragmentDefinitionVisitor::FragmentDefinitionVisitor(const response::Value& variables)
+FragmentDefinitionVisitor::FragmentDefinitionVisitor(const response::Value & variables)
 	: _variables(variables)
 {
 }
@@ -1078,7 +1146,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 	return result;
 }
 
-void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
+void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 {
 	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition, _variables) });
 }
@@ -1101,7 +1169,7 @@ private:
 	std::future<response::Value> _result;
 };
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, response::Value&& variables, FragmentMap&& fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap & operations, const std::string & operationName, response::Value && variables, FragmentMap && fragments)
 	: _params(std::make_shared<OperationData>(
 		std::move(state),
 		std::move(variables),
@@ -1132,13 +1200,13 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 			throw schema_exception({ error.str() });
 		}
 	}
-	catch (const schema_exception& ex)
+	catch (schema_exception & ex)
 	{
 		std::promise<response::Value> promise;
 		response::Value document(response::Type::Map);
 
-		document.emplace_back("data", response::Value());
-		document.emplace_back("errors", response::Value(ex.getErrors()));
+		document.emplace_back(strData, response::Value());
+		document.emplace_back(strErrors, ex.getErrors());
 		promise.set_value(std::move(document));
 
 		result = promise.get_future();
@@ -1147,21 +1215,21 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
+void OperationDefinitionVisitor::visit(const peg::ast_node & operationDefinition)
 {
 	std::string operation;
 
 	peg::on_first_child<peg::operation_type>(operationDefinition,
-		[&operation](const peg::ast_node& child)
+		[&operation](const peg::ast_node & child)
 		{
 			operation = child.content();
 		});
 
 	if (operation.empty())
 	{
-		operation = "query";
+		operation = strQuery;
 	}
-	else if (operation == "subscription")
+	else if (operation == strSubscription)
 	{
 		// Skip subscription operations, they should use subscribe instead of resolve.
 		return;
@@ -1171,7 +1239,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 	std::string name;
 
 	peg::on_first_child<peg::operation_name>(operationDefinition,
-		[&name](const peg::ast_node& child)
+		[&name](const peg::ast_node & child)
 		{
 			name = child.content();
 		});
@@ -1232,12 +1300,12 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		response::Value operationVariables(response::Type::Map);
 
 		peg::for_each_child<peg::variable>(operationDefinition,
-			[this, &operationVariables](const peg::ast_node& variable)
+			[this, &operationVariables](const peg::ast_node & variable)
 			{
 				std::string variableName;
 
 				peg::on_first_child<peg::variable_name>(variable,
-					[&variableName](const peg::ast_node& name)
+					[&variableName](const peg::ast_node & name)
 					{
 						// Skip the $ prefix
 						variableName = name.content().c_str() + 1;
@@ -1253,7 +1321,7 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 				else
 				{
 					peg::on_first_child<peg::default_value>(variable,
-						[this, &valueVar](const peg::ast_node& defaultValue)
+						[this, &valueVar](const peg::ast_node & defaultValue)
 						{
 							ValueVisitor visitor(_params->variables);
 
@@ -1270,13 +1338,13 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		response::Value operationDirectives(response::Type::Map);
 
 		peg::on_first_child<peg::directives>(operationDefinition,
-			[this, &operationDirectives](const peg::ast_node& child)
-		{
-			DirectiveVisitor directiveVisitor(_params->variables);
+			[this, &operationDirectives](const peg::ast_node & child)
+			{
+				DirectiveVisitor directiveVisitor(_params->variables);
 
-			directiveVisitor.visit(child);
-			operationDirectives = directiveVisitor.getDirectives();
-		});
+				directiveVisitor.visit(child);
+				operationDirectives = directiveVisitor.getDirectives();
+			});
 
 		_params->directives = std::move(operationDirectives);
 
@@ -1294,31 +1362,27 @@ void OperationDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 		};
 
 		_result = std::async(std::launch::deferred,
-			[params](std::future<response::Value> data)
+			[params](std::future<response::Value> document)
 			{
-				response::Value document(response::Type::Map);
-
-				document.emplace_back("data", data.get());
-
-				return document;
-		}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
+				return document.get();
+			}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
 	}
-	catch (const schema_exception& ex)
+	catch (schema_exception & ex)
 	{
 		std::promise<response::Value> promise;
 		response::Value document(response::Type::Map);
 
-		document.emplace_back("data", response::Value());
-		document.emplace_back("errors", response::Value(ex.getErrors()));
+		document.emplace_back(strData, response::Value());
+		document.emplace_back(strErrors, ex.getErrors());
 		promise.set_value(std::move(document));
 
 		_result = promise.get_future();
 	}
 }
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
-	peg::ast<std::string>&& query, std::string&& operationName, SubscriptionCallback&& callback,
-	const peg::ast_node& selection)
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, std::unordered_map<SubscriptionName, std::vector<response::Value>> && fieldNamesAndArgs,
+	peg::ast<std::string> && query, std::string && operationName, SubscriptionCallback && callback,
+	const peg::ast_node & selection)
 	: data(std::move(data))
 	, fieldNamesAndArgs(std::move(fieldNamesAndArgs))
 	, query(std::move(query))
@@ -1353,7 +1417,7 @@ private:
 	std::shared_ptr<SubscriptionData> _result;
 };
 
-SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments, const std::shared_ptr<Object>& subscriptionObject)
+SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams && params, SubscriptionCallback && callback, FragmentMap && fragments, const std::shared_ptr<Object> & subscriptionObject)
 	: _params(std::move(params))
 	, _callback(std::move(callback))
 	, _fragments(std::move(fragments))
@@ -1389,17 +1453,17 @@ std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration
 	return result;
 }
 
-void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
+void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinition)
 {
 	std::string operation;
 
 	peg::on_first_child<peg::operation_type>(operationDefinition,
-		[&operation](const peg::ast_node& child)
+		[&operation](const peg::ast_node & child)
 		{
 			operation = child.content();
 		});
 
-	if (operation != "subscription")
+	if (operation != strSubscription)
 	{
 		// Skip operations other than subscription.
 		return;
@@ -1409,7 +1473,7 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 	std::string name;
 
 	peg::on_first_child<peg::operation_name>(operationDefinition,
-		[&name](const peg::ast_node& child)
+		[&name](const peg::ast_node & child)
 		{
 			name = child.content();
 		});
@@ -1466,13 +1530,13 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 	response::Value directives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(operationDefinition,
-		[this, &directives](const peg::ast_node& child)
-	{
-		DirectiveVisitor directiveVisitor(_params.variables);
+		[this, &directives](const peg::ast_node & child)
+		{
+			DirectiveVisitor directiveVisitor(_params.variables);
 
-		directiveVisitor.visit(child);
-		directives = directiveVisitor.getDirectives();
-	});
+			directiveVisitor.visit(child);
+			directives = directiveVisitor.getDirectives();
+		});
 
 	_result = std::make_shared<SubscriptionData>(
 		std::make_shared<OperationData>(
@@ -1487,23 +1551,23 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 		selection);
 }
 
-void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
+void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 {
 	std::string name;
 
 	peg::on_first_child<peg::field_name>(field,
-		[&name](const peg::ast_node& child)
-	{
-		name = child.content();
-	});
+		[&name](const peg::ast_node & child)
+		{
+			name = child.content();
+		});
 
 	DirectiveVisitor directiveVisitor(_params.variables);
 
 	peg::on_first_child<peg::directives>(field,
-		[&directiveVisitor](const peg::ast_node& child)
-	{
-		directiveVisitor.visit(child);
-	});
+		[&directiveVisitor](const peg::ast_node & child)
+		{
+			directiveVisitor.visit(child);
+		});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1513,22 +1577,22 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 	response::Value arguments(response::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &arguments](const peg::ast_node& child)
-	{
-		ValueVisitor visitor(_params.variables);
-
-		for (auto& argument : child.children)
+		[this, &arguments](const peg::ast_node & child)
 		{
-			visitor.visit(*argument->children.back());
+			ValueVisitor visitor(_params.variables);
 
-			arguments.emplace_back(argument->children.front()->content(), visitor.getValue());
-		}
-	});
+			for (auto& argument : child.children)
+			{
+				visitor.visit(*argument->children.back());
+
+				arguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+			}
+		});
 
 	_fieldNamesAndArgs[std::move(name)].emplace_back(std::move(arguments));
 }
 
-void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
+void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 {
 	const std::string name(fragmentSpread.children.front()->content());
 	auto itr = _fragments.find(name);
@@ -1551,10 +1615,10 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fra
 	if (!skip)
 	{
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[&directiveVisitor](const peg::ast_node& child)
-		{
-			directiveVisitor.visit(child);
-		});
+			[&directiveVisitor](const peg::ast_node & child)
+			{
+				directiveVisitor.visit(child);
+			});
 
 		skip = directiveVisitor.shouldSkip();
 	}
@@ -1570,15 +1634,15 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fra
 	}
 }
 
-void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
+void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
 {
 	DirectiveVisitor directiveVisitor(_params.variables);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[&directiveVisitor](const peg::ast_node& child)
-	{
-		directiveVisitor.visit(child);
-	});
+		[&directiveVisitor](const peg::ast_node & child)
+		{
+			directiveVisitor.visit(child);
+		});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1588,55 +1652,55 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 	const peg::ast_node* typeCondition = nullptr;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&typeCondition](const peg::ast_node& child)
-	{
-		typeCondition = &child;
-	});
+		[&typeCondition](const peg::ast_node & child)
+		{
+			typeCondition = &child;
+		});
 
 	if (typeCondition == nullptr
 		|| _subscriptionObject->matchesType(typeCondition->children.front()->content()))
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
-			[this](const peg::ast_node& child)
-		{
-			for (const auto& selection : child.children)
+			[this](const peg::ast_node & child)
 			{
-				visit(*selection);
-			}
-		});
+				for (const auto& selection : child.children)
+				{
+					visit(*selection);
+				}
+			});
 	}
 }
 
-Request::Request(TypeMap&& operationTypes)
+Request::Request(TypeMap && operationTypes)
 	: _operations(std::move(operationTypes))
 {
 }
 
-std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
+std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState> & state, const peg::ast_node & root, const std::string & operationName, response::Value && variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor(variables);
 
 	peg::for_each_child<peg::fragment_definition>(root,
-		[&fragmentVisitor](const peg::ast_node& child)
-	{
-		fragmentVisitor.visit(child);
-	});
+		[&fragmentVisitor](const peg::ast_node & child)
+		{
+			fragmentVisitor.visit(child);
+		});
 
 	auto fragments = fragmentVisitor.getFragments();
 	OperationDefinitionVisitor operationVisitor(state, _operations, operationName, std::move(variables), std::move(fragments));
 
 	peg::for_each_child<peg::operation_definition>(root,
-		[&operationVisitor](const peg::ast_node& child)
-	{
-		operationVisitor.visit(child);
-	});
+		[&operationVisitor](const peg::ast_node & child)
+		{
+			operationVisitor.visit(child);
+		});
 
 	return operationVisitor.getValue();
 }
 
-SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
+SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCallback && callback)
 {
-	auto itr = _operations.find("subscription");
+	auto itr = _operations.find(strSubscription);
 
 	if (itr == _operations.cend())
 	{
@@ -1646,7 +1710,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
 	peg::for_each_child<peg::fragment_definition>(*params.query.root,
-		[&fragmentVisitor](const peg::ast_node& child)
+		[&fragmentVisitor](const peg::ast_node & child)
 		{
 			fragmentVisitor.visit(child);
 		});
@@ -1655,7 +1719,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params), std::move(callback), std::move(fragments), itr->second);
 
 	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
-		[&subscriptionVisitor](const peg::ast_node& child)
+		[&subscriptionVisitor](const peg::ast_node & child)
 		{
 			subscriptionVisitor.visit(child);
 		});
@@ -1685,7 +1749,7 @@ void Request::unsubscribe(SubscriptionKey key)
 	for (const auto& entry : itrSubscription->second->fieldNamesAndArgs)
 	{
 		auto itrListener = _listeners.find(entry.first);
-		
+
 		itrListener->second.erase(key);
 		if (itrListener->second.empty())
 		{
@@ -1705,12 +1769,12 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(const SubscriptionName & name, const std::shared_ptr<Object> & subscriptionObject) const
 {
 	deliver(name, SubscriptionArguments {}, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(const SubscriptionName & name, const SubscriptionArguments & arguments, const std::shared_ptr<Object> & subscriptionObject) const
 {
 	SubscriptionFilterCallback exactMatch = [&arguments](response::MapType::const_reference required) noexcept -> bool
 	{
@@ -1723,11 +1787,11 @@ void Request::deliver(const SubscriptionName& name, const SubscriptionArguments&
 	deliver(name, exactMatch, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCallback & apply, const std::shared_ptr<Object> & subscriptionObject) const
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
-		: _operations.find("subscription")->second;
+		: _operations.find(strSubscription)->second;
 
 	auto itrListeners = _listeners.find(name);
 
@@ -1782,22 +1846,18 @@ void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCall
 		try
 		{
 			result = std::async(std::launch::deferred,
-				[registration](std::future<response::Value> data)
+				[registration](std::future<response::Value> document)
 				{
-					response::Value document(response::Type::Map);
-
-					document.emplace_back("data", data.get());
-
-					return document;
+					return document.get();
 				}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
 		}
-		catch (const schema_exception& ex)
+		catch (schema_exception & ex)
 		{
 			std::promise<response::Value> promise;
 			response::Value document(response::Type::Map);
 
-			document.emplace_back("data", response::Value());
-			document.emplace_back("errors", response::Value(ex.getErrors()));
+			document.emplace_back(strData, response::Value());
+			document.emplace_back(strErrors, ex.getErrors());
 
 			result = promise.get_future();
 		}

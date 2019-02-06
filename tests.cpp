@@ -137,7 +137,6 @@ TEST_F(TodayServiceCase, QueryEverything)
 	EXPECT_EQ(size_t(1), state->loadTasksCount) << "today service called the loader once";
 	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
 
-
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
@@ -1130,7 +1129,7 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 	}
 
 	ASSERT_TRUE(caughtException);
-	EXPECT_EQ(R"js([{"message":"Invalid argument: value message: not a string"}])js", exceptionWhat) << "exception should match";
+	EXPECT_EQ(R"js([{"message":"Invalid argument: value error: not a string"}])js", exceptionWhat) << "exception should match";
 }
 
 TEST(ArgumentsCase, ListArgumentStringsNullable)
@@ -1263,7 +1262,7 @@ TEST(ArgumentsCase, TaskStateEnumFromString)
 
 	EXPECT_NE(today::TaskState::Started, actual) << "should not parse the enum from a known string value";
 	ASSERT_TRUE(caughtException);
-	EXPECT_EQ(R"js([{"message":"Invalid argument: status message: not a valid TaskState value"}])js", exceptionWhat) << "exception should match";
+	EXPECT_EQ(R"js([{"message":"Invalid argument: status error: not a valid TaskState value"}])js", exceptionWhat) << "exception should match";
 }
 
 TEST(ArgumentsCase, TaskStateEnumFromJSONString)
