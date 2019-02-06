@@ -1644,7 +1644,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
-	auto operationDefinition = findOperationDefinition(*params.query.root, params.operationName);
+	auto operationDefinition = findOperationDefinition(*params.query->root, params.operationName);
 
 	if (!operationDefinition.second)
 	{
