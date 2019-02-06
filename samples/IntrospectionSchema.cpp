@@ -43,26 +43,28 @@ introspection::__TypeKind ModifiedArgument<introspection::__TypeKind>::convert(c
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::__TypeKind>::convert(std::future<introspection::__TypeKind>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<introspection::__TypeKind>::convert(std::future<introspection::__TypeKind>&& result, ResolverParams&& params)
 {
-	static const std::string s_names[] = {
-		"SCALAR",
-		"OBJECT",
-		"INTERFACE",
-		"UNION",
-		"ENUM",
-		"INPUT_OBJECT",
-		"LIST",
-		"NON_NULL"
-	};
+	return resolve(std::move(result), std::move(params),
+		[](introspection::__TypeKind && value, const ResolverParams&)
+		{
+			static const std::string s_names[] = {
+				"SCALAR",
+				"OBJECT",
+				"INTERFACE",
+				"UNION",
+				"ENUM",
+				"INPUT_OBJECT",
+				"LIST",
+				"NON_NULL"
+			};
 
-	std::promise<response::Value> promise;
-	response::Value result(response::Type::EnumValue);
+			response::Value result(response::Type::EnumValue);
 
-	result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value.get())]));
-	promise.set_value(std::move(result));
+			result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value)]));
 
-	return promise.get_future();
+			return result;
+		});
 }
 
 template <>
@@ -105,36 +107,38 @@ introspection::__DirectiveLocation ModifiedArgument<introspection::__DirectiveLo
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::__DirectiveLocation>::convert(std::future<introspection::__DirectiveLocation>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<introspection::__DirectiveLocation>::convert(std::future<introspection::__DirectiveLocation>&& result, ResolverParams&& params)
 {
-	static const std::string s_names[] = {
-		"QUERY",
-		"MUTATION",
-		"SUBSCRIPTION",
-		"FIELD",
-		"FRAGMENT_DEFINITION",
-		"FRAGMENT_SPREAD",
-		"INLINE_FRAGMENT",
-		"SCHEMA",
-		"SCALAR",
-		"OBJECT",
-		"FIELD_DEFINITION",
-		"ARGUMENT_DEFINITION",
-		"INTERFACE",
-		"UNION",
-		"ENUM",
-		"ENUM_VALUE",
-		"INPUT_OBJECT",
-		"INPUT_FIELD_DEFINITION"
-	};
+	return resolve(std::move(result), std::move(params),
+		[](introspection::__DirectiveLocation && value, const ResolverParams&)
+		{
+			static const std::string s_names[] = {
+				"QUERY",
+				"MUTATION",
+				"SUBSCRIPTION",
+				"FIELD",
+				"FRAGMENT_DEFINITION",
+				"FRAGMENT_SPREAD",
+				"INLINE_FRAGMENT",
+				"SCHEMA",
+				"SCALAR",
+				"OBJECT",
+				"FIELD_DEFINITION",
+				"ARGUMENT_DEFINITION",
+				"INTERFACE",
+				"UNION",
+				"ENUM",
+				"ENUM_VALUE",
+				"INPUT_OBJECT",
+				"INPUT_FIELD_DEFINITION"
+			};
 
-	std::promise<response::Value> promise;
-	response::Value result(response::Type::EnumValue);
+			response::Value result(response::Type::EnumValue);
 
-	result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value.get())]));
-	promise.set_value(std::move(result));
+			result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value)]));
 
-	return promise.get_future();
+			return result;
+		});
 }
 
 } /* namespace service */

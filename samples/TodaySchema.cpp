@@ -41,22 +41,24 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 }
 
 template <>
-std::future<response::Value> ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& value, ResolverParams&&)
+std::future<response::Value> ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& result, ResolverParams&& params)
 {
-	static const std::string s_names[] = {
-		"New",
-		"Started",
-		"Complete",
-		"Unassigned"
-	};
+	return resolve(std::move(result), std::move(params),
+		[](today::TaskState && value, const ResolverParams&)
+		{
+			static const std::string s_names[] = {
+				"New",
+				"Started",
+				"Complete",
+				"Unassigned"
+			};
 
-	std::promise<response::Value> promise;
-	response::Value result(response::Type::EnumValue);
+			response::Value result(response::Type::EnumValue);
 
-	result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value.get())]));
-	promise.set_value(std::move(result));
+			result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value)]));
 
-	return promise.get_future();
+			return result;
+		});
 }
 
 template <>
