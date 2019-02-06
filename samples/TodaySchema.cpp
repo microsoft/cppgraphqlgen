@@ -210,13 +210,13 @@ std::future<response::Value> Query::resolveNested(service::ResolverParams&& para
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Query::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Query::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Query")));
+	promise.set_value("Query");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 std::future<response::Value> Query::resolve__schema(service::ResolverParams&& params)
@@ -263,13 +263,13 @@ std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverP
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("PageInfo")));
+	promise.set_value("PageInfo");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 AppointmentEdge::AppointmentEdge()
@@ -297,13 +297,13 @@ std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverPar
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> AppointmentEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> AppointmentEdge::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("AppointmentEdge")));
+	promise.set_value("AppointmentEdge");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 AppointmentConnection::AppointmentConnection()
@@ -331,13 +331,13 @@ std::future<response::Value> AppointmentConnection::resolveEdges(service::Resolv
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> AppointmentConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> AppointmentConnection::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("AppointmentConnection")));
+	promise.set_value("AppointmentConnection");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 TaskEdge::TaskEdge()
@@ -365,13 +365,13 @@ std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& p
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> TaskEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> TaskEdge::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("TaskEdge")));
+	promise.set_value("TaskEdge");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 TaskConnection::TaskConnection()
@@ -399,13 +399,13 @@ std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParam
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> TaskConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> TaskConnection::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("TaskConnection")));
+	promise.set_value("TaskConnection");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 FolderEdge::FolderEdge()
@@ -433,13 +433,13 @@ std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&&
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> FolderEdge::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> FolderEdge::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("FolderEdge")));
+	promise.set_value("FolderEdge");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 FolderConnection::FolderConnection()
@@ -467,13 +467,13 @@ std::future<response::Value> FolderConnection::resolveEdges(service::ResolverPar
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> FolderConnection::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> FolderConnection::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("FolderConnection")));
+	promise.set_value("FolderConnection");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 CompleteTaskPayload::CompleteTaskPayload()
@@ -501,13 +501,13 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("CompleteTaskPayload")));
+	promise.set_value("CompleteTaskPayload");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 Mutation::Mutation()
@@ -528,13 +528,13 @@ std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverPara
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Mutation::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Mutation::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Mutation")));
+	promise.set_value("Mutation");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 Subscription::Subscription()
@@ -563,13 +563,13 @@ std::future<response::Value> Subscription::resolveNodeChange(service::ResolverPa
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Subscription::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Subscription::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Subscription")));
+	promise.set_value("Subscription");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 Appointment::Appointment()
@@ -614,13 +614,13 @@ std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&&
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Appointment::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Appointment::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Appointment")));
+	promise.set_value("Appointment");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 Task::Task()
@@ -657,13 +657,13 @@ std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& p
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Task::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Task::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Task")));
+	promise.set_value("Task");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 Folder::Folder()
@@ -700,13 +700,13 @@ std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Folder::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> Folder::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("Folder")));
+	promise.set_value("Folder");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 NestedType::NestedType()
@@ -734,13 +734,13 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> NestedType::resolve__typename(service::ResolverParams&&)
+std::future<response::Value> NestedType::resolve__typename(service::ResolverParams&& params)
 {
-	std::promise<response::Value> promise;
+	std::promise<response::StringType> promise;
 
-	promise.set_value(response::Value(std::string("NestedType")));
+	promise.set_value("NestedType");
 
-	return promise.get_future();
+	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
 } /* namespace object */
