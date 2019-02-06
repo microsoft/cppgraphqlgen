@@ -1156,27 +1156,25 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, const std::string& operationName, response::Value&& variables, FragmentMap&& fragments);
+	OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments);
 
 	std::future<response::Value> getValue();
 
-	void visit(const peg::ast_node& operationDefinition);
+	void visit(std::string operationType, const peg::ast_node& operationDefinition);
 
 private:
 	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
-	const std::string& _operationName;
 	std::future<response::Value> _result;
 };
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap & operations, const std::string & operationName, response::Value && variables, FragmentMap && fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap & operations, response::Value && variables, FragmentMap && fragments)
 	: _params(std::make_shared<OperationData>(
 		std::move(state),
 		std::move(variables),
 		response::Value(),
 		std::move(fragments)))
 	, _operations(operations)
-	, _operationName(operationName)
 {
 }
 
@@ -1184,200 +1182,83 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 {
 	auto result = std::move(_result);
 
-	try
-	{
-		if (!result.valid())
-		{
-			std::ostringstream error;
-
-			error << "Missing operation";
-
-			if (!_operationName.empty())
-			{
-				error << " name: " << _operationName;
-			}
-
-			throw schema_exception({ error.str() });
-		}
-	}
-	catch (schema_exception & ex)
-	{
-		std::promise<response::Value> promise;
-		response::Value document(response::Type::Map);
-
-		document.emplace_back(strData, response::Value());
-		document.emplace_back(strErrors, ex.getErrors());
-		promise.set_value(std::move(document));
-
-		result = promise.get_future();
-	}
-
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(const peg::ast_node & operationDefinition)
+void OperationDefinitionVisitor::visit(std::string operationType, const peg::ast_node & operationDefinition)
 {
-	std::string operation;
+	auto itr = _operations.find(operationType);
 
-	peg::on_first_child<peg::operation_type>(operationDefinition,
-		[&operation](const peg::ast_node & child)
+	// Filter the variable definitions down to the ones referenced in this operation
+	response::Value operationVariables(response::Type::Map);
+
+	peg::for_each_child<peg::variable>(operationDefinition,
+		[this, &operationVariables](const peg::ast_node & variable)
 		{
-			operation = child.content();
-		});
+			std::string variableName;
 
-	if (operation.empty())
-	{
-		operation = strQuery;
-	}
-	else if (operation == strSubscription)
-	{
-		// Skip subscription operations, they should use subscribe instead of resolve.
-		return;
-	}
+			peg::on_first_child<peg::variable_name>(variable,
+				[&variableName](const peg::ast_node & name)
+				{
+					// Skip the $ prefix
+					variableName = name.content().c_str() + 1;
+				});
 
-	auto position = operationDefinition.begin();
-	std::string name;
+			auto itrVar = _params->variables.find(variableName);
+			response::Value valueVar;
 
-	peg::on_first_child<peg::operation_name>(operationDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.content();
-		});
-
-	if (!_operationName.empty()
-		&& name != _operationName)
-	{
-		// Skip the operations that don't match the name
-		return;
-	}
-
-	try
-	{
-		if (_result.valid())
-		{
-			std::ostringstream error;
-
-			if (_operationName.empty())
+			if (itrVar != _params->variables.get<const response::MapType&>().cend())
 			{
-				error << "No operationName specified with extra operation";
+				valueVar = response::Value(itrVar->second);
 			}
 			else
 			{
-				error << "Duplicate operation";
-			}
-
-			if (!name.empty())
-			{
-				error << " name: " << name;
-			}
-
-			error << " line: " << position.line
-				<< " column: " << position.byte_in_line;
-
-			throw schema_exception({ error.str() });
-		}
-
-		auto itr = _operations.find(operation);
-
-		if (itr == _operations.cend())
-		{
-			std::ostringstream error;
-
-			error << "Unknown operation type: " << operation;
-
-			if (!name.empty())
-			{
-				error << " name: " << name;
-			}
-
-			error << " line: " << position.line
-				<< " column: " << position.byte_in_line;
-
-			throw schema_exception({ error.str() });
-		}
-
-		// Filter the variable definitions down to the ones referenced in this operation
-		response::Value operationVariables(response::Type::Map);
-
-		peg::for_each_child<peg::variable>(operationDefinition,
-			[this, &operationVariables](const peg::ast_node & variable)
-			{
-				std::string variableName;
-
-				peg::on_first_child<peg::variable_name>(variable,
-					[&variableName](const peg::ast_node & name)
+				peg::on_first_child<peg::default_value>(variable,
+					[this, &valueVar](const peg::ast_node & defaultValue)
 					{
-						// Skip the $ prefix
-						variableName = name.content().c_str() + 1;
+						ValueVisitor visitor(_params->variables);
+
+						visitor.visit(*defaultValue.children.front());
+						valueVar = visitor.getValue();
 					});
+			}
 
-				auto itrVar = _params->variables.find(variableName);
-				response::Value valueVar;
+			operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+		});
 
-				if (itrVar != _params->variables.get<const response::MapType&>().cend())
-				{
-					valueVar = response::Value(itrVar->second);
-				}
-				else
-				{
-					peg::on_first_child<peg::default_value>(variable,
-						[this, &valueVar](const peg::ast_node & defaultValue)
-						{
-							ValueVisitor visitor(_params->variables);
+	_params->variables = std::move(operationVariables);
 
-							visitor.visit(*defaultValue.children.front());
-							valueVar = visitor.getValue();
-						});
-				}
+	response::Value operationDirectives(response::Type::Map);
 
-				operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
-			});
+	peg::on_first_child<peg::directives>(operationDefinition,
+		[this, &operationDirectives](const peg::ast_node & child)
+		{
+			DirectiveVisitor directiveVisitor(_params->variables);
 
-		_params->variables = std::move(operationVariables);
+			directiveVisitor.visit(child);
+			operationDirectives = directiveVisitor.getDirectives();
+		});
 
-		response::Value operationDirectives(response::Type::Map);
+	_params->directives = std::move(operationDirectives);
 
-		peg::on_first_child<peg::directives>(operationDefinition,
-			[this, &operationDirectives](const peg::ast_node & child)
-			{
-				DirectiveVisitor directiveVisitor(_params->variables);
+	// Keep the params alive until the deferred lambda has executed
+	auto params = std::move(_params);
 
-				directiveVisitor.visit(child);
-				operationDirectives = directiveVisitor.getDirectives();
-			});
+	// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
+	response::Value emptyFragmentDirectives(response::Type::Map);
+	const SelectionSetParams selectionSetParams {
+		params->state,
+		params->directives,
+		emptyFragmentDirectives,
+		emptyFragmentDirectives,
+		emptyFragmentDirectives
+	};
 
-		_params->directives = std::move(operationDirectives);
-
-		// Keep the params alive until the deferred lambda has executed
-		auto params = std::move(_params);
-
-		// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
-		response::Value emptyFragmentDirectives(response::Type::Map);
-		const SelectionSetParams selectionSetParams {
-			params->state,
-			params->directives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives
-		};
-
-		_result = std::async(std::launch::deferred,
-			[params](std::future<response::Value> document)
-			{
-				return document.get();
-			}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
-	}
-	catch (schema_exception & ex)
-	{
-		std::promise<response::Value> promise;
-		response::Value document(response::Type::Map);
-
-		document.emplace_back(strData, response::Value());
-		document.emplace_back(strErrors, ex.getErrors());
-		promise.set_value(std::move(document));
-
-		_result = promise.get_future();
-	}
+	_result = std::async(std::launch::deferred,
+		[params](std::future<response::Value> document)
+		{
+			return document.get();
+		}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
 }
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
@@ -1432,20 +1313,6 @@ const peg::ast_node& SubscriptionDefinitionVisitor::getRoot() const
 
 std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration()
 {
-	if (!_result)
-	{
-		std::ostringstream error;
-
-		error << "Missing operation";
-
-		if (!_params.operationName.empty())
-		{
-			error << " name: " << _params.operationName;
-		}
-
-		throw schema_exception({ error.str() });
-	}
-
 	auto result = std::move(_result);
 
 	_result.reset();
@@ -1455,60 +1322,6 @@ std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration
 
 void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinition)
 {
-	std::string operation;
-
-	peg::on_first_child<peg::operation_type>(operationDefinition,
-		[&operation](const peg::ast_node & child)
-		{
-			operation = child.content();
-		});
-
-	if (operation != strSubscription)
-	{
-		// Skip operations other than subscription.
-		return;
-	}
-
-	auto position = operationDefinition.begin();
-	std::string name;
-
-	peg::on_first_child<peg::operation_name>(operationDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.content();
-		});
-
-	if (!_params.operationName.empty()
-		&& name != _params.operationName)
-	{
-		// Skip the subscriptions that don't match the name
-		return;
-	}
-
-	if (_result)
-	{
-		std::ostringstream error;
-
-		if (_params.operationName.empty())
-		{
-			error << "No operationName specified with extra subscription";
-		}
-		else
-		{
-			error << "Duplicate subscription";
-		}
-
-		if (!name.empty())
-		{
-			error << " name: " << name;
-		}
-
-		error << " line: " << position.line
-			<< " column: " << position.byte_in_line;
-
-		throw schema_exception({ error.str() });
-	}
-
 	const auto& selection = *operationDefinition.children.back();
 
 	for (const auto& child : selection.children)
@@ -1676,6 +1489,88 @@ Request::Request(TypeMap && operationTypes)
 {
 }
 
+std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const
+{
+	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
+
+	peg::for_each_child<peg::operation_definition>(root,
+		[this, &operationName, &result](const peg::ast_node & operationDefinition)
+		{
+			std::string operationType(strQuery);
+
+			peg::on_first_child<peg::operation_type>(operationDefinition,
+				[&operationType](const peg::ast_node & child)
+				{
+					operationType = child.content();
+				});
+
+			std::string name;
+
+			peg::on_first_child<peg::operation_name>(operationDefinition,
+				[&name](const peg::ast_node & child)
+				{
+					name = child.content();
+				});
+
+			if (!operationName.empty()
+				&& name != operationName)
+			{
+				// Skip the operations that don't match the name
+				return;
+			}
+
+			std::vector<std::string> errors;
+			auto position = operationDefinition.begin();
+
+			if (result.second)
+			{
+				std::ostringstream message;
+
+				message << operationName.empty()
+					? "Multiple ambigious operations"
+					: "Duplicate named operations";
+
+				if (!name.empty())
+				{
+					message << " name: " << name;
+				}
+
+				message << " line: " << position.line
+					<< " column: " << position.byte_in_line;
+
+				errors.push_back(message.str());
+			}
+
+			auto itr = _operations.find(operationType);
+
+			if (itr == _operations.cend())
+			{
+				std::ostringstream message;
+
+				message << "Unsupported operation type: " << operationType;
+
+				if (!name.empty())
+				{
+					message << " name: " << name;
+				}
+
+				message << " line: " << position.line
+					<< " column: " << position.byte_in_line;
+
+				errors.push_back(message.str());
+			}
+
+			if (!errors.empty())
+			{
+				throw schema_exception(std::move(errors));
+			}
+
+			result = { std::move(operationType), &operationDefinition };
+		});
+
+	return result;
+}
+
 std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState> & state, const peg::ast_node & root, const std::string & operationName, response::Value && variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor(variables);
@@ -1687,26 +1582,59 @@ std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
-	OperationDefinitionVisitor operationVisitor(state, _operations, operationName, std::move(variables), std::move(fragments));
 
-	peg::for_each_child<peg::operation_definition>(root,
-		[&operationVisitor](const peg::ast_node & child)
+	try
+	{
+		auto operationDefinition = findOperationDefinition(root, operationName);
+
+		if (!operationDefinition.second)
 		{
-			operationVisitor.visit(child);
-		});
+			std::ostringstream message;
 
-	return operationVisitor.getValue();
+			message << "Missing operation";
+
+			if (!operationName.empty())
+			{
+				message << " name: " << operationName;
+			}
+
+			throw schema_exception({ message.str() });
+		}
+		else if (operationDefinition.first == strSubscription)
+		{
+			std::ostringstream message;
+
+			message << "Unexpected subscription";
+
+			if (!operationName.empty())
+			{
+				message << " name: " << operationName;
+			}
+
+			throw schema_exception({ message.str() });
+		}
+
+		OperationDefinitionVisitor operationVisitor(state, _operations, std::move(variables), std::move(fragments));
+
+		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
+
+		return operationVisitor.getValue();
+	}
+	catch (schema_exception & ex)
+	{
+		std::promise<response::Value> promise;
+		response::Value document(response::Type::Map);
+
+		document.emplace_back(strData, response::Value());
+		document.emplace_back(strErrors, ex.getErrors());
+		promise.set_value(std::move(document));
+
+		return promise.get_future();
+	}
 }
 
 SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCallback && callback)
 {
-	auto itr = _operations.find(strSubscription);
-
-	if (itr == _operations.cend())
-	{
-		throw schema_exception({ "Schema does not include a subscription type" });
-	}
-
 	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
 	peg::for_each_child<peg::fragment_definition>(*params.query->root,
@@ -1716,6 +1644,36 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
+	auto operationDefinition = findOperationDefinition(*params.query.root, params.operationName);
+
+	if (!operationDefinition.second)
+	{
+		std::ostringstream message;
+
+		message << "Missing subscription";
+
+		if (!params.operationName.empty())
+		{
+			message << " name: " << params.operationName;
+		}
+
+		throw schema_exception({ message.str() });
+	}
+	else if (operationDefinition.first != strSubscription)
+	{
+		std::ostringstream message;
+
+		message << "Unexpected operation type: " << operationDefinition.first;
+
+		if (!params.operationName.empty())
+		{
+			message << " name: " << params.operationName;
+		}
+
+		throw schema_exception({ message.str() });
+	}
+
+	auto itr = _operations.find(strSubscription);
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params), std::move(callback), std::move(fragments), itr->second);
 
 	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
