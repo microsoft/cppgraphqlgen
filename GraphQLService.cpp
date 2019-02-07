@@ -1082,10 +1082,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 			response::Value result(response::Type::Map);
 
-			if (data.size() > 0)
-			{
-				result.emplace_back(strData, std::move(data));
-			}
+			result.emplace_back(strData, std::move(data));
 
 			if (errors.size() > 0)
 			{

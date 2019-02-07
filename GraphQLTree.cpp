@@ -659,7 +659,15 @@ ast<const char*>::~ast()
 ast<std::string> parseString(std::string&& input)
 {
 	ast<std::string> result { std::move(input), nullptr };
-	memory_input<> in(result.input.c_str(), result.input.size(), "GraphQL");
+	const size_t length = result.input.size();
+
+	if (length < sizeof(result.input))
+	{
+		// Overflow the short string optimization so it uses a heap allocation.
+		result.input.resize(sizeof(result.input));
+	}
+
+	memory_input<> in(result.input.c_str(), length, "GraphQL");
 
 	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
 
