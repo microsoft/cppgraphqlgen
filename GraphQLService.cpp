@@ -517,10 +517,10 @@ std::string Base64::toBase64(const std::vector<uint8_t> & bytes)
 			| static_cast<uint32_t>(data[2]);
 
 		result.append({
-			verifyToBase64((segment & 0xFC0000) >> 18),
-			verifyToBase64((segment & 0x3F000) >> 12),
-			verifyToBase64((segment & 0xFC0) >> 6),
-			verifyToBase64(segment & 0x3F)
+			verifyToBase64(static_cast<uint8_t>((segment & 0xFC0000) >> 18)),
+			verifyToBase64(static_cast<uint8_t>((segment & 0x3F000) >> 12)),
+			verifyToBase64(static_cast<uint8_t>((segment & 0xFC0) >> 6)),
+			verifyToBase64(static_cast<uint8_t>(segment & 0x3F))
 			});
 
 		data += 3;
@@ -534,9 +534,9 @@ std::string Base64::toBase64(const std::vector<uint8_t> & bytes)
 		const uint16_t segment = (static_cast<uint16_t>(data[0]) << 8)
 			| (pair ? static_cast<uint16_t>(data[1]) : 0);
 		const std::array<char, 4> remainder {
-			verifyToBase64((segment & 0xFC00) >> 10),
-			verifyToBase64((segment & 0x3F0) >> 4),
-			(pair ? verifyToBase64((segment & 0xF) << 2) : padding),
+			verifyToBase64(static_cast<uint8_t>((segment & 0xFC00) >> 10)),
+			verifyToBase64(static_cast<uint8_t>((segment & 0x3F0) >> 4)),
+			(pair ? verifyToBase64(static_cast<uint8_t>((segment & 0xF) << 2)) : padding),
 			padding
 		};
 
@@ -1098,11 +1098,11 @@ bool Object::matchesType(const std::string & typeName) const
 	return _typeNames.find(typeName) != _typeNames.cend();
 }
 
-void Object::beginSelectionSet(const SelectionSetParams & params) const
+void Object::beginSelectionSet(const SelectionSetParams &) const
 {
 }
 
-void Object::endSelectionSet(const SelectionSetParams & params) const
+void Object::endSelectionSet(const SelectionSetParams &) const
 {
 }
 
@@ -1157,7 +1157,7 @@ public:
 
 	std::future<response::Value> getValue();
 
-	void visit(std::string operationType, const peg::ast_node& operationDefinition);
+	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
 
 private:
 	std::shared_ptr<OperationData> _params;
@@ -1182,7 +1182,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(std::string operationType, const peg::ast_node & operationDefinition)
+void OperationDefinitionVisitor::visit(const std::string & operationType, const peg::ast_node & operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 

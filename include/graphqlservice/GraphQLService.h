@@ -630,7 +630,7 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
 using SubscriptionArguments = std::unordered_map<std::string, response::Value>;
-using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference) noexcept>;
+using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
 
 // Subscriptions are stored in maps using these keys.
 using SubscriptionKey = size_t;

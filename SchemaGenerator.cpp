@@ -151,7 +151,7 @@ Generator::Generator()
 	}
 }
 
-Generator::Generator(std::string schemaFileName, std::string filenamePrefix, std::string schemaNamespace)
+Generator::Generator(std::string&& schemaFileName, std::string&& filenamePrefix, std::string&& schemaNamespace)
 	: _isIntrospection(false)
 	, _filenamePrefix(std::move(filenamePrefix))
 	, _schemaNamespace(std::move(schemaNamespace))
@@ -1531,7 +1531,7 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 	std::ostringstream output;
 	std::string fieldName(outputField.name);
 
-	fieldName[0] = std::toupper(fieldName[0]);
+	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField, interfaceField)
 		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
@@ -1552,7 +1552,7 @@ std::string Generator::getResolverDeclaration(const OutputField & outputField) c
 	std::ostringstream output;
 	std::string fieldName(outputField.name);
 
-	fieldName[0] = std::toupper(fieldName[0]);
+	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	std::future<response::Value> resolve)cpp" << fieldName
 		<< R"cpp((service::ResolverParams&& params);
 )cpp";
@@ -1747,7 +1747,7 @@ template <>
 				}
 
 				firstField = false;
-				fieldName[0] = std::toupper(fieldName[0]);
+				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 				sourceFile << R"cpp(		std::move(value)cpp" << fieldName << R"cpp())cpp";
 			}
 
@@ -1819,7 +1819,7 @@ namespace object {
 
 				std::string fieldName(outputField.name);
 
-				fieldName[0] = std::toupper(fieldName[0]);
+				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 				sourceFile << R"cpp(		{ ")cpp" << outputField.name
 					<< R"cpp(", [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
 					<< R"cpp((std::move(params)); } })cpp";
@@ -1873,7 +1873,7 @@ namespace object {
 			{
 				std::string fieldName(outputField.name);
 
-				fieldName[0] = std::toupper(fieldName[0]);
+				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 				sourceFile << R"cpp(
 std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
@@ -1931,7 +1931,7 @@ std::future<response::Value> )cpp" << objectType.type
 					{
 						std::string argumentName(argument.name);
 
-						argumentName[0] = std::toupper(argumentName[0]);
+						argumentName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
 						sourceFile << R"cpp(, std::move(arg)cpp" << argumentName << R"cpp())cpp";
 					}
 				}
@@ -2541,7 +2541,7 @@ Operations::Operations()cpp";
 		{
 			std::string operation(operationType.operation);
 
-			operation[0] = std::toupper(operation[0]);
+			operation[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(operation[0])));
 			sourceFile << R"cpp(	schema->Add)cpp" << operation
 				<< R"cpp(Type(type)cpp" << operationType.type
 				<< R"cpp();
@@ -2689,7 +2689,7 @@ std::string Generator::getArgumentDeclaration(const InputField & argument, const
 	std::ostringstream argumentDeclaration;
 	std::string argumentName(argument.name);
 
-	argumentName[0] = std::toupper(argumentName[0]);
+	argumentName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
 	if (argument.defaultValue.type() == response::Type::Null)
 	{
 		argumentDeclaration << R"cpp(	auto )cpp" << prefixToken << argumentName

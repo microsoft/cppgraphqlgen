@@ -30,7 +30,7 @@ public:
 	void AddQueryType(std::shared_ptr<ObjectType> query);
 	void AddMutationType(std::shared_ptr<ObjectType> mutation);
 	void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
-	void AddType(response::StringType name, std::shared_ptr<object::__Type> type);
+	void AddType(response::StringType&& name, std::shared_ptr<object::__Type> type);
 	const std::shared_ptr<object::__Type>& LookupType(const response::StringType& name) const;
 	const std::shared_ptr<object::__Type>& WrapType(__TypeKind kind, const std::shared_ptr<object::__Type>& ofType);
 	void AddDirective(std::shared_ptr<object::__Directive> directive);
@@ -67,7 +67,7 @@ public:
 	std::future<std::shared_ptr<object::__Type>> getOfType(service::FieldParams&& params) const override;
 
 protected:
-	BaseType(response::StringType description);
+	BaseType(response::StringType&& description);
 
 private:
 	const response::StringType _description;
@@ -76,7 +76,7 @@ private:
 class ScalarType : public BaseType
 {
 public:
-	explicit ScalarType(response::StringType name, response::StringType description);
+	explicit ScalarType(response::StringType&& name, response::StringType&& description);
 
 	// Accessors
 	std::future<__TypeKind> getKind(service::FieldParams&& params) const override;
@@ -89,7 +89,7 @@ private:
 class ObjectType : public BaseType
 {
 public:
-	explicit ObjectType(response::StringType name, response::StringType description);
+	explicit ObjectType(response::StringType&& name, response::StringType&& description);
 
 	void AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces);
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
@@ -110,7 +110,7 @@ private:
 class InterfaceType : public BaseType
 {
 public:
-	explicit InterfaceType(response::StringType name, response::StringType description);
+	explicit InterfaceType(response::StringType&& name, response::StringType&& description);
 
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
@@ -128,7 +128,7 @@ private:
 class UnionType : public BaseType
 {
 public:
-	explicit UnionType(response::StringType name, response::StringType description);
+	explicit UnionType(response::StringType&& name, response::StringType&& description);
 
 	void AddPossibleTypes(std::vector<std::weak_ptr<object::__Type>> possibleTypes);
 
@@ -153,7 +153,7 @@ struct EnumValueType
 class EnumType : public BaseType
 {
 public:
-	explicit EnumType(response::StringType name, response::StringType description);
+	explicit EnumType(response::StringType&& name, response::StringType&& description);
 
 	void AddEnumValues(std::vector<EnumValueType> enumValues);
 
@@ -171,7 +171,7 @@ private:
 class InputObjectType : public BaseType
 {
 public:
-	explicit InputObjectType(response::StringType name, response::StringType description);
+	explicit InputObjectType(response::StringType&& name, response::StringType&& description);
 
 	void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
@@ -203,7 +203,7 @@ private:
 class Field : public object::__Field
 {
 public:
-	explicit Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, const std::shared_ptr<object::__Type>& type);
+	explicit Field(response::StringType&& name, response::StringType&& description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::__Type>& type);
 
 	// Accessors
 	std::future<response::StringType> getName(service::FieldParams&& params) const override;
@@ -224,7 +224,7 @@ private:
 class InputValue : public object::__InputValue
 {
 public:
-	explicit InputValue(response::StringType name, response::StringType description, const std::shared_ptr<object::__Type>& type, response::StringType defaultValue);
+	explicit InputValue(response::StringType&& name, response::StringType&& description, const std::shared_ptr<object::__Type>& type, response::StringType&& defaultValue);
 
 	// Accessors
 	std::future<response::StringType> getName(service::FieldParams&& params) const override;
@@ -242,7 +242,7 @@ private:
 class EnumValue : public object::__EnumValue
 {
 public:
-	explicit EnumValue(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason);
+	explicit EnumValue(response::StringType&& name, response::StringType&& description, std::unique_ptr<response::StringType>&& deprecationReason);
 
 	// Accessors
 	std::future<response::StringType> getName(service::FieldParams&& params) const override;
@@ -259,7 +259,7 @@ private:
 class Directive : public object::__Directive
 {
 public:
-	explicit Directive(response::StringType name, response::StringType description, std::vector<response::StringType> locations, std::vector<std::shared_ptr<InputValue>> args);
+	explicit Directive(response::StringType&& name, response::StringType&& description, std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args);
 
 	// Accessors
 	std::future<response::StringType> getName(service::FieldParams&& params) const override;

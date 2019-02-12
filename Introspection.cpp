@@ -26,7 +26,7 @@ void Schema::AddSubscriptionType(std::shared_ptr<ObjectType> subscription)
 	_subscription = std::move(subscription);
 }
 
-void Schema::AddType(response::StringType name, std::shared_ptr<object::__Type> type)
+void Schema::AddType(response::StringType&& name, std::shared_ptr<object::__Type> type)
 {
 	_typeMap[name] = _types.size();
 	_types.push_back({ std::move(name), std::move(type) });
@@ -112,7 +112,7 @@ std::future<std::vector<std::shared_ptr<object::__Directive>>> Schema::getDirect
 	return promise.get_future();
 }
 
-BaseType::BaseType(response::StringType description)
+BaseType::BaseType(response::StringType&& description)
 	: _description(std::move(description))
 {
 }
@@ -191,7 +191,7 @@ std::future<std::shared_ptr<object::__Type>> BaseType::getOfType(service::FieldP
 	return promise.get_future();
 }
 
-ScalarType::ScalarType(response::StringType name, response::StringType description)
+ScalarType::ScalarType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -215,7 +215,7 @@ std::future<std::unique_ptr<response::StringType>> ScalarType::getName(service::
 	return promise.get_future();
 }
 
-ObjectType::ObjectType(response::StringType name, response::StringType description)
+ObjectType::ObjectType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -278,7 +278,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> Objec
 	return promise.get_future();
 }
 
-InterfaceType::InterfaceType(response::StringType name, response::StringType description)
+InterfaceType::InterfaceType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -325,7 +325,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Field>>>> Inte
 	return promise.get_future();
 }
 
-UnionType::UnionType(response::StringType name, response::StringType description)
+UnionType::UnionType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -369,7 +369,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__Type>>>> Union
 	return promise.get_future();
 }
 
-EnumType::EnumType(response::StringType name, response::StringType description)
+EnumType::EnumType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -425,7 +425,7 @@ std::future<std::unique_ptr<std::vector<std::shared_ptr<object::__EnumValue>>>> 
 	return promise.get_future();
 }
 
-InputObjectType::InputObjectType(response::StringType name, response::StringType description)
+InputObjectType::InputObjectType(response::StringType&& name, response::StringType&& description)
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
@@ -490,7 +490,7 @@ std::future<std::shared_ptr<object::__Type>> WrapperType::getOfType(service::Fie
 	return promise.get_future();
 }
 
-Field::Field(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>> args, const std::shared_ptr<object::__Type>& type)
+Field::Field(response::StringType&& name, response::StringType&& description, std::unique_ptr<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::__Type>& type)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _deprecationReason(std::move(deprecationReason))
@@ -559,7 +559,7 @@ std::future<std::unique_ptr<response::StringType>> Field::getDeprecationReason(s
 	return promise.get_future();
 }
 
-InputValue::InputValue(response::StringType name, response::StringType description, const std::shared_ptr<object::__Type>& type, response::StringType defaultValue)
+InputValue::InputValue(response::StringType&& name, response::StringType&& description, const std::shared_ptr<object::__Type>& type, response::StringType&& defaultValue)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _type(type)
@@ -607,7 +607,7 @@ std::future<std::unique_ptr<response::StringType>> InputValue::getDefaultValue(s
 	return promise.get_future();
 }
 
-EnumValue::EnumValue(response::StringType name, response::StringType description, std::unique_ptr<response::StringType>&& deprecationReason)
+EnumValue::EnumValue(response::StringType&& name, response::StringType&& description, std::unique_ptr<response::StringType>&& deprecationReason)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _deprecationReason(std::move(deprecationReason))
@@ -654,7 +654,7 @@ std::future<std::unique_ptr<response::StringType>> EnumValue::getDeprecationReas
 	return promise.get_future();
 }
 
-Directive::Directive(response::StringType name, response::StringType description, std::vector<response::StringType> locations, std::vector<std::shared_ptr<InputValue>> args)
+Directive::Directive(response::StringType&& name, response::StringType&& description, std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args)
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _locations([](std::vector<response::StringType>&& locationsArg) -> std::vector<__DirectiveLocation>
