@@ -79,7 +79,7 @@ struct ast_selector<escaped_unicode>
 	{
 		if (n->has_content())
 		{
-			std::string content = n->content();
+			std::string content = n->string();
 
 			if (unescape::utf8_append_utf32(n->unescaped, unescape::unhex_string<uint32_t>(content.data() + 1, content.data() + content.size())))
 			{
@@ -99,7 +99,7 @@ struct ast_selector<escaped_char>
 	{
 		if (n->has_content())
 		{
-			const char ch = n->content().front();
+			const char ch = n->string().front();
 
 			switch (ch)
 			{
@@ -150,7 +150,7 @@ struct ast_selector<string_quote_character>
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->content();
+		n->unescaped = n->string();
 	}
 };
 
@@ -170,7 +170,7 @@ struct ast_selector<block_quote_character>
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->content();
+		n->unescaped = n->string();
 	}
 };
 

@@ -134,7 +134,7 @@ void ValueVisitor::visit(const peg::ast_node & value)
 
 void ValueVisitor::visitVariable(const peg::ast_node & variable)
 {
-	const std::string name(variable.content().c_str() + 1);
+	const std::string name(variable.string().c_str() + 1);
 	auto itr = _variables.find(name);
 
 	if (itr == _variables.get<const response::MapType&>().cend())
@@ -154,12 +154,12 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 
 void ValueVisitor::visitIntValue(const peg::ast_node & intValue)
 {
-	_value = response::Value(std::atoi(intValue.content().c_str()));
+	_value = response::Value(std::atoi(intValue.string().c_str()));
 }
 
 void ValueVisitor::visitFloatValue(const peg::ast_node & floatValue)
 {
-	_value = response::Value(std::atof(floatValue.content().c_str()));
+	_value = response::Value(std::atof(floatValue.string().c_str()));
 }
 
 void ValueVisitor::visitStringValue(const peg::ast_node & stringValue)
@@ -180,7 +180,7 @@ void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 void ValueVisitor::visitEnumValue(const peg::ast_node & enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
-	_value.set<response::StringType>(enumValue.content());
+	_value.set<response::StringType>(enumValue.string());
 }
 
 void ValueVisitor::visitListValue(const peg::ast_node & listValue)
@@ -207,7 +207,7 @@ void ValueVisitor::visitObjectValue(const peg::ast_node & objectValue)
 	for (const auto& field : objectValue.children)
 	{
 		visitor.visit(*field->children.back());
-		_value.emplace_back(field->children.front()->content(), visitor.getValue());
+		_value.emplace_back(field->children.front()->string(), visitor.getValue());
 	}
 }
 
@@ -246,7 +246,7 @@ void DirectiveVisitor::visit(const peg::ast_node & directives)
 		peg::on_first_child<peg::directive_name>(*directive,
 			[&directiveName](const peg::ast_node & child)
 			{
-				directiveName = child.content();
+				directiveName = child.string();
 			});
 
 		if (directiveName.empty())
@@ -265,7 +265,7 @@ void DirectiveVisitor::visit(const peg::ast_node & directives)
 				{
 					visitor.visit(*argument->children.back());
 
-					directiveArguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+					directiveArguments.emplace_back(argument->children.front()->string(), visitor.getValue());
 				}
 			});
 
@@ -355,7 +355,7 @@ bool DirectiveVisitor::shouldSkip() const
 }
 
 Fragment::Fragment(const peg::ast_node & fragmentDefinition, const response::Value & variables)
-	: _type(fragmentDefinition.children[1]->children.front()->content())
+	: _type(fragmentDefinition.children[1]->children.front()->string())
 	, _directives(response::Type::Map)
 	, _selection(*(fragmentDefinition.children.back()))
 {
@@ -782,7 +782,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 	peg::on_first_child<peg::field_name>(field,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	std::string alias;
@@ -790,7 +790,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 	peg::on_first_child<peg::alias_name>(field,
 		[&alias](const peg::ast_node & child)
 		{
-			alias = child.content();
+			alias = child.string();
 		});
 
 	if (alias.empty())
@@ -836,7 +836,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			{
 				visitor.visit(*argument->children.back());
 
-				arguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+				arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
 			}
 		});
 
@@ -866,7 +866,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 
 void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 {
-	const std::string name(fragmentSpread.children.front()->content());
+	const std::string name(fragmentSpread.children.front()->string());
 	auto itr = _fragments.find(name);
 
 	if (itr == _fragments.cend())
@@ -961,7 +961,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
 		});
 
 	if (typeCondition == nullptr
-		|| _typeNames.count(typeCondition->children.front()->content()) > 0)
+		|| _typeNames.count(typeCondition->children.front()->string()) > 0)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
 			[this, &directiveVisitor](const peg::ast_node & child)
@@ -1145,7 +1145,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.children.front()->content(), Fragment(fragmentDefinition, _variables) });
+	_fragments.insert({ fragmentDefinition.children.front()->string(), Fragment(fragmentDefinition, _variables) });
 }
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
@@ -1198,7 +1198,7 @@ void OperationDefinitionVisitor::visit(const std::string & operationType, const 
 				[&variableName](const peg::ast_node & name)
 				{
 					// Skip the $ prefix
-					variableName = name.content().c_str() + 1;
+					variableName = name.string().c_str() + 1;
 				});
 
 			auto itrVar = _params->variables.find(variableName);
@@ -1368,7 +1368,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 	peg::on_first_child<peg::field_name>(field,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	DirectiveVisitor directiveVisitor(_params.variables);
@@ -1395,7 +1395,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 			{
 				visitor.visit(*argument->children.back());
 
-				arguments.emplace_back(argument->children.front()->content(), visitor.getValue());
+				arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
 			}
 		});
 
@@ -1404,7 +1404,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 
 void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 {
-	const std::string name(fragmentSpread.children.front()->content());
+	const std::string name(fragmentSpread.children.front()->string());
 	auto itr = _fragments.find(name);
 
 	if (itr == _fragments.cend())
@@ -1468,7 +1468,7 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node & in
 		});
 
 	if (typeCondition == nullptr
-		|| _subscriptionObject->matchesType(typeCondition->children.front()->content()))
+		|| _subscriptionObject->matchesType(typeCondition->children.front()->string()))
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
 			[this](const peg::ast_node & child)
@@ -1498,7 +1498,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 			peg::on_first_child<peg::operation_type>(operationDefinition,
 				[&operationType](const peg::ast_node & child)
 				{
-					operationType = child.content();
+					operationType = child.string();
 				});
 
 			std::string name;
@@ -1506,7 +1506,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 			peg::on_first_child<peg::operation_name>(operationDefinition,
 				[&name](const peg::ast_node & child)
 				{
-					name = child.content();
+					name = child.string();
 				});
 
 			if (!operationName.empty()

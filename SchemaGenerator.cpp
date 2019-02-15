@@ -376,8 +376,8 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
 		[this](const peg::ast_node & child)
 		{
-			std::string operation(child.children.front()->content());
-			std::string name(child.children.back()->content());
+			std::string operation(child.children.front()->string());
+			std::string name(child.children.back()->string());
 
 			_operationTypes.push_back({ std::move(name), std::move(operation) });
 		});
@@ -391,7 +391,7 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
@@ -414,7 +414,7 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 	peg::on_first_child<peg::object_name>(objectTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	const auto itrType = _objectNames.find(name);
@@ -426,7 +426,7 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 		peg::for_each_child<peg::interface_type>(objectTypeExtension,
 			[&objectType](const peg::ast_node & child)
 			{
-				objectType.interfaces.push_back(child.content());
+				objectType.interfaces.push_back(child.string());
 			});
 
 		peg::on_first_child<peg::fields_definition>(objectTypeExtension,
@@ -451,7 +451,7 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
@@ -474,7 +474,7 @@ void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeEx
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	const auto itrType = _interfaceNames.find(name);
@@ -505,7 +505,7 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
@@ -528,7 +528,7 @@ void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTy
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	const auto itrType = _inputNames.find(name);
@@ -559,7 +559,7 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
@@ -582,7 +582,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 	peg::on_first_child<peg::enum_name>(enumTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	const auto itrType = _enumNames.find(name);
@@ -601,7 +601,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 				peg::on_first_child<peg::enum_value>(child,
 					[&value](const peg::ast_node & enumValue)
 					{
-						value = enumValue.content();
+						value = enumValue.string();
 					});
 
 				peg::on_first_child<peg::description>(child,
@@ -621,7 +621,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 								peg::on_first_child<peg::directive_name>(directive,
 									[&directiveName](const peg::ast_node & name)
 									{
-										directiveName = name.content();
+										directiveName = name.string();
 									});
 
 								if (directiveName == "deprecated")
@@ -639,7 +639,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 													peg::on_first_child<peg::argument_name>(argument,
 														[&argumentName](const peg::ast_node & name)
 														{
-															argumentName = name.content();
+															argumentName = name.string();
 														});
 
 													if (argumentName == "reason")
@@ -671,7 +671,7 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
@@ -693,7 +693,7 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	peg::on_first_child<peg::union_name>(unionTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
@@ -716,7 +716,7 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 	peg::on_first_child<peg::union_name>(unionTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string();
 		});
 
 	const auto itrType = _unionNames.find(name);
@@ -728,7 +728,7 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 		peg::for_each_child<peg::union_type>(unionTypeExtension,
 			[&unionType](const peg::ast_node & child)
 			{
-				unionType.options.push_back(child.content());
+				unionType.options.push_back(child.string());
 			});
 	}
 }
@@ -740,7 +740,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
 		[&directive](const peg::ast_node & child)
 		{
-			directive.name = child.content();
+			directive.name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
@@ -752,7 +752,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
 		[&directive](const peg::ast_node & child)
 		{
-			directive.locations.push_back(child.content());
+			directive.locations.push_back(child.string());
 		});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
@@ -783,7 +783,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 		{
 			if (child->is<peg::field_name>())
 			{
-				field.name = child->content();
+				field.name = child->string();
 			}
 			else if (child->is<peg::arguments_definition>())
 			{
@@ -809,7 +809,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 						peg::on_first_child<peg::directive_name>(directive,
 							[&directiveName](const peg::ast_node & name)
 							{
-								directiveName = name.content();
+								directiveName = name.string();
 							});
 
 						if (directiveName == "deprecated")
@@ -827,7 +827,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 											peg::on_first_child<peg::argument_name>(argument,
 												[&argumentName](const peg::ast_node & name)
 												{
-													argumentName = name.content();
+													argumentName = name.string();
 												});
 
 											if (argumentName == "reason")
@@ -867,7 +867,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 		{
 			if (child->is<peg::argument_name>())
 			{
-				field.name = child->content();
+				field.name = child->string();
 			}
 			else if (child->is<peg::named_type>()
 				|| child->is<peg::list_type>()
@@ -881,7 +881,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
-				field.defaultValueString = child->children.back()->content();
+				field.defaultValueString = child->children.back()->string();
 			}
 			else if (child->is<peg::description>())
 			{
@@ -919,7 +919,7 @@ void Generator::TypeVisitor::visitNamedType(const peg::ast_node& namedType)
 		_modifiers.push_back(service::TypeModifier::Nullable);
 	}
 
-	_type = namedType.content();
+	_type = namedType.string();
 }
 
 void Generator::TypeVisitor::visitListType(const peg::ast_node& listType)
@@ -986,12 +986,12 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 
 void Generator::DefaultValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = response::Value(std::atoi(intValue.content().c_str()));
+	_value = response::Value(std::atoi(intValue.string().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = response::Value(std::atof(floatValue.content().c_str()));
+	_value = response::Value(std::atof(floatValue.string().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
@@ -1012,7 +1012,7 @@ void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullV
 void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
-	_value.set<response::StringType>(enumValue.content());
+	_value.set<response::StringType>(enumValue.string());
 }
 
 void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
@@ -1039,7 +1039,7 @@ void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objec
 		DefaultValueVisitor visitor;
 
 		visitor.visit(*field->children.back());
-		_value.emplace_back(field->children.front()->content(), visitor.getValue());
+		_value.emplace_back(field->children.front()->string(), visitor.getValue());
 	}
 }
 
