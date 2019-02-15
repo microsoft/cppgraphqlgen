@@ -155,11 +155,19 @@ endif()
 
 install(TARGETS
     graphqlservice
-    graphqljson
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
+
+if(USE_RAPIDJSON)
+  install(TARGETS
+      graphqljson
+    EXPORT cppgraphqlgen-targets
+    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib)
+endif()
 
 set(CMAKE_INSTALL_TOOLSDIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME}
   CACHE PATH "Install schemagen to this directory.")
