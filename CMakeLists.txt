@@ -67,21 +67,36 @@ cppgraphqlgen_target_set_cxx_standard(graphqlservice)
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
 # JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
+# You will also need to define how to build the graphqljson library target with your
+# implementation, and you should set BUILD_GRAPHQLJSON so that the test dependencies know
+# about your version of graphqljson.
 option(USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
 
 if(USE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
 
+  set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson
     JSONResponse.cpp)
-  target_link_libraries(graphqljson PUBLIC
-    graphqlservice)
   target_include_directories(graphqljson SYSTEM PRIVATE
     ${RAPIDJSON_INCLUDE_DIRS})
-  cppgraphqlgen_target_set_cxx_standard(graphqljson)
 endif()
 
-option(BUILD_TESTS "Build the tests and sample schema library." ON)
+if(BUILD_GRAPHQLJSON)
+  option(BUILD_TESTS "Build the tests and sample schema library." ON)
+
+  target_link_libraries(graphqljson PUBLIC
+    graphqlservice)
+  cppgraphqlgen_target_set_cxx_standard(graphqljson)
+
+  install(TARGETS
+      graphqljson
+    EXPORT cppgraphqlgen-targets
+    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib)
+endif()
+
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
 
 if(BUILD_TESTS OR UPDATE_SAMPLES)
@@ -159,15 +174,6 @@ install(TARGETS
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
-
-if(USE_RAPIDJSON)
-  install(TARGETS
-      graphqljson
-    EXPORT cppgraphqlgen-targets
-    RUNTIME DESTINATION bin
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib)
-endif()
 
 set(CMAKE_INSTALL_TOOLSDIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME}
   CACHE PATH "Install schemagen to this directory.")
