@@ -95,6 +95,8 @@ if(BUILD_GRAPHQLJSON)
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib)
+else()
+  set(BUILD_TESTS OFF)
 endif()
 
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
