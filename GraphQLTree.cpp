@@ -526,6 +526,12 @@ struct ast_selector<schema_extension>
 };
 
 template <>
+struct ast_selector<operation_type_definition>
+	: std::true_type
+{
+};
+
+template <>
 struct ast_selector<scalar_type_extension>
 	: std::true_type
 {
