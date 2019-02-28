@@ -117,22 +117,22 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     DEPENDS TodaySchema.cpp
   )
 
-  if(BUILD_TESTS)
-    add_library(todaygraphql
-      Today.cpp
-      TodaySchema.cpp)
-    target_link_libraries(todaygraphql PUBLIC
-      graphqlservice
-      graphqljson)
-    target_include_directories(todaygraphql PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/include
-      ${CMAKE_CURRENT_BINARY_DIR}/include)
-    cppgraphqlgen_target_set_cxx_standard(todaygraphql)
+  add_library(todaygraphql
+    Today.cpp
+    TodaySchema.cpp)
+  target_link_libraries(todaygraphql PUBLIC
+    graphqlservice)
+  target_include_directories(todaygraphql PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/include)
+  cppgraphqlgen_target_set_cxx_standard(todaygraphql)
 
+  if(BUILD_TESTS)
     add_executable(test_today
       test_today.cpp)
     target_link_libraries(test_today PRIVATE
-      todaygraphql)
+      todaygraphql
+      graphqljson)
     cppgraphqlgen_target_set_cxx_standard(test_today)
 
     enable_testing()
@@ -142,6 +142,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       tests.cpp)
     target_link_libraries(tests PRIVATE
       todaygraphql
+      graphqljson
       GTest::GTest
       GTest::Main)
     cppgraphqlgen_target_set_cxx_standard(tests)
