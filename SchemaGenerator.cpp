@@ -316,10 +316,13 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 
 void Generator::visitDefinition(const peg::ast_node& definition)
 {
-	if (definition.is<peg::schema_definition>()
-		|| definition.is<peg::schema_extension>())
+	if (definition.is<peg::schema_definition>())
 	{
 		visitSchemaDefinition(definition);
+	}
+	else if (definition.is<peg::schema_extension>())
+	{
+		visitSchemaExtension(definition);
 	}
 	else if (definition.is<peg::scalar_type_definition>())
 	{
@@ -381,6 +384,18 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 
 			_operationTypes.push_back({ std::move(name), std::move(operation) });
 		});
+}
+
+void Generator::visitSchemaExtension(const peg::ast_node& schemaExtension)
+{
+	peg::for_each_child<peg::operation_type_definition>(schemaExtension,
+		[this](const peg::ast_node & child)
+	{
+		std::string operation(child.children.front()->content());
+		std::string name(child.children.back()->content());
+
+		_operationTypes.push_back({ std::move(name), std::move(operation) });
+	});
 }
 
 void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition)

@@ -209,6 +209,7 @@ private:
 	void visitDefinition(const peg::ast_node& definition);
 
 	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
+	void visitSchemaExtension(const peg::ast_node& schemaExtension);
 	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
 	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
 	void visitEnumTypeExtension(const peg::ast_node& enumTypeExtension);
