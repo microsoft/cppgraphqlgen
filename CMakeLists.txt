@@ -67,21 +67,38 @@ cppgraphqlgen_target_set_cxx_standard(graphqlservice)
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
 # JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
+# You will also need to define how to build the graphqljson library target with your
+# implementation, and you should set BUILD_GRAPHQLJSON so that the test dependencies know
+# about your version of graphqljson.
 option(USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
 
 if(USE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
 
+  set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson
     JSONResponse.cpp)
-  target_link_libraries(graphqljson PUBLIC
-    graphqlservice)
   target_include_directories(graphqljson SYSTEM PRIVATE
     ${RAPIDJSON_INCLUDE_DIRS})
-  cppgraphqlgen_target_set_cxx_standard(graphqljson)
 endif()
 
-option(BUILD_TESTS "Build the tests and sample schema library." ON)
+if(BUILD_GRAPHQLJSON)
+  option(BUILD_TESTS "Build the tests and sample schema library." ON)
+
+  target_link_libraries(graphqljson PUBLIC
+    graphqlservice)
+  cppgraphqlgen_target_set_cxx_standard(graphqljson)
+
+  install(TARGETS
+      graphqljson
+    EXPORT cppgraphqlgen-targets
+    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib)
+else()
+  set(BUILD_TESTS OFF)
+endif()
+
 option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
 
 if(BUILD_TESTS OR UPDATE_SAMPLES)
@@ -100,22 +117,22 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     DEPENDS TodaySchema.cpp
   )
 
-  if(BUILD_TESTS)
-    add_library(todaygraphql
-      Today.cpp
-      TodaySchema.cpp)
-    target_link_libraries(todaygraphql PUBLIC
-      graphqlservice
-      graphqljson)
-    target_include_directories(todaygraphql PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/include
-      ${CMAKE_CURRENT_BINARY_DIR}/include)
-    cppgraphqlgen_target_set_cxx_standard(todaygraphql)
+  add_library(todaygraphql
+    Today.cpp
+    TodaySchema.cpp)
+  target_link_libraries(todaygraphql PUBLIC
+    graphqlservice)
+  target_include_directories(todaygraphql PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/include)
+  cppgraphqlgen_target_set_cxx_standard(todaygraphql)
 
+  if(BUILD_TESTS)
     add_executable(test_today
       test_today.cpp)
     target_link_libraries(test_today PRIVATE
-      todaygraphql)
+      todaygraphql
+      graphqljson)
     cppgraphqlgen_target_set_cxx_standard(test_today)
 
     enable_testing()
@@ -125,6 +142,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       tests.cpp)
     target_link_libraries(tests PRIVATE
       todaygraphql
+      graphqljson
       GTest::GTest
       GTest::Main)
     cppgraphqlgen_target_set_cxx_standard(tests)
@@ -155,7 +173,6 @@ endif()
 
 install(TARGETS
     graphqlservice
-    graphqljson
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
