@@ -160,11 +160,29 @@ __Schema::__Schema()
 {
 }
 
+std::future<std::vector<std::shared_ptr<__Type>>> __Schema::getTypes(service::FieldParams&&) const
+{
+	std::promise<std::vector<std::shared_ptr<__Type>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Schema::getTypes is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Schema::resolveTypes(service::ResolverParams&& params)
 {
 	auto result = getTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<__Type>> __Schema::getQueryType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Schema::getQueryType is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Schema::resolveQueryType(service::ResolverParams&& params)
@@ -174,6 +192,15 @@ std::future<response::Value> __Schema::resolveQueryType(service::ResolverParams&
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<__Type>> __Schema::getMutationType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Schema::getMutationType is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Schema::resolveMutationType(service::ResolverParams&& params)
 {
 	auto result = getMutationType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -181,11 +208,29 @@ std::future<response::Value> __Schema::resolveMutationType(service::ResolverPara
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<__Type>> __Schema::getSubscriptionType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Schema::getSubscriptionType is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
 	auto result = getSubscriptionType(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::vector<std::shared_ptr<__Directive>>> __Schema::getDirectives(service::FieldParams&&) const
+{
+	std::promise<std::vector<std::shared_ptr<__Directive>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Schema::getDirectives is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Schema::resolveDirectives(service::ResolverParams&& params)
@@ -222,11 +267,29 @@ __Type::__Type()
 {
 }
 
+std::future<__TypeKind> __Type::getKind(service::FieldParams&&) const
+{
+	std::promise<__TypeKind> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getKind is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Type::resolveKind(service::ResolverParams&& params)
 {
 	auto result = getKind(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__TypeKind>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __Type::getName(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getName is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Type::resolveName(service::ResolverParams&& params)
@@ -236,11 +299,29 @@ std::future<response::Value> __Type::resolveName(service::ResolverParams&& param
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<response::StringType>> __Type::getDescription(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getDescription is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Type::resolveDescription(service::ResolverParams&& params)
 {
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> __Type::getFields(service::FieldParams&&, std::unique_ptr<response::BooleanType>&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getFields is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Type::resolveFields(service::ResolverParams&& params)
@@ -265,6 +346,15 @@ std::future<response::Value> __Type::resolveFields(service::ResolverParams&& par
 	return service::ModifiedResult<__Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> __Type::getInterfaces(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getInterfaces is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Type::resolveInterfaces(service::ResolverParams&& params)
 {
 	auto result = getInterfaces(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -272,11 +362,29 @@ std::future<response::Value> __Type::resolveInterfaces(service::ResolverParams&&
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> __Type::getPossibleTypes(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getPossibleTypes is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
 	auto result = getPossibleTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> __Type::getEnumValues(service::FieldParams&&, std::unique_ptr<response::BooleanType>&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getEnumValues is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Type::resolveEnumValues(service::ResolverParams&& params)
@@ -301,11 +409,29 @@ std::future<response::Value> __Type::resolveEnumValues(service::ResolverParams&&
 	return service::ModifiedResult<__EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<std::vector<std::shared_ptr<__InputValue>>>> __Type::getInputFields(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<__InputValue>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getInputFields is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Type::resolveInputFields(service::ResolverParams&& params)
 {
 	auto result = getInputFields(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<__Type>> __Type::getOfType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Type::getOfType is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Type::resolveOfType(service::ResolverParams&& params)
@@ -339,11 +465,29 @@ __Field::__Field()
 {
 }
 
+std::future<response::StringType> __Field::getName(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getName is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Field::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __Field::getDescription(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getDescription is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Field::resolveDescription(service::ResolverParams&& params)
@@ -353,11 +497,29 @@ std::future<response::Value> __Field::resolveDescription(service::ResolverParams
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::vector<std::shared_ptr<__InputValue>>> __Field::getArgs(service::FieldParams&&) const
+{
+	std::promise<std::vector<std::shared_ptr<__InputValue>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getArgs is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Field::resolveArgs(service::ResolverParams&& params)
 {
 	auto result = getArgs(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<__Type>> __Field::getType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getType is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Field::resolveType(service::ResolverParams&& params)
@@ -367,11 +529,29 @@ std::future<response::Value> __Field::resolveType(service::ResolverParams&& para
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
 }
 
+std::future<response::BooleanType> __Field::getIsDeprecated(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getIsDeprecated is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Field::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __Field::getDeprecationReason(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Field::getDeprecationReason is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Field::resolveDeprecationReason(service::ResolverParams&& params)
@@ -403,11 +583,29 @@ __InputValue::__InputValue()
 {
 }
 
+std::future<response::StringType> __InputValue::getName(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__InputValue::getName is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __InputValue::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __InputValue::getDescription(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__InputValue::getDescription is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __InputValue::resolveDescription(service::ResolverParams&& params)
@@ -417,11 +615,29 @@ std::future<response::Value> __InputValue::resolveDescription(service::ResolverP
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<__Type>> __InputValue::getType(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<__Type>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__InputValue::getType is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __InputValue::resolveType(service::ResolverParams&& params)
 {
 	auto result = getType(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__Type>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __InputValue::getDefaultValue(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__InputValue::getDefaultValue is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __InputValue::resolveDefaultValue(service::ResolverParams&& params)
@@ -453,11 +669,29 @@ __EnumValue::__EnumValue()
 {
 }
 
+std::future<response::StringType> __EnumValue::getName(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__EnumValue::getName is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __EnumValue::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __EnumValue::getDescription(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__EnumValue::getDescription is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __EnumValue::resolveDescription(service::ResolverParams&& params)
@@ -467,11 +701,29 @@ std::future<response::Value> __EnumValue::resolveDescription(service::ResolverPa
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<response::BooleanType> __EnumValue::getIsDeprecated(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__EnumValue::getIsDeprecated is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __EnumValue::getDeprecationReason(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__EnumValue::getDeprecationReason is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
@@ -503,11 +755,29 @@ __Directive::__Directive()
 {
 }
 
+std::future<response::StringType> __Directive::getName(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Directive::getName is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Directive::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> __Directive::getDescription(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Directive::getDescription is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Directive::resolveDescription(service::ResolverParams&& params)
@@ -517,11 +787,29 @@ std::future<response::Value> __Directive::resolveDescription(service::ResolverPa
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::vector<__DirectiveLocation>> __Directive::getLocations(service::FieldParams&&) const
+{
+	std::promise<std::vector<__DirectiveLocation>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Directive::getLocations is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> __Directive::resolveLocations(service::ResolverParams&& params)
 {
 	auto result = getLocations(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<__DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
+std::future<std::vector<std::shared_ptr<__InputValue>>> __Directive::getArgs(service::FieldParams&&) const
+{
+	std::promise<std::vector<std::shared_ptr<__InputValue>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(__Directive::getArgs is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> __Directive::resolveArgs(service::ResolverParams&& params)

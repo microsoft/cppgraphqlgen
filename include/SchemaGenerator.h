@@ -277,7 +277,7 @@ private:
 
 	bool outputHeader() const noexcept;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
-	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField) const noexcept;
+	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField, bool inheritedField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
