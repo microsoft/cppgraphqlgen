@@ -106,6 +106,7 @@ Query::Query()
 		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
 		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
 		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } }
@@ -280,6 +281,22 @@ std::future<response::Value> Query::resolveNested(service::ResolverParams&& para
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::StringType> Query::getUnimplemented(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex")));
+
+	return promise.get_future();
+}
+
+std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams&& params)
+{
+	auto result = getUnimplemented(service::FieldParams(params, std::move(params.fieldDirectives)));
+
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve__typename(service::ResolverParams&& params)
@@ -1205,7 +1222,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Folder")))),
-		std::make_shared<introspection::Field>("nested", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		std::make_shared<introspection::Field>("nested", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType"))),
+		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")))
 	});
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),

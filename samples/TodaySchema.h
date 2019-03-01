@@ -76,6 +76,7 @@ public:
 	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
 	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
 	virtual std::future<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
+	virtual std::future<response::StringType> getUnimplemented(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -86,6 +87,7 @@ private:
 	std::future<response::Value> resolveTasksById(service::ResolverParams&& params);
 	std::future<response::Value> resolveUnreadCountsById(service::ResolverParams&& params);
 	std::future<response::Value> resolveNested(service::ResolverParams&& params);
+	std::future<response::Value> resolveUnimplemented(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve__schema(service::ResolverParams&& params);
