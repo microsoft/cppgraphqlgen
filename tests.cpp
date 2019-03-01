@@ -852,7 +852,9 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		const auto& errors = result["errors"];
 		ASSERT_TRUE(errors.type() == response::Type::List);
 		ASSERT_EQ(size_t(1), errors.size());
-		const auto& message = errors[0];
+		const auto& error = errors[0];
+		ASSERT_TRUE(error.type() == response::Type::Map);
+		const auto& message = error[service::strMessage];
 		ASSERT_TRUE(message.type() == response::Type::String);
 		ASSERT_EQ(R"e(Field name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<const response::StringType&>());
 	}

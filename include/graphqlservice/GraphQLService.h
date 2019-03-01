@@ -532,7 +532,10 @@ struct ModifiedResult
 							<< "[" << index << "] "
 							<< " unknown error: " << ex.what();
 
-						errors.emplace_back(response::Value(message.str()));
+						response::Value error(response::Type::Map);
+
+						error.emplace_back(strMessage, response::Value(message.str()));
+						errors.emplace_back(std::move(error));
 					}
 
 					children.pop();
@@ -575,8 +578,10 @@ private:
 						<< " unknown error: " << ex.what();
 
 					response::Value errors(response::Type::List);
+					response::Value error(response::Type::Map);
 
-					errors.emplace_back(response::Value(message.str()));
+					error.emplace_back(strMessage, response::Value(message.str()));
+					errors.emplace_back(std::move(error));
 					document.emplace_back(strErrors, std::move(errors));
 				}
 
