@@ -26,6 +26,8 @@ type Query {
     unreadCountsById(ids: [ID!]!): [Folder]!
 
     nested: NestedType!
+
+    unimplemented: String!
 }
 
 "Node interface for Relay support"

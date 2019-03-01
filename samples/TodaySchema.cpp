@@ -106,6 +106,7 @@ Query::Query()
 		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
 		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
 		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } }
@@ -116,12 +117,30 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
+std::future<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, std::vector<uint8_t>&&) const
+{
+	std::promise<std::shared_ptr<service::Object>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getNode is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<AppointmentConnection>> Query::getAppointments(service::FieldParams&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&) const
+{
+	std::promise<std::shared_ptr<AppointmentConnection>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getAppointments is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Query::resolveAppointments(service::ResolverParams&& params)
@@ -135,6 +154,15 @@ std::future<response::Value> Query::resolveAppointments(service::ResolverParams&
 	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<TaskConnection>> Query::getTasks(service::FieldParams&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&) const
+{
+	std::promise<std::shared_ptr<TaskConnection>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getTasks is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Query::resolveTasks(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
@@ -146,6 +174,15 @@ std::future<response::Value> Query::resolveTasks(service::ResolverParams&& param
 	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<FolderConnection>> Query::getUnreadCounts(service::FieldParams&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&, std::unique_ptr<response::IntType>&&, std::unique_ptr<response::Value>&&) const
+{
+	std::promise<std::shared_ptr<FolderConnection>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
@@ -155,6 +192,15 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 	auto result = getUnreadCounts(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
 
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::vector<std::shared_ptr<Appointment>>> Query::getAppointmentsById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+{
+	std::promise<std::vector<std::shared_ptr<Appointment>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
@@ -187,12 +233,30 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::vector<std::shared_ptr<Task>>> Query::getTasksById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+{
+	std::promise<std::vector<std::shared_ptr<Task>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getTasksById is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCountsById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+{
+	std::promise<std::vector<std::shared_ptr<Folder>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
@@ -203,11 +267,36 @@ std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverPar
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::shared_ptr<NestedType>> Query::getNested(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<NestedType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getNested is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Query::resolveNested(service::ResolverParams&& params)
 {
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::StringType> Query::getUnimplemented(service::FieldParams&&) const
+{
+	std::promise<response::StringType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex")));
+
+	return promise.get_future();
+}
+
+std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams&& params)
+{
+	auto result = getUnimplemented(service::FieldParams(params, std::move(params.fieldDirectives)));
+
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve__typename(service::ResolverParams&& params)
@@ -249,11 +338,29 @@ PageInfo::PageInfo()
 {
 }
 
+std::future<response::BooleanType> PageInfo::getHasNextPage(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	auto result = getHasNextPage(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::BooleanType> PageInfo::getHasPreviousPage(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
@@ -283,11 +390,29 @@ AppointmentEdge::AppointmentEdge()
 {
 }
 
+std::future<std::shared_ptr<Appointment>> AppointmentEdge::getNode(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<Appointment>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(AppointmentEdge::getNode is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> AppointmentEdge::getCursor(service::FieldParams&&) const
+{
+	std::promise<response::Value> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
@@ -317,11 +442,29 @@ AppointmentConnection::AppointmentConnection()
 {
 }
 
+std::future<std::shared_ptr<PageInfo>> AppointmentConnection::getPageInfo(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<PageInfo>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(AppointmentConnection::getPageInfo is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> AppointmentConnection::getEdges(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(AppointmentConnection::getEdges is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> AppointmentConnection::resolveEdges(service::ResolverParams&& params)
@@ -351,11 +494,29 @@ TaskEdge::TaskEdge()
 {
 }
 
+std::future<std::shared_ptr<Task>> TaskEdge::getNode(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<Task>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> TaskEdge::getCursor(service::FieldParams&&) const
+{
+	std::promise<response::Value> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
@@ -385,11 +546,29 @@ TaskConnection::TaskConnection()
 {
 }
 
+std::future<std::shared_ptr<PageInfo>> TaskConnection::getPageInfo(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<PageInfo>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(TaskConnection::getPageInfo is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> TaskConnection::getEdges(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(TaskConnection::getEdges is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
@@ -419,11 +598,29 @@ FolderEdge::FolderEdge()
 {
 }
 
+std::future<std::shared_ptr<Folder>> FolderEdge::getNode(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<Folder>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> FolderEdge::getCursor(service::FieldParams&&) const
+{
+	std::promise<response::Value> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
@@ -453,11 +650,29 @@ FolderConnection::FolderConnection()
 {
 }
 
+std::future<std::shared_ptr<PageInfo>> FolderConnection::getPageInfo(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<PageInfo>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(FolderConnection::getPageInfo is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> FolderConnection::getEdges(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> FolderConnection::resolveEdges(service::ResolverParams&& params)
@@ -487,11 +702,29 @@ CompleteTaskPayload::CompleteTaskPayload()
 {
 }
 
+std::future<std::shared_ptr<Task>> CompleteTaskPayload::getTask(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<Task>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	auto result = getTask(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::StringType>> CompleteTaskPayload::getClientMutationId(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
@@ -518,6 +751,15 @@ Mutation::Mutation()
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
 	})
 {
+}
+
+std::future<std::shared_ptr<CompleteTaskPayload>> Mutation::getCompleteTask(service::FieldParams&&, CompleteTaskInput&&) const
+{
+	std::promise<std::shared_ptr<CompleteTaskPayload>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Mutation::getCompleteTask is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
@@ -548,11 +790,29 @@ Subscription::Subscription()
 {
 }
 
+std::future<std::shared_ptr<Appointment>> Subscription::getNextAppointmentChange(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<Appointment>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	auto result = getNextAppointmentChange(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<service::Object>> Subscription::getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const
+{
+	std::promise<std::shared_ptr<service::Object>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
@@ -586,11 +846,29 @@ Appointment::Appointment()
 {
 }
 
+std::future<std::vector<uint8_t>> Appointment::getId(service::FieldParams&&) const
+{
+	std::promise<std::vector<uint8_t>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Appointment::getId is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::unique_ptr<response::Value>> Appointment::getWhen(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::Value>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
@@ -600,11 +878,29 @@ std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<response::StringType>> Appointment::getSubject(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	auto result = getSubject(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::BooleanType> Appointment::getIsNow(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
@@ -636,6 +932,15 @@ Task::Task()
 {
 }
 
+std::future<std::vector<uint8_t>> Task::getId(service::FieldParams&&) const
+{
+	std::promise<std::vector<uint8_t>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Task::getId is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -643,11 +948,29 @@ std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<response::StringType>> Task::getTitle(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Task::getTitle is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
 {
 	auto result = getTitle(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::BooleanType> Task::getIsComplete(service::FieldParams&&) const
+{
+	std::promise<response::BooleanType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
@@ -679,6 +1002,15 @@ Folder::Folder()
 {
 }
 
+std::future<std::vector<uint8_t>> Folder::getId(service::FieldParams&&) const
+{
+	std::promise<std::vector<uint8_t>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Folder::getId is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -686,11 +1018,29 @@ std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
 }
 
+std::future<std::unique_ptr<response::StringType>> Folder::getName(service::FieldParams&&) const
+{
+	std::promise<std::unique_ptr<response::StringType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Folder::getName is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> Folder::resolveName(service::ResolverParams&& params)
 {
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::IntType> Folder::getUnreadCount(service::FieldParams&&) const
+{
+	std::promise<response::IntType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
@@ -720,11 +1070,29 @@ NestedType::NestedType()
 {
 }
 
+std::future<response::IntType> NestedType::getDepth(service::FieldParams&&) const
+{
+	std::promise<response::IntType> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	auto result = getDepth(service::FieldParams(params, std::move(params.fieldDirectives)));
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+}
+
+std::future<std::shared_ptr<NestedType>> NestedType::getNested(service::FieldParams&&) const
+{
+	std::promise<std::shared_ptr<NestedType>> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(NestedType::getNested is not implemented)ex")));
+
+	return promise.get_future();
 }
 
 std::future<response::Value> NestedType::resolveNested(service::ResolverParams&& params)
@@ -854,7 +1222,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Folder")))),
-		std::make_shared<introspection::Field>("nested", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		std::make_shared<introspection::Field>("nested", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType"))),
+		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")))
 	});
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),

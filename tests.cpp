@@ -838,6 +838,30 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 	}
 }
 
+TEST_F(TodayServiceCase, UnimplementedFieldError)
+{
+	auto ast = R"(query {
+			unimplemented
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto result = _service->resolve(nullptr, *ast.root, "", std::move(variables)).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		const auto& errors = result["errors"];
+		ASSERT_TRUE(errors.type() == response::Type::List);
+		ASSERT_EQ(size_t(1), errors.size());
+		const auto& message = errors[0];
+		ASSERT_TRUE(message.type() == response::Type::String);
+		ASSERT_EQ(R"e(Field name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<const response::StringType&>());
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
+
 TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 {
 	auto ast = peg::parseString(R"(subscription TestSubscription {

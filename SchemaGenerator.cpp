@@ -1365,7 +1365,7 @@ struct )cpp" << interfaceType.type << R"cpp(
 )cpp";
 			for (const auto& outputField : interfaceType.fields)
 			{
-				headerFile << getFieldDeclaration(outputField, true);
+				headerFile << getFieldDeclaration(outputField, true, false);
 			}
 			headerFile << R"cpp(};
 )cpp";
@@ -1432,10 +1432,7 @@ protected:
 
 				for (const auto& outputField : objectType.fields)
 				{
-					if (interfaceFields.find(outputField.name) != interfaceFields.cend())
-					{
-						continue;
-					}
+					const bool inheritedField = interfaceFields.find(outputField.name) != interfaceFields.cend();
 
 					if (firstField)
 					{
@@ -1445,7 +1442,7 @@ public:
 						firstField = false;
 					}
 
-					headerFile << getFieldDeclaration(outputField, false);
+					headerFile << getFieldDeclaration(outputField, false, inheritedField);
 				}
 
 				headerFile << R"cpp(
@@ -1541,7 +1538,7 @@ std::string Generator::getFieldDeclaration(const InputField & inputField) const 
 	return output.str();
 }
 
-std::string Generator::getFieldDeclaration(const OutputField & outputField, bool interfaceField) const noexcept
+std::string Generator::getFieldDeclaration(const OutputField & outputField, bool interfaceField, bool inheritedField) const noexcept
 {
 	std::ostringstream output;
 	std::string fieldName(outputField.name);
@@ -1556,7 +1553,16 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 			<< R"cpp(&& )cpp" << argument.name << "Arg";
 	}
 
-	output << R"cpp() const = 0;
+	output << R"cpp() const)cpp";
+	if (interfaceField)
+	{
+		output << R"cpp( = 0)cpp";
+	}
+	else if (inheritedField)
+	{
+		output << R"cpp( override)cpp";
+	}
+	output << R"cpp(;
 )cpp";
 
 	return output.str();
@@ -1890,6 +1896,28 @@ namespace object {
 
 				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 				sourceFile << R"cpp(
+std::future<)cpp" << getOutputCppType(outputField, false)
+<< R"cpp(> )cpp" << objectType.type
+<< R"cpp(::get)cpp" << fieldName
+<< R"cpp((service::FieldParams&&)cpp";
+				for (const auto& argument : outputField.arguments)
+				{
+					sourceFile << R"cpp(, )cpp" << getInputCppType(argument)
+						<< R"cpp(&&)cpp";
+				}
+
+				sourceFile << R"cpp() const
+{
+	std::promise<)cpp" << getOutputCppType(outputField, false)
+					<< R"cpp(> promise;
+
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.type
+					<< R"cpp(::get)cpp" << fieldName
+					<< R"cpp( is not implemented)ex")));
+
+	return promise.get_future();
+}
+
 std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
