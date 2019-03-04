@@ -1058,7 +1058,10 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 								message << "Field error name: " << name
 									<< " error: duplicate field";
 
-								errors.emplace_back(response::Value(message.str()));
+								response::Value error(response::Type::Map);
+
+								error.emplace_back(strMessage, response::Value(message.str()));
+								errors.emplace_back(std::move(error));
 							}
 							else
 							{
@@ -1074,7 +1077,10 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 					message << "Field error name: " << name
 						<< " unknown error: " << ex.what();
 
-					errors.emplace_back(response::Value(message.str()));
+					response::Value error(response::Type::Map);
+
+					error.emplace_back(strMessage, response::Value(message.str()));
+					errors.emplace_back(std::move(error));
 				}
 
 				children.pop();
