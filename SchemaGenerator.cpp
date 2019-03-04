@@ -1434,6 +1434,11 @@ protected:
 				{
 					const bool inheritedField = interfaceFields.find(outputField.name) != interfaceFields.cend();
 
+					if (inheritedField && _isIntrospection)
+					{
+						continue;
+					}
+
 					if (firstField)
 					{
 						headerFile << R"cpp(
@@ -1554,7 +1559,7 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 	}
 
 	output << R"cpp() const)cpp";
-	if (interfaceField)
+	if (interfaceField || _isIntrospection)
 	{
 		output << R"cpp( = 0)cpp";
 	}
@@ -1895,29 +1900,34 @@ namespace object {
 				std::string fieldName(outputField.name);
 
 				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-				sourceFile << R"cpp(
+				if (!_isIntrospection)
+				{
+					sourceFile << R"cpp(
 std::future<)cpp" << getOutputCppType(outputField, false)
 << R"cpp(> )cpp" << objectType.type
 << R"cpp(::get)cpp" << fieldName
 << R"cpp((service::FieldParams&&)cpp";
-				for (const auto& argument : outputField.arguments)
-				{
-					sourceFile << R"cpp(, )cpp" << getInputCppType(argument)
-						<< R"cpp(&&)cpp";
-				}
+					for (const auto& argument : outputField.arguments)
+					{
+						sourceFile << R"cpp(, )cpp" << getInputCppType(argument)
+							<< R"cpp(&&)cpp";
+					}
 
-				sourceFile << R"cpp() const
+					sourceFile << R"cpp() const
 {
 	std::promise<)cpp" << getOutputCppType(outputField, false)
-					<< R"cpp(> promise;
+						<< R"cpp(> promise;
 
 	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.type
-					<< R"cpp(::get)cpp" << fieldName
-					<< R"cpp( is not implemented)ex")));
+						<< R"cpp(::get)cpp" << fieldName
+						<< R"cpp( is not implemented)ex")));
 
 	return promise.get_future();
 }
+)cpp";
+				}
 
+				sourceFile << R"cpp(
 std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
