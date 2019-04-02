@@ -72,7 +72,7 @@ files.
 ## API references
 
 See [GraphQLService.h](include/graphqlservice/GraphQLService.h) for the base types implemented in
-the `facebook::graphql::service` namespace. Take a look at [Today.h](Today.h) and [Today.cpp](Today.cpp)
+the `facebook::graphql::service` namespace. Take a look at [Today.h](include/Today.h) and [Today.cpp](Today.cpp)
 to see a sample implementation of a custom schema defined in [schema.today.graphql](samples/schema.today.graphql)
 for testing purposes.
 
