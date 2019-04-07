@@ -36,6 +36,8 @@ using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
 
+struct TypedData;
+
 // Represent a discriminated union of GraphQL response value types.
 struct Value
 {
@@ -95,29 +97,7 @@ struct Value
 
 private:
 	const Type _type;
-
-	// Type::Map
-	std::unique_ptr<std::unordered_map<std::string, size_t>> _members;
-	std::unique_ptr<MapType> _map;
-
-	// Type::List
-	std::unique_ptr<ListType> _list;
-
-	// Type::String or Type::EnumValue
-	std::unique_ptr<StringType> _string;
-	bool _from_json = false;
-
-	// Type::Boolean
-	BooleanType _boolean = false;
-
-	// Type::Int
-	IntType _int = 0;
-
-	// Type::Float
-	FloatType _float = 0.0;
-
-	// Type::Scalar
-	std::unique_ptr<ScalarType> _scalar;
+	std::unique_ptr<TypedData> _data;
 };
 
 } /* namespace facebook::graphql::response */
