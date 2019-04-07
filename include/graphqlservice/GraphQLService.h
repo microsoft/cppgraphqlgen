@@ -7,6 +7,7 @@
 #include <graphqlservice/GraphQLResponse.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -20,9 +21,7 @@
 #include <map>
 #include <set>
 
-namespace facebook {
-namespace graphql {
-namespace service {
+namespace facebook::graphql::service {
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
@@ -189,7 +188,7 @@ struct ModifiedArgument
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-			std::unique_ptr<typename ArgumentTraits<U, _Other...>::type>,
+			std::optional<typename ArgumentTraits<U, _Other...>::type>,
 			typename std::conditional<TypeModifier::List == _Modifier,
 				std::vector<typename ArgumentTraits<U, _Other...>::type>,
 				U>::type
@@ -266,12 +265,12 @@ struct ModifiedArgument
 		if (valueItr == arguments.get<const response::MapType&>().cend()
 			|| valueItr->second.type() == response::Type::Null)
 		{
-			return nullptr;
+			return {};
 		}
 
 		auto result = require<_Other...>(name, arguments);
 
-		return std::unique_ptr<decltype(result)> { new decltype(result)(std::move(result)) };
+		return std::make_optional<decltype(result)>(std::move(result));
 	}
 
 	// Peel off list modifiers.
@@ -367,7 +366,7 @@ struct ModifiedResult
 			typename std::conditional<std::is_base_of<Object, U>::value
 				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
 				std::shared_ptr<U>,
-				std::unique_ptr<typename ResultTraits<U, _Other...>::type>
+				std::optional<typename ResultTraits<U, _Other...>::type>
 			>::type,
 			typename std::conditional<TypeModifier::List == _Modifier,
 				std::vector<typename ResultTraits<U, _Other...>::type>,
@@ -387,7 +386,7 @@ struct ModifiedResult
 
 		using future_type = typename std::conditional<std::is_base_of<Object, _Type>::value,
 			std::future<std::shared_ptr<Object>>,
-			std::future<type>&&>::type;
+			std::future<type>>::type&&;
 	};
 
 	// Convert a single value of the specified type to JSON.
@@ -445,13 +444,13 @@ struct ModifiedResult
 			}, std::move(result), std::move(params));
 	}
 
-	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
+	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier _Modifier, TypeModifier... _Other>
 	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
 		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && result, ResolverParams && params)
 	{
-		static_assert(std::is_same<std::unique_ptr<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
-			"this is the unique_ptr version");
+		static_assert(std::is_same<std::optional<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
+			"this is the optional version");
 
 		return std::async(std::launch::deferred,
 			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
@@ -609,7 +608,7 @@ using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 struct SubscriptionParams
 {
 	std::shared_ptr<RequestState> state;
-	peg::ast<std::string> query;
+	peg::ast<std::vector<char>> query;
 	std::string operationName;
 	response::Value variables;
 };
@@ -645,12 +644,12 @@ using SubscriptionName = std::string;
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
-		peg::ast<std::string>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+		peg::ast<std::vector<char>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
 	std::unordered_map<SubscriptionName, std::vector<response::Value>> fieldNamesAndArgs;
-	peg::ast<std::string> query;
+	peg::ast<std::vector<char>> query;
 	std::string operationName;
 	SubscriptionCallback callback;
 	const peg::ast_node& selection;
@@ -683,6 +682,4 @@ private:
 	SubscriptionKey _nextKey = 0;
 };
 
-} /* namespace service */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::service */

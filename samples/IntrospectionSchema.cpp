@@ -9,8 +9,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook {
-namespace graphql {
+namespace facebook::graphql {
 namespace service {
 
 template <>
@@ -598,55 +597,54 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	});
 
 	type__Schema->AddFields({
-		std::make_shared<introspection::Field>("types", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
-		std::make_shared<introspection::Field>("queryType", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("mutationType", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<introspection::Field>("subscriptionType", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<introspection::Field>("directives", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Directive")))))
+		std::make_shared<introspection::Field>("types", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
+		std::make_shared<introspection::Field>("queryType", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		std::make_shared<introspection::Field>("mutationType", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
+		std::make_shared<introspection::Field>("subscriptionType", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
+		std::make_shared<introspection::Field>("directives", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Directive")))))
 	});
 	type__Type->AddFields({
-		std::make_shared<introspection::Field>("kind", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
-		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("description", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("fields", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::Field>("kind", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
+		std::make_shared<introspection::Field>("name", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("description", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("fields", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("includeDeprecated", R"md()md", schema->LookupType("Boolean"), R"gql(false)gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Field"))))),
-		std::make_shared<introspection::Field>("interfaces", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
-		std::make_shared<introspection::Field>("possibleTypes", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
-		std::make_shared<introspection::Field>("enumValues", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::Field>("interfaces", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
+		std::make_shared<introspection::Field>("possibleTypes", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))))),
+		std::make_shared<introspection::Field>("enumValues", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("includeDeprecated", R"md()md", schema->LookupType("Boolean"), R"gql(false)gql")
 		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__EnumValue"))))),
-		std::make_shared<introspection::Field>("inputFields", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
-		std::make_shared<introspection::Field>("ofType", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type"))
+		std::make_shared<introspection::Field>("inputFields", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
+		std::make_shared<introspection::Field>("ofType", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type"))
 	});
 	type__Field->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("args", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
-		std::make_shared<introspection::Field>("type", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("name", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("description", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("args", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
+		std::make_shared<introspection::Field>("type", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
 	type__InputValue->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("type", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("defaultValue", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("name", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("description", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("type", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		std::make_shared<introspection::Field>("defaultValue", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
 	type__EnumValue->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("name", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("description", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
 	type__Directive->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("locations", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
-		std::make_shared<introspection::Field>("args", R"md()md", std::unique_ptr<std::string>(nullptr), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
+		std::make_shared<introspection::Field>("name", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("description", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("locations", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
+		std::make_shared<introspection::Field>("args", R"md()md", std::optional<std::string>{}, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
 	});
 }
 
 } /* namespace introspection */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql */

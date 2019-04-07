@@ -10,9 +10,7 @@
 #include <sstream>
 #include <cctype>
 
-namespace facebook {
-namespace graphql {
-namespace schema {
+namespace facebook::graphql::schema {
 
 const std::string Generator::s_introspectionNamespace = "introspection";
 
@@ -379,8 +377,8 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
 		[this](const peg::ast_node & child)
 		{
-			std::string operation(child.children.front()->content());
-			std::string name(child.children.back()->content());
+			std::string operation(child.children.front()->string_view());
+			std::string name(child.children.back()->string_view());
 
 			_operationTypes.push_back({ std::move(name), std::move(operation) });
 		});
@@ -391,8 +389,8 @@ void Generator::visitSchemaExtension(const peg::ast_node& schemaExtension)
 	peg::for_each_child<peg::operation_type_definition>(schemaExtension,
 		[this](const peg::ast_node & child)
 	{
-		std::string operation(child.children.front()->content());
-		std::string name(child.children.back()->content());
+		std::string operation(child.children.front()->string_view());
+		std::string name(child.children.back()->string_view());
 
 		_operationTypes.push_back({ std::move(name), std::move(operation) });
 	});
@@ -406,7 +404,7 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
@@ -429,7 +427,7 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 	peg::on_first_child<peg::object_name>(objectTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	const auto itrType = _objectNames.find(name);
@@ -441,7 +439,7 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 		peg::for_each_child<peg::interface_type>(objectTypeExtension,
 			[&objectType](const peg::ast_node & child)
 			{
-				objectType.interfaces.push_back(child.content());
+				objectType.interfaces.push_back(child.string());
 			});
 
 		peg::on_first_child<peg::fields_definition>(objectTypeExtension,
@@ -466,7 +464,7 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
@@ -489,7 +487,7 @@ void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeEx
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	const auto itrType = _interfaceNames.find(name);
@@ -520,7 +518,7 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
@@ -543,7 +541,7 @@ void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTy
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	const auto itrType = _inputNames.find(name);
@@ -574,7 +572,7 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
@@ -597,7 +595,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 	peg::on_first_child<peg::enum_name>(enumTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	const auto itrType = _enumNames.find(name);
@@ -611,12 +609,12 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 			{
 				std::string value;
 				std::string valueDescription;
-				std::unique_ptr<std::string> deprecationReason;
+				std::optional<std::string> deprecationReason;
 
 				peg::on_first_child<peg::enum_value>(child,
 					[&value](const peg::ast_node & enumValue)
 					{
-						value = enumValue.content();
+						value = enumValue.string_view();
 					});
 
 				peg::on_first_child<peg::description>(child,
@@ -636,7 +634,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 								peg::on_first_child<peg::directive_name>(directive,
 									[&directiveName](const peg::ast_node & name)
 									{
-										directiveName = name.content();
+										directiveName = name.string_view();
 									});
 
 								if (directiveName == "deprecated")
@@ -654,7 +652,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 													peg::on_first_child<peg::argument_name>(argument,
 														[&argumentName](const peg::ast_node & name)
 														{
-															argumentName = name.content();
+															argumentName = name.string_view();
 														});
 
 													if (argumentName == "reason")
@@ -668,7 +666,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 												});
 										});
 
-									deprecationReason.reset(new std::string(std::move(reason)));
+									deprecationReason = std::move(reason);
 								}
 							});
 					});
@@ -686,7 +684,7 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
@@ -708,7 +706,7 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	peg::on_first_child<peg::union_name>(unionTypeDefinition,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
@@ -731,7 +729,7 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 	peg::on_first_child<peg::union_name>(unionTypeExtension,
 		[&name](const peg::ast_node & child)
 		{
-			name = child.content();
+			name = child.string_view();
 		});
 
 	const auto itrType = _unionNames.find(name);
@@ -743,7 +741,7 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 		peg::for_each_child<peg::union_type>(unionTypeExtension,
 			[&unionType](const peg::ast_node & child)
 			{
-				unionType.options.push_back(child.content());
+				unionType.options.push_back(child.string());
 			});
 	}
 }
@@ -755,7 +753,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
 		[&directive](const peg::ast_node & child)
 		{
-			directive.name = child.content();
+			directive.name = child.string();
 		});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
@@ -767,7 +765,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
 		[&directive](const peg::ast_node & child)
 		{
-			directive.locations.push_back(child.content());
+			directive.locations.push_back(child.string());
 		});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
@@ -798,7 +796,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 		{
 			if (child->is<peg::field_name>())
 			{
-				field.name = child->content();
+				field.name = child->string_view();
 			}
 			else if (child->is<peg::arguments_definition>())
 			{
@@ -824,7 +822,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 						peg::on_first_child<peg::directive_name>(directive,
 							[&directiveName](const peg::ast_node & name)
 							{
-								directiveName = name.content();
+								directiveName = name.string_view();
 							});
 
 						if (directiveName == "deprecated")
@@ -842,7 +840,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 											peg::on_first_child<peg::argument_name>(argument,
 												[&argumentName](const peg::ast_node & name)
 												{
-													argumentName = name.content();
+													argumentName = name.string_view();
 												});
 
 											if (argumentName == "reason")
@@ -856,7 +854,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 										});
 								});
 
-							field.deprecationReason.reset(new std::string(std::move(deprecationReason)));
+							field.deprecationReason = std::move(deprecationReason);
 						}
 					});
 			}
@@ -882,7 +880,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 		{
 			if (child->is<peg::argument_name>())
 			{
-				field.name = child->content();
+				field.name = child->string_view();
 			}
 			else if (child->is<peg::named_type>()
 				|| child->is<peg::list_type>()
@@ -896,7 +894,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
-				field.defaultValueString = child->children.back()->content();
+				field.defaultValueString = child->children.back()->string_view();
 			}
 			else if (child->is<peg::description>())
 			{
@@ -934,7 +932,7 @@ void Generator::TypeVisitor::visitNamedType(const peg::ast_node& namedType)
 		_modifiers.push_back(service::TypeModifier::Nullable);
 	}
 
-	_type = namedType.content();
+	_type = namedType.string_view();
 }
 
 void Generator::TypeVisitor::visitListType(const peg::ast_node& listType)
@@ -1001,12 +999,12 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 
 void Generator::DefaultValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	_value = response::Value(std::atoi(intValue.content().c_str()));
+	_value = response::Value(std::atoi(intValue.string().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	_value = response::Value(std::atof(floatValue.content().c_str()));
+	_value = response::Value(std::atof(floatValue.string().c_str()));
 }
 
 void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
@@ -1027,7 +1025,7 @@ void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullV
 void Generator::DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
-	_value.set<response::StringType>(enumValue.content());
+	_value.set<response::StringType>(enumValue.string());
 }
 
 void Generator::DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)
@@ -1054,7 +1052,7 @@ void Generator::DefaultValueVisitor::visitObjectValue(const peg::ast_node& objec
 		DefaultValueVisitor visitor;
 
 		visitor.visit(*field->children.back());
-		_value.emplace_back(field->children.front()->content(), visitor.getValue());
+		_value.emplace_back(field->children.front()->string(), visitor.getValue());
 	}
 }
 
@@ -1114,7 +1112,7 @@ std::string Generator::getInputCppType(const InputField & field) const noexcept
 		switch (modifier)
 		{
 			case service::TypeModifier::Nullable:
-				inputType << R"cpp(std::unique_ptr<)cpp";
+				inputType << R"cpp(std::optional<)cpp";
 				++templateCount;
 				break;
 
@@ -1148,7 +1146,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 	{
 		if (!nonNull)
 		{
-			outputType << R"cpp(std::unique_ptr<)cpp";
+			outputType << R"cpp(std::optional<)cpp";
 			++templateCount;
 		}
 
@@ -1183,7 +1181,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 		default:
 			if (!nonNull)
 			{
-				outputType << R"cpp(std::unique_ptr<)cpp";
+				outputType << R"cpp(std::optional<)cpp";
 				++templateCount;
 			}
 			break;
@@ -1235,8 +1233,7 @@ bool Generator::outputHeader() const noexcept
 #include <string>
 #include <vector>
 
-namespace facebook {
-namespace graphql {
+namespace facebook::graphql {
 namespace introspection {
 
 class Schema;
@@ -1527,8 +1524,7 @@ private:
 void AddTypesToSchema(std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> schema);
 
 } /* namespace )cpp" << _schemaNamespace << R"cpp( */
-} /* namespace graphql */
-} /* namespace facebook */)cpp";
+} /* namespace facebook::graphql */)cpp";
 
 	return true;
 }
@@ -1609,8 +1605,7 @@ bool Generator::outputSource() const noexcept
 #include <unordered_map>
 #include <exception>
 
-namespace facebook {
-namespace graphql {)cpp";
+namespace facebook::graphql {)cpp";
 
 	if (!_enumTypes.empty() || !_inputTypes.empty())
 	{
@@ -2356,19 +2351,15 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
 						<< R"cpp(", R"md()cpp" << interfaceField.description
-						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+						<< R"cpp()md", std::optional<std::string>{)cpp";
 
 					if (interfaceField.deprecationReason)
 					{
-						sourceFile << R"cpp(new std::string(R"md()cpp"
-							<< *interfaceField.deprecationReason << R"cpp()md"))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(nullptr)cpp";
+						sourceFile << R"cpp( std::in_place, R"md()cpp"
+							<< *interfaceField.deprecationReason << R"cpp()md" )cpp";
 					}
 
-					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(}, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -2461,19 +2452,15 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
 						<< R"cpp(", R"md()cpp" << objectField.description
-						<< R"cpp()md", std::unique_ptr<std::string>()cpp";
+						<< R"cpp()md", std::optional<std::string>{)cpp";
 
 					if (objectField.deprecationReason)
 					{
-						sourceFile << R"cpp(new std::string(R"md()cpp"
-							<< *objectField.deprecationReason << R"cpp()md"))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(nullptr)cpp";
+						sourceFile << R"cpp( std::in_place, R"md()cpp"
+							<< *objectField.deprecationReason << R"cpp()md" )cpp";
 					}
 
-					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(}, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())
@@ -2605,8 +2592,7 @@ Operations::Operations()cpp";
 	sourceFile << R"cpp(}
 
 } /* namespace )cpp" << _schemaNamespace << R"cpp( */
-} /* namespace graphql */
-} /* namespace facebook */)cpp";
+} /* namespace facebook::graphql */)cpp";
 
 	return true;
 }
@@ -2941,9 +2927,7 @@ std::string Generator::getIntrospectionType(const std::string & type, const Type
 	return introspectionType.str();
 }
 
-} /* namespace schema */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::schema */
 
 int main(int argc, char** argv)
 {

@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 	try
 	{
 		const peg::ast_node* ast = nullptr;
-		peg::ast<std::string> ast_input;
+		peg::ast<std::vector<char>> ast_input;
 		peg::ast<std::unique_ptr<peg::file_input<>>> ast_file;
 
 		if (argc > 1)

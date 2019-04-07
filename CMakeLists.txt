@@ -1,43 +1,45 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5.1)
-project(cppgraphqlgen)
+cmake_minimum_required(VERSION 3.8.2)
+project(cppgraphqlgen VERSION 3.0.0)
+
+set(CMAKE_CXX_STANDARD 17)
 
 if(WIN32)
   # Let CMake figure out the exports for the SHARED library (DLL) on Windows.
-  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
+
+function(add_bigobj_flag target)
+  if(MSVC)
+	# MSVC requires the /bigobj flag if the number of sections gets too big.
+    target_compile_options(${target} PRIVATE /bigobj)
+  endif()
+endfunction()
 
 find_package(Threads MODULE REQUIRED)
 
 include(CMakePackageConfigHelpers)
 
-find_package(pegtl CONFIG REQUIRED)
+set(PEGTL_BUILD_TESTS OFF CACHE BOOL "Disable PEGTL tests")
+set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "Disable PEGTL examples")
+add_subdirectory(PEGTL)
 
-# Set the minimum C++ standard required for compiling,
-# but allow for user to override on the command line using:
-#     cmake -DCMAKE_CXX_STANDARD=[11|14|17|...] -DCMAKE_CXX_EXTENSIONS=[ON|OFF]
-function(cppgraphqlgen_target_set_cxx_standard target)
-  if (CMAKE_VERSION VERSION_LESS "3.8")
-    # The cxx_std_11 abstract compile feature
-    # is available only starting from CMake 3.8.
-    # We assume the availability of lambdas
-    # indicates a C++11-compatible compiler mode.
-    target_compile_features(${target} PUBLIC cxx_lambdas)
-  else()
-    target_compile_features(${target} PUBLIC cxx_std_11)
-  endif()
-endfunction()
+# At least on Windows, this library needs to be static for the RTTI comparisons to work.
+add_library(graphqlpeg STATIC
+  GraphQLTree.cpp)
+target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_include_directories(graphqlpeg PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/PEGTL/include>
+  $<INSTALL_INTERFACE:include>)
+add_bigobj_flag(graphqlpeg)
 
 add_executable(schemagen
-  GraphQLTree.cpp
   GraphQLResponse.cpp
   SchemaGenerator.cpp)
-target_link_libraries(schemagen PRIVATE taocpp::pegtl)
-target_include_directories(schemagen PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
-cppgraphqlgen_target_set_cxx_standard(schemagen)
+target_link_libraries(schemagen PRIVATE graphqlpeg)
 
 add_custom_command(
   OUTPUT
@@ -50,19 +52,15 @@ add_custom_command(
 )
 
 add_library(graphqlservice
-  GraphQLTree.cpp
   GraphQLResponse.cpp
   GraphQLService.cpp
   Introspection.cpp
   IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PUBLIC
-  taocpp::pegtl
+  graphqlpeg
   Threads::Threads)
 target_include_directories(graphqlservice PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-cppgraphqlgen_target_set_cxx_standard(graphqlservice)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
@@ -87,7 +85,6 @@ if(BUILD_GRAPHQLJSON)
 
   target_link_libraries(graphqljson PUBLIC
     graphqlservice)
-  cppgraphqlgen_target_set_cxx_standard(graphqljson)
 
   install(TARGETS
       graphqljson
@@ -124,8 +121,8 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     graphqlservice)
   target_include_directories(todaygraphql PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/PEGTL/include
     ${CMAKE_CURRENT_BINARY_DIR}/include)
-  cppgraphqlgen_target_set_cxx_standard(todaygraphql)
 
   if(BUILD_TESTS)
     add_executable(test_today
@@ -133,7 +130,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     target_link_libraries(test_today PRIVATE
       todaygraphql
       graphqljson)
-    cppgraphqlgen_target_set_cxx_standard(test_today)
 
     enable_testing()
     find_package(GTest MODULE REQUIRED)
@@ -145,7 +141,6 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       graphqljson
       GTest::GTest
       GTest::Main)
-    cppgraphqlgen_target_set_cxx_standard(tests)
 
     add_test(NAME TodayServiceCase
       COMMAND tests --gtest_filter=TodayServiceCase.*
@@ -172,6 +167,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
 endif()
 
 install(TARGETS
+    graphqlpeg
     graphqlservice
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin

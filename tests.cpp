@@ -1172,7 +1172,7 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 		null,
 		"string3"
 	]})js");
-	std::vector<std::unique_ptr<std::string>> actual;
+	std::vector<std::optional<std::string>> actual;
 
 	try
 	{
@@ -1187,12 +1187,12 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 	}
 
 	ASSERT_EQ(4, actual.size()) << "should get 4 entries";
-	ASSERT_NE(nullptr, actual[0]) << "should not be null";
+	ASSERT_TRUE(actual[0].has_value()) << "should not be null";
 	EXPECT_EQ("string1", *actual[0]) << "entry should match";
-	ASSERT_NE(nullptr, actual[1]) << "should not be null";
+	ASSERT_TRUE(actual[1].has_value()) << "should not be null";
 	EXPECT_EQ("string2", *actual[1]) << "entry should match";
-	EXPECT_EQ(nullptr, actual[2]) << "should be null";
-	ASSERT_NE(nullptr, actual[3]) << "should not be null";
+	EXPECT_FALSE(actual[2].has_value()) << "should be null";
+	ASSERT_TRUE(actual[3].has_value()) << "should not be null";
 	EXPECT_EQ("string3", *actual[3]) << "entry should match";
 }
 
@@ -1231,7 +1231,7 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 		null,
 		["list2string1", "list2string2"]
 	]})js");
-	std::vector<std::unique_ptr<std::vector<std::string>>> actual;
+	std::vector<std::optional<std::vector<std::string>>> actual;
 
 	try
 	{
@@ -1247,7 +1247,7 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
-	EXPECT_EQ(nullptr, actual[0].get()) << "should be null";
+	EXPECT_FALSE(actual[0].has_value()) << "should be null";
 	ASSERT_EQ(2, actual[1]->size()) << "should get 2 entries";
 	EXPECT_EQ("list2string1", (*actual[1])[0]) << "entry should match";
 	EXPECT_EQ("list2string2", (*actual[1])[1]) << "entry should match";

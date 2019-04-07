@@ -8,9 +8,7 @@
 #include <array>
 #include <cstdio>
 
-namespace facebook {
-namespace graphql {
-namespace schema {
+namespace facebook::graphql::schema {
 
 // These are the set of built-in types in GraphQL.
 enum class BuiltinType
@@ -66,7 +64,7 @@ struct EnumValueType
 {
 	std::string value;
 	std::string description;
-	std::unique_ptr<std::string> deprecationReason;
+	std::optional<std::string> deprecationReason;
 };
 
 struct EnumType
@@ -154,7 +152,7 @@ struct OutputField
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
-	std::unique_ptr<std::string> deprecationReason;
+	std::optional<std::string> deprecationReason;
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -314,6 +312,4 @@ private:
 	OperationTypeList _operationTypes;
 };
 
-} /* namespace schema */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::schema */

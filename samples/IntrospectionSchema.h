@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace facebook {
-namespace graphql {
+namespace facebook::graphql {
 namespace introspection {
 
 class Schema;
@@ -89,13 +88,13 @@ protected:
 
 public:
 	virtual std::future<__TypeKind> getKind(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Field>>>> getFields(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::FieldParams&& params, std::unique_ptr<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<__InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<__Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<__Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<__Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<__InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getOfType(service::FieldParams&& params) const = 0;
 
 private:
@@ -120,11 +119,11 @@ protected:
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::FieldParams&& params) const = 0;
 	virtual std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -145,9 +144,9 @@ protected:
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 	virtual std::future<std::shared_ptr<__Type>> getType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -166,9 +165,9 @@ protected:
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 	virtual std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -187,7 +186,7 @@ protected:
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::unique_ptr<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 	virtual std::future<std::vector<__DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
 	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 
@@ -205,5 +204,4 @@ private:
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace introspection */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql */

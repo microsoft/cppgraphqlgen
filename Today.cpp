@@ -6,9 +6,7 @@
 #include <iostream>
 #include <algorithm>
 
-namespace facebook {
-namespace graphql {
-namespace today {
+namespace facebook::graphql::today {
 
 Appointment::Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
@@ -184,7 +182,7 @@ struct EdgeConstraints
 	{
 	}
 
-	std::shared_ptr<_Connection> operator()(const int* first, const response::Value* after, const int* last, const response::Value* before) const
+	std::shared_ptr<_Connection> operator()(const std::optional<int>& first, const std::optional<response::Value>& after, const std::optional<int>& last, const std::optional<response::Value>& before) const
 	{
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
@@ -275,49 +273,49 @@ private:
 	const vec_type& _objects;
 };
 
-std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::FieldParams&& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(service::FieldParams&& params, std::optional<int>&& first, std::optional<response::Value>&& after, std::optional<int>&& last, std::optional<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::optional<int>&& firstWrapped, std::optional<response::Value>&& afterWrapped, std::optional<int>&& lastWrapped, std::optional<response::Value>&& beforeWrapped)
 	{
 		loadAppointments(state);
 
 		EdgeConstraints<Appointment, AppointmentConnection> constraints(state, _appointments);
-		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
+		auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 		return std::static_pointer_cast<object::AppointmentConnection>(connection);
 	}, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::FieldParams&& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::FieldParams&& params, std::optional<int>&& first, std::optional<response::Value>&& after, std::optional<int>&& last, std::optional<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::optional<int>&& firstWrapped, std::optional<response::Value>&& afterWrapped, std::optional<int>&& lastWrapped, std::optional<response::Value>&& beforeWrapped)
 	{
 		loadTasks(state);
 
 		EdgeConstraints<Task, TaskConnection> constraints(state, _tasks);
-		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
+		auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 		return std::static_pointer_cast<object::TaskConnection>(connection);
 	}, std::move(first), std::move(after), std::move(last), std::move(before));
 }
 
-std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::FieldParams&& params, std::unique_ptr<int>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<int>&& last, std::unique_ptr<response::Value>&& before) const
+std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(service::FieldParams&& params, std::optional<int>&& first, std::optional<response::Value>&& after, std::optional<int>&& last, std::optional<response::Value>&& before) const
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
 	return std::async(std::launch::async,
-		[this, spThis, state](std::unique_ptr<int>&& firstWrapped, std::unique_ptr<response::Value>&& afterWrapped, std::unique_ptr<int>&& lastWrapped, std::unique_ptr<response::Value>&& beforeWrapped)
+		[this, spThis, state](std::optional<int>&& firstWrapped, std::optional<response::Value>&& afterWrapped, std::optional<int>&& lastWrapped, std::optional<response::Value>&& beforeWrapped)
 	{
 		loadUnreadCounts(state);
 
 		EdgeConstraints<Folder, FolderConnection> constraints(state, _unreadCounts);
-		auto connection = constraints(firstWrapped.get(), afterWrapped.get(), lastWrapped.get(), beforeWrapped.get());
+		auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 		return std::static_pointer_cast<object::FolderConnection>(connection);
 	}, std::move(first), std::move(after), std::move(last), std::move(before));
@@ -430,6 +428,4 @@ std::stack<CapturedParams> NestedType::getCapturedParams()
 	return result;
 }
 
-} /* namespace today */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::today */

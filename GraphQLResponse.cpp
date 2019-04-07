@@ -5,9 +5,7 @@
 
 #include <stdexcept>
 
-namespace facebook {
-namespace graphql {
-namespace response {
+namespace facebook::graphql::response {
 
 Value::Value(Type type /*= Type::Null*/)
 	: _type(type)
@@ -515,6 +513,4 @@ ScalarType Value::release<ScalarType>()
 	return result;
 }
 
-} /* namespace response */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::response */

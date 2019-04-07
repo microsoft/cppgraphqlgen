@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace facebook {
-namespace graphql {
+namespace facebook::graphql {
 namespace introspection {
 
 class Schema;
@@ -30,8 +29,8 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	std::vector<uint8_t> id;
-	std::unique_ptr<response::BooleanType> isComplete;
-	std::unique_ptr<response::StringType> clientMutationId;
+	std::optional<response::BooleanType> isComplete;
+	std::optional<response::StringType> clientMutationId;
 };
 
 namespace object {
@@ -69,9 +68,9 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const;
-	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const;
-	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const;
-	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::unique_ptr<response::IntType>&& firstArg, std::unique_ptr<response::Value>&& afterArg, std::unique_ptr<response::IntType>&& lastArg, std::unique_ptr<response::Value>&& beforeArg) const;
+	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
+	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
+	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
 	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
 	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
 	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
@@ -138,7 +137,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -172,7 +171,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -206,7 +205,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
-	virtual std::future<std::unique_ptr<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
@@ -223,7 +222,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const;
-	virtual std::future<std::unique_ptr<response::StringType>> getClientMutationId(service::FieldParams&& params) const;
+	virtual std::future<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveTask(service::ResolverParams&& params);
@@ -273,8 +272,8 @@ protected:
 
 public:
 	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
-	virtual std::future<std::unique_ptr<response::Value>> getWhen(service::FieldParams&& params) const;
-	virtual std::future<std::unique_ptr<response::StringType>> getSubject(service::FieldParams&& params) const;
+	virtual std::future<std::optional<response::Value>> getWhen(service::FieldParams&& params) const;
+	virtual std::future<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const;
 	virtual std::future<response::BooleanType> getIsNow(service::FieldParams&& params) const;
 
 private:
@@ -295,7 +294,7 @@ protected:
 
 public:
 	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
-	virtual std::future<std::unique_ptr<response::StringType>> getTitle(service::FieldParams&& params) const;
+	virtual std::future<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const;
 	virtual std::future<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
 
 private:
@@ -315,7 +314,7 @@ protected:
 
 public:
 	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
-	virtual std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&& params) const;
+	virtual std::future<std::optional<response::StringType>> getName(service::FieldParams&& params) const;
 	virtual std::future<response::IntType> getUnreadCount(service::FieldParams&& params) const;
 
 private:
@@ -360,5 +359,4 @@ private:
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace today */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql */

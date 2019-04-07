@@ -7,9 +7,7 @@
 
 #include <stack>
 
-namespace facebook {
-namespace graphql {
-namespace today {
+namespace facebook::graphql::today {
 
 struct RequestState : service::RequestState
 {
@@ -43,9 +41,9 @@ public:
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
 	std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, std::vector<uint8_t>&& id) const override;
-	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
-	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::unique_ptr<response::IntType>&& first, std::unique_ptr<response::Value>&& after, std::unique_ptr<response::IntType>&& last, std::unique_ptr<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
+	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
 	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
 	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
@@ -116,20 +114,20 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::Value>> getWhen(service::FieldParams&&) const override
+	std::future<std::optional<response::Value>> getWhen(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<response::Value>> promise;
+		std::promise<std::optional<response::Value>> promise;
 
-		promise.set_value(std::unique_ptr<response::Value>(new response::Value(std::string(_when))));
+		promise.set_value(std::make_optional<response::Value>(std::string(_when)));
 
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getSubject(service::FieldParams&&) const override
+	std::future<std::optional<response::StringType>> getSubject(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<response::StringType>> promise;
+		std::promise<std::optional<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_subject)));
+		promise.set_value(std::make_optional<response::StringType>(_subject));
 
 		return promise.get_future();
 	}
@@ -198,10 +196,10 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(service::FieldParams&&) const override
+	std::future<std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>> getEdges(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>> promise;
-		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::AppointmentEdge>>>(new std::vector<std::shared_ptr<object::AppointmentEdge>>(_appointments.size()));
+		std::promise<std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>> promise;
+		auto result = std::make_optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>(_appointments.size());
 
 		std::transform(_appointments.cbegin(), _appointments.cend(), result->begin(),
 			[](const std::shared_ptr<Appointment>& node)
@@ -232,11 +230,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getTitle(service::FieldParams&&) const override
+	std::future<std::optional<response::StringType>> getTitle(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<response::StringType>> promise;
+		std::promise<std::optional<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_title)));
+		promise.set_value(std::make_optional<response::StringType>(_title));
 
 		return promise.get_future();
 	}
@@ -305,10 +303,10 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(service::FieldParams&&) const override
+	std::future<std::optional<std::vector<std::shared_ptr<object::TaskEdge>>>> getEdges(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>> promise;
-		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::TaskEdge>>>(new std::vector<std::shared_ptr<object::TaskEdge>>(_tasks.size()));
+		std::promise<std::optional<std::vector<std::shared_ptr<object::TaskEdge>>>> promise;
+		auto result = std::make_optional<std::vector<std::shared_ptr<object::TaskEdge>>>(_tasks.size());
 
 		std::transform(_tasks.cbegin(), _tasks.cend(), result->begin(),
 			[](const std::shared_ptr<Task>& node)
@@ -339,11 +337,11 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getName(service::FieldParams&&) const override
+	std::future<std::optional<response::StringType>> getName(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<response::StringType>> promise;
+		std::promise<std::optional<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::StringType>(new std::string(_name)));
+		promise.set_value(std::make_optional<response::StringType>(_name));
 
 		return promise.get_future();
 	}
@@ -411,10 +409,10 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(service::FieldParams&&) const override
+	std::future<std::optional<std::vector<std::shared_ptr<object::FolderEdge>>>> getEdges(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>> promise;
-		auto result = std::unique_ptr<std::vector<std::shared_ptr<object::FolderEdge>>>(new std::vector<std::shared_ptr<object::FolderEdge>>(_folders.size()));
+		std::promise<std::optional<std::vector<std::shared_ptr<object::FolderEdge>>>> promise;
+		auto result = std::make_optional<std::vector<std::shared_ptr<object::FolderEdge>>>(_folders.size());
 
 		std::transform(_folders.cbegin(), _folders.cend(), result->begin(),
 			[](const std::shared_ptr<Folder>& node)
@@ -434,7 +432,7 @@ private:
 class CompleteTaskPayload : public object::CompleteTaskPayload
 {
 public:
-	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::unique_ptr<response::StringType>&& clientMutationId)
+	explicit CompleteTaskPayload(std::shared_ptr<Task> task, std::optional<response::StringType>&& clientMutationId)
 		: _task(std::move(task))
 		, _clientMutationId(std::move(clientMutationId))
 	{
@@ -449,20 +447,20 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::unique_ptr<response::StringType>> getClientMutationId(service::FieldParams&&) const override
+	std::future<std::optional<response::StringType>> getClientMutationId(service::FieldParams&&) const override
 	{
-		std::promise<std::unique_ptr<response::StringType>> promise;
+		std::promise<std::optional<response::StringType>> promise;
 
-		promise.set_value(std::unique_ptr<response::StringType>(_clientMutationId
-			? new std::string(*_clientMutationId)
-			: nullptr));
+		promise.set_value(_clientMutationId
+			? std::make_optional<response::StringType>(*_clientMutationId)
+			: std::optional<response::StringType>{});
 
 		return promise.get_future();
 	}
 
 private:
 	std::shared_ptr<Task> _task;
-	std::unique_ptr<response::StringType> _clientMutationId;
+	std::optional<response::StringType> _clientMutationId;
 };
 
 class Mutation : public object::Mutation
@@ -579,6 +577,4 @@ private:
 	const int depth;
 };
 
-} /* namespace today */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::today */

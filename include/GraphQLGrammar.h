@@ -8,9 +8,7 @@
 
 #include <graphqlservice/GraphQLTree.h>
 
-namespace facebook {
-namespace graphql {
-namespace peg {
+namespace facebook::graphql::peg {
 
 using namespace tao::graphqlpeg;
 
@@ -1310,6 +1308,4 @@ struct document
 {
 };
 
-} /* namespace peg */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::peg */

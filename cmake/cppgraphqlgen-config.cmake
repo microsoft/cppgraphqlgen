@@ -9,12 +9,12 @@ The following import targets are created
 
 ::
 
+  cppgraphqlgen::graphqlpeg
   cppgraphqlgen::graphqlservice
   cppgraphqlgen::graphqljson
   cppgraphqlgen::schemagen
 #]=======================================================================]
 
 include(CMakeFindDependencyMacro)
-find_package(pegtl REQUIRED)
 find_package(Threads REQUIRED)
 include("${CMAKE_CURRENT_LIST_DIR}/cppgraphqlgen-targets.cmake")
