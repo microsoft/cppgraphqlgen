@@ -39,6 +39,9 @@ enum class SchemaType
 
 using SchemaTypeMap = std::unordered_map<std::string, SchemaType>;
 
+// Keep track of the positions of each type declaration in the file.
+using PositionMap = std::unordered_map<std::string, tao::graphqlpeg::position>;
+
 // For all of the named types we track, we want to keep them in order in a vector but
 // be able to lookup their offset quickly by name.
 using TypeNameMap = std::unordered_map<std::string, size_t>;
@@ -65,6 +68,7 @@ struct EnumValueType
 	std::string value;
 	std::string description;
 	std::optional<std::string> deprecationReason;
+	std::optional<tao::graphqlpeg::position> position;
 };
 
 struct EnumType
@@ -96,6 +100,7 @@ struct InputField
 	InputFieldType fieldType = InputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
+	std::optional<tao::graphqlpeg::position> position;
 };
 
 using InputFieldList = std::vector<InputField>;
@@ -153,6 +158,7 @@ struct OutputField
 	TypeModifierStack modifiers;
 	std::string description;
 	std::optional<std::string> deprecationReason;
+	std::optional<tao::graphqlpeg::position> position;
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -265,9 +271,9 @@ private:
 		response::Value _value;
 	};
 
-	bool validateSchema();
-	bool fixupOutputFieldList(OutputFieldList& fields);
-	bool fixupInputFieldList(InputFieldList& fields);
+	void validateSchema();
+	void fixupOutputFieldList(OutputFieldList& fields);
+	void fixupInputFieldList(InputFieldList& fields);
 
 	const std::string& getCppType(const std::string& type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
@@ -296,6 +302,7 @@ private:
 	const std::string _schemaNamespace;
 
 	SchemaTypeMap _schemaTypes;
+	PositionMap _typePositions;
 	TypeNameMap _scalarNames;
 	ScalarTypeList _scalarTypes;
 	TypeNameMap _enumNames;
@@ -309,6 +316,7 @@ private:
 	TypeNameMap _objectNames;
 	ObjectTypeList _objectTypes;
 	DirectiveList _directives;
+	PositionMap _directivePositions;
 	OperationTypeList _operationTypes;
 };
 

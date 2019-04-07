@@ -143,10 +143,7 @@ Generator::Generator()
 		visitDefinition(*child);
 	}
 
-	if (!validateSchema())
-	{
-		throw std::runtime_error("Invalid introspection schema!");
-	}
+	validateSchema();
 }
 
 Generator::Generator(std::string&& schemaFileName, std::string&& filenamePrefix, std::string&& schemaNamespace)
@@ -166,46 +163,41 @@ Generator::Generator(std::string&& schemaFileName, std::string&& filenamePrefix,
 		visitDefinition(*child);
 	}
 
-	if (!validateSchema())
-	{
-		throw std::runtime_error("Invalid service schema!");
-	}
+	validateSchema();
 }
 
-bool Generator::validateSchema()
+void Generator::validateSchema()
 {
 	// Verify that none of the custom types conflict with a built-in type.
 	for (const auto& entry : _schemaTypes)
 	{
 		if (s_builtinTypes.find(entry.first) != s_builtinTypes.cend())
 		{
-			return false;
+			std::ostringstream error;
+			auto itrPosition = _typePositions.find(entry.first);
+
+			error << "Builtin type overridden: " << entry.first
+				<< " line: " << itrPosition->second.line
+				<< " column: " << itrPosition->second.byte_in_line;
+
+			throw std::runtime_error(error.str());
 		}
 	}
 
 	// Fixup all of the fieldType members.
 	for (auto& entry : _inputTypes)
 	{
-		if (!fixupInputFieldList(entry.fields))
-		{
-			return false;
-		}
+		fixupInputFieldList(entry.fields);
 	}
 
 	for (auto& entry : _interfaceTypes)
 	{
-		if (!fixupOutputFieldList(entry.fields))
-		{
-			return false;
-		}
+		fixupOutputFieldList(entry.fields);
 	}
 
 	for (auto& entry : _objectTypes)
 	{
-		if (!fixupOutputFieldList(entry.fields))
-		{
-			return false;
-		}
+		fixupOutputFieldList(entry.fields);
 	}
 
 	// Validate the interfaces implemented by the object types.
@@ -215,15 +207,20 @@ bool Generator::validateSchema()
 		{
 			if (_interfaceNames.find(interfaceName) == _interfaceNames.cend())
 			{
-				return false;
+				std::ostringstream error;
+				auto itrPosition = _typePositions.find(entry.type);
+
+				error << "Unknown interface: " << interfaceName << " implemented by: " << entry.type
+					<< " line: " << itrPosition->second.line
+					<< " column: " << itrPosition->second.byte_in_line;
+
+				throw std::runtime_error(error.str());
 			}
 		}
 	}
-
-	return true;
 }
 
-bool Generator::fixupOutputFieldList(OutputFieldList& fields)
+void Generator::fixupOutputFieldList(OutputFieldList& fields)
 {
 	for (auto& entry : fields)
 	{
@@ -236,7 +233,13 @@ bool Generator::fixupOutputFieldList(OutputFieldList& fields)
 
 		if (itr == _schemaTypes.cend())
 		{
-			return false;
+			std::ostringstream error;
+
+			error << "Unknown field type: " << entry.type
+				<< " line: " << entry.position->line
+				<< " column: " << entry.position->byte_in_line;
+
+			throw std::runtime_error(error.str());
 		}
 
 		switch (itr->second)
@@ -262,19 +265,22 @@ bool Generator::fixupOutputFieldList(OutputFieldList& fields)
 				break;
 
 			default:
-				return false;
+			{
+				std::ostringstream error;
+
+				error << "Invalid field type: " << entry.type
+					<< " line: " << entry.position->line
+					<< " column: " << entry.position->byte_in_line;
+
+				throw std::runtime_error(error.str());
+			}
 		}
 
-		if (!fixupInputFieldList(entry.arguments))
-		{
-			return false;
-		}
+		fixupInputFieldList(entry.arguments);
 	}
-
-	return true;
 }
 
-bool Generator::fixupInputFieldList(InputFieldList& fields)
+void Generator::fixupInputFieldList(InputFieldList& fields)
 {
 	for (auto& entry : fields)
 	{
@@ -287,7 +293,13 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 
 		if (itr == _schemaTypes.cend())
 		{
-			return false;
+			std::ostringstream error;
+
+			error << "Unknown argument type: " << entry.type
+				<< " line: " << entry.position->line
+				<< " column: " << entry.position->byte_in_line;
+
+			throw std::runtime_error(error.str());
 		}
 
 		switch (itr->second)
@@ -305,11 +317,17 @@ bool Generator::fixupInputFieldList(InputFieldList& fields)
 				break;
 
 			default:
-				return false;
+			{
+				std::ostringstream error;
+
+				error << "Invalid argument type: " << entry.type
+					<< " line: " << entry.position->line
+					<< " column: " << entry.position->byte_in_line;
+
+				throw std::runtime_error(error.str());
+			}
 		}
 	}
-
-	return true;
 }
 
 void Generator::visitDefinition(const peg::ast_node& definition)
@@ -414,6 +432,7 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 		});
 
 	_schemaTypes[name] = SchemaType::Object;
+	_typePositions.emplace(name, objectTypeDefinition.begin());
 	_objectNames[name] = _objectTypes.size();
 	_objectTypes.push_back({ std::move(name), {}, {}, std::move(description) });
 
@@ -474,6 +493,7 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 		});
 
 	_schemaTypes[name] = SchemaType::Interface;
+	_typePositions.emplace(name, interfaceTypeDefinition.begin());
 	_interfaceNames[name] = _interfaceTypes.size();
 	_interfaceTypes.push_back({ std::move(name), {}, std::move(description) });
 
@@ -528,6 +548,7 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 		});
 
 	_schemaTypes[name] = SchemaType::Input;
+	_typePositions.emplace(name, inputObjectTypeDefinition.begin());
 	_inputNames[name] = _inputTypes.size();
 	_inputTypes.push_back({ std::move(name), {}, std::move(description) });
 
@@ -582,6 +603,7 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 		});
 
 	_schemaTypes[name] = SchemaType::Enum;
+	_typePositions.emplace(name, enumTypeDefinition.begin());
 	_enumNames[name] = _enumTypes.size();
 	_enumTypes.push_back({ std::move(name), {}, std::move(description) });
 
@@ -607,27 +629,25 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 		peg::for_each_child<peg::enum_value_definition>(enumTypeExtension,
 			[&enumType](const peg::ast_node & child)
 			{
-				std::string value;
-				std::string valueDescription;
-				std::optional<std::string> deprecationReason;
+				EnumValueType value;
 
 				peg::on_first_child<peg::enum_value>(child,
 					[&value](const peg::ast_node & enumValue)
 					{
-						value = enumValue.string_view();
+						value.value = enumValue.string_view();
 					});
 
 				peg::on_first_child<peg::description>(child,
-					[&valueDescription](const peg::ast_node & enumValue)
+					[&value](const peg::ast_node & enumValue)
 					{
-						valueDescription = enumValue.children.front()->unescaped;
+						value.description = enumValue.children.front()->unescaped;
 					});
 
 				peg::on_first_child<peg::directives>(child,
-					[&deprecationReason](const peg::ast_node & directives)
+					[&value](const peg::ast_node & directives)
 					{
 						peg::for_each_child<peg::directive>(directives,
-							[&deprecationReason](const peg::ast_node & directive)
+							[&value](const peg::ast_node & directive)
 							{
 								std::string directiveName;
 
@@ -642,10 +662,10 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 									std::string reason;
 
 									peg::on_first_child<peg::arguments>(directive,
-										[&reason](const peg::ast_node & arguments)
+										[&value](const peg::ast_node & arguments)
 										{
 											peg::on_first_child<peg::argument>(arguments,
-												[&reason](const peg::ast_node & argument)
+												[&value](const peg::ast_node & argument)
 												{
 													std::string argumentName;
 
@@ -658,20 +678,19 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 													if (argumentName == "reason")
 													{
 														peg::on_first_child<peg::string_value>(argument,
-															[&reason](const peg::ast_node & argumentValue)
+															[&value](const peg::ast_node & argumentValue)
 															{
-																reason = argumentValue.unescaped;
+																value.deprecationReason = argumentValue.unescaped;
 															});
 													}
 												});
 										});
-
-									deprecationReason = std::move(reason);
 								}
 							});
 					});
 
-				enumType.values.push_back({ std::move(value), std::move(valueDescription), std::move(deprecationReason) });
+				value.position = child.begin();
+				enumType.values.push_back(std::move(value));
 			});
 	}
 }
@@ -694,6 +713,7 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 		});
 
 	_schemaTypes[name] = SchemaType::Scalar;
+	_typePositions.emplace(name, scalarTypeDefinition.begin());
 	_scalarNames[name] = _scalarTypes.size();
 	_scalarTypes.push_back({ std::move(name), std::move(description) });
 }
@@ -716,6 +736,7 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 		});
 
 	_schemaTypes[name] = SchemaType::Union;
+	_typePositions.emplace(name, unionTypeDefinition.begin());
 	_unionNames[name] = _unionTypes.size();
 	_unionTypes.push_back({ std::move(name), {}, std::move(description) });
 
@@ -780,6 +801,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 			}
 		});
 
+	_directivePositions.emplace(directive.name, directiveDefinition.begin());
 	_directives.push_back(std::move(directive));
 }
 
@@ -861,6 +883,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 		}
 
 		std::tie(field.type, field.modifiers) = fieldType.getType();
+		field.position = fieldDefinition->begin();
 		outputFields.push_back(std::move(field));
 	}
 
@@ -903,6 +926,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 		}
 
 		std::tie(field.type, field.modifiers) = fieldType.getType();
+		field.position = fieldDefinition->begin();
 		inputFields.push_back(std::move(field));
 	}
 
@@ -2960,7 +2984,21 @@ int main(int argc, char** argv)
 			std::cout << file << std::endl;
 		}
 	}
-	catch (const std::runtime_error & ex)
+	catch (const tao::graphqlpeg::parse_error& pe)
+	{
+		std::cerr << "Invalid GraphQL: " << pe.what()
+			<< std::endl;
+
+		for (const auto& position : pe.positions)
+		{
+			std::cerr << "  line: " << position.line
+				<< " column: " << position.byte_in_line
+				<< std::endl;
+		}
+	
+		return 1;
+	}
+	catch (const std::runtime_error& ex)
 	{
 		std::cerr << ex.what() << std::endl;
 		return 1;
