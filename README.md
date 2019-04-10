@@ -46,7 +46,7 @@ I added a vcpkg port for this project, if you have vcpkg you can also install ev
 For now, I'm maintaining compatibility with C++11 for maximum portability. I picked a few projects as dependencies:
 
 - JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. Specifically, you should use the [2.7.x branch](https://github.com/taocpp/PEGTL/tree/2.7.x) of PEGTL instead of master since it's compatible with C++11.
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. Specifically, you should use the [2.x branch](https://github.com/taocpp/PEGTL/tree/2.x) of PEGTL instead of master since it's compatible with C++11.
 - Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
 
 The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all 3
