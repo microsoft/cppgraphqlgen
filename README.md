@@ -46,7 +46,7 @@ I added a vcpkg port for this project, if you have vcpkg you can also install ev
 For now, I'm maintaining compatibility with C++11 for maximum portability. I picked a few projects as dependencies:
 
 - JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. Specifically, you should use the [2.7.x branch](https://github.com/taocpp/PEGTL/tree/2.7.x) of PEGTL instead of master since it's compatible with C++11.
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. While the PEGTL 3.0 release is still pending I've added this as a sub-module, so you should not install this separately.
 - Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
 
 The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all 3
@@ -55,9 +55,7 @@ dependencies installed on your system along with CMake to build this project.
 ### Using vcpkg
 
 Vcpkg can install the dependencies from source on either platform, and that's what I'm using on
-Windows. Use `vcpkg install rapidjson pegtl gtest` to get all of them.
-
-This approach works well on Linux. I've done all of my testing for Linux with WSL using vcpkg.
+Windows and Linux. Use `vcpkg install rapidjson gtest` to get all of them.
 
 ### Windows with NuGet
 
