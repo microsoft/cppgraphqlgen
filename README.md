@@ -54,8 +54,8 @@ dependencies installed on your system along with CMake to build this project.
 
 ### Using vcpkg
 
-Vcpkg can install the dependencies from source on either platform, and that's what I'm using on
-Windows and Linux. Use `vcpkg install rapidjson gtest` to get all of them.
+Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows and Linux.
+PEGTL is included as a sub-module of this repo, and you can use `vcpkg install rapidjson gtest` to get all of the others.
 
 ### Windows with NuGet
 
