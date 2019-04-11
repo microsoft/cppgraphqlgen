@@ -2070,7 +2070,7 @@ std::future<response::Value> )cpp" << objectType.type
 std::future<response::Value> )cpp" << objectType.type
 << R"cpp(::resolve__type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));
@@ -2400,15 +2400,14 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
 						<< R"cpp(", R"md()cpp" << interfaceField.description
-						<< R"cpp()md", std::optional<std::string>{)cpp";
+						<< R"cpp()md", std::make_optional<response::StringType>()cpp";
 
 					if (interfaceField.deprecationReason)
 					{
-						sourceFile << R"cpp( std::in_place, R"md()cpp"
-							<< *interfaceField.deprecationReason << R"cpp()md" )cpp";
+						sourceFile << R"cpp(R"md()cpp" << *interfaceField.deprecationReason << R"cpp()md")cpp";
 					}
 
-					sourceFile << R"cpp(}, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -2501,15 +2500,14 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
 						<< R"cpp(", R"md()cpp" << objectField.description
-						<< R"cpp()md", std::optional<std::string>{)cpp";
+						<< R"cpp()md", std::make_optional<response::StringType>()cpp";
 
 					if (objectField.deprecationReason)
 					{
-						sourceFile << R"cpp( std::in_place, R"md()cpp"
-							<< *objectField.deprecationReason << R"cpp()md" )cpp";
+						sourceFile << R"cpp(R"md()cpp" << *objectField.deprecationReason << R"cpp()md")cpp";
 					}
 
-					sourceFile << R"cpp(}, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())

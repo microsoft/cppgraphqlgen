@@ -673,7 +673,7 @@ ast<std::vector<char>> parseString(const std::string_view& input)
 
 ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
 {
-	std::unique_ptr<file_input<>> in(new file_input<>(std::string(filename)));
+	auto in = std::make_unique<file_input<>>(std::string(filename));
 	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };
 
 	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(*result.input));
