@@ -6,7 +6,9 @@ project(cppgraphqlgen VERSION 3.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-if(WIN32)
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
   # Let CMake figure out the exports for the SHARED library (DLL) on Windows.
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
@@ -26,8 +28,7 @@ set(PEGTL_BUILD_TESTS OFF CACHE BOOL "Disable PEGTL tests")
 set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "Disable PEGTL examples")
 add_subdirectory(PEGTL)
 
-# At least on Windows, this library needs to be static for the RTTI comparisons to work.
-add_library(graphqlpeg STATIC
+add_library(graphqlpeg
   GraphQLTree.cpp)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
@@ -120,9 +121,9 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   target_link_libraries(todaygraphql PUBLIC
     graphqlservice)
   target_include_directories(todaygraphql PUBLIC
+    ${CMAKE_CURRENT_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/PEGTL/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/PEGTL/include)
 
   if(BUILD_TESTS)
     add_executable(test_today
