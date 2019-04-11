@@ -13,9 +13,9 @@ using namespace facebook::graphql;
 
 int main(int argc, char** argv)
 {
-	std::vector<uint8_t> binAppointmentId;
-	std::vector<uint8_t> binTaskId;
-	std::vector<uint8_t> binFolderId;
+	response::IdType binAppointmentId;
+	response::IdType binTaskId;
+	response::IdType binFolderId;
 
 	std::string fakeAppointmentId("fakeAppointmentId");
 	binAppointmentId.resize(fakeAppointmentId.size());

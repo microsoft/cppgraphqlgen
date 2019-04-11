@@ -28,7 +28,7 @@ enum class TaskState
 
 struct CompleteTaskInput
 {
-	std::vector<uint8_t> id;
+	response::IdType id;
 	std::optional<response::BooleanType> isComplete;
 	std::optional<response::StringType> clientMutationId;
 };
@@ -55,7 +55,7 @@ class NestedType;
 
 struct Node
 {
-	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const = 0;
+	virtual std::future<response::IdType> getId(service::FieldParams&& params) const = 0;
 };
 
 namespace object {
@@ -67,13 +67,13 @@ protected:
 	Query();
 
 public:
-	virtual std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const;
+	virtual std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const;
 	virtual std::future<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
 	virtual std::future<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
 	virtual std::future<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const;
-	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
-	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
-	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& idsArg) const;
+	virtual std::future<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
+	virtual std::future<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
+	virtual std::future<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 	virtual std::future<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual std::future<response::StringType> getUnimplemented(service::FieldParams&& params) const;
 
@@ -254,7 +254,7 @@ protected:
 
 public:
 	virtual std::future<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const;
-	virtual std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const;
+	virtual std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const;
 
 private:
 	std::future<response::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
@@ -271,7 +271,7 @@ protected:
 	Appointment();
 
 public:
-	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
+	virtual std::future<response::IdType> getId(service::FieldParams&& params) const override;
 	virtual std::future<std::optional<response::Value>> getWhen(service::FieldParams&& params) const;
 	virtual std::future<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const;
 	virtual std::future<response::BooleanType> getIsNow(service::FieldParams&& params) const;
@@ -293,7 +293,7 @@ protected:
 	Task();
 
 public:
-	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
+	virtual std::future<response::IdType> getId(service::FieldParams&& params) const override;
 	virtual std::future<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const;
 	virtual std::future<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
 
@@ -313,7 +313,7 @@ protected:
 	Folder();
 
 public:
-	virtual std::future<std::vector<uint8_t>> getId(service::FieldParams&& params) const override;
+	virtual std::future<response::IdType> getId(service::FieldParams&& params) const override;
 	virtual std::future<std::optional<response::StringType>> getName(service::FieldParams&& params) const;
 	virtual std::future<response::IntType> getUnreadCount(service::FieldParams&& params) const;
 

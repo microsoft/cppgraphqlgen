@@ -40,19 +40,19 @@ public:
 
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks, unreadCountsLoader&& getUnreadCounts);
 
-	std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, std::vector<uint8_t>&& id) const override;
+	std::future<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& id) const override;
 	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
 	std::future<std::shared_ptr<object::TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
 	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& first, std::optional<response::Value>&& after, std::optional<response::IntType>&& last, std::optional<response::Value>&& before) const override;
-	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
-	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<std::vector<uint8_t>>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& ids) const override;
+	std::future<std::vector<std::shared_ptr<object::Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& ids) const override;
 	std::future<std::shared_ptr<object::NestedType>> getNested(service::FieldParams&& params) const override;
 
 private:
-	std::shared_ptr<Appointment> findAppointment(const service::FieldParams& params, const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Task> findTask(const service::FieldParams& params, const std::vector<uint8_t>& id) const;
-	std::shared_ptr<Folder> findUnreadCount(const service::FieldParams& params, const std::vector<uint8_t>& id) const;
+	std::shared_ptr<Appointment> findAppointment(const service::FieldParams& params, const response::IdType& id) const;
+	std::shared_ptr<Task> findTask(const service::FieldParams& params, const response::IdType& id) const;
+	std::shared_ptr<Folder> findUnreadCount(const service::FieldParams& params, const response::IdType& id) const;
 
 	// Lazy load the fields in each query
 	void loadAppointments(const std::shared_ptr<service::RequestState>& state) const;
@@ -103,11 +103,11 @@ private:
 class Appointment : public object::Appointment
 {
 public:
-	explicit Appointment(std::vector<uint8_t>&& id, std::string&& when, std::string&& subject, bool isNow);
+	explicit Appointment(response::IdType&& id, std::string&& when, std::string&& subject, bool isNow);
 
-	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
+	std::future<response::IdType> getId(service::FieldParams&&) const override
 	{
-		std::promise<std::vector<uint8_t>> promise;
+		std::promise<response::IdType> promise;
 
 		promise.set_value(_id);
 
@@ -142,7 +142,7 @@ public:
 	}
 
 private:
-	std::vector<uint8_t> _id;
+	response::IdType _id;
 	std::string _when;
 	std::string _subject;
 	bool _isNow;
@@ -219,11 +219,11 @@ private:
 class Task : public object::Task
 {
 public:
-	explicit Task(std::vector<uint8_t>&& id, std::string&& title, bool isComplete);
+	explicit Task(response::IdType&& id, std::string&& title, bool isComplete);
 
-	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
+	std::future<response::IdType> getId(service::FieldParams&&) const override
 	{
-		std::promise<std::vector<uint8_t>> promise;
+		std::promise<response::IdType> promise;
 
 		promise.set_value(_id);
 
@@ -249,7 +249,7 @@ public:
 	}
 
 private:
-	std::vector<uint8_t> _id;
+	response::IdType _id;
 	std::string _title;
 	bool _isComplete;
 	TaskState _state = TaskState::New;
@@ -326,11 +326,11 @@ private:
 class Folder : public object::Folder
 {
 public:
-	explicit Folder(std::vector<uint8_t>&& id, std::string&& name, int unreadCount);
+	explicit Folder(response::IdType&& id, std::string&& name, int unreadCount);
 
-	std::future<std::vector<uint8_t>> getId(service::FieldParams&&) const override
+	std::future<response::IdType> getId(service::FieldParams&&) const override
 	{
-		std::promise<std::vector<uint8_t>> promise;
+		std::promise<response::IdType> promise;
 
 		promise.set_value(_id);
 
@@ -356,7 +356,7 @@ public:
 	}
 
 private:
-	std::vector<uint8_t> _id;
+	response::IdType _id;
 	std::string _name;
 	int _unreadCount;
 };
@@ -486,7 +486,7 @@ public:
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
 
-	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const override
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, response::IdType&&) const override
 	{
 		throw std::runtime_error("Unexpected call to getNodeChange");
 	}
@@ -511,7 +511,7 @@ public:
 		return promise.get_future();
 	}
 
-	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const override
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&&, response::IdType&&) const override
 	{
 		throw std::runtime_error("Unexpected call to getNodeChange");
 	}
@@ -523,7 +523,7 @@ private:
 class NodeChange : public object::Subscription
 {
 public:
-	using nodeChange = std::function<std::shared_ptr<service::Object>(const std::shared_ptr<service::RequestState>&, std::vector<uint8_t>&&)>;
+	using nodeChange = std::function<std::shared_ptr<service::Object>(const std::shared_ptr<service::RequestState>&, response::IdType&&)>;
 
 	explicit NodeChange(nodeChange&& changeNode)
 		: _changeNode(std::move(changeNode))
@@ -535,7 +535,7 @@ public:
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
 
-	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, std::vector<uint8_t>&& idArg) const override
+	std::future<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const override
 	{
 		std::promise<std::shared_ptr<service::Object>> promise;
 
