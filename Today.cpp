@@ -277,7 +277,7 @@ std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointmen
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
-	return std::async(std::launch::async,
+	return std::async(std::launch::deferred,
 		[this, spThis, state](std::optional<int>&& firstWrapped, std::optional<response::Value>&& afterWrapped, std::optional<int>&& lastWrapped, std::optional<response::Value>&& beforeWrapped)
 	{
 		loadAppointments(state);

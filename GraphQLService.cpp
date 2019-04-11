@@ -1161,7 +1161,7 @@ public:
 
 	std::future<response::Value> getValue();
 
-	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
+	void visit(std::launch launch, const std::string& operationType, const peg::ast_node& operationDefinition);
 
 private:
 	std::shared_ptr<OperationData> _params;
@@ -1186,7 +1186,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(const std::string & operationType, const peg::ast_node & operationDefinition)
+void OperationDefinitionVisitor::visit(std::launch launch, const std::string & operationType, const peg::ast_node & operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 
@@ -1243,23 +1243,21 @@ void OperationDefinitionVisitor::visit(const std::string & operationType, const 
 	_params->directives = std::move(operationDirectives);
 
 	// Keep the params alive until the deferred lambda has executed
-	auto params = std::move(_params);
-
-	// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
-	response::Value emptyFragmentDirectives(response::Type::Map);
-	const SelectionSetParams selectionSetParams {
-		params->state,
-		params->directives,
-		emptyFragmentDirectives,
-		emptyFragmentDirectives,
-		emptyFragmentDirectives
-	};
-
-	_result = std::async(std::launch::deferred,
-		[params](std::future<response::Value> document)
+	_result = std::async(launch,
+		[params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
 		{
-			return document.get();
-		}, itr->second->resolve(selectionSetParams, *operationDefinition.children.back(), params->fragments, params->variables));
+			// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
+			const response::Value emptyFragmentDirectives(response::Type::Map);
+			const SelectionSetParams selectionSetParams{
+				params->state,
+				params->directives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives
+			};
+
+			return operation->resolve(selectionSetParams, selection, params->fragments, params->variables).get();
+		}, std::cref(*operationDefinition.children.back()));
 }
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, std::unordered_map<SubscriptionName, std::vector<response::Value>> && fieldNamesAndArgs,
@@ -1572,7 +1570,12 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 	return result;
 }
 
-std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState> & state, const peg::ast_node & root, const std::string & operationName, response::Value && variables) const
+std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
+{
+	return resolve(std::launch::deferred, state, root, operationName, std::move(variables));
+}
+
+std::future<response::Value> Request::resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
 {
 	FragmentDefinitionVisitor fragmentVisitor(variables);
 
@@ -1617,7 +1620,7 @@ std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState
 
 		OperationDefinitionVisitor operationVisitor(state, _operations, std::move(variables), std::move(fragments));
 
-		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
+		operationVisitor.visit(launch, operationDefinition.first, *operationDefinition.second);
 
 		return operationVisitor.getValue();
 	}

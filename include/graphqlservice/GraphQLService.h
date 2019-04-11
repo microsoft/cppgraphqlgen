@@ -667,6 +667,7 @@ public:
 	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
 	void unsubscribe(SubscriptionKey key);

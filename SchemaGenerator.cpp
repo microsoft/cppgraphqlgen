@@ -176,9 +176,13 @@ void Generator::validateSchema()
 			std::ostringstream error;
 			auto itrPosition = _typePositions.find(entry.first);
 
-			error << "Builtin type overridden: " << entry.first
-				<< " line: " << itrPosition->second.line
-				<< " column: " << itrPosition->second.byte_in_line;
+			error << "Builtin type overridden: " << entry.first;
+
+			if (itrPosition != _typePositions.cend())
+			{
+				error << " line: " << itrPosition->second.line
+					<< " column: " << itrPosition->second.byte_in_line;
+			}
 
 			throw std::runtime_error(error.str());
 		}
@@ -210,9 +214,14 @@ void Generator::validateSchema()
 				std::ostringstream error;
 				auto itrPosition = _typePositions.find(entry.type);
 
-				error << "Unknown interface: " << interfaceName << " implemented by: " << entry.type
-					<< " line: " << itrPosition->second.line
-					<< " column: " << itrPosition->second.byte_in_line;
+				error << "Unknown interface: " << interfaceName
+					<< " implemented by: " << entry.type;
+
+				if (itrPosition != _typePositions.cend())
+				{
+					error << " line: " << itrPosition->second.line
+						<< " column: " << itrPosition->second.byte_in_line;
+				}
 
 				throw std::runtime_error(error.str());
 			}
@@ -235,9 +244,13 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields)
 		{
 			std::ostringstream error;
 
-			error << "Unknown field type: " << entry.type
-				<< " line: " << entry.position->line
-				<< " column: " << entry.position->byte_in_line;
+			error << "Unknown field type: " << entry.type;
+
+			if (entry.position)
+			{
+				error << " line: " << entry.position->line
+					<< " column: " << entry.position->byte_in_line;
+			}
 
 			throw std::runtime_error(error.str());
 		}
@@ -268,9 +281,13 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields)
 			{
 				std::ostringstream error;
 
-				error << "Invalid field type: " << entry.type
-					<< " line: " << entry.position->line
-					<< " column: " << entry.position->byte_in_line;
+				error << "Invalid field type: " << entry.type;
+
+				if (entry.position)
+				{
+					error << " line: " << entry.position->line
+						<< " column: " << entry.position->byte_in_line;
+				}
 
 				throw std::runtime_error(error.str());
 			}
@@ -295,9 +312,13 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 		{
 			std::ostringstream error;
 
-			error << "Unknown argument type: " << entry.type
-				<< " line: " << entry.position->line
-				<< " column: " << entry.position->byte_in_line;
+			error << "Unknown argument type: " << entry.type;
+
+			if (entry.position)
+			{
+				error << " line: " << entry.position->line
+					<< " column: " << entry.position->byte_in_line;
+			}
 
 			throw std::runtime_error(error.str());
 		}
@@ -320,9 +341,13 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 			{
 				std::ostringstream error;
 
-				error << "Invalid argument type: " << entry.type
-					<< " line: " << entry.position->line
-					<< " column: " << entry.position->byte_in_line;
+				error << "Invalid argument type: " << entry.type;
+
+				if (entry.position)
+				{
+					error << " line: " << entry.position->line
+						<< " column: " << entry.position->byte_in_line;
+				}
 
 				throw std::runtime_error(error.str());
 			}
