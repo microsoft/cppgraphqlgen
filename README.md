@@ -45,17 +45,19 @@ I added a vcpkg port for this project, if you have vcpkg you can also install ev
 
 For now, I'm maintaining compatibility with C++11 for maximum portability. I picked a few projects as dependencies:
 
-- JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
 - GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. While the PEGTL 3.0 release is still pending I've added this as a sub-module, so you should not install this separately.
+- Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
+- JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
 - Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
 
-The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all 3
+The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all of the
 dependencies installed on your system along with CMake to build this project.
 
 ### Using vcpkg
 
 Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows and Linux.
-PEGTL is included as a sub-module of this repo, and you can use `vcpkg install rapidjson gtest` to get all of the others.
+PEGTL is currently included as a sub-module of this repo, so you can just use `vcpkg install boost-program-options rapidjson gtest`
+to get all of the others.
 
 ### Windows with NuGet
 
