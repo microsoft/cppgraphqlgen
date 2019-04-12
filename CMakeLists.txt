@@ -50,7 +50,6 @@ add_custom_command(
     IntrospectionSchema.cpp
     include/graphqlservice/IntrospectionSchema.h
   COMMAND schemagen --introspection
-  COMMAND ${CMAKE_COMMAND} -E rename IntrospectionSchema.h include/graphqlservice/IntrospectionSchema.h
   DEPENDS schemagen
   COMMENT "Generating IntrospectionSchema files"
 )
@@ -111,8 +110,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     OUTPUT
       TodaySchema.cpp
       include/TodaySchema.h
-    COMMAND schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql Today today
-    COMMAND ${CMAKE_COMMAND} -E rename TodaySchema.h include/TodaySchema.h
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql" --prefix="Today" --namespace="today" --header-dir="include"
     DEPENDS schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql
     COMMENT "Generating mock TodaySchema files"
   )

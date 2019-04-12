@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <filesystem>
 
 namespace facebook::graphql::schema {
 
@@ -36,8 +37,8 @@ const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
-	, _headerFilename("IntrospectionSchema.h")
-	, _sourceFilename("IntrospectionSchema.cpp")
+	, _headerPath((std::filesystem::path("include") / "graphqlservice" / "IntrospectionSchema.h").string())
+	, _sourcePath("IntrospectionSchema.cpp")
 	, _schemaNamespace(s_introspectionNamespace)
 {
 	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
@@ -149,10 +150,10 @@ Generator::Generator()
 	validateSchema();
 }
 
-Generator::Generator(std::string_view schemaFileName, std::string_view filenamePrefix, std::string_view schemaNamespace)
+Generator::Generator(std::string_view schemaFileName, std::string_view headerPath, std::string_view sourcePath, std::string_view schemaNamespace)
 	: _isIntrospection(false)
-	, _headerFilename(std::string(filenamePrefix) + "Schema.h")
-	, _sourceFilename(std::string(filenamePrefix) + "Schema.cpp")
+	, _headerPath(headerPath)
+	, _sourcePath(sourcePath)
 	, _schemaNamespace(schemaNamespace)
 {
 	auto ast = peg::parseFile(schemaFileName);
@@ -1120,12 +1121,12 @@ std::vector<std::string> Generator::Build() const noexcept
 
 	if (outputHeader())
 	{
-		builtFiles.push_back(_headerFilename);
+		builtFiles.push_back(_headerPath);
 	}
 
 	if (outputSource())
 	{
-		builtFiles.push_back(_sourceFilename);
+		builtFiles.push_back(_sourcePath);
 	}
 
 	return builtFiles;
@@ -1273,7 +1274,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 
 bool Generator::outputHeader() const noexcept
 {
-	std::ofstream headerFile(_headerFilename, std::ios_base::trunc);
+	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
 
 	headerFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1637,7 +1638,7 @@ std::string Generator::getResolverDeclaration(const OutputField & outputField) c
 
 bool Generator::outputSource() const noexcept
 {
-	std::ofstream sourceFile(_sourceFilename, std::ios_base::trunc);
+	std::ofstream sourceFile(_sourcePath, std::ios_base::trunc);
 
 	sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1645,7 +1646,7 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	if (!_isIntrospection)
 	{
-		sourceFile << R"cpp(#include ")cpp" << _headerFilename << R"cpp("
+		sourceFile << R"cpp(#include ")cpp" << std::filesystem::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 	}
@@ -2997,6 +2998,8 @@ int main(int argc, char** argv)
 	std::string schemaFileName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
+	std::string sourceDir;
+	std::string headerDir;
 	po::options_description options("Command line options");
 	po::options_description internalOptions("Internal options");
 	po::positional_options_description positional;
@@ -3008,7 +3011,9 @@ int main(int argc, char** argv)
 		("help,?", po::bool_switch(&showUsage), "Print the command line options")
 		("schema,s", po::value(&schemaFileName), "Schema definition file path")
 		("prefix,p", po::value(&filenamePrefix), "Prefix to use for the generated C++ filenames")
-		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types");
+		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types")
+		("source-dir,sd", po::value(&sourceDir), "Target path for the <prefix>Schema.cpp source file")
+		("header-dir,hd", po::value(&headerDir), "Target path for the <prefix>Schema.h header file");
 	internalOptions.add(options);
 	positional
 		.add("schema", 1)
@@ -3072,7 +3077,9 @@ int main(int argc, char** argv)
 
 		if (buildCustom)
 		{
-			const auto files = facebook::graphql::schema::Generator(schemaFileName, filenamePrefix, schemaNamespace).Build();
+			const auto headerPath = (std::filesystem::path(headerDir) / (std::string(filenamePrefix) + "Schema.h")).string();
+			const auto sourcePath = (std::filesystem::path(sourceDir) / (std::string(filenamePrefix) + "Schema.cpp")).string();
+			const auto files = facebook::graphql::schema::Generator(schemaFileName, headerPath, sourcePath, schemaNamespace).Build();
 
 			for (const auto& file : files)
 			{
