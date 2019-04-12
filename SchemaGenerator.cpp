@@ -2992,6 +2992,10 @@ void outputUsage(std::ostream& ostm, const po::options_description& options)
 
 int main(int argc, char** argv)
 {
+	po::options_description options("Command line options");
+	po::positional_options_description positional;
+	po::options_description internalOptions("Internal options");
+	po::variables_map variables;
 	bool showUsage = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
@@ -3000,13 +3004,7 @@ int main(int argc, char** argv)
 	std::string schemaNamespace;
 	std::string sourceDir;
 	std::string headerDir;
-	po::options_description options("Command line options");
-	po::options_description internalOptions("Internal options");
-	po::positional_options_description positional;
-	po::variables_map variables;
 
-	internalOptions.add_options()
-		("introspection", po::bool_switch(&buildIntrospection), "Generate IntrospectionSchema.*");
 	options.add_options()
 		("help,?", po::bool_switch(&showUsage), "Print the command line options")
 		("schema,s", po::value(&schemaFileName), "Schema definition file path")
@@ -3014,11 +3012,13 @@ int main(int argc, char** argv)
 		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types")
 		("source-dir,sd", po::value(&sourceDir), "Target path for the <prefix>Schema.cpp source file")
 		("header-dir,hd", po::value(&headerDir), "Target path for the <prefix>Schema.h header file");
-	internalOptions.add(options);
 	positional
 		.add("schema", 1)
 		.add("prefix", 1)
 		.add("namespace", 1);
+	internalOptions.add_options()
+		("introspection", po::bool_switch(&buildIntrospection), "Generate IntrospectionSchema.*");
+	internalOptions.add(options);
 
 	try
 	{
