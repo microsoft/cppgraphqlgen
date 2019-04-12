@@ -4,6 +4,8 @@
 #include "SchemaGenerator.h"
 #include "GraphQLGrammar.h"
 
+#include <boost/program_options.hpp>
+
 #include <stdexcept>
 #include <iostream>
 #include <fstream>

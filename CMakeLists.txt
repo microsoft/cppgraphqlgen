@@ -42,6 +42,9 @@ add_executable(schemagen
   SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE graphqlpeg)
 
+find_package(Boost REQUIRED COMPONENTS program_options)
+target_link_libraries(schemagen PRIVATE Boost::program_options)
+
 add_custom_command(
   OUTPUT
     IntrospectionSchema.cpp
