@@ -318,7 +318,7 @@ std::future<response::Value> Query::resolve__schema(service::ResolverParams&& pa
 
 std::future<response::Value> Query::resolve__type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	std::promise<std::shared_ptr<introspection::object::__Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));

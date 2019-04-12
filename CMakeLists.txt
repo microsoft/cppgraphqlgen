@@ -93,6 +93,10 @@ if(BUILD_GRAPHQLJSON)
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib)
+  install(FILES
+    include/graphqlservice/JSONResponse.h
+    DESTINATION include/graphqlservice
+    CONFIGURATIONS Release)
 else()
   set(BUILD_TESTS OFF)
 endif()
@@ -187,7 +191,6 @@ install(FILES
   include/graphqlservice/GraphQLTree.h
   include/graphqlservice/GraphQLResponse.h
   include/graphqlservice/GraphQLService.h
-  include/graphqlservice/JSONResponse.h
   include/graphqlservice/Introspection.h
   ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
   DESTINATION include/graphqlservice
