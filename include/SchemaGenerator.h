@@ -204,7 +204,7 @@ public:
 	explicit Generator();
 
 	// Initialize the generator with the GraphQL schema and output parameters.
-	explicit Generator(std::string&& schemaFileName, std::string&& filenamePrefix, std::string&& schemaNamespace);
+	explicit Generator(std::string_view schemaFileName, std::string_view filenamePrefix, std::string_view schemaNamespace);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
@@ -298,8 +298,9 @@ private:
 	static const std::string s_scalarCppType;
 
 	const bool _isIntrospection;
-	const std::string _filenamePrefix;
-	const std::string _schemaNamespace;
+	const std::string _headerFilename;
+	const std::string _sourceFilename;
+	std::string_view _schemaNamespace;
 
 	SchemaTypeMap _schemaTypes;
 	PositionMap _typePositions;

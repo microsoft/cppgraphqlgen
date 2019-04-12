@@ -36,7 +36,8 @@ const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
-	, _filenamePrefix("Introspection")
+	, _headerFilename("IntrospectionSchema.h")
+	, _sourceFilename("IntrospectionSchema.cpp")
 	, _schemaNamespace(s_introspectionNamespace)
 {
 	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
@@ -148,12 +149,13 @@ Generator::Generator()
 	validateSchema();
 }
 
-Generator::Generator(std::string&& schemaFileName, std::string&& filenamePrefix, std::string&& schemaNamespace)
+Generator::Generator(std::string_view schemaFileName, std::string_view filenamePrefix, std::string_view schemaNamespace)
 	: _isIntrospection(false)
-	, _filenamePrefix(std::move(filenamePrefix))
-	, _schemaNamespace(std::move(schemaNamespace))
+	, _headerFilename(std::string(filenamePrefix) + "Schema.h")
+	, _sourceFilename(std::string(filenamePrefix) + "Schema.cpp")
+	, _schemaNamespace(schemaNamespace)
 {
-	auto ast = peg::parseFile(schemaFileName.c_str());
+	auto ast = peg::parseFile(schemaFileName);
 
 	if (!ast.root)
 	{
@@ -1118,12 +1120,12 @@ std::vector<std::string> Generator::Build() const noexcept
 
 	if (outputHeader())
 	{
-		builtFiles.push_back(_filenamePrefix + "Schema.h");
+		builtFiles.push_back(_headerFilename);
 	}
 
 	if (outputSource())
 	{
-		builtFiles.push_back(_filenamePrefix + "Schema.cpp");
+		builtFiles.push_back(_sourceFilename);
 	}
 
 	return builtFiles;
@@ -1271,7 +1273,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 
 bool Generator::outputHeader() const noexcept
 {
-	std::ofstream headerFile(_filenamePrefix + "Schema.h", std::ios_base::trunc);
+	std::ofstream headerFile(_headerFilename, std::ios_base::trunc);
 
 	headerFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1635,7 +1637,7 @@ std::string Generator::getResolverDeclaration(const OutputField & outputField) c
 
 bool Generator::outputSource() const noexcept
 {
-	std::ofstream sourceFile(_filenamePrefix + "Schema.cpp", std::ios_base::trunc);
+	std::ofstream sourceFile(_sourceFilename, std::ios_base::trunc);
 
 	sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1643,7 +1645,7 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	if (!_isIntrospection)
 	{
-		sourceFile << R"cpp(#include ")cpp" << _filenamePrefix << R"cpp(Schema.h"
+		sourceFile << R"cpp(#include ")cpp" << _headerFilename << R"cpp("
 
 )cpp";
 	}
@@ -2978,35 +2980,88 @@ std::string Generator::getIntrospectionType(const std::string & type, const Type
 
 } /* namespace facebook::graphql::schema */
 
+
+namespace po = boost::program_options;
+
+void outputUsage(std::ostream& ostm, const po::options_description& options)
+{
+	std::cerr << "Usage (to generate a custom schema):" << std::endl
+		<< "\tschemagen [options] <schema file> <output filename prefix> <output namespace>" << std::endl
+		<< "Usage (to generate IntrospectionSchema):" << std::endl
+		<< "\tschemagen [options]" << std::endl;
+	std::cerr << options;
+}
+
 int main(int argc, char** argv)
 {
-	std::vector<std::string> files;
+	bool showUsage = false;
+	bool introspection = false;
+	std::string schemaFileName;
+	std::string filenamePrefix;
+	std::string schemaNamespace;
+	po::options_description options("Command line options");
+	po::positional_options_description positional;
+	po::variables_map variables;
+
+	options.add_options()
+		("help,usage,h,?", po::bool_switch(&showUsage), "Print the command line options")
+		("introspection,i", po::bool_switch(&introspection), "Generate IntrospectionSchema")
+		("schema,s", po::value(&schemaFileName), "Schema definition file path")
+		("prefix,p", po::value(&filenamePrefix), "Prefix to use for the generated C++ filenames")
+		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types");
+	positional
+		.add("schema", 1)
+		.add("prefix", 1)
+		.add("namespace", 1);
 
 	try
 	{
-		if (argc == 1)
+		po::store(po::command_line_parser(argc, argv)
+			.options(options)
+			.positional(positional)
+			.run(), variables);
+		po::notify(variables);
+	}
+	catch (const po::error & oe)
+	{
+		std::cerr << oe.what() << std::endl;
+		outputUsage(std::cerr, options);
+		return 1;
+	}
+
+	if (showUsage)
+	{
+		outputUsage(std::cout, options);
+		return 0;
+	}
+
+	introspection = introspection
+		|| schemaFileName.empty()
+		|| filenamePrefix.empty()
+		|| schemaNamespace.empty();
+
+	try
+	{
+		if (introspection)
 		{
-			files = facebook::graphql::schema::Generator().Build();
-		}
-		else
-		{
-			if (argc != 4)
+			const auto files = facebook::graphql::schema::Generator().Build();
+
+			for (const auto& file : files)
 			{
-				std::cerr << "Usage (to generate a custom schema): " << argv[0]
-					<< " <schema file> <output filename prefix> <output namespace>"
-					<< std::endl;
-				std::cerr << "Usage (to generate IntrospectionSchema): " << argv[0] << std::endl;
-				return 1;
+				std::cout << file << std::endl;
 			}
-
-			facebook::graphql::schema::Generator generator(argv[1], argv[2], argv[3]);
-
-			files = generator.Build();
 		}
 
-		for (const auto& file : files)
+		if (!schemaFileName.empty()
+			&& !filenamePrefix.empty()
+			&& !schemaNamespace.empty())
 		{
-			std::cout << file << std::endl;
+			const auto files = facebook::graphql::schema::Generator(schemaFileName, filenamePrefix, schemaNamespace).Build();
+
+			for (const auto& file : files)
+			{
+				std::cout << file << std::endl;
+			}
 		}
 	}
 	catch (const tao::graphqlpeg::parse_error& pe)
@@ -3016,7 +3071,7 @@ int main(int argc, char** argv)
 
 		for (const auto& position : pe.positions)
 		{
-			std::cerr << "  line: " << position.line
+			std::cerr << "\tline: " << position.line
 				<< " column: " << position.byte_in_line
 				<< std::endl;
 		}

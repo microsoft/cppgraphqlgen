@@ -661,7 +661,7 @@ ast<const char*>::~ast()
 	// omitted, declare it explicitly and define it in graphqlservice.
 }
 
-ast<std::vector<char>> parseString(const std::string_view& input)
+ast<std::vector<char>> parseString(std::string_view input)
 {
 	ast<std::vector<char>> result{ { input.cbegin(), input.cend() }, nullptr };
 	memory_input<> in(result.input.data(), result.input.size(), "GraphQL");
@@ -671,7 +671,7 @@ ast<std::vector<char>> parseString(const std::string_view& input)
 	return result;
 }
 
-ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
+ast<std::unique_ptr<file_input<>>> parseFile(std::string_view filename)
 {
 	auto in = std::make_unique<file_input<>>(std::string(filename));
 	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };

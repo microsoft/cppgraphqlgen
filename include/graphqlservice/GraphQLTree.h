@@ -36,8 +36,8 @@ struct ast
 	std::unique_ptr<ast_node> root;
 };
 
-ast<std::vector<char>> parseString(const std::string_view& input);
-ast<std::unique_ptr<file_input<>>> parseFile(const char* filename);
+ast<std::vector<char>> parseString(std::string_view input);
+ast<std::unique_ptr<file_input<>>> parseFile(std::string_view filename);
 
 } /* namespace peg */
 
