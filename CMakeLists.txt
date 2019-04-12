@@ -49,7 +49,7 @@ add_custom_command(
   OUTPUT
     IntrospectionSchema.cpp
     include/graphqlservice/IntrospectionSchema.h
-  COMMAND schemagen
+  COMMAND schemagen --introspection
   COMMAND ${CMAKE_COMMAND} -E rename IntrospectionSchema.h include/graphqlservice/IntrospectionSchema.h
   DEPENDS schemagen
   COMMENT "Generating IntrospectionSchema files"

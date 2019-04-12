@@ -2985,30 +2985,31 @@ namespace po = boost::program_options;
 
 void outputUsage(std::ostream& ostm, const po::options_description& options)
 {
-	std::cerr << "Usage (to generate a custom schema):" << std::endl
-		<< "\tschemagen [options] <schema file> <output filename prefix> <output namespace>" << std::endl
-		<< "Usage (to generate IntrospectionSchema):" << std::endl
-		<< "\tschemagen [options]" << std::endl;
+	std::cerr << "Usage:\tschemagen [options] <schema file> <output filename prefix> <output namespace>" << std::endl;
 	std::cerr << options;
 }
 
 int main(int argc, char** argv)
 {
 	bool showUsage = false;
-	bool introspection = false;
+	bool buildIntrospection = false;
+	bool buildCustom = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
 	po::options_description options("Command line options");
+	po::options_description internalOptions("Internal options");
 	po::positional_options_description positional;
 	po::variables_map variables;
 
+	internalOptions.add_options()
+		("introspection", po::bool_switch(&buildIntrospection), "Generate IntrospectionSchema.*");
 	options.add_options()
-		("help,usage,h,?", po::bool_switch(&showUsage), "Print the command line options")
-		("introspection,i", po::bool_switch(&introspection), "Generate IntrospectionSchema")
+		("help,?", po::bool_switch(&showUsage), "Print the command line options")
 		("schema,s", po::value(&schemaFileName), "Schema definition file path")
 		("prefix,p", po::value(&filenamePrefix), "Prefix to use for the generated C++ filenames")
 		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types");
+	internalOptions.add(options);
 	positional
 		.add("schema", 1)
 		.add("prefix", 1)
@@ -3017,32 +3018,49 @@ int main(int argc, char** argv)
 	try
 	{
 		po::store(po::command_line_parser(argc, argv)
-			.options(options)
+			.options(internalOptions)
 			.positional(positional)
 			.run(), variables);
 		po::notify(variables);
+
+		// If you specify any of these parameters, you must specify all three.
+		buildCustom = !schemaFileName.empty()
+			|| !filenamePrefix.empty()
+			|| !schemaNamespace.empty();
+
+		if (buildCustom)
+		{
+			if (schemaFileName.empty())
+			{
+				throw po::required_option("schema");
+			}
+			else if (filenamePrefix.empty())
+			{
+				throw po::required_option("prefix");
+			}
+			else if (schemaNamespace.empty())
+			{
+				throw po::required_option("namespace");
+			}
+		}
 	}
 	catch (const po::error & oe)
 	{
-		std::cerr << oe.what() << std::endl;
+		std::cerr << "Command line errror: " << oe.what() << std::endl;
 		outputUsage(std::cerr, options);
 		return 1;
 	}
 
-	if (showUsage)
+	if (showUsage ||
+		(!buildIntrospection && !buildCustom))
 	{
 		outputUsage(std::cout, options);
 		return 0;
 	}
 
-	introspection = introspection
-		|| schemaFileName.empty()
-		|| filenamePrefix.empty()
-		|| schemaNamespace.empty();
-
 	try
 	{
-		if (introspection)
+		if (buildIntrospection)
 		{
 			const auto files = facebook::graphql::schema::Generator().Build();
 
@@ -3052,9 +3070,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if (!schemaFileName.empty()
-			&& !filenamePrefix.empty()
-			&& !schemaNamespace.empty())
+		if (buildCustom)
 		{
 			const auto files = facebook::graphql::schema::Generator(schemaFileName, filenamePrefix, schemaNamespace).Build();
 
