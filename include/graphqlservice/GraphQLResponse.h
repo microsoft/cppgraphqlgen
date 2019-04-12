@@ -35,6 +35,7 @@ using BooleanType = bool;
 using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
+using IdType = std::vector<uint8_t>;
 
 struct TypedData;
 

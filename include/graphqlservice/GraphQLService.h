@@ -318,7 +318,7 @@ using IntArgument = ModifiedArgument<response::IntType>;
 using FloatArgument = ModifiedArgument<response::FloatType>;
 using StringArgument = ModifiedArgument<response::StringType>;
 using BooleanArgument = ModifiedArgument<response::BooleanType>;
-using IdArgument = ModifiedArgument<std::vector<uint8_t>>;
+using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
 // Each type should handle fragments with type conditions matching its own
@@ -596,7 +596,7 @@ using IntResult = ModifiedResult<response::IntType>;
 using FloatResult = ModifiedResult<response::FloatType>;
 using StringResult = ModifiedResult<response::StringType>;
 using BooleanResult = ModifiedResult<response::BooleanType>;
-using IdResult = ModifiedResult<std::vector<uint8_t>>;
+using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 

@@ -600,7 +600,7 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 }
 
 template <>
-std::vector<uint8_t> ModifiedArgument<std::vector<uint8_t>>::convert(const response::Value & value)
+response::IdType ModifiedArgument<response::IdType>::convert(const response::Value & value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -663,10 +663,10 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(std::futur
 }
 
 template <>
-std::future<response::Value> ModifiedResult<std::vector<uint8_t>>::convert(std::future<std::vector<uint8_t>> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::IdType>::convert(std::future<response::IdType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](std::vector<uint8_t> && value, const ResolverParams&)
+		[](response::IdType && value, const ResolverParams&)
 		{
 			return response::Value(Base64::toBase64(value));
 		});

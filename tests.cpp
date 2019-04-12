@@ -40,15 +40,15 @@ public:
 			[]() -> std::vector<std::shared_ptr<today::Appointment>>
 		{
 			++_getAppointmentsCount;
-			return { std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
+			return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
 		}, []() -> std::vector<std::shared_ptr<today::Task>>
 		{
 			++_getTasksCount;
-			return { std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true) };
+			return { std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true) };
 		}, []() -> std::vector<std::shared_ptr<today::Folder>>
 		{
 			++_getUnreadCountsCount;
-			return { std::make_shared<today::Folder>(std::vector<uint8_t>(_fakeFolderId), "\"Fake\" Inbox", 3) };
+			return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId), "\"Fake\" Inbox", 3) };
 		});
 		auto mutation = std::make_shared<today::Mutation>(
 			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload>
@@ -61,7 +61,7 @@ public:
 		auto subscription = std::make_shared<today::NextAppointmentChange>(
 			[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<today::Appointment>
 		{
-			return { std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "tomorrow", "Lunch?", true) };
+			return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "tomorrow", "Lunch?", true) };
 		});
 
 		_service = std::make_shared<today::Operations>(query, mutation, subscription);
@@ -76,9 +76,9 @@ public:
 	}
 
 protected:
-	static std::vector<uint8_t> _fakeAppointmentId;
-	static std::vector<uint8_t> _fakeTaskId;
-	static std::vector<uint8_t> _fakeFolderId;
+	static response::IdType _fakeAppointmentId;
+	static response::IdType _fakeTaskId;
+	static response::IdType _fakeFolderId;
 
 	static std::shared_ptr<today::Operations> _service;
 	static size_t _getAppointmentsCount;
@@ -86,9 +86,9 @@ protected:
 	static size_t _getUnreadCountsCount;
 };
 
-std::vector<uint8_t> TodayServiceCase::_fakeAppointmentId;
-std::vector<uint8_t> TodayServiceCase::_fakeTaskId;
-std::vector<uint8_t> TodayServiceCase::_fakeFolderId;
+response::IdType TodayServiceCase::_fakeAppointmentId;
+response::IdType TodayServiceCase::_fakeTaskId;
+response::IdType TodayServiceCase::_fakeFolderId;
 
 std::shared_ptr<today::Operations> TodayServiceCase::_service;
 size_t TodayServiceCase::_getAppointmentsCount = 0;
@@ -449,7 +449,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		[this](const std::shared_ptr<service::RequestState>& state) -> std::shared_ptr<today::Appointment>
 	{
 		EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-		return std::make_shared<today::Appointment>(std::vector<uint8_t>(_fakeAppointmentId), "today", "Dinner Time!", true);
+		return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "today", "Dinner Time!", true);
 	});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
@@ -882,11 +882,11 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(13);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
 	{
 		EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
 		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true));
+		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 	});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
@@ -932,7 +932,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	response::Value variables(response::Type::Map);
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
 	{
 		calledResolver = true;
 		return nullptr;
@@ -980,13 +980,13 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		return true;
 	};
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
 		{
-			const std::vector<uint8_t> fuzzyId { 'f', 'a', 'k' };
+			const response::IdType fuzzyId { 'f', 'a', 'k' };
 
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(fuzzyId, idArg);
-			return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
@@ -1042,7 +1042,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	};
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
 		{
 			calledResolver = true;
 			return nullptr;
@@ -1083,11 +1083,11 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	variables.emplace_back("taskId", response::Value(std::string("ZmFrZVRhc2tJZA==")));
 	auto state = std::make_shared<today::RequestState>(14);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, std::vector<uint8_t>&& idArg) -> std::shared_ptr<service::Object>
+		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
 	{
 		EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
 		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(std::vector<uint8_t>(_fakeTaskId), "Don't forget", true));
+		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 	});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },

@@ -74,7 +74,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 		return values;
 	}();
 
-	auto valueId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", value);
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 	auto pairIsComplete = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
@@ -116,7 +116,7 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
-std::future<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, std::vector<uint8_t>&&) const
+std::future<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
 
@@ -127,7 +127,7 @@ std::future<std::shared_ptr<service::Object>> Query::getNode(service::FieldParam
 
 std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -193,7 +193,7 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
 
-std::future<std::vector<std::shared_ptr<Appointment>>> Query::getAppointmentsById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+std::future<std::vector<std::shared_ptr<Appointment>>> Query::getAppointmentsById(service::FieldParams&&, std::vector<response::IdType>&&) const
 {
 	std::promise<std::vector<std::shared_ptr<Appointment>>> promise;
 
@@ -223,16 +223,16 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 		return values;
 	}();
 
-	auto pairIds = service::ModifiedArgument<std::vector<uint8_t>>::find<service::TypeModifier::List>("ids", params.arguments);
+	auto pairIds = service::ModifiedArgument<response::IdType>::find<service::TypeModifier::List>("ids", params.arguments);
 	auto argIds = (pairIds.second
 		? std::move(pairIds.first)
-		: service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", defaultArguments));
+		: service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", defaultArguments));
 	auto result = getAppointmentsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<std::vector<std::shared_ptr<Task>>> Query::getTasksById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+std::future<std::vector<std::shared_ptr<Task>>> Query::getTasksById(service::FieldParams&&, std::vector<response::IdType>&&) const
 {
 	std::promise<std::vector<std::shared_ptr<Task>>> promise;
 
@@ -243,13 +243,13 @@ std::future<std::vector<std::shared_ptr<Task>>> Query::getTasksById(service::Fie
 
 std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getTasksById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCountsById(service::FieldParams&&, std::vector<std::vector<uint8_t>>&&) const
+std::future<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCountsById(service::FieldParams&&, std::vector<response::IdType>&&) const
 {
 	std::promise<std::vector<std::shared_ptr<Folder>>> promise;
 
@@ -260,7 +260,7 @@ std::future<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCountsById(ser
 
 std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
-	auto argIds = service::ModifiedArgument<std::vector<uint8_t>>::require<service::TypeModifier::List>("ids", params.arguments);
+	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	auto result = getUnreadCountsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -805,7 +805,7 @@ std::future<response::Value> Subscription::resolveNextAppointmentChange(service:
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<std::shared_ptr<service::Object>> Subscription::getNodeChange(service::FieldParams&&, std::vector<uint8_t>&&) const
+std::future<std::shared_ptr<service::Object>> Subscription::getNodeChange(service::FieldParams&&, response::IdType&&) const
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
 
@@ -816,7 +816,7 @@ std::future<std::shared_ptr<service::Object>> Subscription::getNodeChange(servic
 
 std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<std::vector<uint8_t>>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	auto result = getNodeChange(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
 
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
@@ -845,9 +845,9 @@ Appointment::Appointment()
 {
 }
 
-std::future<std::vector<uint8_t>> Appointment::getId(service::FieldParams&&) const
+std::future<response::IdType> Appointment::getId(service::FieldParams&&) const
 {
-	std::promise<std::vector<uint8_t>> promise;
+	std::promise<response::IdType> promise;
 
 	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Appointment::getId is not implemented)ex")));
 
@@ -858,7 +858,7 @@ std::future<response::Value> Appointment::resolveId(service::ResolverParams&& pa
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
 
-	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
 std::future<std::optional<response::Value>> Appointment::getWhen(service::FieldParams&&) const
@@ -931,9 +931,9 @@ Task::Task()
 {
 }
 
-std::future<std::vector<uint8_t>> Task::getId(service::FieldParams&&) const
+std::future<response::IdType> Task::getId(service::FieldParams&&) const
 {
-	std::promise<std::vector<uint8_t>> promise;
+	std::promise<response::IdType> promise;
 
 	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Task::getId is not implemented)ex")));
 
@@ -944,7 +944,7 @@ std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
 
-	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
 std::future<std::optional<response::StringType>> Task::getTitle(service::FieldParams&&) const
@@ -1001,9 +1001,9 @@ Folder::Folder()
 {
 }
 
-std::future<std::vector<uint8_t>> Folder::getId(service::FieldParams&&) const
+std::future<response::IdType> Folder::getId(service::FieldParams&&) const
 {
-	std::promise<std::vector<uint8_t>> promise;
+	std::promise<response::IdType> promise;
 
 	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Folder::getId is not implemented)ex")));
 
@@ -1014,7 +1014,7 @@ std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
 
-	return service::ModifiedResult<std::vector<uint8_t>>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
 std::future<std::optional<response::StringType>> Folder::getName(service::FieldParams&&) const

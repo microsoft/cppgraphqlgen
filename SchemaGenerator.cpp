@@ -29,7 +29,7 @@ const CppTypeMap Generator::s_builtinCppTypes = {
 		"response::FloatType",
 		"response::StringType",
 		"response::BooleanType",
-		"std::vector<uint8_t>",
+		"response::IdType",
 };
 
 const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
