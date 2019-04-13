@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.5.1)
-project(cppgraphqlgen)
+project(cppgraphqlgen VERSION 2.1.0)
 
 if(WIN32)
   # Let CMake figure out the exports for the SHARED library (DLL) on Windows.
@@ -11,14 +11,17 @@ endif()
 
 find_package(Threads MODULE REQUIRED)
 
-include(CMakePackageConfigHelpers)
-
 find_package(pegtl CONFIG REQUIRED)
 
 # Set the minimum C++ standard required for compiling,
 # but allow for user to override on the command line using:
 #     cmake -DCMAKE_CXX_STANDARD=[11|14|17|...] -DCMAKE_CXX_EXTENSIONS=[ON|OFF]
 function(cppgraphqlgen_target_set_cxx_standard target)
+  if(MSVC)
+    # MSVC requires the /bigobj flag if the number of sections gets too big.
+    target_compile_options(${target} PRIVATE /bigobj)
+  endif()
+
   if (CMAKE_VERSION VERSION_LESS "3.8")
     # The cxx_std_11 abstract compile feature
     # is available only starting from CMake 3.8.
@@ -198,6 +201,16 @@ install(FILES
 
 set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME}
   CACHE PATH "Install the CMake config files to this directory.")
+
+# Enable version checks in find_package
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(cmake/${PROJECT_NAME}-config-version.cmake COMPATIBILITY SameMajorVersion)
+
+install(FILES
+    cmake/${PROJECT_NAME}-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
+  DESTINATION ${GRAPHQL_INSTALL_CMAKE_DIR}/${PROJECT_NAME}
+)
 
 install(FILES cmake/${PROJECT_NAME}-config.cmake
   DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
