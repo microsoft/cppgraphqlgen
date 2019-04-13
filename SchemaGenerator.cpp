@@ -6,12 +6,20 @@
 
 #include <boost/program_options.hpp>
 
+#ifdef USE_BOOST_FILESYSTEM
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cctype>
-#include <filesystem>
+
 
 namespace facebook::graphql::schema {
 
@@ -37,7 +45,7 @@ const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
 
 Generator::Generator()
 	: _isIntrospection(true)
-	, _headerPath((std::filesystem::path("include") / "graphqlservice" / "IntrospectionSchema.h").string())
+	, _headerPath((fs::path("include") / "graphqlservice" / "IntrospectionSchema.h").string())
 	, _sourcePath("IntrospectionSchema.cpp")
 	, _schemaNamespace(s_introspectionNamespace)
 {
@@ -1646,7 +1654,7 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	if (!_isIntrospection)
 	{
-		sourceFile << R"cpp(#include ")cpp" << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+		sourceFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 	}
@@ -3077,8 +3085,8 @@ int main(int argc, char** argv)
 
 		if (buildCustom)
 		{
-			const auto headerPath = (std::filesystem::path(headerDir) / (std::string(filenamePrefix) + "Schema.h")).string();
-			const auto sourcePath = (std::filesystem::path(sourceDir) / (std::string(filenamePrefix) + "Schema.cpp")).string();
+			const auto headerPath = (fs::path(headerDir) / (std::string(filenamePrefix) + "Schema.h")).string();
+			const auto sourcePath = (fs::path(sourceDir) / (std::string(filenamePrefix) + "Schema.cpp")).string();
 			const auto files = facebook::graphql::schema::Generator(schemaFileName, headerPath, sourcePath, schemaNamespace).Build();
 
 			for (const auto& file : files)
