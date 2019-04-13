@@ -121,7 +121,7 @@ struct string_escape_sequence
 };
 
 struct string_quote_character
-	: plus<seq<not_at<backslash_token>, not_at<quote_token>, not_at<ascii::eol>, source_character>>
+	: plus<not_at<backslash_token>, not_at<quote_token>, not_at<ascii::eol>, source_character>
 {
 };
 
@@ -147,7 +147,7 @@ struct block_escape_sequence
 };
 
 struct block_quote_character
-	: plus<seq<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>>
+	: plus<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
 {
 };
 
