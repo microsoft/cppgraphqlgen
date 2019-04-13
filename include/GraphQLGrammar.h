@@ -60,7 +60,7 @@ struct ignored
 
 // https://facebook.github.io/graphql/June2018/#sec-Names
 struct name
-	: seq<sor<alpha, one<'_'>>, star<sor<alnum, one<'_'>>>>
+	: identifier
 {
 };
 
@@ -119,7 +119,7 @@ struct string_escape_sequence
 };
 
 struct string_quote_character
-	: plus<seq<not_at<backslash_token>, not_at<quote_token>, not_at<ascii::eol>, source_character>>
+	: plus<not_at<backslash_token>, not_at<quote_token>, not_at<ascii::eol>, source_character>
 {
 };
 
@@ -145,7 +145,7 @@ struct block_escape_sequence
 };
 
 struct block_quote_character
-	: plus<seq<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>>
+	: plus<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
 {
 };
 
@@ -425,7 +425,7 @@ struct type_name
 };
 
 struct variable_content
-	: seq<star<ignored>, one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, default_value>>>
+	: seq<star<ignored>, one<':'>, star<ignored>, type_name, opt<star<ignored>, default_value>>
 {
 };
 
@@ -452,7 +452,7 @@ struct directive_name
 };
 
 struct directive_content
-	: seq<directive_name, opt<seq<star<ignored>, arguments>>>
+	: seq<directive_name, opt<star<ignored>, arguments>>
 {
 };
 
@@ -476,12 +476,12 @@ struct field_name
 };
 
 struct field_start
-	: seq<opt<seq<alias, star<ignored>>>, field_name>
+	: seq<opt<alias, star<ignored>>, field_name>
 {
 };
 
 struct field_arguments
-	: opt<seq<star<ignored>, arguments>>
+	: opt<star<ignored>, arguments>
 {
 };
 
@@ -520,13 +520,13 @@ struct fragment_name
 };
 
 struct fragment_token
-	: rep<3, one<'.'>>
+	: ellipsis
 {
 };
 
 // https://facebook.github.io/graphql/June2018/#FragmentSpread
 struct fragment_spread
-	: seq<star<ignored>, fragment_name, opt<seq<star<ignored>, directives>>>
+	: seq<star<ignored>, fragment_name, opt<star<ignored>, directives>>
 {
 };
 
@@ -543,7 +543,7 @@ struct type_condition
 
 // https://facebook.github.io/graphql/June2018/#InlineFragment
 struct inline_fragment
-	: seq<opt<star<ignored>, type_condition>, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>
+	: seq<opt<star<ignored>, type_condition>, opt<star<ignored>, directives>, star<ignored>, selection_set>
 {
 };
 
@@ -582,7 +582,7 @@ struct operation_name
 };
 
 struct operation_definition_operation_type_content
-	: seq<opt<seq<plus<ignored>, operation_name>>, opt<seq<star<ignored>, variable_definitions>>, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>
+	: seq<opt<plus<ignored>, operation_name>, opt<star<ignored>, variable_definitions>, opt<star<ignored>, directives>, star<ignored>, selection_set>
 {
 };
 
@@ -594,7 +594,7 @@ struct operation_definition
 };
 
 struct fragment_definition_content
-	: seq<plus<ignored>, fragment_name, plus<ignored>, type_condition, opt<seq<star<ignored>, directives>>, star<ignored>, selection_set>
+	: seq<plus<ignored>, fragment_name, plus<ignored>, type_condition, opt<star<ignored>, directives>, star<ignored>, selection_set>
 {
 };
 
@@ -628,7 +628,7 @@ struct root_operation_definition
 };
 
 struct schema_definition_content
-	: seq<opt<seq<star<ignored>, directives>>, star<ignored>, one<'{'>, star<ignored>, list<root_operation_definition, plus<ignored>>, star<ignored>, must<one<'}'>>>
+	: seq<opt<star<ignored>, directives>, star<ignored>, one<'{'>, star<ignored>, list<root_operation_definition, plus<ignored>>, star<ignored>, must<one<'}'>>>
 {
 };
 
@@ -655,12 +655,12 @@ struct scalar_name
 };
 
 struct scalar_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, scalar_keyword>
+	: seq<opt<description, star<ignored>>, scalar_keyword>
 {
 };
 
 struct scalar_type_definition_content
-	: seq<plus<ignored>, scalar_name, opt<seq<star<ignored>, directives>>>
+	: seq<plus<ignored>, scalar_name, opt<star<ignored>, directives>>
 {
 };
 
@@ -694,12 +694,12 @@ struct arguments_definition
 };
 
 struct field_definition_start
-	: seq<opt<seq<description, star<ignored>>>, field_name>
+	: seq<opt<description, star<ignored>>, field_name>
 {
 };
 
 struct field_definition_content
-	: seq<opt<seq<star<ignored>, arguments_definition>>, star<ignored>, one<':'>, star<ignored>, type_name, opt<seq<star<ignored>, directives>>>
+	: seq<opt<star<ignored>, arguments_definition>, star<ignored>, one<':'>, star<ignored>, type_name, opt<star<ignored>, directives>>
 {
 };
 
@@ -726,7 +726,7 @@ struct interface_type
 };
 
 struct implements_interfaces_content
-	: seq<opt<seq<star<ignored>, one<'&'>>>, star<ignored>, list<interface_type, seq<star<ignored>, one<'&'>, star<ignored>>>>
+	: seq<opt<star<ignored>, one<'&'>>, star<ignored>, list<interface_type, seq<star<ignored>, one<'&'>, star<ignored>>>>
 {
 };
 
@@ -742,7 +742,7 @@ struct object_name
 };
 
 struct object_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, type_keyword>
+	: seq<opt<description, star<ignored>>, type_keyword>
 {
 };
 
@@ -752,7 +752,7 @@ struct object_type_definition_object_name
 };
 
 struct object_type_definition_implements_interfaces
-	: opt<seq<plus<ignored>, implements_interfaces>>
+	: opt<plus<ignored>, implements_interfaces>
 {
 };
 
@@ -791,7 +791,7 @@ struct interface_name
 };
 
 struct interface_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, interface_keyword>
+	: seq<opt<description, star<ignored>>, interface_keyword>
 {
 };
 
@@ -801,7 +801,7 @@ struct interface_type_definition_interface_name
 };
 
 struct interface_type_definition_directives
-	: opt<seq<star<ignored>, directives>>
+	: opt<star<ignored>, directives>
 {
 };
 
@@ -844,7 +844,7 @@ struct union_member_types_start
 };
 
 struct union_member_types_content
-	: seq<opt<seq<star<ignored>, one<'|'>>>, star<ignored>, list<union_type, seq<star<ignored>, one<'|'>, star<ignored>>>>
+	: seq<opt<star<ignored>, one<'|'>>, star<ignored>, list<union_type, seq<star<ignored>, one<'|'>, star<ignored>>>>
 {
 };
 
@@ -855,12 +855,12 @@ struct union_member_types
 };
 
 struct union_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, union_keyword>
+	: seq<opt<description, star<ignored>>, union_keyword>
 {
 };
 
 struct union_type_definition_directives
-	: opt<seq<star<ignored>, directives>>
+	: opt<star<ignored>, directives>
 {
 };
 
@@ -888,12 +888,12 @@ struct enum_name
 };
 
 struct enum_value_definition_start
-	: seq<opt<seq<description, star<ignored>>>, enum_value>
+	: seq<opt<description, star<ignored>>, enum_value>
 {
 };
 
 struct enum_value_definition_content
-	: opt<seq<star<ignored>, directives>>
+	: opt<star<ignored>, directives>
 {
 };
 
@@ -920,7 +920,7 @@ struct enum_values_definition
 };
 
 struct enum_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, enum_keyword>
+	: seq<opt<description, star<ignored>>, enum_keyword>
 {
 };
 
@@ -930,7 +930,7 @@ struct enum_type_definition_name
 };
 
 struct enum_type_definition_directives
-	: opt<seq<star<ignored>, directives>>
+	: opt<star<ignored>, directives>
 {
 };
 
@@ -958,7 +958,7 @@ struct input_keyword
 };
 
 struct input_field_definition_start
-	: seq<opt<seq<description, star<ignored>>>, argument_name>
+	: seq<opt<description, star<ignored>>, argument_name>
 {
 };
 
@@ -968,7 +968,7 @@ struct input_field_definition_type_name
 };
 
 struct input_field_definition_default_value
-	: opt<seq<star<ignored>, default_value>>
+	: opt<star<ignored>, default_value>
 {
 };
 
@@ -1007,7 +1007,7 @@ struct input_fields_definition
 };
 
 struct input_object_type_definition_start
-	: seq<opt<seq<description, star<ignored>>>, input_keyword>
+	: seq<opt<description, star<ignored>>, input_keyword>
 {
 };
 
@@ -1017,7 +1017,7 @@ struct input_object_type_definition_object_name
 };
 
 struct input_object_type_definition_directives
-	: opt<seq<star<ignored>, directives>>
+	: opt<star<ignored>, directives>
 {
 };
 
@@ -1087,12 +1087,12 @@ struct directive_location
 
 // https://facebook.github.io/graphql/June2018/#DirectiveLocations
 struct directive_locations
-	: seq<opt<seq<one<'|'>, star<ignored>>>, list<directive_location, seq<star<ignored>, one<'|'>, star<ignored>>>>
+	: seq<opt<one<'|'>, star<ignored>>, list<directive_location, seq<star<ignored>, one<'|'>, star<ignored>>>>
 {
 };
 
 struct directive_definition_start
-	: seq<opt<seq<description, star<ignored>>>, TAO_PEGTL_KEYWORD("directive")>
+	: seq<opt<description, star<ignored>>, TAO_PEGTL_KEYWORD("directive")>
 {
 };
 
@@ -1206,7 +1206,7 @@ struct interface_type_extension_start
 
 struct interface_type_extension_content
 	: seq<plus<ignored>, interface_name, star<ignored>,
-		sor<seq<opt<seq<directives, star<ignored>>>, fields_definition>
+		sor<seq<opt<directives, star<ignored>>, fields_definition>
 		, directives>>
 {
 };
@@ -1224,7 +1224,7 @@ struct union_type_extension_start
 
 struct union_type_extension_content
 	: seq<plus<ignored>, union_name, star<ignored>,
-		sor<seq<opt<seq<directives, star<ignored>>>, union_member_types>
+		sor<seq<opt<directives, star<ignored>>, union_member_types>
 		, directives>>
 {
 };
@@ -1242,7 +1242,7 @@ struct enum_type_extension_start
 
 struct enum_type_extension_content
 	: seq<plus<ignored>, enum_name, star<ignored>,
-		sor<seq<opt<seq<directives, star<ignored>>>, enum_values_definition>
+		sor<seq<opt<directives, star<ignored>>, enum_values_definition>
 		, directives>>
 {
 };
@@ -1260,7 +1260,7 @@ struct input_object_type_extension_start
 
 struct input_object_type_extension_content
 	: seq<plus<ignored>, object_name, star<ignored>,
-		sor<seq<opt<seq<directives, star<ignored>>>, input_fields_definition>
+		sor<seq<opt<directives, star<ignored>>, input_fields_definition>
 		, directives>>
 {
 };
