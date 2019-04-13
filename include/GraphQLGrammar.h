@@ -62,7 +62,7 @@ struct ignored
 
 // https://facebook.github.io/graphql/June2018/#sec-Names
 struct name
-	: seq<sor<alpha, one<'_'>>, star<sor<alnum, one<'_'>>>>
+	: identifier
 {
 };
 
@@ -522,7 +522,7 @@ struct fragment_name
 };
 
 struct fragment_token
-	: rep<3, one<'.'>>
+	: ellipsis
 {
 };
 
