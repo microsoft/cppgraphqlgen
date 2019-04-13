@@ -2899,6 +2899,9 @@ std::string Generator::getTypeModifiers(const TypeModifierStack & modifiers) con
 			case service::TypeModifier::List:
 				typeModifiers << R"cpp(service::TypeModifier::List)cpp";
 				break;
+
+			case service::TypeModifier::None:
+				break;
 		}
 	}
 

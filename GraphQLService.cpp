@@ -1525,9 +1525,9 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 			{
 				std::ostringstream message;
 
-				message << operationName.empty()
+				message << (operationName.empty()
 					? "Multiple ambigious operations"
-					: "Duplicate named operations";
+					: "Duplicate named operations");
 
 				if (!name.empty())
 				{
