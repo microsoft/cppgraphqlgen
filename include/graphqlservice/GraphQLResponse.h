@@ -85,16 +85,16 @@ struct Value
 	const Value& operator[](size_t index) const;
 
 	// Specialized for all single-value Types.
-	template <typename _Value>
-	void set(_Value&& value);
+	template <typename ValueType>
+	void set(ValueType&& value);
 
 	// Specialized for all Types.
-	template <typename _Value>
-	_Value get() const;
+	template <typename ValueType>
+	ValueType get() const;
 
 	// Specialized for all Types which allocate extra memory.
-	template <typename _Value>
-	_Value release();
+	template <typename ValueType>
+	ValueType release();
 
 private:
 	const Type _type;

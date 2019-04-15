@@ -23,7 +23,7 @@ struct ast_node
 	std::string unescaped;
 };
 
-template <typename _Input>
+template <typename Input>
 struct ast
 {
 	ast() = default;
@@ -32,7 +32,7 @@ struct ast
 
 	ast& operator=(ast&& other) = default;
 
-	_Input input;
+	Input input;
 	std::unique_ptr<ast_node> root;
 };
 

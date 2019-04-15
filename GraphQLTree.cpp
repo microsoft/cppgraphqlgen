@@ -16,7 +16,7 @@ namespace peg {
 
 using namespace tao::graphqlpeg;
 
-template <typename _Rule>
+template <typename Rule>
 struct ast_selector
 	: std::false_type
 {
@@ -566,14 +566,14 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
-template <typename _Rule>
+template <typename Rule>
 struct ast_control
-	: normal<_Rule>
+	: normal<Rule>
 {
 	static const std::string error_message;
 
-	template <typename _Input, typename... _States>
-	static void raise(const _Input& in, _States&&...)
+	template <typename Input, typename... State>
+	static void raise(const Input& in, State&&...)
 	{
 		throw parse_error(error_message, in);
 	}

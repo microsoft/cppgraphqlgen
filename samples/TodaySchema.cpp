@@ -43,7 +43,7 @@ template <>
 std::future<response::Value> ModifiedResult<today::TaskState>::convert(std::future<today::TaskState>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](today::TaskState && value, const ResolverParams&)
+		[](today::TaskState&& value, const ResolverParams&)
 		{
 			static const std::string s_names[] = {
 				"New",
@@ -106,9 +106,9 @@ Query::Query()
 		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
 		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } },
-		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
-		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
+		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
 	})
 	, _schema(std::make_shared<introspection::Schema>())
 {
@@ -298,7 +298,7 @@ std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Query::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -307,7 +307,7 @@ std::future<response::Value> Query::resolve__typename(service::ResolverParams&& 
 	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
 }
 
-std::future<response::Value> Query::resolve__schema(service::ResolverParams&& params)
+std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
 
@@ -316,14 +316,14 @@ std::future<response::Value> Query::resolve__schema(service::ResolverParams&& pa
 	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
 }
 
-std::future<response::Value> Query::resolve__type(service::ResolverParams&& params)
+std::future<response::Value> Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
-	std::promise<std::shared_ptr<introspection::object::__Type>> promise;
+	std::promise<std::shared_ptr<introspection::object::Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));
 
-	return service::ModifiedResult<introspection::object::__Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
+	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
 }
 
 PageInfo::PageInfo()
@@ -332,7 +332,7 @@ PageInfo::PageInfo()
 	}, {
 		{ "hasNextPage", [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
 		{ "hasPreviousPage", [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -369,7 +369,7 @@ std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverP
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> PageInfo::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -384,7 +384,7 @@ AppointmentEdge::AppointmentEdge()
 	}, {
 		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -421,7 +421,7 @@ std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverPar
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> AppointmentEdge::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> AppointmentEdge::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -436,7 +436,7 @@ AppointmentConnection::AppointmentConnection()
 	}, {
 		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -473,7 +473,7 @@ std::future<response::Value> AppointmentConnection::resolveEdges(service::Resolv
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> AppointmentConnection::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> AppointmentConnection::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -488,7 +488,7 @@ TaskEdge::TaskEdge()
 	}, {
 		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -525,7 +525,7 @@ std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& p
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> TaskEdge::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -540,7 +540,7 @@ TaskConnection::TaskConnection()
 	}, {
 		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -577,7 +577,7 @@ std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParam
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> TaskConnection::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> TaskConnection::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -592,7 +592,7 @@ FolderEdge::FolderEdge()
 	}, {
 		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -629,7 +629,7 @@ std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&&
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> FolderEdge::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -644,7 +644,7 @@ FolderConnection::FolderConnection()
 	}, {
 		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -681,7 +681,7 @@ std::future<response::Value> FolderConnection::resolveEdges(service::ResolverPar
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> FolderConnection::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> FolderConnection::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -696,7 +696,7 @@ CompleteTaskPayload::CompleteTaskPayload()
 	}, {
 		{ "task", [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } },
 		{ "clientMutationId", [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -733,7 +733,7 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> CompleteTaskPayload::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -747,7 +747,7 @@ Mutation::Mutation()
 		"Mutation"
 	}, {
 		{ "completeTask", [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -769,7 +769,7 @@ std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverPara
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Mutation::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -784,7 +784,7 @@ Subscription::Subscription()
 	}, {
 		{ "nextAppointmentChange", [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } },
 		{ "nodeChange", [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -822,7 +822,7 @@ std::future<response::Value> Subscription::resolveNodeChange(service::ResolverPa
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Subscription::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -840,7 +840,7 @@ Appointment::Appointment()
 		{ "when", [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
 		{ "subject", [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
 		{ "isNow", [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -909,7 +909,7 @@ std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&&
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Appointment::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Appointment::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -926,7 +926,7 @@ Task::Task()
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ "title", [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } },
 		{ "isComplete", [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -979,7 +979,7 @@ std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& p
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Task::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Task::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -996,7 +996,7 @@ Folder::Folder()
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ "unreadCount", [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -1049,7 +1049,7 @@ std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Folder::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -1064,7 +1064,7 @@ NestedType::NestedType()
 	}, {
 		{ "depth", [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
 		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } }
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
 }
@@ -1101,7 +1101,7 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> NestedType::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> NestedType::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -1128,43 +1128,43 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 {
 	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor", R"md()md"));
 	schema->AddType("DateTime", std::make_shared<introspection::ScalarType>("DateTime", R"md()md"));
-	auto typeTaskState= std::make_shared<introspection::EnumType>("TaskState", R"md()md");
+	auto typeTaskState = std::make_shared<introspection::EnumType>("TaskState", R"md()md");
 	schema->AddType("TaskState", typeTaskState);
-	auto typeCompleteTaskInput= std::make_shared<introspection::InputObjectType>("CompleteTaskInput", R"md()md");
+	auto typeCompleteTaskInput = std::make_shared<introspection::InputObjectType>("CompleteTaskInput", R"md()md");
 	schema->AddType("CompleteTaskInput", typeCompleteTaskInput);
-	auto typeUnionType= std::make_shared<introspection::UnionType>("UnionType", R"md()md");
-	schema->AddType("UnionType", typeUnionType);
-	auto typeNode= std::make_shared<introspection::InterfaceType>("Node", R"md(Node interface for Relay support)md");
+	auto type = std::make_shared<introspection::UnionType>("UnionType", R"md()md");
+	schema->AddType("UnionType", type);
+	auto typeNode = std::make_shared<introspection::InterfaceType>("Node", R"md(Node interface for Relay support)md");
 	schema->AddType("Node", typeNode);
-	auto typeQuery= std::make_shared<introspection::ObjectType>("Query", R"md(Root Query type)md");
+	auto typeQuery = std::make_shared<introspection::ObjectType>("Query", R"md(Root Query type)md");
 	schema->AddType("Query", typeQuery);
-	auto typePageInfo= std::make_shared<introspection::ObjectType>("PageInfo", R"md()md");
+	auto typePageInfo = std::make_shared<introspection::ObjectType>("PageInfo", R"md()md");
 	schema->AddType("PageInfo", typePageInfo);
-	auto typeAppointmentEdge= std::make_shared<introspection::ObjectType>("AppointmentEdge", R"md()md");
+	auto typeAppointmentEdge = std::make_shared<introspection::ObjectType>("AppointmentEdge", R"md()md");
 	schema->AddType("AppointmentEdge", typeAppointmentEdge);
-	auto typeAppointmentConnection= std::make_shared<introspection::ObjectType>("AppointmentConnection", R"md()md");
+	auto typeAppointmentConnection = std::make_shared<introspection::ObjectType>("AppointmentConnection", R"md()md");
 	schema->AddType("AppointmentConnection", typeAppointmentConnection);
-	auto typeTaskEdge= std::make_shared<introspection::ObjectType>("TaskEdge", R"md()md");
+	auto typeTaskEdge = std::make_shared<introspection::ObjectType>("TaskEdge", R"md()md");
 	schema->AddType("TaskEdge", typeTaskEdge);
-	auto typeTaskConnection= std::make_shared<introspection::ObjectType>("TaskConnection", R"md()md");
+	auto typeTaskConnection = std::make_shared<introspection::ObjectType>("TaskConnection", R"md()md");
 	schema->AddType("TaskConnection", typeTaskConnection);
-	auto typeFolderEdge= std::make_shared<introspection::ObjectType>("FolderEdge", R"md()md");
+	auto typeFolderEdge = std::make_shared<introspection::ObjectType>("FolderEdge", R"md()md");
 	schema->AddType("FolderEdge", typeFolderEdge);
-	auto typeFolderConnection= std::make_shared<introspection::ObjectType>("FolderConnection", R"md()md");
+	auto typeFolderConnection = std::make_shared<introspection::ObjectType>("FolderConnection", R"md()md");
 	schema->AddType("FolderConnection", typeFolderConnection);
-	auto typeCompleteTaskPayload= std::make_shared<introspection::ObjectType>("CompleteTaskPayload", R"md()md");
+	auto typeCompleteTaskPayload = std::make_shared<introspection::ObjectType>("CompleteTaskPayload", R"md()md");
 	schema->AddType("CompleteTaskPayload", typeCompleteTaskPayload);
-	auto typeMutation= std::make_shared<introspection::ObjectType>("Mutation", R"md()md");
+	auto typeMutation = std::make_shared<introspection::ObjectType>("Mutation", R"md()md");
 	schema->AddType("Mutation", typeMutation);
-	auto typeSubscription= std::make_shared<introspection::ObjectType>("Subscription", R"md()md");
+	auto typeSubscription = std::make_shared<introspection::ObjectType>("Subscription", R"md()md");
 	schema->AddType("Subscription", typeSubscription);
-	auto typeAppointment= std::make_shared<introspection::ObjectType>("Appointment", R"md()md");
+	auto typeAppointment = std::make_shared<introspection::ObjectType>("Appointment", R"md()md");
 	schema->AddType("Appointment", typeAppointment);
-	auto typeTask= std::make_shared<introspection::ObjectType>("Task", R"md()md");
+	auto typeTask = std::make_shared<introspection::ObjectType>("Task", R"md()md");
 	schema->AddType("Task", typeTask);
-	auto typeFolder= std::make_shared<introspection::ObjectType>("Folder", R"md()md");
+	auto typeFolder = std::make_shared<introspection::ObjectType>("Folder", R"md()md");
 	schema->AddType("Folder", typeFolder);
-	auto typeNestedType= std::make_shared<introspection::ObjectType>("NestedType", R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	auto typeNestedType = std::make_shared<introspection::ObjectType>("NestedType", R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
 	schema->AddType("NestedType", typeNestedType);
 
 	typeTaskState->AddEnumValues({
@@ -1175,126 +1175,126 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	});
 
 	typeCompleteTaskInput->AddInputValues({
-		std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"),
+		std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"),
 		std::make_shared<introspection::InputValue>("isComplete", R"md()md", schema->LookupType("Boolean"), R"gql(true)gql"),
 		std::make_shared<introspection::InputValue>("clientMutationId", R"md()md", schema->LookupType("String"), R"gql()gql")
 	});
 
-	typeUnionType->AddPossibleTypes({
+	type->AddPossibleTypes({
 		schema->LookupType("Appointment"),
 		schema->LookupType("Task"),
 		schema->LookupType("Folder")
 	});
 
 	typeNode->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))
+		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 
 	typeQuery->AddFields({
-		std::make_shared<introspection::Field>("node", R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
+		std::make_shared<introspection::Field>("node", R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
 		}), schema->LookupType("Node")),
-		std::make_shared<introspection::Field>("appointments", R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::Field>("appointments", R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("AppointmentConnection"))),
-		std::make_shared<introspection::Field>("tasks", R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("AppointmentConnection"))),
+		std::make_shared<introspection::Field>("tasks", R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("TaskConnection"))),
-		std::make_shared<introspection::Field>("unreadCounts", R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskConnection"))),
+		std::make_shared<introspection::Field>("unreadCounts", R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("first", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("after", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("last", R"md()md", schema->LookupType("Int"), R"gql()gql"),
 			std::make_shared<introspection::InputValue>("before", R"md()md", schema->LookupType("ItemCursor"), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
-		std::make_shared<introspection::Field>("appointmentsById", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Appointment")))),
-		std::make_shared<introspection::Field>("tasksById", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Task")))),
-		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("Folder")))),
-		std::make_shared<introspection::Field>("nested", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType"))),
-		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")))
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
+		std::make_shared<introspection::Field>("appointmentsById", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Appointment")))),
+		std::make_shared<introspection::Field>("tasksById", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Task")))),
+		std::make_shared<introspection::Field>("unreadCountsById", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Folder")))),
+		std::make_shared<introspection::Field>("nested", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
+		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
 	});
 	typePageInfo->AddFields({
-		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("hasPreviousPage", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("hasPreviousPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeAppointmentEdge->AddFields({
-		std::make_shared<introspection::Field>("node", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
-		std::make_shared<introspection::Field>("cursor", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<introspection::Field>("cursor", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeAppointmentConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("AppointmentEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge"))))
 	});
 	typeTaskEdge->AddFields({
-		std::make_shared<introspection::Field>("node", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<introspection::Field>("cursor", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<introspection::Field>("cursor", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeTaskConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("TaskEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge"))))
 	});
 	typeFolderEdge->AddFields({
-		std::make_shared<introspection::Field>("node", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
-		std::make_shared<introspection::Field>("cursor", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
+		std::make_shared<introspection::Field>("cursor", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 	typeFolderConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->WrapType(introspection::__TypeKind::LIST, schema->LookupType("FolderEdge"))))
+		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge"))))
 	});
 	typeCompleteTaskPayload->AddFields({
-		std::make_shared<introspection::Field>("task", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<introspection::Field>("clientMutationId", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("task", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<introspection::Field>("clientMutationId", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
 	});
 	typeMutation->AddFields({
-		std::make_shared<introspection::Field>("completeTask", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("input", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
+		std::make_shared<introspection::Field>("completeTask", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("input", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
 	});
 	typeSubscription->AddFields({
 		std::make_shared<introspection::Field>("nextAppointmentChange", R"md()md", std::make_optional<response::StringType>(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),
-		std::make_shared<introspection::Field>("nodeChange", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
-		}), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Node")))
+		std::make_shared<introspection::Field>("nodeChange", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Node")))
 	});
 	typeAppointment->AddInterfaces({
 		typeNode
 	});
 	typeAppointment->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("when", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("DateTime")),
-		std::make_shared<introspection::Field>("subject", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isNow", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("when", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("DateTime")),
+		std::make_shared<introspection::Field>("subject", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("isNow", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeTask->AddInterfaces({
 		typeNode
 	});
 	typeTask->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("title", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isComplete", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("title", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("isComplete", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeFolder->AddInterfaces({
 		typeNode
 	});
 	typeFolder->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("name", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("unreadCount", R"md()md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Int")))
+		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("unreadCount", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 	typeNestedType->AddFields({
-		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("Int"))),
-		std::make_shared<introspection::Field>("nested", R"md(Link to the next level)md", std::make_optional<response::StringType>(), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
+		std::make_shared<introspection::Field>("nested", R"md(Link to the next level)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
 	});
 
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
@@ -1305,27 +1305,27 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddDirective(std::make_shared<introspection::Directive>("queryTag", R"md()md", std::vector<response::StringType>({
 		R"gql(QUERY)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("query", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("query", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 	schema->AddDirective(std::make_shared<introspection::Directive>("fieldTag", R"md()md", std::vector<response::StringType>({
 		R"gql(FIELD)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("field", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("field", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 	schema->AddDirective(std::make_shared<introspection::Directive>("fragmentDefinitionTag", R"md()md", std::vector<response::StringType>({
 		R"gql(FRAGMENT_DEFINITION)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("fragmentDefinition", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("fragmentDefinition", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 	schema->AddDirective(std::make_shared<introspection::Directive>("fragmentSpreadTag", R"md()md", std::vector<response::StringType>({
 		R"gql(FRAGMENT_SPREAD)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("fragmentSpread", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("fragmentSpread", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 	schema->AddDirective(std::make_shared<introspection::Directive>("inlineFragmentTag", R"md()md", std::vector<response::StringType>({
 		R"gql(INLINE_FRAGMENT)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("inlineFragment", R"md()md", schema->WrapType(introspection::__TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("inlineFragment", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
 	})));
 
 	schema->AddQueryType(typeQuery);

@@ -66,6 +66,7 @@ using ScalarTypeList = std::vector<ScalarType>;
 struct EnumValueType
 {
 	std::string value;
+	std::string cppValue;
 	std::string description;
 	std::optional<std::string> deprecationReason;
 	std::optional<tao::graphqlpeg::position> position;
@@ -74,6 +75,7 @@ struct EnumValueType
 struct EnumType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<EnumValueType> values;
 	std::string description;
 };
@@ -95,6 +97,7 @@ struct InputField
 {
 	std::string type;
 	std::string name;
+	std::string cppName;
 	std::string defaultValueString;
 	response::Value defaultValue;
 	InputFieldType fieldType = InputFieldType::Builtin;
@@ -108,6 +111,7 @@ using InputFieldList = std::vector<InputField>;
 struct InputType
 {
 	std::string type;
+	std::string cppType;
 	InputFieldList fields;
 	std::string description;
 };
@@ -129,6 +133,7 @@ using DirectiveList = std::vector<Directive>;
 struct UnionType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<std::string> options;
 	std::string description;
 };
@@ -153,6 +158,7 @@ struct OutputField
 {
 	std::string type;
 	std::string name;
+	std::string cppName;
 	InputFieldList arguments;
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
@@ -170,6 +176,7 @@ using OutputFieldList = std::vector<OutputField>;
 struct InterfaceType
 {
 	std::string type;
+	std::string cppType;
 	OutputFieldList fields;
 	std::string description;
 };
@@ -181,6 +188,7 @@ using InterfaceTypeList = std::vector<InterfaceType>;
 struct ObjectType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<std::string> interfaces;
 	OutputFieldList fields;
 	std::string description;
@@ -192,19 +200,38 @@ using ObjectTypeList = std::vector<ObjectType>;
 struct OperationType
 {
 	std::string type;
+	std::string cppType;
 	std::string operation;
 };
 
 using OperationTypeList = std::vector<OperationType>;
 
+struct GeneratorSchema
+{
+	const std::string schemaFilename;
+	const std::string filenamePrefix;
+	const std::string schemaNamespace;
+};
+
+struct GeneratorPaths
+{
+	const std::string headerPath;
+	const std::string sourcePath;
+};
+
+struct GeneratorOptions
+{
+	const std::optional<GeneratorSchema> customSchema;
+	const std::optional<GeneratorPaths> paths;
+	const bool separateFiles = false;
+	const bool noStubs = false;
+};
+
 class Generator
 {
 public:
-	// Initialize the generator with the introspection schema.
-	explicit Generator();
-
-	// Initialize the generator with the GraphQL schema and output parameters.
-	explicit Generator(std::string_view schemaFileName, std::string_view headerPath, std::string_view sourcePath, std::string_view schemaNamespace);
+	// Initialize the generator with the introspection schema or a custom GraphQL schema.
+	explicit Generator(GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
@@ -227,6 +254,7 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
+	static const std::string& getSafeCppName(const std::string& type) noexcept;
 	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 
@@ -296,11 +324,13 @@ private:
 	static const BuiltinTypeMap s_builtinTypes;
 	static const CppTypeMap s_builtinCppTypes;
 	static const std::string s_scalarCppType;
+	static const std::string s_currentDirectory;
 
+	const GeneratorOptions _options;
 	const bool _isIntrospection;
+	std::string_view _schemaNamespace;
 	const std::string _headerPath;
 	const std::string _sourcePath;
-	std::string_view _schemaNamespace;
 
 	SchemaTypeMap _schemaTypes;
 	PositionMap _typePositions;

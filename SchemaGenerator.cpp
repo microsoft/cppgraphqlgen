@@ -19,6 +19,7 @@ namespace fs = std::filesystem;
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <regex>
 
 
 namespace facebook::graphql::schema {
@@ -42,138 +43,164 @@ const CppTypeMap Generator::s_builtinCppTypes = {
 };
 
 const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
+const std::string Generator::s_currentDirectory = R"p(.)p";
 
-Generator::Generator()
-	: _isIntrospection(true)
-	, _headerPath((fs::path("include") / "graphqlservice" / "IntrospectionSchema.h").string())
-	, _sourcePath("IntrospectionSchema.cpp")
-	, _schemaNamespace(s_introspectionNamespace)
+Generator::Generator(GeneratorOptions&& options)
+	: _options(std::move(options))
+	, _isIntrospection(!_options.customSchema)
+	, _schemaNamespace(_isIntrospection ? s_introspectionNamespace : _options.customSchema->schemaNamespace)
+	, _headerPath([this]() noexcept -> std::string {
+			if (_isIntrospection)
+			{
+				const auto fullPath = fs::path("include") / "graphqlservice" / "IntrospectionSchema.h";
+
+				return fullPath.string();
+			}
+			else
+			{
+				const auto filename = std::string(_options.customSchema->filenamePrefix) + "Schema.h";
+				const auto& path = _options.paths ? _options.paths->headerPath : s_currentDirectory;
+				const auto fullPath = fs::path(path) / filename;
+
+				return fullPath.string();
+			}
+		}())
+	, _sourcePath([this]() noexcept -> std::string {
+			if (_isIntrospection)
+			{
+				return "IntrospectionSchema.cpp";
+			}
+			else
+			{
+				const auto filename = std::string(_options.customSchema->filenamePrefix) + "Schema.cpp";
+				const auto& path = _options.paths ? _options.paths->sourcePath : s_currentDirectory;
+				const auto fullPath = fs::path(path) / filename;
+
+				return fullPath.string();
+			}
+		}())
 {
-	// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
-	auto ast = R"(
-		type __Schema {
-		  types: [__Type!]!
-		  queryType: __Type!
-		  mutationType: __Type
-		  subscriptionType: __Type
-		  directives: [__Directive!]!
-		}
-
-		type __Type {
-		  kind: __TypeKind!
-		  name: String
-		  description: String
-
-		  # OBJECT and INTERFACE only
-		  fields(includeDeprecated: Boolean = false): [__Field!]
-
-		  # OBJECT only
-		  interfaces: [__Type!]
-
-		  # INTERFACE and UNION only
-		  possibleTypes: [__Type!]
-
-		  # ENUM only
-		  enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-
-		  # INPUT_OBJECT only
-		  inputFields: [__InputValue!]
-
-		  # NON_NULL and LIST only
-		  ofType: __Type
-		}
-
-		type __Field {
-		  name: String!
-		  description: String
-		  args: [__InputValue!]!
-		  type: __Type!
-		  isDeprecated: Boolean!
-		  deprecationReason: String
-		}
-
-		type __InputValue {
-		  name: String!
-		  description: String
-		  type: __Type!
-		  defaultValue: String
-		}
-
-		type __EnumValue {
-		  name: String!
-		  description: String
-		  isDeprecated: Boolean!
-		  deprecationReason: String
-		}
-
-		enum __TypeKind {
-		  SCALAR
-		  OBJECT
-		  INTERFACE
-		  UNION
-		  ENUM
-		  INPUT_OBJECT
-		  LIST
-		  NON_NULL
-		}
-
-		type __Directive {
-		  name: String!
-		  description: String
-		  locations: [__DirectiveLocation!]!
-		  args: [__InputValue!]!
-		}
-
-		enum __DirectiveLocation {
-		  QUERY
-		  MUTATION
-		  SUBSCRIPTION
-		  FIELD
-		  FRAGMENT_DEFINITION
-		  FRAGMENT_SPREAD
-		  INLINE_FRAGMENT
-		  SCHEMA
-		  SCALAR
-		  OBJECT
-		  FIELD_DEFINITION
-		  ARGUMENT_DEFINITION
-		  INTERFACE
-		  UNION
-		  ENUM
-		  ENUM_VALUE
-		  INPUT_OBJECT
-		  INPUT_FIELD_DEFINITION
-		})"_graphql;
-
-	if (!ast.root)
+	if (_isIntrospection)
 	{
-		throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
+		// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
+		auto ast = R"(
+			type __Schema {
+			  types: [__Type!]!
+			  queryType: __Type!
+			  mutationType: __Type
+			  subscriptionType: __Type
+			  directives: [__Directive!]!
+			}
+
+			type __Type {
+			  kind: __TypeKind!
+			  name: String
+			  description: String
+
+			  # OBJECT and INTERFACE only
+			  fields(includeDeprecated: Boolean = false): [__Field!]
+
+			  # OBJECT only
+			  interfaces: [__Type!]
+
+			  # INTERFACE and UNION only
+			  possibleTypes: [__Type!]
+
+			  # ENUM only
+			  enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
+
+			  # INPUT_OBJECT only
+			  inputFields: [__InputValue!]
+
+			  # NON_NULL and LIST only
+			  ofType: __Type
+			}
+
+			type __Field {
+			  name: String!
+			  description: String
+			  args: [__InputValue!]!
+			  type: __Type!
+			  isDeprecated: Boolean!
+			  deprecationReason: String
+			}
+
+			type __InputValue {
+			  name: String!
+			  description: String
+			  type: __Type!
+			  defaultValue: String
+			}
+
+			type __EnumValue {
+			  name: String!
+			  description: String
+			  isDeprecated: Boolean!
+			  deprecationReason: String
+			}
+
+			enum __TypeKind {
+			  SCALAR
+			  OBJECT
+			  INTERFACE
+			  UNION
+			  ENUM
+			  INPUT_OBJECT
+			  LIST
+			  NON_NULL
+			}
+
+			type __Directive {
+			  name: String!
+			  description: String
+			  locations: [__DirectiveLocation!]!
+			  args: [__InputValue!]!
+			}
+
+			enum __DirectiveLocation {
+			  QUERY
+			  MUTATION
+			  SUBSCRIPTION
+			  FIELD
+			  FRAGMENT_DEFINITION
+			  FRAGMENT_SPREAD
+			  INLINE_FRAGMENT
+			  SCHEMA
+			  SCALAR
+			  OBJECT
+			  FIELD_DEFINITION
+			  ARGUMENT_DEFINITION
+			  INTERFACE
+			  UNION
+			  ENUM
+			  ENUM_VALUE
+			  INPUT_OBJECT
+			  INPUT_FIELD_DEFINITION
+			})"_graphql;
+
+		if (!ast.root)
+		{
+			throw std::logic_error("Unable to parse the introspection schema, but there was no error message from the parser!");
+		}
+
+		for (const auto& child : ast.root->children)
+		{
+			visitDefinition(*child);
+		}
 	}
-
-	for (const auto& child : ast.root->children)
+	else
 	{
-		visitDefinition(*child);
-	}
+		auto ast = peg::parseFile(_options.customSchema->schemaFilename);
 
-	validateSchema();
-}
+		if (!ast.root)
+		{
+			throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
+		}
 
-Generator::Generator(std::string_view schemaFileName, std::string_view headerPath, std::string_view sourcePath, std::string_view schemaNamespace)
-	: _isIntrospection(false)
-	, _headerPath(headerPath)
-	, _sourcePath(sourcePath)
-	, _schemaNamespace(schemaNamespace)
-{
-	auto ast = peg::parseFile(schemaFileName);
-
-	if (!ast.root)
-	{
-		throw std::logic_error("Unable to parse the service schema, but there was no error message from the parser!");
-	}
-
-	for (const auto& child : ast.root->children)
-	{
-		visitDefinition(*child);
+		for (const auto& child : ast.root->children)
+		{
+			visitDefinition(*child);
+		}
 	}
 
 	validateSchema();
@@ -435,8 +462,9 @@ void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 		{
 			std::string operation(child.children.front()->string_view());
 			std::string name(child.children.back()->string_view());
+			std::string cppName(getSafeCppName(name));
 
-			_operationTypes.push_back({ std::move(name), std::move(operation) });
+			_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
 		});
 }
 
@@ -447,8 +475,9 @@ void Generator::visitSchemaExtension(const peg::ast_node& schemaExtension)
 	{
 		std::string operation(child.children.front()->string_view());
 		std::string name(child.children.back()->string_view());
+		std::string cppName(getSafeCppName(name));
 
-		_operationTypes.push_back({ std::move(name), std::move(operation) });
+		_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
 	});
 }
 
@@ -472,7 +501,10 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	_schemaTypes[name] = SchemaType::Object;
 	_typePositions.emplace(name, objectTypeDefinition.begin());
 	_objectNames[name] = _objectTypes.size();
-	_objectTypes.push_back({ std::move(name), {}, {}, std::move(description) });
+
+	auto cppName = getSafeCppName(name);
+
+	_objectTypes.push_back({ std::move(name), std::move(cppName), {}, {}, std::move(description) });
 
 	visitObjectTypeExtension(objectTypeDefinition);
 }
@@ -533,7 +565,10 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	_schemaTypes[name] = SchemaType::Interface;
 	_typePositions.emplace(name, interfaceTypeDefinition.begin());
 	_interfaceNames[name] = _interfaceTypes.size();
-	_interfaceTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	auto cppName = getSafeCppName(name);
+
+	_interfaceTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
 
 	visitInterfaceTypeExtension(interfaceTypeDefinition);
 }
@@ -588,7 +623,10 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	_schemaTypes[name] = SchemaType::Input;
 	_typePositions.emplace(name, inputObjectTypeDefinition.begin());
 	_inputNames[name] = _inputTypes.size();
-	_inputTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	auto cppName = getSafeCppName(name);
+
+	_inputTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
 
 	visitInputObjectTypeExtension(inputObjectTypeDefinition);
 }
@@ -643,7 +681,10 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	_schemaTypes[name] = SchemaType::Enum;
 	_typePositions.emplace(name, enumTypeDefinition.begin());
 	_enumNames[name] = _enumTypes.size();
-	_enumTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	auto cppName = getSafeCppName(name);
+
+	_enumTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
 
 	visitEnumTypeExtension(enumTypeDefinition);
 }
@@ -673,6 +714,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 					[&value](const peg::ast_node & enumValue)
 					{
 						value.value = enumValue.string_view();
+						value.cppValue = getSafeCppName(value.value);
 					});
 
 				peg::on_first_child<peg::description>(child,
@@ -776,7 +818,10 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	_schemaTypes[name] = SchemaType::Union;
 	_typePositions.emplace(name, unionTypeDefinition.begin());
 	_unionNames[name] = _unionTypes.size();
-	_unionTypes.push_back({ std::move(name), {}, std::move(description) });
+
+	auto cppName = getSafeCppName(name);
+
+	_unionTypes.push_back({ std::move(name), std::move(name), {}, std::move(description) });
 
 	visitUnionTypeExtension(unionTypeDefinition);
 }
@@ -843,6 +888,29 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	_directives.push_back(std::move(directive));
 }
 
+const std::string& Generator::getSafeCppName(const std::string& type) noexcept
+{
+	// The C++ standard reserves all names starting with '_' followed by a capital letter,
+	// and all names that contain a double '_'. So we need to strip those from the types used
+	// in GraphQL when declaring C++ types.
+	static const std::regex multiple_(R"re(_{2,})re", std::regex::optimize | std::regex::ECMAScript);
+	static const std::regex leading_Capital(R"re(^_([A-Z]))re", std::regex::optimize | std::regex::ECMAScript);
+
+	// Cache the substitutions so we don't need to repeat a replacement.
+	static std::unordered_map<std::string, std::string> safeNames;
+	auto itr = safeNames.find(type);
+
+	if (safeNames.cend() == itr
+		&& (std::regex_search(type, leading_Capital)
+			|| std::regex_search(type, multiple_)))
+	{
+		std::tie(itr, std::ignore) = safeNames.emplace(type,
+			std::regex_replace(std::regex_replace(type, multiple_, R"re(_)re"), leading_Capital, R"re($1)re"));
+	}
+
+	return (safeNames.cend() == itr) ? type : itr->second;
+}
+
 OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
 {
 	OutputFieldList outputFields;
@@ -857,6 +925,7 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 			if (child->is<peg::field_name>())
 			{
 				field.name = child->string_view();
+				field.cppName = getSafeCppName(field.name);
 			}
 			else if (child->is<peg::arguments_definition>())
 			{
@@ -942,6 +1011,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 			if (child->is<peg::argument_name>())
 			{
 				field.name = child->string_view();
+				field.cppName = getSafeCppName(field.name);
 			}
 			else if (child->is<peg::named_type>()
 				|| child->is<peg::list_type>()
@@ -1161,7 +1231,7 @@ const std::string& Generator::getCppType(const std::string & type) const noexcep
 		}
 	}
 
-	return type;
+	return getSafeCppName(type);
 }
 
 std::string Generator::getInputCppType(const InputField & field) const noexcept
@@ -1263,7 +1333,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 				outputType << R"cpp(object::)cpp";
 			}
 
-			outputType << field.type;
+			outputType << getSafeCppName(field.type);
 			break;
 
 		case OutputFieldType::Union:
@@ -1326,7 +1396,7 @@ namespace )cpp" << _schemaNamespace << R"cpp( {
 		for (const auto& enumType : _enumTypes)
 		{
 			headerFile << R"cpp(
-enum class )cpp" << enumType.type << R"cpp(
+enum class )cpp" << enumType.cppType << R"cpp(
 {
 )cpp";
 
@@ -1357,7 +1427,7 @@ enum class )cpp" << enumType.type << R"cpp(
 			for (const auto& inputType : _inputTypes)
 			{
 				headerFile << R"cpp(
-struct )cpp" << inputType.type << R"cpp(;)cpp";
+struct )cpp" << inputType.cppType << R"cpp(;)cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1368,7 +1438,7 @@ struct )cpp" << inputType.type << R"cpp(;)cpp";
 		for (const auto& inputType : _inputTypes)
 		{
 			headerFile << R"cpp(
-struct )cpp" << inputType.type << R"cpp(
+struct )cpp" << inputType.cppType << R"cpp(
 {
 )cpp";
 			for (const auto& inputField : inputType.fields)
@@ -1393,7 +1463,7 @@ namespace object {
 			for (const auto& objectType : _objectTypes)
 			{
 				headerFile << R"cpp(
-class )cpp" << objectType.type << R"cpp(;)cpp";
+class )cpp" << objectType.cppType << R"cpp(;)cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1408,7 +1478,7 @@ class )cpp" << objectType.type << R"cpp(;)cpp";
 			for (const auto& interfaceType : _interfaceTypes)
 			{
 				headerFile << R"cpp(
-struct )cpp" << interfaceType.type << R"cpp(;)cpp";
+struct )cpp" << interfaceType.cppType << R"cpp(;)cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1419,7 +1489,7 @@ struct )cpp" << interfaceType.type << R"cpp(;)cpp";
 		for (const auto& interfaceType : _interfaceTypes)
 		{
 			headerFile << R"cpp(
-struct )cpp" << interfaceType.type << R"cpp(
+struct )cpp" << interfaceType.cppType << R"cpp(
 {
 )cpp";
 			for (const auto& outputField : interfaceType.fields)
@@ -1447,7 +1517,7 @@ struct )cpp" << interfaceType.type << R"cpp(
 			for (const auto& objectType : _objectTypes)
 			{
 				headerFile << R"cpp(
-class )cpp" << objectType.type << R"cpp(;)cpp";
+class )cpp" << objectType.cppType << R"cpp(;)cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1460,13 +1530,13 @@ class )cpp" << objectType.type << R"cpp(;)cpp";
 			std::unordered_set<std::string> interfaceFields;
 
 			headerFile << R"cpp(
-class )cpp" << objectType.type << R"cpp(
+class )cpp" << objectType.cppType << R"cpp(
 	: public service::Object)cpp";
 
 			for (const auto& interfaceName : objectType.interfaces)
 			{
 				headerFile << R"cpp(
-	, public )cpp" << interfaceName;
+	, public )cpp" << getSafeCppName(interfaceName);
 
 				auto itr = _interfaceNames.find(interfaceName);
 
@@ -1482,7 +1552,7 @@ class )cpp" << objectType.type << R"cpp(
 			headerFile << R"cpp(
 {
 protected:
-	)cpp" << objectType.type << R"cpp(();
+	)cpp" << objectType.cppType << R"cpp(();
 )cpp";
 
 			if (!objectType.fields.empty())
@@ -1493,7 +1563,7 @@ protected:
 				{
 					const bool inheritedField = interfaceFields.find(outputField.name) != interfaceFields.cend();
 
-					if (inheritedField && _isIntrospection)
+					if (inheritedField && (_isIntrospection || _options.noStubs))
 					{
 						continue;
 					}
@@ -1519,13 +1589,13 @@ private:
 				}
 
 				headerFile << R"cpp(
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 )cpp";
 
 				if (objectType.type == queryType)
 				{
-					headerFile << R"cpp(	std::future<response::Value> resolve__schema(service::ResolverParams&& params);
-	std::future<response::Value> resolve__type(service::ResolverParams&& params);
+					headerFile << R"cpp(	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
+	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> _schema;
 )cpp";
@@ -1561,7 +1631,7 @@ public:
 				}
 
 				firstOperation = false;
-				headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.type << R"cpp(> )cpp"
+				headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
 					<< operation.operation;
 			}
 
@@ -1572,7 +1642,7 @@ private:
 
 			for (const auto& operation : _operationTypes)
 			{
-				headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.type << R"cpp(> _)cpp"
+				headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> _)cpp"
 					<< operation.operation << R"cpp(;
 )cpp";
 			}
@@ -1596,7 +1666,7 @@ std::string Generator::getFieldDeclaration(const InputField & inputField) const 
 	std::ostringstream output;
 
 	output << getInputCppType(inputField) << R"cpp( )cpp"
-		<< inputField.name;
+		<< inputField.cppName;
 
 	return output.str();
 }
@@ -1604,7 +1674,7 @@ std::string Generator::getFieldDeclaration(const InputField & inputField) const 
 std::string Generator::getFieldDeclaration(const OutputField & outputField, bool interfaceField, bool inheritedField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName(outputField.name);
+	std::string fieldName(outputField.cppName);
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField, interfaceField)
@@ -1613,11 +1683,11 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 	for (const auto& argument : outputField.arguments)
 	{
 		output << R"cpp(, )cpp" << getInputCppType(argument)
-			<< R"cpp(&& )cpp" << argument.name << "Arg";
+			<< R"cpp(&& )cpp" << argument.cppName << "Arg";
 	}
 
 	output << R"cpp() const)cpp";
-	if (interfaceField || _isIntrospection)
+	if (interfaceField || _isIntrospection || _options.noStubs)
 	{
 		output << R"cpp( = 0)cpp";
 	}
@@ -1634,7 +1704,7 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 std::string Generator::getResolverDeclaration(const OutputField & outputField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName(outputField.name);
+	std::string fieldName(outputField.cppName);
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	std::future<response::Value> resolve)cpp" << fieldName
@@ -1681,12 +1751,12 @@ namespace service {
 
 			sourceFile << R"cpp(
 template <>
-)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 << R"cpp(>::convert(const response::Value& value)
 {
 	static const std::unordered_map<std::string, )cpp"
-				<< _schemaNamespace << R"cpp(::)cpp" << enumType.type << R"cpp(> s_names = {
+				<< _schemaNamespace << R"cpp(::)cpp" << enumType.cppType << R"cpp(> s_names = {
 )cpp";
 
 			for (const auto& value : enumType.values)
@@ -1699,8 +1769,8 @@ template <>
 
 				firstValue = false;
 				sourceFile << R"cpp(		{ ")cpp" << value.value << R"cpp(", )cpp"
-					<< _schemaNamespace << R"cpp(::)cpp" << enumType.type
-					<< R"cpp(::)cpp" << value.value << R"cpp( })cpp";
+					<< _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+					<< R"cpp(::)cpp" << value.cppValue << R"cpp( })cpp";
 			}
 
 			sourceFile << R"cpp(
@@ -1722,13 +1792,13 @@ template <>
 }
 
 template <>
-std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-<< R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
+std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+<< R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 << R"cpp(>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[]()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.type
-				<< R"cpp( && value, const ResolverParams&)
+		[]()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+				<< R"cpp(&& value, const ResolverParams&)
 		{
 			static const std::string s_names[] = {
 		)cpp";
@@ -1766,8 +1836,8 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 
 			sourceFile << R"cpp(
 template <>
-)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
-<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.type
+)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.cppType
+<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << inputType.cppType
 << R"cpp(>::convert(const response::Value& value)
 {
 )cpp";
@@ -1821,7 +1891,7 @@ template <>
 
 			for (const auto& inputField : inputType.fields)
 			{
-				std::string fieldName(inputField.name);
+				std::string fieldName(inputField.cppName);
 
 				if (!firstField)
 				{
@@ -1874,7 +1944,7 @@ namespace object {
 			// with arguments that declare the set of types it implements and bind the fields to the
 			// resolver methods.
 			sourceFile << R"cpp(
-)cpp" << objectType.type << R"cpp(::)cpp" << objectType.type << R"cpp(()
+)cpp" << objectType.cppType << R"cpp(::)cpp" << objectType.cppType << R"cpp(()
 	: service::Object({
 )cpp";
 
@@ -1900,7 +1970,7 @@ namespace object {
 
 				firstField = false;
 
-				std::string fieldName(outputField.name);
+				std::string fieldName(outputField.cppName);
 
 				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 				sourceFile << R"cpp(		{ ")cpp" << outputField.name
@@ -1914,14 +1984,14 @@ namespace object {
 )cpp";
 			}
 
-			sourceFile << R"cpp(		{ "__typename", [this](service::ResolverParams&& params) { return resolve__typename(std::move(params)); } })cpp";
+			sourceFile << R"cpp(		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp";
 
 
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(,
-		{ "__schema", [this](service::ResolverParams&& params) { return resolve__schema(std::move(params)); } },
-		{ "__type", [this](service::ResolverParams&& params) { return resolve__type(std::move(params)); } })cpp";
+		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
+		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp";
 			}
 
 			sourceFile << R"cpp(
@@ -1954,14 +2024,14 @@ namespace object {
 			// getters that the implementer must define.
 			for (const auto& outputField : objectType.fields)
 			{
-				std::string fieldName(outputField.name);
+				std::string fieldName(outputField.cppName);
 
 				fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-				if (!_isIntrospection)
+				if (!_isIntrospection && !_options.noStubs)
 				{
 					sourceFile << R"cpp(
 std::future<)cpp" << getOutputCppType(outputField, false)
-<< R"cpp(> )cpp" << objectType.type
+<< R"cpp(> )cpp" << objectType.cppType
 << R"cpp(::get)cpp" << fieldName
 << R"cpp((service::FieldParams&&)cpp";
 					for (const auto& argument : outputField.arguments)
@@ -1975,7 +2045,7 @@ std::future<)cpp" << getOutputCppType(outputField, false)
 	std::promise<)cpp" << getOutputCppType(outputField, false)
 						<< R"cpp(> promise;
 
-	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.type
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.cppType
 						<< R"cpp(::get)cpp" << fieldName
 						<< R"cpp( is not implemented)ex")));
 
@@ -1985,7 +2055,7 @@ std::future<)cpp" << getOutputCppType(outputField, false)
 				}
 
 				sourceFile << R"cpp(
-std::future<response::Value> )cpp" << objectType.type
+std::future<response::Value> )cpp" << objectType.cppType
 << R"cpp(::resolve)cpp" << fieldName
 << R"cpp((service::ResolverParams&& params)
 {
@@ -2039,7 +2109,7 @@ std::future<response::Value> )cpp" << objectType.type
 				{
 					for (const auto& argument : outputField.arguments)
 					{
-						std::string argumentName(argument.name);
+						std::string argumentName(argument.cppName);
 
 						argumentName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
 						sourceFile << R"cpp(, std::move(arg)cpp" << argumentName << R"cpp())cpp";
@@ -2056,8 +2126,8 @@ std::future<response::Value> )cpp" << objectType.type
 			}
 
 			sourceFile << R"cpp(
-std::future<response::Value> )cpp" << objectType.type
-<< R"cpp(::resolve__typename(service::ResolverParams&& params)
+std::future<response::Value> )cpp" << objectType.cppType
+<< R"cpp(::resolve_typename(service::ResolverParams&& params)
 {
 	std::promise<response::StringType> promise;
 
@@ -2070,8 +2140,8 @@ std::future<response::Value> )cpp" << objectType.type
 			if (objectType.type == queryType)
 			{
 				sourceFile << R"cpp(
-std::future<response::Value> )cpp" << objectType.type
-<< R"cpp(::resolve__schema(service::ResolverParams&& params)
+std::future<response::Value> )cpp" << objectType.cppType
+<< R"cpp(::resolve_schema(service::ResolverParams&& params)
 {
 	std::promise<std::shared_ptr<service::Object>> promise;
 
@@ -2080,15 +2150,15 @@ std::future<response::Value> )cpp" << objectType.type
 	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
 }
 
-std::future<response::Value> )cpp" << objectType.type
-<< R"cpp(::resolve__type(service::ResolverParams&& params)
+std::future<response::Value> )cpp" << objectType.cppType
+<< R"cpp(::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
-	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>> promise;
+	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>> promise;
 
 	promise.set_value(_schema->LookupType(argName));
 
-	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::__Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
+	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
 }
 )cpp";
 			}
@@ -2114,7 +2184,7 @@ Operations::Operations()cpp";
 			}
 
 			firstOperation = false;
-			sourceFile << R"cpp(std::shared_ptr<object::)cpp" << operation.type << R"cpp(> )cpp"
+			sourceFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
 				<< operation.operation;
 		}
 
@@ -2196,12 +2266,12 @@ Operations::Operations()cpp";
 	{
 		for (const auto& enumType : _enumTypes)
 		{
-			sourceFile << R"cpp(	auto type)cpp" << enumType.type
-				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
+			sourceFile << R"cpp(	auto type)cpp" << enumType.cppType
+				<< R"cpp( = std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::EnumType>(")cpp" << enumType.type
 				<< R"cpp(", R"md()cpp" << enumType.description << R"cpp()md");
 	schema->AddType(")cpp" << enumType.type
-				<< R"cpp(", type)cpp" << enumType.type
+				<< R"cpp(", type)cpp" << enumType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2211,12 +2281,12 @@ Operations::Operations()cpp";
 	{
 		for (const auto& inputType : _inputTypes)
 		{
-			sourceFile << R"cpp(	auto type)cpp" << inputType.type
-				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
+			sourceFile << R"cpp(	auto type)cpp" << inputType.cppType
+				<< R"cpp( = std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InputObjectType>(")cpp" << inputType.type
 				<< R"cpp(", R"md()cpp" << inputType.description << R"cpp()md");
 	schema->AddType(")cpp" << inputType.type
-				<< R"cpp(", type)cpp" << inputType.type
+				<< R"cpp(", type)cpp" << inputType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2226,12 +2296,12 @@ Operations::Operations()cpp";
 	{
 		for (const auto& unionType : _unionTypes)
 		{
-			sourceFile << R"cpp(	auto type)cpp" << unionType.type
-				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
+			sourceFile << R"cpp(	auto type)cpp" << unionType.cppType
+				<< R"cpp( = std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::UnionType>(")cpp" << unionType.type
 				<< R"cpp(", R"md()cpp" << unionType.description << R"cpp()md");
 	schema->AddType(")cpp" << unionType.type
-				<< R"cpp(", type)cpp" << unionType.type
+				<< R"cpp(", type)cpp" << unionType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2241,12 +2311,12 @@ Operations::Operations()cpp";
 	{
 		for (const auto& interfaceType : _interfaceTypes)
 		{
-			sourceFile << R"cpp(	auto type)cpp" << interfaceType.type
-				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
+			sourceFile << R"cpp(	auto type)cpp" << interfaceType.cppType
+				<< R"cpp( = std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::InterfaceType>(")cpp" << interfaceType.type
 				<< R"cpp(", R"md()cpp" << interfaceType.description << R"cpp()md");
 	schema->AddType(")cpp" << interfaceType.type
-				<< R"cpp(", type)cpp" << interfaceType.type
+				<< R"cpp(", type)cpp" << interfaceType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2256,12 +2326,12 @@ Operations::Operations()cpp";
 	{
 		for (const auto& objectType : _objectTypes)
 		{
-			sourceFile << R"cpp(	auto type)cpp" << objectType.type
-				<< R"cpp(= std::make_shared<)cpp" << s_introspectionNamespace
+			sourceFile << R"cpp(	auto type)cpp" << objectType.cppType
+				<< R"cpp( = std::make_shared<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ObjectType>(")cpp" << objectType.type
 				<< R"cpp(", R"md()cpp" << objectType.description << R"cpp()md");
 	schema->AddType(")cpp" << objectType.type
-				<< R"cpp(", type)cpp" << objectType.type
+				<< R"cpp(", type)cpp" << objectType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2278,7 +2348,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << enumType.type
+				sourceFile << R"cpp(	type)cpp" << enumType.cppType
 					<< R"cpp(->AddEnumValues({
 )cpp";
 
@@ -2324,7 +2394,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << inputType.type
+				sourceFile << R"cpp(	type)cpp" << inputType.cppType
 					<< R"cpp(->AddInputValues({
 )cpp";
 
@@ -2362,7 +2432,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.type
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
 					<< R"cpp(->AddPossibleTypes({
 )cpp";
 
@@ -2397,7 +2467,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << interfaceType.type
+				sourceFile << R"cpp(	type)cpp" << interfaceType.cppType
 					<< R"cpp(->AddFields({
 )cpp";
 
@@ -2413,14 +2483,18 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << interfaceField.name
 						<< R"cpp(", R"md()cpp" << interfaceField.description
-						<< R"cpp()md", std::make_optional<response::StringType>()cpp";
+						<< R"cpp()md", )cpp";
 
 					if (interfaceField.deprecationReason)
 					{
-						sourceFile << R"cpp(R"md()cpp" << *interfaceField.deprecationReason << R"cpp()md")cpp";
+						sourceFile << R"cpp(std::make_optional<response::StringType>(R"md()cpp" << *interfaceField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(std::nullopt)cpp";
 					}
 
-					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!interfaceField.arguments.empty())
@@ -2472,7 +2546,7 @@ Operations::Operations()cpp";
 			{
 				bool firstInterface = true;
 
-				sourceFile << R"cpp(	type)cpp" << objectType.type
+				sourceFile << R"cpp(	type)cpp" << objectType.cppType
 					<< R"cpp(->AddInterfaces({
 )cpp";
 
@@ -2485,7 +2559,7 @@ Operations::Operations()cpp";
 					}
 
 					firstInterface = false;
-					sourceFile << R"cpp(		type)cpp" << interfaceName;
+					sourceFile << R"cpp(		type)cpp" << getSafeCppName(interfaceName);
 				}
 
 				sourceFile << R"cpp(
@@ -2497,7 +2571,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << objectType.type
+				sourceFile << R"cpp(	type)cpp" << objectType.cppType
 					<< R"cpp(->AddFields({
 )cpp";
 
@@ -2513,14 +2587,18 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
 						<< R"cpp(::Field>(")cpp" << objectField.name
 						<< R"cpp(", R"md()cpp" << objectField.description
-						<< R"cpp()md", std::make_optional<response::StringType>()cpp";
+						<< R"cpp()md", )cpp";
 
 					if (objectField.deprecationReason)
 					{
-						sourceFile << R"cpp(R"md()cpp" << *objectField.deprecationReason << R"cpp()md")cpp";
+						sourceFile << R"cpp(std::make_optional<response::StringType>(R"md()cpp" << *objectField.deprecationReason << R"cpp()md"))cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(std::nullopt)cpp";
 					}
 
-					sourceFile << R"cpp(), std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+					sourceFile << R"cpp(, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
 						<< R"cpp(::InputValue>>()cpp";
 
 					if (!objectField.arguments.empty())
@@ -2643,7 +2721,7 @@ Operations::Operations()cpp";
 
 			operation[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(operation[0])));
 			sourceFile << R"cpp(	schema->Add)cpp" << operation
-				<< R"cpp(Type(type)cpp" << operationType.type
+				<< R"cpp(Type(type)cpp" << operationType.cppType
 				<< R"cpp();
 )cpp";
 		}
@@ -2786,7 +2864,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 std::string Generator::getArgumentDeclaration(const InputField & argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept
 {
 	std::ostringstream argumentDeclaration;
-	std::string argumentName(argument.name);
+	std::string argumentName(argument.cppName);
 
 	argumentName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
 	if (argument.defaultValue.type() == response::Type::Null)
@@ -2944,7 +3022,7 @@ std::string Generator::getIntrospectionType(const std::string & type, const Type
 				case service::TypeModifier::List:
 				{
 					introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
-						<< R"cpp(::__TypeKind::NON_NULL, )cpp";
+						<< R"cpp(::TypeKind::NON_NULL, )cpp";
 					++wrapperCount;
 					break;
 				}
@@ -2965,7 +3043,7 @@ std::string Generator::getIntrospectionType(const std::string & type, const Type
 			case service::TypeModifier::List:
 			{
 				introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
-					<< R"cpp(::__TypeKind::LIST, )cpp";
+					<< R"cpp(::TypeKind::LIST, )cpp";
 				++wrapperCount;
 				break;
 			}
@@ -2975,7 +3053,7 @@ std::string Generator::getIntrospectionType(const std::string & type, const Type
 	if (nonNull)
 	{
 		introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
-			<< R"cpp(::__TypeKind::NON_NULL, )cpp";
+			<< R"cpp(::TypeKind::NON_NULL, )cpp";
 		++wrapperCount;
 	}
 
@@ -3010,6 +3088,8 @@ int main(int argc, char** argv)
 	bool showUsage = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
+	bool noStubs = false;
+	bool separateFiles = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
@@ -3021,8 +3101,10 @@ int main(int argc, char** argv)
 		("schema,s", po::value(&schemaFileName), "Schema definition file path")
 		("prefix,p", po::value(&filenamePrefix), "Prefix to use for the generated C++ filenames")
 		("namespace,n", po::value(&schemaNamespace), "C++ sub-namespace for the generated types")
-		("source-dir,sd", po::value(&sourceDir), "Target path for the <prefix>Schema.cpp source file")
-		("header-dir,hd", po::value(&headerDir), "Target path for the <prefix>Schema.h header file");
+		("source-dir", po::value(&sourceDir), "Target path for the <prefix>Schema.cpp source file")
+		("header-dir", po::value(&headerDir), "Target path for the <prefix>Schema.h header file")
+		("no-stubs", po::bool_switch(&noStubs), "Generate abstract classes without stub implementations")
+		("separate-files", po::bool_switch(&separateFiles), "Generate separate files for each of the types");
 	positional
 		.add("schema", 1)
 		.add("prefix", 1)
@@ -3078,7 +3160,7 @@ int main(int argc, char** argv)
 	{
 		if (buildIntrospection)
 		{
-			const auto files = facebook::graphql::schema::Generator().Build();
+			const auto files = facebook::graphql::schema::Generator({}).Build();
 
 			for (const auto& file : files)
 			{
@@ -3088,9 +3170,19 @@ int main(int argc, char** argv)
 
 		if (buildCustom)
 		{
-			const auto headerPath = (fs::path(headerDir) / (std::string(filenamePrefix) + "Schema.h")).string();
-			const auto sourcePath = (fs::path(sourceDir) / (std::string(filenamePrefix) + "Schema.cpp")).string();
-			const auto files = facebook::graphql::schema::Generator(schemaFileName, headerPath, sourcePath, schemaNamespace).Build();
+			const auto files = facebook::graphql::schema::Generator({
+				facebook::graphql::schema::GeneratorSchema{
+					std::move(schemaFileName),
+					std::move(filenamePrefix),
+					std::move(schemaNamespace)
+				},
+				facebook::graphql::schema::GeneratorPaths{
+					std::move(headerDir),
+					std::move(sourceDir)
+				},
+				separateFiles,
+				noStubs
+			}).Build();
 
 			for (const auto& file : files)
 			{

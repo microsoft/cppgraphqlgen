@@ -14,7 +14,7 @@ namespace introspection {
 
 class Schema;
 
-enum class __TypeKind
+enum class TypeKind
 {
 	SCALAR,
 	OBJECT,
@@ -26,7 +26,7 @@ enum class __TypeKind
 	NON_NULL
 };
 
-enum class __DirectiveLocation
+enum class DirectiveLocation
 {
 	QUERY,
 	MUTATION,
@@ -50,25 +50,25 @@ enum class __DirectiveLocation
 
 namespace object {
 
-class __Schema;
-class __Type;
-class __Field;
-class __InputValue;
-class __EnumValue;
-class __Directive;
+class Schema;
+class Type;
+class Field;
+class InputValue;
+class EnumValue;
+class Directive;
 
-class __Schema
+class Schema
 	: public service::Object
 {
 protected:
-	__Schema();
+	Schema();
 
 public:
-	virtual std::future<std::vector<std::shared_ptr<__Type>>> getTypes(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getQueryType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getMutationType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<__Directive>>> getDirectives(service::FieldParams&& params) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveTypes(service::ResolverParams&& params);
@@ -77,25 +77,25 @@ private:
 	std::future<response::Value> resolveSubscriptionType(service::ResolverParams&& params);
 	std::future<response::Value> resolveDirectives(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class __Type
+class Type
 	: public service::Object
 {
 protected:
-	__Type();
+	Type();
 
 public:
-	virtual std::future<__TypeKind> getKind(service::FieldParams&& params) const = 0;
+	virtual std::future<TypeKind> getKind(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<__Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<__Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<__Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<__EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<__InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getOfType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual std::future<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveKind(service::ResolverParams&& params);
@@ -108,20 +108,20 @@ private:
 	std::future<response::Value> resolveInputFields(service::ResolverParams&& params);
 	std::future<response::Value> resolveOfType(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class __Field
+class Field
 	: public service::Object
 {
 protected:
-	__Field();
+	Field();
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
 	virtual std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
@@ -133,19 +133,19 @@ private:
 	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
 	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class __InputValue
+class InputValue
 	: public service::Object
 {
 protected:
-	__InputValue();
+	InputValue();
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<__Type>> getType(service::FieldParams&& params) const = 0;
+	virtual std::future<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
 
 private:
@@ -154,14 +154,14 @@ private:
 	std::future<response::Value> resolveType(service::ResolverParams&& params);
 	std::future<response::Value> resolveDefaultValue(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class __EnumValue
+class EnumValue
 	: public service::Object
 {
 protected:
-	__EnumValue();
+	EnumValue();
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
@@ -175,20 +175,20 @@ private:
 	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
 	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class __Directive
+class Directive
 	: public service::Object
 {
 protected:
-	__Directive();
+	Directive();
 
 public:
 	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
 	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<__DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<__InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+	virtual std::future<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
+	virtual std::future<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -196,7 +196,7 @@ private:
 	std::future<response::Value> resolveLocations(service::ResolverParams&& params);
 	std::future<response::Value> resolveArgs(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

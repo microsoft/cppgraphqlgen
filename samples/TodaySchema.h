@@ -88,9 +88,9 @@ private:
 	std::future<response::Value> resolveNested(service::ResolverParams&& params);
 	std::future<response::Value> resolveUnimplemented(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
-	std::future<response::Value> resolve__schema(service::ResolverParams&& params);
-	std::future<response::Value> resolve__type(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
+	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
 };
@@ -109,7 +109,7 @@ private:
 	std::future<response::Value> resolveHasNextPage(service::ResolverParams&& params);
 	std::future<response::Value> resolveHasPreviousPage(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class AppointmentEdge
@@ -126,7 +126,7 @@ private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
 	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class AppointmentConnection
@@ -143,7 +143,7 @@ private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
 	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class TaskEdge
@@ -160,7 +160,7 @@ private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
 	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class TaskConnection
@@ -177,7 +177,7 @@ private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
 	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class FolderEdge
@@ -194,7 +194,7 @@ private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
 	std::future<response::Value> resolveCursor(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class FolderConnection
@@ -211,7 +211,7 @@ private:
 	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
 	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class CompleteTaskPayload
@@ -228,7 +228,7 @@ private:
 	std::future<response::Value> resolveTask(service::ResolverParams&& params);
 	std::future<response::Value> resolveClientMutationId(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Mutation
@@ -243,7 +243,7 @@ public:
 private:
 	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Subscription
@@ -260,7 +260,7 @@ private:
 	std::future<response::Value> resolveNextAppointmentChange(service::ResolverParams&& params);
 	std::future<response::Value> resolveNodeChange(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Appointment
@@ -282,7 +282,7 @@ private:
 	std::future<response::Value> resolveSubject(service::ResolverParams&& params);
 	std::future<response::Value> resolveIsNow(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Task
@@ -302,7 +302,7 @@ private:
 	std::future<response::Value> resolveTitle(service::ResolverParams&& params);
 	std::future<response::Value> resolveIsComplete(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Folder
@@ -322,7 +322,7 @@ private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
 	std::future<response::Value> resolveUnreadCount(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class NestedType
@@ -339,7 +339,7 @@ private:
 	std::future<response::Value> resolveDepth(service::ResolverParams&& params);
 	std::future<response::Value> resolveNested(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve__typename(service::ResolverParams&& params);
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */

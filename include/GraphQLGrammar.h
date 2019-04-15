@@ -12,24 +12,24 @@ namespace facebook::graphql::peg {
 
 using namespace tao::graphqlpeg;
 
-template <typename _Rule>
+template <typename Rule>
 void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{
-		if (child->is<_Rule>())
+		if (child->is<Rule>())
 		{
 			func(*child);
 		}
 	}
 }
 
-template <typename _Rule>
+template <typename Rule>
 void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{
-		if (child->is<_Rule>())
+		if (child->is<Rule>())
 		{
 			func(*child);
 			return;
