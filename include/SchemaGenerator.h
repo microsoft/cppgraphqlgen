@@ -326,13 +326,14 @@ private:
 	std::string getOutputCppType(const OutputField& field, bool interfaceField) const noexcept;
 
 	bool outputHeader() const noexcept;
-	void outputObjectDeclaration(std::ostream& headerFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const;
+	void outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
 	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField, bool inheritedField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
-	void outputObjectImplementation(std::ostream& sourceFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const;
+	void outputObjectImplementation(std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
 	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;

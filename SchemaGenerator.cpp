@@ -1648,6 +1648,21 @@ private:
 		}
 	}
 
+	if (!_objectTypes.empty() && _options.separateFiles)
+	{
+		for (const auto& objectType : _objectTypes)
+		{
+			headerFile << R"cpp(void Add)cpp" << objectType.cppType
+				<< R"cpp(Details(std::shared_ptr<)cpp" << s_introspectionNamespace
+				<< R"cpp(::ObjectType> type)cpp" << objectType.cppType
+				<< R"cpp(, std::shared_ptr<)cpp" << s_introspectionNamespace
+				<< R"cpp(::Schema> schema);
+)cpp";
+		}
+
+		headerFile << std::endl;
+	}
+
 	headerFile << R"cpp(void AddTypesToSchema(std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> schema);
 
 )cpp";
@@ -1655,7 +1670,7 @@ private:
 	return true;
 }
 
-void Generator::outputObjectDeclaration(std::ostream& headerFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const
+void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
 	std::unordered_set<std::string> interfaceFields;
 
@@ -2389,99 +2404,16 @@ Operations::Operations()cpp";
 
 		for (const auto& objectType : _objectTypes)
 		{
-			if (!objectType.interfaces.empty())
+			if (_options.separateFiles)
 			{
-				bool firstInterface = true;
-
-				sourceFile << R"cpp(	type)cpp" << objectType.cppType
-					<< R"cpp(->AddInterfaces({
-)cpp";
-
-				for (const auto& interfaceName : objectType.interfaces)
-				{
-					if (!firstInterface)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstInterface = false;
-					sourceFile << R"cpp(		type)cpp" << getSafeCppName(interfaceName);
-				}
-
-				sourceFile << R"cpp(
-	});
+				sourceFile << R"cpp(	Add)cpp" << objectType.cppType
+					<< R"cpp(Details(type)cpp" << objectType.cppType
+					<< R"cpp(, schema);
 )cpp";
 			}
-
-			if (!objectType.fields.empty())
+			else
 			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << objectType.cppType
-					<< R"cpp(->AddFields({
-)cpp";
-
-				for (const auto& objectField : objectType.fields)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
-						<< R"cpp(::Field>(")cpp" << objectField.name
-						<< R"cpp(", R"md()cpp" << objectField.description
-						<< R"cpp()md", )cpp";
-
-					if (objectField.deprecationReason)
-					{
-						sourceFile << R"cpp(std::make_optional<response::StringType>(R"md()cpp" << *objectField.deprecationReason << R"cpp()md"))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(std::nullopt)cpp";
-					}
-
-					sourceFile << R"cpp(, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
-						<< R"cpp(::InputValue>>()cpp";
-
-					if (!objectField.arguments.empty())
-					{
-						bool firstArgument = true;
-
-						sourceFile << R"cpp({
-)cpp";
-
-						for (const auto& argument : objectField.arguments)
-						{
-							if (!firstArgument)
-							{
-								sourceFile << R"cpp(,
-)cpp";
-							}
-
-							firstArgument = false;
-							sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
-								<< R"cpp(::InputValue>(")cpp" << argument.name
-								<< R"cpp(", R"md()cpp" << argument.description
-								<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, R"gql()cpp" << argument.defaultValueString << R"cpp()gql"))cpp";
-						}
-
-						sourceFile << R"cpp(
-		})cpp";
-					}
-
-					sourceFile << R"cpp(), )cpp" << getIntrospectionType(objectField.type, objectField.modifiers)
-						<< R"cpp())cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
+				outputObjectIntrospection(sourceFile, objectType);
 			}
 		}
 	}
@@ -2581,7 +2513,7 @@ Operations::Operations()cpp";
 	return true;
 }
 
-void Generator::outputObjectImplementation(std::ostream& sourceFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const
+void Generator::outputObjectImplementation(std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const
 {
 	// Output the protected constructor which calls through to the service::Object constructor
 	// with arguments that declare the set of types it implements and bind the fields to the
@@ -2801,6 +2733,113 @@ std::future<response::Value> )cpp" << objectType.cppType
 
 	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
 }
+)cpp";
+	}
+}
+
+void Generator::outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const
+{
+	if (!objectType.interfaces.empty())
+	{
+		bool firstInterface = true;
+
+		sourceFile << R"cpp(	type)cpp" << objectType.cppType
+			<< R"cpp(->AddInterfaces({
+)cpp";
+
+		for (const auto& interfaceName : objectType.interfaces)
+		{
+			if (!firstInterface)
+			{
+				sourceFile << R"cpp(,
+)cpp";
+			}
+
+			firstInterface = false;
+
+			if (_options.separateFiles)
+			{
+				sourceFile << R"cpp(		schema->LookupType(")cpp" << interfaceName
+					<< R"cpp("))cpp";
+			}
+			else
+			{
+				sourceFile << R"cpp(		type)cpp" << getSafeCppName(interfaceName);
+			}
+		}
+
+		sourceFile << R"cpp(
+	});
+)cpp";
+	}
+
+	if (!objectType.fields.empty())
+	{
+		bool firstValue = true;
+
+		sourceFile << R"cpp(	type)cpp" << objectType.cppType
+			<< R"cpp(->AddFields({
+)cpp";
+
+		for (const auto& objectField : objectType.fields)
+		{
+			if (!firstValue)
+			{
+				sourceFile << R"cpp(,
+)cpp";
+			}
+
+			firstValue = false;
+			sourceFile << R"cpp(		std::make_shared<)cpp" << s_introspectionNamespace
+				<< R"cpp(::Field>(")cpp" << objectField.name
+				<< R"cpp(", R"md()cpp" << objectField.description
+				<< R"cpp()md", )cpp";
+
+			if (objectField.deprecationReason)
+			{
+				sourceFile << R"cpp(std::make_optional<response::StringType>(R"md()cpp" << *objectField.deprecationReason << R"cpp()md"))cpp";
+			}
+			else
+			{
+				sourceFile << R"cpp(std::nullopt)cpp";
+			}
+
+			sourceFile << R"cpp(, std::vector<std::shared_ptr<)cpp" << s_introspectionNamespace
+				<< R"cpp(::InputValue>>()cpp";
+
+			if (!objectField.arguments.empty())
+			{
+				bool firstArgument = true;
+
+				sourceFile << R"cpp({
+)cpp";
+
+				for (const auto& argument : objectField.arguments)
+				{
+					if (!firstArgument)
+					{
+						sourceFile << R"cpp(,
+)cpp";
+					}
+
+					firstArgument = false;
+					sourceFile << R"cpp(			std::make_shared<)cpp" << s_introspectionNamespace
+						<< R"cpp(::InputValue>(")cpp" << argument.name
+						<< R"cpp(", R"md()cpp" << argument.description
+						<< R"cpp()md", )cpp" << getIntrospectionType(argument.type, argument.modifiers)
+						<< R"cpp(, R"gql()cpp" << argument.defaultValueString << R"cpp()gql"))cpp";
+				}
+
+				sourceFile << R"cpp(
+		})cpp";
+			}
+
+			sourceFile << R"cpp(), )cpp" << getIntrospectionType(objectField.type, objectField.modifiers)
+				<< R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(
+	});
 )cpp";
 	}
 }
@@ -3173,8 +3212,11 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		std::ostringstream ossNamespace;
 
 		ossNamespace << R"cpp(facebook::graphql::)cpp"
-			<< _schemaNamespace
-			<< R"cpp(::object)cpp";
+			<< _schemaNamespace;
+
+		const auto schemaNamespace = ossNamespace.str();
+
+		ossNamespace << R"cpp(::object)cpp";
 
 		const auto objectNamespace = ossNamespace.str();
 		NamespaceScope headerNamespace{ headerFile, objectNamespace };
@@ -3206,11 +3248,27 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
-		NamespaceScope sourceNamespace{ sourceFile, objectNamespace };
+		NamespaceScope sourceSchemaNamespace{ sourceFile, schemaNamespace };
+		NamespaceScope sourceObjectNamespace{ sourceFile, "object" };
 
 		sourceFile << std::endl;
 		outputObjectImplementation(sourceFile, objectType, isQueryType);
 		sourceFile << std::endl;
+
+		sourceObjectNamespace.exit();
+		sourceFile << std::endl;
+
+		sourceFile << R"cpp(void Add)cpp" << objectType.cppType
+			<< R"cpp(Details(std::shared_ptr<)cpp" << s_introspectionNamespace
+			<< R"cpp(::ObjectType> type)cpp" << objectType.cppType
+			<< R"cpp(, std::shared_ptr<)cpp" << s_introspectionNamespace
+			<< R"cpp(::Schema> schema)
+{
+)cpp";
+		outputObjectIntrospection(sourceFile, objectType);
+		sourceFile << R"cpp(}
+
+)cpp";
 
 		files.push_back(std::move(sourcePath));
 	}
