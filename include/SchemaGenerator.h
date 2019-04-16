@@ -355,6 +355,7 @@ private:
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
+	const std::string _objectHeaderPath;
 	const std::string _sourcePath;
 
 	SchemaTypeMap _schemaTypes;

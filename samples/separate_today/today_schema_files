@@ -1,0 +1,16 @@
+TodaySchema.cpp
+QuerySchema.cpp
+PageInfoSchema.cpp
+AppointmentEdgeSchema.cpp
+AppointmentConnectionSchema.cpp
+TaskEdgeSchema.cpp
+TaskConnectionSchema.cpp
+FolderEdgeSchema.cpp
+FolderConnectionSchema.cpp
+CompleteTaskPayloadSchema.cpp
+MutationSchema.cpp
+SubscriptionSchema.cpp
+AppointmentSchema.cpp
+TaskSchema.cpp
+FolderSchema.cpp
+NestedTypeSchema.cpp

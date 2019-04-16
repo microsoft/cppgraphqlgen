@@ -45,9 +45,14 @@ target_include_directories(graphqlpeg PUBLIC
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 add_bigobj_flag(graphqlpeg)
 
+# graphqlresponse
+add_library(graphqlresponse OBJECT GraphQLResponse.cpp)
+target_include_directories(graphqlresponse PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 # schemagen
 add_executable(schemagen
-  GraphQLResponse.cpp
+  $<TARGET_OBJECTS:graphqlresponse>
   SchemaGenerator.cpp)
 target_link_libraries(schemagen PRIVATE graphqlpeg)
 
@@ -74,7 +79,7 @@ add_custom_command(
 
 # graphqlservice
 add_library(graphqlservice
-  GraphQLResponse.cpp
+  $<TARGET_OBJECTS:graphqlresponse>
   GraphQLService.cpp
   Introspection.cpp
   IntrospectionSchema.cpp)
@@ -118,35 +123,64 @@ else()
   set(BUILD_TESTS OFF)
 endif()
 
-option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
+option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
 
 if(BUILD_TESTS OR UPDATE_SAMPLES)
   # todaygraphql
   add_custom_command(
     OUTPUT
-      TodaySchema.cpp
-      include/TodaySchema.h
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql" --prefix="Today" --namespace="today" --header-dir="include"
-    DEPENDS schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql
+      samples/today/TodaySchema.h
+      samples/today/TodaySchema.cpp
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/samples/today/schema.today.graphql" --prefix="Today" --namespace="today"
+    DEPENDS schemagen samples/today/schema.today.graphql
+    WORKING_DIRECTORY samples/today
     COMMENT "Generating mock TodaySchema files"
+  )
+
+  # separate_today
+  add_custom_command(
+    OUTPUT samples/separate_today/today_schema_files
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/samples/today/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
+    DEPENDS schemagen samples/today/schema.today.graphql
+    WORKING_DIRECTORY samples/separate_today
+    COMMENT "Generating mock TodaySchema separate files"
   )
 
   # force the generation of samples on the default build target
   add_custom_target(update_samples ALL
-    DEPENDS TodaySchema.cpp
+    DEPENDS
+      samples/today/TodaySchema.cpp
+      samples/separate_today/today_schema_files
   )
 
-  add_library(todaygraphql
-    Today.cpp
-    TodaySchema.cpp)
-  target_link_libraries(todaygraphql PUBLIC
-    graphqlservice)
-  target_include_directories(todaygraphql PUBLIC
-    ${CMAKE_CURRENT_BINARY_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/PEGTL/include)
-
   if(BUILD_TESTS)
+    add_library(todaygraphql
+      samples/today/Today.cpp
+      samples/today/TodaySchema.cpp)
+    target_link_libraries(todaygraphql PUBLIC
+      graphqlservice)
+    target_include_directories(todaygraphql PUBLIC
+      ${CMAKE_CURRENT_BINARY_DIR}/include
+      include
+      PEGTL/include
+      ${CMAKE_CURRENT_BINARY_DIR}/samples/today
+      samples/today)
+
+    file(STRINGS samples/separate_today/today_schema_files SEPARATE_SCHEMA_CPP)
+    list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND ${CMAKE_CURRENT_BINARY_DIR}/samples/separate_today/)
+
+    add_library(separategraphql
+      samples/separate_today/Today.cpp
+      ${SEPARATE_SCHEMA_CPP})
+    target_link_libraries(separategraphql PUBLIC
+      graphqlservice)
+    target_include_directories(separategraphql PUBLIC
+      ${CMAKE_CURRENT_BINARY_DIR}/include
+      include
+      PEGTL/include
+      ${CMAKE_CURRENT_BINARY_DIR}/samples/separate_today
+      samples/separate_today)
+
     # test_today
     add_executable(test_today
       test_today.cpp)
@@ -184,9 +218,10 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
     install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
         ${CMAKE_CURRENT_BINARY_DIR}/IntrospectionSchema.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/include/TodaySchema.h
-        ${CMAKE_CURRENT_BINARY_DIR}/TodaySchema.cpp
-      DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/samples)
+      DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/samples/introspection)
+
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/samples
+      DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 endif()
 
@@ -208,7 +243,7 @@ install(FILES
     include/graphqlservice/GraphQLResponse.h
     include/graphqlservice/GraphQLService.h
     include/graphqlservice/Introspection.h
-  ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
   CONFIGURATIONS Release)
 

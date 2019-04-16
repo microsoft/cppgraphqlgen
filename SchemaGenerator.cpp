@@ -136,6 +136,17 @@ Generator::Generator(GeneratorOptions&& options)
 
 			return fullPath.string();
 		}())
+	, _objectHeaderPath([this]() noexcept -> std::string {
+			if (_options.separateFiles)
+			{
+				fs::path fullPath{ _headerDir };
+
+				fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
+				return fullPath.string();
+			}
+
+			return _headerPath;
+		}())
 	, _sourcePath([this]() noexcept -> std::string {
 			fs::path fullPath{ _sourceDir };
 
@@ -1455,8 +1466,15 @@ bool Generator::outputHeader() const noexcept
 
 	headerFile << R"cpp(
 class Schema;
-
 )cpp";
+
+	if (_options.separateFiles)
+	{
+		headerFile << R"cpp(class ObjectType;
+)cpp";
+	}
+
+	headerFile << std::endl;
 
 	std::string queryType;
 
@@ -1813,7 +1831,7 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	if (!_isIntrospection)
 	{
-		sourceFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+		sourceFile << R"cpp(#include ")cpp" << fs::path(_objectHeaderPath).filename().string() << R"cpp("
 
 )cpp";
 	}
@@ -2759,8 +2777,8 @@ void Generator::outputObjectIntrospection(std::ostream& sourceFile, const Object
 
 			if (_options.separateFiles)
 			{
-				sourceFile << R"cpp(		schema->LookupType(")cpp" << interfaceName
-					<< R"cpp("))cpp";
+				sourceFile << R"cpp(		std::static_pointer_cast<)cpp" << s_introspectionNamespace << R"cpp(::InterfaceType>(schema->LookupType(")cpp" << interfaceName
+					<< R"cpp(")))cpp";
 			}
 			else
 			{
@@ -3193,8 +3211,44 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		}
 	}
 
+	// Output a convenience header
+	const auto objectHeaderPath = (headerDir / _objectHeaderPath).string();
+	std::ofstream objectHeaderFile(objectHeaderPath, std::ios_base::trunc);
+
+	objectHeaderFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#pragma once
+
+#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+
+)cpp";
+
 	for (const auto& objectType : _objectTypes)
 	{
+		const auto headerFilename = std::string(objectType.cppType) + "Schema.h";
+
+		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
+)cpp";
+	}
+
+	if (_options.verbose)
+	{
+		files.push_back(std::move(objectHeaderPath));
+	}
+	
+	for (const auto& objectType : _objectTypes)
+	{
+		std::ostringstream ossNamespace;
+
+		ossNamespace << R"cpp(facebook::graphql::)cpp"
+			<< _schemaNamespace;
+
+		const auto schemaNamespace = ossNamespace.str();
+
+		ossNamespace << R"cpp(::object)cpp";
+
+		const auto objectNamespace = ossNamespace.str();
 		const bool isQueryType = objectType.type == queryType;
 		const auto headerFilename = std::string(objectType.cppType) + "Schema.h";
 		const auto headerPath = (headerDir / headerFilename).string();
@@ -3209,16 +3263,6 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
-		std::ostringstream ossNamespace;
-
-		ossNamespace << R"cpp(facebook::graphql::)cpp"
-			<< _schemaNamespace;
-
-		const auto schemaNamespace = ossNamespace.str();
-
-		ossNamespace << R"cpp(::object)cpp";
-
-		const auto objectNamespace = ossNamespace.str();
 		NamespaceScope headerNamespace{ headerFile, objectNamespace };
 
 		// Output the full declaration
@@ -3238,7 +3282,9 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include ")cpp" << headerFilename << R"cpp("
+#include ")cpp" << objectHeaderPath << R"cpp("
+
+#include <graphqlservice/Introspection.h>
 
 #include <algorithm>
 #include <functional>
