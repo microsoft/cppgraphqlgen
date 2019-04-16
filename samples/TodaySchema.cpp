@@ -1132,8 +1132,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("TaskState", typeTaskState);
 	auto typeCompleteTaskInput = std::make_shared<introspection::InputObjectType>("CompleteTaskInput", R"md()md");
 	schema->AddType("CompleteTaskInput", typeCompleteTaskInput);
-	auto type = std::make_shared<introspection::UnionType>("UnionType", R"md()md");
-	schema->AddType("UnionType", type);
+	auto typeUnionType = std::make_shared<introspection::UnionType>("UnionType", R"md()md");
+	schema->AddType("UnionType", typeUnionType);
 	auto typeNode = std::make_shared<introspection::InterfaceType>("Node", R"md(Node interface for Relay support)md");
 	schema->AddType("Node", typeNode);
 	auto typeQuery = std::make_shared<introspection::ObjectType>("Query", R"md(Root Query type)md");
@@ -1180,7 +1180,7 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 		std::make_shared<introspection::InputValue>("clientMutationId", R"md()md", schema->LookupType("String"), R"gql()gql")
 	});
 
-	type->AddPossibleTypes({
+	typeUnionType->AddPossibleTypes({
 		schema->LookupType("Appointment"),
 		schema->LookupType("Task"),
 		schema->LookupType("Folder")

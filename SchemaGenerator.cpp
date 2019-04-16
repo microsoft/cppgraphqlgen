@@ -892,7 +892,7 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 
 	auto cppName = getSafeCppName(name);
 
-	_unionTypes.push_back({ std::move(name), std::move(name), {}, std::move(description) });
+	_unionTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
 
 	visitUnionTypeExtension(unionTypeDefinition);
 }
