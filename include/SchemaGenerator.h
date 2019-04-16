@@ -223,8 +223,26 @@ struct GeneratorOptions
 {
 	const std::optional<GeneratorSchema> customSchema;
 	const std::optional<GeneratorPaths> paths;
+	const bool verbose = false;
 	const bool separateFiles = false;
 	const bool noStubs = false;
+};
+
+// RAII object to help with emitting matching namespace begin and end statements
+class NamespaceScope
+{
+public:
+	explicit NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
+	NamespaceScope(NamespaceScope&& other) noexcept;
+	~NamespaceScope() noexcept;
+
+	bool enter() noexcept;
+	bool exit() noexcept;
+
+private:
+	bool _inside = false;
+	std::ostream& _outputFile;
+	std::string_view _cppNamespace;
 };
 
 class Generator
@@ -308,17 +326,21 @@ private:
 	std::string getOutputCppType(const OutputField& field, bool interfaceField) const noexcept;
 
 	bool outputHeader() const noexcept;
+	void outputObjectDeclaration(std::ostream& headerFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
 	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField, bool inheritedField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
+	void outputObjectImplementation(std::ostream& sourceFile, const facebook::graphql::schema::ObjectType& objectType, bool isQueryType) const;
 	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 	std::string getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept;
+
+	std::vector<std::string> outputSeparateFiles() const noexcept;
 
 	static const std::string s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
@@ -329,6 +351,8 @@ private:
 	const GeneratorOptions _options;
 	const bool _isIntrospection;
 	std::string_view _schemaNamespace;
+	const std::string _headerDir;
+	const std::string _sourceDir;
 	const std::string _headerPath;
 	const std::string _sourcePath;
 

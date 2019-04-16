@@ -43,7 +43,7 @@ I added a vcpkg port for this project, if you have vcpkg you can also install ev
 
 ## Software dependencies
 
-For now, I'm maintaining compatibility with C++11 for maximum portability. I picked a few projects as dependencies:
+As of version 3.0, this project depends on C++17. I also picked a few other projects as dependencies:
 
 - GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. While the PEGTL 3.0 release is still pending I've added this as a sub-module, so you should not install this separately.
 - Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
