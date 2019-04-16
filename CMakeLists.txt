@@ -129,8 +129,8 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
   # todaygraphql
   add_custom_command(
     OUTPUT
-      samples/today/TodaySchema.h
       samples/today/TodaySchema.cpp
+      samples/today/TodaySchema.h
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/samples/today/schema.today.graphql" --prefix="Today" --namespace="today"
     DEPENDS schemagen samples/today/schema.today.graphql
     WORKING_DIRECTORY samples/today
@@ -163,11 +163,10 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/include
       include
       PEGTL/include
-      ${CMAKE_CURRENT_BINARY_DIR}/samples/today
       samples/today)
 
     file(STRINGS samples/separate_today/today_schema_files SEPARATE_SCHEMA_CPP)
-    list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND ${CMAKE_CURRENT_BINARY_DIR}/samples/separate_today/)
+    list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND samples/separate_today/)
 
     add_library(separategraphql
       samples/separate_today/Today.cpp
@@ -178,14 +177,13 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/include
       include
       PEGTL/include
-      ${CMAKE_CURRENT_BINARY_DIR}/samples/separate_today
       samples/separate_today)
 
     # test_today
     add_executable(test_today
       test_today.cpp)
     target_link_libraries(test_today PRIVATE
-      todaygraphql
+      separategraphql
       graphqljson)
 
     # tests
