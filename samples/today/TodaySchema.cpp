@@ -10,33 +10,34 @@
 #include <sstream>
 #include <unordered_map>
 #include <exception>
+#include <array>
 
 namespace facebook::graphql {
 namespace service {
 
+static const std::array<std::string_view, 4> s_namesTaskState = {
+	"New",
+	"Started",
+	"Complete",
+	"Unassigned"
+};
+
 template <>
 today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)
 {
-	static const std::unordered_map<std::string, today::TaskState> s_names = {
-		{ "New", today::TaskState::New },
-		{ "Started", today::TaskState::Started },
-		{ "Complete", today::TaskState::Complete },
-		{ "Unassigned", today::TaskState::Unassigned }
-	};
-
 	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid TaskState value" });
 	}
 
-	auto itr = s_names.find(value.get<const response::StringType&>());
+	auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<const response::StringType&>());
 
-	if (itr == s_names.cend())
+	if (itr == s_namesTaskState.cend())
 	{
 		throw service::schema_exception({ "not a valid TaskState value" });
 	}
 
-	return itr->second;
+	return static_cast<today::TaskState>(itr - s_namesTaskState.cbegin());
 }
 
 template <>
@@ -45,16 +46,9 @@ std::future<response::Value> ModifiedResult<today::TaskState>::convert(std::futu
 	return resolve(std::move(result), std::move(params),
 		[](today::TaskState&& value, const ResolverParams&)
 		{
-			static const std::string s_names[] = {
-				"New",
-				"Started",
-				"Complete",
-				"Unassigned"
-			};
-
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value)]));
+			result.set<response::StringType>(std::string(s_namesTaskState[static_cast<size_t>(value)]));
 
 			return result;
 		});

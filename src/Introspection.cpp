@@ -381,9 +381,7 @@ void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
 	{
 		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value.value),
 			std::move(value.description),
-			value.deprecationReason
-				? std::make_optional<response::StringType>(value.deprecationReason)
-				: std::nullopt));
+			std::move(value.deprecationReason)));
 	}
 }
 

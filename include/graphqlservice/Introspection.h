@@ -145,7 +145,7 @@ struct EnumValueType
 {
 	response::StringType value;
 	response::StringType description;
-	const char* deprecationReason;
+	std::optional<response::StringType> deprecationReason;
 };
 
 class EnumType : public BaseType

@@ -1874,6 +1874,7 @@ bool Generator::outputSource() const noexcept
 #include <sstream>
 #include <unordered_map>
 #include <exception>
+#include <array>
 
 )cpp";
 
@@ -1889,13 +1890,9 @@ bool Generator::outputSource() const noexcept
 		{
 			bool firstValue = true;
 
-			sourceFile << R"cpp(template <>
-)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-<< R"cpp(>::convert(const response::Value& value)
-{
-	static const std::unordered_map<std::string, )cpp"
-				<< _schemaNamespace << R"cpp(::)cpp" << enumType.cppType << R"cpp(> s_names = {
+			sourceFile << R"cpp(static const std::array<std::string_view, )cpp" << enumType.values.size()
+				<< R"cpp(> s_names)cpp" << enumType.cppType
+				<< R"cpp( = {
 )cpp";
 
 			for (const auto& value : enumType.values)
@@ -1907,27 +1904,35 @@ bool Generator::outputSource() const noexcept
 				}
 
 				firstValue = false;
-				sourceFile << R"cpp(		{ ")cpp" << value.value << R"cpp(", )cpp"
-					<< _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-					<< R"cpp(::)cpp" << value.cppValue << R"cpp( })cpp";
+				sourceFile << R"cpp(	")cpp" << value.value << R"cpp(")cpp";
 			}
 
 			sourceFile << R"cpp(
-	};
+};
 
+template <>
+)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+				<< R"cpp( ModifiedArgument<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+				<< R"cpp(>::convert(const response::Value& value)
+{
 	if (!value.maybe_enum())
 	{
 		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
 	}
 
-	auto itr = s_names.find(value.get<const response::StringType&>());
+	auto itr = std::find(s_names)cpp" << enumType.cppType
+				<< R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
+				<< R"cpp(.cend(), value.get<const response::StringType&>());
 
-	if (itr == s_names.cend())
+	if (itr == s_names)cpp" << enumType.cppType
+				<< R"cpp(.cend())
 	{
 		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
 	}
 
-	return itr->second;
+	return static_cast<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+				<< R"cpp(>(itr - s_names)cpp" << enumType.cppType
+				<< R"cpp(.cbegin());
 }
 
 template <>
@@ -1939,29 +1944,10 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 		[]()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 				<< R"cpp(&& value, const ResolverParams&)
 		{
-			static const std::string s_names[] = {
-		)cpp";
-
-			firstValue = true;
-
-			for (const auto& value : enumType.values)
-			{
-				if (!firstValue)
-				{
-					sourceFile << R"cpp(,
-		)cpp";
-				}
-
-				firstValue = false;
-				sourceFile << R"cpp(		")cpp" << value.value << R"cpp(")cpp";
-			}
-
-			sourceFile << R"cpp(
-			};
-
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_names[static_cast<size_t>(value)]));
+			result.set<response::StringType>(std::string(s_names)cpp" << enumType.cppType
+				<< R"cpp([static_cast<size_t>(value)]));
 
 			return result;
 		});
@@ -2277,11 +2263,11 @@ Operations::Operations()cpp";
 
 					if (enumValue.deprecationReason)
 					{
-						sourceFile << R"cpp(R"md()cpp" << *enumValue.deprecationReason << R"cpp()md")cpp";
+						sourceFile << R"cpp(std::make_optional<response::StringType>(R"md()cpp" << *enumValue.deprecationReason << R"cpp()md"))cpp";
 					}
 					else
 					{
-						sourceFile << R"cpp(nullptr)cpp";
+						sourceFile << R"cpp(std::nullopt)cpp";
 					}
 
 					sourceFile << R"cpp( })cpp";
