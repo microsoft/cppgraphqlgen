@@ -44,10 +44,11 @@ target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
 add_custom_command(
   OUTPUT
-    IntrospectionSchema.cpp
-    include/graphqlservice/IntrospectionSchema.h
+    ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
+    ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
   COMMAND schemagen --introspection
   DEPENDS schemagen
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMENT "Generating IntrospectionSchema files"
 )
 
@@ -56,12 +57,12 @@ add_library(graphqlservice
   $<TARGET_OBJECTS:graphqlresponse>
   GraphQLService.cpp
   Introspection.cpp
-  IntrospectionSchema.cpp)
+  ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
   Threads::Threads)
 target_include_directories(graphqlservice PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/include)
+  ${CMAKE_BINARY_DIR}/include)
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
@@ -99,8 +100,8 @@ endif()
 
 if(GRAPHQL_UPDATE_SAMPLES)
   install(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_CURRENT_BINARY_DIR}/IntrospectionSchema.cpp
+      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
     DESTINATION ${CMAKE_SOURCE_DIR}/samples/introspection)
 endif()
 
@@ -122,7 +123,7 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLResponse.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLService.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/Introspection.h
-    ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+    ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
   CONFIGURATIONS Release)
 
