@@ -535,34 +535,34 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("__Directive", typeDirective);
 
 	typeTypeKind->AddEnumValues({
-		{ "SCALAR", R"md()md", nullptr },
-		{ "OBJECT", R"md()md", nullptr },
-		{ "INTERFACE", R"md()md", nullptr },
-		{ "UNION", R"md()md", nullptr },
-		{ "ENUM", R"md()md", nullptr },
-		{ "INPUT_OBJECT", R"md()md", nullptr },
-		{ "LIST", R"md()md", nullptr },
-		{ "NON_NULL", R"md()md", nullptr }
+		{ "SCALAR", R"md()md", std::nullopt },
+		{ "OBJECT", R"md()md", std::nullopt },
+		{ "INTERFACE", R"md()md", std::nullopt },
+		{ "UNION", R"md()md", std::nullopt },
+		{ "ENUM", R"md()md", std::nullopt },
+		{ "INPUT_OBJECT", R"md()md", std::nullopt },
+		{ "LIST", R"md()md", std::nullopt },
+		{ "NON_NULL", R"md()md", std::nullopt }
 	});
 	typeDirectiveLocation->AddEnumValues({
-		{ "QUERY", R"md()md", nullptr },
-		{ "MUTATION", R"md()md", nullptr },
-		{ "SUBSCRIPTION", R"md()md", nullptr },
-		{ "FIELD", R"md()md", nullptr },
-		{ "FRAGMENT_DEFINITION", R"md()md", nullptr },
-		{ "FRAGMENT_SPREAD", R"md()md", nullptr },
-		{ "INLINE_FRAGMENT", R"md()md", nullptr },
-		{ "SCHEMA", R"md()md", nullptr },
-		{ "SCALAR", R"md()md", nullptr },
-		{ "OBJECT", R"md()md", nullptr },
-		{ "FIELD_DEFINITION", R"md()md", nullptr },
-		{ "ARGUMENT_DEFINITION", R"md()md", nullptr },
-		{ "INTERFACE", R"md()md", nullptr },
-		{ "UNION", R"md()md", nullptr },
-		{ "ENUM", R"md()md", nullptr },
-		{ "ENUM_VALUE", R"md()md", nullptr },
-		{ "INPUT_OBJECT", R"md()md", nullptr },
-		{ "INPUT_FIELD_DEFINITION", R"md()md", nullptr }
+		{ "QUERY", R"md()md", std::nullopt },
+		{ "MUTATION", R"md()md", std::nullopt },
+		{ "SUBSCRIPTION", R"md()md", std::nullopt },
+		{ "FIELD", R"md()md", std::nullopt },
+		{ "FRAGMENT_DEFINITION", R"md()md", std::nullopt },
+		{ "FRAGMENT_SPREAD", R"md()md", std::nullopt },
+		{ "INLINE_FRAGMENT", R"md()md", std::nullopt },
+		{ "SCHEMA", R"md()md", std::nullopt },
+		{ "SCALAR", R"md()md", std::nullopt },
+		{ "OBJECT", R"md()md", std::nullopt },
+		{ "FIELD_DEFINITION", R"md()md", std::nullopt },
+		{ "ARGUMENT_DEFINITION", R"md()md", std::nullopt },
+		{ "INTERFACE", R"md()md", std::nullopt },
+		{ "UNION", R"md()md", std::nullopt },
+		{ "ENUM", R"md()md", std::nullopt },
+		{ "ENUM_VALUE", R"md()md", std::nullopt },
+		{ "INPUT_OBJECT", R"md()md", std::nullopt },
+		{ "INPUT_FIELD_DEFINITION", R"md()md", std::nullopt }
 	});
 
 	typeSchema->AddFields({
