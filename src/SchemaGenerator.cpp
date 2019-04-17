@@ -318,12 +318,41 @@ void Generator::validateSchema()
 
 	for (auto& entry : _interfaceTypes)
 	{
-		fixupOutputFieldList(entry.fields);
+		fixupOutputFieldList(entry.fields, std::nullopt, std::nullopt);
+	}
+
+	std::string mutationType;
+
+	for (const auto& operation : _operationTypes)
+	{
+		if (operation.operation == "mutation")
+		{
+			mutationType = operation.type;
+			break;
+		}
 	}
 
 	for (auto& entry : _objectTypes)
 	{
-		fixupOutputFieldList(entry.fields);
+		auto interfaceFields = std::make_optional<std::unordered_set<std::string>>();
+		auto accessor = (mutationType == entry.type)
+			? std::make_optional<std::string_view>("apply")
+			: std::nullopt;
+
+		for (const auto& interfaceName : entry.interfaces)
+		{
+			auto itr = _interfaceNames.find(interfaceName);
+
+			if (itr != _interfaceNames.cend())
+			{
+				for (const auto& field : _interfaceTypes[itr->second].fields)
+				{
+					interfaceFields->insert(field.name);
+				}
+			}
+		}
+
+		fixupOutputFieldList(entry.fields, interfaceFields, accessor);
 	}
 
 	// Validate the interfaces implemented by the object types.
@@ -351,10 +380,26 @@ void Generator::validateSchema()
 	}
 }
 
-void Generator::fixupOutputFieldList(OutputFieldList& fields)
+void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optional<std::unordered_set<std::string>>& interfaceFields, const std::optional<std::string_view>& accessor)
 {
 	for (auto& entry : fields)
 	{
+		if (interfaceFields)
+		{
+			entry.interfaceField = false;
+			entry.inheritedField = interfaceFields->find(entry.name) != interfaceFields->cend();
+		}
+		else
+		{
+			entry.interfaceField = true;
+			entry.inheritedField = false;
+		}
+
+		if (accessor)
+		{
+			entry.accessor = *accessor;
+		}
+
 		if (s_builtinTypes.find(entry.type) != s_builtinTypes.cend())
 		{
 			continue;
@@ -1360,7 +1405,7 @@ std::string Generator::getInputCppType(const InputField & field) const noexcept
 	return inputType.str();
 }
 
-std::string Generator::getOutputCppType(const OutputField & field, bool interfaceField) const noexcept
+std::string Generator::getOutputCppType(const OutputField & field) const noexcept
 {
 	bool nonNull = true;
 	size_t templateCount = 0;
@@ -1420,7 +1465,7 @@ std::string Generator::getOutputCppType(const OutputField & field, bool interfac
 			break;
 
 		case OutputFieldType::Object:
-			if (interfaceField)
+			if (field.interfaceField)
 			{
 				outputType << R"cpp(object::)cpp";
 			}
@@ -1597,7 +1642,7 @@ class Schema;
 
 			for (const auto& outputField : interfaceType.fields)
 			{
-				headerFile << getFieldDeclaration(outputField, true, false);
+				headerFile << getFieldDeclaration(outputField);
 			}
 
 			headerFile << R"cpp(};
@@ -1690,8 +1735,6 @@ private:
 
 void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
-	std::unordered_set<std::string> interfaceFields;
-
 	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
 	: public service::Object)cpp";
 
@@ -1699,16 +1742,6 @@ void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectTy
 	{
 		headerFile << R"cpp(
 	, public )cpp" << getSafeCppName(interfaceName);
-
-		auto itr = _interfaceNames.find(interfaceName);
-
-		if (itr != _interfaceNames.cend())
-		{
-			for (const auto& field : _interfaceTypes[itr->second].fields)
-			{
-				interfaceFields.insert(field.name);
-			}
-		}
 	}
 
 	headerFile << R"cpp(
@@ -1723,9 +1756,7 @@ protected:
 
 		for (const auto& outputField : objectType.fields)
 		{
-			const bool inheritedField = interfaceFields.find(outputField.name) != interfaceFields.cend();
-
-			if (inheritedField && (_isIntrospection || _options.noStubs))
+			if (outputField.inheritedField && (_isIntrospection || _options.noStubs))
 			{
 				continue;
 			}
@@ -1738,7 +1769,7 @@ public:
 				firstField = false;
 			}
 
-			headerFile << getFieldDeclaration(outputField, false, inheritedField);
+			headerFile << getFieldDeclaration(outputField);
 		}
 
 		headerFile << R"cpp(
@@ -1778,14 +1809,14 @@ std::string Generator::getFieldDeclaration(const InputField & inputField) const 
 	return output.str();
 }
 
-std::string Generator::getFieldDeclaration(const OutputField & outputField, bool interfaceField, bool inheritedField) const noexcept
+std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName(outputField.cppName);
+	std::string fieldName{ outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField, interfaceField)
-		<< R"cpp(> get)cpp" << fieldName << R"cpp((service::FieldParams&& params)cpp";
+	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
+		<< R"cpp(> )cpp" << outputField.accessor << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
 	for (const auto& argument : outputField.arguments)
 	{
@@ -1794,11 +1825,11 @@ std::string Generator::getFieldDeclaration(const OutputField & outputField, bool
 	}
 
 	output << R"cpp() const)cpp";
-	if (interfaceField || _isIntrospection || _options.noStubs)
+	if (outputField.interfaceField || _isIntrospection || _options.noStubs)
 	{
 		output << R"cpp( = 0)cpp";
 	}
-	else if (inheritedField)
+	else if (outputField.inheritedField)
 	{
 		output << R"cpp( override)cpp";
 	}
@@ -2621,9 +2652,9 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 		if (!_isIntrospection && !_options.noStubs)
 		{
 			sourceFile << R"cpp(
-std::future<)cpp" << getOutputCppType(outputField, false)
+std::future<)cpp" << getOutputCppType(outputField)
 << R"cpp(> )cpp" << objectType.cppType
-<< R"cpp(::get)cpp" << fieldName
+<< R"cpp(::)cpp" << outputField.accessor << fieldName
 << R"cpp((service::FieldParams&&)cpp";
 			for (const auto& argument : outputField.arguments)
 			{
@@ -2633,11 +2664,11 @@ std::future<)cpp" << getOutputCppType(outputField, false)
 
 			sourceFile << R"cpp() const
 {
-	std::promise<)cpp" << getOutputCppType(outputField, false)
+	std::promise<)cpp" << getOutputCppType(outputField)
 				<< R"cpp(> promise;
 
 	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.cppType
-				<< R"cpp(::get)cpp" << fieldName
+				<< R"cpp(::)cpp" << outputField.accessor << fieldName
 				<< R"cpp( is not implemented)ex")));
 
 	return promise.get_future();
@@ -2694,7 +2725,8 @@ std::future<response::Value> )cpp" << objectType.cppType
 			}
 		}
 
-		sourceFile << R"cpp(	auto result = get)cpp" << fieldName << R"cpp((service::FieldParams(params, std::move(params.fieldDirectives)))cpp";
+		sourceFile << R"cpp(	auto result = )cpp" << outputField.accessor << fieldName
+			<< R"cpp((service::FieldParams(params, std::move(params.fieldDirectives)))cpp";
 
 		if (!outputField.arguments.empty())
 		{

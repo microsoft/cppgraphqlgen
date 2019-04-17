@@ -14,7 +14,7 @@ protected:
 	Mutation();
 
 public:
-	virtual std::future<std::shared_ptr<CompleteTaskPayload>> getCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
+	virtual std::future<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
 
 private:
 	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);

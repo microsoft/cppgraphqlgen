@@ -165,6 +165,9 @@ struct OutputField
 	std::string description;
 	std::optional<std::string> deprecationReason;
 	std::optional<tao::graphqlpeg::position> position;
+	bool interfaceField = false;
+	bool inheritedField = false;
+	std::string_view accessor{ "get" };
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -318,17 +321,17 @@ private:
 	};
 
 	void validateSchema();
-	void fixupOutputFieldList(OutputFieldList& fields);
+	void fixupOutputFieldList(OutputFieldList& fields, const std::optional<std::unordered_set<std::string>>& interfaceFields, const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
 
 	const std::string& getCppType(const std::string& type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
-	std::string getOutputCppType(const OutputField& field, bool interfaceField) const noexcept;
+	std::string getOutputCppType(const OutputField& field) const noexcept;
 
 	bool outputHeader() const noexcept;
 	void outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
-	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField, bool inheritedField) const noexcept;
+	std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;

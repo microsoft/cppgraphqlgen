@@ -380,7 +380,7 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 {
 }
 
-std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::getCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const
+std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const
 {
 	std::promise<std::shared_ptr<object::CompleteTaskPayload>> promise;
 

@@ -470,7 +470,7 @@ public:
 
 	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
-	std::future<std::shared_ptr<object::CompleteTaskPayload>> getCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const override;
+	std::future<std::shared_ptr<object::CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const override;
 
 private:
 	completeTaskMutation _mutateCompleteTask;

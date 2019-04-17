@@ -752,11 +752,11 @@ Mutation::Mutation()
 {
 }
 
-std::future<std::shared_ptr<CompleteTaskPayload>> Mutation::getCompleteTask(service::FieldParams&&, CompleteTaskInput&&) const
+std::future<std::shared_ptr<CompleteTaskPayload>> Mutation::applyCompleteTask(service::FieldParams&&, CompleteTaskInput&&) const
 {
 	std::promise<std::shared_ptr<CompleteTaskPayload>> promise;
 
-	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Mutation::getCompleteTask is not implemented)ex")));
+	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex")));
 
 	return promise.get_future();
 }
@@ -764,7 +764,7 @@ std::future<std::shared_ptr<CompleteTaskPayload>> Mutation::getCompleteTask(serv
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<CompleteTaskInput>::require("input", params.arguments);
-	auto result = getCompleteTask(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
+	auto result = applyCompleteTask(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
