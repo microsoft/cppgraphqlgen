@@ -5,7 +5,6 @@ cmake_minimum_required(VERSION 3.8.2)
 
 if(GRAPHQL_BUILD_TESTS)
   # tests
-  enable_testing()
   find_package(GTest MODULE REQUIRED)
 
   add_executable(tests
