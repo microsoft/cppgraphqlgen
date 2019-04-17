@@ -187,12 +187,11 @@ struct ModifiedArgument
 	struct ArgumentTraits
 	{
 		// Peel off modifiers until we get to the underlying type.
-		using type = typename std::conditional<TypeModifier::Nullable == Modifier,
+		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
 			std::optional<typename ArgumentTraits<U, Other...>::type>,
-			typename std::conditional<TypeModifier::List == Modifier,
+			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ArgumentTraits<U, Other...>::type>,
-				U>::type
-		>::type;
+				U>>;
 	};
 
 	template <typename U>
@@ -248,7 +247,7 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other >
-	static typename std::enable_if<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>::type require(
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		// Just call through to the non-template method without the modifiers.
@@ -257,7 +256,7 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::Nullable == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type>::type require(
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		const auto& valueItr = arguments.find(name);
@@ -275,7 +274,7 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::List == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type>::type require(
+	static typename std::enable_if_t<TypeModifier::List == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		const auto& values = arguments[name];
@@ -362,31 +361,28 @@ struct ModifiedResult
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ResultTraits
 	{
-		using type = typename std::conditional<TypeModifier::Nullable == Modifier,
-			typename std::conditional<std::is_base_of<Object, U>::value
-				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, Other...>::type>::value,
+		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
+			typename std::conditional_t<std::is_base_of_v<Object, U>
+				&& std::is_same_v<std::shared_ptr<U>, typename ResultTraits<U, Other...>::type>,
 				std::shared_ptr<U>,
-				std::optional<typename ResultTraits<U, Other...>::type>
-			>::type,
-			typename std::conditional<TypeModifier::List == Modifier,
+				std::optional<typename ResultTraits<U, Other...>::type>>,
+			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ResultTraits<U, Other...>::type>,
-				typename std::conditional<std::is_base_of<Object, U>::value,
+				typename std::conditional_t<std::is_base_of_v<Object, U>,
 					std::shared_ptr<U>,
-					U>::type
-			>::type
-		>::type;
+					U>>>;
 	};
 
 	template <typename U>
 	struct ResultTraits<U, TypeModifier::None>
 	{
-		using type = typename std::conditional<std::is_base_of<Object, U>::value,
+		using type = typename std::conditional_t<std::is_base_of_v<Object, U>,
 			std::shared_ptr<U>,
-			U>::type;
+			U>;
 
-		using future_type = typename std::conditional<std::is_base_of<Object, Type>::value,
+		using future_type = typename std::conditional_t<std::is_base_of_v<Object, Type>,
 			std::future<std::shared_ptr<Object>>,
-			std::future<type>>::type&&;
+			std::future<type>>&&;
 	};
 
 	// Convert a single value of the specified type to JSON.
@@ -394,11 +390,11 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::None == Modifier && sizeof...(Other) == 0 && !std::is_same<Object, Type>::value && std::is_base_of<Object, Type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<Type>::type> && result, ResolverParams && params)
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
+		std::future<response::Value>> convert(std::future<typename ResultTraits<Type>::type> && result, ResolverParams && params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
-		static_assert(std::is_same<std::shared_ptr<Type>, typename ResultTraits<Type>::type>::value, "this is the derived object type");
+		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>, "this is the derived object type");
 		auto resultFuture = std::async(std::launch::deferred,
 			[](std::future<std::shared_ptr<Type>> && objectType)
 			{
@@ -410,8 +406,8 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::None == Modifier && sizeof...(Other) == 0 && (std::is_same<Object, Type>::value || !std::is_base_of<Object, Type>::value),
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<Type>::type> && result, ResolverParams && params)
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
+		std::future<response::Value>> convert(std::future<typename ResultTraits<Type>::type> && result, ResolverParams && params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
@@ -419,8 +415,8 @@ struct ModifiedResult
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::Nullable == Modifier && std::is_same<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
+		std::future<response::Value>> convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
 			[](std::future<typename ResultTraits<Type, Modifier, Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
@@ -446,10 +442,10 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::Nullable == Modifier && !std::is_same<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
+		std::future<response::Value>> convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
 	{
-		static_assert(std::is_same<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>::value,
+		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
 		return std::async(std::launch::deferred,
@@ -476,8 +472,8 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if<TypeModifier::List == Modifier,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+	static typename std::enable_if_t<TypeModifier::List == Modifier,
+		std::future<response::Value>> convert(std::future<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
 			[](std::future<typename ResultTraits<Type, Modifier, Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
@@ -559,7 +555,7 @@ private:
 
 	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
 	{
-		static_assert(!std::is_base_of<Object, Type>::value, "ModfiedResult<Object> needs special handling");
+		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
 		return std::async(std::launch::deferred,
 			[](typename ResultTraits<Type>::future_type resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
 			{
