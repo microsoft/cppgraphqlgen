@@ -2258,8 +2258,11 @@ Operations::Operations()cpp";
 					}
 
 					firstValue = false;
-					sourceFile << R"cpp(		{ ")cpp" << enumValue.value
-						<< R"cpp(", R"md()cpp" << enumValue.description << R"cpp()md", )cpp";
+					sourceFile << R"cpp(		{ std::string{ service::s_names)cpp" << enumType.cppType
+						<< R"cpp([static_cast<size_t>()cpp" << _schemaNamespace
+						<< R"cpp(::)cpp" << enumType.cppType
+						<< R"cpp(::)cpp" << enumValue.cppValue
+						<< R"cpp()] }, R"md()cpp" << enumValue.description << R"cpp()md", )cpp";
 
 					if (enumValue.deprecationReason)
 					{

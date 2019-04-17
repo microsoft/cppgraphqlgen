@@ -1162,10 +1162,10 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("NestedType", typeNestedType);
 
 	typeTaskState->AddEnumValues({
-		{ "New", R"md()md", std::nullopt },
-		{ "Started", R"md()md", std::nullopt },
-		{ "Complete", R"md()md", std::nullopt },
-		{ "Unassigned", R"md()md", std::make_optional<response::StringType>(R"md(Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md") }
+		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)] }, R"md()md", std::nullopt },
+		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Started)] }, R"md()md", std::nullopt },
+		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Complete)] }, R"md()md", std::nullopt },
+		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Unassigned)] }, R"md()md", std::make_optional<response::StringType>(R"md(Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md") }
 	});
 
 	typeCompleteTaskInput->AddInputValues({
