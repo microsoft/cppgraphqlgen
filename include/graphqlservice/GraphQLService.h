@@ -88,18 +88,9 @@ struct FieldResult : std::variant<T, std::future<T>>
 {
 	using variant_type = std::variant<T, std::future<T>>;
 
-	FieldResult(const T& value)
-		: variant_type{ T{ value } }
-	{
-	}
-
-	FieldResult(T&& value)
-		: variant_type{ std::move(value) }
-	{
-	}
-
-	FieldResult(std::future<T>&& value)
-		: variant_type{ std::move(value) }
+	template <typename U>
+	FieldResult(U&& value)
+		: variant_type{ std::forward<U>(value) }
 	{
 	}
 
