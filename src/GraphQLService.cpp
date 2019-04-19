@@ -863,11 +863,11 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			std::move(result)
 			});
 	}
-	catch (const std::exception& ex)
+	catch (const std::exception&)
 	{
 		std::promise<response::Value> promise;
 
-		promise.set_exception(std::make_exception_ptr(ex));
+		promise.set_exception(std::current_exception());
 
 		_values.push({
 			std::move(alias),
