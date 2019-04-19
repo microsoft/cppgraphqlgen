@@ -399,6 +399,8 @@ struct ModifiedResult
 				typename std::conditional_t<std::is_base_of_v<Object, U>,
 					std::shared_ptr<U>,
 					U>>>;
+
+		using future_type = FieldResult<type> &&;
 	};
 
 	template <typename U>
@@ -435,7 +437,7 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
-		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type>::type> && result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type>::future_type result, ResolverParams && params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
@@ -444,7 +446,7 @@ struct ModifiedResult
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
 			[](auto && wrappedFuture, ResolverParams && wrappedParams)
@@ -471,7 +473,7 @@ struct ModifiedResult
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
@@ -501,7 +503,7 @@ struct ModifiedResult
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::List == Modifier,
-		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type, Modifier, Other...>::type> && result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
 			[](auto && wrappedFuture, ResolverParams && wrappedParams)
@@ -577,7 +579,7 @@ struct ModifiedResult
 private:
 	using ResolverCallback = std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
 
-	static std::future<response::Value> resolve(FieldResult<typename ResultTraits<Type>::type> && result, ResolverParams&& params, ResolverCallback&& resolver)
+	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
 	{
 		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
 		return std::async(std::launch::deferred,
