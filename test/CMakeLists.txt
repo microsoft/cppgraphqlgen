@@ -7,18 +7,20 @@ find_package(GTest MODULE REQUIRED)
 
 add_executable(today_tests TodayTests.cpp)
 target_link_libraries(today_tests PRIVATE
-  todaygraphql
+  unifiedgraphql
   graphqljson
   GTest::GTest
   GTest::Main)
+add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
 add_executable(argument_tests ArgumentTests.cpp)
 target_link_libraries(argument_tests PRIVATE
-  todaygraphql
+  unifiedgraphql
   graphqljson
   GTest::GTest
   GTest::Main)
+add_bigobj_flag(argument_tests)
 gtest_add_tests(TARGET argument_tests)
 
 add_executable(pegtl_tests PegtlTests.cpp)

@@ -64,11 +64,11 @@ protected:
 	Schema();
 
 public:
-	virtual std::future<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveTypes(service::ResolverParams&& params);
@@ -87,15 +87,15 @@ protected:
 	Type();
 
 public:
-	virtual std::future<TypeKind> getKind(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual std::future<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveKind(service::ResolverParams&& params);
@@ -118,12 +118,12 @@ protected:
 	Field();
 
 public:
-	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-	virtual std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -143,10 +143,10 @@ protected:
 	InputValue();
 
 public:
-	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -164,10 +164,10 @@ protected:
 	EnumValue();
 
 public:
-	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
@@ -185,10 +185,10 @@ protected:
 	Directive();
 
 public:
-	virtual std::future<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual std::future<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
-	virtual std::future<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);

@@ -19,7 +19,7 @@ schema_exception::schema_exception(std::vector<std::string>&& messages)
 	{
 		response::Value error(response::Type::Map);
 
-		error.emplace_back(strMessage, response::Value(std::move(message)));
+		error.emplace_back(std::string{ strMessage }, response::Value(std::move(message)));
 		_errors.emplace_back(std::move(error));
 	}
 
@@ -613,7 +613,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IntType>::convert(std::future<response::IntType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::IntType && value, const ResolverParams&)
@@ -623,7 +623,7 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(std::fut
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::FloatType>::convert(std::future<response::FloatType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::FloatType && value, const ResolverParams&)
@@ -633,7 +633,7 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(std::f
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::StringType>::convert(std::future<response::StringType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::StringType && value, const ResolverParams&)
@@ -643,7 +643,7 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(std::
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::BooleanType>::convert(std::future<response::BooleanType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::BooleanType && value, const ResolverParams&)
@@ -653,7 +653,7 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(std:
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value>::convert(std::future<response::Value> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::Value && value, const ResolverParams&)
@@ -663,7 +663,7 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(std::futur
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IdType>::convert(std::future<response::IdType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType> && result, ResolverParams && params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](response::IdType && value, const ResolverParams&)
@@ -673,10 +673,10 @@ std::future<response::Value> ModifiedResult<response::IdType>::convert(std::futu
 }
 
 template <>
-std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::shared_ptr<Object>> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>> && result, ResolverParams && params)
 {
 	return std::async(std::launch::deferred,
-		[](std::future<std::shared_ptr<Object>> && resultFuture, ResolverParams && paramsFuture)
+		[](FieldResult<std::shared_ptr<Object>> && resultFuture, ResolverParams && paramsFuture)
 		{
 			auto wrappedResult = resultFuture.get();
 
@@ -684,7 +684,7 @@ std::future<response::Value> ModifiedResult<Object>::convert(std::future<std::sh
 			{
 				response::Value document(response::Type::Map);
 
-				document.emplace_back(strData, response::Value(!wrappedResult
+				document.emplace_back(std::string{ strData }, response::Value(!wrappedResult
 					? response::Type::Null
 					: response::Type::Map));
 
@@ -854,12 +854,26 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 		_fragmentDirectives.top().inlineFragmentDirectives
 	};
 
-	auto result = itr->second(ResolverParams(selectionSetParams, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(), selection, _fragments, _variables));
+	try
+	{
+		auto result = itr->second(ResolverParams(selectionSetParams, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(), selection, _fragments, _variables));
 
-	_values.push({
-		std::move(alias),
-		std::move(result)
-		});
+		_values.push({
+			std::move(alias),
+			std::move(result)
+			});
+	}
+	catch (const std::exception& ex)
+	{
+		std::promise<response::Value> promise;
+
+		promise.set_exception(std::make_exception_ptr(ex));
+
+		_values.push({
+			std::move(alias),
+			promise.get_future()
+			});
+	}
 }
 
 void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
@@ -906,7 +920,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	{
 		if (fragmentSpreadDirectives.find(entry.first) == fragmentSpreadDirectives.end())
 		{
-			fragmentSpreadDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+			fragmentSpreadDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
 		}
 	}
 
@@ -917,7 +931,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	{
 		if (fragmentDefinitionDirectives.find(entry.first) == fragmentDefinitionDirectives.end())
 		{
-			fragmentDefinitionDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+			fragmentDefinitionDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
 		}
 	}
 
@@ -971,7 +985,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
 				{
 					if (inlineFragmentDirectives.find(entry.first) == inlineFragmentDirectives.end())
 					{
-						inlineFragmentDirectives.emplace_back(std::string(entry.first), response::Value(entry.second));
+						inlineFragmentDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
 					}
 				}
 
@@ -1058,7 +1072,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 								response::Value error(response::Type::Map);
 
-								error.emplace_back(strMessage, response::Value(message.str()));
+								error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
 								errors.emplace_back(std::move(error));
 							}
 							else
@@ -1077,7 +1091,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 					response::Value error(response::Type::Map);
 
-					error.emplace_back(strMessage, response::Value(message.str()));
+					error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
 					errors.emplace_back(std::move(error));
 				}
 
@@ -1086,11 +1100,11 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 			response::Value result(response::Type::Map);
 
-			result.emplace_back(strData, std::move(data));
+			result.emplace_back(std::string{ strData }, std::move(data));
 
 			if (errors.size() > 0)
 			{
-				result.emplace_back(strErrors, std::move(errors));
+				result.emplace_back(std::string{ strErrors }, std::move(errors));
 			}
 
 			return result;
@@ -1629,8 +1643,8 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 		std::promise<response::Value> promise;
 		response::Value document(response::Type::Map);
 
-		document.emplace_back(strData, response::Value());
-		document.emplace_back(strErrors, ex.getErrors());
+		document.emplace_back(std::string{ strData }, response::Value());
+		document.emplace_back(std::string{ strErrors }, ex.getErrors());
 		promise.set_value(std::move(document));
 
 		return promise.get_future();
@@ -1677,7 +1691,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 		throw schema_exception({ message.str() });
 	}
 
-	auto itr = _operations.find(strSubscription);
+	auto itr = _operations.find(std::string{ strSubscription });
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params), std::move(callback), std::move(fragments), itr->second);
 
 	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
@@ -1753,7 +1767,7 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCal
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
-		: _operations.find(strSubscription)->second;
+		: _operations.find(std::string{ strSubscription })->second;
 
 	auto itrListeners = _listeners.find(name);
 
@@ -1818,8 +1832,8 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCal
 			std::promise<response::Value> promise;
 			response::Value document(response::Type::Map);
 
-			document.emplace_back(strData, response::Value());
-			document.emplace_back(strErrors, ex.getErrors());
+			document.emplace_back(std::string{ strData }, response::Value());
+			document.emplace_back(std::string{ strErrors }, ex.getErrors());
 
 			result = promise.get_future();
 		}

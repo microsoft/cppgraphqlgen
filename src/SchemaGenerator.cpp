@@ -325,7 +325,7 @@ void Generator::validateSchema()
 
 	for (const auto& operation : _operationTypes)
 	{
-		if (operation.operation == "mutation")
+		if (operation.operation == service::strMutation)
 		{
 			mutationType = operation.type;
 			break;
@@ -336,7 +336,7 @@ void Generator::validateSchema()
 	{
 		auto interfaceFields = std::make_optional<std::unordered_set<std::string>>();
 		auto accessor = (mutationType == entry.type)
-			? std::make_optional<std::string_view>("apply")
+			? std::make_optional<std::string_view>(strApply)
 			: std::nullopt;
 
 		for (const auto& interfaceName : entry.interfaces)
@@ -1527,7 +1527,7 @@ class Schema;
 	{
 		for (const auto& operation : _operationTypes)
 		{
-			if (operation.operation == "query")
+			if (operation.operation == service::strQuery)
 			{
 				queryType = operation.type;
 				break;
@@ -1815,7 +1815,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName{ outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual std::future<)cpp" << getOutputCppType(outputField)
+	output << R"cpp(	virtual service::FieldResult<)cpp" << getOutputCppType(outputField)
 		<< R"cpp(> )cpp" << outputField.accessor << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
 	for (const auto& argument : outputField.arguments)
@@ -1937,7 +1937,7 @@ template <>
 
 template <>
 std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-<< R"cpp(>::convert(std::future<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+<< R"cpp(>::convert(service::FieldResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 << R"cpp(>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
@@ -2047,7 +2047,7 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 	{
 		for (const auto& operation : _operationTypes)
 		{
-			if (operation.operation == "query")
+			if (operation.operation == service::strQuery)
 			{
 				queryType = operation.type;
 				break;
@@ -2641,7 +2641,7 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 		if (!_isIntrospection && !_options.noStubs)
 		{
 			sourceFile << R"cpp(
-std::future<)cpp" << getOutputCppType(outputField)
+service::FieldResult<)cpp" << getOutputCppType(outputField)
 << R"cpp(> )cpp" << objectType.cppType
 << R"cpp(::)cpp" << outputField.accessor << fieldName
 << R"cpp((service::FieldParams&&)cpp";
@@ -2653,14 +2653,9 @@ std::future<)cpp" << getOutputCppType(outputField)
 
 			sourceFile << R"cpp() const
 {
-	std::promise<)cpp" << getOutputCppType(outputField)
-				<< R"cpp(> promise;
-
-	promise.set_exception(std::make_exception_ptr(std::runtime_error(R"ex()cpp" << objectType.cppType
+	throw std::runtime_error(R"ex()cpp" << objectType.cppType
 				<< R"cpp(::)cpp" << outputField.accessor << fieldName
-				<< R"cpp( is not implemented)ex")));
-
-	return promise.get_future();
+				<< R"cpp( is not implemented)ex");
 }
 )cpp";
 		}
@@ -2741,11 +2736,7 @@ std::future<response::Value> )cpp" << objectType.cppType
 std::future<response::Value> )cpp" << objectType.cppType
 << R"cpp(::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
-
-	promise.set_value(")cpp" << objectType.type << R"cpp(");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql()cpp" << objectType.type << R"cpp()gql" }, std::move(params));
 }
 )cpp";
 
@@ -2755,22 +2746,15 @@ std::future<response::Value> )cpp" << objectType.cppType
 std::future<response::Value> )cpp" << objectType.cppType
 << R"cpp(::resolve_schema(service::ResolverParams&& params)
 {
-	std::promise<std::shared_ptr<service::Object>> promise;
-
-	promise.set_value(std::static_pointer_cast<service::Object>(_schema));
-
-	return service::ModifiedResult<service::Object>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
 }
 
 std::future<response::Value> )cpp" << objectType.cppType
 << R"cpp(::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
-	std::promise<std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>> promise;
 
-	promise.set_value(_schema->LookupType(argName));
-
-	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(promise.get_future(), std::move(params));
+	return service::ModifiedResult<)cpp" << s_introspectionNamespace << R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 }
 )cpp";
 	}
@@ -3225,7 +3209,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	for (const auto& operation : _operationTypes)
 	{
-		if (operation.operation == "query")
+		if (operation.operation == service::strQuery)
 		{
 			queryType = operation.type;
 			break;

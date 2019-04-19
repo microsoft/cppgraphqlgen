@@ -116,7 +116,7 @@ Value::~Value()
 
 Value::Value(const char* value)
 	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData{ StringOrEnumData{ std::string{ value }, false } }))
+	, _data(std::make_unique<TypedData>(TypedData{ StringOrEnumData{ StringType{ value }, false } }))
 {
 }
 

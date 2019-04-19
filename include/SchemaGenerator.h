@@ -154,6 +154,9 @@ enum class OutputFieldType
 	Object,
 };
 
+constexpr std::string_view strGet = "get";
+constexpr std::string_view strApply = "apply";
+
 struct OutputField
 {
 	std::string type;
@@ -167,7 +170,7 @@ struct OutputField
 	std::optional<tao::graphqlpeg::position> position;
 	bool interfaceField = false;
 	bool inheritedField = false;
-	std::string_view accessor{ "get" };
+	std::string_view accessor{ strGet };
 };
 
 using OutputFieldList = std::vector<OutputField>;

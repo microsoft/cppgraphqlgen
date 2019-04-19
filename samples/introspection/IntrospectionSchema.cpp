@@ -43,7 +43,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::TypeKind>::convert(std::future<introspection::TypeKind>&& result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind&& value, const ResolverParams&)
@@ -96,7 +96,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::DirectiveLocation>::convert(std::future<introspection::DirectiveLocation>&& result, ResolverParams&& params)
+std::future<response::Value> ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation&& value, const ResolverParams&)
@@ -165,11 +165,9 @@ std::future<response::Value> Schema::resolveDirectives(service::ResolverParams&&
 
 std::future<response::Value> Schema::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__Schema)gql" };
 
-	promise.set_value("__Schema");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 Type::Type()
@@ -285,11 +283,9 @@ std::future<response::Value> Type::resolveOfType(service::ResolverParams&& param
 
 std::future<response::Value> Type::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__Type)gql" };
 
-	promise.set_value("__Type");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 Field::Field()
@@ -351,11 +347,9 @@ std::future<response::Value> Field::resolveDeprecationReason(service::ResolverPa
 
 std::future<response::Value> Field::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__Field)gql" };
 
-	promise.set_value("__Field");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 InputValue::InputValue()
@@ -401,11 +395,9 @@ std::future<response::Value> InputValue::resolveDefaultValue(service::ResolverPa
 
 std::future<response::Value> InputValue::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__InputValue)gql" };
 
-	promise.set_value("__InputValue");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 EnumValue::EnumValue()
@@ -451,11 +443,9 @@ std::future<response::Value> EnumValue::resolveDeprecationReason(service::Resolv
 
 std::future<response::Value> EnumValue::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__EnumValue)gql" };
 
-	promise.set_value("__EnumValue");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 Directive::Directive()
@@ -501,11 +491,9 @@ std::future<response::Value> Directive::resolveArgs(service::ResolverParams&& pa
 
 std::future<response::Value> Directive::resolve_typename(service::ResolverParams&& params)
 {
-	std::promise<response::StringType> promise;
+	response::StringType result{ R"gql(__Directive)gql" };
 
-	promise.set_value("__Directive");
-
-	return service::ModifiedResult<response::StringType>::convert(promise.get_future(), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 } /* namespace object */

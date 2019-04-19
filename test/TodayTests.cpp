@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "Today.h"
+#include "UnifiedToday.h"
 
 #include <graphqlservice/JSONResponse.h>
 
@@ -852,9 +852,9 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		ASSERT_EQ(size_t(1), errors.size());
 		const auto& error = errors[0];
 		ASSERT_TRUE(error.type() == response::Type::Map);
-		const auto& message = error[service::strMessage];
+		const auto& message = error[std::string{ service::strMessage }];
 		ASSERT_TRUE(message.type() == response::Type::String);
-		ASSERT_EQ(R"e(Field name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<const response::StringType&>());
+		ASSERT_EQ(R"e(Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<const response::StringType&>());
 	}
 	catch (const service::schema_exception& ex)
 	{
