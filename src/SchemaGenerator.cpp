@@ -3217,8 +3217,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	}
 
 	// Output a convenience header
-	const auto objectHeaderPath = (headerDir / _objectHeaderPath).string();
-	std::ofstream objectHeaderFile(objectHeaderPath, std::ios_base::trunc);
+	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
 
 	objectHeaderFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -3239,7 +3238,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	if (_options.verbose)
 	{
-		files.push_back(std::move(objectHeaderPath));
+		files.push_back({ _objectHeaderPath });
 	}
 	
 	for (const auto& objectType : _objectTypes)
@@ -3287,7 +3286,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include ")cpp" << objectHeaderPath << R"cpp("
+#include ")cpp" << fs::path(_objectHeaderPath).filename().string() << R"cpp("
 
 #include <graphqlservice/Introspection.h>
 

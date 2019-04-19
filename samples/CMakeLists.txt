@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.8.2)
 add_custom_command(
   OUTPUT
     unified/TodaySchema.cpp
+    unified/TodaySchema.h
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today"
   DEPENDS schemagen today/schema.today.graphql
   WORKING_DIRECTORY unified
@@ -20,7 +21,9 @@ list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND separate/)
 add_custom_command(
   OUTPUT
     separate/today_schema_files
-	${SEPARATE_SCHEMA_CPP}
+    separate/TodayObjects.h
+    separate/TodaySchema.h
+    ${SEPARATE_SCHEMA_CPP}
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
   DEPENDS schemagen today/schema.today.graphql
   WORKING_DIRECTORY separate
