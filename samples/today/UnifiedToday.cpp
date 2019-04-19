@@ -277,7 +277,7 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
-	return std::async(std::launch::deferred,
+	return std::async(std::launch::async,
 		[this, spThis, state](std::optional<int>&& firstWrapped, std::optional<response::Value>&& afterWrapped, std::optional<int>&& lastWrapped, std::optional<response::Value>&& beforeWrapped)
 	{
 		loadAppointments(state);
