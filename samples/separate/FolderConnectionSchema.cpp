@@ -51,9 +51,7 @@ std::future<response::Value> FolderConnection::resolveEdges(service::ResolverPar
 
 std::future<response::Value> FolderConnection::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(FolderConnection)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderConnection)gql" }, std::move(params));
 }
 
 } /* namespace object */

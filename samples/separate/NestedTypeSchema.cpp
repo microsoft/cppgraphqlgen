@@ -51,9 +51,7 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 
 std::future<response::Value> NestedType::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(NestedType)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
 }
 
 } /* namespace object */

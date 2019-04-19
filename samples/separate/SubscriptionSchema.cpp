@@ -52,9 +52,7 @@ std::future<response::Value> Subscription::resolveNodeChange(service::ResolverPa
 
 std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Subscription)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
 }
 
 } /* namespace object */

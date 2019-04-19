@@ -258,9 +258,7 @@ std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Query)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
 std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
@@ -312,9 +310,7 @@ std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverP
 
 std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(PageInfo)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
 }
 
 AppointmentEdge::AppointmentEdge()
@@ -354,9 +350,7 @@ std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverPar
 
 std::future<response::Value> AppointmentEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(AppointmentEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentEdge)gql" }, std::move(params));
 }
 
 AppointmentConnection::AppointmentConnection()
@@ -396,9 +390,7 @@ std::future<response::Value> AppointmentConnection::resolveEdges(service::Resolv
 
 std::future<response::Value> AppointmentConnection::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(AppointmentConnection)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentConnection)gql" }, std::move(params));
 }
 
 TaskEdge::TaskEdge()
@@ -438,9 +430,7 @@ std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& p
 
 std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(TaskEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskEdge)gql" }, std::move(params));
 }
 
 TaskConnection::TaskConnection()
@@ -480,9 +470,7 @@ std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParam
 
 std::future<response::Value> TaskConnection::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(TaskConnection)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskConnection)gql" }, std::move(params));
 }
 
 FolderEdge::FolderEdge()
@@ -522,9 +510,7 @@ std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&&
 
 std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(FolderEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderEdge)gql" }, std::move(params));
 }
 
 FolderConnection::FolderConnection()
@@ -564,9 +550,7 @@ std::future<response::Value> FolderConnection::resolveEdges(service::ResolverPar
 
 std::future<response::Value> FolderConnection::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(FolderConnection)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderConnection)gql" }, std::move(params));
 }
 
 CompleteTaskPayload::CompleteTaskPayload()
@@ -606,9 +590,7 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 
 std::future<response::Value> CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(CompleteTaskPayload)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
 }
 
 Mutation::Mutation()
@@ -636,9 +618,7 @@ std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverPara
 
 std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Mutation)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }
 
 Subscription::Subscription()
@@ -679,9 +659,7 @@ std::future<response::Value> Subscription::resolveNodeChange(service::ResolverPa
 
 std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Subscription)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
 }
 
 Appointment::Appointment()
@@ -748,9 +726,7 @@ std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&&
 
 std::future<response::Value> Appointment::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Appointment)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Appointment)gql" }, std::move(params));
 }
 
 Task::Task()
@@ -804,9 +780,7 @@ std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& p
 
 std::future<response::Value> Task::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Task)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Task)gql" }, std::move(params));
 }
 
 Folder::Folder()
@@ -860,9 +834,7 @@ std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&
 
 std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Folder)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Folder)gql" }, std::move(params));
 }
 
 NestedType::NestedType()
@@ -902,9 +874,7 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 
 std::future<response::Value> NestedType::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(NestedType)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
 }
 
 } /* namespace object */

@@ -78,9 +78,7 @@ std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&&
 
 std::future<response::Value> Appointment::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Appointment)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Appointment)gql" }, std::move(params));
 }
 
 } /* namespace object */

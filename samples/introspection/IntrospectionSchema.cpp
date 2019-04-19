@@ -165,9 +165,7 @@ std::future<response::Value> Schema::resolveDirectives(service::ResolverParams&&
 
 std::future<response::Value> Schema::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__Schema)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Schema)gql" }, std::move(params));
 }
 
 Type::Type()
@@ -283,9 +281,7 @@ std::future<response::Value> Type::resolveOfType(service::ResolverParams&& param
 
 std::future<response::Value> Type::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__Type)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Type)gql" }, std::move(params));
 }
 
 Field::Field()
@@ -347,9 +343,7 @@ std::future<response::Value> Field::resolveDeprecationReason(service::ResolverPa
 
 std::future<response::Value> Field::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__Field)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Field)gql" }, std::move(params));
 }
 
 InputValue::InputValue()
@@ -395,9 +389,7 @@ std::future<response::Value> InputValue::resolveDefaultValue(service::ResolverPa
 
 std::future<response::Value> InputValue::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__InputValue)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__InputValue)gql" }, std::move(params));
 }
 
 EnumValue::EnumValue()
@@ -443,9 +435,7 @@ std::future<response::Value> EnumValue::resolveDeprecationReason(service::Resolv
 
 std::future<response::Value> EnumValue::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__EnumValue)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__EnumValue)gql" }, std::move(params));
 }
 
 Directive::Directive()
@@ -491,9 +481,7 @@ std::future<response::Value> Directive::resolveArgs(service::ResolverParams&& pa
 
 std::future<response::Value> Directive::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(__Directive)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Directive)gql" }, std::move(params));
 }
 
 } /* namespace object */

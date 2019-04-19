@@ -51,9 +51,7 @@ std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverP
 
 std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(PageInfo)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
 }
 
 } /* namespace object */

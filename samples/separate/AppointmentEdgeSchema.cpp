@@ -51,9 +51,7 @@ std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverPar
 
 std::future<response::Value> AppointmentEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(AppointmentEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentEdge)gql" }, std::move(params));
 }
 
 } /* namespace object */

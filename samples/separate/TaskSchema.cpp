@@ -65,9 +65,7 @@ std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& p
 
 std::future<response::Value> Task::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Task)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Task)gql" }, std::move(params));
 }
 
 } /* namespace object */

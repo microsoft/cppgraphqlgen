@@ -65,9 +65,7 @@ std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&
 
 std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Folder)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Folder)gql" }, std::move(params));
 }
 
 } /* namespace object */

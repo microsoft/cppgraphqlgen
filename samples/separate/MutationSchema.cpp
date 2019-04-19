@@ -39,9 +39,7 @@ std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverPara
 
 std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(Mutation)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }
 
 } /* namespace object */

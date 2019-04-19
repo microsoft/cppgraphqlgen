@@ -51,9 +51,7 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 
 std::future<response::Value> CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(CompleteTaskPayload)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
 }
 
 } /* namespace object */

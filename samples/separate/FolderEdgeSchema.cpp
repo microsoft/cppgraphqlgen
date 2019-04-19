@@ -51,9 +51,7 @@ std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&&
 
 std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(FolderEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderEdge)gql" }, std::move(params));
 }
 
 } /* namespace object */

@@ -51,9 +51,7 @@ std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& p
 
 std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(TaskEdge)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskEdge)gql" }, std::move(params));
 }
 
 } /* namespace object */

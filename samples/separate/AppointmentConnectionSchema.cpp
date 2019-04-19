@@ -51,9 +51,7 @@ std::future<response::Value> AppointmentConnection::resolveEdges(service::Resolv
 
 std::future<response::Value> AppointmentConnection::resolve_typename(service::ResolverParams&& params)
 {
-	response::StringType result{ R"gql(AppointmentConnection)gql" };
-
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentConnection)gql" }, std::move(params));
 }
 
 } /* namespace object */
