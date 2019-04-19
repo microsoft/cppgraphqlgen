@@ -45,21 +45,21 @@ I added a vcpkg port for this project, if you have vcpkg you can also install ev
 
 ## Software dependencies
 
-For now, I'm maintaining compatibility with C++11 for maximum portability. I picked a few projects as dependencies:
+As of version 3.0, this project depends on C++17. I also picked a few other projects as dependencies:
 
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. While the PEGTL 3.0 release is still pending I've added this as a sub-module, so you should not install this separately.
+- Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
 - JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. Specifically, you should use the [2.x branch](https://github.com/taocpp/PEGTL/tree/2.x) of PEGTL instead of master since it's compatible with C++11.
 - Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
 
-The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all 3
+The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all of the
 dependencies installed on your system along with CMake to build this project.
 
 ### Using vcpkg
 
-Vcpkg can install the dependencies from source on either platform, and that's what I'm using on
-Windows. Use `vcpkg install rapidjson pegtl gtest` to get all of them.
-
-This approach works well on Linux. I've done all of my testing for Linux with WSL using vcpkg.
+Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows and Linux.
+PEGTL is currently included as a sub-module of this repo, so you can just use `vcpkg install boost-program-options rapidjson gtest`
+to get all of the others.
 
 ### Windows with NuGet
 

@@ -8,9 +8,7 @@
 #include <array>
 #include <cstdio>
 
-namespace facebook {
-namespace graphql {
-namespace schema {
+namespace facebook::graphql::schema {
 
 // These are the set of built-in types in GraphQL.
 enum class BuiltinType
@@ -41,6 +39,9 @@ enum class SchemaType
 
 using SchemaTypeMap = std::unordered_map<std::string, SchemaType>;
 
+// Keep track of the positions of each type declaration in the file.
+using PositionMap = std::unordered_map<std::string, tao::graphqlpeg::position>;
+
 // For all of the named types we track, we want to keep them in order in a vector but
 // be able to lookup their offset quickly by name.
 using TypeNameMap = std::unordered_map<std::string, size_t>;
@@ -65,13 +66,16 @@ using ScalarTypeList = std::vector<ScalarType>;
 struct EnumValueType
 {
 	std::string value;
+	std::string cppValue;
 	std::string description;
-	std::unique_ptr<std::string> deprecationReason;
+	std::optional<std::string> deprecationReason;
+	std::optional<tao::graphqlpeg::position> position;
 };
 
 struct EnumType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<EnumValueType> values;
 	std::string description;
 };
@@ -93,11 +97,13 @@ struct InputField
 {
 	std::string type;
 	std::string name;
+	std::string cppName;
 	std::string defaultValueString;
 	response::Value defaultValue;
 	InputFieldType fieldType = InputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
+	std::optional<tao::graphqlpeg::position> position;
 };
 
 using InputFieldList = std::vector<InputField>;
@@ -105,6 +111,7 @@ using InputFieldList = std::vector<InputField>;
 struct InputType
 {
 	std::string type;
+	std::string cppType;
 	InputFieldList fields;
 	std::string description;
 };
@@ -126,6 +133,7 @@ using DirectiveList = std::vector<Directive>;
 struct UnionType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<std::string> options;
 	std::string description;
 };
@@ -146,15 +154,23 @@ enum class OutputFieldType
 	Object,
 };
 
+constexpr std::string_view strGet = "get";
+constexpr std::string_view strApply = "apply";
+
 struct OutputField
 {
 	std::string type;
 	std::string name;
+	std::string cppName;
 	InputFieldList arguments;
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
 	std::string description;
-	std::unique_ptr<std::string> deprecationReason;
+	std::optional<std::string> deprecationReason;
+	std::optional<tao::graphqlpeg::position> position;
+	bool interfaceField = false;
+	bool inheritedField = false;
+	std::string_view accessor{ strGet };
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -166,6 +182,7 @@ using OutputFieldList = std::vector<OutputField>;
 struct InterfaceType
 {
 	std::string type;
+	std::string cppType;
 	OutputFieldList fields;
 	std::string description;
 };
@@ -177,6 +194,7 @@ using InterfaceTypeList = std::vector<InterfaceType>;
 struct ObjectType
 {
 	std::string type;
+	std::string cppType;
 	std::vector<std::string> interfaces;
 	OutputFieldList fields;
 	std::string description;
@@ -188,19 +206,56 @@ using ObjectTypeList = std::vector<ObjectType>;
 struct OperationType
 {
 	std::string type;
+	std::string cppType;
 	std::string operation;
 };
 
 using OperationTypeList = std::vector<OperationType>;
 
+struct GeneratorSchema
+{
+	const std::string schemaFilename;
+	const std::string filenamePrefix;
+	const std::string schemaNamespace;
+};
+
+struct GeneratorPaths
+{
+	const std::string headerPath;
+	const std::string sourcePath;
+};
+
+struct GeneratorOptions
+{
+	const std::optional<GeneratorSchema> customSchema;
+	const std::optional<GeneratorPaths> paths;
+	const bool verbose = false;
+	const bool separateFiles = false;
+	const bool noStubs = false;
+};
+
+// RAII object to help with emitting matching namespace begin and end statements
+class NamespaceScope
+{
+public:
+	explicit NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
+	NamespaceScope(NamespaceScope&& other) noexcept;
+	~NamespaceScope() noexcept;
+
+	bool enter() noexcept;
+	bool exit() noexcept;
+
+private:
+	bool _inside = false;
+	std::ostream& _outputFile;
+	std::string_view _cppNamespace;
+};
+
 class Generator
 {
 public:
-	// Initialize the generator with the introspection schema.
-	explicit Generator();
-
-	// Initialize the generator with the GraphQL schema and output parameters.
-	explicit Generator(std::string&& schemaFileName, std::string&& filenamePrefix, std::string&& schemaNamespace);
+	// Initialize the generator with the introspection schema or a custom GraphQL schema.
+	explicit Generator(GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
@@ -223,6 +278,7 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
+	static const std::string& getSafeCppName(const std::string& type) noexcept;
 	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 
@@ -267,20 +323,23 @@ private:
 		response::Value _value;
 	};
 
-	bool validateSchema();
-	bool fixupOutputFieldList(OutputFieldList& fields);
-	bool fixupInputFieldList(InputFieldList& fields);
+	void validateSchema();
+	void fixupOutputFieldList(OutputFieldList& fields, const std::optional<std::unordered_set<std::string>>& interfaceFields, const std::optional<std::string_view>& accessor);
+	void fixupInputFieldList(InputFieldList& fields);
 
 	const std::string& getCppType(const std::string& type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
-	std::string getOutputCppType(const OutputField& field, bool interfaceField) const noexcept;
+	std::string getOutputCppType(const OutputField& field) const noexcept;
 
 	bool outputHeader() const noexcept;
+	void outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
-	std::string getFieldDeclaration(const OutputField& outputField, bool interfaceField, bool inheritedField) const noexcept;
+	std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
+	void outputObjectImplementation(std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
 	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
@@ -288,16 +347,25 @@ private:
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 	std::string getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept;
 
+	std::vector<std::string> outputSeparateFiles() const noexcept;
+
 	static const std::string s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
 	static const CppTypeMap s_builtinCppTypes;
 	static const std::string s_scalarCppType;
+	static const std::string s_currentDirectory;
 
+	const GeneratorOptions _options;
 	const bool _isIntrospection;
-	const std::string _filenamePrefix;
-	const std::string _schemaNamespace;
+	std::string_view _schemaNamespace;
+	const std::string _headerDir;
+	const std::string _sourceDir;
+	const std::string _headerPath;
+	const std::string _objectHeaderPath;
+	const std::string _sourcePath;
 
 	SchemaTypeMap _schemaTypes;
+	PositionMap _typePositions;
 	TypeNameMap _scalarNames;
 	ScalarTypeList _scalarTypes;
 	TypeNameMap _enumNames;
@@ -311,9 +379,8 @@ private:
 	TypeNameMap _objectNames;
 	ObjectTypeList _objectTypes;
 	DirectiveList _directives;
+	PositionMap _directivePositions;
 	OperationTypeList _operationTypes;
 };
 
-} /* namespace schema */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::schema */

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "Today.h"
+#include "SeparateToday.h"
 
 #include <graphqlservice/JSONResponse.h>
 
@@ -13,9 +13,9 @@ using namespace facebook::graphql;
 
 int main(int argc, char** argv)
 {
-	std::vector<uint8_t> binAppointmentId;
-	std::vector<uint8_t> binTaskId;
-	std::vector<uint8_t> binFolderId;
+	response::IdType binAppointmentId;
+	response::IdType binTaskId;
+	response::IdType binFolderId;
 
 	std::string fakeAppointmentId("fakeAppointmentId");
 	binAppointmentId.resize(fakeAppointmentId.size());
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 	try
 	{
 		const peg::ast_node* ast = nullptr;
-		peg::ast<std::string> ast_input;
+		peg::ast<std::vector<char>> ast_input;
 		peg::ast<std::unique_ptr<peg::file_input<>>> ast_file;
 
 		if (argc > 1)

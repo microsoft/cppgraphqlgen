@@ -1,222 +1,50 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5.1)
-project(cppgraphqlgen VERSION 2.1.0)
+cmake_minimum_required(VERSION 3.8.2)
+project(cppgraphqlgen VERSION 3.0.0)
 
-if(WIN32)
+set(CMAKE_CXX_STANDARD 17)
+
+set(GRAPHQL_INSTALL_INCLUDE_DIR include CACHE PATH "Header file install directory")
+set(GRAPHQL_INSTALL_TOOLS_DIR bin CACHE PATH "schemagen install directory")
+set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install directory")
+
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
   # Let CMake figure out the exports for the SHARED library (DLL) on Windows.
-  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
-find_package(Threads MODULE REQUIRED)
-
-find_package(pegtl CONFIG REQUIRED)
-
-# Set the minimum C++ standard required for compiling,
-# but allow for user to override on the command line using:
-#     cmake -DCMAKE_CXX_STANDARD=[11|14|17|...] -DCMAKE_CXX_EXTENSIONS=[ON|OFF]
-function(cppgraphqlgen_target_set_cxx_standard target)
+function(add_bigobj_flag target)
   if(MSVC)
     # MSVC requires the /bigobj flag if the number of sections gets too big.
     target_compile_options(${target} PRIVATE /bigobj)
   endif()
-
-  if (CMAKE_VERSION VERSION_LESS "3.8")
-    # The cxx_std_11 abstract compile feature
-    # is available only starting from CMake 3.8.
-    # We assume the availability of lambdas
-    # indicates a C++11-compatible compiler mode.
-    target_compile_features(${target} PUBLIC cxx_lambdas)
-  else()
-    target_compile_features(${target} PUBLIC cxx_std_11)
-  endif()
 endfunction()
 
-add_executable(schemagen
-  GraphQLTree.cpp
-  GraphQLResponse.cpp
-  SchemaGenerator.cpp)
-target_link_libraries(schemagen PRIVATE taocpp::pegtl)
-target_include_directories(schemagen PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
-cppgraphqlgen_target_set_cxx_standard(schemagen)
+find_package(Threads MODULE REQUIRED)
 
-add_custom_command(
-  OUTPUT
-    IntrospectionSchema.cpp
-    include/graphqlservice/IntrospectionSchema.h
-  COMMAND schemagen
-  COMMAND ${CMAKE_COMMAND} -E rename IntrospectionSchema.h include/graphqlservice/IntrospectionSchema.h
-  DEPENDS schemagen
-  COMMENT "Generating IntrospectionSchema files"
-)
-
-add_library(graphqlservice
-  GraphQLTree.cpp
-  GraphQLResponse.cpp
-  GraphQLService.cpp
-  Introspection.cpp
-  IntrospectionSchema.cpp)
-target_link_libraries(graphqlservice PUBLIC
-  taocpp::pegtl
-  Threads::Threads)
-target_include_directories(graphqlservice PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-cppgraphqlgen_target_set_cxx_standard(graphqlservice)
-
-# RapidJSON is the only option for JSON serialization used in this project, but if you want
-# to use another JSON library you can implement an alternate version of the functions in
-# JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
-# You will also need to define how to build the graphqljson library target with your
-# implementation, and you should set BUILD_GRAPHQLJSON so that the test dependencies know
-# about your version of graphqljson.
-option(USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
-
-if(USE_RAPIDJSON)
-  find_package(RapidJSON CONFIG REQUIRED)
-
-  set(BUILD_GRAPHQLJSON ON)
-  add_library(graphqljson
-    JSONResponse.cpp)
-  target_include_directories(graphqljson SYSTEM PRIVATE
-    ${RAPIDJSON_INCLUDE_DIRS})
+find_package(pegtl 3.0.0 QUIET CONFIG)
+if(NOT pegtl_FOUND)
+  # If a compatible version of PEGTL is not already installed, build and install it from the submodule directory.
+  set(PEGTL_BUILD_TESTS OFF CACHE BOOL "Disable PEGTL tests")
+  set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "Disable PEGTL examples")
+  set(PEGTL_INSTALL_INCLUDE_DIR ${GRAPHQL_INSTALL_INCLUDE_DIR} CACHE STRING "Override PEGTL include install directory")
+  set(PEGTL_INSTALL_CMAKE_DIR ${GRAPHQL_INSTALL_CMAKE_DIR}/pegtl CACHE STRING "Override PEGTL cmake install directory")
+  add_subdirectory(PEGTL)
 endif()
 
-if(BUILD_GRAPHQLJSON)
-  option(BUILD_TESTS "Build the tests and sample schema library." ON)
+add_subdirectory(src)
 
-  target_link_libraries(graphqljson PUBLIC
-    graphqlservice)
-  cppgraphqlgen_target_set_cxx_standard(graphqljson)
+option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
 
-  install(TARGETS
-      graphqljson
-    EXPORT cppgraphqlgen-targets
-    RUNTIME DESTINATION bin
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib)
-else()
-  set(BUILD_TESTS OFF)
-endif()
+if(GRAPHQL_BUILD_TESTS OR GRAPHQL_UPDATE_SAMPLES)
+  add_subdirectory(samples)
 
-option(UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests and the sample library." ON)
-
-if(BUILD_TESTS OR UPDATE_SAMPLES)
-  add_custom_command(
-    OUTPUT
-      TodaySchema.cpp
-      include/TodaySchema.h
-    COMMAND schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql Today today
-    COMMAND ${CMAKE_COMMAND} -E rename TodaySchema.h include/TodaySchema.h
-    DEPENDS schemagen ${CMAKE_CURRENT_SOURCE_DIR}/samples/schema.today.graphql
-    COMMENT "Generating mock TodaySchema files"
-  )
-
-  # force the generation of samples on the default build target
-  add_custom_target(update_samples ALL
-    DEPENDS TodaySchema.cpp
-  )
-
-  add_library(todaygraphql
-    Today.cpp
-    TodaySchema.cpp)
-  target_link_libraries(todaygraphql PUBLIC
-    graphqlservice)
-  target_include_directories(todaygraphql PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include)
-  cppgraphqlgen_target_set_cxx_standard(todaygraphql)
-
-  if(BUILD_TESTS)
-    add_executable(test_today
-      test_today.cpp)
-    target_link_libraries(test_today PRIVATE
-      todaygraphql
-      graphqljson)
-    cppgraphqlgen_target_set_cxx_standard(test_today)
-
+  if(GRAPHQL_BUILD_TESTS)
     include(CTest)
-    find_package(GTest MODULE REQUIRED)
-
-    add_executable(tests
-      tests.cpp)
-    target_link_libraries(tests PRIVATE
-      todaygraphql
-      graphqljson
-      GTest::GTest
-      GTest::Main)
-    cppgraphqlgen_target_set_cxx_standard(tests)
-
-    add_test(NAME TodayServiceCase
-      COMMAND tests --gtest_filter=TodayServiceCase.*
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
-    add_test(NAME ArgumentsCase
-      COMMAND tests --gtest_filter=ArgumentsCase.*
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
-    add_test(NAME PegtlCase
-      COMMAND tests --gtest_filter=PegtlCase.*
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
-    add_test(NAME ResponseCase
-      COMMAND tests --gtest_filter=ResponseCase.*
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>)
-  endif()
-
-  if(UPDATE_SAMPLES)
-    install(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_CURRENT_BINARY_DIR}/IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/include/TodaySchema.h
-      ${CMAKE_CURRENT_BINARY_DIR}/TodaySchema.cpp
-      DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/samples)
+    add_subdirectory(test)
   endif()
 endif()
-
-install(TARGETS
-    graphqlservice
-  EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib)
-
-set(CMAKE_INSTALL_TOOLSDIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME}
-  CACHE PATH "Install schemagen to this directory.")
-
-install(TARGETS schemagen
-  EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION ${CMAKE_INSTALL_TOOLSDIR}
-  CONFIGURATIONS Release)
-
-install(FILES
-  include/graphqlservice/GraphQLTree.h
-  include/graphqlservice/GraphQLResponse.h
-  include/graphqlservice/GraphQLService.h
-  include/graphqlservice/JSONResponse.h
-  include/graphqlservice/Introspection.h
-  ${CMAKE_CURRENT_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-  DESTINATION include/graphqlservice
-  CONFIGURATIONS Release)
-
-set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME}
-  CACHE PATH "Install the CMake config files to this directory.")
-
-# Enable version checks in find_package
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(cmake/${PROJECT_NAME}-config-version.cmake COMPATIBILITY SameMajorVersion)
-
-install(FILES
-    cmake/${PROJECT_NAME}-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
-  DESTINATION ${GRAPHQL_INSTALL_CMAKE_DIR}/${PROJECT_NAME}
-)
-
-install(FILES cmake/${PROJECT_NAME}-config.cmake
-  DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
-)
-
-install(EXPORT cppgraphqlgen-targets
-  NAMESPACE cppgraphqlgen::
-  DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
-)

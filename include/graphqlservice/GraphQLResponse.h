@@ -8,9 +8,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace facebook {
-namespace graphql {
-namespace response {
+namespace facebook::graphql::response {
 
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
@@ -37,6 +35,9 @@ using BooleanType = bool;
 using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
+using IdType = std::vector<uint8_t>;
+
+struct TypedData;
 
 // Represent a discriminated union of GraphQL response value types.
 struct Value
@@ -84,44 +85,20 @@ struct Value
 	const Value& operator[](size_t index) const;
 
 	// Specialized for all single-value Types.
-	template <typename _Value>
-	void set(_Value&& value);
+	template <typename ValueType>
+	void set(ValueType&& value);
 
 	// Specialized for all Types.
-	template <typename _Value>
-	_Value get() const;
+	template <typename ValueType>
+	ValueType get() const;
 
 	// Specialized for all Types which allocate extra memory.
-	template <typename _Value>
-	_Value release();
+	template <typename ValueType>
+	ValueType release();
 
 private:
 	const Type _type;
-
-	// Type::Map
-	std::unique_ptr<std::unordered_map<std::string, size_t>> _members;
-	std::unique_ptr<MapType> _map;
-
-	// Type::List
-	std::unique_ptr<ListType> _list;
-
-	// Type::String or Type::EnumValue
-	std::unique_ptr<StringType> _string;
-	bool _from_json = false;
-
-	// Type::Boolean
-	BooleanType _boolean = false;
-
-	// Type::Int
-	IntType _int = 0;
-
-	// Type::Float
-	FloatType _float = 0.0;
-
-	// Type::Scalar
-	std::unique_ptr<ScalarType> _scalar;
+	std::unique_ptr<TypedData> _data;
 };
 
-} /* namespace response */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::response */

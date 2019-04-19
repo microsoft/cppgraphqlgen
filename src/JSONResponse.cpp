@@ -4,8 +4,6 @@
 #include <graphqlservice/JSONResponse.h>
 
 #define RAPIDJSON_NAMESPACE facebook::graphql::rapidjson
-#define RAPIDJSON_NAMESPACE_BEGIN namespace facebook { namespace graphql { namespace rapidjson {
-#define RAPIDJSON_NAMESPACE_END } /* namespace rapidjson */ } /* namespace graphql */ } /* namespace facebook */
 #include <rapidjson/rapidjson.h>
 
 #include <rapidjson/stringbuffer.h>
@@ -16,9 +14,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace facebook {
-namespace graphql {
-namespace response {
+namespace facebook::graphql::response {
 
 void writeResponse(rapidjson::Writer<rapidjson::StringBuffer>& writer, Value&& response)
 {
@@ -254,6 +250,4 @@ Value parseJSON(const std::string& json)
 	return handler.getResponse();
 }
 
-} /* namespace response */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::response */

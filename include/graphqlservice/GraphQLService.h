@@ -7,6 +7,9 @@
 #include <graphqlservice/GraphQLResponse.h>
 
 #include <memory>
+#include <optional>
+#include <variant>
+#include <string_view>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -20,9 +23,7 @@
 #include <map>
 #include <set>
 
-namespace facebook {
-namespace graphql {
-namespace service {
+namespace facebook::graphql::service {
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
@@ -47,12 +48,12 @@ struct RequestState : std::enable_shared_from_this<RequestState>
 {
 };
 
-constexpr char strData[] = "data";
-constexpr char strErrors[] = "errors";
-constexpr char strMessage[] = "message";
-constexpr char strQuery[] = "query";
-constexpr char strMutation[] = "mutation";
-constexpr char strSubscription[] = "subscription";
+constexpr std::string_view strData = "data";
+constexpr std::string_view strErrors = "errors";
+constexpr std::string_view strMessage = "message";
+constexpr std::string_view strQuery = "query";
+constexpr std::string_view strMutation = "mutation";
+constexpr std::string_view strSubscription = "subscription";
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
 struct SelectionSetParams
@@ -78,6 +79,32 @@ struct FieldParams : SelectionSetParams
 	// Each field owns its own field-specific directives. Once the accessor returns it will be destroyed,
 	// but you can move it into another instance of response::Value to keep it alive longer.
 	response::Value fieldDirectives;
+};
+
+// Field accessors may return either a result of T or a std::future<T>, so at runtime the implementer
+// may choose to return by value or defer/parallelize expensive operations by returning an async future.
+template <typename T>
+class FieldResult
+{
+public:
+	template <typename U>
+	FieldResult(U&& value)
+		: _value{ std::forward<U>(value) }
+	{
+	}
+
+	T get()
+	{
+		if (std::holds_alternative<std::future<T>>(_value))
+		{
+			return std::get<std::future<T>>(std::move(_value)).get();
+		}
+
+		return std::get<T>(std::move(_value));
+	}
+
+private:
+	std::variant<T, std::future<T>> _value;
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
@@ -180,20 +207,19 @@ enum class TypeModifier
 // If the argument is not optional, use require and let it throw a schema_exception when the
 // argument is missing or not the correct type. If it's nullable, use find and check the second
 // element in the pair to see if it was found or if you just got the default value for that type.
-template <typename _Type>
+template <typename Type>
 struct ModifiedArgument
 {
 	// Peel off modifiers until we get to the underlying type.
-	template <typename U, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ArgumentTraits
 	{
 		// Peel off modifiers until we get to the underlying type.
-		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-			std::unique_ptr<typename ArgumentTraits<U, _Other...>::type>,
-			typename std::conditional<TypeModifier::List == _Modifier,
-				std::vector<typename ArgumentTraits<U, _Other...>::type>,
-				U>::type
-		>::type;
+		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
+			std::optional<typename ArgumentTraits<U, Other...>::type>,
+			typename std::conditional_t<TypeModifier::List == Modifier,
+				std::vector<typename ArgumentTraits<U, Other...>::type>,
+				U>>;
 	};
 
 	template <typename U>
@@ -203,10 +229,10 @@ struct ModifiedArgument
 	};
 
 	// Convert a single value to the specified type.
-	static _Type convert(const response::Value& value);
+	static Type convert(const response::Value& value);
 
 	// Call convert on this type without any modifiers.
-	static _Type require(const std::string& name, const response::Value& arguments)
+	static Type require(const std::string& name, const response::Value& arguments)
 	{
 		try
 		{
@@ -235,7 +261,7 @@ struct ModifiedArgument
 	}
 
 	// Wrap require in a try/catch block.
-	static std::pair<_Type, bool> find(const std::string& name, const response::Value& arguments) noexcept
+	static std::pair<Type, bool> find(const std::string& name, const response::Value& arguments) noexcept
 	{
 		try
 		{
@@ -243,13 +269,13 @@ struct ModifiedArgument
 		}
 		catch (const std::exception&)
 		{
-			return { _Type{}, false };
+			return { Type{}, false };
 		}
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other >
-	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0, _Type>::type require(
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other >
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		// Just call through to the non-template method without the modifiers.
@@ -257,8 +283,8 @@ struct ModifiedArgument
 	}
 
 	// Peel off nullable modifiers.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::Nullable == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		const auto& valueItr = arguments.find(name);
@@ -266,21 +292,21 @@ struct ModifiedArgument
 		if (valueItr == arguments.get<const response::MapType&>().cend()
 			|| valueItr->second.type() == response::Type::Null)
 		{
-			return nullptr;
+			return {};
 		}
 
-		auto result = require<_Other...>(name, arguments);
+		auto result = require<Other...>(name, arguments);
 
-		return std::unique_ptr<decltype(result)> { new decltype(result)(std::move(result)) };
+		return std::make_optional<decltype(result)>(std::move(result));
 	}
 
 	// Peel off list modifiers.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::List == _Modifier, typename ArgumentTraits<_Type, _Modifier, _Other...>::type>::type require(
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::List == Modifier, typename ArgumentTraits<Type, Modifier, Other...>::type> require(
 		const std::string& name, const response::Value& arguments)
 	{
 		const auto& values = arguments[name];
-		typename ArgumentTraits<_Type, _Modifier, _Other...>::type result(values.size());
+		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
 		const auto& elements = values.get<const response::ListType&>();
 
 		std::transform(elements.cbegin(), elements.cend(), result.begin(),
@@ -288,26 +314,26 @@ struct ModifiedArgument
 			{
 				response::Value single(response::Type::Map);
 
-				single.emplace_back(std::string(name), response::Value(element));
+				single.emplace_back(std::string{ name }, response::Value(element));
 
-				return require<_Other...>(name, single);
+				return require<Other...>(name, single);
 			});
 
 		return result;
 	}
 
 	// Wrap require with modifiers in a try/catch block.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static std::pair<typename ArgumentTraits<_Type, _Modifier, _Other...>::type, bool> find(
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool> find(
 		const std::string& name, const response::Value& arguments) noexcept
 	{
 		try
 		{
-			return { require<_Modifier, _Other...>(name, arguments), true };
+			return { require<Modifier, Other...>(name, arguments), true };
 		}
 		catch (const std::exception&)
 		{
-			return { typename ArgumentTraits<_Type, _Modifier, _Other...>::type{}, false };
+			return { typename ArgumentTraits<Type, Modifier, Other...>::type{}, false };
 		}
 	}
 };
@@ -319,7 +345,7 @@ using IntArgument = ModifiedArgument<response::IntType>;
 using FloatArgument = ModifiedArgument<response::FloatType>;
 using StringArgument = ModifiedArgument<response::StringType>;
 using BooleanArgument = ModifiedArgument<response::BooleanType>;
-using IdArgument = ModifiedArgument<std::vector<uint8_t>>;
+using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
 // Each type should handle fragments with type conditions matching its own
@@ -356,52 +382,51 @@ private:
 
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
-template <typename _Type>
+template <typename Type>
 struct ModifiedResult
 {
 	// Peel off modifiers until we get to the underlying type.
-	template <typename U, TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
+	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ResultTraits
 	{
-		using type = typename std::conditional<TypeModifier::Nullable == _Modifier,
-			typename std::conditional<std::is_base_of<Object, U>::value
-				&& std::is_same<std::shared_ptr<U>, typename ResultTraits<U, _Other...>::type>::value,
+		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
+			typename std::conditional_t<std::is_base_of_v<Object, U>
+				&& std::is_same_v<std::shared_ptr<U>, typename ResultTraits<U, Other...>::type>,
 				std::shared_ptr<U>,
-				std::unique_ptr<typename ResultTraits<U, _Other...>::type>
-			>::type,
-			typename std::conditional<TypeModifier::List == _Modifier,
-				std::vector<typename ResultTraits<U, _Other...>::type>,
-				typename std::conditional<std::is_base_of<Object, U>::value,
+				std::optional<typename ResultTraits<U, Other...>::type>>,
+			typename std::conditional_t<TypeModifier::List == Modifier,
+				std::vector<typename ResultTraits<U, Other...>::type>,
+				typename std::conditional_t<std::is_base_of_v<Object, U>,
 					std::shared_ptr<U>,
-					U>::type
-			>::type
-		>::type;
+					U>>>;
+
+		using future_type = FieldResult<type> &&;
 	};
 
 	template <typename U>
 	struct ResultTraits<U, TypeModifier::None>
 	{
-		using type = typename std::conditional<std::is_base_of<Object, U>::value,
+		using type = typename std::conditional_t<std::is_base_of_v<Object, U>,
 			std::shared_ptr<U>,
-			U>::type;
+			U>;
 
-		using future_type = typename std::conditional<std::is_base_of<Object, _Type>::value,
-			std::future<std::shared_ptr<Object>>,
-			std::future<type>&&>::type;
+		using future_type = typename std::conditional_t<std::is_base_of_v<Object, Type>,
+			FieldResult<std::shared_ptr<Object>>,
+			FieldResult<type>> &&;
 	};
 
 	// Convert a single value of the specified type to JSON.
-	static std::future<response::Value> convert(typename ResultTraits<_Type>::future_type result, ResolverParams&& params);
+	static std::future<response::Value> convert(typename ResultTraits<Type>::future_type result, ResolverParams&& params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && !std::is_same<Object, _Type>::value && std::is_base_of<Object, _Type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type>::type> && result, ResolverParams && params)
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
+		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type>::type> && result, ResolverParams && params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
-		static_assert(std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type>::type>::value, "this is the derived object type");
+		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>, "this is the derived object type");
 		auto resultFuture = std::async(std::launch::deferred,
-			[](std::future<std::shared_ptr<_Type>> && objectType)
+			[](auto && objectType)
 			{
 				return std::static_pointer_cast<Object>(objectType.get());
 			}, std::move(result));
@@ -410,21 +435,21 @@ struct ModifiedResult
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
-	template <TypeModifier _Modifier = TypeModifier::None, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::None == _Modifier && sizeof...(_Other) == 0 && (std::is_same<Object, _Type>::value || !std::is_base_of<Object, _Type>::value),
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type>::type> && result, ResolverParams && params)
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
+		std::future<response::Value>> convert(typename ResultTraits<Type>::future_type result, ResolverParams && params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
 	}
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::Nullable == _Modifier && std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && result, ResolverParams && params)
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
-			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
 
@@ -432,29 +457,29 @@ struct ModifiedResult
 				{
 					response::Value document(response::Type::Map);
 
-					document.emplace_back(strData, response::Value());
+					document.emplace_back(std::string{ strData }, response::Value());
 
 					return document;
 				}
 
-				std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
+				std::promise<typename ResultTraits<Type, Other...>::type> promise;
 
 				promise.set_value(std::move(wrappedResult));
 
-				return convert<_Other...>(promise.get_future(), std::move(wrappedParams)).get();
+				return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
 			}, std::move(result), std::move(params));
 	}
 
-	// Peel off nullable modifiers for anything else, which should all be std::unique_ptr.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::Nullable == _Modifier && !std::is_same<std::shared_ptr<_Type>, typename ResultTraits<_Type, _Other...>::type>::value,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && result, ResolverParams && params)
+	// Peel off nullable modifiers for anything else, which should all be std::optional.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
-		static_assert(std::is_same<std::unique_ptr<typename ResultTraits<_Type, _Other...>::type>, typename ResultTraits<_Type, _Modifier, _Other...>::type>::value,
-			"this is the unique_ptr version");
+		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>,
+			"this is the optional version");
 
 		return std::async(std::launch::deferred,
-			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
 
@@ -462,37 +487,33 @@ struct ModifiedResult
 				{
 					response::Value document(response::Type::Map);
 
-					document.emplace_back(strData, response::Value());
+					document.emplace_back(std::string{ strData }, response::Value());
 
 					return document;
 				}
 
-				std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
+				std::promise<typename ResultTraits<Type, Other...>::type> promise;
 
 				promise.set_value(std::move(*wrappedResult));
 
-				return convert<_Other...>(promise.get_future(), std::move(wrappedParams)).get();
+				return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
 			}, std::move(result), std::move(params));
 	}
 
 	// Peel off list modifiers.
-	template <TypeModifier _Modifier, TypeModifier... _Other>
-	static typename std::enable_if<TypeModifier::List == _Modifier,
-		std::future<response::Value>>::type convert(std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && result, ResolverParams && params)
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static typename std::enable_if_t<TypeModifier::List == Modifier,
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
 		return std::async(std::launch::deferred,
-			[](std::future<typename ResultTraits<_Type, _Modifier, _Other...>::type> && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
 				std::queue<std::future<response::Value>> children;
 
 				for (auto& entry : wrappedResult)
 				{
-					std::promise<typename ResultTraits<_Type, _Other...>::type> promise;
-
-					promise.set_value(std::move(entry));
-
-					children.push(convert<_Other...>(promise.get_future(), ResolverParams(wrappedParams)));
+					children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
 				}
 
 				response::Value data(response::Type::List);
@@ -534,7 +555,7 @@ struct ModifiedResult
 
 						response::Value error(response::Type::Map);
 
-						error.emplace_back(strMessage, response::Value(message.str()));
+						error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
 						errors.emplace_back(std::move(error));
 					}
 
@@ -544,11 +565,11 @@ struct ModifiedResult
 
 				response::Value document(response::Type::Map);
 
-				document.emplace_back(strData, std::move(data));
+				document.emplace_back(std::string{ strData }, std::move(data));
 
 				if (errors.size() > 0)
 				{
-					document.emplace_back(strErrors, std::move(errors));
+					document.emplace_back(std::string{ strErrors }, std::move(errors));
 				}
 
 				return document;
@@ -556,19 +577,19 @@ struct ModifiedResult
 	}
 
 private:
-	using ResolverCallback = std::function<response::Value(typename ResultTraits<_Type>::type&&, const ResolverParams&)>;
+	using ResolverCallback = std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
 
-	static std::future<response::Value> resolve(typename ResultTraits<_Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
+	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
 	{
-		static_assert(!std::is_base_of<Object, _Type>::value, "ModfiedResult<Object> needs special handling");
+		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
 		return std::async(std::launch::deferred,
-			[](typename ResultTraits<_Type>::future_type resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
+			[](auto && resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
 			{
 				response::Value document(response::Type::Map);
 
 				try
 				{
-					document.emplace_back(strData, resolverFuture(resultFuture.get(), paramsFuture));
+					document.emplace_back(std::string{ strData }, resolverFuture(resultFuture.get(), paramsFuture));
 				}
 				catch (const std::exception & ex)
 				{
@@ -580,9 +601,9 @@ private:
 					response::Value errors(response::Type::List);
 					response::Value error(response::Type::Map);
 
-					error.emplace_back(strMessage, response::Value(message.str()));
+					error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
 					errors.emplace_back(std::move(error));
-					document.emplace_back(strErrors, std::move(errors));
+					document.emplace_back(std::string{ strErrors }, std::move(errors));
 				}
 
 				return document;
@@ -597,7 +618,7 @@ using IntResult = ModifiedResult<response::IntType>;
 using FloatResult = ModifiedResult<response::FloatType>;
 using StringResult = ModifiedResult<response::StringType>;
 using BooleanResult = ModifiedResult<response::BooleanType>;
-using IdResult = ModifiedResult<std::vector<uint8_t>>;
+using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
@@ -609,7 +630,7 @@ using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 struct SubscriptionParams
 {
 	std::shared_ptr<RequestState> state;
-	peg::ast<std::string> query;
+	peg::ast<std::vector<char>> query;
 	std::string operationName;
 	response::Value variables;
 };
@@ -645,12 +666,12 @@ using SubscriptionName = std::string;
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
-		peg::ast<std::string>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+		peg::ast<std::vector<char>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
 	std::unordered_map<SubscriptionName, std::vector<response::Value>> fieldNamesAndArgs;
-	peg::ast<std::string> query;
+	peg::ast<std::vector<char>> query;
 	std::string operationName;
 	SubscriptionCallback callback;
 	const peg::ast_node& selection;
@@ -668,6 +689,7 @@ public:
 	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
 	void unsubscribe(SubscriptionKey key);
@@ -683,6 +705,4 @@ private:
 	SubscriptionKey _nextKey = 0;
 };
 
-} /* namespace service */
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql::service */

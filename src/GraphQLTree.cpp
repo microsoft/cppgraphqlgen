@@ -11,13 +11,12 @@
 #include <functional>
 #include <numeric>
 
-namespace facebook {
-namespace graphql {
+namespace facebook::graphql {
 namespace peg {
 
 using namespace tao::graphqlpeg;
 
-template <typename _Rule>
+template <typename Rule>
 struct ast_selector
 	: std::false_type
 {
@@ -79,7 +78,7 @@ struct ast_selector<escaped_unicode>
 	{
 		if (n->has_content())
 		{
-			std::string content = n->content();
+			auto content = n->string_view();
 
 			if (unescape::utf8_append_utf32(n->unescaped, unescape::unhex_string<uint32_t>(content.data() + 1, content.data() + content.size())))
 			{
@@ -99,7 +98,7 @@ struct ast_selector<escaped_char>
 	{
 		if (n->has_content())
 		{
-			const char ch = n->content().front();
+			const char ch = n->string_view().front();
 
 			switch (ch)
 			{
@@ -150,7 +149,7 @@ struct ast_selector<string_quote_character>
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->content();
+		n->unescaped = n->string_view();
 	}
 };
 
@@ -170,7 +169,7 @@ struct ast_selector<block_quote_character>
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->content();
+		n->unescaped = n->string_view();
 	}
 };
 
@@ -567,14 +566,14 @@ struct ast_selector<input_object_type_extension>
 {
 };
 
-template <typename _Rule>
+template <typename Rule>
 struct ast_control
-	: normal<_Rule>
+	: normal<Rule>
 {
 	static const std::string error_message;
 
-	template <typename _Input, typename... _States>
-	static void raise(const _Input& in, _States&&...)
+	template <typename Input, typename... State>
+	static void raise(const Input& in, State&&...)
 	{
 		throw parse_error(error_message, in);
 	}
@@ -639,7 +638,7 @@ template <> const std::string ast_control<input_object_type_extension_content>::
 template <> const std::string ast_control<document_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Document";
 
 template <>
-ast<std::string>::~ast()
+ast<std::vector<char>>::~ast()
 {
 	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
 	// variables than the graphqlservice module used to allocate them. So even though this could be
@@ -662,27 +661,19 @@ ast<const char*>::~ast()
 	// omitted, declare it explicitly and define it in graphqlservice.
 }
 
-ast<std::string> parseString(std::string&& input)
+ast<std::vector<char>> parseString(std::string_view input)
 {
-	ast<std::string> result { std::move(input), nullptr };
-	const size_t length = result.input.size();
-
-	if (length < sizeof(result.input))
-	{
-		// Overflow the short string optimization so it uses a heap allocation.
-		result.input.resize(sizeof(result.input));
-	}
-
-	memory_input<> in(result.input.c_str(), length, "GraphQL");
+	ast<std::vector<char>> result{ { input.cbegin(), input.cend() }, nullptr };
+	memory_input<> in(result.input.data(), result.input.size(), "GraphQL");
 
 	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
 
 	return result;
 }
 
-ast<std::unique_ptr<file_input<>>> parseFile(const char* filename)
+ast<std::unique_ptr<file_input<>>> parseFile(std::string_view filename)
 {
-	std::unique_ptr<file_input<>> in(new file_input<>(std::string(filename)));
+	auto in = std::make_unique<file_input<>>(std::string(filename));
 	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };
 
 	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(*result.input));
@@ -699,5 +690,4 @@ peg::ast<const char*> operator "" _graphql(const char* text, size_t size)
 	return { text, peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector, peg::nothing, peg::ast_control>(std::move(in)) };
 }
 
-} /* namespace graphql */
-} /* namespace facebook */
+} /* namespace facebook::graphql */
