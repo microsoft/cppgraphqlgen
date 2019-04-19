@@ -1,5 +1,7 @@
 # Introduction 
 
+[![Build Status](https://dev.azure.com/wravery/Build%20Pipelines/_apis/build/status/CppGraphQLGen-CI%20(Microsoft)?branchName=master)](https://dev.azure.com/wravery/Build%20Pipelines/_build/latest?definitionId=7&branchName=master)
+
 [GraphQL](https://graphql.org/) and [React](https://reactjs.org/) go together like peanut butter
 and jelly, especially if you use a GraphQL client/compiler like [Relay](http://facebook.github.io/relay/en/)
 or [Apollo](https://github.com/apollographql/apollo-client).
@@ -84,8 +86,6 @@ include updating the samples in any pull requests which change them.
 
 ## Windows
 
-[![Build Status](https://dev.azure.com/wravery/Build%20Pipelines/_apis/build/status/CppGraphQLGen-CI-Windows?branchName=master)](https://dev.azure.com/wravery/Build%20Pipelines/_build/latest?definitionId=1&branchName=master)
-
 There are a couple of options for building on Windows. You can either run CMake from the command
 line, or you can use the CMake integration in Visual Studio. They behave a little differently, but
 I prefer building and running tests in Visual Studio, then optionally performing a Release build
@@ -115,8 +115,6 @@ If you want to make a Release build, add the `/p:Configuration=Release` argument
 command line.
 
 ## Linux
-
-[![Build Status](https://dev.azure.com/wravery/Build%20Pipelines/_apis/build/status/CppGraphQLGen-CI-Linux?branchName=master)](https://dev.azure.com/wravery/Build%20Pipelines/_build/latest?definitionId=2&branchName=master)
 
 To build everything on Linux run:
 
