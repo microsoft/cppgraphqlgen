@@ -8,8 +8,6 @@ Testing/
 Win32/
 /include/graphqlservice/IntrospectionSchema.h
 /IntrospectionSchema.cpp
-/include/TodaySchema.h
-/TodaySchema.cpp
 *.filters
 *.vcxproj
 *.vcxproj.user
@@ -19,6 +17,7 @@ CMakeSettings.json
 CMakeCache.txt
 CTestCostData.txt
 CTestTestfile.cmake
+DartConfiguration.tcl
 install_manifest.txt
 LastTest.log
 lib*.a
@@ -26,8 +25,13 @@ lib*.so
 Makefile
 *.ninja
 .ninja_*
+/PEGTL/
 schemagen
 settings.json
-test_today
-tests
+/samples/sample
+/src/cmake/
+/test/argument_tests
+/test/pegtl_tests
+/test/response_tests
+/test/today_tests
 build
