@@ -84,25 +84,27 @@ struct FieldParams : SelectionSetParams
 // Field accessors may return either a result of T or a std::future<T>, so at runtime the implementer
 // may choose to return by value or defer/parallelize expensive operations by returning an async future.
 template <typename T>
-struct FieldResult : std::variant<T, std::future<T>>
+class FieldResult
 {
-	using variant_type = std::variant<T, std::future<T>>;
-
+public:
 	template <typename U>
 	FieldResult(U&& value)
-		: variant_type{ std::forward<U>(value) }
+		: _value{ std::forward<U>(value) }
 	{
 	}
 
 	T get()
 	{
-		if (std::holds_alternative<std::future<T>>(*this))
+		if (std::holds_alternative<std::future<T>>(_value))
 		{
-			return std::get<std::future<T>>(std::move(*this)).get();
+			return std::get<std::future<T>>(std::move(_value)).get();
 		}
 
-		return std::get<T>(std::move(*this));
+		return std::get<T>(std::move(_value));
 	}
+
+private:
+	std::variant<T, std::future<T>> _value;
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
