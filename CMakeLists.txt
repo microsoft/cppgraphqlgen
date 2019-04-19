@@ -138,7 +138,7 @@ if(BUILD_TESTS OR UPDATE_SAMPLES)
       graphqljson)
     cppgraphqlgen_target_set_cxx_standard(test_today)
 
-    enable_testing()
+    include(CTest)
     find_package(GTest MODULE REQUIRED)
 
     add_executable(tests
