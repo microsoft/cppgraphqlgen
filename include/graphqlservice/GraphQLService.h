@@ -88,9 +88,6 @@ struct FieldResult : std::variant<T, std::future<T>>
 {
 	using variant_type = std::variant<T, std::future<T>>;
 
-	template <typename U>
-	using always_false = std::false_type;
-
 	FieldResult(const T& value)
 		: variant_type{ T{ value } }
 	{
@@ -108,22 +105,12 @@ struct FieldResult : std::variant<T, std::future<T>>
 
 	T get()
 	{
-		return std::visit([](auto && visited) {
-			using U = std::decay_t<decltype(visited)>;
+		if (std::holds_alternative<std::future<T>>(*this))
+		{
+			return std::get<std::future<T>>(std::move(*this)).get();
+		}
 
-			if constexpr (std::is_same_v<U, std::future<T>>)
-			{
-				return visited.get();
-			}
-			else if constexpr (std::is_same_v<U, T>)
-			{
-				return std::move(visited);
-			}
-			else
-			{
-				static_assert(always_false<T>::value, "unhandled variant");
-			}
-		}, std::move(*this));
+		return std::get<T>(std::move(*this));
 	}
 };
 
