@@ -42,15 +42,24 @@ endif()
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
-add_custom_command(
-  OUTPUT
-    ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
-    ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-  COMMAND schemagen --introspection
-  DEPENDS schemagen
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  COMMENT "Generating IntrospectionSchema files"
-)
+if(GRAPHQL_UPDATE_SAMPLES)
+  add_custom_command(
+    OUTPUT
+      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
+      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+    COMMAND schemagen --introspection
+    DEPENDS schemagen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Generating IntrospectionSchema files")
+
+  install(FILES
+      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
+    DESTINATION ${CMAKE_SOURCE_DIR}/samples/introspection)
+else()
+  file(COPY ${CMAKE_SOURCE_DIR}/samples/introspection/IntrospectionSchema.cpp DESTINATION ${CMAKE_BINARY_DIR})
+  file(COPY ${CMAKE_SOURCE_DIR}/samples/introspection/IntrospectionSchema.h DESTINATION ${CMAKE_BINARY_DIR}/include/graphqlservice)
+endif()
 
 # graphqlservice
 add_library(graphqlservice
@@ -96,13 +105,6 @@ if(BUILD_GRAPHQLJSON)
     CONFIGURATIONS Release)
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
-endif()
-
-if(GRAPHQL_UPDATE_SAMPLES)
-  install(FILES
-      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
-    DESTINATION ${CMAKE_SOURCE_DIR}/samples/introspection)
 endif()
 
 install(TARGETS
