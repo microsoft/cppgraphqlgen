@@ -3230,7 +3230,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	for (const auto& objectType : _objectTypes)
 	{
-		const auto headerFilename = std::string(objectType.cppType) + "Schema.h";
+		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 
 		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
 )cpp";
@@ -3254,7 +3254,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 		const auto objectNamespace = ossNamespace.str();
 		const bool isQueryType = objectType.type == queryType;
-		const auto headerFilename = std::string(objectType.cppType) + "Schema.h";
+		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 		const auto headerPath = (headerDir / headerFilename).string();
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
 
@@ -3279,7 +3279,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 			files.push_back(std::move(headerPath));
 		}
 
-		const auto sourceFilename = std::string(objectType.cppType) + "Schema.cpp";
+		const auto sourceFilename = std::string(objectType.cppType) + "Object.cpp";
 		const auto sourcePath = (sourceDir / sourceFilename).string();
 		std::ofstream sourceFile(sourcePath, std::ios_base::trunc);
 

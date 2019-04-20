@@ -25,7 +25,7 @@ app and your native/hybrid app.
 
 ## Related projects
 
-I created a couple of sample projects to demonstrate integrating the [schema.today.graphql](./samples/schema.today.graphql)
+I created a couple of sample projects to demonstrate integrating the [schema.today.graphql](./samples/today/schema.today.graphql)
 service into an Electron app. They're available under my personal account, feel free to use either or both of these as a
 starting point to integrate your own generated service with Node or Electron:
 * [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
@@ -74,13 +74,20 @@ files.
 ## API references
 
 See [GraphQLService.h](include/graphqlservice/GraphQLService.h) for the base types implemented in
-the `facebook::graphql::service` namespace. Take a look at [Today.h](include/Today.h) and [Today.cpp](Today.cpp)
-to see a sample implementation of a custom schema defined in [schema.today.graphql](samples/schema.today.graphql)
-for testing purposes.
+the `facebook::graphql::service` namespace. Take a look at [UnifiedToday.h](samples/today/UnifiedToday.h) and
+[UnifiedToday.cpp](samples/today/UnifiedToday.cpp) to see a sample implementation of a custom schema defined
+in [schema.today.graphql](samples/today/schema.today.graphql) for testing purposes.
 
-All of the generated files are in the [samples](samples/) directory. If you modify the code
-generator in SchemaGenerator.* and rebuild, `make install` will update them. Please remember to
-include updating the samples in any pull requests which change them.
+All of the generated files are in the [samples](samples/) directory. There are two different versions of
+the generated code, one which creates a single pair of files (`samples/unified/`), and one which uses the
+`--separate-files` flag with `schemagen` to generate individual header and source files (`samples/separate/`)
+for each of the object types which need to be implemeneted. The only difference between [UnifiedToday.h](samples/today/UnifiedToday.h)
+and [SeparateToday.h](samples/today/SeparateToday.h) should be that the `SeparateToday` use a generated
+[TodayObjects.h](samples/separate/TodayObjects.h) convenience header which includes all of the inidividual
+object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h).
+
+If you modify the code generator in SchemaGenerator.* and rebuild, `make install` will update them. Please
+remember to include updating the samples in any pull requests which change them.
 
 # Build and Test
 
