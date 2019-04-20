@@ -25,7 +25,6 @@ lib*.so
 Makefile
 *.ninja
 .ninja_*
-/PEGTL/
 schemagen
 settings.json
 /samples/sample
