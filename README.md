@@ -25,51 +25,104 @@ app and your native/hybrid app.
 
 ## Related projects
 
-I created a couple of sample projects to demonstrate integrating the [schema.today.graphql](./samples/today/schema.today.graphql)
-service into an Electron app. They're available under my personal account, feel free to use either or both of these as a
-starting point to integrate your own generated service with Node or Electron:
-* [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
+I created a couple of sample projects that worked up to version 2.x to demonstrate integrating the
+[schema.today.graphql](./samples/today/schema.today.graphql) service into an Electron app. I haven't migrated them
+to 3.x and C++17 yet, but they're available under my personal account. Feel free to use either or both of these as a
+starting point to integrate your own generated service with Node or Electron. PRs with links to your own samples or
+migrating either of those projects to 3.x are welcome.
+
+- [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
 against the version of the Node headers included in Electron.
-* [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
+- [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
 exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of it.
 
 ## Installation process
 
-First, clone this repo, then make sure you have the dependencies. Acquiring the dependencies is a
-bit different depending on your platform.
+I've tested this on Windows with Visual Studio 2019 and Linux using an Ubuntu 18.04 LTS instance running in WSL with
+both gcc 7.3.0 and clang 6.0.0. The key compiler requirement is support for C++17, recent updates to Visual Studio 2017
+will probably work too.
 
-I've tested this on Windows with Visual Studio 2017 and Linux using an Ubuntu instance running in
-WSL.
+The easiest way to get all of these and to build `cppgraphqlgen` in one step is to use
+[Microsoft/vcpkg](https://github.com/Microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
+and then run `vcpkg install cppgraphqlgen` (or `cppgraphqlgen:x64-windows`, `cppgraphqlgen:x86-windows-static`, etc.
+depending on your platform). To install just the dependencies and work in a clone of this repo, you'll need some subset
+of `vcpkg install pegtl boost-program-options boost-filesystem rapidjson gtest`. It works for Windows, Linux, and Mac,
+but if you want to try building for another platform (e.g. Android or iOS), you'll need to do more of this manually.
 
-I added a vcpkg port for this project, if you have vcpkg you can also install everything with `vcpkg install cppgraphqlgen`.
+Manual installation will work best if you clone the GitHub repos for each of the dependencies and follow the installation
+instructions for each project. You might also be able to find pre-built packages depending on your platform, but the
+versions need to match.
 
 ## Software dependencies
 
-As of version 3.0, this project depends on C++17. I also picked a few other projects as dependencies:
+The build system for this project uses [CMake](http://www.cmake.org/). You will need to have CMake (at least version
+3.8.0) installed, and the library dependencies need to be where CMake can find them. Otherwise you need to disable the
+options which depend on them.
 
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL), which is part of [The Art of C++](https://taocpp.github.io/) library collection. While the PEGTL 3.0 release is still pending I've added this as a sub-module, so you should not install this separately.
+I also picked a few other projects as dependencies, most of which are optional when consuming this project. If you
+redistribute any binaries built from these libraries, you should still follow the terms of their individual licenses. As
+of this writing, this library and all of its redistributable dependencies are available under the MIT license, which
+means you need to include an acknowledgement along with the license text.
+
+### graphqlpeg
+
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.0.0,
+which is part of [The Art of C++](https://taocpp.github.io/) library collection. I've added this as a sub-module, so you
+do not need to install this separately. If you already have 3.0.0 installed where CMake can find it, it will use that
+instead of the sub-module and avoid installing another copy of PEGTL. _Note: PEGTL 3.0.0 is currently at pre-release._
+
+### graphqlservice
+
+The core library depends on `graphqlpeg` and it references the PEGTL headers itself at build time. Both of those mean it
+depends on PEGTL as well.
+
+### graphqljson (`GRAPHQL_USE_RAPIDJSON=ON`)
+
+- JSON support: [RapidJSON](https://github.com/Tencent/rapidjson) release 1.1.0. If you don't need JSON support, you can
+also avoid installing this dependency. You will need to set `GRAPHQL_USE_RAPIDJSON=OFF` in your CMake configuration to
+do that.
+
+### schemagen
+
+I'm using [Boost](https://www.boost.org/doc/libs/1_69_0/more/getting_started/index.html) for `schemagen`:
+
+- C++17 std::filesystem support on Unix:
+[Boost.Filesystem](https://www.boost.org/doc/libs/1_69_0/libs/filesystem/doc/index.htm). Most of the default C++
+compilers on Linux still have `std::filesystem` from C++17 in an experimental directory and require an extra
+library. The standard just adopted the Boost library, so on Unix systems I have an `#ifdef` which redirects back to
+it for the time being.
 - Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
-- JSON support: [RapidJSON](https://github.com/Tencent/rapidjson).
-- Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework.
+Run `schemagen -?` to get a list of options. Many of the files in the [samples](samples/) directory were generated
+with `schemagen`, you can look at [samples/CMakeLists.txt](samples/CMakeLists.txt) for a few examples of how to call it:
+```
+Usage:  schemagen [options] <schema file> <output filename prefix> <output namespace>
+Command line options:
+  -? [ --help ]          Print the command line options
+  -v [ --verbose ]       Verbose output including generated header names as
+                         well as sources
+  -s [ --schema ] arg    Schema definition file path
+  -p [ --prefix ] arg    Prefix to use for the generated C++ filenames
+  -n [ --namespace ] arg C++ sub-namespace for the generated types
+  --source-dir arg       Target path for the <prefix>Schema.cpp source file
+  --header-dir arg       Target path for the <prefix>Schema.h header file
+  --no-stubs             Generate abstract classes without stub implementations
+  --separate-files       Generate separate files for each of the types
+```
 
-The build system for this project uses [CMake](http://www.cmake.org/). You'll need to have all of the
-dependencies installed on your system along with CMake to build this project.
+I've only tested this with Boost 1.69.0, but I expect it will work fine with most other versions. The Boost dependencies
+are only used by the `schemagen` utility at or before your build, so you probably don't need to redistribute it or the
+Boost libraries with your project.
 
-### Using vcpkg
+If you are building shared libraries on Windows (DLLs) using vcpkg or `BUILD_SHARED_LIBS=ON` in CMake, be aware that this
+adds a runtime dependency on a Boost DLL. The `schemagen` tool won't run without it. However, in addition to automating
+the install of Boost, vcpkg also takes care of installing the dependencies next to `schemagen.exe` when building the
+Windows and UWP shared library targets (the platform triplets which don't end in `-static`).
 
-Vcpkg can install the dependencies from source on either platform, and that's what I'm using on Windows and Linux.
-PEGTL is currently included as a sub-module of this repo, so you can just use `vcpkg install boost-program-options rapidjson gtest`
-to get all of the others.
+### tests (`GRAPHQL_BUILD_TESTS=ON`)
 
-### Windows with NuGet
-
-All of these packages dependencies should also be available in NuGet packages if you don't want to
-use [vcpkg](https://github.com/Microsoft/vcpkg) but still want to use a package manager.
-
-### Linux or Windows from GitHub
-
-Clone each of the repos from GitHub and follow the installation instructions in the README.md
-files.
+- Unit testing: [Google Test](https://github.com/google/googletest) for the unit testing framework. If you don't want to
+build or run the unit tests, you can avoid this dependency as well by setting `GRAPHQL_BUILD_TESTS=OFF` in your CMake
+configuration.
 
 ## API references
 
@@ -81,63 +134,44 @@ in [schema.today.graphql](samples/today/schema.today.graphql) for testing purpos
 All of the generated files are in the [samples](samples/) directory. There are two different versions of
 the generated code, one which creates a single pair of files (`samples/unified/`), and one which uses the
 `--separate-files` flag with `schemagen` to generate individual header and source files (`samples/separate/`)
-for each of the object types which need to be implemeneted. The only difference between [UnifiedToday.h](samples/today/UnifiedToday.h)
+for each of the object types which need to be implemeneted. The only difference between
+[UnifiedToday.h](samples/today/UnifiedToday.h)
 and [SeparateToday.h](samples/today/SeparateToday.h) should be that the `SeparateToday` use a generated
 [TodayObjects.h](samples/separate/TodayObjects.h) convenience header which includes all of the inidividual
-object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h).
-
-If you modify the code generator in SchemaGenerator.* and rebuild, `make install` will update them. Please
-remember to include updating the samples in any pull requests which change them.
+object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h). If you modify the
+code generator in SchemaGenerator.* and rebuild, building the install target will update them. Please remember to
+include updating the samples in any pull requests which change them.
 
 # Build and Test
 
-## Windows
-
-There are a couple of options for building on Windows. You can either run CMake from the command
-line, or you can use the CMake integration in Visual Studio. They behave a little differently, but
-I prefer building and running tests in Visual Studio, then optionally performing a Release build
-and install from the command line.
-
-### Visual Studio
+### Visual Studio on Windows
 
 Use the Open Folder command to open the root of the repo. If you've installed the dependencies with
 vcpkg and run its Visual Studio integration command, Visual Studio should know how to build each of
-the targets in this project automatically. I've only been able to get x86-debug to work so far in
-Visual Studio though, it doesn't switch properly between the Debug and Release dependencies
-installed by vcpkg on my machine.
+the targets in this project automatically.
 
-### Command Line
+Once you've built the project Visual Studio's Test Explorer window should list the unit tests, and you
+can run all of them from there.
 
-To build from the command line, run:
+### Command Line on any platform
 
-`cmake -DCMAKE_TOOLCHAIN_FILE=<...path to vcpkg root...>/scripts/buildsystems/vcpkg.cmake .` once
-to populate the Visual Studio solution files, then:
+Your experience will vary depending on your build toolchain. The same instructions should work for any platform that
+CMake supports. These basic steps will build and run the tests. You can add options to build in another target directory,
+change the config from `Debug` (default) to `Release`, use another build tool like `Ninja`, etc. If you are using vcpkg
+to install the dependencies, remember to specify the `-DCMAKE_TOOLCHAIN_FILE=...` option when you run the initial build
+configuration.
 
-`msbuild cppgraphql.sln` to perform the build.
+- Configure the build system: `"cmake ."`
+- Tell CMake to invoke the build system: `"cmake --build ."` _You can repeat this step to rebuild your changes._
+- CTest comes with CMake and runs the tests: `"ctest ."` _Run this frequently, and make sure it passes before commits._
 
-You can also build optional `.vcxproj` project files with msbuild to perform the associated task,
-e.g. installing or running tests.
+You can then optionally install the public outputs by running.
 
-If you want to make a Release build, add the `/p:Configuration=Release` argument to the `msbuild`
-command line.
+- `cmake --build . --config Release --target install` _You probably need to use `sudo` on Unix to do this._
 
-## Linux
+## Interactive tests
 
-To build everything on Linux run:
-
-`cmake .`
-
-`make`
-
-You can then optionally install the public outputs by running:
-
-`sudo make install`.
-
-## Testing
-
-Run the unit tests with `tests` from the build output directory.
-
-If you want to try an interactive version, you can run `test_today` and paste in queries against
+If you want to try an interactive version, you can run `samples/sample` and paste in queries against
 the same mock service or load a query from a file on the command line.
 
 ## Reporting Security Issues
