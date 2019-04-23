@@ -5,6 +5,8 @@
 
 #include <graphqlservice/GraphQLService.h>
 
+#include "GraphQLGrammar.h"
+
 #include <array>
 #include <cstdio>
 

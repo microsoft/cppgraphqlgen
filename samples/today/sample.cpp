@@ -58,14 +58,11 @@ int main(int argc, char** argv)
 
 	try
 	{
-		const peg::ast_node* ast = nullptr;
-		peg::ast<std::vector<char>> ast_input;
-		peg::ast<std::unique_ptr<peg::file_input<>>> ast_file;
+		peg::ast query;
 
 		if (argc > 1)
 		{
-			ast_file = peg::parseFile(argv[1]);
-			ast = ast_file.root.get();
+			query = peg::parseFile(argv[1]);
 		}
 		else
 		{
@@ -77,11 +74,10 @@ int main(int argc, char** argv)
 				input.append(line);
 			}
 
-			ast_input = peg::parseString(std::move(input));
-			ast = ast_input.root.get();
+			query = peg::parseString(std::move(input));
 		}
 
-		if (!ast)
+		if (!query.root)
 		{
 			std::cerr << "Unknown error!" << std::endl;
 			std::cerr << std::endl;
@@ -90,7 +86,7 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		std::cout << response::toJSON(service->resolve(nullptr, *ast, ((argc > 2) ? argv[2] : ""), response::Value(response::Type::Map)).get()) << std::endl;
+		std::cout << response::toJSON(service->resolve(nullptr, *query.root, ((argc > 2) ? argv[2] : ""), response::Value(response::Type::Map)).get()) << std::endl;
 	}
 	catch (const std::runtime_error& ex)
 	{

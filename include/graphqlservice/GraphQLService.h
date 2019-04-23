@@ -630,7 +630,7 @@ using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 struct SubscriptionParams
 {
 	std::shared_ptr<RequestState> state;
-	peg::ast<std::vector<char>> query;
+	peg::ast query;
 	std::string operationName;
 	response::Value variables;
 };
@@ -666,12 +666,12 @@ using SubscriptionName = std::string;
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
-		peg::ast<std::vector<char>>&& query, std::string&& operationName, SubscriptionCallback&& callback,
+		peg::ast&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
 	std::unordered_map<SubscriptionName, std::vector<response::Value>> fieldNamesAndArgs;
-	peg::ast<std::vector<char>> query;
+	peg::ast query;
 	std::string operationName;
 	SubscriptionCallback callback;
 	const peg::ast_node& selection;

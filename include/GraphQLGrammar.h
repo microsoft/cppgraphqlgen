@@ -8,9 +8,28 @@
 
 #include <graphqlservice/GraphQLTree.h>
 
+#define TAO_PEGTL_NAMESPACE tao::graphqlpeg
+
+#include <tao/pegtl.hpp>
+#include <tao/pegtl/contrib/parse_tree.hpp>
+
+#include <variant>
+#include <vector>
+#include <functional>
+
 namespace facebook::graphql::peg {
 
 using namespace tao::graphqlpeg;
+
+struct ast_node : parse_tree::basic_node<ast_node>
+{
+	std::string unescaped;
+};
+
+struct ast_input
+{
+	std::variant<std::vector<char>, std::unique_ptr<file_input<>>, std::string_view> data;
+};
 
 template <typename Rule>
 void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
