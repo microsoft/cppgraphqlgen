@@ -121,7 +121,9 @@ install(TARGETS schemagen
   CONFIGURATIONS Release)
 
 install(FILES
+    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLParse.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLTree.h
+    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLResponse.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLService.h
     ${CMAKE_SOURCE_DIR}/include/graphqlservice/Introspection.h

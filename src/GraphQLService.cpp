@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "GraphQLGrammar.h"
-
 #include <graphqlservice/GraphQLService.h>
+#include <graphqlservice/GraphQLGrammar.h>
 
 #include <iostream>
 #include <algorithm>

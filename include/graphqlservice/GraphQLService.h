@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <graphqlservice/GraphQLTree.h>
+#include <graphqlservice/GraphQLParse.h>
 #include <graphqlservice/GraphQLResponse.h>
 
 #include <memory>

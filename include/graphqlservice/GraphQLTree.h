@@ -3,26 +3,27 @@
 
 #pragma once
 
-#include <memory>
-#include <string_view>
+#define TAO_PEGTL_NAMESPACE tao::graphqlpeg
 
-namespace facebook::graphql {
-namespace peg {
+#include <tao/pegtl.hpp>
+#include <tao/pegtl/contrib/parse_tree.hpp>
 
-struct ast_node;
-struct ast_input;
+#include <string>
+#include <variant>
+#include <vector>
 
-struct ast
+namespace facebook::graphql::peg {
+
+using namespace tao::graphqlpeg;
+
+struct ast_node : parse_tree::basic_node<ast_node>
 {
-	std::shared_ptr<ast_input> input;
-	std::shared_ptr<ast_node> root;
+	std::string unescaped;
 };
 
-ast parseString(std::string_view input);
-ast parseFile(std::string_view filename);
+struct ast_input
+{
+	std::variant<std::vector<char>, std::unique_ptr<file_input<>>, std::string_view> data;
+};
 
-} /* namespace peg */
-
-peg::ast operator "" _graphql(const char* text, size_t size);
-
-} /* namespace facebook::graphql */
+} /* namespace facebook::graphql::peg */
