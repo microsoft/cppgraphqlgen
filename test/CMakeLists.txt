@@ -28,9 +28,9 @@ target_link_libraries(pegtl_tests PRIVATE
   GTest::GTest
   GTest::Main)
 target_include_directories(pegtl_tests PUBLIC
-  ${CMAKE_BINARY_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/PEGTL/include)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 gtest_add_tests(TARGET pegtl_tests)
 
 add_executable(response_tests ResponseTests.cpp)
@@ -39,6 +39,6 @@ target_link_libraries(response_tests PRIVATE
   GTest::GTest
   GTest::Main)
 target_include_directories(response_tests PUBLIC
-  ${CMAKE_BINARY_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET response_tests)
