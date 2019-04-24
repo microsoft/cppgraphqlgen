@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "GraphQLGrammar.h"
+#include <graphqlservice/GraphQLGrammar.h>
 
 #include <tao/pegtl/analyze.hpp>
 

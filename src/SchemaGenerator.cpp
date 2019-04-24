@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #include "SchemaGenerator.h"
-#include "GraphQLGrammar.h"
 
 #include <boost/program_options.hpp>
 

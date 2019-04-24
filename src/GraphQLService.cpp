@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "GraphQLGrammar.h"
-
 #include <graphqlservice/GraphQLService.h>
+#include <graphqlservice/GraphQLGrammar.h>
 
 #include <iostream>
 #include <algorithm>
@@ -1275,7 +1274,7 @@ void OperationDefinitionVisitor::visit(std::launch launch, const std::string & o
 }
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, std::unordered_map<SubscriptionName, std::vector<response::Value>> && fieldNamesAndArgs,
-	peg::ast<std::vector<char>> && query, std::string && operationName, SubscriptionCallback && callback,
+	peg::ast && query, std::string && operationName, SubscriptionCallback && callback,
 	const peg::ast_node & selection)
 	: data(std::move(data))
 	, fieldNamesAndArgs(std::move(fieldNamesAndArgs))

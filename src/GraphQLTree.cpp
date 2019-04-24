@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "GraphQLGrammar.h"
+#include <graphqlservice/GraphQLParse.h>
+#include <graphqlservice/GraphQLTree.h>
+#include <graphqlservice/GraphQLGrammar.h>
 
 #include <tao/pegtl/contrib/unescape.hpp>
 
@@ -637,57 +639,37 @@ template <> const std::string ast_control<enum_type_extension_content>::error_me
 template <> const std::string ast_control<input_object_type_extension_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#InputObjectTypeExtension";
 template <> const std::string ast_control<document_content>::error_message = "Expected https://facebook.github.io/graphql/June2018/#Document";
 
-template <>
-ast<std::vector<char>>::~ast()
+ast parseString(std::string_view input)
 {
-	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
-	// variables than the graphqlservice module used to allocate them. So even though this could be
-	// omitted, declare it explicitly and define it in graphqlservice.
-}
-
-template <>
-ast<std::unique_ptr<file_input<>>>::~ast()
-{
-	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
-	// variables than the graphqlservice module used to allocate them. So even though this could be
-	// omitted, declare it explicitly and define it in graphqlservice.
-}
-
-template <>
-ast<const char*>::~ast()
-{
-	// The default destructor gets inlined and may use a different allocator to free ast<>'s member
-	// variables than the graphqlservice module used to allocate them. So even though this could be
-	// omitted, declare it explicitly and define it in graphqlservice.
-}
-
-ast<std::vector<char>> parseString(std::string_view input)
-{
-	ast<std::vector<char>> result{ { input.cbegin(), input.cend() }, nullptr };
-	memory_input<> in(result.input.data(), result.input.size(), "GraphQL");
+	ast result{ std::make_shared<ast_input>(ast_input{ std::vector<char>{ input.cbegin(), input.cend() } }), {}};
+	const auto& data = std::get<std::vector<char>>(result.input->data);
+	memory_input<> in(data.data(), data.size(), "GraphQL");
 
 	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
 
 	return result;
 }
 
-ast<std::unique_ptr<file_input<>>> parseFile(std::string_view filename)
+ast parseFile(std::string_view filename)
 {
-	auto in = std::make_unique<file_input<>>(std::string(filename));
-	ast<std::unique_ptr<file_input<>>> result { std::move(in), nullptr };
+	ast result{ std::make_shared<ast_input>(ast_input{ std::make_unique<file_input<>>(filename) }), {} };
+	auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
 
-	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(*result.input));
+	result.root = parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
 
 	return result;
 }
 
 } /* namespace peg */
 
-peg::ast<const char*> operator "" _graphql(const char* text, size_t size)
+peg::ast operator "" _graphql(const char* text, size_t size)
 {
 	peg::memory_input<> in(text, size, "GraphQL");
 
-	return { text, peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector, peg::nothing, peg::ast_control>(std::move(in)) };
+	return {
+		std::make_shared<peg::ast_input>(peg::ast_input{ { std::string_view{ text, size } } }),
+		peg::parse_tree::parse<peg::document, peg::ast_node, peg::ast_selector, peg::nothing, peg::ast_control>(std::move(in))
+	};
 }
 
 } /* namespace facebook::graphql */

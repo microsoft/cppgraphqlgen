@@ -4,6 +4,7 @@
 #pragma once
 
 #include <graphqlservice/GraphQLService.h>
+#include <graphqlservice/GraphQLGrammar.h>
 
 #include <array>
 #include <cstdio>
