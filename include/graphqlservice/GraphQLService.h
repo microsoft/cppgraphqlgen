@@ -48,12 +48,14 @@ struct RequestState : std::enable_shared_from_this<RequestState>
 {
 };
 
-constexpr std::string_view strData = "data";
-constexpr std::string_view strErrors = "errors";
-constexpr std::string_view strMessage = "message";
-constexpr std::string_view strQuery = "query";
-constexpr std::string_view strMutation = "mutation";
-constexpr std::string_view strSubscription = "subscription";
+using namespace std::literals;
+
+constexpr std::string_view strData{ "data"sv };
+constexpr std::string_view strErrors{ "errors"sv };
+constexpr std::string_view strMessage{ "message"sv };
+constexpr std::string_view strQuery{ "query"sv };
+constexpr std::string_view strMutation{ "mutation"sv };
+constexpr std::string_view strSubscription{ "subscription"sv };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
 struct SelectionSetParams
