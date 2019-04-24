@@ -42,9 +42,9 @@ if(GRAPHQL_BUILD_TESTS)
   add_library(unifiedschema OBJECT unified/TodaySchema.cpp)
   target_link_libraries(unifiedschema PUBLIC graphqlservice)
   target_include_directories(unifiedschema PUBLIC
-    ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/PEGTL/include
+    ${CMAKE_CURRENT_BINARY_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
     ${CMAKE_CURRENT_BINARY_DIR}/unified)
   add_bigobj_flag(unifiedschema)
 
@@ -56,9 +56,9 @@ endif()
 add_library(separateschema OBJECT ${SEPARATE_SCHEMA_CPP})
 target_link_libraries(separateschema PUBLIC graphqlservice)
 target_include_directories(separateschema PUBLIC
-  ${CMAKE_BINARY_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/PEGTL/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
   ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
 add_library(separategraphql today/SeparateToday.cpp)
@@ -71,9 +71,9 @@ target_link_libraries(sample PRIVATE
   separategraphql
   graphqljson)
 target_include_directories(sample PRIVATE
-  ${CMAKE_BINARY_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/PEGTL/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
   ${CMAKE_CURRENT_BINARY_DIR}/separate
   ${CMAKE_CURRENT_SOURCE_DIR}/today)
 

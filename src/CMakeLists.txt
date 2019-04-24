@@ -14,51 +14,62 @@ endfunction()
 add_library(graphqlpeg GraphQLTree.cpp)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/PEGTL/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 add_bigobj_flag(graphqlpeg)
 
 # graphqlresponse
 add_library(graphqlresponse OBJECT GraphQLResponse.cpp)
 target_include_directories(graphqlresponse PRIVATE
-  ${CMAKE_SOURCE_DIR}/include)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
-# schemagen
-add_executable(schemagen
-  $<TARGET_OBJECTS:graphqlresponse>
-  SchemaGenerator.cpp)
-target_link_libraries(schemagen PRIVATE graphqlpeg)
+option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 
-set(BOOST_COMPONENTS program_options)
-set(BOOST_LIBRARIES Boost::program_options)
+if(GRAPHQL_BUILD_SCHEMAGEN)
+  # schemagen
+  add_executable(schemagen
+    $<TARGET_OBJECTS:graphqlresponse>
+    SchemaGenerator.cpp)
+  target_link_libraries(schemagen PRIVATE graphqlpeg)
+  
+  set(BOOST_COMPONENTS program_options)
+  set(BOOST_LIBRARIES Boost::program_options)
+  
+  if(NOT MSVC)
+    set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
+    set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
+    target_compile_options(schemagen PRIVATE -DUSE_BOOST_FILESYSTEM)
+  endif()
+  
+  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
-if(NOT MSVC)
-  set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-  set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-  target_compile_options(schemagen PRIVATE -DUSE_BOOST_FILESYSTEM)
+  install(TARGETS schemagen
+    EXPORT cppgraphqlgen-targets
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
+    CONFIGURATIONS Release)
+else()
+  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "GRAPHQL_UPDATE_SAMPLES depends on GRAPHQL_BUILD_SCHEMAGEN" FORCE)
 endif()
-
-find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
 if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_command(
     OUTPUT
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
-      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
     COMMAND schemagen --introspection
     DEPENDS schemagen
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     COMMENT "Generating IntrospectionSchema files")
 
   install(FILES
-      ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp
-    DESTINATION ${CMAKE_SOURCE_DIR}/samples/introspection)
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
 else()
-  file(COPY ${CMAKE_SOURCE_DIR}/samples/introspection/IntrospectionSchema.cpp DESTINATION ${CMAKE_BINARY_DIR})
-  file(COPY ${CMAKE_SOURCE_DIR}/samples/introspection/IntrospectionSchema.h DESTINATION ${CMAKE_BINARY_DIR}/include/graphqlservice)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice)
 endif()
 
 # graphqlservice
@@ -66,12 +77,12 @@ add_library(graphqlservice
   $<TARGET_OBJECTS:graphqlresponse>
   GraphQLService.cpp
   Introspection.cpp
-  ${CMAKE_BINARY_DIR}/IntrospectionSchema.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
   Threads::Threads)
 target_include_directories(graphqlservice PRIVATE
-  ${CMAKE_BINARY_DIR}/include)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include)
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
@@ -100,7 +111,7 @@ if(BUILD_GRAPHQLJSON)
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib)
-  install(FILES ${CMAKE_SOURCE_DIR}/include/graphqlservice/JSONResponse.h
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/JSONResponse.h
     DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
     CONFIGURATIONS Release)
 else()
@@ -115,19 +126,14 @@ install(TARGETS
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-install(TARGETS schemagen
-  EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
-  CONFIGURATIONS Release)
-
 install(FILES
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLParse.h
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLTree.h
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLGrammar.h
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLResponse.h
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/GraphQLService.h
-    ${CMAKE_SOURCE_DIR}/include/graphqlservice/Introspection.h
-    ${CMAKE_BINARY_DIR}/include/graphqlservice/IntrospectionSchema.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/Introspection.h
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
   CONFIGURATIONS Release)
 
@@ -136,7 +142,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(cmake/${PROJECT_NAME}-config-version.cmake COMPATIBILITY SameMajorVersion)
 
 install(FILES
-    ${CMAKE_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/${PROJECT_NAME}-config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
   DESTINATION ${GRAPHQL_INSTALL_CMAKE_DIR}/${PROJECT_NAME})
 
