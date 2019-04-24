@@ -66,7 +66,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   install(FILES
       ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-    DESTINATION ${CMAKE_SOURCE_DIR}/samples/introspection)
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
 else()
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice)
