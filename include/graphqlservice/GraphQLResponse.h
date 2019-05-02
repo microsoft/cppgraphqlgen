@@ -8,7 +8,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace facebook::graphql::response {
+namespace graphql::response {
 
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
@@ -101,4 +101,4 @@ private:
 	std::unique_ptr<TypedData> _data;
 };
 
-} /* namespace facebook::graphql::response */
+} /* namespace graphql::response */

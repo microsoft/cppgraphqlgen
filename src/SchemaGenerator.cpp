@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
 #include <regex>
 
 
-namespace facebook::graphql::schema {
+namespace graphql::schema {
 	
 NamespaceScope::NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred /*= false*/) noexcept
 	: _outputFile(outputFile)
@@ -1503,7 +1503,7 @@ bool Generator::outputHeader() const noexcept
 
 )cpp";
 
-	NamespaceScope graphqlNamespace{ headerFile, "facebook::graphql" };
+	NamespaceScope graphqlNamespace{ headerFile, "graphql" };
 	NamespaceScope introspectionNamespace{ headerFile, s_introspectionNamespace };
 	NamespaceScope schemaNamespace{ headerFile, _schemaNamespace, true };
 	NamespaceScope objectNamespace{ headerFile, "object", true };
@@ -1877,7 +1877,7 @@ bool Generator::outputSource() const noexcept
 
 )cpp";
 
-	NamespaceScope graphqlNamespace{ sourceFile, "facebook::graphql" };
+	NamespaceScope graphqlNamespace{ sourceFile, "graphql" };
 
 	if (!_enumTypes.empty() || !_inputTypes.empty())
 	{
@@ -3244,7 +3244,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	{
 		std::ostringstream ossNamespace;
 
-		ossNamespace << R"cpp(facebook::graphql::)cpp"
+		ossNamespace << R"cpp(graphql::)cpp"
 			<< _schemaNamespace;
 
 		const auto schemaNamespace = ossNamespace.str();
@@ -3325,7 +3325,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	return files;
 }
 
-} /* namespace facebook::graphql::schema */
+} /* namespace graphql::schema */
 
 
 namespace po = boost::program_options;
@@ -3419,7 +3419,7 @@ int main(int argc, char** argv)
 	{
 		if (buildIntrospection)
 		{
-			const auto files = facebook::graphql::schema::Generator({
+			const auto files = graphql::schema::Generator({
 				std::nullopt,
 				std::nullopt,
 				verbose
@@ -3433,13 +3433,13 @@ int main(int argc, char** argv)
 
 		if (buildCustom)
 		{
-			const auto files = facebook::graphql::schema::Generator({
-				facebook::graphql::schema::GeneratorSchema{
+			const auto files = graphql::schema::Generator({
+				graphql::schema::GeneratorSchema{
 					std::move(schemaFileName),
 					std::move(filenamePrefix),
 					std::move(schemaNamespace)
 				},
-				facebook::graphql::schema::GeneratorPaths{
+				graphql::schema::GeneratorPaths{
 					std::move(headerDir),
 					std::move(sourceDir)
 				},

@@ -5,7 +5,7 @@
 
 #include "TodaySchema.h"
 
-namespace facebook::graphql::today::object {
+namespace graphql::today::object {
 
 class Query
 	: public service::Object
@@ -42,4 +42,4 @@ private:
 	std::shared_ptr<introspection::Schema> _schema;
 };
 
-} /* namespace facebook::graphql::today::object */
+} /* namespace graphql::today::object */

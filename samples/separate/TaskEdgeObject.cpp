@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 TaskEdge::TaskEdge()
@@ -64,4 +64,4 @@ void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge,
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

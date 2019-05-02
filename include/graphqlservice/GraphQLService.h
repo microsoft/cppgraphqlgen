@@ -23,7 +23,7 @@
 #include <map>
 #include <set>
 
-namespace facebook::graphql::service {
+namespace graphql::service {
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
@@ -48,6 +48,8 @@ struct RequestState : std::enable_shared_from_this<RequestState>
 {
 };
 
+namespace {
+
 using namespace std::literals;
 
 constexpr std::string_view strData{ "data"sv };
@@ -56,6 +58,8 @@ constexpr std::string_view strMessage{ "message"sv };
 constexpr std::string_view strQuery{ "query"sv };
 constexpr std::string_view strMutation{ "mutation"sv };
 constexpr std::string_view strSubscription{ "subscription"sv };
+
+}
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
 struct SelectionSetParams
@@ -707,4 +711,4 @@ private:
 	SubscriptionKey _nextKey = 0;
 };
 
-} /* namespace facebook::graphql::service */
+} /* namespace graphql::service */

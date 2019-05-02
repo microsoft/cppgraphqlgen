@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <cstdio>
 
-using namespace facebook::graphql;
+using namespace graphql;
 
 int main(int argc, char** argv)
 {

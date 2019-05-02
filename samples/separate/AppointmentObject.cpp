@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 Appointment::Appointment()
@@ -96,4 +96,4 @@ void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppoin
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

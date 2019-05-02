@@ -7,7 +7,7 @@
 
 #include <stack>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 
 struct RequestState : service::RequestState
 {
@@ -473,4 +473,4 @@ private:
 	const int depth;
 };
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

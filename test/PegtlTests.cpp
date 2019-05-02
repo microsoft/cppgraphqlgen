@@ -7,8 +7,8 @@
 
 #include <tao/pegtl/analyze.hpp>
 
-using namespace facebook::graphql;
-using namespace facebook::graphql::peg;
+using namespace graphql;
+using namespace graphql::peg;
 
 using namespace tao::graphqlpeg;
 

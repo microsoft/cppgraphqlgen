@@ -7,7 +7,7 @@
 #include <variant>
 #include <optional>
 
-namespace facebook::graphql::response {
+namespace graphql::response {
 
 // Type::Map
 struct MapData
@@ -527,4 +527,4 @@ ScalarType Value::release<ScalarType>()
 	return result;
 }
 
-} /* namespace facebook::graphql::response */
+} /* namespace graphql::response */

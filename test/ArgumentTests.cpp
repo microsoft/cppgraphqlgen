@@ -7,7 +7,7 @@
 
 #include <graphqlservice/JSONResponse.h>
 
-using namespace facebook::graphql;
+using namespace graphql;
 
 
 TEST(ArgumentsCase, ListArgumentStrings)

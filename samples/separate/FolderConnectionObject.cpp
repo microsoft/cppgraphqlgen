@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 FolderConnection::FolderConnection()
@@ -64,4 +64,4 @@ void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeF
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

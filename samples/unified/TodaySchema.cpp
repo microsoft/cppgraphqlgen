@@ -12,7 +12,7 @@
 #include <exception>
 #include <array>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
@@ -1101,4 +1101,4 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 }
 
 } /* namespace today */
-} /* namespace facebook::graphql */
+} /* namespace graphql */

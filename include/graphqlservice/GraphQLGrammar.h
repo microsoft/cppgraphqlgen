@@ -15,7 +15,7 @@
 
 #include <functional>
 
-namespace facebook::graphql::peg {
+namespace graphql::peg {
 
 using namespace tao::graphqlpeg;
 
@@ -1315,4 +1315,4 @@ struct document
 {
 };
 
-} /* namespace facebook::graphql::peg */
+} /* namespace graphql::peg */

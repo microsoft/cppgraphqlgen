@@ -9,7 +9,7 @@
 #include <array>
 #include <cstdio>
 
-namespace facebook::graphql::schema {
+namespace graphql::schema {
 
 // These are the set of built-in types in GraphQL.
 enum class BuiltinType
@@ -384,4 +384,4 @@ private:
 	OperationTypeList _operationTypes;
 };
 
-} /* namespace facebook::graphql::schema */
+} /* namespace graphql::schema */

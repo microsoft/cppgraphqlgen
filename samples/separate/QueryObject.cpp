@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 Query::Query()
@@ -240,4 +240,4 @@ void AddQueryDetails(std::shared_ptr<introspection::ObjectType> typeQuery, std::
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

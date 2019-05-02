@@ -10,7 +10,7 @@
 #include <exception>
 #include <array>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 8> s_namesTypeKind = {
@@ -592,4 +592,4 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 }
 
 } /* namespace introspection */
-} /* namespace facebook::graphql */
+} /* namespace graphql */

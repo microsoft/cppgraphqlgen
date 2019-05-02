@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 Mutation::Mutation()
@@ -53,4 +53,4 @@ void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation,
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

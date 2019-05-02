@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-namespace facebook::graphql::peg {
+namespace graphql::peg {
 
 using namespace tao::graphqlpeg;
 
@@ -26,4 +26,4 @@ struct ast_input
 	std::variant<std::vector<char>, std::unique_ptr<file_input<>>, std::string_view> data;
 };
 
-} /* namespace facebook::graphql::peg */
+} /* namespace graphql::peg */

@@ -9,7 +9,7 @@
 #include <array>
 #include <stack>
 
-namespace facebook::graphql::service {
+namespace graphql::service {
 
 schema_exception::schema_exception(std::vector<std::string>&& messages)
 	: _errors(response::Type::List)
@@ -1841,4 +1841,4 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCal
 	}
 }
 
-} /* namespace facebook::graphql::service */
+} /* namespace graphql::service */

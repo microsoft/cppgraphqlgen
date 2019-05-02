@@ -5,7 +5,7 @@
 
 #include "TodaySchema.h"
 
-namespace facebook::graphql::today::object {
+namespace graphql::today::object {
 
 class Mutation
 	: public service::Object
@@ -22,4 +22,4 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace facebook::graphql::today::object */
+} /* namespace graphql::today::object */

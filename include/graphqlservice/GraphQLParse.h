@@ -6,7 +6,7 @@
 #include <memory>
 #include <string_view>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace peg {
 
 struct ast_node;
@@ -25,4 +25,4 @@ ast parseFile(std::string_view filename);
 
 peg::ast operator "" _graphql(const char* text, size_t size);
 
-} /* namespace facebook::graphql */
+} /* namespace graphql */

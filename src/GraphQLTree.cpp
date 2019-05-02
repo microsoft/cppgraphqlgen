@@ -13,7 +13,7 @@
 #include <functional>
 #include <numeric>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace peg {
 
 using namespace tao::graphqlpeg;
@@ -672,4 +672,4 @@ peg::ast operator "" _graphql(const char* text, size_t size)
 	};
 }
 
-} /* namespace facebook::graphql */
+} /* namespace graphql */

@@ -38,9 +38,9 @@ exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of
 
 ## Installation process
 
-I've tested this on Windows with Visual Studio 2019 and Linux using an Ubuntu 18.04 LTS instance running in WSL with
-both gcc 7.3.0 and clang 6.0.0. The key compiler requirement is support for C++17, recent updates to Visual Studio 2017
-will probably work too.
+I've tested this on Windows with both Visual Studio 2017 and 2019, and on Linux using an Ubuntu 18.04 LTS instance running in
+WSL with both gcc 7.3.0 and clang 6.0.0. The key compiler requirement is support for C++17, earlier versions of gcc and clang
+may not have enough support for that.
 
 The easiest way to get all of these and to build `cppgraphqlgen` in one step is to use
 [Microsoft/vcpkg](https://github.com/Microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
@@ -127,7 +127,7 @@ configuration.
 ## API references
 
 See [GraphQLService.h](include/graphqlservice/GraphQLService.h) for the base types implemented in
-the `facebook::graphql::service` namespace. Take a look at [UnifiedToday.h](samples/today/UnifiedToday.h) and
+the `graphql::service` namespace. Take a look at [UnifiedToday.h](samples/today/UnifiedToday.h) and
 [UnifiedToday.cpp](samples/today/UnifiedToday.cpp) to see a sample implementation of a custom schema defined
 in [schema.today.graphql](samples/today/schema.today.graphql) for testing purposes.
 

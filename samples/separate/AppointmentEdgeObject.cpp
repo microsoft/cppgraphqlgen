@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 AppointmentEdge::AppointmentEdge()
@@ -64,4 +64,4 @@ void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAp
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

@@ -5,10 +5,10 @@
 
 #include <graphqlservice/GraphQLResponse.h>
 
-namespace facebook::graphql::response {
+namespace graphql::response {
 
 std::string toJSON(Value&& response);
 
 Value parseJSON(const std::string& json);
 
-} /* namespace facebook::graphql::response */
+} /* namespace graphql::response */

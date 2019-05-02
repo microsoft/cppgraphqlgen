@@ -6,7 +6,7 @@
 #include <iostream>
 #include <algorithm>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 
 Appointment::Appointment(response::IdType&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
@@ -428,4 +428,4 @@ std::stack<CapturedParams> NestedType::getCapturedParams()
 	return result;
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

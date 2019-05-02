@@ -9,7 +9,7 @@
 
 #include <chrono>
 
-using namespace facebook::graphql;
+using namespace graphql;
 
 using namespace std::literals;
 

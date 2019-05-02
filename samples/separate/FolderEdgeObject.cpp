@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 FolderEdge::FolderEdge()
@@ -64,4 +64,4 @@ void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderE
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

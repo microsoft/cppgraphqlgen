@@ -5,7 +5,7 @@
 
 #include <graphqlservice/GraphQLResponse.h>
 
-using namespace facebook::graphql;
+using namespace graphql;
 
 
 TEST(ResponseCase, ValueConstructorFromStringLiteral)

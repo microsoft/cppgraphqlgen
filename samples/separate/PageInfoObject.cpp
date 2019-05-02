@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 PageInfo::PageInfo()
@@ -64,4 +64,4 @@ void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo,
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

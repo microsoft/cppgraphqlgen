@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace introspection {
 
 class Schema;
@@ -204,4 +204,4 @@ private:
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace introspection */
-} /* namespace facebook::graphql */
+} /* namespace graphql */

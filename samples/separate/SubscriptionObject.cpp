@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 Subscription::Subscription()
@@ -67,4 +67,4 @@ void AddSubscriptionDetails(std::shared_ptr<introspection::ObjectType> typeSubsc
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

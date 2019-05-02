@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace facebook::graphql {
+namespace graphql {
 namespace introspection {
 
 class Schema;
@@ -90,4 +90,4 @@ void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedT
 void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace today */
-} /* namespace facebook::graphql */
+} /* namespace graphql */

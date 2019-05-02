@@ -5,7 +5,7 @@
 
 #include <graphqlservice/IntrospectionSchema.h>
 
-namespace facebook::graphql::introspection {
+namespace graphql::introspection {
 
 class Schema;
 class Directive;
@@ -272,4 +272,4 @@ private:
 	const std::vector<std::shared_ptr<InputValue>> _args;
 };
 
-} /* namespace facebook::graphql::introspection */
+} /* namespace graphql::introspection */

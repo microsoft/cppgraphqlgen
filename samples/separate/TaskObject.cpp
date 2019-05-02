@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <exception>
 
-namespace facebook::graphql::today {
+namespace graphql::today {
 namespace object {
 
 Task::Task()
@@ -82,4 +82,4 @@ void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, std::sh
 	});
 }
 
-} /* namespace facebook::graphql::today */
+} /* namespace graphql::today */

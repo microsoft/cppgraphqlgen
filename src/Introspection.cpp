@@ -3,7 +3,7 @@
 
 #include <graphqlservice/Introspection.h>
 
-namespace facebook::graphql::introspection {
+namespace graphql::introspection {
 
 Schema::Schema()
 {
@@ -550,4 +550,4 @@ service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Directive
 	return { std::move(result) };
 }
 
-} /* namespace facebook::graphql::introspection */
+} /* namespace graphql::introspection */
