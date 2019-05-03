@@ -211,7 +211,7 @@ enum class TypeModifier
 
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
-// argument is missing or not the correct type. If it's nullable, use find and check the second
+// argument is missing or not the correct type. If it's optional, use find and check the second
 // element in the pair to see if it was found or if you just got the default value for that type.
 template <typename Type>
 struct ModifiedArgument
