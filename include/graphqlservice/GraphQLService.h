@@ -199,9 +199,9 @@ private:
 	static char verifyToBase64(uint8_t i);
 };
 
-// Default-nullable types may be wrapped non-null or list types in GraphQL. Since nullability is
-// a more special case in C++, we invert the default and apply that modifier instead when the
-// non-null wrapper is not present in that part of the wrapper chain.
+// GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
+// Since nullability is a more special case in C++, we invert the default and apply that modifier
+// instead when the non-null wrapper is not present in that part of the wrapper chain.
 enum class TypeModifier
 {
 	None,
