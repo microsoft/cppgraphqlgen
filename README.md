@@ -43,7 +43,7 @@ WSL with both gcc 7.3.0 and clang 6.0.0. The key compiler requirement is support
 may not have enough support for that.
 
 The easiest way to get all of these and to build `cppgraphqlgen` in one step is to use
-[Microsoft/vcpkg](https://github.com/Microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
+[microsoft/vcpkg](https://github.com/microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
 and then run `vcpkg install cppgraphqlgen` (or `cppgraphqlgen:x64-windows`, `cppgraphqlgen:x86-windows-static`, etc.
 depending on your platform). To install just the dependencies and work in a clone of this repo, you'll need some subset
 of `vcpkg install pegtl boost-program-options boost-filesystem rapidjson gtest`. It works for Windows, Linux, and Mac,
