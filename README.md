@@ -25,11 +25,10 @@ app and your native/hybrid app.
 
 ## Related projects
 
-I created a couple of sample projects that worked up to version 2.x to demonstrate integrating the
-[schema.today.graphql](./samples/today/schema.today.graphql) service into an Electron app. I haven't migrated them
-to 3.x and C++17 yet, but they're available under my personal account. Feel free to use either or both of these as a
-starting point to integrate your own generated service with Node or Electron. PRs with links to your own samples or
-migrating either of those projects to 3.x are welcome.
+I created a couple of sample projects that work with the latest version to demonstrate integrating the
+[schema.today.graphql](./samples/today/schema.today.graphql) service into an Electron app. They're available under
+my personal account, feel free to use either or both of these as a starting point to integrate your own generated
+service with Node or Electron. PRs with links to your own samples are always welcome.
 
 - [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
 against the version of the Node headers included in Electron.
