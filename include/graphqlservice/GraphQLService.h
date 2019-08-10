@@ -298,7 +298,7 @@ struct ModifiedArgument
 		if (valueItr == arguments.get<const response::MapType&>().cend()
 			|| valueItr->second.type() == response::Type::Null)
 		{
-			return {};
+			return std::nullopt;
 		}
 
 		auto result = require<Other...>(name, arguments);
