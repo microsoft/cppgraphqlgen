@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unified)
+
 # todaygraphql
 add_custom_command(
   OUTPUT
@@ -17,6 +19,8 @@ add_custom_command(
 # separate
 file(STRINGS separate/today_schema_files SEPARATE_SCHEMA_CPP)
 list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND separate/)
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
 add_custom_command(
   OUTPUT
