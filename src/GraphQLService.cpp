@@ -90,40 +90,40 @@ response::Value ValueVisitor::getValue()
 
 void ValueVisitor::visit(const peg::ast_node & value)
 {
-	if (value.is<peg::variable_value>())
+	if (value.is_type<peg::variable_value>())
 	{
 		visitVariable(value);
 	}
-	else if (value.is<peg::integer_value>())
+	else if (value.is_type<peg::integer_value>())
 	{
 		visitIntValue(value);
 	}
-	else if (value.is<peg::float_value>())
+	else if (value.is_type<peg::float_value>())
 	{
 		visitFloatValue(value);
 	}
-	else if (value.is<peg::string_value>())
+	else if (value.is_type<peg::string_value>())
 	{
 		visitStringValue(value);
 	}
-	else if (value.is<peg::true_keyword>()
-		|| value.is<peg::false_keyword>())
+	else if (value.is_type<peg::true_keyword>()
+		|| value.is_type<peg::false_keyword>())
 	{
 		visitBooleanValue(value);
 	}
-	else if (value.is<peg::null_keyword>())
+	else if (value.is_type<peg::null_keyword>())
 	{
 		visitNullValue(value);
 	}
-	else if (value.is<peg::enum_value>())
+	else if (value.is_type<peg::enum_value>())
 	{
 		visitEnumValue(value);
 	}
-	else if (value.is<peg::list_value>())
+	else if (value.is_type<peg::list_value>())
 	{
 		visitListValue(value);
 	}
-	else if (value.is<peg::object_value>())
+	else if (value.is_type<peg::object_value>())
 	{
 		visitObjectValue(value);
 	}
@@ -166,7 +166,7 @@ void ValueVisitor::visitStringValue(const peg::ast_node & stringValue)
 
 void ValueVisitor::visitBooleanValue(const peg::ast_node & booleanValue)
 {
-	_value = response::Value(booleanValue.is<peg::true_keyword>());
+	_value = response::Value(booleanValue.is_type<peg::true_keyword>());
 }
 
 void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
@@ -758,15 +758,15 @@ std::queue<std::pair<std::string, std::future<response::Value>>> SelectionVisito
 
 void SelectionVisitor::visit(const peg::ast_node & selection)
 {
-	if (selection.is<peg::field>())
+	if (selection.is_type<peg::field>())
 	{
 		visitField(selection);
 	}
-	else if (selection.is<peg::fragment_spread>())
+	else if (selection.is_type<peg::fragment_spread>())
 	{
 		visitFragmentSpread(selection);
 	}
-	else if (selection.is<peg::inline_fragment>())
+	else if (selection.is_type<peg::inline_fragment>())
 	{
 		visitInlineFragment(selection);
 	}
@@ -1338,15 +1338,15 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinit
 
 	for (const auto& child : selection.children)
 	{
-		if (child->is<peg::field>())
+		if (child->is_type<peg::field>())
 		{
 			visitField(*child);
 		}
-		else if (child->is<peg::fragment_spread>())
+		else if (child->is_type<peg::fragment_spread>())
 		{
 			visitFragmentSpread(*child);
 		}
-		else if (child->is<peg::inline_fragment>())
+		else if (child->is_type<peg::inline_fragment>())
 		{
 			visitInlineFragment(*child);
 		}

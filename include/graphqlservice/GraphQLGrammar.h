@@ -24,7 +24,7 @@ void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 {
 	for (const auto& child : n.children)
 	{
-		if (child->is<Rule>())
+		if (child->is_type<Rule>())
 		{
 			func(*child);
 		}
@@ -36,7 +36,7 @@ void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 {
 	for (const auto& child : n.children)
 	{
-		if (child->is<Rule>())
+		if (child->is_type<Rule>())
 		{
 			func(*child);
 			return;

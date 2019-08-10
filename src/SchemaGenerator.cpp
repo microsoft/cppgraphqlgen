@@ -523,59 +523,59 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 
 void Generator::visitDefinition(const peg::ast_node& definition)
 {
-	if (definition.is<peg::schema_definition>())
+	if (definition.is_type<peg::schema_definition>())
 	{
 		visitSchemaDefinition(definition);
 	}
-	else if (definition.is<peg::schema_extension>())
+	else if (definition.is_type<peg::schema_extension>())
 	{
 		visitSchemaExtension(definition);
 	}
-	else if (definition.is<peg::scalar_type_definition>())
+	else if (definition.is_type<peg::scalar_type_definition>())
 	{
 		visitScalarTypeDefinition(definition);
 	}
-	else if (definition.is<peg::enum_type_definition>())
+	else if (definition.is_type<peg::enum_type_definition>())
 	{
 		visitEnumTypeDefinition(definition);
 	}
-	else if (definition.is<peg::enum_type_extension>())
+	else if (definition.is_type<peg::enum_type_extension>())
 	{
 		visitEnumTypeExtension(definition);
 	}
-	else if (definition.is<peg::input_object_type_definition>())
+	else if (definition.is_type<peg::input_object_type_definition>())
 	{
 		visitInputObjectTypeDefinition(definition);
 	}
-	else if (definition.is<peg::input_object_type_extension>())
+	else if (definition.is_type<peg::input_object_type_extension>())
 	{
 		visitInputObjectTypeExtension(definition);
 	}
-	else if (definition.is<peg::union_type_definition>())
+	else if (definition.is_type<peg::union_type_definition>())
 	{
 		visitUnionTypeDefinition(definition);
 	}
-	else if (definition.is<peg::union_type_extension>())
+	else if (definition.is_type<peg::union_type_extension>())
 	{
 		visitUnionTypeExtension(definition);
 	}
-	else if (definition.is<peg::interface_type_definition>())
+	else if (definition.is_type<peg::interface_type_definition>())
 	{
 		visitInterfaceTypeDefinition(definition);
 	}
-	else if (definition.is<peg::interface_type_extension>())
+	else if (definition.is_type<peg::interface_type_extension>())
 	{
 		visitInterfaceTypeExtension(definition);
 	}
-	else if (definition.is<peg::object_type_definition>())
+	else if (definition.is_type<peg::object_type_definition>())
 	{
 		visitObjectTypeDefinition(definition);
 	}
-	else if (definition.is<peg::object_type_extension>())
+	else if (definition.is_type<peg::object_type_extension>())
 	{
 		visitObjectTypeExtension(definition);
 	}
-	else if (definition.is<peg::directive_definition>())
+	else if (definition.is_type<peg::directive_definition>())
 	{
 		visitDirectiveDefinition(definition);
 	}
@@ -1048,26 +1048,26 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 
 		for (const auto& child : fieldDefinition->children)
 		{
-			if (child->is<peg::field_name>())
+			if (child->is_type<peg::field_name>())
 			{
 				field.name = child->string_view();
 				field.cppName = getSafeCppName(field.name);
 			}
-			else if (child->is<peg::arguments_definition>())
+			else if (child->is_type<peg::arguments_definition>())
 			{
 				field.arguments = getInputFields(child->children);
 			}
-			else if (child->is<peg::named_type>()
-				|| child->is<peg::list_type>()
-				|| child->is<peg::nonnull_type>())
+			else if (child->is_type<peg::named_type>()
+				|| child->is_type<peg::list_type>()
+				|| child->is_type<peg::nonnull_type>())
 			{
 				fieldType.visit(*child);
 			}
-			else if (child->is<peg::description>())
+			else if (child->is_type<peg::description>())
 			{
 				field.description = child->children.front()->unescaped;
 			}
-			else if (child->is<peg::directives>())
+			else if (child->is_type<peg::directives>())
 			{
 				peg::for_each_child<peg::directive>(*child,
 					[&field](const peg::ast_node & directive)
@@ -1134,18 +1134,18 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 		for (const auto& child : fieldDefinition->children)
 		{
-			if (child->is<peg::argument_name>())
+			if (child->is_type<peg::argument_name>())
 			{
 				field.name = child->string_view();
 				field.cppName = getSafeCppName(field.name);
 			}
-			else if (child->is<peg::named_type>()
-				|| child->is<peg::list_type>()
-				|| child->is<peg::nonnull_type>())
+			else if (child->is_type<peg::named_type>()
+				|| child->is_type<peg::list_type>()
+				|| child->is_type<peg::nonnull_type>())
 			{
 				fieldType.visit(*child);
 			}
-			else if (child->is<peg::default_value>())
+			else if (child->is_type<peg::default_value>())
 			{
 				DefaultValueVisitor defaultValue;
 
@@ -1153,7 +1153,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 				field.defaultValue = defaultValue.getValue();
 				field.defaultValueString = child->children.back()->string_view();
 			}
-			else if (child->is<peg::description>())
+			else if (child->is_type<peg::description>())
 			{
 				field.description = child->children.front()->unescaped;
 			}
@@ -1169,15 +1169,15 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 void Generator::TypeVisitor::visit(const peg::ast_node& typeName)
 {
-	if (typeName.is<peg::nonnull_type>())
+	if (typeName.is_type<peg::nonnull_type>())
 	{
 		visitNonNullType(typeName);
 	}
-	else if (typeName.is<peg::list_type>())
+	else if (typeName.is_type<peg::list_type>())
 	{
 		visitListType(typeName);
 	}
-	else if (typeName.is<peg::named_type>())
+	else if (typeName.is_type<peg::named_type>())
 	{
 		visitNamedType(typeName);
 	}
@@ -1220,36 +1220,36 @@ std::pair<std::string, TypeModifierStack> Generator::TypeVisitor::getType()
 
 void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 {
-	if (value.is<peg::integer_value>())
+	if (value.is_type<peg::integer_value>())
 	{
 		visitIntValue(value);
 	}
-	else if (value.is<peg::float_value>())
+	else if (value.is_type<peg::float_value>())
 	{
 		visitFloatValue(value);
 	}
-	else if (value.is<peg::string_value>())
+	else if (value.is_type<peg::string_value>())
 	{
 		visitStringValue(value);
 	}
-	else if (value.is<peg::true_keyword>()
-		|| value.is<peg::false_keyword>())
+	else if (value.is_type<peg::true_keyword>()
+		|| value.is_type<peg::false_keyword>())
 	{
 		visitBooleanValue(value);
 	}
-	else if (value.is<peg::null_keyword>())
+	else if (value.is_type<peg::null_keyword>())
 	{
 		visitNullValue(value);
 	}
-	else if (value.is<peg::enum_value>())
+	else if (value.is_type<peg::enum_value>())
 	{
 		visitEnumValue(value);
 	}
-	else if (value.is<peg::list_value>())
+	else if (value.is_type<peg::list_value>())
 	{
 		visitListValue(value);
 	}
-	else if (value.is<peg::object_value>())
+	else if (value.is_type<peg::object_value>())
 	{
 		visitObjectValue(value);
 	}
@@ -1272,7 +1272,7 @@ void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& strin
 
 void Generator::DefaultValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	_value = response::Value(booleanValue.is<peg::true_keyword>());
+	_value = response::Value(booleanValue.is_type<peg::true_keyword>());
 }
 
 void Generator::DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
