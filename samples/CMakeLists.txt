@@ -39,7 +39,7 @@ add_custom_target(update_samples ALL
   DEPENDS
     unified/TodaySchema.cpp
     separate/today_schema_files
-	${SEPARATE_SCHEMA_CPP}
+    ${SEPARATE_SCHEMA_CPP}
 )
 
 if(GRAPHQL_BUILD_TESTS)

@@ -143,7 +143,7 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 			<< " line: " << position.line
 			<< " column: " << position.byte_in_line;
 
-		throw schema_exception({ error.str() });
+		throw schema_exception { { error.str() } };
 	}
 
 	_value = response::Value(itr->second);
@@ -304,7 +304,7 @@ bool DirectiveVisitor::shouldSkip() const
 
 			error << "Invalid arguments to directive: " << entry.second;
 
-			throw schema_exception({ error.str() });
+			throw schema_exception { { error.str() } };
 		}
 
 		bool argumentTrue = false;
@@ -322,7 +322,7 @@ bool DirectiveVisitor::shouldSkip() const
 				error << "Invalid argument to directive: " << entry.second
 					<< " name: " << argument.first;
 
-				throw schema_exception({ error.str() });
+				throw schema_exception { { error.str() } };
 			}
 
 			argumentTrue = argument.second.get<response::BooleanType>();
@@ -344,7 +344,7 @@ bool DirectiveVisitor::shouldSkip() const
 			error << "Missing argument to directive: " << entry.second
 				<< " name: if";
 
-			throw schema_exception({ error.str() });
+			throw schema_exception { { error.str() } };
 		}
 	}
 
@@ -399,7 +399,7 @@ uint8_t Base64::verifyFromBase64(char ch)
 
 	if (result > 63)
 	{
-		throw schema_exception({ "invalid character in base64 encoded string" });
+		throw schema_exception { { "invalid character in base64 encoded string" } };
 	}
 
 	return result;
@@ -446,7 +446,7 @@ std::vector<uint8_t> Base64::fromBase64(const char* encoded, size_t count)
 		{
 			if (tail & 0x3)
 			{
-				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
+				throw schema_exception { { "invalid padding at the end of a base64 encoded string" } };
 			}
 
 			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
@@ -459,7 +459,7 @@ std::vector<uint8_t> Base64::fromBase64(const char* encoded, size_t count)
 		{
 			if (segment & 0xFF)
 			{
-				throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
+				throw schema_exception { { "invalid padding at the end of a base64 encoded string" } };
 			}
 
 			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
@@ -474,7 +474,7 @@ std::vector<uint8_t> Base64::fromBase64(const char* encoded, size_t count)
 		|| (count > 1 && padding != encoded[1])
 		|| count > 2)
 	{
-		throw schema_exception({ "invalid padding at the end of a base64 encoded string" });
+		throw schema_exception { { "invalid padding at the end of a base64 encoded string" } };
 	}
 
 	return result;
@@ -486,7 +486,7 @@ char Base64::verifyToBase64(uint8_t i)
 
 	if (result == padding)
 	{
-		throw schema_exception({ "invalid 6-bit value" });
+		throw schema_exception { { "invalid 6-bit value" } };
 	}
 
 	return result;
@@ -548,7 +548,7 @@ response::IntType ModifiedArgument<response::IntType>::convert(const response::V
 {
 	if (value.type() != response::Type::Int)
 	{
-		throw schema_exception({ "not an integer" });
+		throw schema_exception { { "not an integer" } };
 	}
 
 	return value.get<response::IntType>();
@@ -559,7 +559,7 @@ response::FloatType ModifiedArgument<response::FloatType>::convert(const respons
 {
 	if (value.type() != response::Type::Float)
 	{
-		throw schema_exception({ "not a float" });
+		throw schema_exception { { "not a float" } };
 	}
 
 	return value.get<response::FloatType>();
@@ -570,7 +570,7 @@ response::StringType ModifiedArgument<response::StringType>::convert(const respo
 {
 	if (value.type() != response::Type::String)
 	{
-		throw schema_exception({ "not a string" });
+		throw schema_exception { { "not a string" } };
 	}
 
 	return value.get<const response::StringType&>();
@@ -581,7 +581,7 @@ response::BooleanType ModifiedArgument<response::BooleanType>::convert(const res
 {
 	if (value.type() != response::Type::Boolean)
 	{
-		throw schema_exception({ "not a boolean" });
+		throw schema_exception { { "not a boolean" } };
 	}
 
 	return value.get<response::BooleanType>();
@@ -592,7 +592,7 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 {
 	if (value.type() != response::Type::Map)
 	{
-		throw schema_exception({ "not an object" });
+		throw schema_exception { { "not an object" } };
 	}
 
 	return response::Value(value);
@@ -603,7 +603,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 {
 	if (value.type() != response::Type::String)
 	{
-		throw schema_exception({ "not a string" });
+		throw schema_exception { { "not a string" } };
 	}
 
 	const auto& encoded = value.get<const response::StringType&>();
@@ -806,7 +806,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			<< " line: " << position.line
 			<< " column: " << position.byte_in_line;
 
-		throw schema_exception({ error.str() });
+		throw schema_exception { { error.str() } };
 	}
 
 	DirectiveVisitor directiveVisitor(_variables);
@@ -889,7 +889,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 			<< " line: " << position.line
 			<< " column: " << position.byte_in_line;
 
-		throw schema_exception({ error.str() });
+		throw schema_exception { { error.str() } };
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
@@ -1431,7 +1431,7 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 			<< " line: " << position.line
 			<< " column: " << position.byte_in_line;
 
-		throw schema_exception({ error.str() });
+		throw schema_exception { { error.str() } };
 	}
 
 	bool skip = !_subscriptionObject->matchesType(itr->second.getType());
@@ -1615,7 +1615,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 				message << " name: " << operationName;
 			}
 
-			throw schema_exception({ message.str() });
+			throw schema_exception { { message.str() } };
 		}
 		else if (operationDefinition.first == strSubscription)
 		{
@@ -1628,7 +1628,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 				message << " name: " << operationName;
 			}
 
-			throw schema_exception({ message.str() });
+			throw schema_exception { { message.str() } };
 		}
 
 		OperationDefinitionVisitor operationVisitor(state, _operations, std::move(variables), std::move(fragments));
@@ -1674,7 +1674,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 			message << " name: " << params.operationName;
 		}
 
-		throw schema_exception({ message.str() });
+		throw schema_exception { { message.str() } };
 	}
 	else if (operationDefinition.first != strSubscription)
 	{
@@ -1687,7 +1687,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 			message << " name: " << params.operationName;
 		}
 
-		throw schema_exception({ message.str() });
+		throw schema_exception { { message.str() } };
 	}
 
 	auto itr = _operations.find(std::string{ strSubscription });

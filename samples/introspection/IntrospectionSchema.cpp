@@ -29,14 +29,14 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception({ "not a valid __TypeKind value" });
+		throw service::schema_exception { { "not a valid __TypeKind value" } };
 	}
 
 	auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<const response::StringType&>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
-		throw service::schema_exception({ "not a valid __TypeKind value" });
+		throw service::schema_exception { { "not a valid __TypeKind value" } };
 	}
 
 	return static_cast<introspection::TypeKind>(itr - s_namesTypeKind.cbegin());
@@ -82,14 +82,14 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception({ "not a valid __DirectiveLocation value" });
+		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
 	}
 
 	auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<const response::StringType&>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{
-		throw service::schema_exception({ "not a valid __DirectiveLocation value" });
+		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
 	}
 
 	return static_cast<introspection::DirectiveLocation>(itr - s_namesDirectiveLocation.cbegin());

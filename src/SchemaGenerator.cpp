@@ -1916,7 +1916,7 @@ template <>
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
+		throw service::schema_exception { { "not a valid )cpp" << enumType.type << R"cpp( value" } };
 	}
 
 	auto itr = std::find(s_names)cpp" << enumType.cppType
@@ -1926,7 +1926,7 @@ template <>
 	if (itr == s_names)cpp" << enumType.cppType
 				<< R"cpp(.cend())
 	{
-		throw service::schema_exception({ "not a valid )cpp" << enumType.type << R"cpp( value" });
+		throw service::schema_exception { { "not a valid )cpp" << enumType.type << R"cpp( value" } };
 	}
 
 	return static_cast<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType

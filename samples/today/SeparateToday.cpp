@@ -236,7 +236,7 @@ struct EdgeConstraints
 				std::ostringstream error;
 
 				error << "Invalid argument: first value: " << *first;
-				throw service::schema_exception({ error.str() });
+				throw service::schema_exception { { error.str() } };
 			}
 
 			if (itrLast - itrFirst > *first)
@@ -252,7 +252,7 @@ struct EdgeConstraints
 				std::ostringstream error;
 
 				error << "Invalid argument: last value: " << *last;
-				throw service::schema_exception({ error.str() });
+				throw service::schema_exception { { error.str() } };
 			}
 
 			if (itrLast - itrFirst > *last)
