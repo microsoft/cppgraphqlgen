@@ -29,7 +29,11 @@ namespace graphql::service {
 class schema_exception : public std::exception
 {
 public:
-	schema_exception(std::vector<std::string>&& messages);
+	schema_exception() = delete;
+	schema_exception(const schema_exception&) = delete;
+	explicit schema_exception(schema_exception&&) = default;
+
+	explicit schema_exception(std::vector<std::string>&& messages);
 
 	const char* what() const noexcept override;
 

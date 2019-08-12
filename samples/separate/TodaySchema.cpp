@@ -27,14 +27,14 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception({ "not a valid TaskState value" });
+		throw service::schema_exception { { "not a valid TaskState value" } };
 	}
 
 	auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<const response::StringType&>());
 
 	if (itr == s_namesTaskState.cend())
 	{
-		throw service::schema_exception({ "not a valid TaskState value" });
+		throw service::schema_exception { { "not a valid TaskState value" } };
 	}
 
 	return static_cast<today::TaskState>(itr - s_namesTaskState.cbegin());
