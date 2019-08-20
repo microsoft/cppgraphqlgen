@@ -3038,9 +3038,12 @@ std::string Generator::getArgumentAccessType(const InputField & argument) const 
 	switch (argument.fieldType)
 	{
 		case InputFieldType::Builtin:
+			argumentType << getCppType(argument.type);
+			break;
+
 		case InputFieldType::Enum:
 		case InputFieldType::Input:
-			argumentType << getCppType(argument.type);
+			argumentType << _schemaNamespace << R"cpp(::)cpp" << getCppType(argument.type);
 			break;
 
 		case InputFieldType::Scalar:
