@@ -347,7 +347,7 @@ void Value::set<StringType>(StringType&& value)
 }
 
 template <>
-void Value::set<BooleanType>(BooleanType&& value)
+void Value::set<BooleanType>(BooleanType value)
 {
 	if (type() != Type::Boolean)
 	{
@@ -358,7 +358,7 @@ void Value::set<BooleanType>(BooleanType&& value)
 }
 
 template <>
-void Value::set<IntType>(IntType&& value)
+void Value::set<IntType>(IntType value)
 {
 	if (type() != Type::Int)
 	{
@@ -369,7 +369,7 @@ void Value::set<IntType>(IntType&& value)
 }
 
 template <>
-void Value::set<FloatType>(FloatType&& value)
+void Value::set<FloatType>(FloatType value)
 {
 	if (type() != Type::Float)
 	{

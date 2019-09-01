@@ -37,6 +37,63 @@ using FloatType = double;
 using ScalarType = Value;
 using IdType = std::vector<uint8_t>;
 
+template <typename ValueType>
+struct ValueTypeTraits
+{
+	// Set by r-value reference, get by const reference, and release by value. The only types
+	// that actually support all 3 methods are StringType and ScalarType, everything else
+	// overrides some subset of these types with a template specialization.
+	using set_type = ValueType &&;
+	using get_type = const ValueType &;
+	using release_type = ValueType;
+};
+
+template <>
+struct ValueTypeTraits<MapType>
+{
+	// Get by const reference and release by value.
+	using get_type = const MapType &;
+	using release_type = MapType;
+};
+
+template <>
+struct ValueTypeTraits<ListType>
+{
+	// Get by const reference and release by value.
+	using get_type = const ListType &;
+	using release_type = ListType;
+};
+
+template <>
+struct ValueTypeTraits<BooleanType>
+{
+	// Set and get by value.
+	using set_type = BooleanType;
+	using get_type = BooleanType;
+};
+
+template <>
+struct ValueTypeTraits<IntType>
+{
+	// Set and get by value.
+	using set_type = IntType;
+	using get_type = IntType;
+};
+
+template <>
+struct ValueTypeTraits<FloatType>
+{
+	// Set and get by value.
+	using set_type = FloatType;
+	using get_type = FloatType;
+};
+
+template <>
+struct ValueTypeTraits<IdType>
+{
+	// ID values are represented as a String, there's no separate handling of this type.
+};
+
 struct TypedData;
 
 // Represent a discriminated union of GraphQL response value types.
@@ -86,15 +143,15 @@ struct Value
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
-	void set(ValueType&& value);
+	void set(typename ValueTypeTraits<ValueType>::set_type value);
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	ValueType get() const;
+	typename ValueTypeTraits<ValueType>::get_type get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
-	ValueType release();
+	typename ValueTypeTraits<ValueType>::release_type release();
 
 private:
 	const Type _type;
