@@ -29,11 +29,9 @@ namespace graphql::service {
 class schema_exception : public std::exception
 {
 public:
-	schema_exception() = delete;
-	schema_exception(const schema_exception&) = delete;
-	explicit schema_exception(schema_exception&&) = default;
-
 	explicit schema_exception(std::vector<std::string>&& messages);
+
+	schema_exception() = delete;
 
 	const char* what() const noexcept override;
 
@@ -555,6 +553,16 @@ struct ModifiedResult
 							}
 						}
 					}
+					catch (schema_exception& scx)
+					{
+						auto messages = scx.getErrors().release<response::ListType>();
+
+						errors.reserve(errors.size() + messages.size());
+						for (auto& error : messages)
+						{
+							errors.emplace_back(std::move(error));
+						}
+					}
 					catch (const std::exception & ex)
 					{
 						std::ostringstream message;
@@ -595,11 +603,16 @@ private:
 		return std::async(std::launch::deferred,
 			[](auto && resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
 			{
-				response::Value document(response::Type::Map);
+				response::Value data;
+				response::Value errors(response::Type::List);
 
 				try
 				{
-					document.emplace_back(std::string{ strData }, resolverFuture(resultFuture.get(), paramsFuture));
+					data = resolverFuture(resultFuture.get(), paramsFuture);
+				}
+				catch (schema_exception& scx)
+				{
+					errors = scx.getErrors();
 				}
 				catch (const std::exception & ex)
 				{
@@ -608,11 +621,18 @@ private:
 					message << "Field name: " << paramsFuture.fieldName
 						<< " unknown error: " << ex.what();
 
-					response::Value errors(response::Type::List);
 					response::Value error(response::Type::Map);
 
 					error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
 					errors.emplace_back(std::move(error));
+				}
+
+				response::Value document(response::Type::Map);
+
+				document.emplace_back(std::string{ strData }, std::move(data));
+
+				if (errors.size() > 0)
+				{
 					document.emplace_back(std::string{ strErrors }, std::move(errors));
 				}
 
