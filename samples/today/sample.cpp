@@ -5,6 +5,7 @@
 
 #include <graphqlservice/JSONResponse.h>
 
+#include <iterator>
 #include <iostream>
 #include <stdexcept>
 #include <cstdio>
@@ -66,13 +67,8 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			std::string input;
-			std::string line;
-
-			while (std::getline(std::cin, line))
-			{
-				input.append(line);
-			}
+			std::istream_iterator<char> start{ std::cin >> std::noskipws }, end{};
+			std::string input{ start, end };
 
 			query = peg::parseString(std::move(input));
 		}
