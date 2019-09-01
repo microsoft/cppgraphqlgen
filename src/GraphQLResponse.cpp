@@ -69,37 +69,36 @@ struct TypedData : std::variant<
 	
 Value::Value(Type type /*= Type::Null*/)
 	: _type(type)
-	, _data(std::make_unique<TypedData>())
 {
 	switch (type)
 	{
 		case Type::Map:
-			*_data = { std::make_optional<MapData>() };
+			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<MapData>() });
 			break;
 
 		case Type::List:
-			*_data = { std::make_optional<ListData>() };
+			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<ListData>() });
 			break;
 
 		case Type::String:
 		case Type::EnumValue:
-			*_data = { std::make_optional<StringOrEnumData>() };
+			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<StringOrEnumData>() });
 			break;
 
 		case Type::Scalar:
-			*_data = { std::make_optional<ScalarData>() };
+			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<ScalarData>() });
 			break;
 
 		case Type::Boolean:
-			*_data = { BooleanType{ false } };
+			_data = std::make_unique<TypedData>(TypedData{ BooleanType{ false } });
 			break;
 
 		case Type::Int:
-			*_data = { IntType{ 0 } };
+			_data = std::make_unique<TypedData>(TypedData{ IntType{ 0 } });
 			break;
 
 		case Type::Float:
-			*_data = { FloatType{ 0.0 } };
+			_data = std::make_unique<TypedData>(TypedData{ FloatType{ 0.0 } });
 			break;
 
 		default:
@@ -158,8 +157,12 @@ Value::Value(const Value& other)
 
 Value& Value::operator=(Value&& rhs) noexcept
 {
-	const_cast<Type&>(_type) = rhs._type;
-	_data = std::move(rhs._data);
+	if (&rhs != this)
+	{
+		const_cast<Type&>(_type) = rhs._type;
+		_data = std::move(rhs._data);
+	}
+
 	return *this;
 }
 

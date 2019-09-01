@@ -1081,6 +1081,16 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 						}
 					}
 				}
+				catch (schema_exception & scx)
+				{
+					auto messages = scx.getErrors().release<response::ListType>();
+
+					errors.reserve(errors.size() + messages.size());
+					for (auto& error : messages)
+					{
+						errors.emplace_back(std::move(error));
+					}
+				}
 				catch (const std::exception & ex)
 				{
 					std::ostringstream message;
