@@ -1305,7 +1305,7 @@ struct definition
 };
 
 struct document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>, list<definition, plus<ignored>>, star<ignored>, tao::graphqlpeg::eof>
+	: seq<bof, opt<utf8::bom>, star<ignored>, list<definition, star<ignored>>, star<ignored>, tao::graphqlpeg::eof>
 {
 };
 
