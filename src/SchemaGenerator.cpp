@@ -22,7 +22,7 @@ namespace fs = std::filesystem;
 
 
 namespace graphql::schema {
-	
+
 NamespaceScope::NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred /*= false*/) noexcept
 	: _outputFile(outputFile)
 	, _cppNamespace(cppNamespace)
@@ -1506,7 +1506,6 @@ bool Generator::outputHeader() const noexcept
 	NamespaceScope graphqlNamespace{ headerFile, "graphql" };
 	NamespaceScope introspectionNamespace{ headerFile, s_introspectionNamespace };
 	NamespaceScope schemaNamespace{ headerFile, _schemaNamespace, true };
-	NamespaceScope objectNamespace{ headerFile, "object", true };
 
 	headerFile << R"cpp(
 class Schema;
@@ -1600,7 +1599,7 @@ class Schema;
 
 	if (!_objectTypes.empty())
 	{
-		objectNamespace.enter();
+		NamespaceScope objectNamespace{ headerFile, "object" };
 		headerFile << std::endl;
 
 		// Forward declare all of the object types
@@ -1615,10 +1614,7 @@ class Schema;
 
 	if (!_interfaceTypes.empty())
 	{
-		if (objectNamespace.exit())
-		{
-			headerFile << std::endl;
-		}
+		headerFile << std::endl;
 
 		// Forward declare all of the interface types
 		if (_interfaceTypes.size() > 1)
@@ -1652,10 +1648,8 @@ class Schema;
 
 	if (!_objectTypes.empty() && !_options.separateFiles)
 	{
-		if (objectNamespace.enter())
-		{
-			headerFile << std::endl;
-		}
+		NamespaceScope objectNamespace{ headerFile, "object" };
+		headerFile << std::endl;
 
 		// Output the full declarations
 		for (const auto& objectType : _objectTypes)
@@ -1664,7 +1658,6 @@ class Schema;
 			headerFile << std::endl;
 		}
 
-		objectNamespace.exit();
 		headerFile << std::endl;
 	}
 
@@ -1674,7 +1667,8 @@ class Schema;
 		{
 			bool firstOperation = true;
 
-			headerFile << R"cpp(class Operations
+			headerFile << R"cpp(
+class Operations
 	: public service::Request
 {
 public:
@@ -3242,7 +3236,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	{
 		files.push_back({ _objectHeaderPath });
 	}
-	
+
 	for (const auto& objectType : _objectTypes)
 	{
 		std::ostringstream ossNamespace;
@@ -3468,7 +3462,7 @@ int main(int argc, char** argv)
 				<< " column: " << position.byte_in_line
 				<< std::endl;
 		}
-	
+
 		return 1;
 	}
 	catch (const std::runtime_error& ex)
