@@ -252,6 +252,20 @@ private:
 	std::string_view _cppNamespace;
 };
 
+// Keep track of whether we want to add a blank separator line once some additional content is about to be output.
+class PendingBlankLine
+{
+public:
+	explicit PendingBlankLine(std::ostream& outputFile) noexcept;
+
+	void add() noexcept;
+	bool reset() noexcept;
+
+private:
+	bool _pending = false;
+	std::ostream& _outputFile;
+};
+
 class Generator
 {
 public:
