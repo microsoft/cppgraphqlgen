@@ -22,7 +22,7 @@ namespace fs = std::filesystem;
 
 
 namespace graphql::schema {
-	
+
 NamespaceScope::NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred /*= false*/) noexcept
 	: _outputFile(outputFile)
 	, _cppNamespace(cppNamespace)
@@ -1663,8 +1663,10 @@ class Schema;
 			outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
 			headerFile << std::endl;
 		}
+	}
 
-		objectNamespace.exit();
+	if (objectNamespace.exit())
+	{
 		headerFile << std::endl;
 	}
 
@@ -3242,7 +3244,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	{
 		files.push_back({ _objectHeaderPath });
 	}
-	
+
 	for (const auto& objectType : _objectTypes)
 	{
 		std::ostringstream ossNamespace;
@@ -3468,7 +3470,7 @@ int main(int argc, char** argv)
 				<< " column: " << position.byte_in_line
 				<< std::endl;
 		}
-	
+
 		return 1;
 	}
 	catch (const std::runtime_error& ex)
