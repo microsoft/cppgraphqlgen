@@ -73,6 +73,29 @@ bool NamespaceScope::exit() noexcept
 }
 
 
+PendingBlankLine::PendingBlankLine(std::ostream& outputFile) noexcept
+	: _outputFile(outputFile)
+{
+}
+
+void PendingBlankLine::add() noexcept
+{
+	_pending = true;
+}
+
+bool PendingBlankLine::reset() noexcept
+{
+	if (_pending)
+	{
+		_outputFile << std::endl;
+		_pending = false;
+		return true;
+	}
+
+	return false;
+}
+
+
 const std::string Generator::s_introspectionNamespace = "introspection";
 
 const BuiltinTypeMap Generator::s_builtinTypes = {
@@ -1507,6 +1530,7 @@ bool Generator::outputHeader() const noexcept
 	NamespaceScope introspectionNamespace{ headerFile, s_introspectionNamespace };
 	NamespaceScope schemaNamespace{ headerFile, _schemaNamespace, true };
 	NamespaceScope objectNamespace{ headerFile, "object", true };
+	PendingBlankLine pendingSeparator{ headerFile };
 
 	headerFile << R"cpp(
 class Schema;
@@ -1536,11 +1560,13 @@ class Schema;
 		introspectionNamespace.exit();
 		headerFile << std::endl;
 		schemaNamespace.enter();
-		headerFile << std::endl;
+		pendingSeparator.add();
 	}
 
 	if (!_enumTypes.empty())
 	{
+		pendingSeparator.reset();
+
 		for (const auto& enumType : _enumTypes)
 		{
 			headerFile << R"cpp(enum class )cpp" << enumType.cppType << R"cpp(
@@ -1569,6 +1595,8 @@ class Schema;
 
 	if (!_inputTypes.empty())
 	{
+		pendingSeparator.reset();
+
 		// Forward declare all of the input types
 		if (_inputTypes.size() > 1)
 		{
@@ -2006,8 +2034,7 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 
 			if (!inputType.fields.empty())
 			{
-				sourceFile << R"cpp(
-)cpp";
+				sourceFile << std::endl;
 			}
 
 			sourceFile << R"cpp(	return {
@@ -2237,8 +2264,7 @@ Operations::Operations()cpp";
 
 	if (!_enumTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& enumType : _enumTypes)
 		{
@@ -2286,8 +2312,7 @@ Operations::Operations()cpp";
 
 	if (!_inputTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& inputType : _inputTypes)
 		{
@@ -2324,8 +2349,7 @@ Operations::Operations()cpp";
 
 	if (!_unionTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& unionType : _unionTypes)
 		{
@@ -2359,8 +2383,7 @@ Operations::Operations()cpp";
 
 	if (!_interfaceTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& interfaceType : _interfaceTypes)
 		{
@@ -2438,8 +2461,7 @@ Operations::Operations()cpp";
 
 	if (!_objectTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& objectType : _objectTypes)
 		{
@@ -2459,8 +2481,7 @@ Operations::Operations()cpp";
 
 	if (!_directives.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& directive : _directives)
 		{
@@ -2530,8 +2551,7 @@ Operations::Operations()cpp";
 
 	if (!_operationTypes.empty())
 	{
-		sourceFile << R"cpp(
-)cpp";
+		sourceFile << std::endl;
 
 		for (const auto& operationType : _operationTypes)
 		{
