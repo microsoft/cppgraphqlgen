@@ -1506,6 +1506,7 @@ bool Generator::outputHeader() const noexcept
 	NamespaceScope graphqlNamespace{ headerFile, "graphql" };
 	NamespaceScope introspectionNamespace{ headerFile, s_introspectionNamespace };
 	NamespaceScope schemaNamespace{ headerFile, _schemaNamespace, true };
+	NamespaceScope objectNamespace{ headerFile, "object", true };
 
 	headerFile << R"cpp(
 class Schema;
@@ -1599,7 +1600,7 @@ class Schema;
 
 	if (!_objectTypes.empty())
 	{
-		NamespaceScope objectNamespace{ headerFile, "object" };
+		objectNamespace.enter();
 		headerFile << std::endl;
 
 		// Forward declare all of the object types
@@ -1614,7 +1615,10 @@ class Schema;
 
 	if (!_interfaceTypes.empty())
 	{
-		headerFile << std::endl;
+		if (objectNamespace.exit())
+		{
+			headerFile << std::endl;
+		}
 
 		// Forward declare all of the interface types
 		if (_interfaceTypes.size() > 1)
@@ -1648,8 +1652,10 @@ class Schema;
 
 	if (!_objectTypes.empty() && !_options.separateFiles)
 	{
-		NamespaceScope objectNamespace{ headerFile, "object" };
-		headerFile << std::endl;
+		if (objectNamespace.enter())
+		{
+			headerFile << std::endl;
+		}
 
 		// Output the full declarations
 		for (const auto& objectType : _objectTypes)
@@ -1657,7 +1663,10 @@ class Schema;
 			outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
 			headerFile << std::endl;
 		}
+	}
 
+	if (objectNamespace.exit())
+	{
 		headerFile << std::endl;
 	}
 
@@ -1667,8 +1676,7 @@ class Schema;
 		{
 			bool firstOperation = true;
 
-			headerFile << R"cpp(
-class Operations
+			headerFile << R"cpp(class Operations
 	: public service::Request
 {
 public:
