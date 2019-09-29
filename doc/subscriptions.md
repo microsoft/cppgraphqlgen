@@ -11,7 +11,7 @@ the subscriptions to those listeners.
 ## Adding/Removing a Listener
 
 Subscriptions are created or removed by calling the `Request::subscribe`
-and `Request::unsubscribe` methods in [GraphQLService.h](../include/GraphQLService.h):
+and `Request::unsubscribe` methods in [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
 SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
 void unsubscribe(SubscriptionKey key);
