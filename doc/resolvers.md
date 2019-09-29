@@ -73,7 +73,7 @@ In this example, the `resolveId` method invokes `getId`:
 virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
 ```
 
-There are also a couple of interesting quirks in this example:
+There are a couple of interesting quirks in this example:
 1. The `Appointment object` implements and inherits from the `Node interface`,
 which already declared `getId` as a pure-virtual method. That's what the
 `override` keyword refers to.
@@ -88,3 +88,9 @@ in the `response errors` collection:
 ```cpp
 throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
 ```
+
+Although the `id field` does not take any arguments according to the sample
+[schema](../samples/today/schema.today.graphql), this example also shows how
+every `getField` method takes a `graphql::service::FieldParams` struct as
+its first parameter. There are more details on this in the [fieldparams.md](./fieldparams.md)
+document.
