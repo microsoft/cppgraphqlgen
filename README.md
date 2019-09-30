@@ -130,6 +130,20 @@ the `graphql::service` namespace. Take a look at [UnifiedToday.h](samples/today/
 [UnifiedToday.cpp](samples/today/UnifiedToday.cpp) to see a sample implementation of a custom schema defined
 in [schema.today.graphql](samples/today/schema.today.graphql) for testing purposes.
 
+### Additional Documentation
+
+There are some more targeted documents in the [doc](./doc) directory:
+
+* [Parsing GraphQL](./doc/parsing.md)
+* [Query Responses](./doc/responses.md)
+* [JSON Representation](./doc/json.md)
+* [Field Resolvers](./doc/resolvers.md)
+* [Field Parameters](./doc/fieldparams.md)
+* [Directives](./doc/directives.md)
+* [Subscriptions](./doc/subscriptions.md)
+
+### Samples
+
 All of the generated files are in the [samples](samples/) directory. There are two different versions of
 the generated code, one which creates a single pair of files (`samples/unified/`), and one which uses the
 `--separate-files` flag with `schemagen` to generate individual header and source files (`samples/separate/`)
