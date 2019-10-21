@@ -13,8 +13,7 @@ add_custom_command(
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today"
   DEPENDS schemagen today/schema.today.graphql
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/unified
-  COMMENT "Generating mock TodaySchema files"
-)
+  COMMENT "Generating mock TodaySchema files")
 
 # separate
 file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files SEPARATE_SCHEMA_CPP)
@@ -31,16 +30,17 @@ add_custom_command(
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
   DEPENDS schemagen today/schema.today.graphql
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/separate
-  COMMENT "Generating mock TodaySchema (--separate-files)"
-)
+  COMMENT "Generating mock TodaySchema (--separate-files)")
 
 # force the generation of samples on the default build target
 add_custom_target(update_samples ALL
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
     ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
-    ${SEPARATE_SCHEMA_CPP}
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/TodayObjects.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/TodaySchema.h
+    ${SEPARATE_SCHEMA_CPP})
 
 if(GRAPHQL_BUILD_TESTS)
   add_library(unifiedschema OBJECT unified/TodaySchema.cpp)

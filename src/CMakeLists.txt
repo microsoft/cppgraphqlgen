@@ -52,20 +52,20 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
 endif()
 
 add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-    COMMAND schemagen --introspection
-	COMMAND ${CMAKE_COMMAND} -E copy IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
-	COMMAND ${CMAKE_COMMAND} -E copy include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
-    DEPENDS schemagen
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-    COMMENT "Generating IntrospectionSchema files")
+  OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+  COMMAND schemagen --introspection
+  COMMAND ${CMAKE_COMMAND} -E copy IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+  COMMAND ${CMAKE_COMMAND} -E copy include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+  DEPENDS schemagen
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+  COMMENT "Generating IntrospectionSchema files")
 
 install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-        ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+    ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
 
 # graphqlservice
 add_library(graphqlservice
