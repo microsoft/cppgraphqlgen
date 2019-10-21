@@ -29,7 +29,7 @@ const char* schema_exception::what() const noexcept
 {
 	return (_errors.size() < 1 || _errors[0].type() != response::Type::String)
 		? "Unknown schema error"
-		: _errors[0].get<const response::StringType&>().c_str();
+		: _errors[0].get<response::StringType>().c_str();
 }
 
 const response::Value& schema_exception::getErrors() const noexcept
@@ -134,7 +134,7 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 	const std::string name(variable.string_view().substr(1));
 	auto itr = _variables.find(name);
 
-	if (itr == _variables.get<const response::MapType&>().cend())
+	if (itr == _variables.get<response::MapType>().cend())
 	{
 		auto position = variable.begin();
 		std::ostringstream error;
@@ -573,7 +573,7 @@ response::StringType ModifiedArgument<response::StringType>::convert(const respo
 		throw schema_exception { { "not a string" } };
 	}
 
-	return value.get<const response::StringType&>();
+	return value.get<response::StringType>();
 }
 
 template <>
@@ -590,11 +590,6 @@ response::BooleanType ModifiedArgument<response::BooleanType>::convert(const res
 template <>
 response::Value ModifiedArgument<response::Value>::convert(const response::Value & value)
 {
-	if (value.type() != response::Type::Map)
-	{
-		throw schema_exception { { "not an object" } };
-	}
-
 	return response::Value(value);
 }
 
@@ -606,7 +601,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 		throw schema_exception { { "not a string" } };
 	}
 
-	const auto& encoded = value.get<const response::StringType&>();
+	const auto& encoded = value.get<response::StringType>();
 
 	return Base64::fromBase64(encoded.c_str(), encoded.size());
 }
@@ -1231,7 +1226,7 @@ void OperationDefinitionVisitor::visit(std::launch launch, const std::string & o
 			auto itrVar = _params->variables.find(variableName);
 			response::Value valueVar;
 
-			if (itrVar != _params->variables.get<const response::MapType&>().cend())
+			if (itrVar != _params->variables.get<response::MapType>().cend())
 			{
 				valueVar = response::Value(itrVar->second);
 			}

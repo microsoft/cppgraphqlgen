@@ -211,3 +211,86 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
 }
+
+TEST(ArgumentsCase, ScalarArgumentMap)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", response::parseJSON(R"js({ "foo": "bar" })js"));
+	response::Value actual;
+	response::MapType values;
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
+	}
+	catch (const service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	ASSERT_EQ(response::Type::Map, actual.type()) << "should parse the object";
+	values = actual.release<response::MapType>();
+	ASSERT_EQ(1, values.size()) << "should have a single key/value";
+	ASSERT_EQ("foo", values.front().first) << "should match the key";
+	ASSERT_EQ("bar", values.front().second.get<response::StringType>()) << "should match the value";
+}
+
+TEST(ArgumentsCase, ScalarArgumentList)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", response::parseJSON(R"js([ "foo", "bar" ])js"));
+	response::Value actual;
+	response::ListType values;
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
+	}
+	catch (const service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	ASSERT_EQ(response::Type::List, actual.type()) << "should parse the array";
+	values = actual.release<response::ListType>();
+	ASSERT_EQ(2, values.size()) << "should have 2 values";
+	ASSERT_EQ("foo", values.front().get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("bar", values.back().get<response::StringType>()) << "should match the value";
+}
+
+TEST(ArgumentsCase, ScalarArgumentNull)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", {});
+	response::Value actual;
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
+	}
+	catch (const service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	ASSERT_EQ(response::Type::Null, actual.type()) << "should match null";
+}
+
+TEST(ArgumentsCase, ScalarArgumentString)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", response::Value("foobar"));
+	response::Value actual;
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
+	}
+	catch (const service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+
+	ASSERT_EQ(response::Type::String, actual.type()) << "should parse the object";
+	ASSERT_EQ("foobar", actual.get<response::StringType>()) << "should match the value";
+}

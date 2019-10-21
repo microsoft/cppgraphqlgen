@@ -297,7 +297,7 @@ struct ModifiedArgument
 	{
 		const auto& valueItr = arguments.find(name);
 
-		if (valueItr == arguments.get<const response::MapType&>().cend()
+		if (valueItr == arguments.get<response::MapType>().cend()
 			|| valueItr->second.type() == response::Type::Null)
 		{
 			return std::nullopt;
@@ -315,7 +315,7 @@ struct ModifiedArgument
 	{
 		const auto& values = arguments[name];
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
-		const auto& elements = values.get<const response::ListType&>();
+		const auto& elements = values.get<response::ListType>();
 
 		std::transform(elements.cbegin(), elements.cend(), result.begin(),
 			[&name](const response::Value & element)

@@ -49,28 +49,23 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
     EXPORT cppgraphqlgen-targets
     RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
     CONFIGURATIONS Release)
-else()
-  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "GRAPHQL_UPDATE_SAMPLES depends on GRAPHQL_BUILD_SCHEMAGEN" FORCE)
 endif()
 
-if(GRAPHQL_UPDATE_SAMPLES)
-  add_custom_command(
+add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+        ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
     COMMAND schemagen --introspection
+	COMMAND ${CMAKE_COMMAND} -E copy IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+	COMMAND ${CMAKE_COMMAND} -E copy include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
     DEPENDS schemagen
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     COMMENT "Generating IntrospectionSchema files")
 
-  install(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+        ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
-else()
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice)
-endif()
 
 # graphqlservice
 add_library(graphqlservice
@@ -116,7 +111,6 @@ if(BUILD_GRAPHQLJSON)
     CONFIGURATIONS Release)
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
-  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "GRAPHQL_UPDATE_SAMPLES depends on BUILD_GRAPHQLJSON" FORCE)
 endif()
 
 install(TARGETS

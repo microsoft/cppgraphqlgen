@@ -142,7 +142,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -216,7 +216,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -268,7 +268,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -319,7 +319,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -360,7 +360,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -409,7 +409,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -458,7 +458,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -518,7 +518,7 @@ TEST_F(TodayServiceCase, Introspection)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -580,7 +580,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -642,7 +642,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -699,7 +699,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -816,7 +816,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -854,7 +854,7 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		ASSERT_TRUE(error.type() == response::Type::Map);
 		const auto& message = error[std::string{ service::strMessage }];
 		ASSERT_TRUE(message.type() == response::Type::String);
-		ASSERT_EQ(R"e(Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<const response::StringType&>());
+		ASSERT_EQ(R"e(Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<response::StringType>());
 	}
 	catch (const service::schema_exception& ex)
 	{
@@ -895,7 +895,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -969,7 +969,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 	{
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
-		EXPECT_EQ("ZmFr", fuzzy.second.get<const response::StringType&>());
+		EXPECT_EQ("ZmFr", fuzzy.second.get<response::StringType>());
 		filterCalled = true;
 		return true;
 	};
@@ -996,7 +996,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		ASSERT_TRUE(filterCalled) << "should match the id parameter in the subscription";
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -1030,7 +1030,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	{
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
-		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<const response::StringType&>());
+		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<response::StringType>());
 		filterCalled = true;
 		return false;
 	};
@@ -1096,7 +1096,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -1146,7 +1146,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
@@ -1196,7 +1196,7 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<const response::MapType&>().cend())
+		if (errorsItr != result.get<response::MapType>().cend())
 		{
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}

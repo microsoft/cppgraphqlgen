@@ -8,37 +8,37 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unified)
 # todaygraphql
 add_custom_command(
   OUTPUT
-    unified/TodaySchema.cpp
-    unified/TodaySchema.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today"
   DEPENDS schemagen today/schema.today.graphql
-  WORKING_DIRECTORY unified
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/unified
   COMMENT "Generating mock TodaySchema files"
 )
 
 # separate
-file(STRINGS separate/today_schema_files SEPARATE_SCHEMA_CPP)
-list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND separate/)
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files SEPARATE_SCHEMA_CPP)
+list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/separate/)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
 add_custom_command(
   OUTPUT
-    separate/today_schema_files
-    separate/TodayObjects.h
-    separate/TodaySchema.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/TodayObjects.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/TodaySchema.h
     ${SEPARATE_SCHEMA_CPP}
   COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
   DEPENDS schemagen today/schema.today.graphql
-  WORKING_DIRECTORY separate
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/separate
   COMMENT "Generating mock TodaySchema (--separate-files)"
 )
 
 # force the generation of samples on the default build target
 add_custom_target(update_samples ALL
   DEPENDS
-    unified/TodaySchema.cpp
-    separate/today_schema_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
     ${SEPARATE_SCHEMA_CPP}
 )
 
@@ -49,7 +49,7 @@ if(GRAPHQL_BUILD_TESTS)
     ${CMAKE_CURRENT_BINARY_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    ${CMAKE_CURRENT_BINARY_DIR}/unified)
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified)
   add_bigobj_flag(unifiedschema)
 
   add_library(unifiedgraphql today/UnifiedToday.cpp)
@@ -63,7 +63,7 @@ target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  ${CMAKE_CURRENT_BINARY_DIR}/separate)
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate)
 
 add_library(separategraphql today/SeparateToday.cpp)
 target_link_libraries(separategraphql PUBLIC separateschema)
@@ -78,13 +78,5 @@ target_include_directories(sample PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  ${CMAKE_CURRENT_BINARY_DIR}/separate
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate
   ${CMAKE_CURRENT_SOURCE_DIR}/today)
-
-if(GRAPHQL_UPDATE_SAMPLES)
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unified
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-endif()

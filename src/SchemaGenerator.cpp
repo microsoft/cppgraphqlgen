@@ -1951,7 +1951,7 @@ template <>
 
 	auto itr = std::find(s_names)cpp" << enumType.cppType
 				<< R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-				<< R"cpp(.cend(), value.get<const response::StringType&>());
+				<< R"cpp(.cend(), value.get<response::StringType>());
 
 	if (itr == s_names)cpp" << enumType.cppType
 				<< R"cpp(.cend())
@@ -2897,7 +2897,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 	{
 		case response::Type::Map:
 		{
-			const auto& members = defaultValue.get<const response::MapType&>();
+			const auto& members = defaultValue.get<response::MapType>();
 
 			argumentDefaultValue << padding << R"cpp(		entry = []()
 )cpp" << padding << R"cpp(		{
@@ -2921,7 +2921,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 
 		case response::Type::List:
 		{
-			const auto& elements = defaultValue.get<const response::ListType&>();
+			const auto& elements = defaultValue.get<response::ListType>();
 
 			argumentDefaultValue << padding << R"cpp(		entry = []()
 )cpp" << padding << R"cpp(		{
@@ -2946,7 +2946,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 		case response::Type::String:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value(std::string(R"gql()cpp"
-				<< defaultValue.get<const response::StringType&>() << R"cpp()gql"));
+				<< defaultValue.get<response::StringType>() << R"cpp()gql"));
 )cpp";
 			break;
 		}
@@ -2988,7 +2988,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 		case response::Type::EnumValue:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value(response::Type::EnumValue);
-		entry.set<response::StringType>(R"gql()cpp" << defaultValue.get<const response::StringType&>() << R"cpp()gql");
+		entry.set<response::StringType>(R"gql()cpp" << defaultValue.get<response::StringType>() << R"cpp()gql");
 )cpp";
 			break;
 		}
@@ -3001,7 +3001,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 )cpp" << padding << R"cpp(			response::Value entry;
 
 )cpp";
-			argumentDefaultValue << padding << R"cpp(	)cpp" << getArgumentDefaultValue(level + 1, defaultValue.get<const response::ScalarType&>())
+			argumentDefaultValue << padding << R"cpp(	)cpp" << getArgumentDefaultValue(level + 1, defaultValue.get<response::ScalarType>())
 				<< padding << R"cpp(			scalar.set<response::ScalarType>(std::move(entry));
 
 )cpp" << padding << R"cpp(			return scalar;

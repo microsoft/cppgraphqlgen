@@ -38,8 +38,6 @@ endif()
 
 add_subdirectory(src)
 
-option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
-
 if(GRAPHQL_BUILD_TESTS OR GRAPHQL_UPDATE_SAMPLES)
   add_subdirectory(samples)
 
