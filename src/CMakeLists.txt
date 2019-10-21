@@ -62,11 +62,6 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   COMMENT "Generating IntrospectionSchema files")
 
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-    ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection)
-
 # graphqlservice
 add_library(graphqlservice
   $<TARGET_OBJECTS:graphqlresponse>
