@@ -394,7 +394,7 @@ void Value::set<ScalarType>(ScalarType&& value)
 }
 
 template <>
-const MapType& Value::get<const MapType&>() const
+const MapType& Value::get<MapType>() const
 {
 	if (type() != Type::Map)
 	{
@@ -405,7 +405,7 @@ const MapType& Value::get<const MapType&>() const
 }
 
 template <>
-const ListType& Value::get<const ListType&>() const
+const ListType& Value::get<ListType>() const
 {
 	if (type() != Type::List)
 	{
@@ -416,7 +416,7 @@ const ListType& Value::get<const ListType&>() const
 }
 
 template <>
-const StringType& Value::get<const StringType&>() const
+const StringType& Value::get<StringType>() const
 {
 	if (type() != Type::String
 		&& type() != Type::EnumValue)
@@ -461,7 +461,7 @@ FloatType Value::get<FloatType>() const
 }
 
 template <>
-const ScalarType& Value::get<const ScalarType&>() const
+const ScalarType& Value::get<ScalarType>() const
 {
 	if (type() != Type::Scalar)
 	{

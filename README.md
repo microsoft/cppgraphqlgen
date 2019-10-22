@@ -151,9 +151,7 @@ for each of the object types which need to be implemeneted. The only difference 
 [UnifiedToday.h](samples/today/UnifiedToday.h)
 and [SeparateToday.h](samples/today/SeparateToday.h) should be that the `SeparateToday` use a generated
 [TodayObjects.h](samples/separate/TodayObjects.h) convenience header which includes all of the inidividual
-object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h). If you modify the
-code generator in SchemaGenerator.* and rebuild, building the install target will update them. Please remember to
-include updating the samples in any pull requests which change them.
+object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h).
 
 # Build and Test
 

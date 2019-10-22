@@ -32,7 +32,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { "not a valid __TypeKind value" } };
 	}
 
-	auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<const response::StringType&>());
+	auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
@@ -85,7 +85,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
 	}
 
-	auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<const response::StringType&>());
+	auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{

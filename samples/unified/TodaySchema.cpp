@@ -30,7 +30,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { "not a valid TaskState value" } };
 	}
 
-	auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<const response::StringType&>());
+	auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTaskState.cend())
 	{

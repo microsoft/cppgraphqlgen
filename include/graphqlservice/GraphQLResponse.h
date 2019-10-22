@@ -143,15 +143,32 @@ struct Value
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
-	void set(typename ValueTypeTraits<ValueType>::set_type value);
+	void set(typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
+		typename ValueTypeTraits<ValueType>::set_type> value);
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	typename ValueTypeTraits<ValueType>::get_type get() const;
+	typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
+		typename ValueTypeTraits<ValueType>::get_type> get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
 	typename ValueTypeTraits<ValueType>::release_type release();
+
+	// Compatibility wrappers
+	template <typename ReferenceType>
+	[[deprecated("Use the unqualified Value::set<> specialization instead of specializing on the r-value reference.")]]
+	void set(typename std::enable_if_t<std::is_rvalue_reference_v<ReferenceType>, ReferenceType> value)
+	{
+		set<std::decay_t<ReferenceType>>(std::move(value));
+	}
+
+	template <typename ReferenceType>
+	[[deprecated("Use the unqualified Value::get<> specialization instead of specializing on the const reference.")]]
+	typename std::enable_if_t<std::is_lvalue_reference_v<ReferenceType> && std::is_const_v<typename std::remove_reference_t<ReferenceType>>, ReferenceType> get() const
+	{
+		return get<std::decay_t<ReferenceType>>();
+	}
 
 private:
 	const Type _type;
