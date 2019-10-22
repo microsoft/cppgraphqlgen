@@ -37,9 +37,14 @@ if(NOT pegtl_FOUND)
 endif()
 
 add_subdirectory(src)
-add_subdirectory(samples)
 
-if(GRAPHQL_BUILD_TESTS)
-  include(CTest)
-  add_subdirectory(test)
+option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
+
+if(GRAPHQL_BUILD_TESTS OR GRAPHQL_UPDATE_SAMPLES)
+  add_subdirectory(samples)
+  
+  if(GRAPHQL_BUILD_TESTS)
+    include(CTest)
+    add_subdirectory(test)
+  endif()
 endif()
