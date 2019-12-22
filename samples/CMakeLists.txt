@@ -76,6 +76,7 @@ endif()
 add_library(separategraphql
   today/SeparateToday.cpp
   $<TARGET_OBJECTS:separateschema>)
+add_dependencies(separategraphql separateschema)
 target_link_libraries(separategraphql PUBLIC graphqlservice)
 target_include_directories(separategraphql PUBLIC
   $<TARGET_PROPERTY:separateschema,INCLUDE_DIRECTORIES>
@@ -98,7 +99,6 @@ if(GRAPHQL_BUILD_TESTS)
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
     unified)
-  add_bigobj_flag(unifiedschema)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
@@ -108,8 +108,10 @@ if(GRAPHQL_BUILD_TESTS)
   add_library(unifiedgraphql
     today/UnifiedToday.cpp
     $<TARGET_OBJECTS:unifiedschema>)
+  add_dependencies(unifiedgraphql unifiedschema)
   target_link_libraries(unifiedgraphql PUBLIC graphqlservice)
   target_include_directories(unifiedgraphql PUBLIC
     $<TARGET_PROPERTY:unifiedschema,INCLUDE_DIRECTORIES>
     today)
+  add_bigobj_flag(unifiedgraphql)
 endif()
