@@ -34,23 +34,17 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_target(separate_schema_files ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files)
 
-  file(GLOB OLD_INTROSPECTION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/introspection/*)
   file(GLOB OLD_UNIFIED_FILES ${CMAKE_CURRENT_SOURCE_DIR}/unified/*)
   file(GLOB OLD_SEPARATE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/separate/*)
 
   add_custom_command(
     OUTPUT updated_samples
-    COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_INTROSPECTION_FILES}
-    COMMAND ${CMAKE_COMMAND} -E copy ../IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/introspection/
-    COMMAND ${CMAKE_COMMAND} -E copy ../include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/introspection/
     COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_UNIFIED_FILES}
     COMMAND ${CMAKE_COMMAND} -E copy_directory unified/ ${CMAKE_CURRENT_SOURCE_DIR}/unified/
     COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_SEPARATE_FILES}
     COMMAND ${CMAKE_COMMAND} -E copy_directory separate/ ${CMAKE_CURRENT_SOURCE_DIR}/separate/
     COMMAND ${CMAKE_COMMAND} -E touch updated_samples
     DEPENDS 
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files

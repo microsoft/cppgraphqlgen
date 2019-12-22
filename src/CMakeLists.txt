@@ -57,6 +57,24 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   COMMENT "Generating IntrospectionSchema files")
 
+if(GRAPHQL_UPDATE_SAMPLES)
+  file(GLOB OLD_INTROSPECTION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/*)
+
+  add_custom_command(
+    OUTPUT updated_introspection
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_INTROSPECTION_FILES}
+    COMMAND ${CMAKE_COMMAND} -E copy ../IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+    COMMAND ${CMAKE_COMMAND} -E copy ../include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+    COMMAND ${CMAKE_COMMAND} -E touch updated_introspection
+    DEPENDS 
+      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+    COMMENT "Updating introspection files")
+
+  add_custom_target(update_introspection ALL
+    DEPENDS updated_introspection)
+endif()
+
 # graphqlservice
 add_library(graphqlservice
   $<TARGET_OBJECTS:graphqlresponse>
