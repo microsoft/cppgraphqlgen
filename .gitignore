@@ -33,4 +33,6 @@ settings.json
 /test/pegtl_tests
 /test/response_tests
 /test/today_tests
-build
+build/
+install/
+isenseconfig/

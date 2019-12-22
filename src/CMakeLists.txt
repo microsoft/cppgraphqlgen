@@ -52,6 +52,7 @@ add_custom_command(
   OUTPUT
     ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+  COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice
   COMMAND schemagen --introspection
   DEPENDS schemagen
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
@@ -84,7 +85,7 @@ add_library(graphqlservice
 target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
   Threads::Threads)
-target_include_directories(graphqlservice PRIVATE
+target_include_directories(graphqlservice SYSTEM PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/../include)
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
@@ -139,15 +140,6 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
   CONFIGURATIONS Release)
-
-# Enable version checks in find_package
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(cmake/${PROJECT_NAME}-config-version.cmake COMPATIBILITY SameMajorVersion)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/${PROJECT_NAME}-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
-  DESTINATION ${GRAPHQL_INSTALL_CMAKE_DIR}/${PROJECT_NAME})
 
 install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::
