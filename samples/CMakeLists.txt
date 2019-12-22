@@ -54,6 +54,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Updating sample files")
 
   add_custom_target(update_samples ALL
