@@ -55,11 +55,13 @@ if(GRAPHQL_UPDATE_SAMPLES)
 endif()
 
 # sample
-file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files SEPARATE_SCHEMA_CPP)
-list(TRANSFORM SEPARATE_SCHEMA_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/separate/)
+set(SEPARATE_SCHEMA_PATHS "")
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files SEPARATE_SCHEMA_FILES)
+foreach(CPP_FILE IN LISTS SEPARATE_SCHEMA_FILES)
+  list(APPEND SEPARATE_SCHEMA_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/separate/${CPP_FILE}")
+endforeach(CPP_FILE)
 
-add_library(separateschema OBJECT ${SEPARATE_SCHEMA_CPP})
-target_link_libraries(separateschema PUBLIC graphqlservice)
+add_library(separateschema OBJECT ${SEPARATE_SCHEMA_PATHS})
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -71,9 +73,13 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_dependencies(separateschema update_samples)
 endif()
 
-add_library(separategraphql today/SeparateToday.cpp)
-target_link_libraries(separategraphql PUBLIC separateschema)
-target_include_directories(separategraphql PUBLIC today)
+add_library(separategraphql
+  today/SeparateToday.cpp
+  $<TARGET_OBJECTS:separateschema>)
+target_link_libraries(separategraphql PUBLIC graphqlservice)
+target_include_directories(separategraphql PUBLIC
+  $<TARGET_PROPERTY:separateschema,INCLUDE_DIRECTORIES>
+  today)
 
 add_executable(sample today/sample.cpp)
 target_link_libraries(sample PRIVATE
@@ -87,7 +93,6 @@ target_include_directories(sample PRIVATE
 if(GRAPHQL_BUILD_TESTS)
   # tests
   add_library(unifiedschema OBJECT unified/TodaySchema.cpp)
-  target_link_libraries(unifiedschema PUBLIC graphqlservice)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -100,7 +105,11 @@ if(GRAPHQL_BUILD_TESTS)
     add_dependencies(unifiedschema update_samples)
   endif()
 
-  add_library(unifiedgraphql today/UnifiedToday.cpp)
-  target_link_libraries(unifiedgraphql PUBLIC unifiedschema)
-  target_include_directories(unifiedgraphql PUBLIC today)
+  add_library(unifiedgraphql
+    today/UnifiedToday.cpp
+    $<TARGET_OBJECTS:unifiedschema>)
+  target_link_libraries(unifiedgraphql PUBLIC graphqlservice)
+  target_include_directories(unifiedgraphql PUBLIC
+    $<TARGET_PROPERTY:unifiedschema,INCLUDE_DIRECTORIES>
+    today)
 endif()
