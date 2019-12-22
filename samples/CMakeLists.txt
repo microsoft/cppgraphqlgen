@@ -62,6 +62,7 @@ foreach(CPP_FILE IN LISTS SEPARATE_SCHEMA_FILES)
 endforeach(CPP_FILE)
 
 add_library(separateschema OBJECT ${SEPARATE_SCHEMA_PATHS})
+add_dependencies(separateschema graphqlservice)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -94,6 +95,7 @@ target_include_directories(sample PRIVATE
 if(GRAPHQL_BUILD_TESTS)
   # tests
   add_library(unifiedschema OBJECT unified/TodaySchema.cpp)
+  add_dependencies(unifiedschema graphqlservice)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
