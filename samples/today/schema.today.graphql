@@ -11,14 +11,14 @@ scalar ItemCursor
 
 "Root Query type"
 type Query {
-	"""[Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification)"""
+    """[Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification)"""
     node(id: ID!) : Node
 
-	"""Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    """Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     appointments(first: Int, after: ItemCursor, last: Int, before: ItemCursor): AppointmentConnection!
-	"""Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    """Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     tasks(first: Int, after: ItemCursor, last: Int, before: ItemCursor): TaskConnection!
-	"""Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    """Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
     unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
 
     appointmentsById(ids: [ID!]! = ["ZmFrZUFwcG9pbnRtZW50SWQ="]) : [Appointment]!
@@ -87,7 +87,7 @@ type Mutation {
 
 type Subscription {
     nextAppointmentChange : Appointment @deprecated(reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
-	nodeChange(id: ID!): Node!
+    nodeChange(id: ID!): Node!
 }
 
 directive @subscriptionTag(field: String) on SUBSCRIPTION
@@ -98,7 +98,7 @@ enum TaskState {
     New
     Started
     Complete
-	Unassigned @deprecated(reason:"""Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
+    Unassigned @deprecated(reason:"""Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
 }
 
 type Appointment implements Node {
