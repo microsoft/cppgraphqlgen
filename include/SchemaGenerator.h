@@ -21,7 +21,7 @@ enum class BuiltinType
 	ID,
 };
 
-using BuiltinTypeMap = std::unordered_map<std::string, BuiltinType>;
+using BuiltinTypeMap = std::map<std::string, BuiltinType>;
 
 // These are the C++ types we'll use for them.
 using CppTypeMap = std::array<std::string, static_cast<size_t>(BuiltinType::ID) + 1>;
@@ -38,7 +38,7 @@ enum class SchemaType
 	Operation,
 };
 
-using SchemaTypeMap = std::unordered_map<std::string, SchemaType>;
+using SchemaTypeMap = std::map<std::string, SchemaType>;
 
 // Keep track of the positions of each type declaration in the file.
 using PositionMap = std::unordered_map<std::string, tao::graphqlpeg::position>;
