@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef FOLDERCONNECTIONOBJECT_H
+#define FOLDERCONNECTIONOBJECT_H
+
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
@@ -25,3 +28,5 @@ private:
 };
 
 } /* namespace graphql::today::object */
+
+#endif // FOLDERCONNECTIONOBJECT_H

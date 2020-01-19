@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef TASKOBJECT_H
+#define TASKOBJECT_H
+
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
@@ -28,3 +31,5 @@ private:
 };
 
 } /* namespace graphql::today::object */
+
+#endif // TASKOBJECT_H

@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef INTROSPECTIONSCHEMA_H
+#define INTROSPECTIONSCHEMA_H
+
 #include <graphqlservice/GraphQLService.h>
 
 #include <memory>
@@ -205,3 +208,5 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace introspection */
 } /* namespace graphql */
+
+#endif // INTROSPECTIONSCHEMA_H

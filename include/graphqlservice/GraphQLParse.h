@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef GRAPHQLPARSE_H
+#define GRAPHQLPARSE_H
+
 #include <memory>
 #include <string_view>
 
@@ -26,3 +29,5 @@ ast parseFile(std::string_view filename);
 peg::ast operator "" _graphql(const char* text, size_t size);
 
 } /* namespace graphql */
+
+#endif // GRAPHQLPARSE_H

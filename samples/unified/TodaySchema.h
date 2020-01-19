@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef TODAYSCHEMA_H
+#define TODAYSCHEMA_H
+
 #include <graphqlservice/GraphQLService.h>
 
 #include <memory>
@@ -360,3 +363,5 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
 
 } /* namespace today */
 } /* namespace graphql */
+
+#endif // TODAYSCHEMA_H

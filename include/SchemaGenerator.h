@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef SCHEMAGENERATOR_H
+#define SCHEMAGENERATOR_H
+
 #include <graphqlservice/GraphQLService.h>
 #include <graphqlservice/GraphQLGrammar.h>
 
@@ -235,6 +238,18 @@ struct GeneratorOptions
 	const bool noStubs = false;
 };
 
+// RAII object to help with emitting matching include guard begin and end statements
+class IncludeGuardScope
+{
+public:
+	explicit IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept;
+	~IncludeGuardScope() noexcept;
+
+private:
+	std::ostream& _outputFile;
+	std::string _includeGuardName;
+};
+
 // RAII object to help with emitting matching namespace begin and end statements
 class NamespaceScope
 {
@@ -399,3 +414,5 @@ private:
 };
 
 } /* namespace graphql::schema */
+
+#endif // SCHEMAGENERATOR_H

@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef TODAYOBJECTS_H
+#define TODAYOBJECTS_H
+
 #include "TodaySchema.h"
 
 #include "QueryObject.h"
@@ -20,3 +23,5 @@
 #include "TaskObject.h"
 #include "FolderObject.h"
 #include "NestedTypeObject.h"
+
+#endif // TODAYOBJECTS_H

@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef GRAPHQLTREE_H
+#define GRAPHQLTREE_H
+
 #define TAO_PEGTL_NAMESPACE tao::graphqlpeg
 
 #include <tao/pegtl.hpp>
@@ -27,3 +30,5 @@ struct ast_input
 };
 
 } /* namespace graphql::peg */
+
+#endif // GRAPHQLTREE_H

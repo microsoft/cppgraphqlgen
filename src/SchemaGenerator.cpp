@@ -23,6 +23,39 @@ namespace fs = std::filesystem;
 
 namespace graphql::schema {
 
+IncludeGuardScope::IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept
+	: _outputFile(outputFile)
+	, _includeGuardName(headerFileName.size(), char{})
+{
+	std::transform(headerFileName.begin(), headerFileName.end(), _includeGuardName.begin(),
+		[](char ch) noexcept -> char
+		{
+			if (ch == '.')
+			{
+				return '_';
+			}
+
+			return std::toupper(ch);
+		});
+
+	_outputFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#pragma once
+
+#ifndef )cpp" << _includeGuardName << R"cpp(
+#define )cpp" << _includeGuardName << R"cpp(
+
+)cpp";
+}
+
+IncludeGuardScope::~IncludeGuardScope() noexcept
+{
+	_outputFile << R"cpp(
+#endif // )cpp" << _includeGuardName << R"cpp(
+)cpp";
+}
+
 NamespaceScope::NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred /*= false*/) noexcept
 	: _outputFile(outputFile)
 	, _cppNamespace(cppNamespace)
@@ -1512,13 +1545,9 @@ std::string Generator::getOutputCppType(const OutputField & field) const noexcep
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
+	IncludeGuardScope includeGuard{ headerFile, fs::path(_headerPath).filename().string() };
 
-	headerFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-#pragma once
-
-#include <graphqlservice/GraphQLService.h>
+	headerFile << R"cpp(#include <graphqlservice/GraphQLService.h>
 
 #include <memory>
 #include <string>
@@ -3242,13 +3271,9 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	// Output a convenience header
 	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
+	IncludeGuardScope includeGuard{ objectHeaderFile, fs::path(_objectHeaderPath).filename().string() };
 
-	objectHeaderFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-#pragma once
-
-#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+	objectHeaderFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -3281,13 +3306,9 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 		const auto headerPath = (headerDir / headerFilename).string();
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
+		IncludeGuardScope includeGuard{ headerFile, headerFilename };
 
-		headerFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-#pragma once
-
-#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 

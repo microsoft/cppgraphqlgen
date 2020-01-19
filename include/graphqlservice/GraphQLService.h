@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef GRAPHQLSERVICE_H
+#define GRAPHQLSERVICE_H
+
 #include <graphqlservice/GraphQLParse.h>
 #include <graphqlservice/GraphQLResponse.h>
 
@@ -736,3 +739,5 @@ private:
 };
 
 } /* namespace graphql::service */
+
+#endif // GRAPHQLSERVICE_H
