@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef GRAPHQLRESPONSE_H
+#define GRAPHQLRESPONSE_H
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -176,3 +179,5 @@ private:
 };
 
 } /* namespace graphql::response */
+
+#endif // GRAPHQLRESPONSE_H

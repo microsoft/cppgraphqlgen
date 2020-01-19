@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef APPOINTMENTOBJECT_H
+#define APPOINTMENTOBJECT_H
+
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
@@ -30,3 +33,5 @@ private:
 };
 
 } /* namespace graphql::today::object */
+
+#endif // APPOINTMENTOBJECT_H

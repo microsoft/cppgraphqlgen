@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef QUERYOBJECT_H
+#define QUERYOBJECT_H
+
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
@@ -43,3 +46,5 @@ private:
 };
 
 } /* namespace graphql::today::object */
+
+#endif // QUERYOBJECT_H

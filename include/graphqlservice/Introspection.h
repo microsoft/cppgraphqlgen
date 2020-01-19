@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef INTROSPECTION_H
+#define INTROSPECTION_H
+
 #include <graphqlservice/IntrospectionSchema.h>
 
 namespace graphql::introspection {
@@ -273,3 +276,5 @@ private:
 };
 
 } /* namespace graphql::introspection */
+
+#endif // INTROSPECTION_H

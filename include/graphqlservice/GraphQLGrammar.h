@@ -6,6 +6,9 @@
 
 #pragma once
 
+#ifndef GRAPHQLGRAMMAR_H
+#define GRAPHQLGRAMMAR_H
+
 #include <graphqlservice/GraphQLTree.h>
 
 #define TAO_PEGTL_NAMESPACE tao::graphqlpeg
@@ -1316,3 +1319,5 @@ struct document
 };
 
 } /* namespace graphql::peg */
+
+#endif // GRAPHQLGRAMMAR_H

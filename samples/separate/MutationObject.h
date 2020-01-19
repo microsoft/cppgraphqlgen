@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef MUTATIONOBJECT_H
+#define MUTATIONOBJECT_H
+
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
@@ -23,3 +26,5 @@ private:
 };
 
 } /* namespace graphql::today::object */
+
+#endif // MUTATIONOBJECT_H

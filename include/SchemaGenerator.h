@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef SCHEMAGENERATOR_H
+#define SCHEMAGENERATOR_H
+
 #include <graphqlservice/GraphQLService.h>
 #include <graphqlservice/GraphQLGrammar.h>
 
@@ -21,7 +24,7 @@ enum class BuiltinType
 	ID,
 };
 
-using BuiltinTypeMap = std::unordered_map<std::string, BuiltinType>;
+using BuiltinTypeMap = std::map<std::string, BuiltinType>;
 
 // These are the C++ types we'll use for them.
 using CppTypeMap = std::array<std::string, static_cast<size_t>(BuiltinType::ID) + 1>;
@@ -38,7 +41,7 @@ enum class SchemaType
 	Operation,
 };
 
-using SchemaTypeMap = std::unordered_map<std::string, SchemaType>;
+using SchemaTypeMap = std::map<std::string, SchemaType>;
 
 // Keep track of the positions of each type declaration in the file.
 using PositionMap = std::unordered_map<std::string, tao::graphqlpeg::position>;
@@ -235,6 +238,18 @@ struct GeneratorOptions
 	const bool noStubs = false;
 };
 
+// RAII object to help with emitting matching include guard begin and end statements
+class IncludeGuardScope
+{
+public:
+	explicit IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept;
+	~IncludeGuardScope() noexcept;
+
+private:
+	std::ostream& _outputFile;
+	std::string _includeGuardName;
+};
+
 // RAII object to help with emitting matching namespace begin and end statements
 class NamespaceScope
 {
@@ -399,3 +414,5 @@ private:
 };
 
 } /* namespace graphql::schema */
+
+#endif // SCHEMAGENERATOR_H
