@@ -358,7 +358,7 @@ void Generator::validateSchema()
 			if (itrPosition != _typePositions.cend())
 			{
 				error << " line: " << itrPosition->second.line
-					<< " column: " << itrPosition->second.byte_in_line;
+					<< " column: " << (itrPosition->second.byte_in_line + 1);
 			}
 
 			throw std::runtime_error(error.str());
@@ -426,7 +426,7 @@ void Generator::validateSchema()
 				if (itrPosition != _typePositions.cend())
 				{
 					error << " line: " << itrPosition->second.line
-						<< " column: " << itrPosition->second.byte_in_line;
+						<< " column: " << (itrPosition->second.byte_in_line + 1);
 				}
 
 				throw std::runtime_error(error.str());
@@ -471,7 +471,7 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optiona
 			if (entry.position)
 			{
 				error << " line: " << entry.position->line
-					<< " column: " << entry.position->byte_in_line;
+					<< " column: " << (entry.position->byte_in_line + 1);
 			}
 
 			throw std::runtime_error(error.str());
@@ -508,7 +508,7 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optiona
 				if (entry.position)
 				{
 					error << " line: " << entry.position->line
-						<< " column: " << entry.position->byte_in_line;
+						<< " column: " << (entry.position->byte_in_line + 1);
 				}
 
 				throw std::runtime_error(error.str());
@@ -539,7 +539,7 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 			if (entry.position)
 			{
 				error << " line: " << entry.position->line
-					<< " column: " << entry.position->byte_in_line;
+					<< " column: " << (entry.position->byte_in_line + 1);
 			}
 
 			throw std::runtime_error(error.str());
@@ -568,7 +568,7 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 				if (entry.position)
 				{
 					error << " line: " << entry.position->line
-						<< " column: " << entry.position->byte_in_line;
+						<< " column: " << (entry.position->byte_in_line + 1);
 				}
 
 				throw std::runtime_error(error.str());
@@ -3508,7 +3508,7 @@ int main(int argc, char** argv)
 		for (const auto& position : pe.positions)
 		{
 			std::cerr << "\tline: " << position.line
-				<< " column: " << position.byte_in_line
+				<< " column: " << (position.byte_in_line + 1)
 				<< std::endl;
 		}
 

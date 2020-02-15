@@ -141,7 +141,7 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 
 		error << "Unknown variable name: " << name
 			<< " line: " << position.line
-			<< " column: " << position.byte_in_line;
+			<< " column: " << (position.byte_in_line + 1);
 
 		throw schema_exception { { error.str() } };
 	}
@@ -799,7 +799,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 
 		error << "Unknown field name: " << name
 			<< " line: " << position.line
-			<< " column: " << position.byte_in_line;
+			<< " column: " << (position.byte_in_line + 1);
 
 		throw schema_exception { { error.str() } };
 	}
@@ -882,7 +882,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 
 		error << "Unknown fragment name: " << name
 			<< " line: " << position.line
-			<< " column: " << position.byte_in_line;
+			<< " column: " << (position.byte_in_line + 1);
 
 		throw schema_exception { { error.str() } };
 	}
@@ -1167,7 +1167,21 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.children.front()->string(), Fragment(fragmentDefinition, _variables) });
+	const auto& fragmentName = fragmentDefinition.children.front();
+	const auto inserted = _fragments.insert({ fragmentName->string(), Fragment(fragmentDefinition, _variables) });
+
+	if (!inserted.second)
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragment-Name-Uniqueness
+		auto position = fragmentName->begin();
+		std::ostringstream error;
+
+		error << "Duplicate fragment name: " << inserted.first->first
+			<< " line: " << position.line
+			<< " column: " << (position.byte_in_line + 1);
+
+		throw schema_exception { { error.str() } };
+	}
 }
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
@@ -1434,7 +1448,7 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 
 		error << "Unknown fragment name: " << name
 			<< " line: " << position.line
-			<< " column: " << position.byte_in_line;
+			<< " column: " << (position.byte_in_line + 1);
 
 		throw schema_exception { { error.str() } };
 	}
@@ -1553,7 +1567,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 				}
 
 				message << " line: " << position.line
-					<< " column: " << position.byte_in_line;
+					<< " column: " << (position.byte_in_line + 1);
 
 				errors.push_back(message.str());
 			}
@@ -1572,7 +1586,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 				}
 
 				message << " line: " << position.line
-					<< " column: " << position.byte_in_line;
+					<< " column: " << (position.byte_in_line + 1);
 
 				errors.push_back(message.str());
 			}
@@ -1595,18 +1609,17 @@ std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState
 
 std::future<response::Value> Request::resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
 {
-	FragmentDefinitionVisitor fragmentVisitor(variables);
-
-	peg::for_each_child<peg::fragment_definition>(root,
-		[&fragmentVisitor](const peg::ast_node & child)
-		{
-			fragmentVisitor.visit(child);
-		});
-
-	auto fragments = fragmentVisitor.getFragments();
-
 	try
 	{
+		FragmentDefinitionVisitor fragmentVisitor(variables);
+
+		peg::for_each_child<peg::fragment_definition>(root,
+			[&fragmentVisitor](const peg::ast_node & child)
+			{
+				fragmentVisitor.visit(child);
+			});
+
+		auto fragments = fragmentVisitor.getFragments();
 		auto operationDefinition = findOperationDefinition(root, operationName);
 
 		if (!operationDefinition.second)
