@@ -32,12 +32,23 @@ void Schema::AddType(response::StringType&& name, std::shared_ptr<object::Type> 
 
 const std::shared_ptr<object::Type>& Schema::LookupType(const response::StringType& name) const
 {
-	if (_typeMap.find(name) == _typeMap.cend())
+	auto itr = _typeMap.find(name);
+
+	if (itr == _typeMap.cend())
 	{
-		throw service::schema_exception { { "type not found" } };
+		std::ostringstream message;
+
+		message << "Type not found";
+
+		if (!name.empty())
+		{
+			message << " name: " << name;
+		}
+
+		throw service::schema_exception { { message.str() } };
 	}
 
-	return _types[_typeMap.find(name)->second].second;
+	return _types[itr->second].second;
 }
 
 const std::shared_ptr<object::Type>& Schema::WrapType(TypeKind kind, const std::shared_ptr<object::Type>& ofType)

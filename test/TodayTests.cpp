@@ -1215,3 +1215,28 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
+
+TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
+{
+	auto ast = R"(query {
+			__type(name: "NonExistentType") {
+				description
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto future = _service->resolve(std::launch::deferred, nullptr, *ast.root, "", std::move(variables));
+	auto result = future.get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
+		auto errorsString = response::toJSON(response::Value(errorsItr->second));
+		EXPECT_EQ(R"js([{"message":"Type not found name: NonExistentType"}])js", errorsString) << "error should match";
+	}
+	catch (const service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
