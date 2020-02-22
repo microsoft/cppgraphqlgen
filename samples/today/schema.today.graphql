@@ -86,7 +86,9 @@ type Mutation {
 }
 
 type Subscription {
-    nextAppointmentChange : Appointment @deprecated(reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
+    nextAppointmentChange : Appointment @deprecated(
+        reason:"""Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation)"""
+    )
     nodeChange(id: ID!): Node!
 }
 
@@ -98,7 +100,9 @@ enum TaskState {
     New
     Started
     Complete
-    Unassigned @deprecated(reason:"""Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation)""")
+    Unassigned @deprecated(
+        reason:"""Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation)"""
+    )
 }
 
 type Appointment implements Node {

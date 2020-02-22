@@ -1612,6 +1612,22 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 {
 	try
 	{
+		// http://spec.graphql.org/June2018/#sec-Executable-Definitions
+		for (const auto& child : root.children)
+		{
+			if (!child->is_type<peg::fragment_definition>()
+				&& !child->is_type<peg::operation_definition>())
+			{
+				auto position = child->begin();
+				std::ostringstream message;
+
+				message << "Unexpected TypeSystemDefinition line: " << position.line
+					<< " column: " << (position.byte_in_line + 1);
+
+				throw schema_exception { { message.str() } };
+			}
+		}
+
 		FragmentDefinitionVisitor fragmentVisitor(variables);
 
 		peg::for_each_child<peg::fragment_definition>(root,
