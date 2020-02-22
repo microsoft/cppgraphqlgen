@@ -14,7 +14,7 @@ class CompleteTaskPayload
 	: public service::Object
 {
 protected:
-	CompleteTaskPayload();
+	explicit CompleteTaskPayload();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const;

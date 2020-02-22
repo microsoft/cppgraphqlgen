@@ -1737,7 +1737,7 @@ class Schema;
 	: public service::Request
 {
 public:
-	Operations()cpp";
+	explicit Operations()cpp";
 
 			for (const auto& operation : _operationTypes)
 			{
@@ -1776,15 +1776,15 @@ private:
 			headerFile << R"cpp(void Add)cpp" << objectType.cppType
 				<< R"cpp(Details(std::shared_ptr<)cpp" << s_introspectionNamespace
 				<< R"cpp(::ObjectType> type)cpp" << objectType.cppType
-				<< R"cpp(, std::shared_ptr<)cpp" << s_introspectionNamespace
-				<< R"cpp(::Schema> schema);
+				<< R"cpp(, const std::shared_ptr<)cpp" << s_introspectionNamespace
+				<< R"cpp(::Schema>& schema);
 )cpp";
 		}
 
 		headerFile << std::endl;
 	}
 
-	headerFile << R"cpp(void AddTypesToSchema(std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema> schema);
+	headerFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema>& schema);
 
 )cpp";
 
@@ -1805,8 +1805,16 @@ void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectTy
 	headerFile << R"cpp(
 {
 protected:
-	)cpp" << objectType.cppType << R"cpp(();
+	explicit )cpp" << objectType.cppType << R"cpp(();
 )cpp";
+	
+	if (isQueryType)
+	{
+		headerFile << R"cpp(
+public:
+	const std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema>& schema() const noexcept;
+)cpp";
+	}
 
 	if (!objectType.fields.empty())
 	{
@@ -1821,9 +1829,15 @@ protected:
 
 			if (firstField)
 			{
-				headerFile << R"cpp(
-public:
+
+				headerFile << std::endl;
+				
+				if (!isQueryType)
+				{
+					headerFile << R"cpp(public:
 )cpp";
+				}
+				
 				firstField = false;
 			}
 
@@ -2165,7 +2179,8 @@ Operations::Operations()cpp";
 		}
 
 		sourceFile << R"cpp(
-	})
+	}, )cpp" << service::strQuery
+			<< R"cpp(->schema())
 )cpp";
 
 		for (const auto& operation : _operationTypes)
@@ -2186,8 +2201,8 @@ Operations::Operations()cpp";
 		sourceFile << std::endl;
 	}
 
-	sourceFile << R"cpp(void AddTypesToSchema(std::shared_ptr<)cpp" << s_introspectionNamespace
-		<< R"cpp(::Schema> schema)
+	sourceFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp" << s_introspectionNamespace
+		<< R"cpp(::Schema>& schema)
 {
 )cpp";
 
@@ -2680,6 +2695,18 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 
 	sourceFile << R"cpp(}
 )cpp";
+
+	if (isQueryType)
+	{
+		sourceFile << R"cpp(
+const std::shared_ptr<)cpp" << s_introspectionNamespace
+			<< R"cpp(::Schema>& )cpp" << objectType.cppType
+			<< R"cpp(::schema() const noexcept
+{
+	return _schema;
+}
+)cpp";
+	}
 
 	// Output each of the resolver implementations, which call the virtual property
 	// getters that the implementer must define.
@@ -3356,8 +3383,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		sourceFile << R"cpp(void Add)cpp" << objectType.cppType
 			<< R"cpp(Details(std::shared_ptr<)cpp" << s_introspectionNamespace
 			<< R"cpp(::ObjectType> type)cpp" << objectType.cppType
-			<< R"cpp(, std::shared_ptr<)cpp" << s_introspectionNamespace
-			<< R"cpp(::Schema> schema)
+			<< R"cpp(, const std::shared_ptr<)cpp" << s_introspectionNamespace
+			<< R"cpp(::Schema>& schema)
 {
 )cpp";
 		outputObjectIntrospection(sourceFile, objectType);

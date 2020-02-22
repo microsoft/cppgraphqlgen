@@ -14,7 +14,7 @@ class TaskConnection
 	: public service::Object
 {
 protected:
-	TaskConnection();
+	explicit TaskConnection();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;

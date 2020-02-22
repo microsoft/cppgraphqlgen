@@ -14,7 +14,7 @@ class NestedType
 	: public service::Object
 {
 protected:
-	NestedType();
+	explicit NestedType();
 
 public:
 	virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const;

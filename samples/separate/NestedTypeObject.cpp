@@ -56,7 +56,7 @@ std::future<response::Value> NestedType::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
-void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, std::shared_ptr<introspection::Schema> schema)
+void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeNestedType->AddFields({
 		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),

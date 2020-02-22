@@ -14,7 +14,7 @@ class AppointmentConnection
 	: public service::Object
 {
 protected:
-	AppointmentConnection();
+	explicit AppointmentConnection();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;

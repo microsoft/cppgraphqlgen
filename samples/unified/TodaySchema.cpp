@@ -110,6 +110,11 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
+const std::shared_ptr<introspection::Schema>& Query::schema() const noexcept
+{
+	return _schema;
+}
+
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
 {
 	throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
@@ -884,14 +889,14 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	})
+	}, query->schema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))
 {
 }
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor", R"md()md"));
 	schema->AddType("DateTime", std::make_shared<introspection::ScalarType>("DateTime", R"md()md"));

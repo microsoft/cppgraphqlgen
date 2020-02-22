@@ -15,7 +15,7 @@ class Appointment
 	, public Node
 {
 protected:
-	Appointment();
+	explicit Appointment();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;

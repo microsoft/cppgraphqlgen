@@ -15,7 +15,7 @@ class Folder
 	, public Node
 {
 protected:
-	Folder();
+	explicit Folder();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;

@@ -14,7 +14,7 @@ class Mutation
 	: public service::Object
 {
 protected:
-	Mutation();
+	explicit Mutation();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;

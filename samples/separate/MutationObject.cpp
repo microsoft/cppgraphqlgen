@@ -44,7 +44,7 @@ std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, std::shared_ptr<introspection::Schema> schema)
+void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeMutation->AddFields({
 		std::make_shared<introspection::Field>("completeTask", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({

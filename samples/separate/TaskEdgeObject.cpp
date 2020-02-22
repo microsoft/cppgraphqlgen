@@ -56,7 +56,7 @@ std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, std::shared_ptr<introspection::Schema> schema)
+void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeTaskEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),

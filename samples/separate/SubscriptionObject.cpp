@@ -57,7 +57,7 @@ std::future<response::Value> Subscription::resolve_typename(service::ResolverPar
 
 } /* namespace object */
 
-void AddSubscriptionDetails(std::shared_ptr<introspection::ObjectType> typeSubscription, std::shared_ptr<introspection::Schema> schema)
+void AddSubscriptionDetails(std::shared_ptr<introspection::ObjectType> typeSubscription, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeSubscription->AddFields({
 		std::make_shared<introspection::Field>("nextAppointmentChange", R"md()md", std::make_optional<response::StringType>(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),

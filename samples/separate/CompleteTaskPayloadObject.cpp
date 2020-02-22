@@ -56,7 +56,7 @@ std::future<response::Value> CompleteTaskPayload::resolve_typename(service::Reso
 
 } /* namespace object */
 
-void AddCompleteTaskPayloadDetails(std::shared_ptr<introspection::ObjectType> typeCompleteTaskPayload, std::shared_ptr<introspection::Schema> schema)
+void AddCompleteTaskPayloadDetails(std::shared_ptr<introspection::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeCompleteTaskPayload->AddFields({
 		std::make_shared<introspection::Field>("task", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),

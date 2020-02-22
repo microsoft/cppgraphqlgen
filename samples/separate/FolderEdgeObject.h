@@ -14,7 +14,7 @@ class FolderEdge
 	: public service::Object
 {
 protected:
-	FolderEdge();
+	explicit FolderEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const;

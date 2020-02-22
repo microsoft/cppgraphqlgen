@@ -56,7 +56,7 @@ std::future<response::Value> AppointmentConnection::resolve_typename(service::Re
 
 } /* namespace object */
 
-void AddAppointmentConnectionDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentConnection, std::shared_ptr<introspection::Schema> schema)
+void AddAppointmentConnectionDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentConnection, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeAppointmentConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),

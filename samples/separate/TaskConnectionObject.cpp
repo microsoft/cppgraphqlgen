@@ -56,7 +56,7 @@ std::future<response::Value> TaskConnection::resolve_typename(service::ResolverP
 
 } /* namespace object */
 
-void AddTaskConnectionDetails(std::shared_ptr<introspection::ObjectType> typeTaskConnection, std::shared_ptr<introspection::Schema> schema)
+void AddTaskConnectionDetails(std::shared_ptr<introspection::ObjectType> typeTaskConnection, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeTaskConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),

@@ -70,7 +70,7 @@ std::future<response::Value> Task::resolve_typename(service::ResolverParams&& pa
 
 } /* namespace object */
 
-void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, std::shared_ptr<introspection::Schema> schema)
+void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeTask->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

@@ -83,7 +83,7 @@ std::future<response::Value> Appointment::resolve_typename(service::ResolverPara
 
 } /* namespace object */
 
-void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, std::shared_ptr<introspection::Schema> schema)
+void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeAppointment->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

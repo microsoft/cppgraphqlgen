@@ -56,7 +56,7 @@ std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, std::shared_ptr<introspection::Schema> schema)
+void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),

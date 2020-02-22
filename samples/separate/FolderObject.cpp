@@ -70,7 +70,7 @@ std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& 
 
 } /* namespace object */
 
-void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, std::shared_ptr<introspection::Schema> schema)
+void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeFolder->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

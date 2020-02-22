@@ -56,7 +56,7 @@ std::future<response::Value> FolderConnection::resolve_typename(service::Resolve
 
 } /* namespace object */
 
-void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeFolderConnection, std::shared_ptr<introspection::Schema> schema)
+void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeFolderConnection, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeFolderConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),

@@ -56,7 +56,7 @@ std::future<response::Value> AppointmentEdge::resolve_typename(service::Resolver
 
 } /* namespace object */
 
-void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, std::shared_ptr<introspection::Schema> schema)
+void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeAppointmentEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),

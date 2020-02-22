@@ -1515,8 +1515,9 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node & in
 	}
 }
 
-Request::Request(TypeMap && operationTypes)
+Request::Request(TypeMap && operationTypes, const std::shared_ptr<introspection::Schema>& schema)
 	: _operations(std::move(operationTypes))
+	, _schema(schema)
 {
 }
 

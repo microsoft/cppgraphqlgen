@@ -37,6 +37,11 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
+const std::shared_ptr<introspection::Schema>& Query::schema() const noexcept
+{
+	return _schema;
+}
+
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
 {
 	throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
@@ -202,7 +207,7 @@ std::future<response::Value> Query::resolve_type(service::ResolverParams&& param
 
 } /* namespace object */
 
-void AddQueryDetails(std::shared_ptr<introspection::ObjectType> typeQuery, std::shared_ptr<introspection::Schema> schema)
+void AddQueryDetails(std::shared_ptr<introspection::ObjectType> typeQuery, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeQuery->AddFields({
 		std::make_shared<introspection::Field>("node", R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({

@@ -486,7 +486,7 @@ std::future<response::Value> Directive::resolve_typename(service::ResolverParams
 
 } /* namespace object */
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	schema->AddType("Boolean", std::make_shared<introspection::ScalarType>("Boolean", R"md(Built-in type)md"));
 	schema->AddType("Float", std::make_shared<introspection::ScalarType>("Float", R"md(Built-in type)md"));

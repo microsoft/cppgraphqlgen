@@ -14,7 +14,7 @@ class Subscription
 	: public service::Object
 {
 protected:
-	Subscription();
+	explicit Subscription();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const;

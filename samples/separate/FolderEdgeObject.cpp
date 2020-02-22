@@ -56,7 +56,7 @@ std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
-void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, std::shared_ptr<introspection::Schema> schema)
+void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeFolderEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),

@@ -64,7 +64,7 @@ class Schema
 	: public service::Object
 {
 protected:
-	Schema();
+	explicit Schema();
 
 public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
@@ -87,7 +87,7 @@ class Type
 	: public service::Object
 {
 protected:
-	Type();
+	explicit Type();
 
 public:
 	virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
@@ -118,7 +118,7 @@ class Field
 	: public service::Object
 {
 protected:
-	Field();
+	explicit Field();
 
 public:
 	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
@@ -143,7 +143,7 @@ class InputValue
 	: public service::Object
 {
 protected:
-	InputValue();
+	explicit InputValue();
 
 public:
 	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
@@ -164,7 +164,7 @@ class EnumValue
 	: public service::Object
 {
 protected:
-	EnumValue();
+	explicit EnumValue();
 
 public:
 	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
@@ -185,7 +185,7 @@ class Directive
 	: public service::Object
 {
 protected:
-	Directive();
+	explicit Directive();
 
 public:
 	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
@@ -204,7 +204,7 @@ private:
 
 } /* namespace object */
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */
