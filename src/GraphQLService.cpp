@@ -1523,10 +1523,12 @@ Request::Request(TypeMap && operationTypes, const std::shared_ptr<introspection:
 
 std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const
 {
+	bool hasAnonymous = false;
+	std::unordered_set<std::string> usedNames;
 	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
 
 	peg::for_each_child<peg::operation_definition>(root,
-		[this, &operationName, &result](const peg::ast_node & operationDefinition)
+		[this, &hasAnonymous, &usedNames, &operationName, &result](const peg::ast_node & operationDefinition)
 		{
 			std::string operationType(strQuery);
 
@@ -1544,27 +1546,45 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					name = child.string_view();
 				});
 
-			if (!operationName.empty()
-				&& name != operationName)
-			{
-				// Skip the operations that don't match the name
-				return;
-			}
-
 			std::vector<std::string> errors;
 			auto position = operationDefinition.begin();
 
-			if (result.second)
+			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+			if (!usedNames.insert(name).second)
 			{
 				std::ostringstream message;
 
-				message << (operationName.empty()
-					? "Multiple ambigious operations"
-					: "Duplicate named operations");
-
-				if (!name.empty())
+				if (name.empty())
 				{
-					message << " name: " << name;
+					message << "Multiple anonymous operations";
+				}
+				else
+				{
+					message << "Duplicate named operations name: " << name;
+				}
+
+				message << " line: " << position.line
+					<< " column: " << (position.byte_in_line + 1);
+
+				errors.push_back(message.str());
+			}
+
+			hasAnonymous = hasAnonymous || name.empty();
+
+			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
+			if (name.empty()
+				? usedNames.size() > 1
+				: hasAnonymous)
+			{
+				std::ostringstream message;
+
+				if (name.empty())
+				{
+					message << "Unexpected anonymous operation";
+				}
+				else
+				{
+					message << "Unexpected named operation name: " << name;
 				}
 
 				message << " line: " << position.line
@@ -1596,8 +1616,11 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 			{
 				throw schema_exception(std::move(errors));
 			}
-
-			result = { std::move(operationType), &operationDefinition };
+			else if (operationName.empty()
+				|| name == operationName)
+			{
+				result = { std::move(operationType), &operationDefinition };
+			}
 		});
 
 	return result;
