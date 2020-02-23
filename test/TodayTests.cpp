@@ -1264,7 +1264,7 @@ TEST_F(TodayServiceCase, DuplicateFragments)
 		auto errorsItr = result.find("errors");
 		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		EXPECT_EQ(R"js([{"message":"Duplicate fragment name: DuplicateFragment line: 9 column: 12"}])js", errorsString) << "error should match";
+		EXPECT_EQ(R"js([{"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":12}]}])js", errorsString) << "error should match";
 	}
 	catch (const service::schema_exception & ex)
 	{

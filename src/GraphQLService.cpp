@@ -11,18 +11,68 @@
 
 namespace graphql::service {
 
-schema_exception::schema_exception(std::vector<std::string>&& messages)
+schema_exception::schema_exception(std::vector<schema_error>&& errors)
 	: _errors(response::Type::List)
 {
-	for (auto& message : messages)
+	for (auto& error : errors)
 	{
-		response::Value error(response::Type::Map);
+		response::Value entry(response::Type::Map);
 
-		error.emplace_back(std::string{ strMessage }, response::Value(std::move(message)));
-		_errors.emplace_back(std::move(error));
+		entry.reserve(3);
+		entry.emplace_back(std::string{ strMessage }, response::Value(std::move(error.message)));
+
+		if (error.line > 0
+			&& error.column > 0)
+		{
+			response::Value location(response::Type::Map);
+
+			location.reserve(2);
+			location.emplace_back(std::string{ strLine }, response::Value(static_cast<response::IntType>(error.line)));
+			location.emplace_back(std::string{ strColumn }, response::Value(static_cast<response::IntType>(error.column)));
+
+			response::Value locations(response::Type::List);
+
+			location.reserve(1);
+			locations.emplace_back(std::move(location));
+
+			entry.emplace_back(std::string{ strLocations }, std::move(locations));
+		}
+
+		if (!error.path.empty())
+		{
+			response::Value path(response::Type::List);
+
+			path.reserve(error.path.size());
+			for (auto& element : error.path)
+			{
+				path.emplace_back(std::move(element));
+			}
+
+			entry.emplace_back(std::string{ strPath }, std::move(path));
+		}
+
+		_errors.emplace_back(std::move(entry));
 	}
 
-	messages.clear();
+	errors.clear();
+}
+
+schema_exception::schema_exception(std::vector<std::string>&& messages)
+	: schema_exception(convertMessages(std::move(messages)))
+{
+}
+
+std::vector<schema_error> schema_exception::convertMessages(std::vector<std::string>&& messages) noexcept
+{
+	std::vector<schema_error> errors(messages.size());
+
+	std::transform(messages.begin(), messages.end(), errors.begin(),
+		[](std::string& message) noexcept
+		{
+			return schema_error{ std::move(message) };
+		});
+
+	return errors;
 }
 
 const char* schema_exception::what() const noexcept
@@ -139,11 +189,9 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 		auto position = variable.begin();
 		std::ostringstream error;
 
-		error << "Unknown variable name: " << name
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Unknown variable name: " << name;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	_value = response::Value(itr->second);
@@ -616,11 +664,9 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldRes
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -639,11 +685,9 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldR
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -662,11 +706,9 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(Field
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -685,11 +727,9 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(Fiel
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -708,11 +748,9 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResul
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -731,11 +769,9 @@ std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResu
 		auto position = params.selection->begin();
 		std::ostringstream error;
 
-		error << "Field may not have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -754,11 +790,9 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 		auto position = params.field.begin();
 		std::ostringstream error;
 
-		error << "Field must have sub-fields name: " << params.fieldName
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Field must have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	return std::async(std::launch::deferred,
@@ -889,11 +923,9 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 		auto position = field.begin();
 		std::ostringstream error;
 
-		error << "Unknown field name: " << name
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Unknown field name: " << name;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	DirectiveVisitor directiveVisitor(_variables);
@@ -974,11 +1006,9 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 		auto position = fragmentSpread.begin();
 		std::ostringstream error;
 
-		error << "Unknown fragment name: " << name
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Unknown fragment name: " << name;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
@@ -1270,11 +1300,9 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 		auto position = fragmentName->begin();
 		std::ostringstream error;
 
-		error << "Duplicate fragment name: " << inserted.first->first
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Duplicate fragment name: " << inserted.first->first;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 }
 
@@ -1511,11 +1539,9 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 		auto position = field.begin();
 		std::ostringstream error;
 
-		error << "Extra subscription root field name: " << name
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Extra subscription root field name: " << name;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	DirectiveVisitor directiveVisitor(_params.variables);
@@ -1560,11 +1586,9 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 		auto position = fragmentSpread.begin();
 		std::ostringstream error;
 
-		error << "Unknown fragment name: " << name
-			<< " line: " << position.line
-			<< " column: " << (position.byte_in_line + 1);
+		error << "Unknown fragment name: " << name;
 
-		throw schema_exception { { error.str() } };
+		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	bool skip = !_subscriptionObject->matchesType(itr->second.getType());
@@ -1660,7 +1684,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					name = child.string_view();
 				});
 
-			std::vector<std::string> errors;
+			std::vector<schema_error> errors;
 			auto position = operationDefinition.begin();
 
 			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
@@ -1677,10 +1701,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << "Duplicate named operations name: " << name;
 				}
 
-				message << " line: " << position.line
-					<< " column: " << (position.byte_in_line + 1);
-
-				errors.push_back(message.str());
+				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
 			}
 
 			hasAnonymous = hasAnonymous || name.empty();
@@ -1701,10 +1722,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << "Unexpected named operation name: " << name;
 				}
 
-				message << " line: " << position.line
-					<< " column: " << (position.byte_in_line + 1);
-
-				errors.push_back(message.str());
+				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
 			}
 
 			auto itr = _operations.find(operationType);
@@ -1720,10 +1738,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << " name: " << name;
 				}
 
-				message << " line: " << position.line
-					<< " column: " << (position.byte_in_line + 1);
-
-				errors.push_back(message.str());
+				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
 			}
 
 			if (!errors.empty())
@@ -1758,10 +1773,9 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 				auto position = child->begin();
 				std::ostringstream message;
 
-				message << "Unexpected TypeSystemDefinition line: " << position.line
-					<< " column: " << (position.byte_in_line + 1);
+				message << "Unexpected type definition";
 
-				throw schema_exception { { message.str() } };
+				throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
 			}
 		}
 
@@ -1791,6 +1805,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 		}
 		else if (operationDefinition.first == strSubscription)
 		{
+			auto position = operationDefinition.second->begin();
 			std::ostringstream message;
 
 			message << "Unexpected subscription";
@@ -1800,7 +1815,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 				message << " name: " << operationName;
 			}
 
-			throw schema_exception { { message.str() } };
+			throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
 		}
 
 		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
@@ -1857,6 +1872,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 	}
 	else if (operationDefinition.first != strSubscription)
 	{
+		auto position = operationDefinition.second->begin();
 		std::ostringstream message;
 
 		message << "Unexpected operation type: " << operationDefinition.first;
@@ -1866,7 +1882,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 			message << " name: " << params.operationName;
 		}
 
-		throw schema_exception { { message.str() } };
+		throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
 	}
 
 	auto itr = _operations.find(std::string{ strSubscription });

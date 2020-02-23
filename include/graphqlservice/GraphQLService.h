@@ -34,10 +34,21 @@ class Schema;
 
 namespace graphql::service {
 
+// Errors should have a message string, and optional locations and a path.
+struct schema_error
+{
+	std::string message;
+
+	size_t line = 0;
+	size_t column = 0;
+	response::ListType path{};
+};
+
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
 {
 public:
+	explicit schema_exception(std::vector<schema_error>&& errors);
 	explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
@@ -48,6 +59,8 @@ public:
 	response::Value getErrors() noexcept;
 
 private:
+	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
+
 	response::Value _errors;
 };
 
@@ -66,6 +79,10 @@ using namespace std::literals;
 constexpr std::string_view strData{ "data"sv };
 constexpr std::string_view strErrors{ "errors"sv };
 constexpr std::string_view strMessage{ "message"sv };
+constexpr std::string_view strLocations{ "locations"sv };
+constexpr std::string_view strLine{ "line"sv };
+constexpr std::string_view strColumn{ "column"sv };
+constexpr std::string_view strPath{ "path"sv };
 constexpr std::string_view strQuery{ "query"sv };
 constexpr std::string_view strMutation{ "mutation"sv };
 constexpr std::string_view strSubscription{ "subscription"sv };
