@@ -381,9 +381,10 @@ const response::Value& Fragment::getDirectives() const
 	return _directives;
 }
 
-ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
+ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, const peg::ast_node& field, std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
 	const peg::ast_node * selection, const FragmentMap & fragments, const response::Value & variables)
 	: SelectionSetParams(selectionSetParams)
+	, field(field)
 	, fieldName(std::move(fieldName))
 	, arguments(std::move(arguments))
 	, fieldDirectives(std::move(fieldDirectives))
@@ -750,9 +751,12 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection == nullptr)
 	{
+		auto position = params.field.begin();
 		std::ostringstream error;
 
-		error << "Field must have sub-fields name: " << params.fieldName;
+		error << "Field must have sub-fields name: " << params.fieldName
+			<< " line: " << position.line
+			<< " column: " << (position.byte_in_line + 1);
 
 		throw schema_exception { { error.str() } };
 	}
@@ -762,13 +766,11 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 		{
 			auto wrappedResult = resultFuture.get();
 
-			if (!wrappedResult || !paramsFuture.selection)
+			if (!wrappedResult)
 			{
 				response::Value document(response::Type::Map);
 
-				document.emplace_back(std::string{ strData }, response::Value(!wrappedResult
-					? response::Type::Null
-					: response::Type::Map));
+				document.emplace_back(std::string{ strData }, response::Value(response::Type::Null));
 
 				return document;
 			}
@@ -938,7 +940,8 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 
 	try
 	{
-		auto result = itr->second(ResolverParams(selectionSetParams, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(), selection, _fragments, _variables));
+		auto result = itr->second(ResolverParams(selectionSetParams, field, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(),
+			selection, _fragments, _variables));
 
 		_values.push({
 			std::move(alias),

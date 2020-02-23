@@ -152,10 +152,11 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams : SelectionSetParams
 {
-	explicit ResolverParams(const SelectionSetParams& selectionSetParams, std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
+	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
 		const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables);
 
 	// These values are different for each resolver.
+	const peg::ast_node& field;
 	std::string fieldName;
 	response::Value arguments { response::Type::Map };
 	response::Value fieldDirectives { response::Type::Map };
