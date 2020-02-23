@@ -704,12 +704,14 @@ using SubscriptionName = std::string;
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
-	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, std::unordered_map<SubscriptionName, std::vector<response::Value>>&& fieldNamesAndArgs,
+	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field, response::Value&& arguments,
 		peg::ast&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
-	std::unordered_map<SubscriptionName, std::vector<response::Value>> fieldNamesAndArgs;
+
+	SubscriptionName field;
+	response::Value arguments;
 	peg::ast query;
 	std::string operationName;
 	SubscriptionCallback callback;

@@ -1292,11 +1292,12 @@ void OperationDefinitionVisitor::visit(std::launch launch, const std::string & o
 		}, std::cref(*operationDefinition.children.back()));
 }
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, std::unordered_map<SubscriptionName, std::vector<response::Value>> && fieldNamesAndArgs,
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, SubscriptionName&& field, response::Value&& arguments,
 	peg::ast && query, std::string && operationName, SubscriptionCallback && callback,
 	const peg::ast_node & selection)
 	: data(std::move(data))
-	, fieldNamesAndArgs(std::move(fieldNamesAndArgs))
+	, field(std::move(field))
+	, arguments(std::move(arguments))
 	, query(std::move(query))
 	, operationName(std::move(operationName))
 	, callback(std::move(callback))
@@ -1325,7 +1326,8 @@ private:
 	SubscriptionCallback _callback;
 	FragmentMap _fragments;
 	const std::shared_ptr<Object>& _subscriptionObject;
-	std::unordered_map<SubscriptionName, std::vector<response::Value>> _fieldNamesAndArgs;
+	SubscriptionName _field;
+	response::Value _arguments;
 	std::shared_ptr<SubscriptionData> _result;
 };
 
@@ -1388,7 +1390,8 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinit
 			std::move(_params.variables),
 			std::move(directives),
 			std::move(_fragments)),
-		std::move(_fieldNamesAndArgs),
+		std::move(_field),
+		std::move(_arguments),
 		std::move(_params.query),
 		std::move(_params.operationName),
 		std::move(_callback),
@@ -1404,6 +1407,19 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 		{
 			name = child.string_view();
 		});
+
+	// http://spec.graphql.org/June2018/#sec-Single-root-field
+	if (!_field.empty())
+	{
+		auto position = field.begin();
+		std::ostringstream error;
+
+		error << "Extra subscription root field name: " << name
+			<< " line: " << position.line
+			<< " column: " << (position.byte_in_line + 1);
+
+		throw schema_exception { { error.str() } };
+	}
 
 	DirectiveVisitor directiveVisitor(_params.variables);
 
@@ -1433,7 +1449,8 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 			}
 		});
 
-	_fieldNamesAndArgs[std::move(name)].emplace_back(std::move(arguments));
+	_field = std::move(name);
+	_arguments = std::move(arguments);
 }
 
 void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
@@ -1760,11 +1777,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 	auto registration = subscriptionVisitor.getRegistration();
 	auto key = _nextKey++;
 
-	for (const auto& entry : registration->fieldNamesAndArgs)
-	{
-		_listeners[entry.first].insert(key);
-	}
-
+	_listeners[registration->field].insert(key);
 	_subscriptions.emplace(key, std::move(registration));
 
 	return key;
@@ -1779,15 +1792,12 @@ void Request::unsubscribe(SubscriptionKey key)
 		return;
 	}
 
-	for (const auto& entry : itrSubscription->second->fieldNamesAndArgs)
-	{
-		auto itrListener = _listeners.find(entry.first);
+	auto itrListener = _listeners.find(itrSubscription->second->field);
 
-		itrListener->second.erase(key);
-		if (itrListener->second.empty())
-		{
-			_listeners.erase(itrListener);
-		}
+	itrListener->second.erase(key);
+	if (itrListener->second.empty())
+	{
+		_listeners.erase(itrListener);
 	}
 
 	_subscriptions.erase(itrSubscription);
@@ -1837,26 +1847,16 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCal
 	{
 		auto itrSubscription = _subscriptions.find(key);
 		auto registration = itrSubscription->second;
-		const auto& subscriptionArguments = registration->fieldNamesAndArgs[name];
-		bool matchedArguments = false;
+		const auto& subscriptionArguments = registration->arguments;
+		bool matchedArguments = true;
 
-		// If none of the fields in this subscription had arguments that match what was provided
+		// If the field in this subscription had arguments that did not match what was provided
 		// in this event, don't deliver the event to this subscription
 		for (const auto& required : subscriptionArguments)
 		{
-			matchedArguments = true;
-
-			for (auto itrRequired = required.begin(); itrRequired != required.end(); ++itrRequired)
+			if (!apply(required))
 			{
-				if (!apply(*itrRequired))
-				{
-					matchedArguments = false;
-					break;
-				}
-			}
-
-			if (matchedArguments)
-			{
+				matchedArguments = false;
 				break;
 			}
 		}
