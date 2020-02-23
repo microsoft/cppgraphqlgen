@@ -86,6 +86,9 @@ struct SelectionSetParams
 	// you'll need to explicitly copy them into other instances of response::Value.
 	const response::Value& fragmentSpreadDirectives;
 	const response::Value& inlineFragmentDirectives;
+
+	// Async launch policy for sub-field resolvers.
+	const std::launch launch = std::launch::deferred;
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
@@ -443,7 +446,7 @@ struct ModifiedResult
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>, "this is the derived object type");
-		auto resultFuture = std::async(std::launch::deferred,
+		auto resultFuture = std::async(params.launch,
 			[](auto && objectType)
 			{
 				return std::static_pointer_cast<Object>(objectType.get());
@@ -466,7 +469,7 @@ struct ModifiedResult
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
 		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
-		return std::async(std::launch::deferred,
+		return std::async(params.launch,
 			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
@@ -496,7 +499,7 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		return std::async(std::launch::deferred,
+		return std::async(params.launch,
 			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
@@ -523,7 +526,7 @@ struct ModifiedResult
 	static typename std::enable_if_t<TypeModifier::List == Modifier,
 		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
 	{
-		return std::async(std::launch::deferred,
+		return std::async(params.launch,
 			[](auto && wrappedFuture, ResolverParams && wrappedParams)
 			{
 				auto wrappedResult = wrappedFuture.get();
@@ -610,7 +613,7 @@ private:
 	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
 	{
 		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
-		return std::async(std::launch::deferred,
+		return std::async(params.launch,
 			[](auto && resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
 			{
 				response::Value data;
@@ -740,6 +743,10 @@ public:
 	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
 	void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+
+	void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
 private:
 	TypeMap _operations;

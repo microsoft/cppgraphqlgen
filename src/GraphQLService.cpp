@@ -809,6 +809,7 @@ private:
 
 	const std::shared_ptr<RequestState>& _state;
 	const response::Value& _operationDirectives;
+	const std::launch _launch;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -822,6 +823,7 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams & selectionSetParams
 	const TypeNames & typeNames, const ResolverMap & resolvers)
 	: _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
+	, _launch(selectionSetParams.launch)
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -935,7 +937,8 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 		_operationDirectives,
 		_fragmentDirectives.top().fragmentDefinitionDirectives,
 		_fragmentDirectives.top().fragmentSpreadDirectives,
-		_fragmentDirectives.top().inlineFragmentDirectives
+		_fragmentDirectives.top().inlineFragmentDirectives,
+		_launch,
 	};
 
 	try
@@ -1119,7 +1122,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 	endSelectionSet(selectionSetParams);
 
-	return std::async(std::launch::deferred,
+	return std::async(selectionSetParams.launch,
 		[](std::queue<std::pair<std::string, std::future<response::Value>>> && children)
 		{
 			response::Value data(response::Type::Map);
@@ -1280,20 +1283,22 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments);
+	OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments);
 
 	std::future<response::Value> getValue();
 
-	void visit(std::launch launch, const std::string& operationType, const peg::ast_node& operationDefinition);
+	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
 
 private:
+	const std::launch _launch;
 	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
 	std::future<response::Value> _result;
 };
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(std::shared_ptr<RequestState> state, const TypeMap & operations, response::Value && variables, FragmentMap && fragments)
-	: _params(std::make_shared<OperationData>(
+OperationDefinitionVisitor::OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap & operations, response::Value && variables, FragmentMap && fragments)
+	: _launch(launch)
+	, _params(std::make_shared<OperationData>(
 		std::move(state),
 		std::move(variables),
 		response::Value(),
@@ -1309,7 +1314,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(std::launch launch, const std::string & operationType, const peg::ast_node & operationDefinition)
+void OperationDefinitionVisitor::visit(const std::string & operationType, const peg::ast_node & operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 
@@ -1366,8 +1371,8 @@ void OperationDefinitionVisitor::visit(std::launch launch, const std::string & o
 	_params->directives = std::move(operationDirectives);
 
 	// Keep the params alive until the deferred lambda has executed
-	_result = std::async(launch,
-		[params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
+	_result = std::async(_launch,
+		[selectionLaunch = _launch, params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
 		{
 			// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
 			const response::Value emptyFragmentDirectives(response::Type::Map);
@@ -1376,7 +1381,8 @@ void OperationDefinitionVisitor::visit(std::launch launch, const std::string & o
 				params->directives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
-				emptyFragmentDirectives
+				emptyFragmentDirectives,
+				selectionLaunch,
 			};
 
 			return operation->resolve(selectionSetParams, selection, params->fragments, params->variables).get();
@@ -1797,9 +1803,16 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 			throw schema_exception { { message.str() } };
 		}
 
-		OperationDefinitionVisitor operationVisitor(state, _operations, std::move(variables), std::move(fragments));
+		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
+		if (operationDefinition.first == strMutation)
+		{
+			// Force mutations to perform serial execution
+			launch = std::launch::deferred;
+		}
 
-		operationVisitor.visit(launch, operationDefinition.first, *operationDefinition.second);
+		OperationDefinitionVisitor operationVisitor(launch, state, _operations, std::move(variables), std::move(fragments));
+
+		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
 		return operationVisitor.getValue();
 	}
@@ -1905,10 +1918,20 @@ void Request::unsubscribe(SubscriptionKey key)
 
 void Request::deliver(const SubscriptionName & name, const std::shared_ptr<Object> & subscriptionObject) const
 {
-	deliver(name, SubscriptionArguments {}, subscriptionObject);
+	deliver(std::launch::deferred, name, subscriptionObject);
+}
+
+void Request::deliver(std::launch launch, const SubscriptionName & name, const std::shared_ptr<Object> & subscriptionObject) const
+{
+	deliver(launch, name, SubscriptionArguments {}, subscriptionObject);
 }
 
 void Request::deliver(const SubscriptionName & name, const SubscriptionArguments & arguments, const std::shared_ptr<Object> & subscriptionObject) const
+{
+	deliver(std::launch::deferred, name, arguments, subscriptionObject);
+}
+
+void Request::deliver(std::launch launch, const SubscriptionName & name, const SubscriptionArguments & arguments, const std::shared_ptr<Object> & subscriptionObject) const
 {
 	SubscriptionFilterCallback exactMatch = [&arguments](response::MapType::const_reference required) noexcept -> bool
 	{
@@ -1918,10 +1941,15 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionArguments
 			&& itrArgument->second == required.second);
 	};
 
-	deliver(name, exactMatch, subscriptionObject);
+	deliver(launch, name, exactMatch, subscriptionObject);
 }
 
 void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCallback & apply, const std::shared_ptr<Object> & subscriptionObject) const
+{
+	deliver(std::launch::deferred, name, apply, subscriptionObject);
+}
+
+void Request::deliver(std::launch launch, const SubscriptionName & name, const SubscriptionFilterCallback & apply, const std::shared_ptr<Object> & subscriptionObject) const
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
@@ -1964,12 +1992,13 @@ void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCal
 			registration->data->directives,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
-			emptyFragmentDirectives
+			emptyFragmentDirectives,
+			launch,
 		};
 
 		try
 		{
-			result = std::async(std::launch::deferred,
+			result = std::async(launch,
 				[registration](std::future<response::Value> document)
 				{
 					return document.get();

@@ -1271,3 +1271,46 @@ TEST_F(TodayServiceCase, DuplicateFragments)
 		FAIL() << response::toJSON(response::Value(ex.getErrors()));
 	}
 }
+
+TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
+{
+	auto ast = peg::parseString(R"(subscription TestSubscription {
+			nextAppointment: nextAppointmentChange {
+				nextAppointmentId: id
+				when
+				subject
+				isNow
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(17);
+	response::Value result;
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response)
+		{
+			result = response.get();
+		});
+	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr);
+	_service->unsubscribe(key);
+	
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+	}
+	catch (const service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+	}
+}
