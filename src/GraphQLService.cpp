@@ -1978,6 +1978,8 @@ void Request::deliver(std::launch launch, const SubscriptionName & name, const S
 		return;
 	}
 
+	std::queue<std::future<void>> callbacks;
+
 	for (const auto& key : itrListeners->second)
 	{
 		auto itrSubscription = _subscriptions.find(key);
@@ -2031,7 +2033,17 @@ void Request::deliver(std::launch launch, const SubscriptionName & name, const S
 			result = promise.get_future();
 		}
 
-		registration->callback(std::move(result));
+		callbacks.push(std::async(launch,
+			[registration](std::future<response::Value> document)
+			{
+				registration->callback(std::move(document));
+			}, std::move(result)));
+	}
+
+	while (!callbacks.empty())
+	{
+		callbacks.front().get();
+		callbacks.pop();
 	}
 }
 
