@@ -97,6 +97,12 @@ class Appointment : public object::Appointment
 public:
 	explicit Appointment(response::IdType&& id, std::string&& when, std::string&& subject, bool isNow);
 
+	// EdgeConstraints accessor
+	const response::IdType& id() const
+	{
+		return _id;
+	}
+
 	service::FieldResult<response::IdType> getId(service::FieldParams&&) const override
 	{
 		return _id;
@@ -183,6 +189,12 @@ class Task : public object::Task
 public:
 	explicit Task(response::IdType&& id, std::string&& title, bool isComplete);
 
+	// EdgeConstraints accessor
+	const response::IdType& id() const
+	{
+		return _id;
+	}
+
 	service::FieldResult<response::IdType> getId(service::FieldParams&&) const override
 	{
 		return _id;
@@ -263,6 +275,12 @@ class Folder : public object::Folder
 {
 public:
 	explicit Folder(response::IdType&& id, std::string&& name, int unreadCount);
+
+	// EdgeConstraints accessor
+	const response::IdType& id() const
+	{
+		return _id;
+	}
 
 	service::FieldResult<response::IdType> getId(service::FieldParams&&) const override
 	{

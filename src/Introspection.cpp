@@ -71,11 +71,11 @@ void Schema::AddDirective(std::shared_ptr<object::Directive> directive)
 	_directives.emplace_back(std::move(directive));
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(service::FieldParams&&) const
+service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(service::FieldParams&& params) const
 {
 	auto spThis = shared_from_this();
 
-	return std::async(std::launch::deferred,
+	return std::async(params.launch,
 		[this, spThis]()
 	{
 		std::vector<std::shared_ptr<object::Type>> result(_types.size());

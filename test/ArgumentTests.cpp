@@ -23,9 +23,9 @@ TEST(ArgumentsCase, ListArgumentStrings)
 	{
 		actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(3, actual.size()) << "should get 3 entries";
@@ -49,9 +49,9 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 	{
 		auto actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		exceptionWhat = response::toJSON(response::Value(ex.getErrors()));
+		exceptionWhat = response::toJSON(ex.getErrors());
 		caughtException = true;
 	}
 
@@ -76,9 +76,9 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 			service::TypeModifier::Nullable
 		>("value", parsed);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(4, actual.size()) << "should get 4 entries";
@@ -106,9 +106,9 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 			service::TypeModifier::List
 		>("value", parsed);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -136,9 +136,9 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 			service::TypeModifier::List
 		>("value", parsed);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
@@ -160,9 +160,9 @@ TEST(ArgumentsCase, TaskStateEnum)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
@@ -181,10 +181,10 @@ TEST(ArgumentsCase, TaskStateEnumFromString)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
 		caughtException = true;
-		exceptionWhat = response::toJSON(response::Value(ex.getErrors()));
+		exceptionWhat = response::toJSON(ex.getErrors());
 	}
 
 	EXPECT_NE(today::TaskState::Started, actual) << "should not parse the enum from a known string value";
@@ -204,9 +204,9 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
@@ -223,9 +223,9 @@ TEST(ArgumentsCase, ScalarArgumentMap)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception & ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(response::Type::Map, actual.type()) << "should parse the object";
@@ -246,9 +246,9 @@ TEST(ArgumentsCase, ScalarArgumentList)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception & ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(response::Type::List, actual.type()) << "should parse the array";
@@ -268,9 +268,9 @@ TEST(ArgumentsCase, ScalarArgumentNull)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception & ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(response::Type::Null, actual.type()) << "should match null";
@@ -286,9 +286,9 @@ TEST(ArgumentsCase, ScalarArgumentString)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception & ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 
 	ASSERT_EQ(response::Type::String, actual.type()) << "should parse the object";

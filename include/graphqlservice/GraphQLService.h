@@ -35,25 +35,41 @@ class Schema;
 namespace graphql::service {
 
 // Errors should have a message string, and optional locations and a path.
+void addErrorMessage(std::string&& message, response::Value& error);
+
+struct schema_location
+{
+	size_t line = 0;
+	size_t byte_in_line = 0;
+};
+
+void addErrorLocation(const schema_location& location, response::Value& error);
+
+using path_segment = std::variant<std::string, size_t>;
+using field_path = std::queue<path_segment>;
+
+void addErrorPath(field_path&& path, response::Value& error);
+
 struct schema_error
 {
 	std::string message;
-
-	size_t line = 0;
-	size_t column = 0;
-	response::ListType path{};
+	schema_location location;
+	field_path path;
 };
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
 {
 public:
-	explicit schema_exception(std::vector<schema_error>&& errors);
+	explicit schema_exception(std::vector<schema_error>&& structuredErrors);
 	explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
 
 	const char* what() const noexcept override;
+
+	const std::vector<schema_error>& getStructuredErrors() const noexcept;
+	std::vector<schema_error> getStructuredErrors() noexcept;
 
 	const response::Value& getErrors() const noexcept;
 	response::Value getErrors() noexcept;
@@ -61,6 +77,7 @@ public:
 private:
 	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
 
+	std::vector<schema_error> _structuredErrors;
 	response::Value _errors;
 };
 
@@ -103,6 +120,9 @@ struct SelectionSetParams
 	// you'll need to explicitly copy them into other instances of response::Value.
 	const response::Value& fragmentSpreadDirectives;
 	const response::Value& inlineFragmentDirectives;
+
+	// Field error path to this selection set.
+	field_path errorPath;
 
 	// Async launch policy for sub-field resolvers.
 	const std::launch launch = std::launch::deferred;
@@ -172,8 +192,11 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams : SelectionSetParams
 {
-	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
+	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
+		std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
 		const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables);
+
+	schema_location getLocation() const;
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
@@ -278,23 +301,19 @@ struct ModifiedArgument
 		}
 		catch (schema_exception & ex)
 		{
-			auto errors = ex.getErrors().release<response::ListType>();
-			std::vector<std::string> messages(errors.size());
+			auto errors = ex.getStructuredErrors();
 
-			std::transform(errors.begin(), errors.end(), messages.begin(),
-				[&name](response::Value & error)
-				{
-					auto errorMessages = error.release<response::MapType>();
-					auto messageText = errorMessages.front().second.release<response::StringType>();
-					std::ostringstream message;
+			for (auto& error : errors)
+			{
+				std::ostringstream message;
 
-					message << "Invalid argument: " << name
-						<< " error: " << messageText;
+				message << "Invalid argument: " << name
+					<< " error: " << error.message;
 
-					return message.str();
-				});
+				error.message = message.str();
+			}
 
-			throw schema_exception(std::move(messages));
+			throw schema_exception(std::move(errors));
 		}
 	}
 
@@ -549,14 +568,18 @@ struct ModifiedResult
 				auto wrappedResult = wrappedFuture.get();
 				std::queue<std::future<response::Value>> children;
 
+				wrappedParams.errorPath.push(size_t{ 0 });
+
 				for (auto& entry : wrappedResult)
 				{
 					children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
+					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 
 				response::Value data(response::Type::List);
 				response::Value errors(response::Type::List);
-				size_t index = 0;
+
+				wrappedParams.errorPath.back() = size_t{ 0 };
 
 				while (!children.empty())
 				{
@@ -585,11 +608,18 @@ struct ModifiedResult
 					}
 					catch (schema_exception& scx)
 					{
-						auto messages = scx.getErrors().release<response::ListType>();
+						auto messages = scx.getStructuredErrors();
 
 						errors.reserve(errors.size() + messages.size());
-						for (auto& error : messages)
+						for (auto& message : messages)
 						{
+							response::Value error(response::Type::Map);
+
+							error.reserve(3);
+							addErrorMessage(std::move(message.message), error);
+							addErrorLocation(message.location.line > 0 ? message.location : wrappedParams.getLocation(), error);
+							addErrorPath(field_path{ message.path.empty() ? wrappedParams.errorPath : message.path }, error);
+
 							errors.emplace_back(std::move(error));
 						}
 					}
@@ -598,21 +628,26 @@ struct ModifiedResult
 						std::ostringstream message;
 
 						message << "Field error name: " << wrappedParams.fieldName
-							<< "[" << index << "] "
 							<< " unknown error: " << ex.what();
 
+						schema_location location = wrappedParams.getLocation();
 						response::Value error(response::Type::Map);
 
-						error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
+						error.reserve(3);
+						addErrorMessage(message.str(), error);
+						addErrorLocation(location, error);
+						addErrorPath(field_path{ wrappedParams.errorPath }, error);
+
 						errors.emplace_back(std::move(error));
 					}
 
 					children.pop();
-					++index;
+					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 
 				response::Value document(response::Type::Map);
 
+				document.reserve(2);
 				document.emplace_back(std::string{ strData }, std::move(data));
 
 				if (errors.size() > 0)
@@ -642,7 +677,20 @@ private:
 				}
 				catch (schema_exception& scx)
 				{
-					errors = scx.getErrors();
+					auto messages = scx.getStructuredErrors();
+
+					errors.reserve(errors.size() + messages.size());
+					for (auto& message : messages)
+					{
+						response::Value error(response::Type::Map);
+
+						error.reserve(3);
+						addErrorMessage(std::move(message.message), error);
+						addErrorLocation(message.location.line > 0 ? message.location : paramsFuture.getLocation(), error);
+						addErrorPath(field_path{ message.path.empty() ? paramsFuture.errorPath : message.path }, error);
+
+						errors.emplace_back(std::move(error));
+					}
 				}
 				catch (const std::exception & ex)
 				{
@@ -653,12 +701,17 @@ private:
 
 					response::Value error(response::Type::Map);
 
-					error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
+					error.reserve(3);
+					addErrorMessage(message.str(), error);
+					addErrorLocation(paramsFuture.getLocation(), error);
+					addErrorPath(std::move(paramsFuture.errorPath), error);
+
 					errors.emplace_back(std::move(error));
 				}
 
 				response::Value document(response::Type::Map);
 
+				document.reserve(2);
 				document.emplace_back(std::string{ strData }, std::move(data));
 
 				if (errors.size() > 0)

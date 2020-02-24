@@ -11,50 +11,76 @@
 
 namespace graphql::service {
 
-schema_exception::schema_exception(std::vector<schema_error>&& errors)
-	: _errors(response::Type::List)
+void addErrorMessage(std::string&& message, response::Value& error)
 {
-	for (auto& error : errors)
+	error.emplace_back(std::string{ strMessage }, response::Value(std::move(message)));
+}
+
+void addErrorLocation(const schema_location& location, response::Value& error)
+{
+	if (location.line == 0)
+	{
+		return;
+	}
+
+	response::Value errorLocation(response::Type::Map);
+
+	errorLocation.reserve(2);
+	errorLocation.emplace_back(std::string{ strLine }, response::Value(static_cast<response::IntType>(location.line)));
+	errorLocation.emplace_back(std::string{ strColumn }, response::Value(static_cast<response::IntType>(location.byte_in_line + 1)));
+
+	response::Value errorLocations(response::Type::List);
+
+	errorLocations.reserve(1);
+	errorLocations.emplace_back(std::move(errorLocation));
+
+	error.emplace_back(std::string{ strLocations }, std::move(errorLocations));
+}
+
+void addErrorPath(field_path&& path, response::Value& error)
+{
+	if (path.empty())
+	{
+		return;
+	}
+
+	response::Value errorPath(response::Type::List);
+
+	errorPath.reserve(path.size());
+	while (!path.empty())
+	{
+		auto& segment = path.front();
+
+		if (std::holds_alternative<std::string>(segment))
+		{
+			errorPath.emplace_back(response::Value(std::move(std::get<std::string>(segment))));
+		}
+		else if (std::holds_alternative<size_t>(segment))
+		{
+			errorPath.emplace_back(response::Value(static_cast<response::IntType>(std::get<size_t>(segment))));
+		}
+
+		path.pop();
+	}
+
+	error.emplace_back(std::string{ strPath }, std::move(errorPath));
+}
+
+schema_exception::schema_exception(std::vector<schema_error>&& structuredErrors)
+	: _structuredErrors(std::move(structuredErrors))
+	, _errors(response::Type::List)
+{
+	for (auto error : _structuredErrors)
 	{
 		response::Value entry(response::Type::Map);
 
 		entry.reserve(3);
-		entry.emplace_back(std::string{ strMessage }, response::Value(std::move(error.message)));
-
-		if (error.line > 0
-			&& error.column > 0)
-		{
-			response::Value location(response::Type::Map);
-
-			location.reserve(2);
-			location.emplace_back(std::string{ strLine }, response::Value(static_cast<response::IntType>(error.line)));
-			location.emplace_back(std::string{ strColumn }, response::Value(static_cast<response::IntType>(error.column)));
-
-			response::Value locations(response::Type::List);
-
-			location.reserve(1);
-			locations.emplace_back(std::move(location));
-
-			entry.emplace_back(std::string{ strLocations }, std::move(locations));
-		}
-
-		if (!error.path.empty())
-		{
-			response::Value path(response::Type::List);
-
-			path.reserve(error.path.size());
-			for (auto& element : error.path)
-			{
-				path.emplace_back(std::move(element));
-			}
-
-			entry.emplace_back(std::string{ strPath }, std::move(path));
-		}
+		addErrorMessage(std::move(error.message), entry);
+		addErrorLocation(error.location, entry);
+		addErrorPath(std::move(error.path), entry);
 
 		_errors.emplace_back(std::move(entry));
 	}
-
-	errors.clear();
 }
 
 schema_exception::schema_exception(std::vector<std::string>&& messages)
@@ -80,6 +106,19 @@ const char* schema_exception::what() const noexcept
 	return (_errors.size() < 1 || _errors[0].type() != response::Type::String)
 		? "Unknown schema error"
 		: _errors[0].get<response::StringType>().c_str();
+}
+
+
+const std::vector<schema_error>& schema_exception::getStructuredErrors() const noexcept
+{
+	return _structuredErrors;
+}
+
+std::vector<schema_error> schema_exception::getStructuredErrors() noexcept
+{
+	auto structuredErrors = std::move(_structuredErrors);
+
+	return structuredErrors;
 }
 
 const response::Value& schema_exception::getErrors() const noexcept
@@ -191,7 +230,7 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 
 		error << "Unknown variable name: " << name;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line } } } };
 	}
 
 	_value = response::Value(itr->second);
@@ -429,7 +468,8 @@ const response::Value& Fragment::getDirectives() const
 	return _directives;
 }
 
-ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, const peg::ast_node& field, std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
+ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, const peg::ast_node& field,
+	std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
 	const peg::ast_node * selection, const FragmentMap & fragments, const response::Value & variables)
 	: SelectionSetParams(selectionSetParams)
 	, field(field)
@@ -440,6 +480,13 @@ ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, co
 	, fragments(fragments)
 	, variables(variables)
 {
+}
+
+schema_location ResolverParams::getLocation() const
+{
+	auto position = field.begin();
+
+	return { position.line, position.byte_in_line };
 }
 
 uint8_t Base64::verifyFromBase64(char ch)
@@ -666,7 +713,7 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldRes
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -687,7 +734,7 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldR
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -708,7 +755,7 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(Field
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -729,7 +776,7 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(Fiel
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -750,7 +797,7 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResul
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -771,7 +818,7 @@ std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResu
 
 		error << "Field may not have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
 	return resolve(std::move(result), std::move(params),
@@ -792,10 +839,10 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 
 		error << "Field must have sub-fields name: " << params.fieldName;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { params.errorPath } } } };
 	}
 
-	return std::async(std::launch::deferred,
+	return std::async(params.launch,
 		[](FieldResult<std::shared_ptr<Object>> && resultFuture, ResolverParams && paramsFuture)
 		{
 			auto wrappedResult = resultFuture.get();
@@ -829,7 +876,8 @@ struct FragmentDirectives
 class SelectionVisitor
 {
 public:
-	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams, const FragmentMap& fragments, const response::Value& variables,
+	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams,
+		const FragmentMap& fragments, const response::Value& variables,
 		const TypeNames& typeNames, const ResolverMap& resolvers);
 
 	void visit(const peg::ast_node& selection);
@@ -843,6 +891,7 @@ private:
 
 	const std::shared_ptr<RequestState>& _state;
 	const response::Value& _operationDirectives;
+	const field_path _path;
 	const std::launch _launch;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
@@ -853,10 +902,12 @@ private:
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
-SelectionVisitor::SelectionVisitor(const SelectionSetParams & selectionSetParams, const FragmentMap & fragments, const response::Value & variables,
+SelectionVisitor::SelectionVisitor(const SelectionSetParams & selectionSetParams,
+	const FragmentMap & fragments, const response::Value & variables,
 	const TypeNames & typeNames, const ResolverMap & resolvers)
 	: _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
+	, _path(selectionSetParams.errorPath)
 	, _launch(selectionSetParams.launch)
 	, _fragments(fragments)
 	, _variables(variables)
@@ -920,12 +971,24 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 
 	if (itr == _resolvers.cend())
 	{
+		std::promise<response::Value> promise;
 		auto position = field.begin();
 		std::ostringstream error;
 
 		error << "Unknown field name: " << name;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		promise.set_exception(std::make_exception_ptr(
+			schema_exception { { schema_error{
+				error.str(),
+				{ position.line, position.byte_in_line },
+				{ _path }
+			} } }));
+
+		_values.push({
+			std::move(alias),
+			promise.get_future()
+		});
+		return;
 	}
 
 	DirectiveVisitor directiveVisitor(_variables);
@@ -964,18 +1027,24 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			selection = &child;
 		});
 
+	auto path = _path;
+
+	path.push({ alias });
+
 	SelectionSetParams selectionSetParams {
 		_state,
 		_operationDirectives,
 		_fragmentDirectives.top().fragmentDefinitionDirectives,
 		_fragmentDirectives.top().fragmentSpreadDirectives,
 		_fragmentDirectives.top().inlineFragmentDirectives,
+		std::move(path),
 		_launch,
 	};
 
 	try
 	{
-		auto result = itr->second(ResolverParams(selectionSetParams, field, std::string(alias), std::move(arguments), directiveVisitor.getDirectives(),
+		auto result = itr->second(ResolverParams(selectionSetParams, field,
+			std::string(alias), std::move(arguments), directiveVisitor.getDirectives(),
 			selection, _fragments, _variables));
 
 		_values.push({
@@ -983,11 +1052,47 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			std::move(result)
 			});
 	}
-	catch (const std::exception&)
+	catch (schema_exception& scx)
 	{
 		std::promise<response::Value> promise;
+		auto position = field.begin();
+		auto messages = scx.getStructuredErrors();
 
-		promise.set_exception(std::current_exception());
+		for (auto& message : messages)
+		{
+			if (message.location.line == 0)
+			{
+				message.location = { position.line, position.byte_in_line };
+			}
+
+			if (message.path.empty())
+			{
+				message.path = { selectionSetParams.errorPath };
+			}
+		}
+
+		promise.set_exception(std::make_exception_ptr(schema_exception { std::move(messages) }));
+
+		_values.push({
+			std::move(alias),
+			promise.get_future()
+			});
+	}
+	catch (const std::exception& ex)
+	{
+		std::promise<response::Value> promise;
+		auto position = field.begin();
+		std::ostringstream message;
+
+		message << "Field error name: " << alias
+			<< " unknown error: " << ex.what();
+
+		promise.set_exception(std::make_exception_ptr(
+			schema_exception { { schema_error{
+				message.str(),
+				{ position.line, position.byte_in_line },
+				std::move(selectionSetParams.errorPath)
+			} } }));
 
 		_values.push({
 			std::move(alias),
@@ -1008,7 +1113,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 
 		error << "Unknown fragment name: " << name;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line }, { _path } } } };
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
@@ -1181,21 +1286,20 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 						}
 						else if (entry.first == strData)
 						{
-							if (data.find(name) != data.end())
-							{
-								std::ostringstream message;
+							auto itrData = data.find(name);
 
-								message << "Field error name: " << name
-									<< " error: duplicate field";
-
-								response::Value error(response::Type::Map);
-
-								error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
-								errors.emplace_back(std::move(error));
-							}
-							else
+							if (itrData == data.end())
 							{
 								data.emplace_back(std::move(name), std::move(entry.second));
+							}
+							else if (itrData->second != entry.second)
+							{
+								std::ostringstream message;
+								response::Value error(response::Type::Map);
+
+								message << "Ambiguous field error name: " << name;
+								addErrorMessage(message.str(), error);
+								errors.emplace_back(std::move(error));
 							}
 						}
 					}
@@ -1209,6 +1313,11 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 					{
 						errors.emplace_back(std::move(error));
 					}
+
+					if (data.find(name) == data.end())
+					{
+						data.emplace_back(std::move(name), {});
+					}
 				}
 				catch (const std::exception & ex)
 				{
@@ -1219,8 +1328,13 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 
 					response::Value error(response::Type::Map);
 
-					error.emplace_back(std::string{ strMessage }, response::Value(message.str()));
+					addErrorMessage(message.str(), error);
 					errors.emplace_back(std::move(error));
+
+					if (data.find(name) == data.end())
+					{
+						data.emplace_back(std::move(name), {});
+					}
 				}
 
 				children.pop();
@@ -1302,7 +1416,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
 
 		error << "Duplicate fragment name: " << inserted.first->first;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line } } } };
 	}
 }
 
@@ -1410,6 +1524,7 @@ void OperationDefinitionVisitor::visit(const std::string & operationType, const 
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
+				{},
 				selectionLaunch,
 			};
 
@@ -1541,7 +1656,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 
 		error << "Extra subscription root field name: " << name;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line } } } };
 	}
 
 	DirectiveVisitor directiveVisitor(_params.variables);
@@ -1588,7 +1703,7 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 
 		error << "Unknown fragment name: " << name;
 
-		throw schema_exception { { schema_error{ error.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line } } } };
 	}
 
 	bool skip = !_subscriptionObject->matchesType(itr->second.getType());
@@ -1701,7 +1816,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << "Duplicate named operations name: " << name;
 				}
 
-				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
+				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 			}
 
 			hasAnonymous = hasAnonymous || name.empty();
@@ -1722,7 +1837,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << "Unexpected named operation name: " << name;
 				}
 
-				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
+				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 			}
 
 			auto itr = _operations.find(operationType);
@@ -1738,7 +1853,7 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 					message << " name: " << name;
 				}
 
-				errors.push_back({ message.str(), position.line, position.byte_in_line + 1 });
+				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 			}
 
 			if (!errors.empty())
@@ -1775,7 +1890,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 
 				message << "Unexpected type definition";
 
-				throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
+				throw schema_exception { { schema_error{ message.str(), { position.line, position.byte_in_line } } } };
 			}
 		}
 
@@ -1815,7 +1930,7 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 				message << " name: " << operationName;
 			}
 
-			throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
+			throw schema_exception { { schema_error{ message.str(), { position.line, position.byte_in_line } } } };
 		}
 
 		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
@@ -1882,7 +1997,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 			message << " name: " << params.operationName;
 		}
 
-		throw schema_exception { { schema_error{ message.str(), position.line, position.byte_in_line + 1 } } };
+		throw schema_exception { { schema_error{ message.str(), { position.line, position.byte_in_line } } } };
 	}
 
 	auto itr = _operations.find(std::string{ strSubscription });
@@ -2011,6 +2126,7 @@ void Request::deliver(std::launch launch, const SubscriptionName & name, const S
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
+			{},
 			launch,
 		};
 

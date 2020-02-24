@@ -179,9 +179,9 @@ TEST_F(TodayServiceCase, QueryEverything)
 		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
 		EXPECT_EQ("Folder", service::StringArgument::require("__typename", unreadCountNode)) << "__typename should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -232,9 +232,9 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -283,9 +283,9 @@ TEST_F(TodayServiceCase, QueryTasks)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -334,9 +334,9 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
 		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -378,9 +378,9 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		const auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask);
 		EXPECT_EQ("Hi There!", clientMutationId) << "clientMutationId should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -421,9 +421,9 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -470,9 +470,9 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		EXPECT_EQ("today", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -532,9 +532,9 @@ TEST_F(TodayServiceCase, Introspection)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -594,9 +594,9 @@ TEST_F(TodayServiceCase, SkipDirective)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_FALSE(mutationType.second);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -656,9 +656,9 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		ASSERT_FALSE(queryType.second);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -782,9 +782,9 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_EQ("inlineFragment5", inlineFragment4) << "nested inline fragments don't reset, but do overwrite on collision";
 		ASSERT_EQ("nested4", field4) << "remember the field directives";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -830,9 +830,9 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -850,15 +850,13 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		const auto& errors = result["errors"];
 		ASSERT_TRUE(errors.type() == response::Type::List);
 		ASSERT_EQ(size_t(1), errors.size());
-		const auto& error = errors[0];
+		response::Value error{ errors[0] };
 		ASSERT_TRUE(error.type() == response::Type::Map);
-		const auto& message = error[std::string{ service::strMessage }];
-		ASSERT_TRUE(message.type() == response::Type::String);
-		ASSERT_EQ(R"e(Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented)e", message.get<response::StringType>());
+		ASSERT_EQ(R"e({"message":"Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented","locations":[{"line":2,"column":4}],"path":["unimplemented"]})e", response::toJSON(std::move(error)));
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -906,9 +904,9 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -945,9 +943,9 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1007,9 +1005,9 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1056,9 +1054,9 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1107,9 +1105,9 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1160,9 +1158,9 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1210,9 +1208,9 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1233,11 +1231,11 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 		auto errorsItr = result.find("errors");
 		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		EXPECT_EQ(R"js([{"message":"Type not found name: NonExistentType"}])js", errorsString) << "error should match";
+		EXPECT_EQ(R"js([{"message":"Type not found name: NonExistentType","locations":[{"line":2,"column":4}],"path":["__type"]}])js", errorsString) << "error should match";
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1266,9 +1264,9 @@ TEST_F(TodayServiceCase, DuplicateFragments)
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
 		EXPECT_EQ(R"js([{"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":12}]}])js", errorsString) << "error should match";
 	}
-	catch (const service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
 
@@ -1309,8 +1307,8 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (const service::schema_exception& ex)
+	catch (service::schema_exception& ex)
 	{
-		FAIL() << response::toJSON(response::Value(ex.getErrors()));
+		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
