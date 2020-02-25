@@ -130,35 +130,45 @@ Schema::Schema()
 
 std::future<response::Value> Schema::resolveTypes(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Schema::resolveQueryType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getQueryType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Schema::resolveMutationType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getMutationType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSubscriptionType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Schema::resolveDirectives(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDirectives(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
@@ -188,21 +198,27 @@ Type::Type()
 
 std::future<response::Value> Type::resolveKind(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getKind(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<TypeKind>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolveDescription(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -224,21 +240,27 @@ std::future<response::Value> Type::resolveFields(service::ResolverParams&& param
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getFields(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIncludeDeprecated));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolveInterfaces(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getInterfaces(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPossibleTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
@@ -260,21 +282,27 @@ std::future<response::Value> Type::resolveEnumValues(service::ResolverParams&& p
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getEnumValues(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIncludeDeprecated));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolveInputFields(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getInputFields(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Type::resolveOfType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getOfType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -301,42 +329,54 @@ Field::Field()
 
 std::future<response::Value> Field::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Field::resolveDescription(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Field::resolveArgs(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getArgs(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Field::resolveType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Field::resolveIsDeprecated(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Field::resolveDeprecationReason(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDeprecationReason(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -361,28 +401,36 @@ InputValue::InputValue()
 
 std::future<response::Value> InputValue::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> InputValue::resolveDescription(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> InputValue::resolveType(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getType(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> InputValue::resolveDefaultValue(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDefaultValue(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -407,28 +455,36 @@ EnumValue::EnumValue()
 
 std::future<response::Value> EnumValue::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> EnumValue::resolveDescription(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDeprecationReason(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -453,28 +509,36 @@ Directive::Directive()
 
 std::future<response::Value> Directive::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Directive::resolveDescription(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Directive::resolveLocations(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getLocations(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Directive::resolveArgs(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getArgs(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }

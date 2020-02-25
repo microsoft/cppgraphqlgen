@@ -127,7 +127,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	auto result = _service->resolve(state, *ast.root, "Everything", std::move(variables)).get();
+	auto result = _service->resolve(std::launch::async, state, *ast.root, "Everything", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -512,7 +512,7 @@ TEST_F(TodayServiceCase, Introspection)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(std::launch::async, state, *ast.root, "", std::move(variables)).get();
 
 	try
 	{

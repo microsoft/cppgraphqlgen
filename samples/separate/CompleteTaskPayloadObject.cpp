@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Task>> CompleteTaskPayload::getTask(service
 
 std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTask(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<std::optional<response::StringType>> CompleteTaskPayload::g
 
 std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getClientMutationId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }

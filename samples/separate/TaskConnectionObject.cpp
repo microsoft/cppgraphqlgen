@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<PageInfo>> TaskConnection::getPageInfo(serv
 
 std::future<response::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> Task
 
 std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getEdges(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }

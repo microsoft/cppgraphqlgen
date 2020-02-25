@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <future>
+#include <mutex>
 #include <queue>
 #include <map>
 #include <set>
@@ -431,6 +432,8 @@ protected:
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
 	virtual void beginSelectionSet(const SelectionSetParams& params) const;
 	virtual void endSelectionSet(const SelectionSetParams& params) const;
+
+	std::mutex _resolverMutex{};
 
 private:
 	TypeNames _typeNames;

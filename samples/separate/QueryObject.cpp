@@ -50,7 +50,9 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::F
 std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -66,7 +68,9 @@ std::future<response::Value> Query::resolveAppointments(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getAppointments(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
@@ -82,7 +86,9 @@ std::future<response::Value> Query::resolveTasks(service::ResolverParams&& param
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTasks(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
@@ -98,7 +104,9 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCounts(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
@@ -133,7 +141,9 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 	auto argIds = (pairIds.second
 		? std::move(pairIds.first)
 		: service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", defaultArguments));
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getAppointmentsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -146,7 +156,9 @@ service::FieldResult<std::vector<std::shared_ptr<Task>>> Query::getTasksById(ser
 std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTasksById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -159,7 +171,9 @@ service::FieldResult<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCount
 std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCountsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -171,7 +185,9 @@ service::FieldResult<std::shared_ptr<NestedType>> Query::getNested(service::Fiel
 
 std::future<response::Value> Query::resolveNested(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
@@ -183,7 +199,9 @@ service::FieldResult<response::StringType> Query::getUnimplemented(service::Fiel
 
 std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnimplemented(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }

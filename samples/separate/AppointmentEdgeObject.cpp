@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Appointment>> AppointmentEdge::getNode(serv
 
 std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<response::Value> AppointmentEdge::getCursor(service::FieldP
 
 std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }

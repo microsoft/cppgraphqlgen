@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Appointment>> Subscription::getNextAppointm
 
 std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNextAppointmentChange(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -45,7 +47,9 @@ service::FieldResult<std::shared_ptr<service::Object>> Subscription::getNodeChan
 std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNodeChange(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }

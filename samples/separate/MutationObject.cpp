@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> Mutation::applyComple
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = applyCompleteTask(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }

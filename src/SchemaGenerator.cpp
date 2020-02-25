@@ -2786,7 +2786,8 @@ std::future<response::Value> )cpp" << objectType.cppType
 			}
 		}
 
-		sourceFile << R"cpp(	auto result = )cpp" << outputField.accessor << fieldName
+		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
+	auto result = )cpp" << outputField.accessor << fieldName
 			<< R"cpp((service::FieldParams(params, std::move(params.fieldDirectives)))cpp";
 
 		if (!outputField.arguments.empty())
@@ -2801,6 +2802,7 @@ std::future<response::Value> )cpp" << objectType.cppType
 		}
 
 		sourceFile << R"cpp();
+	resolverLock.unlock();
 
 	return )cpp" << getResultAccessType(outputField)
 			<< R"cpp(::convert)cpp" << getTypeModifiers(outputField.modifiers)
