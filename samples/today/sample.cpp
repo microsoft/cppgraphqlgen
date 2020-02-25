@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "SeparateToday.h"
+#include "TodayMock.h"
 
 #include <graphqlservice/JSONResponse.h>
 

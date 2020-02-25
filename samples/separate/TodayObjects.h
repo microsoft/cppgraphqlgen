@@ -23,5 +23,6 @@
 #include "TaskObject.h"
 #include "FolderObject.h"
 #include "NestedTypeObject.h"
+#include "ExpensiveObject.h"
 
 #endif // TODAYOBJECTS_H

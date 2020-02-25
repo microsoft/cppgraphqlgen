@@ -28,6 +28,8 @@ type Query {
     nested: NestedType!
 
     unimplemented: String!
+
+    expensive: [Expensive!]!
 }
 
 "Node interface for Relay support"
@@ -138,4 +140,8 @@ type NestedType {
     depth: Int!
     "Link to the next level"
     nested: NestedType!
+}
+
+type Expensive {
+    order: Int!
 }

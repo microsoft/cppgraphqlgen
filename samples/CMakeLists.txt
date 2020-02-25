@@ -63,6 +63,7 @@ endforeach(CPP_FILE)
 
 add_library(separateschema OBJECT ${SEPARATE_SCHEMA_PATHS})
 add_dependencies(separateschema graphqlservice)
+target_compile_definitions(separateschema PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -75,10 +76,11 @@ if(GRAPHQL_UPDATE_SAMPLES)
 endif()
 
 add_library(separategraphql
-  today/SeparateToday.cpp
+  today/TodayMock.cpp
   $<TARGET_OBJECTS:separateschema>)
 add_dependencies(separategraphql separateschema)
 target_link_libraries(separategraphql PUBLIC graphqlservice)
+target_compile_definitions(separategraphql PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separategraphql PUBLIC
   $<TARGET_PROPERTY:separateschema,INCLUDE_DIRECTORIES>
   today)
@@ -108,7 +110,7 @@ if(GRAPHQL_BUILD_TESTS)
   endif()
 
   add_library(unifiedgraphql
-    today/UnifiedToday.cpp
+    today/TodayMock.cpp
     $<TARGET_OBJECTS:unifiedschema>)
   add_dependencies(unifiedgraphql unifiedschema)
   target_link_libraries(unifiedgraphql PUBLIC graphqlservice)

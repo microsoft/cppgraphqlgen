@@ -54,6 +54,7 @@ class Appointment;
 class Task;
 class Folder;
 class NestedType;
+class Expensive;
 
 } /* namespace object */
 
@@ -89,6 +90,7 @@ void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppoin
 void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, const std::shared_ptr<introspection::Schema>& schema);
 void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, const std::shared_ptr<introspection::Schema>& schema);
 void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, const std::shared_ptr<introspection::Schema>& schema);
+void AddExpensiveDetails(std::shared_ptr<introspection::ObjectType> typeExpensive, const std::shared_ptr<introspection::Schema>& schema);
 
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 

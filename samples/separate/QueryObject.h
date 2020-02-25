@@ -28,6 +28,7 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -39,6 +40,7 @@ private:
 	std::future<response::Value> resolveUnreadCountsById(service::ResolverParams&& params);
 	std::future<response::Value> resolveNested(service::ResolverParams&& params);
 	std::future<response::Value> resolveUnimplemented(service::ResolverParams&& params);
+	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);

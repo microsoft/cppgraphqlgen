@@ -140,6 +140,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("Folder", typeFolder);
 	auto typeNestedType = std::make_shared<introspection::ObjectType>("NestedType", R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
 	schema->AddType("NestedType", typeNestedType);
+	auto typeExpensive = std::make_shared<introspection::ObjectType>("Expensive", R"md()md");
+	schema->AddType("Expensive", typeExpensive);
 
 	typeTaskState->AddEnumValues({
 		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)] }, R"md()md", std::nullopt },
@@ -179,6 +181,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	AddTaskDetails(typeTask, schema);
 	AddFolderDetails(typeFolder, schema);
 	AddNestedTypeDetails(typeNestedType, schema);
+	AddExpensiveDetails(typeExpensive, schema);
 
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
 		R"gql(SUBSCRIPTION)gql"

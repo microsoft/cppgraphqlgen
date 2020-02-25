@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "UnifiedToday.h"
+#include "TodayMock.h"
 
 #include <iostream>
 #include <algorithm>
@@ -368,6 +368,18 @@ service::FieldResult<std::shared_ptr<object::NestedType>> Query::getNested(servi
 	return promise.get_future();
 }
 
+service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::getExpensive(service::FieldParams&& /*params*/) const
+{
+	std::vector<std::shared_ptr<object::Expensive>> result(Expensive::count);
+
+	for (auto& entry : result)
+	{
+		entry = std::make_shared<Expensive>();
+	}
+
+	return result;
+}
+
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 	: _mutateCompleteTask(std::move(mutateCompleteTask))
 {
@@ -419,6 +431,58 @@ std::stack<CapturedParams> NestedType::getCapturedParams()
 	auto result = std::move(_capturedParams);
 
 	return result;
+}
+
+std::mutex Expensive::pendingExpensiveMutex{};
+std::condition_variable Expensive::pendingExpensiveCondition{};
+size_t Expensive::pendingExpensive = 0;
+
+size_t Expensive::instances = 0;
+
+bool Expensive::Reset() noexcept
+{
+	std::unique_lock pendingExpensiveLock(pendingExpensiveMutex);
+
+	pendingExpensive = 0;
+	pendingExpensiveLock.unlock();
+
+	return instances == 0;
+}
+
+Expensive::Expensive()
+	: order(++instances)
+{
+}
+
+Expensive::~Expensive()
+{
+	--instances;
+}
+
+service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams&& params) const
+{
+	return std::async(params.launch,
+		[](std::launch launch, response::IntType instanceOrder) noexcept
+	{
+		if (launch == std::launch::async)
+		{
+			// Block all of the Expensive objects in async mode until the count is reached.
+			std::unique_lock pendingExpensiveLock(pendingExpensiveMutex);
+
+			if (++pendingExpensive < count)
+			{
+				pendingExpensiveCondition.wait(pendingExpensiveLock, []() {
+					return pendingExpensive == count;
+				});
+			}
+
+			// Wake up the next Expensive object.
+			pendingExpensiveLock.unlock();
+			pendingExpensiveCondition.notify_one();		
+		}
+
+		return instanceOrder;
+	}, params.launch, static_cast<response::IntType>(order));
 }
 
 } /* namespace graphql::today */

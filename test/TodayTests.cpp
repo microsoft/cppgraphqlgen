@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "UnifiedToday.h"
+#include "TodayMock.h"
 
 #include <graphqlservice/JSONResponse.h>
 
@@ -1306,6 +1306,60 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+	}
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
+TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
+{
+	auto ast = R"(query NonblockingDeferredExpensive {
+			expensive {
+				order
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(18);
+	auto future = _service->resolve(std::launch::deferred, state, *ast.root, "NonblockingDeferredExpensive", std::move(variables));
+	auto result = future.get();
+
+	try
+	{
+		ASSERT_TRUE(today::Expensive::Reset()) << "there should be no remaining instances";
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		ASSERT_TRUE(errorsItr == result.get<response::MapType>().cend());
+		auto response = response::toJSON(response::Value(result));
+		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
+	}
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
+TEST_F(TodayServiceCase, BlockingAsyncExpensive)
+{
+	auto ast = R"(query BlockingAsyncExpensive {
+			expensive {
+				order
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(19);
+	auto future = _service->resolve(std::launch::async, state, *ast.root, "BlockingAsyncExpensive", std::move(variables));
+	auto result = future.get();
+
+	try
+	{
+		ASSERT_TRUE(today::Expensive::Reset()) << "there should be no remaining instances";
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		ASSERT_TRUE(errorsItr == result.get<response::MapType>().cend());
+		auto response = response::toJSON(response::Value(result));
+		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
 	}
 	catch (service::schema_exception& ex)
 	{
