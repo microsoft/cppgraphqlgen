@@ -291,6 +291,12 @@ public:
 	std::vector<std::string> Build() const noexcept;
 
 private:
+	std::string getHeaderDir() const noexcept;
+	std::string getSourceDir() const noexcept;
+	std::string getHeaderPath() const noexcept;
+	std::string getObjectHeaderPath() const noexcept;
+	std::string getSourcePath() const noexcept;
+
 	void visitDefinition(const peg::ast_node& definition);
 
 	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);

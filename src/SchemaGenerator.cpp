@@ -152,75 +152,14 @@ const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
 Generator::Generator(GeneratorOptions&& options)
 	: _options(std::move(options))
 	, _isIntrospection(!_options.customSchema)
-	, _schemaNamespace(_isIntrospection ? s_introspectionNamespace : _options.customSchema->schemaNamespace)
-	, _headerDir([this]() noexcept -> std::string
-	{
-		if (_isIntrospection)
-		{
-			return (fs::path { "include" } / "graphqlservice").string();
-		}
-		else if (_options.paths)
-		{
-			return fs::path { _options.paths->headerPath }.string();
-		}
-		else
-		{
-			return {};
-		}
-	}())
-	, _sourceDir([this]() noexcept -> std::string
-	{
-		if (_isIntrospection || !_options.paths)
-		{
-			return {};
-		}
-		else
-		{
-			return fs::path(_options.paths->sourcePath).string();
-		}
-	}())
-	, _headerPath([this]() noexcept -> std::string
-	{
-		fs::path fullPath { _headerDir };
-
-		if (_isIntrospection)
-		{
-			fullPath /= "IntrospectionSchema.h";
-		}
-		else
-		{
-			fullPath /= (_options.customSchema->filenamePrefix + "Schema.h");
-		}
-
-		return fullPath.string();
-	}())
-	, _objectHeaderPath([this]() noexcept -> std::string
-	{
-		if (_options.separateFiles)
-		{
-			fs::path fullPath { _headerDir };
-
-			fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
-			return fullPath.string();
-		}
-
-		return _headerPath;
-	}())
-	, _sourcePath([this]() noexcept -> std::string
-	{
-		fs::path fullPath { _sourceDir };
-
-		if (_isIntrospection)
-		{
-			fullPath /= "IntrospectionSchema.cpp";
-		}
-		else
-		{
-			fullPath /= (_options.customSchema->filenamePrefix + "Schema.cpp");
-		}
-
-		return fullPath.string();
-	}())
+	, _schemaNamespace(_isIntrospection
+		? s_introspectionNamespace
+		: _options.customSchema->schemaNamespace)
+	, _headerDir(getHeaderDir())
+	, _sourceDir(getSourceDir())
+	, _headerPath(getHeaderPath())
+	, _objectHeaderPath(getObjectHeaderPath())
+	, _sourcePath(getSourcePath())
 {
 	if (_isIntrospection)
 	{
@@ -346,6 +285,79 @@ Generator::Generator(GeneratorOptions&& options)
 	}
 
 	validateSchema();
+}
+
+std::string Generator::getHeaderDir() const noexcept
+{
+	if (_isIntrospection)
+	{
+		return (fs::path { "include" } / "graphqlservice").string();
+	}
+	else if (_options.paths)
+	{
+		return fs::path { _options.paths->headerPath }.string();
+	}
+	else
+	{
+		return {};
+	}
+}
+
+std::string Generator::getSourceDir() const noexcept
+{
+	if (_isIntrospection || !_options.paths)
+	{
+		return {};
+	}
+	else
+	{
+		return fs::path(_options.paths->sourcePath).string();
+	}
+}
+
+std::string Generator::getHeaderPath() const noexcept
+{
+	fs::path fullPath { _headerDir };
+
+	if (_isIntrospection)
+	{
+		fullPath /= "IntrospectionSchema.h";
+	}
+	else
+	{
+		fullPath /= (_options.customSchema->filenamePrefix + "Schema.h");
+	}
+
+	return fullPath.string();
+}
+
+std::string Generator::getObjectHeaderPath() const noexcept
+{
+	if (_options.separateFiles)
+	{
+		fs::path fullPath { _headerDir };
+
+		fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
+		return fullPath.string();
+	}
+
+	return _headerPath;
+}
+
+std::string Generator::getSourcePath() const noexcept
+{
+	fs::path fullPath { _sourceDir };
+
+	if (_isIntrospection)
+	{
+		fullPath /= "IntrospectionSchema.cpp";
+	}
+	else
+	{
+		fullPath /= (_options.customSchema->filenamePrefix + "Schema.cpp");
+	}
+
+	return fullPath.string();
 }
 
 void Generator::validateSchema()
