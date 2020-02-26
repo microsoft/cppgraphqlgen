@@ -224,7 +224,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_interfaces.size());
 
 	std::copy(_interfaces.cbegin(), _interfaces.cend(), result->begin());
-	
+
 	return { std::move(result) };
 }
 
@@ -261,7 +261,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
 		return deprecated
 			|| !field->getIsDeprecated(service::FieldParams(params, response::Value(response::Type::Map))).get();
 	});
-	
+
 	return { std::move(result) };
 }
 
@@ -516,20 +516,20 @@ Directive::Directive(response::StringType&& name, response::StringType&& descrip
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _locations([](std::vector<response::StringType>&& locationsArg) -> std::vector<DirectiveLocation>
+	{
+		std::vector<DirectiveLocation> result(locationsArg.size());
+
+		std::transform(locationsArg.begin(), locationsArg.end(), result.begin(),
+			[](std::string& name) -> DirectiveLocation
 		{
-			std::vector<DirectiveLocation> result(locationsArg.size());
+			response::Value location(response::Type::EnumValue);
 
-			std::transform(locationsArg.begin(), locationsArg.end(), result.begin(),
-				[](std::string& name) -> DirectiveLocation
-				{
-					response::Value location(response::Type::EnumValue);
+			location.set<response::StringType>(std::move(name));
+			return service::ModifiedArgument<DirectiveLocation>::convert(location);
+		});
 
-					location.set<response::StringType>(std::move(name));
-					return service::ModifiedArgument<DirectiveLocation>::convert(location);
-				});
-
-			return result;
-		}(std::move(locations)))
+		return result;
+	}(std::move(locations)))
 	, _args(std::move(args))
 {
 }

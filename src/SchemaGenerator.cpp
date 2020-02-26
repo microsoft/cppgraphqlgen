@@ -25,18 +25,18 @@ namespace graphql::schema {
 
 IncludeGuardScope::IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept
 	: _outputFile(outputFile)
-	, _includeGuardName(headerFileName.size(), char{})
+	, _includeGuardName(headerFileName.size(), char {})
 {
 	std::transform(headerFileName.begin(), headerFileName.end(), _includeGuardName.begin(),
 		[](char ch) noexcept -> char
+	{
+		if (ch == '.')
 		{
-			if (ch == '.')
-			{
-				return '_';
-			}
+			return '_';
+		}
 
-			return std::toupper(ch);
-		});
+		return std::toupper(ch);
+	});
 
 	_outputFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -153,69 +153,74 @@ Generator::Generator(GeneratorOptions&& options)
 	: _options(std::move(options))
 	, _isIntrospection(!_options.customSchema)
 	, _schemaNamespace(_isIntrospection ? s_introspectionNamespace : _options.customSchema->schemaNamespace)
-	, _headerDir([this]() noexcept -> std::string {
-			if (_isIntrospection)
-			{
-				return (fs::path{ "include" } / "graphqlservice").string();
-			}
-			else if (_options.paths)
-			{
-				return fs::path{ _options.paths->headerPath }.string();
-			}
-			else
-			{
-				return {};
-			}
-		}())
-	, _sourceDir([this]() noexcept -> std::string {
-			if (_isIntrospection || !_options.paths)
-			{
-				return {};
-			}
-			else
-			{
-				return fs::path(_options.paths->sourcePath).string();
-			}
-		}())
-	, _headerPath([this]() noexcept -> std::string {
-			fs::path fullPath{ _headerDir };
+	, _headerDir([this]() noexcept -> std::string
+	{
+		if (_isIntrospection)
+		{
+			return (fs::path { "include" } / "graphqlservice").string();
+		}
+		else if (_options.paths)
+		{
+			return fs::path { _options.paths->headerPath }.string();
+		}
+		else
+		{
+			return {};
+		}
+	}())
+	, _sourceDir([this]() noexcept -> std::string
+	{
+		if (_isIntrospection || !_options.paths)
+		{
+			return {};
+		}
+		else
+		{
+			return fs::path(_options.paths->sourcePath).string();
+		}
+	}())
+	, _headerPath([this]() noexcept -> std::string
+	{
+		fs::path fullPath { _headerDir };
 
-			if (_isIntrospection)
-			{
-				fullPath /= "IntrospectionSchema.h";
-			}
-			else
-			{
-				fullPath /= (_options.customSchema->filenamePrefix + "Schema.h");
-			}
+		if (_isIntrospection)
+		{
+			fullPath /= "IntrospectionSchema.h";
+		}
+		else
+		{
+			fullPath /= (_options.customSchema->filenamePrefix + "Schema.h");
+		}
 
+		return fullPath.string();
+	}())
+	, _objectHeaderPath([this]() noexcept -> std::string
+	{
+		if (_options.separateFiles)
+		{
+			fs::path fullPath { _headerDir };
+
+			fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
 			return fullPath.string();
-		}())
-	, _objectHeaderPath([this]() noexcept -> std::string {
-			if (_options.separateFiles)
-			{
-				fs::path fullPath{ _headerDir };
+		}
 
-				fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
-				return fullPath.string();
-			}
+		return _headerPath;
+	}())
+	, _sourcePath([this]() noexcept -> std::string
+	{
+		fs::path fullPath { _sourceDir };
 
-			return _headerPath;
-		}())
-	, _sourcePath([this]() noexcept -> std::string {
-			fs::path fullPath{ _sourceDir };
+		if (_isIntrospection)
+		{
+			fullPath /= "IntrospectionSchema.cpp";
+		}
+		else
+		{
+			fullPath /= (_options.customSchema->filenamePrefix + "Schema.cpp");
+		}
 
-			if (_isIntrospection)
-			{
-				fullPath /= "IntrospectionSchema.cpp";
-			}
-			else
-			{
-				fullPath /= (_options.customSchema->filenamePrefix + "Schema.cpp");
-			}
-
-			return fullPath.string();
-		}())
+		return fullPath.string();
+	}())
 {
 	if (_isIntrospection)
 	{
@@ -640,20 +645,20 @@ void Generator::visitDefinition(const peg::ast_node& definition)
 void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 {
 	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
-		[this](const peg::ast_node & child)
-		{
-			std::string operation(child.children.front()->string_view());
-			std::string name(child.children.back()->string_view());
-			std::string cppName(getSafeCppName(name));
+		[this](const peg::ast_node& child)
+	{
+		std::string operation(child.children.front()->string_view());
+		std::string name(child.children.back()->string_view());
+		std::string cppName(getSafeCppName(name));
 
-			_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
-		});
+		_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
+	});
 }
 
 void Generator::visitSchemaExtension(const peg::ast_node& schemaExtension)
 {
 	peg::for_each_child<peg::operation_type_definition>(schemaExtension,
-		[this](const peg::ast_node & child)
+		[this](const peg::ast_node& child)
 	{
 		std::string operation(child.children.front()->string_view());
 		std::string name(child.children.back()->string_view());
@@ -669,16 +674,16 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	std::string description;
 
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Object;
 	_typePositions.emplace(name, objectTypeDefinition.begin());
@@ -696,10 +701,10 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 	std::string name;
 
 	peg::on_first_child<peg::object_name>(objectTypeExtension,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	const auto itrType = _objectNames.find(name);
 
@@ -708,22 +713,22 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 		auto& objectType = _objectTypes[itrType->second];
 
 		peg::for_each_child<peg::interface_type>(objectTypeExtension,
-			[&objectType](const peg::ast_node & child)
-			{
-				objectType.interfaces.push_back(child.string());
-			});
+			[&objectType](const peg::ast_node& child)
+		{
+			objectType.interfaces.push_back(child.string());
+		});
 
 		peg::on_first_child<peg::fields_definition>(objectTypeExtension,
-			[&objectType](const peg::ast_node & child)
-			{
-				auto fields = getOutputFields(child.children);
+			[&objectType](const peg::ast_node& child)
+		{
+			auto fields = getOutputFields(child.children);
 
-				objectType.fields.reserve(objectType.fields.size() + fields.size());
-				for (auto& field : fields)
-				{
-					objectType.fields.push_back(std::move(field));
-				}
-			});
+			objectType.fields.reserve(objectType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				objectType.fields.push_back(std::move(field));
+			}
+		});
 	}
 }
 
@@ -733,16 +738,16 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	std::string description;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Interface;
 	_typePositions.emplace(name, interfaceTypeDefinition.begin());
@@ -760,10 +765,10 @@ void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeEx
 	std::string name;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	const auto itrType = _interfaceNames.find(name);
 
@@ -772,16 +777,16 @@ void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeEx
 		auto& interfaceType = _interfaceTypes[itrType->second];
 
 		peg::on_first_child<peg::fields_definition>(interfaceTypeExtension,
-			[&interfaceType](const peg::ast_node & child)
-			{
-				auto fields = getOutputFields(child.children);
+			[&interfaceType](const peg::ast_node& child)
+		{
+			auto fields = getOutputFields(child.children);
 
-				interfaceType.fields.reserve(interfaceType.fields.size() + fields.size());
-				for (auto& field : fields)
-				{
-					interfaceType.fields.push_back(std::move(field));
-				}
-			});
+			interfaceType.fields.reserve(interfaceType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				interfaceType.fields.push_back(std::move(field));
+			}
+		});
 	}
 }
 
@@ -791,16 +796,16 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	std::string description;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Input;
 	_typePositions.emplace(name, inputObjectTypeDefinition.begin());
@@ -818,10 +823,10 @@ void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTy
 	std::string name;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	const auto itrType = _inputNames.find(name);
 
@@ -830,16 +835,16 @@ void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTy
 		auto& inputType = _inputTypes[itrType->second];
 
 		peg::on_first_child<peg::input_fields_definition>(inputObjectTypeExtension,
-			[&inputType](const peg::ast_node & child)
-			{
-				auto fields = getInputFields(child.children);
+			[&inputType](const peg::ast_node& child)
+		{
+			auto fields = getInputFields(child.children);
 
-				inputType.fields.reserve(inputType.fields.size() + fields.size());
-				for (auto& field : fields)
-				{
-					inputType.fields.push_back(std::move(field));
-				}
-			});
+			inputType.fields.reserve(inputType.fields.size() + fields.size());
+			for (auto& field : fields)
+			{
+				inputType.fields.push_back(std::move(field));
+			}
+		});
 	}
 }
 
@@ -849,16 +854,16 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	std::string description;
 
 	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Enum;
 	_typePositions.emplace(name, enumTypeDefinition.begin());
@@ -876,10 +881,10 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 	std::string name;
 
 	peg::on_first_child<peg::enum_name>(enumTypeExtension,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	const auto itrType = _enumNames.find(name);
 
@@ -888,72 +893,72 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 		auto& enumType = _enumTypes[itrType->second];
 
 		peg::for_each_child<peg::enum_value_definition>(enumTypeExtension,
-			[&enumType](const peg::ast_node & child)
+			[&enumType](const peg::ast_node& child)
+		{
+			EnumValueType value;
+
+			peg::on_first_child<peg::enum_value>(child,
+				[&value](const peg::ast_node& enumValue)
 			{
-				EnumValueType value;
+				value.value = enumValue.string_view();
+				value.cppValue = getSafeCppName(value.value);
+			});
 
-				peg::on_first_child<peg::enum_value>(child,
-					[&value](const peg::ast_node & enumValue)
+			peg::on_first_child<peg::description>(child,
+				[&value](const peg::ast_node& enumValue)
+			{
+				value.description = enumValue.children.front()->unescaped;
+			});
+
+			peg::on_first_child<peg::directives>(child,
+				[&value](const peg::ast_node& directives)
+			{
+				peg::for_each_child<peg::directive>(directives,
+					[&value](const peg::ast_node& directive)
+				{
+					std::string directiveName;
+
+					peg::on_first_child<peg::directive_name>(directive,
+						[&directiveName](const peg::ast_node& name)
 					{
-						value.value = enumValue.string_view();
-						value.cppValue = getSafeCppName(value.value);
+						directiveName = name.string_view();
 					});
 
-				peg::on_first_child<peg::description>(child,
-					[&value](const peg::ast_node & enumValue)
+					if (directiveName == "deprecated")
 					{
-						value.description = enumValue.children.front()->unescaped;
-					});
+						std::string reason;
 
-				peg::on_first_child<peg::directives>(child,
-					[&value](const peg::ast_node & directives)
-					{
-						peg::for_each_child<peg::directive>(directives,
-							[&value](const peg::ast_node & directive)
+						peg::on_first_child<peg::arguments>(directive,
+							[&value](const peg::ast_node& arguments)
+						{
+							peg::on_first_child<peg::argument>(arguments,
+								[&value](const peg::ast_node& argument)
 							{
-								std::string directiveName;
+								std::string argumentName;
 
-								peg::on_first_child<peg::directive_name>(directive,
-									[&directiveName](const peg::ast_node & name)
-									{
-										directiveName = name.string_view();
-									});
-
-								if (directiveName == "deprecated")
+								peg::on_first_child<peg::argument_name>(argument,
+									[&argumentName](const peg::ast_node& name)
 								{
-									std::string reason;
+									argumentName = name.string_view();
+								});
 
-									peg::on_first_child<peg::arguments>(directive,
-										[&value](const peg::ast_node & arguments)
-										{
-											peg::on_first_child<peg::argument>(arguments,
-												[&value](const peg::ast_node & argument)
-												{
-													std::string argumentName;
-
-													peg::on_first_child<peg::argument_name>(argument,
-														[&argumentName](const peg::ast_node & name)
-														{
-															argumentName = name.string_view();
-														});
-
-													if (argumentName == "reason")
-													{
-														peg::on_first_child<peg::string_value>(argument,
-															[&value](const peg::ast_node & argumentValue)
-															{
-																value.deprecationReason = argumentValue.unescaped;
-															});
-													}
-												});
-										});
+								if (argumentName == "reason")
+								{
+									peg::on_first_child<peg::string_value>(argument,
+										[&value](const peg::ast_node& argumentValue)
+									{
+										value.deprecationReason = argumentValue.unescaped;
+									});
 								}
 							});
-					});
-
-				value.position = child.begin();
-				enumType.values.push_back(std::move(value));
+						});
+					}
+				});
 			});
+
+			value.position = child.begin();
+			enumType.values.push_back(std::move(value));
+		});
 	}
 }
 
@@ -963,16 +968,16 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	std::string description;
 
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Scalar;
 	_typePositions.emplace(name, scalarTypeDefinition.begin());
@@ -986,16 +991,16 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	std::string description;
 
 	peg::on_first_child<peg::union_name>(unionTypeDefinition,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
-		[&description](const peg::ast_node & child)
-		{
-			description = child.children.front()->unescaped;
-		});
+		[&description](const peg::ast_node& child)
+	{
+		description = child.children.front()->unescaped;
+	});
 
 	_schemaTypes[name] = SchemaType::Union;
 	_typePositions.emplace(name, unionTypeDefinition.begin());
@@ -1013,10 +1018,10 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 	std::string name;
 
 	peg::on_first_child<peg::union_name>(unionTypeExtension,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	const auto itrType = _unionNames.find(name);
 
@@ -1025,10 +1030,10 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 		auto& unionType = _unionTypes[itrType->second];
 
 		peg::for_each_child<peg::union_type>(unionTypeExtension,
-			[&unionType](const peg::ast_node & child)
-			{
-				unionType.options.push_back(child.string());
-			});
+			[&unionType](const peg::ast_node& child)
+		{
+			unionType.options.push_back(child.string());
+		});
 	}
 }
 
@@ -1037,34 +1042,34 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	Directive directive;
 
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
-		[&directive](const peg::ast_node & child)
-		{
-			directive.name = child.string();
-		});
+		[&directive](const peg::ast_node& child)
+	{
+		directive.name = child.string();
+	});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
-		[&directive](const peg::ast_node & child)
-		{
-			directive.description = child.children.front()->unescaped;
-		});
+		[&directive](const peg::ast_node& child)
+	{
+		directive.description = child.children.front()->unescaped;
+	});
 
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
-		[&directive](const peg::ast_node & child)
-		{
-			directive.locations.push_back(child.string());
-		});
+		[&directive](const peg::ast_node& child)
+	{
+		directive.locations.push_back(child.string());
+	});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
-		[&directive](const peg::ast_node & child)
-		{
-			auto fields = getInputFields(child.children);
+		[&directive](const peg::ast_node& child)
+	{
+		auto fields = getInputFields(child.children);
 
-			directive.arguments.reserve(directive.arguments.size() + fields.size());
-			for (auto& field : fields)
-			{
-				directive.arguments.push_back(std::move(field));
-			}
-		});
+		directive.arguments.reserve(directive.arguments.size() + fields.size());
+		for (auto& field : fields)
+		{
+			directive.arguments.push_back(std::move(field));
+		}
+	});
 
 	_directivePositions.emplace(directive.name, directiveDefinition.begin());
 	_directives.push_back(std::move(directive));
@@ -1126,48 +1131,48 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 			else if (child->is_type<peg::directives>())
 			{
 				peg::for_each_child<peg::directive>(*child,
-					[&field](const peg::ast_node & directive)
+					[&field](const peg::ast_node& directive)
+				{
+					std::string directiveName;
+
+					peg::on_first_child<peg::directive_name>(directive,
+						[&directiveName](const peg::ast_node& name)
 					{
-						std::string directiveName;
+						directiveName = name.string_view();
+					});
 
-						peg::on_first_child<peg::directive_name>(directive,
-							[&directiveName](const peg::ast_node & name)
-							{
-								directiveName = name.string_view();
-							});
+					if (directiveName == "deprecated")
+					{
+						std::string deprecationReason;
 
-						if (directiveName == "deprecated")
+						peg::on_first_child<peg::arguments>(directive,
+							[&deprecationReason](const peg::ast_node& arguments)
 						{
-							std::string deprecationReason;
+							peg::on_first_child<peg::argument>(arguments,
+								[&deprecationReason](const peg::ast_node& argument)
+							{
+								std::string argumentName;
 
-							peg::on_first_child<peg::arguments>(directive,
-								[&deprecationReason](const peg::ast_node & arguments)
+								peg::on_first_child<peg::argument_name>(argument,
+									[&argumentName](const peg::ast_node& name)
 								{
-									peg::on_first_child<peg::argument>(arguments,
-										[&deprecationReason](const peg::ast_node & argument)
-										{
-											std::string argumentName;
-
-											peg::on_first_child<peg::argument_name>(argument,
-												[&argumentName](const peg::ast_node & name)
-												{
-													argumentName = name.string_view();
-												});
-
-											if (argumentName == "reason")
-											{
-												peg::on_first_child<peg::string_value>(argument,
-													[&deprecationReason](const peg::ast_node & reason)
-													{
-														deprecationReason = reason.unescaped;
-													});
-											}
-										});
+									argumentName = name.string_view();
 								});
 
-							field.deprecationReason = std::move(deprecationReason);
-						}
-					});
+								if (argumentName == "reason")
+								{
+									peg::on_first_child<peg::string_value>(argument,
+										[&deprecationReason](const peg::ast_node& reason)
+									{
+										deprecationReason = reason.unescaped;
+									});
+								}
+							});
+						});
+
+						field.deprecationReason = std::move(deprecationReason);
+					}
+				});
 			}
 		}
 
@@ -1402,7 +1407,7 @@ std::vector<std::string> Generator::Build() const noexcept
 	return builtFiles;
 }
 
-const std::string& Generator::getCppType(const std::string & type) const noexcept
+const std::string& Generator::getCppType(const std::string& type) const noexcept
 {
 	auto itrBuiltin = s_builtinTypes.find(type);
 
@@ -1426,7 +1431,7 @@ const std::string& Generator::getCppType(const std::string & type) const noexcep
 	return getSafeCppName(type);
 }
 
-std::string Generator::getInputCppType(const InputField & field) const noexcept
+std::string Generator::getInputCppType(const InputField& field) const noexcept
 {
 	size_t templateCount = 0;
 	std::ostringstream inputType;
@@ -1460,7 +1465,7 @@ std::string Generator::getInputCppType(const InputField & field) const noexcept
 	return inputType.str();
 }
 
-std::string Generator::getOutputCppType(const OutputField & field) const noexcept
+std::string Generator::getOutputCppType(const OutputField& field) const noexcept
 {
 	bool nonNull = true;
 	size_t templateCount = 0;
@@ -1545,7 +1550,7 @@ std::string Generator::getOutputCppType(const OutputField & field) const noexcep
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard{ headerFile, fs::path(_headerPath).filename().string() };
+	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
 
 	headerFile << R"cpp(#include <graphqlservice/GraphQLService.h>
 
@@ -1555,11 +1560,11 @@ bool Generator::outputHeader() const noexcept
 
 )cpp";
 
-	NamespaceScope graphqlNamespace{ headerFile, "graphql" };
-	NamespaceScope introspectionNamespace{ headerFile, s_introspectionNamespace };
-	NamespaceScope schemaNamespace{ headerFile, _schemaNamespace, true };
-	NamespaceScope objectNamespace{ headerFile, "object", true };
-	PendingBlankLine pendingSeparator{ headerFile };
+	NamespaceScope graphqlNamespace { headerFile, "graphql" };
+	NamespaceScope introspectionNamespace { headerFile, s_introspectionNamespace };
+	NamespaceScope schemaNamespace { headerFile, _schemaNamespace, true };
+	NamespaceScope objectNamespace { headerFile, "object", true };
+	PendingBlankLine pendingSeparator { headerFile };
 
 	headerFile << R"cpp(
 class Schema;
@@ -1807,7 +1812,7 @@ void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectTy
 protected:
 	explicit )cpp" << objectType.cppType << R"cpp(();
 )cpp";
-	
+
 	if (isQueryType)
 	{
 		headerFile << R"cpp(
@@ -1831,13 +1836,13 @@ public:
 			{
 
 				headerFile << std::endl;
-				
+
 				if (!isQueryType)
 				{
 					headerFile << R"cpp(public:
 )cpp";
 				}
-				
+
 				firstField = false;
 			}
 
@@ -1871,7 +1876,7 @@ private:
 )cpp";
 }
 
-std::string Generator::getFieldDeclaration(const InputField & inputField) const noexcept
+std::string Generator::getFieldDeclaration(const InputField& inputField) const noexcept
 {
 	std::ostringstream output;
 
@@ -1884,7 +1889,7 @@ std::string Generator::getFieldDeclaration(const InputField & inputField) const 
 std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName{ outputField.cppName };
+	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	virtual service::FieldResult<)cpp" << getOutputCppType(outputField)
@@ -1911,7 +1916,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	return output.str();
 }
 
-std::string Generator::getResolverDeclaration(const OutputField & outputField) const noexcept
+std::string Generator::getResolverDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
 	std::string fieldName(outputField.cppName);
@@ -1950,11 +1955,11 @@ bool Generator::outputSource() const noexcept
 
 )cpp";
 
-	NamespaceScope graphqlNamespace{ sourceFile, "graphql" };
+	NamespaceScope graphqlNamespace { sourceFile, "graphql" };
 
 	if (!_enumTypes.empty() || !_inputTypes.empty())
 	{
-		NamespaceScope serviceNamespace{ sourceFile, "service" };
+		NamespaceScope serviceNamespace { sourceFile, "service" };
 
 		sourceFile << std::endl;
 
@@ -2009,8 +2014,8 @@ template <>
 
 template <>
 std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-<< R"cpp(>::convert(service::FieldResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
-<< R"cpp(>&& result, ResolverParams&& params)
+				<< R"cpp(>::convert(service::FieldResult<)cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+				<< R"cpp(>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[]()cpp" << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
@@ -2111,7 +2116,7 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 		sourceFile << std::endl;
 	}
 
-	NamespaceScope schemaNamespace{ sourceFile, _schemaNamespace };
+	NamespaceScope schemaNamespace { sourceFile, _schemaNamespace };
 	std::string queryType;
 
 	if (!_isIntrospection)
@@ -2128,7 +2133,7 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 
 	if (!_objectTypes.empty() && !_options.separateFiles)
 	{
-		NamespaceScope objectNamespace{ sourceFile, "object" };
+		NamespaceScope objectNamespace { sourceFile, "object" };
 
 		sourceFile << std::endl;
 
@@ -2946,7 +2951,7 @@ void Generator::outputObjectIntrospection(std::ostream& sourceFile, const Object
 	}
 }
 
-std::string Generator::getArgumentDefaultValue(size_t level, const response::Value & defaultValue) const noexcept
+std::string Generator::getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept
 {
 	const std::string padding(level, '\t');
 	std::ostringstream argumentDefaultValue;
@@ -3072,7 +3077,7 @@ std::string Generator::getArgumentDefaultValue(size_t level, const response::Val
 	return argumentDefaultValue.str();
 }
 
-std::string Generator::getArgumentDeclaration(const InputField & argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept
+std::string Generator::getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept
 {
 	std::ostringstream argumentDeclaration;
 	std::string argumentName(argument.cppName);
@@ -3109,7 +3114,7 @@ std::string Generator::getArgumentDeclaration(const InputField & argument, const
 	return argumentDeclaration.str();
 }
 
-std::string Generator::getArgumentAccessType(const InputField & argument) const noexcept
+std::string Generator::getArgumentAccessType(const InputField& argument) const noexcept
 {
 	std::ostringstream argumentType;
 
@@ -3136,7 +3141,7 @@ std::string Generator::getArgumentAccessType(const InputField & argument) const 
 	return argumentType.str();
 }
 
-std::string Generator::getResultAccessType(const OutputField & result) const noexcept
+std::string Generator::getResultAccessType(const OutputField& result) const noexcept
 {
 	std::ostringstream resultType;
 
@@ -3165,7 +3170,7 @@ std::string Generator::getResultAccessType(const OutputField & result) const noe
 	return resultType.str();
 }
 
-std::string Generator::getTypeModifiers(const TypeModifierStack & modifiers) const noexcept
+std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) const noexcept
 {
 	bool firstValue = true;
 	std::ostringstream typeModifiers;
@@ -3205,7 +3210,7 @@ std::string Generator::getTypeModifiers(const TypeModifierStack & modifiers) con
 	return typeModifiers.str();
 }
 
-std::string Generator::getIntrospectionType(const std::string & type, const TypeModifierStack & modifiers) const noexcept
+std::string Generator::getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept
 {
 	size_t wrapperCount = 0;
 	bool nonNull = true;
@@ -3300,7 +3305,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	// Output a convenience header
 	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard{ objectHeaderFile, fs::path(_objectHeaderPath).filename().string() };
+	IncludeGuardScope includeGuard { objectHeaderFile, fs::path(_objectHeaderPath).filename().string() };
 
 	objectHeaderFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
@@ -3333,15 +3338,15 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		const auto objectNamespace = ossNamespace.str();
 		const bool isQueryType = objectType.type == queryType;
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
-		const auto headerPath = (headerDir / headerFilename).string();
+		auto headerPath = (headerDir / headerFilename).string();
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
-		IncludeGuardScope includeGuard{ headerFile, headerFilename };
+		IncludeGuardScope includeGuard { headerFile, headerFilename };
 
 		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
-		NamespaceScope headerNamespace{ headerFile, objectNamespace };
+		NamespaceScope headerNamespace { headerFile, objectNamespace };
 
 		// Output the full declaration
 		headerFile << std::endl;
@@ -3354,7 +3359,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		}
 
 		const auto sourceFilename = std::string(objectType.cppType) + "Object.cpp";
-		const auto sourcePath = (sourceDir / sourceFilename).string();
+		auto sourcePath = (sourceDir / sourceFilename).string();
 		std::ofstream sourceFile(sourcePath, std::ios_base::trunc);
 
 		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
@@ -3372,8 +3377,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
-		NamespaceScope sourceSchemaNamespace{ sourceFile, schemaNamespace };
-		NamespaceScope sourceObjectNamespace{ sourceFile, "object" };
+		NamespaceScope sourceSchemaNamespace { sourceFile, schemaNamespace };
+		NamespaceScope sourceObjectNamespace { sourceFile, "object" };
 
 		sourceFile << std::endl;
 		outputObjectImplementation(sourceFile, objectType, isQueryType);
@@ -3498,7 +3503,7 @@ int main(int argc, char** argv)
 				std::nullopt,
 				std::nullopt,
 				verbose
-			}).Build();
+				}).Build();
 
 			for (const auto& file : files)
 			{
@@ -3521,7 +3526,7 @@ int main(int argc, char** argv)
 				verbose,
 				separateFiles,
 				noStubs
-			}).Build();
+				}).Build();
 
 			for (const auto& file : files)
 			{
@@ -3529,7 +3534,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	catch (const tao::graphqlpeg::parse_error& pe)
+	catch (const tao::graphqlpeg::parse_error & pe)
 	{
 		std::cerr << "Invalid GraphQL: " << pe.what()
 			<< std::endl;
@@ -3543,7 +3548,7 @@ int main(int argc, char** argv)
 
 		return 1;
 	}
-	catch (const std::runtime_error& ex)
+	catch (const std::runtime_error & ex)
 	{
 		std::cerr << ex.what() << std::endl;
 		return 1;

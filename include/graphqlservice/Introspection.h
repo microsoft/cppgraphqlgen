@@ -103,7 +103,7 @@ public:
 
 private:
 	const response::StringType _name;
-	
+
 	std::vector<std::shared_ptr<InterfaceType>> _interfaces;
 	std::vector<std::shared_ptr<Field>> _fields;
 };
@@ -165,7 +165,7 @@ public:
 
 private:
 	const response::StringType _name;
-	
+
 	std::vector<std::shared_ptr<object::EnumValue>> _enumValues;
 };
 
@@ -183,7 +183,7 @@ public:
 
 private:
 	const response::StringType _name;
-	
+
 	std::vector<std::shared_ptr<InputValue>> _inputValues;
 };
 

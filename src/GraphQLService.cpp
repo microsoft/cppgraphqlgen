@@ -13,7 +13,7 @@ namespace graphql::service {
 
 void addErrorMessage(std::string&& message, response::Value& error)
 {
-	error.emplace_back(std::string{ strMessage }, response::Value(std::move(message)));
+	error.emplace_back(std::string { strMessage }, response::Value(std::move(message)));
 }
 
 void addErrorLocation(const schema_location& location, response::Value& error)
@@ -26,15 +26,15 @@ void addErrorLocation(const schema_location& location, response::Value& error)
 	response::Value errorLocation(response::Type::Map);
 
 	errorLocation.reserve(2);
-	errorLocation.emplace_back(std::string{ strLine }, response::Value(static_cast<response::IntType>(location.line)));
-	errorLocation.emplace_back(std::string{ strColumn }, response::Value(static_cast<response::IntType>(location.byte_in_line + 1)));
+	errorLocation.emplace_back(std::string { strLine }, response::Value(static_cast<response::IntType>(location.line)));
+	errorLocation.emplace_back(std::string { strColumn }, response::Value(static_cast<response::IntType>(location.byte_in_line + 1)));
 
 	response::Value errorLocations(response::Type::List);
 
 	errorLocations.reserve(1);
 	errorLocations.emplace_back(std::move(errorLocation));
 
-	error.emplace_back(std::string{ strLocations }, std::move(errorLocations));
+	error.emplace_back(std::string { strLocations }, std::move(errorLocations));
 }
 
 void addErrorPath(field_path&& path, response::Value& error)
@@ -63,7 +63,7 @@ void addErrorPath(field_path&& path, response::Value& error)
 		path.pop();
 	}
 
-	error.emplace_back(std::string{ strPath }, std::move(errorPath));
+	error.emplace_back(std::string { strPath }, std::move(errorPath));
 }
 
 schema_exception::schema_exception(std::vector<schema_error>&& structuredErrors)
@@ -94,20 +94,32 @@ std::vector<schema_error> schema_exception::convertMessages(std::vector<std::str
 
 	std::transform(messages.begin(), messages.end(), errors.begin(),
 		[](std::string& message) noexcept
-		{
-			return schema_error{ std::move(message) };
-		});
+	{
+		return schema_error { std::move(message) };
+	});
 
 	return errors;
 }
 
 const char* schema_exception::what() const noexcept
 {
-	return (_errors.size() < 1 || _errors[0].type() != response::Type::String)
-		? "Unknown schema error"
-		: _errors[0].get<response::StringType>().c_str();
-}
+	const char* message = nullptr;
 
+	if (_errors.size() > 0)
+	{
+		auto itr = _errors[0].find("message");
+
+		if (itr != _errors[0].end()
+			&& itr->second.type() == response::Type::String)
+		{
+			message = itr->second.get<response::StringType>().c_str();
+		}
+	}
+
+	return (message == nullptr)
+		? "Unknown schema error"
+		: message;
+}
 
 const std::vector<schema_error>& schema_exception::getStructuredErrors() const noexcept
 {
@@ -133,7 +145,7 @@ response::Value schema_exception::getErrors() noexcept
 	return errors;
 }
 
-FieldParams::FieldParams(const SelectionSetParams & selectionSetParams, response::Value && directives)
+FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
 	: SelectionSetParams(selectionSetParams)
 	, fieldDirectives(std::move(directives))
 {
@@ -165,7 +177,7 @@ private:
 	response::Value _value;
 };
 
-ValueVisitor::ValueVisitor(const response::Value & variables)
+ValueVisitor::ValueVisitor(const response::Value& variables)
 	: _variables(variables)
 {
 }
@@ -177,7 +189,7 @@ response::Value ValueVisitor::getValue()
 	return result;
 }
 
-void ValueVisitor::visit(const peg::ast_node & value)
+void ValueVisitor::visit(const peg::ast_node& value)
 {
 	if (value.is_type<peg::variable_value>())
 	{
@@ -218,7 +230,7 @@ void ValueVisitor::visit(const peg::ast_node & value)
 	}
 }
 
-void ValueVisitor::visitVariable(const peg::ast_node & variable)
+void ValueVisitor::visitVariable(const peg::ast_node& variable)
 {
 	const std::string name(variable.string_view().substr(1));
 	auto itr = _variables.find(name);
@@ -236,22 +248,22 @@ void ValueVisitor::visitVariable(const peg::ast_node & variable)
 	_value = response::Value(itr->second);
 }
 
-void ValueVisitor::visitIntValue(const peg::ast_node & intValue)
+void ValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
 	_value = response::Value(std::atoi(intValue.string().c_str()));
 }
 
-void ValueVisitor::visitFloatValue(const peg::ast_node & floatValue)
+void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
 	_value = response::Value(std::atof(floatValue.string().c_str()));
 }
 
-void ValueVisitor::visitStringValue(const peg::ast_node & stringValue)
+void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
 	_value = response::Value(std::string(stringValue.unescaped));
 }
 
-void ValueVisitor::visitBooleanValue(const peg::ast_node & booleanValue)
+void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
 	_value = response::Value(booleanValue.is_type<peg::true_keyword>());
 }
@@ -261,13 +273,13 @@ void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 	_value = {};
 }
 
-void ValueVisitor::visitEnumValue(const peg::ast_node & enumValue)
+void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
 	_value.set<response::StringType>(enumValue.string());
 }
 
-void ValueVisitor::visitListValue(const peg::ast_node & listValue)
+void ValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
 	_value = response::Value(response::Type::List);
 	_value.reserve(listValue.children.size());
@@ -281,7 +293,7 @@ void ValueVisitor::visitListValue(const peg::ast_node & listValue)
 	}
 }
 
-void ValueVisitor::visitObjectValue(const peg::ast_node & objectValue)
+void ValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
 	_value = response::Value(response::Type::Map);
 	_value.reserve(objectValue.children.size());
@@ -313,13 +325,13 @@ private:
 	response::Value _directives;
 };
 
-DirectiveVisitor::DirectiveVisitor(const response::Value & variables)
+DirectiveVisitor::DirectiveVisitor(const response::Value& variables)
 	: _variables(variables)
 	, _directives(response::Type::Map)
 {
 }
 
-void DirectiveVisitor::visit(const peg::ast_node & directives)
+void DirectiveVisitor::visit(const peg::ast_node& directives)
 {
 	response::Value result(response::Type::Map);
 
@@ -328,10 +340,10 @@ void DirectiveVisitor::visit(const peg::ast_node & directives)
 		std::string directiveName;
 
 		peg::on_first_child<peg::directive_name>(*directive,
-			[&directiveName](const peg::ast_node & child)
-			{
-				directiveName = child.string_view();
-			});
+			[&directiveName](const peg::ast_node& child)
+		{
+			directiveName = child.string_view();
+		});
 
 		if (directiveName.empty())
 		{
@@ -341,17 +353,17 @@ void DirectiveVisitor::visit(const peg::ast_node & directives)
 		response::Value directiveArguments(response::Type::Map);
 
 		peg::on_first_child<peg::arguments>(*directive,
-			[this, &directiveArguments](const peg::ast_node & child)
+			[this, &directiveArguments](const peg::ast_node& child)
+		{
+			ValueVisitor visitor(_variables);
+
+			for (auto& argument : child.children)
 			{
-				ValueVisitor visitor(_variables);
+				visitor.visit(*argument->children.back());
 
-				for (auto& argument : child.children)
-				{
-					visitor.visit(*argument->children.back());
-
-					directiveArguments.emplace_back(argument->children.front()->string(), visitor.getValue());
-				}
-			});
+				directiveArguments.emplace_back(argument->children.front()->string(), visitor.getValue());
+			}
+		});
 
 		result.emplace_back(std::move(directiveName), std::move(directiveArguments));
 	}
@@ -438,19 +450,19 @@ bool DirectiveVisitor::shouldSkip() const
 	return false;
 }
 
-Fragment::Fragment(const peg::ast_node & fragmentDefinition, const response::Value & variables)
+Fragment::Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables)
 	: _type(fragmentDefinition.children[1]->children.front()->string_view())
 	, _directives(response::Type::Map)
 	, _selection(*(fragmentDefinition.children.back()))
 {
 	peg::on_first_child<peg::directives>(fragmentDefinition,
-		[this, &variables](const peg::ast_node & child)
-		{
-			DirectiveVisitor directiveVisitor(variables);
+		[this, &variables](const peg::ast_node& child)
+	{
+		DirectiveVisitor directiveVisitor(variables);
 
-			directiveVisitor.visit(child);
-			_directives = directiveVisitor.getDirectives();
-		});
+		directiveVisitor.visit(child);
+		_directives = directiveVisitor.getDirectives();
+	});
 }
 
 const std::string& Fragment::getType() const
@@ -468,9 +480,9 @@ const response::Value& Fragment::getDirectives() const
 	return _directives;
 }
 
-ResolverParams::ResolverParams(const SelectionSetParams & selectionSetParams, const peg::ast_node& field,
-	std::string && fieldName, response::Value && arguments, response::Value && fieldDirectives,
-	const peg::ast_node * selection, const FragmentMap & fragments, const response::Value & variables)
+ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
+	std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
+	const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables)
 	: SelectionSetParams(selectionSetParams)
 	, field(field)
 	, fieldName(std::move(fieldName))
@@ -588,7 +600,7 @@ char Base64::verifyToBase64(uint8_t i)
 	return result;
 }
 
-std::string Base64::toBase64(const std::vector<uint8_t> & bytes)
+std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
 {
 	std::string result;
 
@@ -640,7 +652,7 @@ std::string Base64::toBase64(const std::vector<uint8_t> & bytes)
 }
 
 template <>
-response::IntType ModifiedArgument<response::IntType>::convert(const response::Value & value)
+response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -651,7 +663,7 @@ response::IntType ModifiedArgument<response::IntType>::convert(const response::V
 }
 
 template <>
-response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value & value)
+response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Float)
 	{
@@ -662,7 +674,7 @@ response::FloatType ModifiedArgument<response::FloatType>::convert(const respons
 }
 
 template <>
-response::StringType ModifiedArgument<response::StringType>::convert(const response::Value & value)
+response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -673,7 +685,7 @@ response::StringType ModifiedArgument<response::StringType>::convert(const respo
 }
 
 template <>
-response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value & value)
+response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -684,13 +696,13 @@ response::BooleanType ModifiedArgument<response::BooleanType>::convert(const res
 }
 
 template <>
-response::Value ModifiedArgument<response::Value>::convert(const response::Value & value)
+response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
 {
 	return response::Value(value);
 }
 
 template <>
-response::IdType ModifiedArgument<response::IdType>::convert(const response::Value & value)
+response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -703,7 +715,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -717,14 +729,14 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldRes
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::IntType && value, const ResolverParams&)
-		{
-			return response::Value(value);
-		});
+		[](response::IntType&& value, const ResolverParams&)
+	{
+		return response::Value(value);
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -738,14 +750,14 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldR
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::FloatType && value, const ResolverParams&)
-		{
-			return response::Value(value);
-		});
+		[](response::FloatType&& value, const ResolverParams&)
+	{
+		return response::Value(value);
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -759,14 +771,14 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(Field
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::StringType && value, const ResolverParams&)
-		{
-			return response::Value(std::move(value));
-		});
+		[](response::StringType&& value, const ResolverParams&)
+	{
+		return response::Value(std::move(value));
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -780,14 +792,14 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(Fiel
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::BooleanType && value, const ResolverParams&)
-		{
-			return response::Value(value);
-		});
+		[](response::BooleanType&& value, const ResolverParams&)
+	{
+		return response::Value(value);
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -801,14 +813,14 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResul
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::Value && value, const ResolverParams&)
-		{
-			return response::Value(std::move(value));
-		});
+		[](response::Value&& value, const ResolverParams&)
+	{
+		return response::Value(std::move(value));
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -822,14 +834,14 @@ std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResu
 	}
 
 	return resolve(std::move(result), std::move(params),
-		[](response::IdType && value, const ResolverParams&)
-		{
-			return response::Value(Base64::toBase64(value));
-		});
+		[](response::IdType&& value, const ResolverParams&)
+	{
+		return response::Value(Base64::toBase64(value));
+	});
 }
 
 template <>
-std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>> && result, ResolverParams && params)
+std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection == nullptr)
@@ -843,21 +855,21 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 	}
 
 	return std::async(params.launch,
-		[](FieldResult<std::shared_ptr<Object>> && resultFuture, ResolverParams && paramsFuture)
+		[](FieldResult<std::shared_ptr<Object>>&& resultFuture, ResolverParams&& paramsFuture)
+	{
+		auto wrappedResult = resultFuture.get();
+
+		if (!wrappedResult)
 		{
-			auto wrappedResult = resultFuture.get();
+			response::Value document(response::Type::Map);
 
-			if (!wrappedResult)
-			{
-				response::Value document(response::Type::Map);
+			document.emplace_back(std::string { strData }, response::Value(response::Type::Null));
 
-				document.emplace_back(std::string{ strData }, response::Value(response::Type::Null));
+			return document;
+		}
 
-				return document;
-			}
-
-			return wrappedResult->resolve(paramsFuture, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
-		}, std::move(result), std::move(params));
+		return wrappedResult->resolve(paramsFuture, *paramsFuture.selection, paramsFuture.fragments, paramsFuture.variables).get();
+	}, std::move(result), std::move(params));
 }
 
 // As we recursively expand fragment spreads and inline fragments, we want to accumulate the directives
@@ -902,9 +914,9 @@ private:
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
-SelectionVisitor::SelectionVisitor(const SelectionSetParams & selectionSetParams,
-	const FragmentMap & fragments, const response::Value & variables,
-	const TypeNames & typeNames, const ResolverMap & resolvers)
+SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
+	const FragmentMap& fragments, const response::Value& variables,
+	const TypeNames& typeNames, const ResolverMap& resolvers)
 	: _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _path(selectionSetParams.errorPath)
@@ -928,7 +940,7 @@ std::queue<std::pair<std::string, std::future<response::Value>>> SelectionVisito
 	return values;
 }
 
-void SelectionVisitor::visit(const peg::ast_node & selection)
+void SelectionVisitor::visit(const peg::ast_node& selection)
 {
 	if (selection.is_type<peg::field>())
 	{
@@ -944,23 +956,23 @@ void SelectionVisitor::visit(const peg::ast_node & selection)
 	}
 }
 
-void SelectionVisitor::visitField(const peg::ast_node & field)
+void SelectionVisitor::visitField(const peg::ast_node& field)
 {
 	std::string name;
 
 	peg::on_first_child<peg::field_name>(field,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	std::string alias;
 
 	peg::on_first_child<peg::alias_name>(field,
-		[&alias](const peg::ast_node & child)
-		{
-			alias = child.string_view();
-		});
+		[&alias](const peg::ast_node& child)
+	{
+		alias = child.string_view();
+	});
 
 	if (alias.empty())
 	{
@@ -987,17 +999,17 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 		_values.push({
 			std::move(alias),
 			promise.get_future()
-		});
+			});
 		return;
 	}
 
 	DirectiveVisitor directiveVisitor(_variables);
 
 	peg::on_first_child<peg::directives>(field,
-		[&directiveVisitor](const peg::ast_node & child)
-		{
-			directiveVisitor.visit(child);
-		});
+		[&directiveVisitor](const peg::ast_node& child)
+	{
+		directiveVisitor.visit(child);
+	});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1007,25 +1019,25 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 	response::Value arguments(response::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &arguments](const peg::ast_node & child)
+		[this, &arguments](const peg::ast_node& child)
+	{
+		ValueVisitor visitor(_variables);
+
+		for (auto& argument : child.children)
 		{
-			ValueVisitor visitor(_variables);
+			visitor.visit(*argument->children.back());
 
-			for (auto& argument : child.children)
-			{
-				visitor.visit(*argument->children.back());
-
-				arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
-			}
-		});
+			arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
+		}
+	});
 
 	const peg::ast_node* selection = nullptr;
 
 	peg::on_first_child<peg::selection_set>(field,
-		[&selection](const peg::ast_node & child)
-		{
-			selection = &child;
-		});
+		[&selection](const peg::ast_node& child)
+	{
+		selection = &child;
+	});
 
 	auto path = _path;
 
@@ -1052,7 +1064,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			std::move(result)
 			});
 	}
-	catch (schema_exception& scx)
+	catch (schema_exception & scx)
 	{
 		std::promise<response::Value> promise;
 		auto position = field.begin();
@@ -1078,7 +1090,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 			promise.get_future()
 			});
 	}
-	catch (const std::exception& ex)
+	catch (const std::exception & ex)
 	{
 		std::promise<response::Value> promise;
 		auto position = field.begin();
@@ -1101,7 +1113,7 @@ void SelectionVisitor::visitField(const peg::ast_node & field)
 	}
 }
 
-void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
+void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
 	const std::string name(fragmentSpread.children.front()->string_view());
 	auto itr = _fragments.find(name);
@@ -1122,11 +1134,11 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	if (!skip)
 	{
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[&directiveVisitor](const peg::ast_node & child)
-			{
+			[&directiveVisitor](const peg::ast_node& child)
+		{
 
-				directiveVisitor.visit(child);
-			});
+			directiveVisitor.visit(child);
+		});
 
 		skip = directiveVisitor.shouldSkip();
 	}
@@ -1143,7 +1155,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	{
 		if (fragmentSpreadDirectives.find(entry.first) == fragmentSpreadDirectives.end())
 		{
-			fragmentSpreadDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
+			fragmentSpreadDirectives.emplace_back(std::string { entry.first }, response::Value(entry.second));
 		}
 	}
 
@@ -1154,7 +1166,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	{
 		if (fragmentDefinitionDirectives.find(entry.first) == fragmentDefinitionDirectives.end())
 		{
-			fragmentDefinitionDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
+			fragmentDefinitionDirectives.emplace_back(std::string { entry.first }, response::Value(entry.second));
 		}
 	}
 
@@ -1172,15 +1184,15 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
 	_fragmentDirectives.pop();
 }
 
-void SelectionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
+void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
 	DirectiveVisitor directiveVisitor(_variables);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[&directiveVisitor](const peg::ast_node & child)
-		{
-			directiveVisitor.visit(child);
-		});
+		[&directiveVisitor](const peg::ast_node& child)
+	{
+		directiveVisitor.visit(child);
+	});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1190,51 +1202,51 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
 	const peg::ast_node* typeCondition = nullptr;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&typeCondition](const peg::ast_node & child)
-		{
-			typeCondition = &child;
-		});
+		[&typeCondition](const peg::ast_node& child)
+	{
+		typeCondition = &child;
+	});
 
 	if (typeCondition == nullptr
 		|| _typeNames.count(typeCondition->children.front()->string()) > 0)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
-			[this, &directiveVisitor](const peg::ast_node & child)
+			[this, &directiveVisitor](const peg::ast_node& child)
+		{
+			auto inlineFragmentDirectives = directiveVisitor.getDirectives();
+
+			// Merge outer inline fragment directives as long as they don't conflict.
+			for (const auto& entry : _fragmentDirectives.top().inlineFragmentDirectives)
 			{
-				auto inlineFragmentDirectives = directiveVisitor.getDirectives();
-
-				// Merge outer inline fragment directives as long as they don't conflict.
-				for (const auto& entry : _fragmentDirectives.top().inlineFragmentDirectives)
+				if (inlineFragmentDirectives.find(entry.first) == inlineFragmentDirectives.end())
 				{
-					if (inlineFragmentDirectives.find(entry.first) == inlineFragmentDirectives.end())
-					{
-						inlineFragmentDirectives.emplace_back(std::string{ entry.first }, response::Value(entry.second));
-					}
+					inlineFragmentDirectives.emplace_back(std::string { entry.first }, response::Value(entry.second));
 				}
+			}
 
-				_fragmentDirectives.push({
-					response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
-					response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
-					std::move(inlineFragmentDirectives)
-					});
+			_fragmentDirectives.push({
+				response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
+				response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
+				std::move(inlineFragmentDirectives)
+				});
 
-				for (const auto& selection : child.children)
-				{
-					visit(*selection);
-				}
+			for (const auto& selection : child.children)
+			{
+				visit(*selection);
+			}
 
-				_fragmentDirectives.pop();
-			});
+			_fragmentDirectives.pop();
+		});
 	}
 }
 
-Object::Object(TypeNames && typeNames, ResolverMap && resolvers)
+Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 	: _typeNames(std::move(typeNames))
 	, _resolvers(std::move(resolvers))
 {
 }
 
-std::future<response::Value> Object::resolve(const SelectionSetParams & selectionSetParams, const peg::ast_node & selection, const FragmentMap & fragments, const response::Value & variables) const
+std::future<response::Value> Object::resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const
 {
 	std::queue<std::pair<std::string, std::future<response::Value>>> selections;
 
@@ -1258,116 +1270,116 @@ std::future<response::Value> Object::resolve(const SelectionSetParams & selectio
 	endSelectionSet(selectionSetParams);
 
 	return std::async(selectionSetParams.launch,
-		[](std::queue<std::pair<std::string, std::future<response::Value>>> && children)
+		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& children)
+	{
+		response::Value data(response::Type::Map);
+		response::Value errors(response::Type::List);
+
+		while (!children.empty())
 		{
-			response::Value data(response::Type::Map);
-			response::Value errors(response::Type::List);
+			auto name = std::move(children.front().first);
 
-			while (!children.empty())
+			try
 			{
-				auto name = std::move(children.front().first);
+				auto value = children.front().second.get();
+				auto members = value.release<response::MapType>();
 
-				try
+				for (auto& entry : members)
 				{
-					auto value = children.front().second.get();
-					auto members = value.release<response::MapType>();
-
-					for (auto& entry : members)
+					if (entry.second.type() == response::Type::List
+						&& entry.first == strErrors)
 					{
-						if (entry.second.type() == response::Type::List
-							&& entry.first == strErrors)
-						{
-							auto errorEntries = entry.second.release<response::ListType>();
+						auto errorEntries = entry.second.release<response::ListType>();
 
-							for (auto& errorEntry : errorEntries)
-							{
-								errors.emplace_back(std::move(errorEntry));
-							}
+						for (auto& errorEntry : errorEntries)
+						{
+							errors.emplace_back(std::move(errorEntry));
 						}
-						else if (entry.first == strData)
+					}
+					else if (entry.first == strData)
+					{
+						auto itrData = data.find(name);
+
+						if (itrData == data.end())
 						{
-							auto itrData = data.find(name);
+							data.emplace_back(std::move(name), std::move(entry.second));
+						}
+						else if (itrData->second != entry.second)
+						{
+							std::ostringstream message;
+							response::Value error(response::Type::Map);
 
-							if (itrData == data.end())
-							{
-								data.emplace_back(std::move(name), std::move(entry.second));
-							}
-							else if (itrData->second != entry.second)
-							{
-								std::ostringstream message;
-								response::Value error(response::Type::Map);
-
-								message << "Ambiguous field error name: " << name;
-								addErrorMessage(message.str(), error);
-								errors.emplace_back(std::move(error));
-							}
+							message << "Ambiguous field error name: " << name;
+							addErrorMessage(message.str(), error);
+							errors.emplace_back(std::move(error));
 						}
 					}
 				}
-				catch (schema_exception & scx)
+			}
+			catch (schema_exception & scx)
+			{
+				auto messages = scx.getErrors().release<response::ListType>();
+
+				errors.reserve(errors.size() + messages.size());
+				for (auto& error : messages)
 				{
-					auto messages = scx.getErrors().release<response::ListType>();
-
-					errors.reserve(errors.size() + messages.size());
-					for (auto& error : messages)
-					{
-						errors.emplace_back(std::move(error));
-					}
-
-					if (data.find(name) == data.end())
-					{
-						data.emplace_back(std::move(name), {});
-					}
-				}
-				catch (const std::exception & ex)
-				{
-					std::ostringstream message;
-
-					message << "Field error name: " << name
-						<< " unknown error: " << ex.what();
-
-					response::Value error(response::Type::Map);
-
-					addErrorMessage(message.str(), error);
 					errors.emplace_back(std::move(error));
-
-					if (data.find(name) == data.end())
-					{
-						data.emplace_back(std::move(name), {});
-					}
 				}
 
-				children.pop();
+				if (data.find(name) == data.end())
+				{
+					data.emplace_back(std::move(name), {});
+				}
 			}
-
-			response::Value result(response::Type::Map);
-
-			result.emplace_back(std::string{ strData }, std::move(data));
-
-			if (errors.size() > 0)
+			catch (const std::exception & ex)
 			{
-				result.emplace_back(std::string{ strErrors }, std::move(errors));
+				std::ostringstream message;
+
+				message << "Field error name: " << name
+					<< " unknown error: " << ex.what();
+
+				response::Value error(response::Type::Map);
+
+				addErrorMessage(message.str(), error);
+				errors.emplace_back(std::move(error));
+
+				if (data.find(name) == data.end())
+				{
+					data.emplace_back(std::move(name), {});
+				}
 			}
 
-			return result;
-		}, std::move(selections));
+			children.pop();
+		}
+
+		response::Value result(response::Type::Map);
+
+		result.emplace_back(std::string { strData }, std::move(data));
+
+		if (errors.size() > 0)
+		{
+			result.emplace_back(std::string { strErrors }, std::move(errors));
+		}
+
+		return result;
+	}, std::move(selections));
 }
 
-bool Object::matchesType(const std::string & typeName) const
+bool Object::matchesType(const std::string& typeName) const
 {
 	return _typeNames.find(typeName) != _typeNames.cend();
 }
 
-void Object::beginSelectionSet(const SelectionSetParams &) const
+void Object::beginSelectionSet(const SelectionSetParams&) const
 {
 }
 
-void Object::endSelectionSet(const SelectionSetParams &) const
+void Object::endSelectionSet(const SelectionSetParams&) const
 {
 }
 
-OperationData::OperationData(std::shared_ptr<RequestState> && state, response::Value && variables,
-	response::Value && directives, FragmentMap && fragments)
+OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables,
+	response::Value&& directives, FragmentMap&& fragments)
 	: state(std::move(state))
 	, variables(std::move(variables))
 	, directives(std::move(directives))
@@ -1392,7 +1404,7 @@ private:
 	FragmentMap _fragments;
 };
 
-FragmentDefinitionVisitor::FragmentDefinitionVisitor(const response::Value & variables)
+FragmentDefinitionVisitor::FragmentDefinitionVisitor(const response::Value& variables)
 	: _variables(variables)
 {
 }
@@ -1403,7 +1415,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 	return result;
 }
 
-void FragmentDefinitionVisitor::visit(const peg::ast_node & fragmentDefinition)
+void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
 	const auto& fragmentName = fragmentDefinition.children.front();
 	const auto inserted = _fragments.insert({ fragmentName->string(), Fragment(fragmentDefinition, _variables) });
@@ -1438,7 +1450,7 @@ private:
 	std::future<response::Value> _result;
 };
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap & operations, response::Value && variables, FragmentMap && fragments)
+OperationDefinitionVisitor::OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments)
 	: _launch(launch)
 	, _params(std::make_shared<OperationData>(
 		std::move(state),
@@ -1456,7 +1468,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 	return result;
 }
 
-void OperationDefinitionVisitor::visit(const std::string & operationType, const peg::ast_node & operationDefinition)
+void OperationDefinitionVisitor::visit(const std::string& operationType, const peg::ast_node& operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 
@@ -1464,77 +1476,77 @@ void OperationDefinitionVisitor::visit(const std::string & operationType, const 
 	response::Value operationVariables(response::Type::Map);
 
 	peg::for_each_child<peg::variable>(operationDefinition,
-		[this, &operationVariables](const peg::ast_node & variable)
+		[this, &operationVariables](const peg::ast_node& variable)
+	{
+		std::string variableName;
+
+		peg::on_first_child<peg::variable_name>(variable,
+			[&variableName](const peg::ast_node& name)
 		{
-			std::string variableName;
-
-			peg::on_first_child<peg::variable_name>(variable,
-				[&variableName](const peg::ast_node & name)
-				{
-					// Skip the $ prefix
-					variableName = name.string_view().substr(1);
-				});
-
-			auto itrVar = _params->variables.find(variableName);
-			response::Value valueVar;
-
-			if (itrVar != _params->variables.get<response::MapType>().cend())
-			{
-				valueVar = response::Value(itrVar->second);
-			}
-			else
-			{
-				peg::on_first_child<peg::default_value>(variable,
-					[this, &valueVar](const peg::ast_node & defaultValue)
-					{
-						ValueVisitor visitor(_params->variables);
-
-						visitor.visit(*defaultValue.children.front());
-						valueVar = visitor.getValue();
-					});
-			}
-
-			operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+			// Skip the $ prefix
+			variableName = name.string_view().substr(1);
 		});
+
+		auto itrVar = _params->variables.find(variableName);
+		response::Value valueVar;
+
+		if (itrVar != _params->variables.get<response::MapType>().cend())
+		{
+			valueVar = response::Value(itrVar->second);
+		}
+		else
+		{
+			peg::on_first_child<peg::default_value>(variable,
+				[this, &valueVar](const peg::ast_node& defaultValue)
+			{
+				ValueVisitor visitor(_params->variables);
+
+				visitor.visit(*defaultValue.children.front());
+				valueVar = visitor.getValue();
+			});
+		}
+
+		operationVariables.emplace_back(std::move(variableName), std::move(valueVar));
+	});
 
 	_params->variables = std::move(operationVariables);
 
 	response::Value operationDirectives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(operationDefinition,
-		[this, &operationDirectives](const peg::ast_node & child)
-		{
-			DirectiveVisitor directiveVisitor(_params->variables);
+		[this, &operationDirectives](const peg::ast_node& child)
+	{
+		DirectiveVisitor directiveVisitor(_params->variables);
 
-			directiveVisitor.visit(child);
-			operationDirectives = directiveVisitor.getDirectives();
-		});
+		directiveVisitor.visit(child);
+		operationDirectives = directiveVisitor.getDirectives();
+	});
 
 	_params->directives = std::move(operationDirectives);
 
 	// Keep the params alive until the deferred lambda has executed
 	_result = std::async(_launch,
 		[selectionLaunch = _launch, params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
-		{
-			// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
-			const response::Value emptyFragmentDirectives(response::Type::Map);
-			const SelectionSetParams selectionSetParams{
-				params->state,
-				params->directives,
-				emptyFragmentDirectives,
-				emptyFragmentDirectives,
-				emptyFragmentDirectives,
-				{},
-				selectionLaunch,
-			};
+	{
+		// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
+		const response::Value emptyFragmentDirectives(response::Type::Map);
+		const SelectionSetParams selectionSetParams {
+			params->state,
+			params->directives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives,
+			emptyFragmentDirectives,
+			{},
+			selectionLaunch,
+		};
 
-			return operation->resolve(selectionSetParams, selection, params->fragments, params->variables).get();
-		}, std::cref(*operationDefinition.children.back()));
+		return operation->resolve(selectionSetParams, selection, params->fragments, params->variables).get();
+	}, std::cref(*operationDefinition.children.back()));
 }
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> && data, SubscriptionName&& field, response::Value&& arguments,
-	peg::ast && query, std::string && operationName, SubscriptionCallback && callback,
-	const peg::ast_node & selection)
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field, response::Value&& arguments,
+	peg::ast&& query, std::string&& operationName, SubscriptionCallback&& callback,
+	const peg::ast_node& selection)
 	: data(std::move(data))
 	, field(std::move(field))
 	, arguments(std::move(arguments))
@@ -1571,7 +1583,7 @@ private:
 	std::shared_ptr<SubscriptionData> _result;
 };
 
-SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams && params, SubscriptionCallback && callback, FragmentMap && fragments, const std::shared_ptr<Object> & subscriptionObject)
+SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback, FragmentMap&& fragments, const std::shared_ptr<Object>& subscriptionObject)
 	: _params(std::move(params))
 	, _callback(std::move(callback))
 	, _fragments(std::move(fragments))
@@ -1593,7 +1605,7 @@ std::shared_ptr<SubscriptionData> SubscriptionDefinitionVisitor::getRegistration
 	return result;
 }
 
-void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinition)
+void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefinition)
 {
 	const auto& selection = *operationDefinition.children.back();
 
@@ -1616,13 +1628,13 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinit
 	response::Value directives(response::Type::Map);
 
 	peg::on_first_child<peg::directives>(operationDefinition,
-		[this, &directives](const peg::ast_node & child)
-		{
-			DirectiveVisitor directiveVisitor(_params.variables);
+		[this, &directives](const peg::ast_node& child)
+	{
+		DirectiveVisitor directiveVisitor(_params.variables);
 
-			directiveVisitor.visit(child);
-			directives = directiveVisitor.getDirectives();
-		});
+		directiveVisitor.visit(child);
+		directives = directiveVisitor.getDirectives();
+	});
 
 	_result = std::make_shared<SubscriptionData>(
 		std::make_shared<OperationData>(
@@ -1638,15 +1650,15 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node & operationDefinit
 		selection);
 }
 
-void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
+void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 {
 	std::string name;
 
 	peg::on_first_child<peg::field_name>(field,
-		[&name](const peg::ast_node & child)
-		{
-			name = child.string_view();
-		});
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
 
 	// http://spec.graphql.org/June2018/#sec-Single-root-field
 	if (!_field.empty())
@@ -1662,10 +1674,10 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 	DirectiveVisitor directiveVisitor(_params.variables);
 
 	peg::on_first_child<peg::directives>(field,
-		[&directiveVisitor](const peg::ast_node & child)
-		{
-			directiveVisitor.visit(child);
-		});
+		[&directiveVisitor](const peg::ast_node& child)
+	{
+		directiveVisitor.visit(child);
+	});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1675,23 +1687,23 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node & field)
 	response::Value arguments(response::Type::Map);
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &arguments](const peg::ast_node & child)
+		[this, &arguments](const peg::ast_node& child)
+	{
+		ValueVisitor visitor(_params.variables);
+
+		for (auto& argument : child.children)
 		{
-			ValueVisitor visitor(_params.variables);
+			visitor.visit(*argument->children.back());
 
-			for (auto& argument : child.children)
-			{
-				visitor.visit(*argument->children.back());
-
-				arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
-			}
-		});
+			arguments.emplace_back(argument->children.front()->string(), visitor.getValue());
+		}
+	});
 
 	_field = std::move(name);
 	_arguments = std::move(arguments);
 }
 
-void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fragmentSpread)
+void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
 	const std::string name(fragmentSpread.children.front()->string_view());
 	auto itr = _fragments.find(name);
@@ -1712,10 +1724,10 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 	if (!skip)
 	{
 		peg::on_first_child<peg::directives>(fragmentSpread,
-			[&directiveVisitor](const peg::ast_node & child)
-			{
-				directiveVisitor.visit(child);
-			});
+			[&directiveVisitor](const peg::ast_node& child)
+		{
+			directiveVisitor.visit(child);
+		});
 
 		skip = directiveVisitor.shouldSkip();
 	}
@@ -1731,15 +1743,15 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node & fr
 	}
 }
 
-void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node & inlineFragment)
+void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
 	DirectiveVisitor directiveVisitor(_params.variables);
 
 	peg::on_first_child<peg::directives>(inlineFragment,
-		[&directiveVisitor](const peg::ast_node & child)
-		{
-			directiveVisitor.visit(child);
-		});
+		[&directiveVisitor](const peg::ast_node& child)
+	{
+		directiveVisitor.visit(child);
+	});
 
 	if (directiveVisitor.shouldSkip())
 	{
@@ -1749,26 +1761,26 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node & in
 	const peg::ast_node* typeCondition = nullptr;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&typeCondition](const peg::ast_node & child)
-		{
-			typeCondition = &child;
-		});
+		[&typeCondition](const peg::ast_node& child)
+	{
+		typeCondition = &child;
+	});
 
 	if (typeCondition == nullptr
 		|| _subscriptionObject->matchesType(typeCondition->children.front()->string()))
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
-			[this](const peg::ast_node & child)
+			[this](const peg::ast_node& child)
+		{
+			for (const auto& selection : child.children)
 			{
-				for (const auto& selection : child.children)
-				{
-					visit(*selection);
-				}
-			});
+				visit(*selection);
+			}
+		});
 	}
 }
 
-Request::Request(TypeMap && operationTypes, const std::shared_ptr<introspection::Schema>& schema)
+Request::Request(TypeMap&& operationTypes, const std::shared_ptr<introspection::Schema>& schema)
 	: _operations(std::move(operationTypes))
 	, _schema(schema)
 {
@@ -1781,91 +1793,91 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
 
 	peg::for_each_child<peg::operation_definition>(root,
-		[this, &hasAnonymous, &usedNames, &operationName, &result](const peg::ast_node & operationDefinition)
+		[this, &hasAnonymous, &usedNames, &operationName, &result](const peg::ast_node& operationDefinition)
+	{
+		std::string operationType(strQuery);
+
+		peg::on_first_child<peg::operation_type>(operationDefinition,
+			[&operationType](const peg::ast_node& child)
 		{
-			std::string operationType(strQuery);
-
-			peg::on_first_child<peg::operation_type>(operationDefinition,
-				[&operationType](const peg::ast_node & child)
-				{
-					operationType = child.string_view();
-				});
-
-			std::string name;
-
-			peg::on_first_child<peg::operation_name>(operationDefinition,
-				[&name](const peg::ast_node & child)
-				{
-					name = child.string_view();
-				});
-
-			std::vector<schema_error> errors;
-			auto position = operationDefinition.begin();
-
-			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
-			if (!usedNames.insert(name).second)
-			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Multiple anonymous operations";
-				}
-				else
-				{
-					message << "Duplicate named operations name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			}
-
-			hasAnonymous = hasAnonymous || name.empty();
-
-			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
-			if (name.empty()
-				? usedNames.size() > 1
-				: hasAnonymous)
-			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Unexpected anonymous operation";
-				}
-				else
-				{
-					message << "Unexpected named operation name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			}
-
-			auto itr = _operations.find(operationType);
-
-			if (itr == _operations.cend())
-			{
-				std::ostringstream message;
-
-				message << "Unsupported operation type: " << operationType;
-
-				if (!name.empty())
-				{
-					message << " name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			}
-
-			if (!errors.empty())
-			{
-				throw schema_exception(std::move(errors));
-			}
-			else if (operationName.empty()
-				|| name == operationName)
-			{
-				result = { std::move(operationType), &operationDefinition };
-			}
+			operationType = child.string_view();
 		});
+
+		std::string name;
+
+		peg::on_first_child<peg::operation_name>(operationDefinition,
+			[&name](const peg::ast_node& child)
+		{
+			name = child.string_view();
+		});
+
+		std::vector<schema_error> errors;
+		auto position = operationDefinition.begin();
+
+		// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+		if (!usedNames.insert(name).second)
+		{
+			std::ostringstream message;
+
+			if (name.empty())
+			{
+				message << "Multiple anonymous operations";
+			}
+			else
+			{
+				message << "Duplicate named operations name: " << name;
+			}
+
+			errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		}
+
+		hasAnonymous = hasAnonymous || name.empty();
+
+		// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
+		if (name.empty()
+			? usedNames.size() > 1
+			: hasAnonymous)
+		{
+			std::ostringstream message;
+
+			if (name.empty())
+			{
+				message << "Unexpected anonymous operation";
+			}
+			else
+			{
+				message << "Unexpected named operation name: " << name;
+			}
+
+			errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		}
+
+		auto itr = _operations.find(operationType);
+
+		if (itr == _operations.cend())
+		{
+			std::ostringstream message;
+
+			message << "Unsupported operation type: " << operationType;
+
+			if (!name.empty())
+			{
+				message << " name: " << name;
+			}
+
+			errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		}
+
+		if (!errors.empty())
+		{
+			throw schema_exception(std::move(errors));
+		}
+		else if (operationName.empty()
+			|| name == operationName)
+		{
+			result = { std::move(operationType), &operationDefinition };
+		}
+	});
 
 	return result;
 }
@@ -1897,10 +1909,10 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 		FragmentDefinitionVisitor fragmentVisitor(variables);
 
 		peg::for_each_child<peg::fragment_definition>(root,
-			[&fragmentVisitor](const peg::ast_node & child)
-			{
-				fragmentVisitor.visit(child);
-			});
+			[&fragmentVisitor](const peg::ast_node& child)
+		{
+			fragmentVisitor.visit(child);
+		});
 
 		auto fragments = fragmentVisitor.getFragments();
 		auto operationDefinition = findOperationDefinition(root, operationName);
@@ -1951,23 +1963,23 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 		std::promise<response::Value> promise;
 		response::Value document(response::Type::Map);
 
-		document.emplace_back(std::string{ strData }, response::Value());
-		document.emplace_back(std::string{ strErrors }, ex.getErrors());
+		document.emplace_back(std::string { strData }, response::Value());
+		document.emplace_back(std::string { strErrors }, ex.getErrors());
 		promise.set_value(std::move(document));
 
 		return promise.get_future();
 	}
 }
 
-SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCallback && callback)
+SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
 	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
 	peg::for_each_child<peg::fragment_definition>(*params.query.root,
-		[&fragmentVisitor](const peg::ast_node & child)
-		{
-			fragmentVisitor.visit(child);
-		});
+		[&fragmentVisitor](const peg::ast_node& child)
+	{
+		fragmentVisitor.visit(child);
+	});
 
 	auto fragments = fragmentVisitor.getFragments();
 	auto operationDefinition = findOperationDefinition(*params.query.root, params.operationName);
@@ -2000,14 +2012,14 @@ SubscriptionKey Request::subscribe(SubscriptionParams && params, SubscriptionCal
 		throw schema_exception { { schema_error{ message.str(), { position.line, position.byte_in_line } } } };
 	}
 
-	auto itr = _operations.find(std::string{ strSubscription });
+	auto itr = _operations.find(std::string { strSubscription });
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params), std::move(callback), std::move(fragments), itr->second);
 
 	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
-		[&subscriptionVisitor](const peg::ast_node & child)
-		{
-			subscriptionVisitor.visit(child);
-		});
+		[&subscriptionVisitor](const peg::ast_node& child)
+	{
+		subscriptionVisitor.visit(child);
+	});
 
 	auto registration = subscriptionVisitor.getRegistration();
 	auto key = _nextKey++;
@@ -2047,22 +2059,22 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-void Request::deliver(const SubscriptionName & name, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	deliver(std::launch::deferred, name, subscriptionObject);
 }
 
-void Request::deliver(std::launch launch, const SubscriptionName & name, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	deliver(launch, name, SubscriptionArguments {}, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName & name, const SubscriptionArguments & arguments, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	deliver(std::launch::deferred, name, arguments, subscriptionObject);
 }
 
-void Request::deliver(std::launch launch, const SubscriptionName & name, const SubscriptionArguments & arguments, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	SubscriptionFilterCallback exactMatch = [&arguments](response::MapType::const_reference required) noexcept -> bool
 	{
@@ -2075,16 +2087,16 @@ void Request::deliver(std::launch launch, const SubscriptionName & name, const S
 	deliver(launch, name, exactMatch, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName & name, const SubscriptionFilterCallback & apply, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	deliver(std::launch::deferred, name, apply, subscriptionObject);
 }
 
-void Request::deliver(std::launch launch, const SubscriptionName & name, const SubscriptionFilterCallback & apply, const std::shared_ptr<Object> & subscriptionObject) const
+void Request::deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
-		: _operations.find(std::string{ strSubscription })->second;
+		: _operations.find(std::string { strSubscription })->second;
 
 	auto itrListeners = _listeners.find(name);
 
@@ -2134,26 +2146,26 @@ void Request::deliver(std::launch launch, const SubscriptionName & name, const S
 		{
 			result = std::async(launch,
 				[registration](std::future<response::Value> document)
-				{
-					return document.get();
-				}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
+			{
+				return document.get();
+			}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
 		}
 		catch (schema_exception & ex)
 		{
 			std::promise<response::Value> promise;
 			response::Value document(response::Type::Map);
 
-			document.emplace_back(std::string{ strData }, response::Value());
-			document.emplace_back(std::string{ strErrors }, ex.getErrors());
+			document.emplace_back(std::string { strData }, response::Value());
+			document.emplace_back(std::string { strErrors }, ex.getErrors());
 
 			result = promise.get_future();
 		}
 
 		callbacks.push(std::async(launch,
 			[registration](std::future<response::Value> document)
-			{
-				registration->callback(std::move(document));
-			}, std::move(result)));
+		{
+			registration->callback(std::move(document));
+		}, std::move(result)));
 	}
 
 	while (!callbacks.empty())

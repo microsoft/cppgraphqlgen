@@ -433,11 +433,12 @@ std::stack<CapturedParams> NestedType::getCapturedParams()
 	return result;
 }
 
-std::mutex Expensive::pendingExpensiveMutex{};
-std::condition_variable Expensive::pendingExpensiveCondition{};
+std::mutex Expensive::testMutex {};
+std::mutex Expensive::pendingExpensiveMutex {};
+std::condition_variable Expensive::pendingExpensiveCondition {};
 size_t Expensive::pendingExpensive = 0;
 
-size_t Expensive::instances = 0;
+std::atomic<size_t> Expensive::instances = 0;
 
 bool Expensive::Reset() noexcept
 {
@@ -462,27 +463,28 @@ Expensive::~Expensive()
 service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams&& params) const
 {
 	return std::async(params.launch,
-		[](std::launch launch, response::IntType instanceOrder) noexcept
+		[](bool blockAsync, response::IntType instanceOrder) noexcept
 	{
-		if (launch == std::launch::async)
+		if (blockAsync)
 		{
 			// Block all of the Expensive objects in async mode until the count is reached.
 			std::unique_lock pendingExpensiveLock(pendingExpensiveMutex);
 
 			if (++pendingExpensive < count)
 			{
-				pendingExpensiveCondition.wait(pendingExpensiveLock, []() {
+				pendingExpensiveCondition.wait(pendingExpensiveLock, []()
+				{
 					return pendingExpensive == count;
 				});
 			}
 
 			// Wake up the next Expensive object.
 			pendingExpensiveLock.unlock();
-			pendingExpensiveCondition.notify_one();		
+			pendingExpensiveCondition.notify_one();
 		}
 
 		return instanceOrder;
-	}, params.launch, static_cast<response::IntType>(order));
+	}, params.launch == std::launch::async, static_cast<response::IntType>(order));
 }
 
 } /* namespace graphql::today */

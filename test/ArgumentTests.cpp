@@ -23,7 +23,7 @@ TEST(ArgumentsCase, ListArgumentStrings)
 	{
 		actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -49,7 +49,7 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 	{
 		auto actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		exceptionWhat = response::toJSON(ex.getErrors());
 		caughtException = true;
@@ -76,7 +76,7 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 			service::TypeModifier::Nullable
 		>("value", parsed);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -106,7 +106,7 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 			service::TypeModifier::List
 		>("value", parsed);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -136,7 +136,7 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 			service::TypeModifier::List
 		>("value", parsed);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -160,7 +160,7 @@ TEST(ArgumentsCase, TaskStateEnum)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -181,7 +181,7 @@ TEST(ArgumentsCase, TaskStateEnumFromString)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		caughtException = true;
 		exceptionWhat = response::toJSON(ex.getErrors());
@@ -204,7 +204,7 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}

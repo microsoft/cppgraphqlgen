@@ -509,6 +509,7 @@ public:
 	service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final;
 
 	static constexpr size_t count = 5;
+	static std::mutex testMutex;
 
 private:
 	// Block async calls to getOrder until pendingExpensive == count
@@ -517,7 +518,7 @@ private:
 	static size_t pendingExpensive;
 
 	// Number of instances
-	static size_t instances;
+	static std::atomic<size_t> instances;
 
 	// Initialized in the constructor
 	const size_t order;

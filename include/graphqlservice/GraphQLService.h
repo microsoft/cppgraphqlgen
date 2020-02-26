@@ -94,16 +94,16 @@ namespace {
 
 using namespace std::literals;
 
-constexpr std::string_view strData{ "data"sv };
-constexpr std::string_view strErrors{ "errors"sv };
-constexpr std::string_view strMessage{ "message"sv };
-constexpr std::string_view strLocations{ "locations"sv };
-constexpr std::string_view strLine{ "line"sv };
-constexpr std::string_view strColumn{ "column"sv };
-constexpr std::string_view strPath{ "path"sv };
-constexpr std::string_view strQuery{ "query"sv };
-constexpr std::string_view strMutation{ "mutation"sv };
-constexpr std::string_view strSubscription{ "subscription"sv };
+constexpr std::string_view strData { "data"sv };
+constexpr std::string_view strErrors { "errors"sv };
+constexpr std::string_view strMessage { "message"sv };
+constexpr std::string_view strLocations { "locations"sv };
+constexpr std::string_view strLine { "line"sv };
+constexpr std::string_view strColumn { "column"sv };
+constexpr std::string_view strPath { "path"sv };
+constexpr std::string_view strQuery { "query"sv };
+constexpr std::string_view strMutation { "mutation"sv };
+constexpr std::string_view strSubscription { "subscription"sv };
 
 }
 
@@ -147,7 +147,7 @@ class FieldResult
 public:
 	template <typename U>
 	FieldResult(U&& value)
-		: _value{ std::forward<U>(value) }
+		: _value { std::forward<U>(value) }
 	{
 	}
 
@@ -243,7 +243,7 @@ public:
 	}
 
 	// Convert a set of bytes to Base64.
-	static std::string toBase64(const std::vector<uint8_t> & bytes);
+	static std::string toBase64(const std::vector<uint8_t>& bytes);
 
 private:
 	static constexpr char padding = '=';
@@ -368,14 +368,14 @@ struct ModifiedArgument
 		const auto& elements = values.get<response::ListType>();
 
 		std::transform(elements.cbegin(), elements.cend(), result.begin(),
-			[&name](const response::Value & element)
-			{
-				response::Value single(response::Type::Map);
+			[&name](const response::Value& element)
+		{
+			response::Value single(response::Type::Map);
 
-				single.emplace_back(std::string{ name }, response::Value(element));
+			single.emplace_back(std::string { name }, response::Value(element));
 
-				return require<Other...>(name, single);
-			});
+			return require<Other...>(name, single);
+		});
 
 		return result;
 	}
@@ -433,7 +433,7 @@ protected:
 	virtual void beginSelectionSet(const SelectionSetParams& params) const;
 	virtual void endSelectionSet(const SelectionSetParams& params) const;
 
-	std::mutex _resolverMutex{};
+	std::mutex _resolverMutex {};
 
 private:
 	TypeNames _typeNames;
@@ -460,7 +460,7 @@ struct ModifiedResult
 					std::shared_ptr<U>,
 					U>>>;
 
-		using future_type = FieldResult<type> &&;
+		using future_type = FieldResult<type>&&;
 	};
 
 	template <typename U>
@@ -472,7 +472,7 @@ struct ModifiedResult
 
 		using future_type = typename std::conditional_t<std::is_base_of_v<Object, Type>,
 			FieldResult<std::shared_ptr<Object>>,
-			FieldResult<type>> &&;
+			FieldResult<type>>&&;
 	};
 
 	// Convert a single value of the specified type to JSON.
@@ -481,15 +481,15 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
-		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type>::type> && result, ResolverParams && params)
+		std::future<response::Value>> convert(FieldResult<typename ResultTraits<Type>::type>&& result, ResolverParams&& params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of Object.
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>, "this is the derived object type");
 		auto resultFuture = std::async(params.launch,
-			[](auto && objectType)
-			{
-				return std::static_pointer_cast<Object>(objectType.get());
-			}, std::move(result));
+			[](auto&& objectType)
+		{
+			return std::static_pointer_cast<Object>(objectType.get());
+		}, std::move(result));
 
 		return ModifiedResult<Object>::convert(std::move(resultFuture), std::move(params));
 	}
@@ -497,7 +497,7 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0 && (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
-		std::future<response::Value>> convert(typename ResultTraits<Type>::future_type result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type>::future_type result, ResolverParams&& params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
@@ -506,179 +506,110 @@ struct ModifiedResult
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams&& params)
 	{
 		return std::async(params.launch,
-			[](auto && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto&& wrappedFuture, ResolverParams&& wrappedParams)
+		{
+			auto wrappedResult = wrappedFuture.get();
+
+			if (!wrappedResult)
 			{
-				auto wrappedResult = wrappedFuture.get();
+				response::Value document(response::Type::Map);
 
-				if (!wrappedResult)
-				{
-					response::Value document(response::Type::Map);
+				document.emplace_back(std::string { strData }, response::Value());
 
-					document.emplace_back(std::string{ strData }, response::Value());
+				return document;
+			}
 
-					return document;
-				}
+			std::promise<typename ResultTraits<Type, Other...>::type> promise;
 
-				std::promise<typename ResultTraits<Type, Other...>::type> promise;
+			promise.set_value(std::move(wrappedResult));
 
-				promise.set_value(std::move(wrappedResult));
-
-				return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
-			}, std::move(result), std::move(params));
+			return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
+		}, std::move(result), std::move(params));
 	}
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier && !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams&& params)
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>, typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
 		return std::async(params.launch,
-			[](auto && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto&& wrappedFuture, ResolverParams&& wrappedParams)
+		{
+			auto wrappedResult = wrappedFuture.get();
+
+			if (!wrappedResult)
 			{
-				auto wrappedResult = wrappedFuture.get();
+				response::Value document(response::Type::Map);
 
-				if (!wrappedResult)
-				{
-					response::Value document(response::Type::Map);
+				document.emplace_back(std::string { strData }, response::Value());
 
-					document.emplace_back(std::string{ strData }, response::Value());
+				return document;
+			}
 
-					return document;
-				}
+			std::promise<typename ResultTraits<Type, Other...>::type> promise;
 
-				std::promise<typename ResultTraits<Type, Other...>::type> promise;
+			promise.set_value(std::move(*wrappedResult));
 
-				promise.set_value(std::move(*wrappedResult));
-
-				return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
-			}, std::move(result), std::move(params));
+			return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
+		}, std::move(result), std::move(params));
 	}
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::List == Modifier,
-		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams && params)
+		std::future<response::Value>> convert(typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams&& params)
 	{
 		return std::async(params.launch,
-			[](auto && wrappedFuture, ResolverParams && wrappedParams)
+			[](auto&& wrappedFuture, ResolverParams&& wrappedParams)
+		{
+			auto wrappedResult = wrappedFuture.get();
+			std::queue<std::future<response::Value>> children;
+
+			wrappedParams.errorPath.push(size_t { 0 });
+
+			for (auto& entry : wrappedResult)
 			{
-				auto wrappedResult = wrappedFuture.get();
-				std::queue<std::future<response::Value>> children;
+				children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
+				++std::get<size_t>(wrappedParams.errorPath.back());
+			}
 
-				wrappedParams.errorPath.push(size_t{ 0 });
+			response::Value data(response::Type::List);
+			response::Value errors(response::Type::List);
 
-				for (auto& entry : wrappedResult)
-				{
-					children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
-					++std::get<size_t>(wrappedParams.errorPath.back());
-				}
+			wrappedParams.errorPath.back() = size_t { 0 };
 
-				response::Value data(response::Type::List);
-				response::Value errors(response::Type::List);
-
-				wrappedParams.errorPath.back() = size_t{ 0 };
-
-				while (!children.empty())
-				{
-					try
-					{
-						auto value = children.front().get();
-						auto members = value.release<response::MapType>();
-
-						for (auto& entry : members)
-						{
-							if (entry.second.type() == response::Type::List
-								&& entry.first == strErrors)
-							{
-								auto errorEntries = entry.second.release<response::ListType>();
-
-								for (auto& errorEntry : errorEntries)
-								{
-									errors.emplace_back(std::move(errorEntry));
-								}
-							}
-							else if (entry.first == strData)
-							{
-								data.emplace_back(std::move(entry.second));
-							}
-						}
-					}
-					catch (schema_exception& scx)
-					{
-						auto messages = scx.getStructuredErrors();
-
-						errors.reserve(errors.size() + messages.size());
-						for (auto& message : messages)
-						{
-							response::Value error(response::Type::Map);
-
-							error.reserve(3);
-							addErrorMessage(std::move(message.message), error);
-							addErrorLocation(message.location.line > 0 ? message.location : wrappedParams.getLocation(), error);
-							addErrorPath(field_path{ message.path.empty() ? wrappedParams.errorPath : message.path }, error);
-
-							errors.emplace_back(std::move(error));
-						}
-					}
-					catch (const std::exception & ex)
-					{
-						std::ostringstream message;
-
-						message << "Field error name: " << wrappedParams.fieldName
-							<< " unknown error: " << ex.what();
-
-						schema_location location = wrappedParams.getLocation();
-						response::Value error(response::Type::Map);
-
-						error.reserve(3);
-						addErrorMessage(message.str(), error);
-						addErrorLocation(location, error);
-						addErrorPath(field_path{ wrappedParams.errorPath }, error);
-
-						errors.emplace_back(std::move(error));
-					}
-
-					children.pop();
-					++std::get<size_t>(wrappedParams.errorPath.back());
-				}
-
-				response::Value document(response::Type::Map);
-
-				document.reserve(2);
-				document.emplace_back(std::string{ strData }, std::move(data));
-
-				if (errors.size() > 0)
-				{
-					document.emplace_back(std::string{ strErrors }, std::move(errors));
-				}
-
-				return document;
-			}, std::move(result), std::move(params));
-	}
-
-private:
-	using ResolverCallback = std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
-
-	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
-	{
-		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
-		return std::async(params.launch,
-			[](auto && resultFuture, ResolverParams && paramsFuture, ResolverCallback && resolverFuture) noexcept
+			while (!children.empty())
 			{
-				response::Value data;
-				response::Value errors(response::Type::List);
-
 				try
 				{
-					data = resolverFuture(resultFuture.get(), paramsFuture);
+					auto value = children.front().get();
+					auto members = value.release<response::MapType>();
+
+					for (auto& entry : members)
+					{
+						if (entry.second.type() == response::Type::List
+							&& entry.first == strErrors)
+						{
+							auto errorEntries = entry.second.release<response::ListType>();
+
+							for (auto& errorEntry : errorEntries)
+							{
+								errors.emplace_back(std::move(errorEntry));
+							}
+						}
+						else if (entry.first == strData)
+						{
+							data.emplace_back(std::move(entry.second));
+						}
+					}
 				}
-				catch (schema_exception& scx)
+				catch (schema_exception & scx)
 				{
 					auto messages = scx.getStructuredErrors();
 
@@ -689,8 +620,8 @@ private:
 
 						error.reserve(3);
 						addErrorMessage(std::move(message.message), error);
-						addErrorLocation(message.location.line > 0 ? message.location : paramsFuture.getLocation(), error);
-						addErrorPath(field_path{ message.path.empty() ? paramsFuture.errorPath : message.path }, error);
+						addErrorLocation(message.location.line > 0 ? message.location : wrappedParams.getLocation(), error);
+						addErrorPath(field_path { message.path.empty() ? wrappedParams.errorPath : message.path }, error);
 
 						errors.emplace_back(std::move(error));
 					}
@@ -699,31 +630,100 @@ private:
 				{
 					std::ostringstream message;
 
-					message << "Field name: " << paramsFuture.fieldName
+					message << "Field error name: " << wrappedParams.fieldName
 						<< " unknown error: " << ex.what();
 
+					schema_location location = wrappedParams.getLocation();
 					response::Value error(response::Type::Map);
 
 					error.reserve(3);
 					addErrorMessage(message.str(), error);
-					addErrorLocation(paramsFuture.getLocation(), error);
-					addErrorPath(std::move(paramsFuture.errorPath), error);
+					addErrorLocation(location, error);
+					addErrorPath(field_path { wrappedParams.errorPath }, error);
 
 					errors.emplace_back(std::move(error));
 				}
 
-				response::Value document(response::Type::Map);
+				children.pop();
+				++std::get<size_t>(wrappedParams.errorPath.back());
+			}
 
-				document.reserve(2);
-				document.emplace_back(std::string{ strData }, std::move(data));
+			response::Value document(response::Type::Map);
 
-				if (errors.size() > 0)
+			document.reserve(2);
+			document.emplace_back(std::string { strData }, std::move(data));
+
+			if (errors.size() > 0)
+			{
+				document.emplace_back(std::string { strErrors }, std::move(errors));
+			}
+
+			return document;
+		}, std::move(result), std::move(params));
+	}
+
+private:
+	using ResolverCallback = std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
+
+	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result, ResolverParams&& params, ResolverCallback&& resolver)
+	{
+		static_assert(!std::is_base_of_v<Object, Type>, "ModfiedResult<Object> needs special handling");
+		return std::async(params.launch,
+			[](auto&& resultFuture, ResolverParams&& paramsFuture, ResolverCallback&& resolverFuture) noexcept
+		{
+			response::Value data;
+			response::Value errors(response::Type::List);
+
+			try
+			{
+				data = resolverFuture(resultFuture.get(), paramsFuture);
+			}
+			catch (schema_exception & scx)
+			{
+				auto messages = scx.getStructuredErrors();
+
+				errors.reserve(errors.size() + messages.size());
+				for (auto& message : messages)
 				{
-					document.emplace_back(std::string{ strErrors }, std::move(errors));
-				}
+					response::Value error(response::Type::Map);
 
-				return document;
-			}, std::move(result), std::move(params), std::move(resolver));
+					error.reserve(3);
+					addErrorMessage(std::move(message.message), error);
+					addErrorLocation(message.location.line > 0 ? message.location : paramsFuture.getLocation(), error);
+					addErrorPath(field_path { message.path.empty() ? paramsFuture.errorPath : message.path }, error);
+
+					errors.emplace_back(std::move(error));
+				}
+			}
+			catch (const std::exception & ex)
+			{
+				std::ostringstream message;
+
+				message << "Field name: " << paramsFuture.fieldName
+					<< " unknown error: " << ex.what();
+
+				response::Value error(response::Type::Map);
+
+				error.reserve(3);
+				addErrorMessage(message.str(), error);
+				addErrorLocation(paramsFuture.getLocation(), error);
+				addErrorPath(std::move(paramsFuture.errorPath), error);
+
+				errors.emplace_back(std::move(error));
+			}
+
+			response::Value document(response::Type::Map);
+
+			document.reserve(2);
+			document.emplace_back(std::string { strData }, std::move(data));
+
+			if (errors.size() > 0)
+			{
+				document.emplace_back(std::string { strErrors }, std::move(errors));
+			}
+
+			return document;
+		}, std::move(result), std::move(params), std::move(resolver));
 	}
 };
 

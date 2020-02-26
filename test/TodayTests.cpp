@@ -147,7 +147,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 			FAIL() << response::toJSON(response::Value(errorsItr->second));
 		}
 		const auto data = service::ScalarArgument::require("data", result);
-		
+
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
@@ -179,7 +179,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
 		EXPECT_EQ("Folder", service::StringArgument::require("__typename", unreadCountNode)) << "__typename should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -232,7 +232,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -283,7 +283,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -313,7 +313,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 	EXPECT_EQ(size_t(4), state->unreadCountsRequestId) << "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once"; 
+	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
 
 	try
 	{
@@ -334,7 +334,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
 		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -378,7 +378,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		const auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask);
 		EXPECT_EQ("Hi There!", clientMutationId) << "clientMutationId should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -399,12 +399,12 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
-		{
-			result = response.get();
-		});
+	{
+		result = response.get();
+	});
 	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
-	
+
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
@@ -421,7 +421,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -470,7 +470,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		EXPECT_EQ("today", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -532,7 +532,7 @@ TEST_F(TodayServiceCase, Introspection)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -594,7 +594,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_FALSE(mutationType.second);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -656,7 +656,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		ASSERT_FALSE(queryType.second);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -782,7 +782,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_EQ("inlineFragment5", inlineFragment4) << "nested inline fragments don't reset, but do overwrite on collision";
 		ASSERT_EQ("nested4", field4) << "remember the field directives";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -830,7 +830,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -850,11 +850,11 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		const auto& errors = result["errors"];
 		ASSERT_TRUE(errors.type() == response::Type::List);
 		ASSERT_EQ(size_t(1), errors.size());
-		response::Value error{ errors[0] };
+		response::Value error { errors[0] };
 		ASSERT_TRUE(error.type() == response::Type::Map);
 		ASSERT_EQ(R"e({"message":"Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented","locations":[{"line":2,"column":4}],"path":["unimplemented"]})e", response::toJSON(std::move(error)));
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -904,7 +904,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -943,7 +943,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -973,19 +973,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 	};
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
 		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-		{
-			const response::IdType fuzzyId { 'f', 'a', 'k' };
+	{
+		const response::IdType fuzzyId { 'f', 'a', 'k' };
 
-			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(fuzzyId, idArg);
-			return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
-		});
+		EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
+		EXPECT_EQ(fuzzyId, idArg);
+		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+	});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
-		{
-			result = response.get();
-		});
+	{
+		result = response.get();
+	});
 	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
@@ -1005,7 +1005,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1035,16 +1035,16 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
 		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-		{
-			calledResolver = true;
-			return nullptr;
-		});
+	{
+		calledResolver = true;
+		return nullptr;
+	});
 	bool calledGet = false;
 	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&calledGet](std::future<response::Value>)
-		{
-			calledGet = true;
-		});
+	{
+		calledGet = true;
+	});
 	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
@@ -1054,7 +1054,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1105,7 +1105,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1158,7 +1158,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1208,7 +1208,7 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
 		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1233,7 +1233,7 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
 		EXPECT_EQ(R"js([{"message":"Type not found name: NonExistentType","locations":[{"line":2,"column":4}],"path":["__type"]}])js", errorsString) << "error should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1264,7 +1264,7 @@ TEST_F(TodayServiceCase, DuplicateFragments)
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
 		EXPECT_EQ(R"js([{"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":12}]}])js", errorsString) << "error should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1285,12 +1285,12 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
-		{
-			result = response.get();
-		});
+	{
+		result = response.get();
+	});
 	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
-	
+
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
@@ -1307,7 +1307,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
 		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1322,6 +1322,7 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(18);
+	std::unique_lock testLock(today::Expensive::testMutex);
 	auto future = _service->resolve(std::launch::deferred, state, *ast.root, "NonblockingDeferredExpensive", std::move(variables));
 	auto result = future.get();
 
@@ -1334,7 +1335,7 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 		auto response = response::toJSON(response::Value(result));
 		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1349,6 +1350,7 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(19);
+	std::unique_lock testLock(today::Expensive::testMutex);
 	auto future = _service->resolve(std::launch::async, state, *ast.root, "BlockingAsyncExpensive", std::move(variables));
 	auto result = future.get();
 
@@ -1361,7 +1363,7 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 		auto response = response::toJSON(response::Value(result));
 		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
 	}
-	catch (service::schema_exception& ex)
+	catch (service::schema_exception & ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
