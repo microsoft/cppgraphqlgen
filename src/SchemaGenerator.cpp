@@ -1825,14 +1825,6 @@ protected:
 	explicit )cpp" << objectType.cppType << R"cpp(();
 )cpp";
 
-	if (isQueryType)
-	{
-		headerFile << R"cpp(
-public:
-	const std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema>& schema() const noexcept;
-)cpp";
-	}
-
 	if (!objectType.fields.empty())
 	{
 		bool firstField = true;
@@ -1846,15 +1838,9 @@ public:
 
 			if (firstField)
 			{
-
-				headerFile << std::endl;
-
-				if (!isQueryType)
-				{
-					headerFile << R"cpp(public:
+				headerFile << R"cpp(
+public:
 )cpp";
-				}
-
 				firstField = false;
 			}
 
@@ -2196,8 +2182,7 @@ Operations::Operations()cpp";
 		}
 
 		sourceFile << R"cpp(
-	}, )cpp" << service::strQuery
-			<< R"cpp(->schema())
+	})
 )cpp";
 
 		for (const auto& operation : _operationTypes)
@@ -2712,18 +2697,6 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 
 	sourceFile << R"cpp(}
 )cpp";
-
-	if (isQueryType)
-	{
-		sourceFile << R"cpp(
-const std::shared_ptr<)cpp" << s_introspectionNamespace
-			<< R"cpp(::Schema>& )cpp" << objectType.cppType
-			<< R"cpp(::schema() const noexcept
-{
-	return _schema;
-}
-)cpp";
-	}
 
 	// Output each of the resolver implementations, which call the virtual property
 	// getters that the implementer must define.

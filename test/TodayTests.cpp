@@ -1252,17 +1252,20 @@ TEST_F(TodayServiceCase, DuplicateFragments)
 		fragment DuplicateFragment on __Type {
 			name
 		})"_graphql;
-	response::Value variables(response::Type::Map);
-	auto future = _service->resolve(std::launch::deferred, nullptr, *ast.root, "", std::move(variables));
-	auto result = future.get();
+	auto errors = _service->validate(*ast.root);
 
 	try
 	{
-		ASSERT_TRUE(result.type() == response::Type::Map);
-		auto errorsItr = result.find("errors");
-		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
-		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		EXPECT_EQ(R"js([{"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":12}]}])js", errorsString) << "error should match";
+		response::Value error1(response::Type::Map);
+		response::Value error2(response::Type::Map);
+
+		ASSERT_TRUE(errors.size() == 2);
+		service::addErrorMessage(std::move(errors[0].message), error1);
+		service::addErrorLocation(errors[0].location, error1);
+		EXPECT_EQ(R"js({"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
+		service::addErrorMessage(std::move(errors[1].message), error2);
+		service::addErrorLocation(errors[1].location, error2);
+		EXPECT_EQ(R"js({"message":"Unused fragment name: DuplicateFragment","locations":[{"line":6,"column":3}]})js", response::toJSON(std::move(error2))) << "error should match";
 	}
 	catch (service::schema_exception & ex)
 	{

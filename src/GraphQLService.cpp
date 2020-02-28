@@ -1387,6 +1387,139 @@ OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Va
 {
 }
 
+// ValidateExecutableVisitor visits the AST and validates that it is executable against the service schema.
+class ValidateExecutableVisitor
+{
+public:
+	ValidateExecutableVisitor(const Request& service);
+
+	void visit(const peg::ast_node& root);
+
+	std::vector<schema_error> getStructuredErrors();
+
+private:
+	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
+	void visitOperationDefinition(const peg::ast_node& operationDefinition);
+
+	void visitField(const peg::ast_node& field);
+	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
+	void visitInlineFragment(const peg::ast_node& inlineFragment);
+	
+	const Request& _service;
+	std::vector<schema_error> _errors;
+
+	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
+
+	ExecutableNodes _fragmentDefinitions;
+	ExecutableNodes _operationDefinitions;
+};
+
+ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
+	: _service(service)
+{
+}
+
+void ValidateExecutableVisitor::visit(const peg::ast_node& root)
+{
+	// Visit all of the fragment definitions and check for duplicates.
+	peg::for_each_child<peg::fragment_definition>(root,
+		[this](const peg::ast_node& fragmentDefinition)
+	{
+		const auto& fragmentName = fragmentDefinition.children.front();
+		const auto inserted = _fragmentDefinitions.insert({ fragmentName->string(), fragmentDefinition });
+
+		if (!inserted.second)
+		{
+			// http://spec.graphql.org/June2018/#sec-Fragment-Name-Uniqueness
+			auto position = fragmentDefinition.begin();
+			std::ostringstream error;
+
+			error << "Duplicate fragment name: " << inserted.first->first;
+
+			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		}
+	});
+
+	// Visit all of the operation definitions and check for duplicates.
+	peg::for_each_child<peg::operation_definition>(root,
+		[this](const peg::ast_node& operationDefinition)
+	{
+		std::string operationName;
+
+		peg::on_first_child<peg::operation_name>(operationDefinition,
+			[&operationName](const peg::ast_node& child)
+		{
+			operationName = child.string_view();
+		});
+
+		const auto inserted = _operationDefinitions.insert({ std::move(operationName), operationDefinition });
+
+		if (!inserted.second)
+		{
+			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Duplicate operation name: " << inserted.first->first;
+
+			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		}
+	});
+
+	// Visit the executable definitions recursively.
+	for (const auto& child : root.children)
+	{
+		if (child->is_type<peg::fragment_definition>())
+		{
+			visitFragmentDefinition(*child);
+		}
+		else if (child->is_type<peg::operation_definition>())
+		{
+			visitOperationDefinition(*child);
+		}
+		else
+		{
+			// http://spec.graphql.org/June2018/#sec-Executable-Definitions
+			auto position = child->begin();
+
+			_errors.push_back({ "Unexpected type definition", { position.line, position.byte_in_line } });
+		}
+	}
+
+	if (!_fragmentDefinitions.empty())
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragments-Must-Be-Used
+		const size_t originalSize = _errors.size();
+
+		_errors.resize(originalSize + _fragmentDefinitions.size());
+		std::transform(_fragmentDefinitions.cbegin(), _fragmentDefinitions.cend(), _errors.begin() + originalSize,
+			[](const std::pair<const std::string, const peg::ast_node&>& fragmentDefinition) noexcept
+		{
+			auto position = fragmentDefinition.second.begin();
+			std::ostringstream message;
+
+			message << "Unused fragment name: " << fragmentDefinition.first;
+
+			return schema_error { message.str(), { position.line, position.byte_in_line } };
+		});
+	}
+}
+
+std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
+{
+	auto errors = std::move(_errors);
+
+	return errors;
+}
+
+void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fragmentDefinition)
+{
+}
+
+void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& operationDefinition)
+{
+}
+
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment
 // definitions in the document.
 class FragmentDefinitionVisitor
@@ -1417,19 +1550,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
-	const auto& fragmentName = fragmentDefinition.children.front();
-	const auto inserted = _fragments.insert({ fragmentName->string(), Fragment(fragmentDefinition, _variables) });
-
-	if (!inserted.second)
-	{
-		// http://spec.graphql.org/June2018/#sec-Fragment-Name-Uniqueness
-		auto position = fragmentName->begin();
-		std::ostringstream error;
-
-		error << "Duplicate fragment name: " << inserted.first->first;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.byte_in_line } } } };
-	}
+	_fragments.insert({ fragmentDefinition.children.front()->string(), Fragment(fragmentDefinition, _variables) });
 }
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
@@ -1780,10 +1901,18 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 	}
 }
 
-Request::Request(TypeMap&& operationTypes, const std::shared_ptr<introspection::Schema>& schema)
+Request::Request(TypeMap&& operationTypes)
 	: _operations(std::move(operationTypes))
-	, _schema(schema)
 {
+}
+
+std::vector<schema_error> Request::validate(const peg::ast_node& root) const
+{
+	ValidateExecutableVisitor visitor(*this);
+
+	visitor.visit(root);
+
+	return visitor.getStructuredErrors();
 }
 
 std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const

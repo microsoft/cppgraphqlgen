@@ -27,12 +27,6 @@
 #include <map>
 #include <set>
 
-namespace graphql::introspection {
-
-class Schema;
-
-} /* namespace graphql::introspection */
-
 namespace graphql::service {
 
 // Errors should have a message string, and optional locations and a path.
@@ -801,10 +795,12 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 class Request : public std::enable_shared_from_this<Request>
 {
 protected:
-	explicit Request(TypeMap&& operationTypes, const std::shared_ptr<introspection::Schema>& schema);
+	explicit Request(TypeMap&& operationTypes);
 	virtual ~Request() = default;
 
 public:
+	std::vector<schema_error> validate(const peg::ast_node& root) const;
+
 	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
@@ -823,7 +819,6 @@ public:
 
 private:
 	TypeMap _operations;
-	std::shared_ptr<introspection::Schema> _schema;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;

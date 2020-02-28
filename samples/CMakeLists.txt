@@ -11,8 +11,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today"
-    DEPENDS schemagen today/schema.today.graphql
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today"
+    DEPENDS schemagen schema.today.graphql
     WORKING_DIRECTORY unified
     COMMENT "Generating mock TodaySchema files")
 
@@ -26,16 +26,34 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/today/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
-    DEPENDS schemagen today/schema.today.graphql
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
+    DEPENDS schemagen schema.today.graphql
     WORKING_DIRECTORY separate
     COMMENT "Generating mock TodaySchema (--separate-files)")
 
   add_custom_target(separate_schema_files ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files)
 
+  # unifiedschema
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/validation)
+
+  add_custom_command(
+    OUTPUT
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation"
+    DEPENDS schemagen schema.validation.graphql
+    WORKING_DIRECTORY validation
+    COMMENT "Generating ValidationSchema files")
+
+  add_custom_target(validation_schema_files ALL
+    DEPENDS
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h)
+
   file(GLOB OLD_UNIFIED_FILES ${CMAKE_CURRENT_SOURCE_DIR}/unified/*)
   file(GLOB OLD_SEPARATE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/separate/*)
+  file(GLOB OLD_VALIDATION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/validation/*)
 
   add_custom_command(
     OUTPUT updated_samples
@@ -43,11 +61,15 @@ if(GRAPHQL_UPDATE_SAMPLES)
     COMMAND ${CMAKE_COMMAND} -E copy_directory unified/ ${CMAKE_CURRENT_SOURCE_DIR}/unified/
     COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_SEPARATE_FILES}
     COMMAND ${CMAKE_COMMAND} -E copy_directory separate/ ${CMAKE_CURRENT_SOURCE_DIR}/separate/
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_VALIDATION_FILES}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory validation/ ${CMAKE_CURRENT_SOURCE_DIR}/validation/
     COMMAND ${CMAKE_COMMAND} -E touch updated_samples
     DEPENDS 
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
     COMMENT "Updating sample files")
 
   add_custom_target(update_samples ALL
@@ -118,4 +140,18 @@ if(GRAPHQL_BUILD_TESTS)
     $<TARGET_PROPERTY:unifiedschema,INCLUDE_DIRECTORIES>
     today)
   add_bigobj_flag(unifiedgraphql)
+
+  add_library(validationgraphql validation/ValidationSchema.cpp)
+  target_link_libraries(validationgraphql PUBLIC graphqlservice)
+  target_include_directories(validationgraphql PUBLIC
+    ${CMAKE_CURRENT_BINARY_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+    validation)
+  add_bigobj_flag(validationgraphql)
+
+  if(GRAPHQL_UPDATE_SAMPLES)
+    # wait for the sample update to complete
+    add_dependencies(validationgraphql update_samples)
+  endif()
 endif()

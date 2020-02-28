@@ -91,7 +91,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	}, query->schema())
+	})
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))

@@ -38,11 +38,6 @@ Query::Query()
 	today::AddTypesToSchema(_schema);
 }
 
-const std::shared_ptr<introspection::Schema>& Query::schema() const noexcept
-{
-	return _schema;
-}
-
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
 {
 	throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
