@@ -393,6 +393,68 @@ void Generator::validateSchema()
 		fixupOutputFieldList(entry.fields, std::nullopt, std::nullopt);
 	}
 
+	if (!_isIntrospection)
+	{
+		bool queryDefined = false;
+
+		if (_operationTypes.empty())
+		{
+			// Fill in the operations with default type names if present.
+			std::string strDefaultQuery { "Query" };
+			std::string strDefaultMutation { "Mutation" };
+			std::string strDefaultSubscription { "Subscription" };
+
+			if (_objectNames.find(strDefaultQuery) != _objectNames.cend())
+			{
+				auto cppName = getSafeCppName(strDefaultQuery);
+
+				_operationTypes.push_back({ std::move(strDefaultQuery), std::move(cppName), std::string{ service::strQuery } });
+				queryDefined = true;
+			}
+
+			if (_objectNames.find(strDefaultMutation) != _objectNames.cend())
+			{
+				auto cppName = getSafeCppName(strDefaultMutation);
+
+				_operationTypes.push_back({ std::move(strDefaultMutation), std::move(cppName), std::string{ service::strMutation } });
+			}
+
+			if (_objectNames.find(strDefaultSubscription) != _objectNames.cend())
+			{
+				auto cppName = getSafeCppName(strDefaultSubscription);
+
+				_operationTypes.push_back({ std::move(strDefaultSubscription), std::move(cppName), std::string{ service::strSubscription } });
+			}
+		}
+		else
+		{
+			// Validate that all of the operation types exist and that query is defined.
+			for (const auto& operation : _operationTypes)
+			{
+				if (_objectNames.find(operation.type) == _objectNames.cend())
+				{
+					std::ostringstream error;
+
+					error << "Unknown operation type: " << operation.type
+						<< " operation: " << operation.operation;
+
+					throw std::runtime_error(error.str());
+				}
+
+				queryDefined = queryDefined || (operation.operation == service::strQuery);
+			}
+		}
+
+		if (!queryDefined)
+		{
+			throw std::runtime_error("Query operation type undefined");
+		}
+	}
+	else if (!_operationTypes.empty())
+	{
+		throw std::runtime_error("Introspection should not define any operation types");
+	}
+
 	std::string mutationType;
 
 	for (const auto& operation : _operationTypes)
@@ -1746,44 +1808,41 @@ class Schema;
 
 	if (!_isIntrospection)
 	{
-		if (!_operationTypes.empty())
-		{
-			bool firstOperation = true;
+		bool firstOperation = true;
 
-			headerFile << R"cpp(class Operations
+		headerFile << R"cpp(class Operations
 	: public service::Request
 {
 public:
 	explicit Operations()cpp";
 
-			for (const auto& operation : _operationTypes)
+		for (const auto& operation : _operationTypes)
+		{
+			if (!firstOperation)
 			{
-				if (!firstOperation)
-				{
-					headerFile << R"cpp(, )cpp";
-				}
-
-				firstOperation = false;
-				headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
-					<< operation.operation;
+				headerFile << R"cpp(, )cpp";
 			}
 
-			headerFile << R"cpp();
+			firstOperation = false;
+			headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
+				<< operation.operation;
+		}
+
+		headerFile << R"cpp();
 
 private:
 )cpp";
 
-			for (const auto& operation : _operationTypes)
-			{
-				headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> _)cpp"
-					<< operation.operation << R"cpp(;
-)cpp";
-			}
-
-			headerFile << R"cpp(};
-
+		for (const auto& operation : _operationTypes)
+		{
+			headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> _)cpp"
+				<< operation.operation << R"cpp(;
 )cpp";
 		}
+
+		headerFile << R"cpp(};
+
+)cpp";
 	}
 
 	if (!_objectTypes.empty() && _options.separateFiles)
@@ -2142,7 +2201,7 @@ std::future<response::Value> ModifiedResult<)cpp" << _schemaNamespace << R"cpp(:
 		}
 	}
 
-	if (!_operationTypes.empty())
+	if (!_isIntrospection)
 	{
 		bool firstOperation = true;
 
@@ -2595,7 +2654,7 @@ Operations::Operations()cpp";
 		}
 	}
 
-	if (!_operationTypes.empty())
+	if (!_isIntrospection)
 	{
 		sourceFile << std::endl;
 

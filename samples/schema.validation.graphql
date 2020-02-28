@@ -1,10 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-schema {
-  query: Query
-}
-
 "GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d)"
 type Query {
   dog: Dog
