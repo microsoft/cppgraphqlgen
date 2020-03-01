@@ -1499,7 +1499,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 					}
 				}
 			}
-			else if (member.second.type() == response::Type::List)
+			else if (member.second.type() == response::Type::List
+				&& member.first == R"gql(types)gql")
 			{
 				auto entries = member.second.release<response::ListType>();
 
