@@ -1239,40 +1239,6 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 	}
 }
 
-TEST_F(TodayServiceCase, DuplicateFragments)
-{
-	auto ast = R"(query {
-			__type(name: "Appointment") {
-				...DuplicateFragment
-			}
-		}
-		fragment DuplicateFragment on __Type {
-			name
-		}		
-		fragment DuplicateFragment on __Type {
-			name
-		})"_graphql;
-	auto errors = _service->validate(*ast.root);
-
-	try
-	{
-		response::Value error1(response::Type::Map);
-		response::Value error2(response::Type::Map);
-
-		ASSERT_TRUE(errors.size() == 2);
-		service::addErrorMessage(std::move(errors[0].message), error1);
-		service::addErrorLocation(errors[0].location, error1);
-		EXPECT_EQ(R"js({"message":"Duplicate fragment name: DuplicateFragment","locations":[{"line":9,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
-		service::addErrorMessage(std::move(errors[1].message), error2);
-		service::addErrorLocation(errors[1].location, error2);
-		EXPECT_EQ(R"js({"message":"Unused fragment name: DuplicateFragment","locations":[{"line":6,"column":3}]})js", response::toJSON(std::move(error2))) << "error should match";
-	}
-	catch (service::schema_exception & ex)
-	{
-		FAIL() << response::toJSON(ex.getErrors());
-	}
-}
-
 TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 {
 	auto ast = peg::parseString(R"(subscription TestSubscription {

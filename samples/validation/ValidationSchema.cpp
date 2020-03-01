@@ -89,6 +89,16 @@ std::future<response::Value> ModifiedResult<validation::CatCommand>::convert(ser
 		});
 }
 
+template <>
+validation::MutateDogInput ModifiedArgument<validation::MutateDogInput>::convert(const response::Value& value)
+{
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+
+	return {
+		std::move(valueId)
+	};
+}
+
 } /* namespace service */
 
 namespace validation {
@@ -138,6 +148,124 @@ std::future<response::Value> Query::resolve_type(service::ResolverParams&& param
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 
 	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
+}
+
+Mutation::Mutation()
+	: service::Object({
+		"Mutation"
+	}, {
+		{ "mutateDog", [this](service::ResolverParams&& params) { return resolveMutateDog(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+	})
+{
+}
+
+service::FieldResult<std::shared_ptr<Dog>> Mutation::applyMutateDog(service::FieldParams&&, MutateDogInput&&) const
+{
+	throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
+}
+
+std::future<response::Value> Mutation::resolveMutateDog(service::ResolverParams&& params)
+{
+	auto argInput = service::ModifiedArgument<validation::MutateDogInput>::require("input", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = applyMutateDog(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
+}
+
+Subscription::Subscription()
+	: service::Object({
+		"Subscription"
+	}, {
+		{ "newMessage", [this](service::ResolverParams&& params) { return resolveNewMessage(std::move(params)); } },
+		{ "disallowedSecondRootField", [this](service::ResolverParams&& params) { return resolveDisallowedSecondRootField(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+	})
+{
+}
+
+service::FieldResult<std::shared_ptr<Message>> Subscription::getNewMessage(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
+}
+
+std::future<response::Value> Subscription::resolveNewMessage(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getNewMessage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Message>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<response::BooleanType> Subscription::getDisallowedSecondRootField(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
+}
+
+std::future<response::Value> Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getDisallowedSecondRootField(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
+}
+
+Message::Message()
+	: service::Object({
+		"Message"
+	}, {
+		{ "body", [this](service::ResolverParams&& params) { return resolveBody(std::move(params)); } },
+		{ "sender", [this](service::ResolverParams&& params) { return resolveSender(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+	})
+{
+}
+
+service::FieldResult<std::optional<response::StringType>> Message::getBody(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
+}
+
+std::future<response::Value> Message::resolveBody(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getBody(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<response::IdType> Message::getSender(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
+}
+
+std::future<response::Value> Message::resolveSender(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getSender(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Message::resolve_typename(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Message)gql" }, std::move(params));
 }
 
 Dog::Dog()
@@ -400,11 +528,15 @@ std::future<response::Value> Cat::resolve_typename(service::ResolverParams&& par
 
 } /* namespace object */
 
-Operations::Operations(std::shared_ptr<object::Query> query)
+Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
-		{ "query", query }
+		{ "query", query },
+		{ "mutation", mutation },
+		{ "subscription", subscription }
 	})
 	, _query(std::move(query))
+	, _mutation(std::move(mutation))
+	, _subscription(std::move(subscription))
 {
 }
 
@@ -414,6 +546,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("DogCommand", typeDogCommand);
 	auto typeCatCommand = std::make_shared<introspection::EnumType>("CatCommand", R"md()md");
 	schema->AddType("CatCommand", typeCatCommand);
+	auto typeMutateDogInput = std::make_shared<introspection::InputObjectType>("MutateDogInput", R"md()md");
+	schema->AddType("MutateDogInput", typeMutateDogInput);
 	auto typeCatOrDog = std::make_shared<introspection::UnionType>("CatOrDog", R"md()md");
 	schema->AddType("CatOrDog", typeCatOrDog);
 	auto typeDogOrHuman = std::make_shared<introspection::UnionType>("DogOrHuman", R"md()md");
@@ -426,6 +560,12 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("Pet", typePet);
 	auto typeQuery = std::make_shared<introspection::ObjectType>("Query", R"md(GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d))md");
 	schema->AddType("Query", typeQuery);
+	auto typeMutation = std::make_shared<introspection::ObjectType>("Mutation", R"md()md");
+	schema->AddType("Mutation", typeMutation);
+	auto typeSubscription = std::make_shared<introspection::ObjectType>("Subscription", R"md()md");
+	schema->AddType("Subscription", typeSubscription);
+	auto typeMessage = std::make_shared<introspection::ObjectType>("Message", R"md()md");
+	schema->AddType("Message", typeMessage);
 	auto typeDog = std::make_shared<introspection::ObjectType>("Dog", R"md()md");
 	schema->AddType("Dog", typeDog);
 	auto typeAlien = std::make_shared<introspection::ObjectType>("Alien", R"md()md");
@@ -442,6 +582,10 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	});
 	typeCatCommand->AddEnumValues({
 		{ std::string{ service::s_namesCatCommand[static_cast<size_t>(validation::CatCommand::JUMP)] }, R"md()md", std::nullopt }
+	});
+
+	typeMutateDogInput->AddInputValues({
+		std::make_shared<introspection::InputValue>("id", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql")
 	});
 
 	typeCatOrDog->AddPossibleTypes({
@@ -466,6 +610,19 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 
 	typeQuery->AddFields({
 		std::make_shared<introspection::Field>("dog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Dog"))
+	});
+	typeMutation->AddFields({
+		std::make_shared<introspection::Field>("mutateDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("input", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("MutateDogInput")), R"gql()gql")
+		}), schema->LookupType("Dog"))
+	});
+	typeSubscription->AddFields({
+		std::make_shared<introspection::Field>("newMessage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
+		std::make_shared<introspection::Field>("disallowedSecondRootField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+	});
+	typeMessage->AddFields({
+		std::make_shared<introspection::Field>("body", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<introspection::Field>("sender", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 	typeDog->AddInterfaces({
 		typePet
@@ -508,6 +665,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	});
 
 	schema->AddQueryType(typeQuery);
+	schema->AddMutationType(typeMutation);
+	schema->AddSubscriptionType(typeSubscription);
 }
 
 } /* namespace validation */

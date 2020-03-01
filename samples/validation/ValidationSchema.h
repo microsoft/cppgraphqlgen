@@ -33,9 +33,17 @@ enum class CatCommand
 	JUMP
 };
 
+struct MutateDogInput
+{
+	response::IdType id;
+};
+
 namespace object {
 
 class Query;
+class Mutation;
+class Subscription;
+class Message;
 class Dog;
 class Alien;
 class Human;
@@ -75,6 +83,55 @@ private:
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
+};
+
+class Mutation
+	: public service::Object
+{
+protected:
+	explicit Mutation();
+
+public:
+	virtual service::FieldResult<std::shared_ptr<Dog>> applyMutateDog(service::FieldParams&& params, MutateDogInput&& inputArg) const;
+
+private:
+	std::future<response::Value> resolveMutateDog(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Subscription
+	: public service::Object
+{
+protected:
+	explicit Subscription();
+
+public:
+	virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const;
+	virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveNewMessage(service::ResolverParams&& params);
+	std::future<response::Value> resolveDisallowedSecondRootField(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Message
+	: public service::Object
+{
+protected:
+	explicit Message();
+
+public:
+	virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const;
+	virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveBody(service::ResolverParams&& params);
+	std::future<response::Value> resolveSender(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Dog
@@ -165,10 +222,12 @@ class Operations
 	: public service::Request
 {
 public:
-	explicit Operations(std::shared_ptr<object::Query> query);
+	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
 private:
 	std::shared_ptr<object::Query> _query;
+	std::shared_ptr<object::Mutation> _mutation;
+	std::shared_ptr<object::Subscription> _subscription;
 };
 
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);

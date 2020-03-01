@@ -3,6 +3,7 @@
 
 #include <graphqlservice/GraphQLService.h>
 #include <graphqlservice/GraphQLGrammar.h>
+#include <graphqlservice/IntrospectionSchema.h>
 
 #include <iostream>
 #include <algorithm>
@@ -1398,8 +1399,19 @@ public:
 	std::vector<schema_error> getStructuredErrors();
 
 private:
+	response::Value executeQuery(std::string_view query) const;
+
+	using FieldTypes = std::map<std::string, response::Value>;
+	using TypeFields = std::map<std::string, FieldTypes>;
+	
+	std::optional<introspection::TypeKind> getScopedTypeKind() const;
+	TypeFields::const_iterator getScopedTypeFields();
+	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
+
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
+
+	void visitSelection(const peg::ast_node& selection);
 
 	void visitField(const peg::ast_node& field);
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
@@ -1408,15 +1420,142 @@ private:
 	const Request& _service;
 	std::vector<schema_error> _errors;
 
+	using OperationTypes = std::map<std::string_view, std::string>;
+	using TypeKinds = std::map<std::string, introspection::TypeKind>;
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
+	using FragmentSet = std::unordered_set<std::string>;
+
+	OperationTypes _operationTypes;
+	TypeKinds _typeKinds;
 
 	ExecutableNodes _fragmentDefinitions;
 	ExecutableNodes _operationDefinitions;
+
+	FragmentSet _referencedFragments;
+	FragmentSet _fragmentStack;
+	size_t _fieldDepth = 0;
+	size_t _rootFields = 0;
+	TypeFields _typeFields;
+	std::string _scopedType;
 };
 
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 	: _service(service)
 {
+	auto data = executeQuery(R"gql(query {
+			__schema {
+				queryType {
+					name
+				}
+				mutationType {
+					name
+				}
+				subscriptionType {
+					name
+				}
+				types {
+					name
+					kind
+				}
+			}
+		})gql");
+	auto members = data.release<response::MapType>();
+	auto itrData = std::find_if(members.begin(), members.end(),
+		[](const std::pair<std::string, response::Value>& entry) noexcept
+	{
+		return entry.first == R"gql(__schema)gql";
+	});
+
+	if (itrData != members.end()
+		&& itrData->second.type() == response::Type::Map)
+	{
+		members = itrData->second.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.second.type() == response::Type::Map)
+			{
+				auto typeMembers = member.second.release<response::MapType>();
+				auto itrType = std::find_if(typeMembers.begin(), typeMembers.end(),
+					[](const std::pair<std::string, response::Value>& entry) noexcept
+				{
+					return entry.first == R"gql(name)gql";
+				});
+
+				if (itrType != typeMembers.end()
+					&& itrType->second.type() == response::Type::String)
+				{
+					if (member.first == R"gql(queryType)gql")
+					{
+						_operationTypes[strQuery] = itrType->second.release<response::StringType>();
+					}
+					else if (member.first == R"gql(mutationType)gql")
+					{
+						_operationTypes[strMutation] = itrType->second.release<response::StringType>();
+					}
+					else if (member.first == R"gql(subscriptionType)gql")
+					{
+						_operationTypes[strSubscription] = itrType->second.release<response::StringType>();
+					}
+				}
+			}
+			else if (member.second.type() == response::Type::List)
+			{
+				auto entries = member.second.release<response::ListType>();
+
+				for (auto& entry : entries)
+				{
+					if (entry.type() != response::Type::Map)
+					{
+						continue;
+					}
+
+					auto typeMembers = entry.release<response::MapType>();
+					auto itrType = std::find_if(typeMembers.begin(), typeMembers.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(name)gql";
+					});
+					auto itrKind = std::find_if(typeMembers.begin(), typeMembers.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(kind)gql";
+					});
+
+					if (itrType != typeMembers.end()
+						&& itrType->second.type() == response::Type::String
+						&& itrKind != typeMembers.end()
+						&& itrKind->second.type() == response::Type::EnumValue)
+					{
+						_typeKinds[itrType->second.release<response::StringType>()] = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+					}
+				}
+			}
+		}
+	}
+}
+
+response::Value ValidateExecutableVisitor::executeQuery(std::string_view query) const
+{
+	response::Value data(response::Type::Map);
+	std::shared_ptr<RequestState> state;
+	auto ast = peg::parseString(query);
+	const std::string operationName;
+	response::Value variables(response::Type::Map);
+	auto result = _service.resolve(state, *ast.root, operationName, std::move(variables)).get();
+	auto members = result.release<response::MapType>();
+	auto itrResponse = std::find_if(members.begin(), members.end(),
+		[](const std::pair<std::string, response::Value>& entry) noexcept
+	{
+		return entry.first == strData;
+	});
+
+	if (itrResponse != members.end())
+	{
+		data = std::move(itrResponse->second);
+	}
+
+	return data;
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
@@ -1466,6 +1605,24 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		}
 	});
 
+	// Check for lone anonymous operations.
+	if (_operationDefinitions.size() > 1)
+	{
+		auto itr = std::find_if(_operationDefinitions.cbegin(), _operationDefinitions.cend(),
+			[](const std::pair<const std::string, const peg::ast_node&>& entry) noexcept
+		{
+			return entry.first.empty();
+		});
+
+		if (itr != _operationDefinitions.cend())
+		{
+			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
+			auto position = itr->second.begin();
+
+			_errors.push_back({ "Anonymous operation not alone", { position.line, position.byte_in_line } });
+		}
+	}
+
 	// Visit the executable definitions recursively.
 	for (const auto& child : root.children)
 	{
@@ -1490,9 +1647,15 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragments-Must-Be-Used
 		const size_t originalSize = _errors.size();
+		auto unreferencedFragments = std::move(_fragmentDefinitions);
 
-		_errors.resize(originalSize + _fragmentDefinitions.size());
-		std::transform(_fragmentDefinitions.cbegin(), _fragmentDefinitions.cend(), _errors.begin() + originalSize,
+		for (const auto& name : _referencedFragments)
+		{
+			unreferencedFragments.erase(name);
+		}
+
+		_errors.resize(originalSize + unreferencedFragments.size());
+		std::transform(unreferencedFragments.cbegin(), unreferencedFragments.cend(), _errors.begin() + originalSize,
 			[](const std::pair<const std::string, const peg::ast_node&>& fragmentDefinition) noexcept
 		{
 			auto position = fragmentDefinition.second.begin();
@@ -1514,10 +1677,418 @@ std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 
 void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fragmentDefinition)
 {
+	//const auto& selection = *fragmentDefinition.children.back();
+
+	//visitSelection(selection);
 }
 
 void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& operationDefinition)
 {
+	auto operationType = strQuery;
+
+	peg::on_first_child<peg::operation_type>(operationDefinition,
+		[&operationType](const peg::ast_node& child)
+	{
+		operationType = child.string_view();
+	});
+
+	auto itrType = _operationTypes.find(operationType);
+
+	if (itrType == _operationTypes.cend())
+	{
+		auto position = operationDefinition.begin();
+		std::ostringstream error;
+
+		error << "Unsupported operation type: " << operationType;
+
+		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	_scopedType = itrType->second;
+
+	const auto& selection = *operationDefinition.children.back();
+
+	visitSelection(selection);
+
+	if (_rootFields > 1)
+	{
+		// http://spec.graphql.org/June2018/#sec-Single-root-field
+		peg::on_first_child<peg::operation_type>(operationDefinition,
+			[this, &operationDefinition](const peg::ast_node& child)
+		{
+			if (child.string_view() != strSubscription)
+			{
+				return;
+			}
+
+			std::string name;
+
+			peg::on_first_child<peg::operation_name>(operationDefinition,
+				[&name](const peg::ast_node& child)
+				{
+					name = child.string_view();
+				});
+
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Subscription with more than one root field";
+
+			if (!name.empty())
+			{
+				error << " name: " << name;
+			}
+
+			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		});
+	}
+}
+
+void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
+{
+	for (const auto& child : selection.children)
+	{
+		if (child->is_type<peg::field>())
+		{
+			visitField(*child);
+		}
+		else if (child->is_type<peg::fragment_spread>())
+		{
+			visitFragmentSpread(*child);
+		}
+		else if (child->is_type<peg::inline_fragment>())
+		{
+			visitInlineFragment(*child);
+		}
+	}
+}
+
+std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+{
+	auto itrKind = _typeKinds.find(_scopedType);
+
+	return (itrKind == _typeKinds.cend()
+		? std::nullopt
+		: std::make_optional(itrKind->second));
+}
+
+ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::getScopedTypeFields()
+{
+	auto itrType = _typeFields.find(_scopedType);
+
+	if (itrType == _typeFields.cend())
+	{
+		std::ostringstream oss;
+
+		// This is taking advantage of the fact that during validation we can choose to execute
+		// unvalidated queries. Normally you can't have fragment cycles, so tools like GraphiQL work
+		// around that limitation by nesting the ofType selection set many layers deep to eventually
+		// read the underlying type when it's wrapped in List or NotNull types.
+		oss << R"gql(query {
+					__type(name: ")gql" << _scopedType << R"gql(") {
+						fields(includeDeprecated: true) {
+							name
+							type {
+								...nestedType
+							}
+						}
+					}
+				}
+
+			fragment nestedType on __Type {
+				name
+				ofType {
+					...nestedType
+				}
+			})gql";
+
+		auto data = executeQuery(oss.str());
+		auto members = data.release<response::MapType>();
+		auto itrResponse = std::find_if(members.begin(), members.end(),
+			[](const std::pair<std::string, response::Value>& entry) noexcept
+		{
+			return entry.first == R"gql(__type)gql";
+		});
+
+		if (itrResponse != members.end()
+			&& itrResponse->second.type() == response::Type::Map)
+		{
+			members = itrResponse->second.release<response::MapType>();
+			itrResponse = std::find_if(members.begin(), members.end(),
+				[](const std::pair<std::string, response::Value>& entry) noexcept
+			{
+				return entry.first == R"gql(fields)gql";
+			});
+
+			if (itrResponse != members.end()
+				&& itrResponse->second.type() == response::Type::List)
+			{
+				auto entries = itrResponse->second.release<response::ListType>();
+				std::map<std::string, response::Value> fields;
+
+				for (auto& entry : entries)
+				{
+					if (entry.type() != response::Type::Map)
+					{
+						continue;
+					}
+
+					members = entry.release<response::MapType>();
+
+					auto itrFieldName = std::find_if(members.begin(), members.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(name)gql";
+					});
+					auto itrFieldType = std::find_if(members.begin(), members.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(type)gql";
+					});
+
+					if (itrFieldName != members.end()
+						&& itrFieldName->second.type() == response::Type::String
+						&& itrFieldType != members.end()
+						&& itrFieldType->second.type() == response::Type::Map)
+
+					{
+						fields[itrFieldName->second.release<response::StringType>()] = std::move(itrFieldType->second);
+					}
+				}
+
+				if (_scopedType == _operationTypes[strQuery])
+				{
+					response::Value schemaType(response::Type::Map);
+					response::Value notNullSchemaType(response::Type::Map);
+
+					schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
+					notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
+					fields[R"gql(__schema)gql"] = std::move(notNullSchemaType);
+
+					response::Value typeType(response::Type::Map);
+
+					typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
+					fields[R"gql(__type)gql"] = std::move(typeType);
+				}
+
+				response::Value typenameType(response::Type::Map);
+				response::Value notNullTypenameType(response::Type::Map);
+
+				typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
+				notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
+				fields[R"gql(__typename)gql"] = std::move(notNullTypenameType);
+
+				itrType = _typeFields.insert({ _scopedType, std::move(fields) }).first;
+			}
+		}
+	}
+
+	return itrType;
+}
+
+std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, const std::string& name)
+{
+	std::string result;
+	auto itrType = fields.find(name);
+
+	if (itrType == fields.end())
+	{
+		return result;
+	}
+
+	// Recursively expand nested types till we get the underlying field type.
+	const std::string nameMember{ R"gql(name)gql" };
+	const std::string ofTypeMember{ R"gql(ofType)gql" };
+	auto itrName = itrType->second.find(nameMember);
+	auto itrOfType = itrType->second.find(ofTypeMember);
+	auto itrEnd = itrType->second.end();
+
+	do
+	{
+		if (itrName != itrEnd
+			&& itrName->second.type() == response::Type::String)
+		{
+			result = itrName->second.get<response::StringType>();
+		}
+		else if (itrOfType != itrEnd
+			&& itrOfType->second.type() == response::Type::Map)
+		{
+			itrEnd = itrOfType->second.end();
+			itrName = itrOfType->second.find(nameMember);
+			itrOfType = itrOfType->second.find(ofTypeMember);
+		}
+		else
+		{
+			break;
+		}
+	} while (result.empty());
+
+	return result;
+}
+
+void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
+{
+	std::string name;
+
+	peg::on_first_child<peg::field_name>(field,
+		[&name](const peg::ast_node& child)
+	{
+		name = child.string_view();
+	});
+
+	auto kind = getScopedTypeKind();
+
+	if (!kind)
+	{
+		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		auto position = field.begin();
+		std::ostringstream message;
+
+		message << "Field on unknown type: " << _scopedType
+			<< " name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	std::string innerType;
+
+	switch (*kind)
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		{
+			auto itrType = getScopedTypeFields();
+
+			if (itrType != _typeFields.cend())
+			{
+				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+				innerType = getFieldType(itrType->second, name);
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::UNION:
+		{
+			if (name == R"gql(__typename)gql")
+			{
+				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+				innerType = "String";
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	if (innerType.empty())
+	{
+		// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+		auto position = field.begin();
+		std::ostringstream message;
+
+		message << "Undefined field type: " << _scopedType
+			<< " name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	const peg::ast_node* selection = nullptr;
+
+	peg::on_first_child<peg::selection_set>(field,
+		[&selection](const peg::ast_node& child)
+	{
+		selection = &child;
+	});
+
+	if (selection != nullptr)
+	{
+		auto outerType = std::move(_scopedType);
+
+		++_fieldDepth;
+		_scopedType = std::move(innerType);
+		visitSelection(*selection);
+		_scopedType = std::move(outerType);
+		--_fieldDepth;
+	}
+
+	if (_fieldDepth == 0)
+	{
+		++_rootFields;
+	}
+}
+
+void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
+{
+	const std::string name(fragmentSpread.children.front()->string_view());
+	auto itr = _fragmentDefinitions.find(name);
+
+	if (itr == _fragmentDefinitions.cend())
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragment-spread-target-defined
+		auto position = fragmentSpread.begin();
+		std::ostringstream message;
+
+		message << "Fragment spread undefined name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	if (_fragmentStack.find(name) != _fragmentStack.cend())
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragment-spreads-must-not-form-cycles
+		auto position = fragmentSpread.begin();
+		std::ostringstream message;
+
+		message << "Fragment spread cycle name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	const auto& selection = *itr->second.children.back();
+	std::string innerType{ itr->second.children[1]->children.front()->string_view() };
+	auto outerType = std::move(_scopedType);
+
+	_fragmentStack.insert(name);
+	_scopedType = std::move(innerType);
+	visitSelection(selection);
+	_scopedType = std::move(outerType);
+	_fragmentStack.erase(name);
+
+	_referencedFragments.insert(name);
+}
+
+void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
+{
+	std::string innerType;
+
+	peg::on_first_child<peg::type_condition>(inlineFragment,
+		[&innerType](const peg::ast_node& child)
+	{
+		innerType = child.children.front()->string();
+	});
+
+	if (innerType.empty())
+	{
+		innerType = _scopedType;
+	}
+
+	peg::on_first_child<peg::selection_set>(inlineFragment,
+		[this, &innerType](const peg::ast_node& selection)
+	{
+		auto outerType = std::move(_scopedType);
+
+		_scopedType = std::move(innerType);
+		visitSelection(selection);
+		_scopedType = std::move(outerType);
+	});
 }
 
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment

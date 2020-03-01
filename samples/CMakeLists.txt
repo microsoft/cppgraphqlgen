@@ -53,7 +53,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   file(GLOB OLD_UNIFIED_FILES ${CMAKE_CURRENT_SOURCE_DIR}/unified/*)
   file(GLOB OLD_SEPARATE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/separate/*)
-  file(GLOB OLD_VALIDATION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/validation/*)
+  file(GLOB OLD_VALIDATION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.*)
 
   add_custom_command(
     OUTPUT updated_samples
@@ -141,7 +141,9 @@ if(GRAPHQL_BUILD_TESTS)
     today)
   add_bigobj_flag(unifiedgraphql)
 
-  add_library(validationgraphql validation/ValidationSchema.cpp)
+  add_library(validationgraphql
+    validation/ValidationMock.cpp
+    validation/ValidationSchema.cpp)
   target_link_libraries(validationgraphql PUBLIC graphqlservice)
   target_include_directories(validationgraphql PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../include

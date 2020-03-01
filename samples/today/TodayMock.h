@@ -3,6 +3,9 @@
 
 #pragma once
 
+#ifndef TODAYMOCK_H
+#define TODAYMOCK_H
+
 #ifdef IMPL_SEPARATE_TODAY
 #include "TodayObjects.h"
 #else
@@ -525,3 +528,5 @@ private:
 };
 
 } /* namespace graphql::today */
+
+#endif // TODAYMOCK_H

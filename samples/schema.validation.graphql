@@ -6,6 +6,24 @@ type Query {
   dog: Dog
 }
 
+type Mutation {
+  mutateDog(input: MutateDogInput!): Dog
+}
+
+input MutateDogInput {
+  id: ID!
+}
+
+type Subscription {
+  newMessage: Message!
+  disallowedSecondRootField: Boolean!
+}
+
+type Message {
+  body: String
+  sender: ID!
+}
+
 enum DogCommand { SIT, DOWN, HEEL }
 
 type Dog implements Pet {
