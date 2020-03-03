@@ -64,3 +64,10 @@ type Cat implements Pet {
 union CatOrDog = Cat | Dog
 union DogOrHuman = Dog | Human
 union HumanOrAlien = Human | Alien
+
+# http://spec.graphql.org/June2018/#example-9bada
+extend type Query {
+  human: Human
+  pet: Pet
+  catOrDog: CatOrDog
+}

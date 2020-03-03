@@ -109,6 +109,9 @@ Query::Query()
 		"Query"
 	}, {
 		{ "dog", [this](service::ResolverParams&& params) { return resolveDog(std::move(params)); } },
+		{ "human", [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
+		{ "pet", [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
+		{ "catOrDog", [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
@@ -131,6 +134,48 @@ std::future<response::Value> Query::resolveDog(service::ResolverParams&& params)
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveHuman(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getHuman(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::shared_ptr<service::Object>> Query::getPet(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolvePet(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getPet(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::shared_ptr<service::Object>> Query::getCatOrDog(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveCatOrDog(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getCatOrDog(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
@@ -609,7 +654,10 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	});
 
 	typeQuery->AddFields({
-		std::make_shared<introspection::Field>("dog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Dog"))
+		std::make_shared<introspection::Field>("dog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Dog")),
+		std::make_shared<introspection::Field>("human", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human")),
+		std::make_shared<introspection::Field>("pet", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Pet")),
+		std::make_shared<introspection::Field>("catOrDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog"))
 	});
 	typeMutation->AddFields({
 		std::make_shared<introspection::Field>("mutateDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({

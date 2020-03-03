@@ -544,3 +544,96 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 	service::addErrorLocation(errors[0].location, error1);
 	EXPECT_EQ(R"js({"message":"Conflicting field type: Cat name: meowVolume","locations":[{"line":6,"column":5}]})js", response::toJSON(std::move(error1))) << "error should match";
 }
+
+TEST_F(ValidationExamplesCase, Example113)
+{
+	// http://spec.graphql.org/June2018/#example-e23c5
+	auto ast = R"(fragment scalarSelection on Dog {
+			barkVolume
+		}
+
+		query {
+			dog {
+				...scalarSelection
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample114)
+{
+	// http://spec.graphql.org/June2018/#example-13b69
+	auto ast = R"(fragment scalarSelectionsNotAllowedOnInt on Dog {
+			barkVolume {
+				sinceWhen
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Field on scalar type: Int name: sinceWhen","locations":[{"line":3,"column":5}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example115)
+{
+	// http://spec.graphql.org/June2018/#example-9bada
+	auto ast = R"(query {
+			human {
+				name
+			}
+			pet {
+				name
+			}
+			catOrDog {
+				... on Cat {
+					volume: meowVolume
+				}
+				... on Dog {
+					volume: barkVolume
+				}
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample116)
+{
+	// http://spec.graphql.org/June2018/#example-13b69
+	auto ast = R"(query directQueryOnObjectWithoutSubFields {
+			human
+		}
+
+		query directQueryOnInterfaceWithoutSubFields {
+			pet
+		}
+
+		query directQueryOnUnionWithoutSubFields {
+			catOrDog
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_EQ(errors.size(), 3) << "3 invalid fields";
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Human","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	response::Value error2(response::Type::Map);
+	service::addErrorMessage(std::move(errors[1].message), error2);
+	service::addErrorLocation(errors[1].location, error2);
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Pet","locations":[{"line":6,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
+	response::Value error3(response::Type::Map);
+	service::addErrorMessage(std::move(errors[2].message), error3);
+	service::addErrorLocation(errors[2].location, error3);
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: CatOrDog","locations":[{"line":10,"column":4}]})js", response::toJSON(std::move(error3))) << "error should match";
+}

@@ -74,9 +74,15 @@ protected:
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveDog(service::ResolverParams&& params);
+	std::future<response::Value> resolveHuman(service::ResolverParams&& params);
+	std::future<response::Value> resolvePet(service::ResolverParams&& params);
+	std::future<response::Value> resolveCatOrDog(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);

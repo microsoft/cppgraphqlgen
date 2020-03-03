@@ -1759,8 +1759,7 @@ private:
 
 	FragmentSet _referencedFragments;
 	FragmentSet _fragmentStack;
-	size_t _fieldDepth = 0;
-	size_t _rootFields = 0;
+	size_t _fieldCount = 0;
 	TypeFields _typeFields;
 	std::string _scopedType;
 	std::map<std::string, ValidateField> _selectionFields;
@@ -2043,42 +2042,35 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	}
 
 	_scopedType = itrType->second;
+	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
 
 	visitSelection(selection);
 
-	if (_rootFields > 1)
+	if (_fieldCount > 1
+		&& operationType == strSubscription)
 	{
 		// http://spec.graphql.org/June2018/#sec-Single-root-field
-		peg::on_first_child<peg::operation_type>(operationDefinition,
-			[this, &operationDefinition](const peg::ast_node& child)
+		std::string name;
+
+		peg::on_first_child<peg::operation_name>(operationDefinition,
+			[&name](const peg::ast_node& child)
+			{
+				name = child.string_view();
+			});
+
+		auto position = operationDefinition.begin();
+		std::ostringstream error;
+
+		error << "Subscription with more than one root field";
+
+		if (!name.empty())
 		{
-			if (child.string_view() != strSubscription)
-			{
-				return;
-			}
+			error << " name: " << name;
+		}
 
-			std::string name;
-
-			peg::on_first_child<peg::operation_name>(operationDefinition,
-				[&name](const peg::ast_node& child)
-				{
-					name = child.string_view();
-				});
-
-			auto position = operationDefinition.begin();
-			std::ostringstream error;
-
-			error << "Subscription with more than one root field";
-
-			if (!name.empty())
-			{
-				error << " name: " << name;
-			}
-
-			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
-		});
+		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
 	}
 
 	_scopedType.clear();;
@@ -2384,7 +2376,17 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		}
 
 		default:
-			break;
+		{
+			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+			auto position = field.begin();
+			std::ostringstream message;
+
+			message << "Field on scalar type: " << _scopedType
+				<< " name: " << name;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			return;
+		}
 	}
 
 	if (innerType.empty())
@@ -2464,26 +2466,56 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		selection = &child;
 	});
 
+	size_t subFieldCount = 0;
+
 	if (selection != nullptr)
 	{
 		auto outerType = std::move(_scopedType);
 		auto outerFields = std::move(_selectionFields);
+		auto outerFieldCount = _fieldCount;
 
-		++_fieldDepth;
+		_fieldCount = 0;
 		_selectionFields.clear();
 		_scopedType = std::move(innerType);
 
 		visitSelection(*selection);
 
+		innerType = std::move(_scopedType);
 		_scopedType = std::move(outerType);
 		_selectionFields = std::move(outerFields);
-		--_fieldDepth;
+		subFieldCount = _fieldCount;
+		_fieldCount = outerFieldCount;
 	}
 
-	if (_fieldDepth == 0)
+	if (subFieldCount == 0)
 	{
-		++_rootFields;
+		auto itrInnerKind = _typeKinds.find(innerType);
+
+		if (itrInnerKind != _typeKinds.end())
+		{
+			switch (itrInnerKind->second)
+			{
+				case introspection::TypeKind::OBJECT:
+				case introspection::TypeKind::INTERFACE:
+				case introspection::TypeKind::UNION:
+				{
+					// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+					auto position = field.begin();
+					std::ostringstream message;
+
+					message << "Missing fields on non-scalar type: " << innerType;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					return;
+				}
+
+				default:
+					break;
+			}
+		}
 	}
+
+	++_fieldCount;
 }
 
 void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
