@@ -608,7 +608,7 @@ TEST_F(ValidationExamplesCase, Example115)
 
 TEST_F(ValidationExamplesCase, CounterExample116)
 {
-	// http://spec.graphql.org/June2018/#example-13b69
+	// http://spec.graphql.org/June2018/#example-d68ee
 	auto ast = R"(query directQueryOnObjectWithoutSubFields {
 			human
 		}
