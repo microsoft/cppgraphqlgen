@@ -164,7 +164,7 @@ Generator::Generator(GeneratorOptions&& options)
 	if (_isIntrospection)
 	{
 		// Introspection Schema: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
-		auto ast = R"(
+		auto ast = R"gql(
 			type __Schema {
 				types: [__Type!]!
 				queryType: __Type!
@@ -257,7 +257,15 @@ Generator::Generator(GeneratorOptions&& options)
 				ENUM_VALUE
 				INPUT_OBJECT
 				INPUT_FIELD_DEFINITION
-			})"_graphql;
+			}
+
+			# These directives are always defined and should be included in the Introspection schema.
+			directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+			directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+			directive @deprecated(
+				reason: String = "No longer supported"
+			) on FIELD_DEFINITION | ENUM_VALUE
+		)gql"_graphql;
 
 		if (!ast.root)
 		{
@@ -1286,7 +1294,9 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
-				field.defaultValueString = child->children.back()->string_view();
+				field.defaultValueString = child->children.back()->unescaped.empty() 
+					? child->children.back()->string_view()
+					: child->children.back()->unescaped;
 			}
 			else if (child->is_type<peg::description>())
 			{

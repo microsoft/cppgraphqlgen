@@ -653,6 +653,27 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("locations", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
 		std::make_shared<introspection::Field>("args", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
 	});
+
+	schema->AddDirective(std::make_shared<introspection::Directive>("skip", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD)gql",
+		R"gql(FRAGMENT_SPREAD)gql",
+		R"gql(INLINE_FRAGMENT)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("if", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("include", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD)gql",
+		R"gql(FRAGMENT_SPREAD)gql",
+		R"gql(INLINE_FRAGMENT)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("if", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
+	})));
+	schema->AddDirective(std::make_shared<introspection::Directive>("deprecated", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD_DEFINITION)gql",
+		R"gql(ENUM_VALUE)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>({
+		std::make_shared<introspection::InputValue>("reason", R"md()md", schema->LookupType("String"), R"gql(No longer supported)gql")
+	})));
 }
 
 } /* namespace introspection */
