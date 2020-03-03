@@ -33,21 +33,17 @@ enum class CatCommand
 	JUMP
 };
 
-struct MutateDogInput
-{
-	response::IdType id;
-};
-
 namespace object {
 
 class Query;
-class Mutation;
-class Subscription;
-class Message;
 class Dog;
 class Alien;
 class Human;
 class Cat;
+class Mutation;
+class MutateDogResult;
+class Subscription;
+class Message;
 
 } /* namespace object */
 
@@ -89,55 +85,6 @@ private:
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
-};
-
-class Mutation
-	: public service::Object
-{
-protected:
-	explicit Mutation();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<Dog>> applyMutateDog(service::FieldParams&& params, MutateDogInput&& inputArg) const;
-
-private:
-	std::future<response::Value> resolveMutateDog(service::ResolverParams&& params);
-
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
-};
-
-class Subscription
-	: public service::Object
-{
-protected:
-	explicit Subscription();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const;
-
-private:
-	std::future<response::Value> resolveNewMessage(service::ResolverParams&& params);
-	std::future<response::Value> resolveDisallowedSecondRootField(service::ResolverParams&& params);
-
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
-};
-
-class Message
-	: public service::Object
-{
-protected:
-	explicit Message();
-
-public:
-	virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const;
-
-private:
-	std::future<response::Value> resolveBody(service::ResolverParams&& params);
-	std::future<response::Value> resolveSender(service::ResolverParams&& params);
-
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 class Dog
@@ -218,6 +165,70 @@ private:
 	std::future<response::Value> resolveNickname(service::ResolverParams&& params);
 	std::future<response::Value> resolveDoesKnowCommand(service::ResolverParams&& params);
 	std::future<response::Value> resolveMeowVolume(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Mutation
+	: public service::Object
+{
+protected:
+	explicit Mutation();
+
+public:
+	virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveMutateDog(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class MutateDogResult
+	: public service::Object
+{
+protected:
+	explicit MutateDogResult();
+
+public:
+	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveId(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Subscription
+	: public service::Object
+{
+protected:
+	explicit Subscription();
+
+public:
+	virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const;
+	virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveNewMessage(service::ResolverParams&& params);
+	std::future<response::Value> resolveDisallowedSecondRootField(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Message
+	: public service::Object
+{
+protected:
+	explicit Message();
+
+public:
+	virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const;
+	virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveBody(service::ResolverParams&& params);
+	std::future<response::Value> resolveSender(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };

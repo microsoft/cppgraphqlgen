@@ -6,24 +6,6 @@ type Query {
   dog: Dog
 }
 
-type Mutation {
-  mutateDog(input: MutateDogInput!): Dog
-}
-
-input MutateDogInput {
-  id: ID!
-}
-
-type Subscription {
-  newMessage: Message!
-  disallowedSecondRootField: Boolean!
-}
-
-type Message {
-  body: String
-  sender: ID!
-}
-
 enum DogCommand { SIT, DOWN, HEEL }
 
 type Dog implements Pet {
@@ -65,9 +47,36 @@ union CatOrDog = Cat | Dog
 union DogOrHuman = Dog | Human
 union HumanOrAlien = Human | Alien
 
+"Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e)"
+type Mutation {
+  mutateDog: MutateDogResult
+}
+
+"Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e)"
+type MutateDogResult {
+  id: ID!
+}
+
+"Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+type Subscription {
+  "Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+  newMessage: Message!
+  "Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466)"
+  disallowedSecondRootField: Boolean!
+}
+
+"Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+type Message {
+  body: String
+  sender: ID!
+}
+
 # http://spec.graphql.org/June2018/#example-9bada
 extend type Query {
+  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
   human: Human
+  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
   pet: Pet
+  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
   catOrDog: CatOrDog
 }
