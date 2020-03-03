@@ -1397,6 +1397,16 @@ OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Va
 {
 }
 
+using ValidateType = response::Value;
+
+using ValidateTypeFieldArguments = std::map<std::string, response::Value>;
+
+struct ValidateTypeField
+{
+	ValidateType returnType;
+	ValidateTypeFieldArguments arguments;
+};
+
 struct ValidateArgumentVariable
 {
 	bool operator==(const ValidateArgumentVariable& other) const;
@@ -1418,6 +1428,7 @@ struct ValidateArgumentValuePtr
 	bool operator==(const ValidateArgumentValuePtr& other) const;
 
 	std::unique_ptr<ValidateArgumentValue> value;
+	schema_location position;
 };
 
 struct ValidateArgumentList
@@ -1605,53 +1616,69 @@ void ValidateArgumentValueVisitor::visit(const peg::ast_node& value)
 void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 {
 	ValidateArgumentVariable value { std::string { variable.string_view().substr(1) } };
+	auto position = variable.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
 	response::IntType value { std::atoi(intValue.string().c_str()) };
+	auto position = intValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
 	response::FloatType value { std::atof(floatValue.string().c_str()) };
+	auto position = floatValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
 	response::StringType value { stringValue.unescaped };
+	auto position = stringValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
 	response::BooleanType value { booleanValue.is_type<peg::true_keyword>() };
+	auto position = booleanValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
-void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
+void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue)
 {
+	auto position = nullValue.begin();
+
 	_argumentValue.value.reset();
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	ValidateArgumentEnumValue value { enumValue.string() };
+	auto position = enumValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue)
 {
 	ValidateArgumentList value;
+	auto position = listValue.begin();
 
 	value.values.reserve(listValue.children.size());
 
@@ -1664,11 +1691,13 @@ void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue
 	}
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
 void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
 {
 	ValidateArgumentMap value;
+	auto position = objectValue.begin();
 
 	for (const auto& field : objectValue.children)
 	{
@@ -1679,37 +1708,36 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	}
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.position = { position.line, position.byte_in_line };
 }
 
-using ValidateArguments = std::map<std::string, ValidateArgumentValuePtr>;
+using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
 
-class ValidateField
+struct ValidateField
 {
-public:
-	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateArguments&& arguments);
+	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
-private:
-	std::string _returnType;
-	std::optional<std::string> _objectType;
-	std::string _fieldName;
-	ValidateArguments _arguments;
+	std::string returnType;
+	std::optional<std::string> objectType;
+	std::string fieldName;
+	ValidateFieldArguments arguments;
 };
 
-ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateArguments&& arguments)
-	: _returnType(std::move(returnType))
-	, _objectType(std::move(objectType))
-	, _fieldName(fieldName)
-	, _arguments(std::move(arguments))
+ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateFieldArguments&& arguments)
+	: returnType(std::move(returnType))
+	, objectType(std::move(objectType))
+	, fieldName(fieldName)
+	, arguments(std::move(arguments))
 {
 }
 
 bool ValidateField::operator==(const ValidateField& other) const
 {
-	return _returnType == other._returnType
-		&& ((_objectType && other._objectType && *_objectType != *other._objectType)
-			|| (_fieldName == other._fieldName && _arguments == other._arguments));
+	return returnType == other.returnType
+		&& ((objectType && other.objectType && *objectType != *other.objectType)
+			|| (fieldName == other.fieldName && arguments == other.arguments));
 }
 
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service schema.
@@ -1725,14 +1753,14 @@ public:
 private:
 	response::Value executeQuery(std::string_view query) const;
 
-	using FieldTypes = std::map<std::string, response::Value>;
+	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using TypeFields = std::map<std::string, FieldTypes>;
 	
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
 	TypeFields::const_iterator getScopedTypeFields();
 	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
 	static std::string getWrappedFieldType(const FieldTypes& fields, const std::string& name);
-	static std::string getWrappedFieldType(const response::Value& returnType);
+	static std::string getWrappedFieldType(const ValidateType& returnType);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -2108,7 +2136,28 @@ std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeK
 
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::getScopedTypeFields()
 {
+	auto typeKind = getScopedTypeKind();
 	auto itrType = _typeFields.find(_scopedType);
+
+	if (itrType == _typeFields.cend())
+	{
+		if (!typeKind)
+		{
+			return itrType;
+		}
+
+		switch (*typeKind)
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				// These are the only types which support sub-fields.
+				break;
+
+			default:
+				return itrType;
+		}
+	}
 
 	if (itrType == _typeFields.cend())
 	{
@@ -2124,6 +2173,12 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 							name
 							type {
 								...nestedType
+							}
+							args {
+								name
+								type {
+									...nestedType
+								}
 							}
 						}
 					}
@@ -2148,7 +2203,15 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 		if (itrResponse != members.end()
 			&& itrResponse->second.type() == response::Type::Map)
 		{
+			std::map<std::string, ValidateTypeField> fields;
+			response::Value scalarKind(response::Type::EnumValue);
+			response::Value nonNullKind(response::Type::EnumValue);
+
+			scalarKind.set<response::StringType>(R"gql(SCALAR)gql");
+			nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
+
 			members = itrResponse->second.release<response::MapType>();
+
 			itrResponse = std::find_if(members.begin(), members.end(),
 				[](const std::pair<std::string, response::Value>& entry) noexcept
 			{
@@ -2159,7 +2222,6 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 				&& itrResponse->second.type() == response::Type::List)
 			{
 				auto entries = itrResponse->second.release<response::ListType>();
-				std::map<std::string, response::Value> fields;
 
 				for (auto& entry : entries)
 				{
@@ -2185,36 +2247,106 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 						&& itrFieldName->second.type() == response::Type::String
 						&& itrFieldType != members.end()
 						&& itrFieldType->second.type() == response::Type::Map)
-
 					{
-						fields[itrFieldName->second.release<response::StringType>()] = std::move(itrFieldType->second);
+						auto fieldName = itrFieldName->second.release<response::StringType>();
+						ValidateTypeField subField;
+
+						subField.returnType = std::move(itrFieldType->second);
+
+						auto itrArgs = std::find_if(members.begin(), members.end(),
+							[](const std::pair<std::string, response::Value>& entry) noexcept
+						{
+							return entry.first == R"gql(args)gql";
+						});
+
+						if (itrArgs != members.end()
+							&& itrArgs->second.type() == response::Type::List)
+						{
+							auto args = itrArgs->second.release<response::ListType>();
+
+							for (auto& arg : args)
+							{
+								if (arg.type() != response::Type::Map)
+								{
+									continue;
+								}
+
+								members = arg.release<response::MapType>();
+
+								auto itrArgName = std::find_if(members.begin(), members.end(),
+									[](const std::pair<std::string, response::Value>& argEntry) noexcept
+								{
+									return argEntry.first == R"gql(name)gql";
+								});
+								auto itrArgType = std::find_if(members.begin(), members.end(),
+									[](const std::pair<std::string, response::Value>& argEntry) noexcept
+								{
+									return argEntry.first == R"gql(type)gql";
+								});
+
+								if (itrArgName != members.end()
+									&& itrArgName->second.type() == response::Type::String
+									&& itrArgType != members.end()
+									&& itrArgType->second.type() == response::Type::Map)
+								{
+									subField.arguments[itrArgName->second.release<response::StringType>()] = std::move(itrArgType->second);
+								}
+							}
+						}
+
+						fields[std::move(fieldName)] = std::move(subField);
 					}
 				}
 
 				if (_scopedType == _operationTypes[strQuery])
 				{
+					response::Value objectKind(response::Type::EnumValue);
+
+					objectKind.set<response::StringType>(R"gql(OBJECT)gql");
+
+					ValidateTypeField schemaField;
 					response::Value schemaType(response::Type::Map);
 					response::Value notNullSchemaType(response::Type::Map);
 
+					schemaType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
 					schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
+					notNullSchemaType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
 					notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
-					fields[R"gql(__schema)gql"] = std::move(notNullSchemaType);
+					schemaField.returnType = std::move(notNullSchemaType);
+					fields[R"gql(__schema)gql"] = std::move(schemaField);
 
+					ValidateTypeField typeField;
 					response::Value typeType(response::Type::Map);
 
+					typeType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
 					typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
-					fields[R"gql(__type)gql"] = std::move(typeType);
+					typeField.returnType = std::move(typeType);
+
+					response::Value typeNameArg(response::Type::Map);
+					response::Value nonNullTypeNameArg(response::Type::Map);
+
+					typeNameArg.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
+					typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
+					nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
+					nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
+					typeField.arguments[R"gql(name)gql"] = std::move(nonNullTypeNameArg);
+
+					fields[R"gql(__type)gql"] = std::move(typeField);
 				}
-
-				response::Value typenameType(response::Type::Map);
-				response::Value notNullTypenameType(response::Type::Map);
-
-				typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-				notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
-				fields[R"gql(__typename)gql"] = std::move(notNullTypenameType);
-
-				itrType = _typeFields.insert({ _scopedType, std::move(fields) }).first;
 			}
+
+			ValidateTypeField typenameField;
+			response::Value typenameType(response::Type::Map);
+			response::Value notNullTypenameType(response::Type::Map);
+
+			typenameType.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
+			typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
+			notNullTypenameType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
+			notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
+			typenameField.returnType = std::move(notNullTypenameType);
+			fields[R"gql(__typename)gql"] = std::move(typenameField);
+
+			itrType = _typeFields.insert({ _scopedType, std::move(fields) }).first;
 		}
 	}
 
@@ -2231,12 +2363,12 @@ std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, co
 		return result;
 	}
 
-	// Recursively expand nested types till we get the underlying field type.
+	// Iteratively expand nested types till we get the underlying field type.
 	const std::string nameMember{ R"gql(name)gql" };
 	const std::string ofTypeMember{ R"gql(ofType)gql" };
-	auto itrName = itrType->second.find(nameMember);
-	auto itrOfType = itrType->second.find(ofTypeMember);
-	auto itrEnd = itrType->second.end();
+	auto itrName = itrType->second.returnType.find(nameMember);
+	auto itrOfType = itrType->second.returnType.find(ofTypeMember);
+	auto itrEnd = itrType->second.returnType.end();
 
 	do
 	{
@@ -2271,12 +2403,12 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(const FieldTypes& fie
 		return result;
 	}
 
-	result = getWrappedFieldType(itrType->second);
+	result = getWrappedFieldType(itrType->second.returnType);
 
 	return result;
 }
 
-std::string ValidateExecutableVisitor::getWrappedFieldType(const response::Value& returnType)
+std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& returnType)
 {
 	// Recursively expand nested types till we get the underlying field type.
 	const std::string nameMember { R"gql(name)gql" };
@@ -2345,48 +2477,55 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	std::string innerType;
 	std::string wrappedType;
+	auto itrType = getScopedTypeFields();
+
+	if (itrType == _typeFields.cend())
+	{
+		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		auto position = field.begin();
+		std::ostringstream message;
+
+		message << "Field on scalar type: " << _scopedType
+			<< " name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
 
 	switch (*kind)
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
 		{
-			auto itrType = getScopedTypeFields();
-
-			if (itrType != _typeFields.cend())
-			{
-				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-				innerType = getFieldType(itrType->second, name);
-				wrappedType = getWrappedFieldType(itrType->second, name);
-			}
-
+			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+			innerType = getFieldType(itrType->second, name);
+			wrappedType = getWrappedFieldType(itrType->second, name);
 			break;
 		}
 
 		case introspection::TypeKind::UNION:
 		{
-			if (name == R"gql(__typename)gql")
+			if (name != R"gql(__typename)gql")
 			{
-				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-				innerType = "String";
-				wrappedType = "String!";
+				// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+				auto position = field.begin();
+				std::ostringstream message;
+
+				message << "Field on union type: " << _scopedType
+					<< " name: " << name;
+
+				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				return;
 			}
 
+			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+			innerType = "String";
+			wrappedType = "String!";
 			break;
 		}
 
 		default:
-		{
-			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-			auto position = field.begin();
-			std::ostringstream message;
-
-			message << "Field on scalar type: " << _scopedType
-				<< " name: " << name;
-
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			return;
-		}
+			break;
 	}
 
 	if (innerType.empty())
@@ -2415,24 +2554,33 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		alias = name;
 	}
 
-	ValidateArguments arguments;
+	std::queue<std::string> argumentNames;
+	std::map<std::string, schema_location> argumentLocations;
+	ValidateFieldArguments validateArguments;
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &arguments](const peg::ast_node& child)
+		[this, &validateArguments, &argumentNames , &argumentLocations](const peg::ast_node& child)
 	{
 		for (auto& argument : child.children)
 		{
+			auto argumentName = argument->children.front()->string();
+			auto position = argument->begin();
+
+			argumentLocations[argumentName] = { position.line, position.byte_in_line };
+
 			ValidateArgumentValueVisitor visitor;
 
 			visitor.visit(*argument->children.back());
-			arguments[argument->children.front()->string()] = visitor.getArgumentValue();
+			validateArguments[argumentName] = visitor.getArgumentValue();
+
+			argumentNames.push(std::move(argumentName));
 		}
 	});
 
 	std::optional<std::string> objectType = (*kind == introspection::TypeKind::OBJECT
 		? std::make_optional(_scopedType)
 		: std::nullopt);
-	ValidateField validateField(std::move(wrappedType), std::move(objectType), name, std::move(arguments));
+	ValidateField validateField(std::move(wrappedType), std::move(objectType), name, std::move(validateArguments));
 	auto itrValidateField = _selectionFields.find(alias);
 
 	if (itrValidateField != _selectionFields.end())
@@ -2452,7 +2600,34 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				<< " name: " << name;
 
 			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			return;
+		}
+	}
+
+	auto itrField = itrType->second.find(name);
+
+	if (itrField != itrType->second.end())
+	{
+		while (!argumentNames.empty())
+		{
+			auto argumentName = std::move(argumentNames.front());
+
+			argumentNames.pop();
+
+			auto itrArgument = itrField->second.arguments.find(argumentName);
+
+			if (itrArgument == itrField->second.arguments.end())
+			{
+				// http://spec.graphql.org/June2018/#sec-Argument-Names
+				std::ostringstream message;
+
+				message << "Undefined argument type: " << _scopedType
+					<< " field: " << name
+					<< " argument: " << argumentName;
+
+				_errors.push_back({ message.str(), argumentLocations[argumentName] });
+			}
+
+			//const auto& argument = validateField.arguments[argumentName];
 		}
 	}
 

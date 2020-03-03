@@ -127,7 +127,7 @@ TEST_F(ValidationExamplesCase, CounterExample94)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -285,7 +285,8 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
+	EXPECT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
+	ASSERT_GE(errors.size(), 2);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -323,7 +324,8 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -364,15 +366,16 @@ TEST_F(ValidationExamplesCase, CounterExample106)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
+	ASSERT_GE(errors.size(), 2);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined field type: CatOrDog name: name","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: name","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
 	response::Value error2(response::Type::Map);
 	service::addErrorMessage(std::move(errors[1].message), error2);
 	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Undefined field type: CatOrDog name: barkVolume","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: barkVolume","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example107)
@@ -410,7 +413,8 @@ TEST_F(ValidationExamplesCase, CounterExample108)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -472,7 +476,8 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 8) << "4 conflicting fields + 4 unused fragments";
+	EXPECT_EQ(errors.size(), 8) << "4 conflicting fields + 4 unused fragments";
+	ASSERT_GE(errors.size(), 4);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -538,7 +543,8 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -574,7 +580,8 @@ TEST_F(ValidationExamplesCase, CounterExample114)
 
 	auto errors = _service->validate(*ast.root);
 
-	ASSERT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -636,4 +643,44 @@ TEST_F(ValidationExamplesCase, CounterExample116)
 	service::addErrorMessage(std::move(errors[2].message), error3);
 	service::addErrorLocation(errors[2].location, error3);
 	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: CatOrDog","locations":[{"line":10,"column":4}]})js", response::toJSON(std::move(error3))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example117)
+{
+	// http://spec.graphql.org/June2018/#example-760cb
+	auto ast = R"(fragment argOnRequiredArg on Dog {
+			doesKnowCommand(dogCommand: SIT)
+		}
+
+		fragment argOnOptional on Dog {
+			isHousetrained(atOtherHomes: true) @include(if: true)
+		}
+
+		query {
+			dog {
+				...argOnRequiredArg
+				...argOnOptional
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample118)
+{
+	// http://spec.graphql.org/June2018/#example-d5639
+	auto ast = R"(fragment invalidArgName on Dog {
+			doesKnowCommand(command: CLEAN_UP_HOUSE)
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined argument + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Undefined argument type: Dog field: doesKnowCommand argument: command","locations":[{"line":2,"column":20}]})js", response::toJSON(std::move(error1))) << "error should match";
 }
