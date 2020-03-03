@@ -912,6 +912,7 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::stack<FragmentDirectives> _fragmentDirectives;
+	std::unordered_set<std::string> _names;
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
@@ -978,6 +979,14 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	if (alias.empty())
 	{
 		alias = name;
+	}
+
+	if (!_names.insert(alias).second)
+	{
+		// Skip resolving fields which map to the same response name as a field we've already
+		// resolved. Validation should handle merging multiple references to the same field or
+		// to compatible fields.
+		return;
 	}
 
 	const auto itr = _resolvers.find(name);
