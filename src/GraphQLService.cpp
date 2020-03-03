@@ -1388,6 +1388,321 @@ OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Va
 {
 }
 
+struct ValidateArgumentVariable
+{
+	bool operator==(const ValidateArgumentVariable& other) const;
+
+	std::string name;
+};
+
+struct ValidateArgumentEnumValue
+{
+	bool operator==(const ValidateArgumentEnumValue& other) const;
+
+	std::string value;
+};
+
+struct ValidateArgumentValue;
+
+struct ValidateArgumentValuePtr
+{
+	bool operator==(const ValidateArgumentValuePtr& other) const;
+
+	std::unique_ptr<ValidateArgumentValue> value;
+};
+
+struct ValidateArgumentList
+{
+	bool operator==(const ValidateArgumentList& other) const;
+
+	std::vector<ValidateArgumentValuePtr> values;
+};
+
+struct ValidateArgumentMap
+{
+	bool operator==(const ValidateArgumentMap& other) const;
+
+	std::map<std::string, ValidateArgumentValuePtr> values;
+};
+
+using ValidateArgumentVariant = std::variant<
+	ValidateArgumentVariable,
+	response::IntType,
+	response::FloatType,
+	response::StringType,
+	response::BooleanType,
+	ValidateArgumentEnumValue,
+	ValidateArgumentList,
+	ValidateArgumentMap>;
+
+struct ValidateArgumentValue
+{
+	ValidateArgumentValue(ValidateArgumentVariable&& value);
+	ValidateArgumentValue(response::IntType value);
+	ValidateArgumentValue(response::FloatType value);
+	ValidateArgumentValue(response::StringType&& value);
+	ValidateArgumentValue(response::BooleanType value);
+	ValidateArgumentValue(ValidateArgumentEnumValue&& value);
+	ValidateArgumentValue(ValidateArgumentList&& value);
+	ValidateArgumentValue(ValidateArgumentMap&& value);
+
+	ValidateArgumentVariant data;
+};
+
+bool ValidateArgumentVariable::operator==(const ValidateArgumentVariable& other) const
+{
+	return name == other.name;
+}
+
+bool ValidateArgumentEnumValue::operator==(const ValidateArgumentEnumValue& other) const
+{
+	return value == other.value;
+}
+
+bool ValidateArgumentValuePtr::operator==(const ValidateArgumentValuePtr& other) const
+{
+	return (!value
+		? !other.value
+		: (other.value && value->data == other.value->data));
+}
+
+bool ValidateArgumentList::operator==(const ValidateArgumentList& other) const
+{
+	return values == other.values;
+}
+
+bool ValidateArgumentMap::operator==(const ValidateArgumentMap& other) const
+{
+	return values == other.values;
+}
+
+ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentVariable&& value)
+	: data(std::move(value))
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(response::IntType value)
+	: data(value)
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(response::FloatType value)
+	: data(value)
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(response::StringType&& value)
+	: data(std::move(value))
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(response::BooleanType value)
+	: data(value)
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentEnumValue&& value)
+	: data(std::move(value))
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentList&& value)
+	: data(std::move(value))
+{
+}
+
+ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentMap&& value)
+	: data(std::move(value))
+{
+}
+
+// ValidateArgumentValueVisitor visits the AST and builds a record of a field return type and map
+// of the arguments for comparison to see if 2 fields with the same result name can be merged.
+class ValidateArgumentValueVisitor
+{
+public:
+	ValidateArgumentValueVisitor();
+
+	void visit(const peg::ast_node& value);
+
+	ValidateArgumentValuePtr getArgumentValue();
+
+private:
+	void visitVariable(const peg::ast_node& variable);
+	void visitIntValue(const peg::ast_node& intValue);
+	void visitFloatValue(const peg::ast_node& floatValue);
+	void visitStringValue(const peg::ast_node& stringValue);
+	void visitBooleanValue(const peg::ast_node& booleanValue);
+	void visitNullValue(const peg::ast_node& nullValue);
+	void visitEnumValue(const peg::ast_node& enumValue);
+	void visitListValue(const peg::ast_node& listValue);
+	void visitObjectValue(const peg::ast_node& objectValue);
+
+	ValidateArgumentValuePtr _argumentValue;
+};
+
+ValidateArgumentValueVisitor::ValidateArgumentValueVisitor()
+{
+}
+
+ValidateArgumentValuePtr ValidateArgumentValueVisitor::getArgumentValue()
+{
+	auto result = std::move(_argumentValue);
+
+	return result;
+}
+
+void ValidateArgumentValueVisitor::visit(const peg::ast_node& value)
+{
+	if (value.is_type<peg::variable_value>())
+	{
+		visitVariable(value);
+	}
+	else if (value.is_type<peg::integer_value>())
+	{
+		visitIntValue(value);
+	}
+	else if (value.is_type<peg::float_value>())
+	{
+		visitFloatValue(value);
+	}
+	else if (value.is_type<peg::string_value>())
+	{
+		visitStringValue(value);
+	}
+	else if (value.is_type<peg::true_keyword>()
+		|| value.is_type<peg::false_keyword>())
+	{
+		visitBooleanValue(value);
+	}
+	else if (value.is_type<peg::null_keyword>())
+	{
+		visitNullValue(value);
+	}
+	else if (value.is_type<peg::enum_value>())
+	{
+		visitEnumValue(value);
+	}
+	else if (value.is_type<peg::list_value>())
+	{
+		visitListValue(value);
+	}
+	else if (value.is_type<peg::object_value>())
+	{
+		visitObjectValue(value);
+	}
+}
+
+void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
+{
+	ValidateArgumentVariable value { std::string { variable.string_view().substr(1) } };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+}
+
+void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
+{
+	response::IntType value { std::atoi(intValue.string().c_str()) };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+}
+
+void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
+{
+	response::FloatType value { std::atof(floatValue.string().c_str()) };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+}
+
+void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringValue)
+{
+	response::StringType value { stringValue.unescaped };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+}
+
+void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
+{
+	response::BooleanType value { booleanValue.is_type<peg::true_keyword>() };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
+}
+
+void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
+{
+	_argumentValue.value.reset();
+}
+
+void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
+{
+	ValidateArgumentEnumValue value { enumValue.string() };
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+}
+
+void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue)
+{
+	ValidateArgumentList value;
+
+	value.values.reserve(listValue.children.size());
+
+	for (const auto& child : listValue.children)
+	{
+		ValidateArgumentValueVisitor visitor;
+
+		visitor.visit(*child);
+		value.values.emplace_back(visitor.getArgumentValue());
+	}
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+}
+
+void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
+{
+	ValidateArgumentMap value;
+
+	for (const auto& field : objectValue.children)
+	{
+		ValidateArgumentValueVisitor visitor;
+
+		visitor.visit(*field->children.back());
+		value.values[field->children.front()->string()] = visitor.getArgumentValue();
+	}
+
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+}
+
+using ValidateArguments = std::map<std::string, ValidateArgumentValuePtr>;
+
+class ValidateField
+{
+public:
+	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateArguments&& arguments);
+
+	bool operator==(const ValidateField& other) const;
+
+private:
+	std::string _returnType;
+	std::optional<std::string> _objectType;
+	std::string _fieldName;
+	ValidateArguments _arguments;
+};
+
+ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateArguments&& arguments)
+	: _returnType(std::move(returnType))
+	, _objectType(std::move(objectType))
+	, _fieldName(fieldName)
+	, _arguments(std::move(arguments))
+{
+}
+
+bool ValidateField::operator==(const ValidateField& other) const
+{
+	return _returnType == other._returnType
+		&& ((_objectType && other._objectType && *_objectType != *other._objectType)
+			|| (_fieldName == other._fieldName && _arguments == other._arguments));
+}
+
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service schema.
 class ValidateExecutableVisitor
 {
@@ -1407,6 +1722,8 @@ private:
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
 	TypeFields::const_iterator getScopedTypeFields();
 	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
+	static std::string getWrappedFieldType(const FieldTypes& fields, const std::string& name);
+	static std::string getWrappedFieldType(const response::Value& returnType);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -1437,6 +1754,7 @@ private:
 	size_t _rootFields = 0;
 	TypeFields _typeFields;
 	std::string _scopedType;
+	std::map<std::string, ValidateField> _selectionFields;
 };
 
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
@@ -1678,9 +1996,18 @@ std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 
 void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fragmentDefinition)
 {
-	//const auto& selection = *fragmentDefinition.children.back();
+	const auto name = fragmentDefinition.children.front()->string();
+	const auto& selection = *fragmentDefinition.children.back();
+	auto innerType = fragmentDefinition.children[1]->children.front()->string();
 
-	//visitSelection(selection);
+	_fragmentStack.insert(name);
+	_scopedType = std::move(innerType);
+
+	visitSelection(selection);
+
+	_scopedType.clear();;
+	_fragmentStack.clear();
+	_selectionFields.clear();
 }
 
 void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& operationDefinition)
@@ -1744,6 +2071,10 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
 		});
 	}
+
+	_scopedType.clear();;
+	_fragmentStack.clear();
+	_selectionFields.clear();
 }
 
 void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
@@ -1798,6 +2129,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 				}
 
 			fragment nestedType on __Type {
+				kind
 				name
 				ofType {
 					...nestedType
@@ -1928,6 +2260,63 @@ std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, co
 	return result;
 }
 
+std::string ValidateExecutableVisitor::getWrappedFieldType(const FieldTypes& fields, const std::string& name)
+{
+	std::string result;
+	auto itrType = fields.find(name);
+
+	if (itrType == fields.end())
+	{
+		return result;
+	}
+
+	result = getWrappedFieldType(itrType->second);
+
+	return result;
+}
+
+std::string ValidateExecutableVisitor::getWrappedFieldType(const response::Value& returnType)
+{
+	// Recursively expand nested types till we get the underlying field type.
+	const std::string nameMember { R"gql(name)gql" };
+	auto itrName = returnType.find(nameMember);
+	auto itrEnd = returnType.end();
+
+	if (itrName != itrEnd
+		&& itrName->second.type() == response::Type::String)
+	{
+		return itrName->second.get<response::StringType>();
+	}
+
+	std::ostringstream oss;
+	const std::string kindMember { R"gql(kind)gql" };
+	const std::string ofTypeMember { R"gql(ofType)gql" };
+	auto itrKind = returnType.find(kindMember);
+	auto itrOfType = returnType.find(ofTypeMember);
+
+	if (itrKind != itrEnd
+		&& itrKind->second.type() == response::Type::EnumValue
+		&& itrOfType != itrEnd
+		&& itrOfType->second.type() == response::Type::Map)
+	{
+		switch (ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+		{
+			case introspection::TypeKind::LIST:
+				oss << '[' << getWrappedFieldType(itrOfType->second) << ']';
+				break;
+
+			case introspection::TypeKind::NON_NULL:
+				oss << getWrappedFieldType(itrOfType->second) << '!';
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	return oss.str();
+}
+
 void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 {
 	std::string name;
@@ -1954,6 +2343,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	std::string innerType;
+	std::string wrappedType;
 
 	switch (*kind)
 	{
@@ -1966,6 +2356,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			{
 				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
 				innerType = getFieldType(itrType->second, name);
+				wrappedType = getWrappedFieldType(itrType->second, name);
 			}
 
 			break;
@@ -1977,6 +2368,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			{
 				// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
 				innerType = "String";
+				wrappedType = "String!";
 			}
 
 			break;
@@ -1999,6 +2391,62 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
+	std::string alias;
+
+	peg::on_first_child<peg::alias_name>(field,
+		[&alias](const peg::ast_node& child)
+	{
+		alias = child.string_view();
+	});
+
+	if (alias.empty())
+	{
+		alias = name;
+	}
+
+	ValidateArguments arguments;
+
+	peg::on_first_child<peg::arguments>(field,
+		[this, &arguments](const peg::ast_node& child)
+	{
+		for (auto& argument : child.children)
+		{
+			ValidateArgumentValueVisitor visitor;
+
+			visitor.visit(*argument->children.back());
+			arguments[argument->children.front()->string()] = visitor.getArgumentValue();
+		}
+	});
+
+	std::optional<std::string> objectType = (*kind == introspection::TypeKind::OBJECT
+		? std::make_optional(_scopedType)
+		: std::nullopt);
+	ValidateField validateField(std::move(wrappedType), std::move(objectType), name, std::move(arguments));
+	auto itrValidateField = _selectionFields.find(alias);
+
+	if (itrValidateField != _selectionFields.end())
+	{
+		if (itrValidateField->second == validateField)
+		{
+			// We already validated this field.
+			return;
+		}
+		else
+		{
+			// http://spec.graphql.org/June2018/#sec-Field-Selection-Merging
+			auto position = field.begin();
+			std::ostringstream message;
+
+			message << "Conflicting field type: " << _scopedType
+				<< " name: " << name;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			return;
+		}
+	}
+
+	_selectionFields.insert({ std::move(alias), std::move(validateField) });
+
 	const peg::ast_node* selection = nullptr;
 
 	peg::on_first_child<peg::selection_set>(field,
@@ -2010,11 +2458,16 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	if (selection != nullptr)
 	{
 		auto outerType = std::move(_scopedType);
+		auto outerFields = std::move(_selectionFields);
 
 		++_fieldDepth;
+		_selectionFields.clear();
 		_scopedType = std::move(innerType);
+
 		visitSelection(*selection);
+
 		_scopedType = std::move(outerType);
+		_selectionFields = std::move(outerFields);
 		--_fieldDepth;
 	}
 
@@ -2059,7 +2512,9 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	_fragmentStack.insert(name);
 	_scopedType = std::move(innerType);
+
 	visitSelection(selection);
+
 	_scopedType = std::move(outerType);
 	_fragmentStack.erase(name);
 
@@ -2087,7 +2542,9 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 		auto outerType = std::move(_scopedType);
 
 		_scopedType = std::move(innerType);
+
 		visitSelection(selection);
+
 		_scopedType = std::move(outerType);
 	});
 }
