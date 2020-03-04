@@ -801,3 +801,20 @@ TEST_F(ValidationExamplesCase, CounterExample124)
 	service::addErrorLocation(errors[0].location, error1);
 	EXPECT_EQ(R"js({"message":"Missing argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
 }
+
+TEST_F(ValidationExamplesCase, CounterExample125)
+{
+	// http://spec.graphql.org/June2018/#example-0bc81
+	auto ast = R"(fragment missingRequiredArg on Arguments {
+			nonNullBooleanArgField(nonNullBooleanArg: null)
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Required non-null argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+}

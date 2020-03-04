@@ -2792,8 +2792,9 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 
 			auto itrArgument = validateField.arguments.find(argument.first);
+			const bool missing = itrArgument == validateField.arguments.end();
 
-			if (itrArgument != validateField.arguments.end()
+			if (!missing
 				&& itrArgument->second.value)
 			{
 				// The value was not null.
@@ -2811,7 +2812,9 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				auto position = field.begin();
 				std::ostringstream message;
 
-				message << "Missing argument type: " << _scopedType
+				message << (missing ?
+					"Missing argument type: " :
+					"Required non-null argument type: ") << _scopedType
 					<< " field: " << name
 					<< " name: " << argument.first;
 
@@ -3059,8 +3062,9 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 				}
 
 				auto itrArgument = validateArguments.find(argument.first);
+				const bool missing = itrArgument == validateArguments.end();
 
-				if (itrArgument != validateArguments.end()
+				if (!missing
 					&& itrArgument->second.value)
 				{
 					// The value was not null.
@@ -3078,7 +3082,9 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					auto position = directive->begin();
 					std::ostringstream message;
 
-					message << "Missing argument directive: " << directiveName
+					message << (missing ?
+						"Missing argument directive: " :
+						"Required non-null argument directive: ") << directiveName
 						<< " name: " << argument.first;
 
 					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
