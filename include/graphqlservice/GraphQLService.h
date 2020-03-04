@@ -6,8 +6,8 @@
 #ifndef GRAPHQLSERVICE_H
 #define GRAPHQLSERVICE_H
 
-#include <graphqlservice/GraphQLParse.h>
-#include <graphqlservice/GraphQLResponse.h>
+#include "graphqlservice/GraphQLParse.h"
+#include "graphqlservice/GraphQLResponse.h"
 
 #include <memory>
 #include <optional>
@@ -51,6 +51,8 @@ struct schema_error
 	schema_location location;
 	field_path path;
 };
+
+response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
@@ -803,11 +805,6 @@ public:
 
 	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
-	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
-	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
-
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
@@ -821,6 +818,11 @@ public:
 	void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
 	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+
+	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
+	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 private:
 	std::future<response::Value> resolveValidated(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;

@@ -5,7 +5,7 @@
 
 #include "TodaySchema.h"
 
-#include <graphqlservice/JSONResponse.h>
+#include "graphqlservice/JSONResponse.h"
 
 using namespace graphql;
 

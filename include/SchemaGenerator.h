@@ -6,8 +6,8 @@
 #ifndef SCHEMAGENERATOR_H
 #define SCHEMAGENERATOR_H
 
-#include <graphqlservice/GraphQLService.h>
-#include <graphqlservice/GraphQLGrammar.h>
+#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/GraphQLGrammar.h"
 
 #include <array>
 #include <cstdio>

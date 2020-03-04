@@ -6,7 +6,7 @@
 #ifndef INTROSPECTIONSCHEMA_H
 #define INTROSPECTIONSCHEMA_H
 
-#include <graphqlservice/GraphQLService.h>
+#include "graphqlservice/GraphQLService.h"
 
 #include <memory>
 #include <string>

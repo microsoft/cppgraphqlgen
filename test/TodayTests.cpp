@@ -5,7 +5,7 @@
 
 #include "TodayMock.h"
 
-#include <graphqlservice/JSONResponse.h>
+#include "graphqlservice/JSONResponse.h"
 
 #include <chrono>
 

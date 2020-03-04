@@ -81,6 +81,7 @@ add_library(graphqlservice
   $<TARGET_OBJECTS:graphqlresponse>
   GraphQLService.cpp
   Introspection.cpp
+  Validation.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PUBLIC
   graphqlpeg

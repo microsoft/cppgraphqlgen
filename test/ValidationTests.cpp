@@ -5,7 +5,7 @@
 
 #include "ValidationMock.h"
 
-#include <graphqlservice/JSONResponse.h>
+#include "graphqlservice/JSONResponse.h"
 
 #include <chrono>
 
