@@ -186,6 +186,11 @@ ObjectType::ObjectType(response::StringType&& name, response::StringType&& descr
 void ObjectType::AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces)
 {
 	_interfaces = std::move(interfaces);
+
+	for (const auto& interface : _interfaces)
+	{
+		interface->AddPossibleType(std::static_pointer_cast<ObjectType>(shared_from_this()));
+	}
 }
 
 void ObjectType::AddFields(std::vector<std::shared_ptr<Field>> fields)
@@ -234,6 +239,11 @@ InterfaceType::InterfaceType(response::StringType&& name, response::StringType&&
 {
 }
 
+void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
+{
+	_possibleTypes.push_back(possibleType);
+}
+
 void InterfaceType::AddFields(std::vector<std::shared_ptr<Field>> fields)
 {
 	_fields = std::move(fields);
@@ -260,6 +270,19 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
 	{
 		return deprecated
 			|| !field->getIsDeprecated(service::FieldParams(params, response::Value(response::Type::Map))).get();
+	});
+
+	return { std::move(result) };
+}
+
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> InterfaceType::getPossibleTypes(service::FieldParams&&) const
+{
+	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_possibleTypes.size());
+
+	std::transform(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin(),
+		[](const std::weak_ptr<object::Type>& weak)
+	{
+		return weak.lock();
 	});
 
 	return { std::move(result) };

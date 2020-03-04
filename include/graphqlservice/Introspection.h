@@ -113,17 +113,20 @@ class InterfaceType : public BaseType
 public:
 	explicit InterfaceType(response::StringType&& name, response::StringType&& description);
 
+	void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
 	void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
 	service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const override;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const override;
+	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> getPossibleTypes(service::FieldParams&& params) const override;
 
 private:
 	const response::StringType _name;
 
 	std::vector<std::shared_ptr<Field>> _fields;
+	std::vector<std::weak_ptr<ObjectType>> _possibleTypes;
 };
 
 class UnionType : public BaseType
