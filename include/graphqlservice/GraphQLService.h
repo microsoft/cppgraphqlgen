@@ -799,12 +799,17 @@ protected:
 	virtual ~Request() = default;
 
 public:
-	std::vector<schema_error> validate(const peg::ast_node& root) const;
+	std::vector<schema_error> validate(peg::ast& query) const;
 
 	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
+	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
 	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
 	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+
+	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
 	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
 	void unsubscribe(SubscriptionKey key);
@@ -818,6 +823,8 @@ public:
 	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
 private:
+	std::future<response::Value> resolveValidated(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+
 	TypeMap _operations;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;

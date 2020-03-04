@@ -91,7 +91,7 @@ size_t TodayServiceCase::_getUnreadCountsCount = 0;
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
-	auto ast = R"(
+	auto query = R"(
 		query Everything {
 			appointments {
 				edges {
@@ -127,7 +127,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	auto result = _service->resolve(std::launch::async, state, *ast.root, "Everything", std::move(variables)).get();
+	auto result = _service->resolve(std::launch::async, state, query, "Everything", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -187,7 +187,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 
 TEST_F(TodayServiceCase, QueryAppointments)
 {
-	auto ast = R"({
+	auto query = R"({
 			appointments {
 				edges {
 					node {
@@ -201,7 +201,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -240,7 +240,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 
 TEST_F(TodayServiceCase, QueryTasks)
 {
-	auto ast = R"gql({
+	auto query = R"gql({
 			tasks {
 				edges {
 					node {
@@ -253,7 +253,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		})gql"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(3);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -291,7 +291,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 
 TEST_F(TodayServiceCase, QueryUnreadCounts)
 {
-	auto ast = R"({
+	auto query = R"({
 			unreadCounts {
 				edges {
 					node {
@@ -304,7 +304,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(4);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -342,7 +342,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 
 TEST_F(TodayServiceCase, MutateCompleteTask)
 {
-	auto ast = R"(mutation {
+	auto query = R"(mutation {
 			completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
 				completedTask: task {
 					completedTaskId: id
@@ -354,7 +354,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(5);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -386,7 +386,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			nextAppointment: nextAppointmentChange {
 				nextAppointmentId: id
 				when
@@ -397,7 +397,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -429,7 +429,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 
 TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			nextAppointment: nextAppointmentChange {
 				nextAppointmentId: id
 				when
@@ -446,7 +446,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "today", "Dinner Time!", true);
 	});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -478,13 +478,15 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 
 TEST_F(TodayServiceCase, Introspection)
 {
-	auto ast = R"({
+	auto query = R"({
 			__schema {
 				types {
 					kind
 					name
 					description
-					ofType
+					ofType {
+						kind
+					}
 				}
 				queryType {
 					kind
@@ -512,7 +514,7 @@ TEST_F(TodayServiceCase, Introspection)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result = _service->resolve(std::launch::async, state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -540,13 +542,15 @@ TEST_F(TodayServiceCase, Introspection)
 
 TEST_F(TodayServiceCase, SkipDirective)
 {
-	auto ast = R"({
+	auto query = R"({
 			__schema {
 				types {
 					kind
 					name
 					description
-					ofType
+					ofType {
+						kind
+					}
 				}
 				queryType @skip(if: false) {
 					kind
@@ -574,7 +578,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(9);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -602,13 +606,15 @@ TEST_F(TodayServiceCase, SkipDirective)
 
 TEST_F(TodayServiceCase, IncludeDirective)
 {
-	auto ast = R"({
+	auto query = R"({
 			__schema {
 				types {
 					kind
 					name
 					description
-					ofType
+					ofType {
+						kind
+					}
 				}
 				queryType @include(if: false) {
 					kind
@@ -636,7 +642,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(10);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -664,7 +670,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 
 TEST_F(TodayServiceCase, NestedFragmentDirectives)
 {
-	auto ast = R"(
+	auto query = R"(
 		query NestedFragmentsQuery @queryTag(query: "nested") {
 			nested @fieldTag(field: "nested1") {
 				...Fragment1 @fragmentSpreadTag(fragmentSpread: "fragmentSpread1")
@@ -693,7 +699,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(11);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -790,7 +796,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 
 TEST_F(TodayServiceCase, QueryAppointmentsById)
 {
-	auto ast = R"(query SpecificAppointment($appointmentId: ID!) {
+	auto query = R"(query SpecificAppointment($appointmentId: ID!) {
 			appointmentsById(ids: [$appointmentId]) {
 				appointmentId: id
 				subject
@@ -801,7 +807,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(12);
-	auto result = _service->resolve(state, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
 	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
@@ -838,11 +844,11 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 
 TEST_F(TodayServiceCase, UnimplementedFieldError)
 {
-	auto ast = R"(query {
+	auto query = R"(query {
 			unimplemented
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto result = _service->resolve(nullptr, *ast.root, "", std::move(variables)).get();
+	auto result = _service->resolve(nullptr, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -862,7 +868,7 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 
 TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			changedNode: nodeChange(id: "ZmFrZVRhc2tJZA==") {
 				changedId: id
 				...on Task {
@@ -881,7 +887,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 	});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -912,7 +918,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 
 TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			changedNode: nodeChange(id: "ZmFrZVRhc2tJZA==") {
 				changedId: id
 				...on Task {
@@ -930,7 +936,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 		return nullptr;
 	});
 	bool calledGet = false;
-	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&calledGet](std::future<response::Value>)
 	{
 		calledGet = true;
@@ -951,7 +957,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 
 TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			changedNode: nodeChange(id: "ZmFr") {
 				changedId: id
 				...on Task {
@@ -981,7 +987,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 	});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -1013,7 +1019,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 
 TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			changedNode: nodeChange(id: "ZmFrZVRhc2tJZA==") {
 				changedId: id
 				...on Task {
@@ -1040,7 +1046,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		return nullptr;
 	});
 	bool calledGet = false;
-	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&calledGet](std::future<response::Value>)
 	{
 		calledGet = true;
@@ -1062,7 +1068,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 
 TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription($taskId: ID!) {
+	auto query = peg::parseString(R"(subscription TestSubscription($taskId: ID!) {
 			changedNode: nodeChange(id: $taskId) {
 				changedId: id
 				...on Task {
@@ -1082,7 +1088,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
 	});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -1113,7 +1119,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 
 TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 {
-	auto ast = R"(query SpecificAppointment($appointmentId: ID!) {
+	auto query = R"(query SpecificAppointment($appointmentId: ID!) {
 			appointmentsById(ids: [$appointmentId]) {
 				appointmentId: id
 				subject
@@ -1124,7 +1130,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(15);
-	auto future = _service->resolve(std::launch::deferred, state, *ast.root, "", std::move(variables));
+	auto future = _service->resolve(std::launch::deferred, state, query, "", std::move(variables));
 	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s)) << "should be deferred";
 	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service should not call the loader until we block";
 	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s)) << "should stay deferred until we block";
@@ -1166,7 +1172,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 
 TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 {
-	auto ast = R"(query SpecificAppointment($appointmentId: ID!) {
+	auto query = R"(query SpecificAppointment($appointmentId: ID!) {
 			appointmentsById(ids: [$appointmentId]) {
 				appointmentId: id
 				subject
@@ -1177,7 +1183,7 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(16);
-	auto future = _service->resolve(std::launch::async, state, *ast.root, "", std::move(variables));
+	auto future = _service->resolve(std::launch::async, state, query, "", std::move(variables));
 	ASSERT_NE(std::future_status::deferred, future.wait_for(0s)) << "should not start out deferred";
 	auto result = future.get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
@@ -1216,13 +1222,13 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 
 TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 {
-	auto ast = R"(query {
+	auto query = R"(query {
 			__type(name: "NonExistentType") {
 				description
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto future = _service->resolve(std::launch::deferred, nullptr, *ast.root, "", std::move(variables));
+	auto future = _service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
 	auto result = future.get();
 
 	try
@@ -1241,7 +1247,7 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 
 TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 {
-	auto ast = peg::parseString(R"(subscription TestSubscription {
+	auto query = peg::parseString(R"(subscription TestSubscription {
 			nextAppointment: nextAppointmentChange {
 				nextAppointmentId: id
 				when
@@ -1252,7 +1258,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(17);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(ast), "TestSubscription", std::move(std::move(variables)) },
+	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
 		[&result](std::future<response::Value> response)
 	{
 		result = response.get();
@@ -1284,7 +1290,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 
 TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 {
-	auto ast = R"(query NonblockingDeferredExpensive {
+	auto query = R"(query NonblockingDeferredExpensive {
 			expensive {
 				order
 			}
@@ -1292,7 +1298,7 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(18);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::deferred, state, *ast.root, "NonblockingDeferredExpensive", std::move(variables));
+	auto future = _service->resolve(std::launch::deferred, state, query, "NonblockingDeferredExpensive", std::move(variables));
 	auto result = future.get();
 
 	try
@@ -1312,7 +1318,7 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 
 TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 {
-	auto ast = R"(query BlockingAsyncExpensive {
+	auto query = R"(query BlockingAsyncExpensive {
 			expensive {
 				order
 			}
@@ -1320,7 +1326,7 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(19);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::async, state, *ast.root, "BlockingAsyncExpensive", std::move(variables));
+	auto future = _service->resolve(std::launch::async, state, query, "BlockingAsyncExpensive", std::move(variables));
 	auto result = future.get();
 
 	try

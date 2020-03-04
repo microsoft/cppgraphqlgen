@@ -1816,10 +1816,6 @@ private:
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 	: _service(service)
 {
-	// This is taking advantage of the fact that during validation we can choose to execute
-	// unvalidated queries. Normally you can't have fragment cycles, so tools like GraphiQL work
-	// around that limitation by nesting the ofType selection set many layers deep to eventually
-	// read the underlying type when it's wrapped in List or NotNull types.
 	auto data = executeQuery(R"gql(query {
 			__schema {
 				queryType {
@@ -1993,12 +1989,18 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 
 response::Value ValidateExecutableVisitor::executeQuery(std::string_view query) const
 {
+	auto ast = peg::parseString(query);
+
+	// This is taking advantage of the fact that during validation we can choose to execute
+	// unvalidated queries against the Introspection schema. This way we can use fragment
+	// cycles to expand an arbitrary number of wrapper types.
+	ast.validated = true;
+
 	response::Value data(response::Type::Map);
 	std::shared_ptr<RequestState> state;
-	auto ast = peg::parseString(query);
 	const std::string operationName;
 	response::Value variables(response::Type::Map);
-	auto result = _service.resolve(state, *ast.root, operationName, std::move(variables)).get();
+	auto result = _service.resolve(state, ast, operationName, std::move(variables)).get();
 	auto members = result.release<response::MapType>();
 	auto itrResponse = std::find_if(members.begin(), members.end(),
 		[](const std::pair<std::string, response::Value>& entry) noexcept
@@ -2370,10 +2372,6 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	{
 		std::ostringstream oss;
 
-		// This is taking advantage of the fact that during validation we can choose to execute
-		// unvalidated queries. Normally you can't have fragment cycles, so tools like GraphiQL work
-		// around that limitation by nesting the ofType selection set many layers deep to eventually
-		// read the underlying type when it's wrapped in List or NotNull types.
 		oss << R"gql(query {
 					__type(name: ")gql" << _scopedType << R"gql(") {
 						fields(includeDeprecated: true) {
@@ -3560,13 +3558,21 @@ Request::Request(TypeMap&& operationTypes)
 {
 }
 
-std::vector<schema_error> Request::validate(const peg::ast_node& root) const
+std::vector<schema_error> Request::validate(peg::ast& query) const
 {
-	ValidateExecutableVisitor visitor(*this);
+	std::vector<schema_error> errors;
 
-	visitor.visit(root);
+	if (!query.validated)
+	{
+		ValidateExecutableVisitor visitor(*this);
 
-	return visitor.getStructuredErrors();
+		visitor.visit(*query.root);
+
+		errors = visitor.getStructuredErrors();
+		query.validated = errors.empty();
+	}
+
+	return errors;
 }
 
 std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const
@@ -3667,10 +3673,40 @@ std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(co
 
 std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
 {
-	return resolve(std::launch::deferred, state, root, operationName, std::move(variables));
+	return resolveValidated(std::launch::deferred, state, root, operationName, std::move(variables));
 }
 
 std::future<response::Value> Request::resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
+{
+	return resolveValidated(launch, state, root, operationName, std::move(variables));
+}
+
+std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const
+{
+	return resolve(std::launch::deferred, state, query, operationName, std::move(variables));
+}
+
+std::future<response::Value> Request::resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const
+{
+	auto errors = validate(query);
+
+	if (!errors.empty())
+	{
+		schema_exception ex { std::move(errors) };
+		std::promise<response::Value> promise;
+		response::Value document(response::Type::Map);
+
+		document.emplace_back(std::string { strData }, response::Value());
+		document.emplace_back(std::string { strErrors }, ex.getErrors());
+		promise.set_value(std::move(document));
+
+		return promise.get_future();
+	}
+
+	return resolveValidated(launch, state, *query.root, operationName, std::move(variables));
+}
+
+std::future<response::Value> Request::resolveValidated(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
 {
 	try
 	{
@@ -3756,6 +3792,13 @@ std::future<response::Value> Request::resolve(std::launch launch, const std::sha
 
 SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
+	auto errors = validate(params.query);
+
+	if (!errors.empty())
+	{
+		throw schema_exception { std::move(errors) };
+	}
+
 	FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
 	peg::for_each_child<peg::fragment_definition>(*params.query.root,

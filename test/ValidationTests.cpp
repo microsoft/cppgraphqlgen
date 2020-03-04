@@ -38,7 +38,7 @@ std::shared_ptr<validation::Operations> ValidationExamplesCase::_service;
 TEST_F(ValidationExamplesCase, CounterExample91)
 {
 	// http://spec.graphql.org/June2018/#example-12752
-	auto ast = R"(query getDogName {
+	auto query = R"(query getDogName {
 			dog {
 				name
 				color
@@ -49,7 +49,7 @@ TEST_F(ValidationExamplesCase, CounterExample91)
 			color: String
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 2);
 	response::Value error1(response::Type::Map);
@@ -65,7 +65,7 @@ TEST_F(ValidationExamplesCase, CounterExample91)
 TEST_F(ValidationExamplesCase, Example92)
 {
 	// http://spec.graphql.org/June2018/#example-069e1
-	auto ast = R"(query getDogName {
+	auto query = R"(query getDogName {
 			dog {
 				name
 			}
@@ -79,7 +79,7 @@ TEST_F(ValidationExamplesCase, Example92)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -87,7 +87,7 @@ TEST_F(ValidationExamplesCase, Example92)
 TEST_F(ValidationExamplesCase, CounterExample93)
 {
 	// http://spec.graphql.org/June2018/#example-5e409
-	auto ast = R"(query getName {
+	auto query = R"(query getName {
 			dog {
 				name
 			}
@@ -101,7 +101,7 @@ TEST_F(ValidationExamplesCase, CounterExample93)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -113,7 +113,7 @@ TEST_F(ValidationExamplesCase, CounterExample93)
 TEST_F(ValidationExamplesCase, CounterExample94)
 {
 	// http://spec.graphql.org/June2018/#example-77c2e
-	auto ast = R"(query dogOperation {
+	auto query = R"(query dogOperation {
 			dog {
 				name
 			}
@@ -125,7 +125,7 @@ TEST_F(ValidationExamplesCase, CounterExample94)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -137,13 +137,13 @@ TEST_F(ValidationExamplesCase, CounterExample94)
 TEST_F(ValidationExamplesCase, Example95)
 {
 	// http://spec.graphql.org/June2018/#example-be853
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				name
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -151,7 +151,7 @@ TEST_F(ValidationExamplesCase, Example95)
 TEST_F(ValidationExamplesCase, CounterExample96)
 {
 	// http://spec.graphql.org/June2018/#example-44b85
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				name
 			}
@@ -165,7 +165,7 @@ TEST_F(ValidationExamplesCase, CounterExample96)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -177,14 +177,14 @@ TEST_F(ValidationExamplesCase, CounterExample96)
 TEST_F(ValidationExamplesCase, Example97)
 {
 	// http://spec.graphql.org/June2018/#example-5bbc3
-	auto ast = R"(subscription sub {
+	auto query = R"(subscription sub {
 			newMessage {
 				body
 				sender
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -192,7 +192,7 @@ TEST_F(ValidationExamplesCase, Example97)
 TEST_F(ValidationExamplesCase, Example98)
 {
 	// http://spec.graphql.org/June2018/#example-13061
-	auto ast = R"(subscription sub {
+	auto query = R"(subscription sub {
 			...newMessageFields
 		}
 
@@ -203,7 +203,7 @@ TEST_F(ValidationExamplesCase, Example98)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -211,7 +211,7 @@ TEST_F(ValidationExamplesCase, Example98)
 TEST_F(ValidationExamplesCase, CounterExample99)
 {
 	// http://spec.graphql.org/June2018/#example-3997d
-	auto ast = R"(subscription sub {
+	auto query = R"(subscription sub {
 			newMessage {
 				body
 				sender
@@ -219,7 +219,7 @@ TEST_F(ValidationExamplesCase, CounterExample99)
 			disallowedSecondRootField
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -231,7 +231,7 @@ TEST_F(ValidationExamplesCase, CounterExample99)
 TEST_F(ValidationExamplesCase, CounterExample100)
 {
 	// http://spec.graphql.org/June2018/#example-18466
-	auto ast = R"(subscription sub {
+	auto query = R"(subscription sub {
 			...multipleSubscriptions
 		}
 
@@ -243,7 +243,7 @@ TEST_F(ValidationExamplesCase, CounterExample100)
 			disallowedSecondRootField
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -255,7 +255,7 @@ TEST_F(ValidationExamplesCase, CounterExample100)
 TEST_F(ValidationExamplesCase, CounterExample101)
 {
 	// http://spec.graphql.org/June2018/#example-2353b
-	auto ast = R"(subscription sub {
+	auto query = R"(subscription sub {
 			newMessage {
 				body
 				sender
@@ -263,7 +263,7 @@ TEST_F(ValidationExamplesCase, CounterExample101)
 			__typename
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 1);
 	response::Value error1(response::Type::Map);
@@ -275,7 +275,7 @@ TEST_F(ValidationExamplesCase, CounterExample101)
 TEST_F(ValidationExamplesCase, CounterExample102)
 {
 	// http://spec.graphql.org/June2018/#example-48706
-	auto ast = R"(fragment fieldNotDefined on Dog {
+	auto query = R"(fragment fieldNotDefined on Dog {
 			meowVolume
 		}
 
@@ -283,7 +283,7 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 			barkVolume: kawVolume
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
 	ASSERT_GE(errors.size(), 2);
@@ -300,7 +300,7 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 TEST_F(ValidationExamplesCase, Example103)
 {
 	// http://spec.graphql.org/June2018/#example-d34e0
-	auto ast = R"(fragment interfaceFieldSelection on Pet {
+	auto query = R"(fragment interfaceFieldSelection on Pet {
 			name
 		}
 
@@ -310,7 +310,7 @@ TEST_F(ValidationExamplesCase, Example103)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -318,11 +318,11 @@ TEST_F(ValidationExamplesCase, Example103)
 TEST_F(ValidationExamplesCase, CounterExample104)
 {
 	// http://spec.graphql.org/June2018/#example-db33b
-	auto ast = R"(fragment definedOnImplementorsButNotInterface on Pet {
+	auto query = R"(fragment definedOnImplementorsButNotInterface on Pet {
 			nickname
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -335,7 +335,7 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 TEST_F(ValidationExamplesCase, Example105)
 {
 	// http://spec.graphql.org/June2018/#example-245fa
-	auto ast = R"(fragment inDirectFieldSelectionOnUnion on CatOrDog {
+	auto query = R"(fragment inDirectFieldSelectionOnUnion on CatOrDog {
 			__typename
 			... on Pet {
 				name
@@ -351,7 +351,7 @@ TEST_F(ValidationExamplesCase, Example105)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -359,12 +359,12 @@ TEST_F(ValidationExamplesCase, Example105)
 TEST_F(ValidationExamplesCase, CounterExample106)
 {
 	// http://spec.graphql.org/June2018/#example-252ad
-	auto ast = R"(fragment directFieldSelectionOnUnion on CatOrDog {
+	auto query = R"(fragment directFieldSelectionOnUnion on CatOrDog {
 			name
 			barkVolume
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
 	ASSERT_GE(errors.size(), 2);
@@ -381,7 +381,7 @@ TEST_F(ValidationExamplesCase, CounterExample106)
 TEST_F(ValidationExamplesCase, Example107)
 {
 	// http://spec.graphql.org/June2018/#example-4e10c
-	auto ast = R"(fragment mergeIdenticalFields on Dog {
+	auto query = R"(fragment mergeIdenticalFields on Dog {
 			name
 			name
 		}
@@ -398,7 +398,7 @@ TEST_F(ValidationExamplesCase, Example107)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -406,12 +406,12 @@ TEST_F(ValidationExamplesCase, Example107)
 TEST_F(ValidationExamplesCase, CounterExample108)
 {
 	// http://spec.graphql.org/June2018/#example-a2230
-	auto ast = R"(fragment conflictingBecauseAlias on Dog {
+	auto query = R"(fragment conflictingBecauseAlias on Dog {
 			name: nickname
 			name
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -424,7 +424,7 @@ TEST_F(ValidationExamplesCase, CounterExample108)
 TEST_F(ValidationExamplesCase, Example109)
 {
 	// http://spec.graphql.org/June2018/#example-b6369
-	auto ast = R"(fragment mergeIdenticalFieldsWithIdenticalArgs on Dog {
+	auto query = R"(fragment mergeIdenticalFieldsWithIdenticalArgs on Dog {
 			doesKnowCommand(dogCommand: SIT)
 			doesKnowCommand(dogCommand: SIT)
 		}
@@ -446,7 +446,7 @@ TEST_F(ValidationExamplesCase, Example109)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -454,7 +454,7 @@ TEST_F(ValidationExamplesCase, Example109)
 TEST_F(ValidationExamplesCase, CounterExample110)
 {
 	// http://spec.graphql.org/June2018/#example-00fbf
-	auto ast = R"(fragment conflictingArgsOnValues on Dog {
+	auto query = R"(fragment conflictingArgsOnValues on Dog {
 			doesKnowCommand(dogCommand: SIT)
 			doesKnowCommand(dogCommand: HEEL)
 		}
@@ -474,7 +474,7 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 			doesKnowCommand
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 9) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
 	ASSERT_GE(errors.size(), 4);
@@ -499,7 +499,7 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 TEST_F(ValidationExamplesCase, Example111)
 {
 	// http://spec.graphql.org/June2018/#example-a8406
-	auto ast = R"(fragment safeDifferingFields on Pet {
+	auto query = R"(fragment safeDifferingFields on Pet {
 			... on Dog {
 				volume: barkVolume
 			}
@@ -524,7 +524,7 @@ TEST_F(ValidationExamplesCase, Example111)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -532,7 +532,7 @@ TEST_F(ValidationExamplesCase, Example111)
 TEST_F(ValidationExamplesCase, CounterExample112)
 {
 	// http://spec.graphql.org/June2018/#example-54e3d
-	auto ast = R"(fragment conflictingDifferingResponses on Pet {
+	auto query = R"(fragment conflictingDifferingResponses on Pet {
 			... on Dog {
 				someValue: nickname
 			}
@@ -541,7 +541,7 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -554,7 +554,7 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 TEST_F(ValidationExamplesCase, Example113)
 {
 	// http://spec.graphql.org/June2018/#example-e23c5
-	auto ast = R"(fragment scalarSelection on Dog {
+	auto query = R"(fragment scalarSelection on Dog {
 			barkVolume
 		}
 
@@ -564,7 +564,7 @@ TEST_F(ValidationExamplesCase, Example113)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -572,13 +572,13 @@ TEST_F(ValidationExamplesCase, Example113)
 TEST_F(ValidationExamplesCase, CounterExample114)
 {
 	// http://spec.graphql.org/June2018/#example-13b69
-	auto ast = R"(fragment scalarSelectionsNotAllowedOnInt on Dog {
+	auto query = R"(fragment scalarSelectionsNotAllowedOnInt on Dog {
 			barkVolume {
 				sinceWhen
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -591,7 +591,7 @@ TEST_F(ValidationExamplesCase, CounterExample114)
 TEST_F(ValidationExamplesCase, Example115)
 {
 	// http://spec.graphql.org/June2018/#example-9bada
-	auto ast = R"(query {
+	auto query = R"(query {
 			human {
 				name
 			}
@@ -608,7 +608,7 @@ TEST_F(ValidationExamplesCase, Example115)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -616,7 +616,7 @@ TEST_F(ValidationExamplesCase, Example115)
 TEST_F(ValidationExamplesCase, CounterExample116)
 {
 	// http://spec.graphql.org/June2018/#example-d68ee
-	auto ast = R"(query directQueryOnObjectWithoutSubFields {
+	auto query = R"(query directQueryOnObjectWithoutSubFields {
 			human
 		}
 
@@ -628,7 +628,7 @@ TEST_F(ValidationExamplesCase, CounterExample116)
 			catOrDog
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_EQ(errors.size(), 3) << "3 invalid fields";
 	response::Value error1(response::Type::Map);
@@ -648,7 +648,7 @@ TEST_F(ValidationExamplesCase, CounterExample116)
 TEST_F(ValidationExamplesCase, Example117)
 {
 	// http://spec.graphql.org/June2018/#example-760cb
-	auto ast = R"(fragment argOnRequiredArg on Dog {
+	auto query = R"(fragment argOnRequiredArg on Dog {
 			doesKnowCommand(dogCommand: SIT)
 		}
 
@@ -663,7 +663,7 @@ TEST_F(ValidationExamplesCase, Example117)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -671,11 +671,11 @@ TEST_F(ValidationExamplesCase, Example117)
 TEST_F(ValidationExamplesCase, CounterExample118)
 {
 	// http://spec.graphql.org/June2018/#example-d5639
-	auto ast = R"(fragment invalidArgName on Dog {
+	auto query = R"(fragment invalidArgName on Dog {
 			doesKnowCommand(command: CLEAN_UP_HOUSE)
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -688,11 +688,11 @@ TEST_F(ValidationExamplesCase, CounterExample118)
 TEST_F(ValidationExamplesCase, CounterExample119)
 {
 	// http://spec.graphql.org/June2018/#example-4feee
-	auto ast = R"(fragment invalidArgName on Dog {
+	auto query = R"(fragment invalidArgName on Dog {
 			isHousetrained(atOtherHomes: true) @include(unless: false)
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -705,13 +705,13 @@ TEST_F(ValidationExamplesCase, CounterExample119)
 TEST_F(ValidationExamplesCase, Example120)
 {
 	// http://spec.graphql.org/June2018/#example-1891c
-	auto ast = R"(query {
+	auto query = R"(query {
 			arguments {
 				multipleReqs(x: 1, y: 2)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -719,7 +719,7 @@ TEST_F(ValidationExamplesCase, Example120)
 TEST_F(ValidationExamplesCase, Example121)
 {
 	// http://spec.graphql.org/June2018/#example-18fab
-	auto ast = R"(fragment multipleArgs on Arguments {
+	auto query = R"(fragment multipleArgs on Arguments {
 			multipleReqs(x: 1, y: 2)
 		}
 
@@ -739,7 +739,7 @@ TEST_F(ValidationExamplesCase, Example121)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -747,7 +747,7 @@ TEST_F(ValidationExamplesCase, Example121)
 TEST_F(ValidationExamplesCase, Example122)
 {
 	// http://spec.graphql.org/June2018/#example-503bd
-	auto ast = R"(fragment goodBooleanArg on Arguments {
+	auto query = R"(fragment goodBooleanArg on Arguments {
 			booleanArgField(booleanArg: true)
 		}
 
@@ -762,7 +762,7 @@ TEST_F(ValidationExamplesCase, Example122)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -770,7 +770,7 @@ TEST_F(ValidationExamplesCase, Example122)
 TEST_F(ValidationExamplesCase, Example123)
 {
 	// http://spec.graphql.org/June2018/#example-1f1d2
-	auto ast = R"(fragment goodBooleanArgDefault on Arguments {
+	auto query = R"(fragment goodBooleanArgDefault on Arguments {
 			booleanArgField
 		}
 
@@ -780,7 +780,7 @@ TEST_F(ValidationExamplesCase, Example123)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -788,11 +788,11 @@ TEST_F(ValidationExamplesCase, Example123)
 TEST_F(ValidationExamplesCase, CounterExample124)
 {
 	// http://spec.graphql.org/June2018/#example-f12a1
-	auto ast = R"(fragment missingRequiredArg on Arguments {
+	auto query = R"(fragment missingRequiredArg on Arguments {
 			nonNullBooleanArgField
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -805,11 +805,11 @@ TEST_F(ValidationExamplesCase, CounterExample124)
 TEST_F(ValidationExamplesCase, CounterExample125)
 {
 	// http://spec.graphql.org/June2018/#example-0bc81
-	auto ast = R"(fragment missingRequiredArg on Arguments {
+	auto query = R"(fragment missingRequiredArg on Arguments {
 			nonNullBooleanArgField(nonNullBooleanArg: null)
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -822,7 +822,7 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 TEST_F(ValidationExamplesCase, Example126)
 {
 	// http://spec.graphql.org/June2018/#example-3703b
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				...fragmentOne
 				...fragmentTwo
@@ -839,7 +839,7 @@ TEST_F(ValidationExamplesCase, Example126)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -847,7 +847,7 @@ TEST_F(ValidationExamplesCase, Example126)
 TEST_F(ValidationExamplesCase, CounterExample127)
 {
 	// http://spec.graphql.org/June2018/#example-2c3e3
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				...fragmentOne
 			}
@@ -863,7 +863,7 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 1) << "1 duplicate fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -876,7 +876,7 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 TEST_F(ValidationExamplesCase, Example128)
 {
 	// http://spec.graphql.org/June2018/#example-1b2da
-	auto ast = R"(fragment correctType on Dog {
+	auto query = R"(fragment correctType on Dog {
 			name
 		}
 
@@ -900,7 +900,7 @@ TEST_F(ValidationExamplesCase, Example128)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -908,7 +908,7 @@ TEST_F(ValidationExamplesCase, Example128)
 TEST_F(ValidationExamplesCase, CounterExample129)
 {
 	// http://spec.graphql.org/June2018/#example-463f6
-	auto ast = R"(fragment notOnExistingType on NotInSchema {
+	auto query = R"(fragment notOnExistingType on NotInSchema {
 			name
 		}
 
@@ -918,7 +918,7 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), 2);
@@ -935,7 +935,7 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 TEST_F(ValidationExamplesCase, Example130)
 {
 	// http://spec.graphql.org/June2018/#example-3c8d4
-	auto ast = R"(fragment fragOnObject on Dog {
+	auto query = R"(fragment fragOnObject on Dog {
 			name
 		}
 
@@ -957,7 +957,7 @@ TEST_F(ValidationExamplesCase, Example130)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -965,7 +965,7 @@ TEST_F(ValidationExamplesCase, Example130)
 TEST_F(ValidationExamplesCase, CounterExample131)
 {
 	// http://spec.graphql.org/June2018/#example-4d5e5
-	auto ast = R"(fragment fragOnScalar on Int {
+	auto query = R"(fragment fragOnScalar on Int {
 			something
 		}
 
@@ -975,7 +975,7 @@ TEST_F(ValidationExamplesCase, CounterExample131)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), 2);
@@ -992,7 +992,7 @@ TEST_F(ValidationExamplesCase, CounterExample131)
 TEST_F(ValidationExamplesCase, CounterExample132)
 {
 	// http://spec.graphql.org/June2018/#example-9e1e3
-	auto ast = R"(fragment nameFragment on Dog { # unused
+	auto query = R"(fragment nameFragment on Dog { # unused
 			name
 		}
 
@@ -1002,7 +1002,7 @@ TEST_F(ValidationExamplesCase, CounterExample132)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 1) << "1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
@@ -1015,13 +1015,13 @@ TEST_F(ValidationExamplesCase, CounterExample132)
 TEST_F(ValidationExamplesCase, CounterExample133)
 {
 	// http://spec.graphql.org/June2018/#example-28421
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				...undefinedFragment
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined fragment + 1 missing field";
 	ASSERT_GE(errors.size(), 1);
@@ -1034,7 +1034,7 @@ TEST_F(ValidationExamplesCase, CounterExample133)
 TEST_F(ValidationExamplesCase, CounterExample134)
 {
 	// http://spec.graphql.org/June2018/#example-9ceb4
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				...nameFragment
 			}
@@ -1050,7 +1050,7 @@ TEST_F(ValidationExamplesCase, CounterExample134)
 			...nameFragment
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), 2);
@@ -1067,7 +1067,7 @@ TEST_F(ValidationExamplesCase, CounterExample134)
 TEST_F(ValidationExamplesCase, Example135)
 {
 	// http://spec.graphql.org/June2018/#example-08734
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				name
 				barkVolume
@@ -1080,7 +1080,7 @@ TEST_F(ValidationExamplesCase, Example135)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1088,7 +1088,7 @@ TEST_F(ValidationExamplesCase, Example135)
 TEST_F(ValidationExamplesCase, CounterExample136)
 {
 	// http://spec.graphql.org/June2018/#example-6bbad
-	auto ast = R"({
+	auto query = R"({
 			dog {
 				...dogFragment
 			}
@@ -1110,7 +1110,7 @@ TEST_F(ValidationExamplesCase, CounterExample136)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(*ast.root);
+	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), 2);
