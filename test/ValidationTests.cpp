@@ -286,7 +286,7 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -325,7 +325,7 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -367,7 +367,7 @@ TEST_F(ValidationExamplesCase, CounterExample106)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -414,7 +414,7 @@ TEST_F(ValidationExamplesCase, CounterExample108)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -477,7 +477,7 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 9) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
-	ASSERT_GE(errors.size(), 4);
+	ASSERT_GE(errors.size(), size_t { 4 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -544,7 +544,7 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -581,7 +581,7 @@ TEST_F(ValidationExamplesCase, CounterExample114)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -678,7 +678,7 @@ TEST_F(ValidationExamplesCase, CounterExample118)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -695,7 +695,7 @@ TEST_F(ValidationExamplesCase, CounterExample119)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -795,7 +795,7 @@ TEST_F(ValidationExamplesCase, CounterExample124)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -812,7 +812,7 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -866,7 +866,7 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 1) << "1 duplicate fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -921,7 +921,7 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -978,7 +978,7 @@ TEST_F(ValidationExamplesCase, CounterExample131)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -1005,7 +1005,7 @@ TEST_F(ValidationExamplesCase, CounterExample132)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 1) << "1 unused fragment";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -1024,7 +1024,7 @@ TEST_F(ValidationExamplesCase, CounterExample133)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined fragment + 1 missing field";
-	ASSERT_GE(errors.size(), 1);
+	ASSERT_GE(errors.size(), size_t { 1 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -1053,7 +1053,7 @@ TEST_F(ValidationExamplesCase, CounterExample134)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
@@ -1113,7 +1113,7 @@ TEST_F(ValidationExamplesCase, CounterExample136)
 	auto errors = _service->validate(query);
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
-	ASSERT_GE(errors.size(), 2);
+	ASSERT_GE(errors.size(), size_t { 2 });
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
