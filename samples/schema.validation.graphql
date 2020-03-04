@@ -97,3 +97,8 @@ type Arguments {
 extend type Query {
   arguments: Arguments
 }
+
+# http://spec.graphql.org/June2018/#example-6bbad
+extend type Human {
+  pets: [Pet!]!
+}

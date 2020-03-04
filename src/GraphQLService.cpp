@@ -1806,6 +1806,7 @@ private:
 
 	FragmentSet _referencedFragments;
 	FragmentSet _fragmentStack;
+	FragmentSet _fragmentCycles;
 	size_t _fieldCount = 0;
 	TypeFields _typeFields;
 	std::string _scopedType;
@@ -2116,7 +2117,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			auto position = fragmentDefinition.second.begin();
 			std::ostringstream message;
 
-			message << "Unused fragment name: " << fragmentDefinition.first;
+			message << "Unused fragment definition name: " << fragmentDefinition.first;
 
 			return schema_error { message.str(), { position.line, position.byte_in_line } };
 		});
@@ -2134,13 +2135,50 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 {
 	const auto name = fragmentDefinition.children.front()->string();
 	const auto& selection = *fragmentDefinition.children.back();
-	auto innerType = fragmentDefinition.children[1]->children.front()->string();
+	const auto& typeCondition = fragmentDefinition.children[1];
+	auto innerType = typeCondition->children.front()->string();
 
 	peg::on_first_child<peg::directives>(fragmentDefinition,
 		[this](const peg::ast_node& child)
 	{
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_DEFINITION, child);
 	});
+
+	auto itrKind = _typeKinds.find(innerType);
+
+	if (itrKind == _typeKinds.end())
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
+		auto position = typeCondition->begin();
+		std::ostringstream message;
+
+		message << "Undefined target type on fragment definition: " << name
+			<< " name: " << innerType;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
+	switch (itrKind->second)
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			break;
+
+		default:
+		{
+			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
+			auto position = typeCondition->begin();
+			std::ostringstream message;
+
+			message << "Scalar target type on fragment definition: " << name
+				<< " name: " << innerType;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			return;
+		}
+	}
 
 	_fragmentStack.insert(name);
 	_scopedType = std::move(innerType);
@@ -2902,7 +2940,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		auto position = fragmentSpread.begin();
 		std::ostringstream message;
 
-		message << "Fragment spread undefined name: " << name;
+		message << "Undefined fragment spread name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 		return;
@@ -2910,13 +2948,17 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	if (_fragmentStack.find(name) != _fragmentStack.cend())
 	{
-		// http://spec.graphql.org/June2018/#sec-Fragment-spreads-must-not-form-cycles
-		auto position = fragmentSpread.begin();
-		std::ostringstream message;
+		if (_fragmentCycles.insert(name).second)
+		{
+			// http://spec.graphql.org/June2018/#sec-Fragment-spreads-must-not-form-cycles
+			auto position = fragmentSpread.begin();
+			std::ostringstream message;
 
-		message << "Fragment spread cycle name: " << name;
+			message << "Cyclic fragment spread name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		}
+
 		return;
 	}
 
@@ -2944,16 +2986,54 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
 	std::string innerType;
+	schema_location typeConditionLocation;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&innerType](const peg::ast_node& child)
+		[&innerType, &typeConditionLocation](const peg::ast_node& child)
 	{
+		auto position = child.begin();
+
 		innerType = child.children.front()->string();
+		typeConditionLocation = { position.line, position.byte_in_line };
 	});
 
 	if (innerType.empty())
 	{
 		innerType = _scopedType;
+	}
+	else
+	{
+		auto itrKind = _typeKinds.find(innerType);
+
+		if (_typeKinds.find(innerType) == _typeKinds.end())
+		{
+			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
+			std::ostringstream message;
+
+			message << "Undefined target type on inline fragment name: " << innerType;
+
+			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
+			return;
+		}
+
+		switch (itrKind->second)
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				break;
+
+			default:
+			{
+				// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
+				std::ostringstream message;
+
+				message << "Scalar target type on inline fragment name: " << innerType;
+
+				_errors.push_back({ message.str(), std::move(typeConditionLocation) });
+				return;
+			}
+		}
 	}
 
 	peg::on_first_child<peg::directives>(inlineFragment,

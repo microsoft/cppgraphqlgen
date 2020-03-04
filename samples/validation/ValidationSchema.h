@@ -143,9 +143,11 @@ protected:
 
 public:
 	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
+	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveName(service::ResolverParams&& params);
+	std::future<response::Value> resolvePets(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };

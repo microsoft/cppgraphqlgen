@@ -358,6 +358,7 @@ Human::Human()
 		"Human"
 	}, {
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
+		{ "pets", [this](service::ResolverParams&& params) { return resolvePets(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 {
@@ -375,6 +376,20 @@ std::future<response::Value> Human::resolveName(service::ResolverParams&& params
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Human::getPets(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
+}
+
+std::future<response::Value> Human::resolvePets(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getPets(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Human::resolve_typename(service::ResolverParams&& params)
@@ -858,7 +873,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		typeSentient
 	});
 	typeHuman->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
+		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("pets", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
 	});
 	typeCat->AddInterfaces({
 		typePet

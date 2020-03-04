@@ -818,3 +818,308 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 	service::addErrorLocation(errors[0].location, error1);
 	EXPECT_EQ(R"js({"message":"Required non-null argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
 }
+
+TEST_F(ValidationExamplesCase, Example126)
+{
+	// http://spec.graphql.org/June2018/#example-3703b
+	auto ast = R"({
+			dog {
+				...fragmentOne
+				...fragmentTwo
+			}
+		}
+
+		fragment fragmentOne on Dog {
+			name
+		}
+
+		fragment fragmentTwo on Dog {
+			owner {
+				name
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample127)
+{
+	// http://spec.graphql.org/June2018/#example-2c3e3
+	auto ast = R"({
+			dog {
+				...fragmentOne
+			}
+		}
+
+		fragment fragmentOne on Dog {
+			name
+		}
+
+		fragment fragmentOne on Dog {
+			owner {
+				name
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 1) << "1 duplicate fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Duplicate fragment name: fragmentOne","locations":[{"line":11,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example128)
+{
+	// http://spec.graphql.org/June2018/#example-1b2da
+	auto ast = R"(fragment correctType on Dog {
+			name
+		}
+
+		fragment inlineFragment on Dog {
+			... on Dog {
+				name
+			}
+		}
+
+		fragment inlineFragment2 on Dog {
+			... @include(if: true) {
+				name
+			}
+		}
+
+		query {
+			dog {
+				...correctType
+				...inlineFragment
+				...inlineFragment2
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample129)
+{
+	// http://spec.graphql.org/June2018/#example-463f6
+	auto ast = R"(fragment notOnExistingType on NotInSchema {
+			name
+		}
+
+		fragment inlineNotExistingType on Dog {
+			... on NotInSchema {
+				name
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
+	ASSERT_GE(errors.size(), 2);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Undefined target type on fragment definition: notOnExistingType name: NotInSchema","locations":[{"line":1,"column":28}]})js", response::toJSON(std::move(error1))) << "error should match";
+	response::Value error2(response::Type::Map);
+	service::addErrorMessage(std::move(errors[1].message), error2);
+	service::addErrorLocation(errors[1].location, error2);
+	EXPECT_EQ(R"js({"message":"Undefined target type on inline fragment name: NotInSchema","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example130)
+{
+	// http://spec.graphql.org/June2018/#example-3c8d4
+	auto ast = R"(fragment fragOnObject on Dog {
+			name
+		}
+
+		fragment fragOnInterface on Pet {
+			name
+		}
+
+		fragment fragOnUnion on CatOrDog {
+			... on Dog {
+				name
+			}
+		}
+
+		query {
+			dog {
+				...fragOnObject
+				...fragOnInterface
+				...fragOnUnion
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample131)
+{
+	// http://spec.graphql.org/June2018/#example-4d5e5
+	auto ast = R"(fragment fragOnScalar on Int {
+			something
+		}
+
+		fragment inlineFragOnScalar on Dog {
+			... on Boolean {
+				somethingElse
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
+	ASSERT_GE(errors.size(), 2);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Scalar target type on fragment definition: fragOnScalar name: Int","locations":[{"line":1,"column":23}]})js", response::toJSON(std::move(error1))) << "error should match";
+	response::Value error2(response::Type::Map);
+	service::addErrorMessage(std::move(errors[1].message), error2);
+	service::addErrorLocation(errors[1].location, error2);
+	EXPECT_EQ(R"js({"message":"Scalar target type on inline fragment name: Boolean","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample132)
+{
+	// http://spec.graphql.org/June2018/#example-9e1e3
+	auto ast = R"(fragment nameFragment on Dog { # unused
+			name
+		}
+
+		{
+			dog {
+				name
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 1) << "1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Unused fragment definition name: nameFragment","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample133)
+{
+	// http://spec.graphql.org/June2018/#example-28421
+	auto ast = R"({
+			dog {
+				...undefinedFragment
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined fragment + 1 missing field";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Undefined fragment spread name: undefinedFragment","locations":[{"line":3,"column":8}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample134)
+{
+	// http://spec.graphql.org/June2018/#example-9ceb4
+	auto ast = R"({
+			dog {
+				...nameFragment
+			}
+		}
+
+		fragment nameFragment on Dog {
+			name
+			...barkVolumeFragment
+		}
+
+		fragment barkVolumeFragment on Dog {
+			barkVolume
+			...nameFragment
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
+	ASSERT_GE(errors.size(), 2);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: nameFragment","locations":[{"line":14,"column":7}]})js", response::toJSON(std::move(error1))) << "error should match";
+	response::Value error2(response::Type::Map);
+	service::addErrorMessage(std::move(errors[1].message), error2);
+	service::addErrorLocation(errors[1].location, error2);
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: barkVolumeFragment","locations":[{"line":9,"column":7}]})js", response::toJSON(std::move(error2))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example135)
+{
+	// http://spec.graphql.org/June2018/#example-08734
+	auto ast = R"({
+			dog {
+				name
+				barkVolume
+				name
+				barkVolume
+				name
+				barkVolume
+				name
+				# forever...
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample136)
+{
+	// http://spec.graphql.org/June2018/#example-6bbad
+	auto ast = R"({
+			dog {
+				...dogFragment
+			}
+		}
+
+		fragment dogFragment on Dog {
+			name
+			owner {
+				name
+				...ownerFragment
+			}
+		}
+
+		fragment ownerFragment on Human {
+			name
+			pets {
+				name
+				...dogFragment
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
+	ASSERT_GE(errors.size(), 2);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: dogFragment","locations":[{"line":19,"column":8}]})js", response::toJSON(std::move(error1))) << "error should match";
+	response::Value error2(response::Type::Map);
+	service::addErrorMessage(std::move(errors[1].message), error2);
+	service::addErrorLocation(errors[1].location, error2);
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: ownerFragment","locations":[{"line":11,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+}
