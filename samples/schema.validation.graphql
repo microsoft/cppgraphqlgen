@@ -57,15 +57,15 @@ type MutateDogResult {
   id: ID!
 }
 
-"Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+"Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
 type Subscription {
-  "Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+  "Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
   newMessage: Message!
-  "Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466)"
+  "Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466)"
   disallowedSecondRootField: Boolean!
 }
 
-"Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+"Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
 type Message {
   body: String
   sender: ID!
@@ -79,4 +79,21 @@ extend type Query {
   pet: Pet
   "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
   catOrDog: CatOrDog
+}
+
+"Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c)"
+type Arguments {
+  "Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab)"
+  multipleReqs(x: Int!, y: Int!): Int!
+  booleanArgField(booleanArg: Boolean): Boolean
+  floatArgField(floatArg: Float): Float
+  intArgField(intArg: Int): Int
+  nonNullBooleanArgField(nonNullBooleanArg: Boolean!): Boolean!
+  booleanListArgField(booleanListArg: [Boolean]!): [Boolean]
+  optionalNonNullBooleanArgField(optionalBooleanArg: Boolean! = false): Boolean!
+}
+
+# http://spec.graphql.org/June2018/#example-1891c
+extend type Query {
+  arguments: Arguments
 }

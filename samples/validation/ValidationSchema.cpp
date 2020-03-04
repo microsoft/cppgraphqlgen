@@ -102,6 +102,7 @@ Query::Query()
 		{ "human", [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ "pet", [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
 		{ "catOrDog", [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
+		{ "arguments", [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
@@ -166,6 +167,20 @@ std::future<response::Value> Query::resolveCatOrDog(service::ResolverParams&& pa
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::shared_ptr<Arguments>> Query::getArguments(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveArguments(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getArguments(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
@@ -589,6 +604,147 @@ std::future<response::Value> Message::resolve_typename(service::ResolverParams&&
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Message)gql" }, std::move(params));
 }
 
+Arguments::Arguments()
+	: service::Object({
+		"Arguments"
+	}, {
+		{ "multipleReqs", [this](service::ResolverParams&& params) { return resolveMultipleReqs(std::move(params)); } },
+		{ "booleanArgField", [this](service::ResolverParams&& params) { return resolveBooleanArgField(std::move(params)); } },
+		{ "floatArgField", [this](service::ResolverParams&& params) { return resolveFloatArgField(std::move(params)); } },
+		{ "intArgField", [this](service::ResolverParams&& params) { return resolveIntArgField(std::move(params)); } },
+		{ "nonNullBooleanArgField", [this](service::ResolverParams&& params) { return resolveNonNullBooleanArgField(std::move(params)); } },
+		{ "booleanListArgField", [this](service::ResolverParams&& params) { return resolveBooleanListArgField(std::move(params)); } },
+		{ "optionalNonNullBooleanArgField", [this](service::ResolverParams&& params) { return resolveOptionalNonNullBooleanArgField(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+	})
+{
+}
+
+service::FieldResult<response::IntType> Arguments::getMultipleReqs(service::FieldParams&&, response::IntType&&, response::IntType&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getMultipleReqs is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveMultipleReqs(service::ResolverParams&& params)
+{
+	auto argX = service::ModifiedArgument<response::IntType>::require("x", params.arguments);
+	auto argY = service::ModifiedArgument<response::IntType>::require("y", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getMultipleReqs(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argX), std::move(argY));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<response::BooleanType>> Arguments::getBooleanArgField(service::FieldParams&&, std::optional<response::BooleanType>&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getBooleanArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveBooleanArgField(service::ResolverParams&& params)
+{
+	auto argBooleanArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<response::FloatType>> Arguments::getFloatArgField(service::FieldParams&&, std::optional<response::FloatType>&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getFloatArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveFloatArgField(service::ResolverParams&& params)
+{
+	auto argFloatArg = service::ModifiedArgument<response::FloatType>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getFloatArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFloatArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::FloatType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<response::IntType>> Arguments::getIntArgField(service::FieldParams&&, std::optional<response::IntType>&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getIntArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveIntArgField(service::ResolverParams&& params)
+{
+	auto argIntArg = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getIntArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIntArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::IntType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<response::BooleanType> Arguments::getNonNullBooleanArgField(service::FieldParams&&, response::BooleanType&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getNonNullBooleanArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params)
+{
+	auto argNonNullBooleanArg = service::ModifiedArgument<response::BooleanType>::require("nonNullBooleanArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getNonNullBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argNonNullBooleanArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> Arguments::getBooleanListArgField(service::FieldParams&&, std::vector<std::optional<response::BooleanType>>&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getBooleanListArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveBooleanListArgField(service::ResolverParams&& params)
+{
+	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getBooleanListArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanListArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<response::BooleanType> Arguments::getOptionalNonNullBooleanArgField(service::FieldParams&&, response::BooleanType&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getOptionalNonNullBooleanArgField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params)
+{
+	const auto defaultArguments = []()
+	{
+		response::Value values(response::Type::Map);
+		response::Value entry;
+
+		entry = response::Value(false);
+		values.emplace_back("optionalBooleanArg", std::move(entry));
+
+		return values;
+	}();
+
+	auto pairOptionalBooleanArg = service::ModifiedArgument<response::BooleanType>::find("optionalBooleanArg", params.arguments);
+	auto argOptionalBooleanArg = (pairOptionalBooleanArg.second
+		? std::move(pairOptionalBooleanArg.first)
+		: service::ModifiedArgument<response::BooleanType>::require("optionalBooleanArg", defaultArguments));
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getOptionalNonNullBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argOptionalBooleanArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Arguments::resolve_typename(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Arguments)gql" }, std::move(params));
+}
+
 } /* namespace object */
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
@@ -633,10 +789,12 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("Mutation", typeMutation);
 	auto typeMutateDogResult = std::make_shared<introspection::ObjectType>("MutateDogResult", R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
 	schema->AddType("MutateDogResult", typeMutateDogResult);
-	auto typeSubscription = std::make_shared<introspection::ObjectType>("Subscription", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	auto typeSubscription = std::make_shared<introspection::ObjectType>("Subscription", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
 	schema->AddType("Subscription", typeSubscription);
-	auto typeMessage = std::make_shared<introspection::ObjectType>("Message", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	auto typeMessage = std::make_shared<introspection::ObjectType>("Message", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
 	schema->AddType("Message", typeMessage);
+	auto typeArguments = std::make_shared<introspection::ObjectType>("Arguments", R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md");
+	schema->AddType("Arguments", typeArguments);
 
 	typeDogCommand->AddEnumValues({
 		{ std::string{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::SIT)] }, R"md()md", std::nullopt },
@@ -671,7 +829,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("dog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Dog")),
 		std::make_shared<introspection::Field>("human", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human")),
 		std::make_shared<introspection::Field>("pet", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Pet")),
-		std::make_shared<introspection::Field>("catOrDog", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog"))
+		std::make_shared<introspection::Field>("catOrDog", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog")),
+		std::make_shared<introspection::Field>("arguments", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments"))
 	});
 	typeDog->AddInterfaces({
 		typePet
@@ -719,12 +878,36 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 	typeSubscription->AddFields({
-		std::make_shared<introspection::Field>("newMessage", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
-		std::make_shared<introspection::Field>("disallowedSecondRootField", R"md(Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-77c2e) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<introspection::Field>("newMessage", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
+		std::make_shared<introspection::Field>("disallowedSecondRootField", R"md(Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeMessage->AddFields({
 		std::make_shared<introspection::Field>("body", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
 		std::make_shared<introspection::Field>("sender", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+	});
+	typeArguments->AddFields({
+		std::make_shared<introspection::Field>("multipleReqs", R"md(Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("x", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"),
+			std::make_shared<introspection::InputValue>("y", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
+		std::make_shared<introspection::Field>("booleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("booleanArg", R"md()md", schema->LookupType("Boolean"), R"gql()gql")
+		}), schema->LookupType("Boolean")),
+		std::make_shared<introspection::Field>("floatArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("floatArg", R"md()md", schema->LookupType("Float"), R"gql()gql")
+		}), schema->LookupType("Float")),
+		std::make_shared<introspection::Field>("intArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("intArg", R"md()md", schema->LookupType("Int"), R"gql()gql")
+		}), schema->LookupType("Int")),
+		std::make_shared<introspection::Field>("nonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("nonNullBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("booleanListArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("booleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean")))),
+		std::make_shared<introspection::Field>("optionalNonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("optionalBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql(false)gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 
 	schema->AddQueryType(typeQuery);

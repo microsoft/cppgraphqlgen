@@ -44,6 +44,7 @@ class Mutation;
 class MutateDogResult;
 class Subscription;
 class Message;
+class Arguments;
 
 } /* namespace object */
 
@@ -73,12 +74,14 @@ public:
 	virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveDog(service::ResolverParams&& params);
 	std::future<response::Value> resolveHuman(service::ResolverParams&& params);
 	std::future<response::Value> resolvePet(service::ResolverParams&& params);
 	std::future<response::Value> resolveCatOrDog(service::ResolverParams&& params);
+	std::future<response::Value> resolveArguments(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
@@ -229,6 +232,33 @@ public:
 private:
 	std::future<response::Value> resolveBody(service::ResolverParams&& params);
 	std::future<response::Value> resolveSender(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
+class Arguments
+	: public service::Object
+{
+protected:
+	explicit Arguments();
+
+public:
+	virtual service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const;
+	virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const;
+	virtual service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const;
+	virtual service::FieldResult<std::optional<response::IntType>> getIntArgField(service::FieldParams&& params, std::optional<response::IntType>&& intArgArg) const;
+	virtual service::FieldResult<response::BooleanType> getNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& nonNullBooleanArgArg) const;
+	virtual service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<response::BooleanType>>&& booleanListArgArg) const;
+	virtual service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const;
+
+private:
+	std::future<response::Value> resolveMultipleReqs(service::ResolverParams&& params);
+	std::future<response::Value> resolveBooleanArgField(service::ResolverParams&& params);
+	std::future<response::Value> resolveFloatArgField(service::ResolverParams&& params);
+	std::future<response::Value> resolveIntArgField(service::ResolverParams&& params);
+	std::future<response::Value> resolveNonNullBooleanArgField(service::ResolverParams&& params);
+	std::future<response::Value> resolveBooleanListArgField(service::ResolverParams&& params);
+	std::future<response::Value> resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };

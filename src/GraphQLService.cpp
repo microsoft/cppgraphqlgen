@@ -441,7 +441,7 @@ bool DirectiveVisitor::shouldSkip() const
 		{
 			std::ostringstream error;
 
-			error << "Missing argument to directive: " << entry.second
+			error << "Missing argument directive: " << entry.second
 				<< " name: if";
 
 			throw schema_exception { { error.str() } };
@@ -1146,7 +1146,6 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		peg::on_first_child<peg::directives>(fragmentSpread,
 			[&directiveVisitor](const peg::ast_node& child)
 		{
-
 			directiveVisitor.visit(child);
 		});
 
@@ -1399,12 +1398,26 @@ OperationData::OperationData(std::shared_ptr<RequestState>&& state, response::Va
 
 using ValidateType = response::Value;
 
-using ValidateTypeFieldArguments = std::map<std::string, response::Value>;
+struct ValidateArgument
+{
+	bool defaultValue = false;
+	ValidateType type;
+};
+
+using ValidateTypeFieldArguments = std::map<std::string, ValidateArgument>;
 
 struct ValidateTypeField
 {
 	ValidateType returnType;
 	ValidateTypeFieldArguments arguments;
+};
+
+using ValidateDirectiveArguments = std::map<std::string, ValidateArgument>;
+
+struct ValidateDirective
+{
+	std::set<introspection::DirectiveLocation> locations;
+	ValidateDirectiveArguments arguments;
 };
 
 struct ValidateArgumentVariable
@@ -1753,9 +1766,11 @@ public:
 private:
 	response::Value executeQuery(std::string_view query) const;
 
+	static ValidateTypeFieldArguments getArguments(response::ListType&& argumentsMember);
+
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using TypeFields = std::map<std::string, FieldTypes>;
-	
+
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
 	TypeFields::const_iterator getScopedTypeFields();
 	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
@@ -1770,17 +1785,21 @@ private:
 	void visitField(const peg::ast_node& field);
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
-	
+
+	void visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives);
+
 	const Request& _service;
 	std::vector<schema_error> _errors;
 
 	using OperationTypes = std::map<std::string_view, std::string>;
 	using TypeKinds = std::map<std::string, introspection::TypeKind>;
+	using Directives = std::map<std::string, ValidateDirective>;
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
 
 	OperationTypes _operationTypes;
 	TypeKinds _typeKinds;
+	Directives _directives;
 
 	ExecutableNodes _fragmentDefinitions;
 	ExecutableNodes _operationDefinitions;
@@ -1796,6 +1815,10 @@ private:
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 	: _service(service)
 {
+	// This is taking advantage of the fact that during validation we can choose to execute
+	// unvalidated queries. Normally you can't have fragment cycles, so tools like GraphiQL work
+	// around that limitation by nesting the ofType selection set many layers deep to eventually
+	// read the underlying type when it's wrapped in List or NotNull types.
 	auto data = executeQuery(R"gql(query {
 			__schema {
 				queryType {
@@ -1811,6 +1834,25 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 					name
 					kind
 				}
+				directives {
+					name
+					locations
+					args {
+						name
+						defaultValue
+						type {
+							...nestedType
+						}
+					}
+				}
+			}
+		}
+
+		fragment nestedType on __Type {
+			kind
+			name
+			ofType {
+				...nestedType
 			}
 		})gql");
 	auto members = data.release<response::MapType>();
@@ -1866,7 +1908,7 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 					}
 
 					auto typeMembers = entry.release<response::MapType>();
-					auto itrType = std::find_if(typeMembers.begin(), typeMembers.end(),
+					auto itrName = std::find_if(typeMembers.begin(), typeMembers.end(),
 						[](const std::pair<std::string, response::Value>& entry) noexcept
 					{
 						return entry.first == R"gql(name)gql";
@@ -1877,12 +1919,70 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 						return entry.first == R"gql(kind)gql";
 					});
 
-					if (itrType != typeMembers.end()
-						&& itrType->second.type() == response::Type::String
+					if (itrName != typeMembers.end()
+						&& itrName->second.type() == response::Type::String
 						&& itrKind != typeMembers.end()
 						&& itrKind->second.type() == response::Type::EnumValue)
 					{
-						_typeKinds[itrType->second.release<response::StringType>()] = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+						_typeKinds[itrName->second.release<response::StringType>()] = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+					}
+				}
+			}
+			else if (member.second.type() == response::Type::List
+				&& member.first == R"gql(directives)gql")
+			{
+				auto entries = member.second.release<response::ListType>();
+
+				for (auto& entry : entries)
+				{
+					if (entry.type() != response::Type::Map)
+					{
+						continue;
+					}
+
+					auto directiveMembers = entry.release<response::MapType>();
+					auto itrName = std::find_if(directiveMembers.begin(), directiveMembers.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(name)gql";
+					});
+					auto itrLocations = std::find_if(directiveMembers.begin(), directiveMembers.end(),
+						[](const std::pair<std::string, response::Value>& entry) noexcept
+					{
+						return entry.first == R"gql(locations)gql";
+					});
+
+					if (itrName != directiveMembers.end()
+						&& itrName->second.type() == response::Type::String
+						&& itrLocations != directiveMembers.end()
+						&& itrLocations->second.type() == response::Type::List)
+					{
+						ValidateDirective directive;
+						auto locations = itrLocations->second.release<response::ListType>();
+
+						for (const auto& location : locations)
+						{
+							if (location.type() != response::Type::EnumValue)
+							{
+								continue;
+							}
+
+							directive.locations.insert(ModifiedArgument<introspection::DirectiveLocation>::convert(location));
+						}
+
+						auto itrArgs = std::find_if(directiveMembers.begin(), directiveMembers.end(),
+							[](const std::pair<std::string, response::Value>& entry) noexcept
+						{
+							return entry.first == R"gql(args)gql";
+						});
+
+						if (itrArgs != directiveMembers.end()
+							&& itrArgs->second.type() == response::Type::List)
+						{
+							directive.arguments = getArguments(itrArgs->second.release<response::ListType>());
+						}
+
+						_directives[itrName->second.release<response::StringType>()] = std::move(directive);
 					}
 				}
 			}
@@ -2036,6 +2136,12 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	const auto& selection = *fragmentDefinition.children.back();
 	auto innerType = fragmentDefinition.children[1]->children.front()->string();
 
+	peg::on_first_child<peg::directives>(fragmentDefinition,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::FRAGMENT_DEFINITION, child);
+	});
+
 	_fragmentStack.insert(name);
 	_scopedType = std::move(innerType);
 
@@ -2068,6 +2174,23 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
 		return;
 	}
+
+	peg::on_first_child<peg::directives>(operationDefinition,
+		[this, &operationType](const peg::ast_node& child)
+	{
+		auto location = introspection::DirectiveLocation::QUERY;
+
+		if (operationType == strMutation)
+		{
+			location = introspection::DirectiveLocation::MUTATION;
+		}
+		else if (operationType == strSubscription)
+		{
+			location = introspection::DirectiveLocation::SUBSCRIPTION;
+		}
+
+		visitDirectives(location, child);
+	});
 
 	_scopedType = itrType->second;
 	_fieldCount = 0;
@@ -2125,6 +2248,52 @@ void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
 	}
 }
 
+ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(response::ListType&& args)
+{
+	ValidateTypeFieldArguments result;
+
+	for (auto& arg : args)
+	{
+		if (arg.type() != response::Type::Map)
+		{
+			continue;
+		}
+
+		auto members = arg.release<response::MapType>();
+		auto itrName = std::find_if(members.begin(), members.end(),
+			[](const std::pair<std::string, response::Value>& argEntry) noexcept
+		{
+			return argEntry.first == R"gql(name)gql";
+		});
+		auto itrType = std::find_if(members.begin(), members.end(),
+			[](const std::pair<std::string, response::Value>& argEntry) noexcept
+		{
+			return argEntry.first == R"gql(type)gql";
+		});
+		auto itrDefaultValue = std::find_if(members.begin(), members.end(),
+			[](const std::pair<std::string, response::Value>& argEntry) noexcept
+		{
+			return argEntry.first == R"gql(defaultValue)gql";
+		});
+
+		if (itrName != members.end()
+			&& itrName->second.type() == response::Type::String
+			&& itrType != members.end()
+			&& itrType->second.type() == response::Type::Map)
+		{
+			ValidateArgument argument;
+
+			argument.defaultValue = (itrDefaultValue != members.end()
+				&& itrDefaultValue->second.type() == response::Type::String);
+			argument.type = std::move(itrType->second);
+
+			result[itrName->second.release<response::StringType>()] = std::move(argument);
+		}
+	}
+
+	return result;
+}
+
 std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
 {
 	auto itrKind = _typeKinds.find(_scopedType);
@@ -2176,6 +2345,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 							}
 							args {
 								name
+								defaultValue
 								type {
 									...nestedType
 								}
@@ -2262,36 +2432,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 						if (itrArgs != members.end()
 							&& itrArgs->second.type() == response::Type::List)
 						{
-							auto args = itrArgs->second.release<response::ListType>();
-
-							for (auto& arg : args)
-							{
-								if (arg.type() != response::Type::Map)
-								{
-									continue;
-								}
-
-								members = arg.release<response::MapType>();
-
-								auto itrArgName = std::find_if(members.begin(), members.end(),
-									[](const std::pair<std::string, response::Value>& argEntry) noexcept
-								{
-									return argEntry.first == R"gql(name)gql";
-								});
-								auto itrArgType = std::find_if(members.begin(), members.end(),
-									[](const std::pair<std::string, response::Value>& argEntry) noexcept
-								{
-									return argEntry.first == R"gql(type)gql";
-								});
-
-								if (itrArgName != members.end()
-									&& itrArgName->second.type() == response::Type::String
-									&& itrArgType != members.end()
-									&& itrArgType->second.type() == response::Type::Map)
-								{
-									subField.arguments[itrArgName->second.release<response::StringType>()] = std::move(itrArgType->second);
-								}
-							}
+							subField.arguments = getArguments(itrArgs->second.release<response::ListType>());
 						}
 
 						fields[std::move(fieldName)] = std::move(subField);
@@ -2322,6 +2463,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 					typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
 					typeField.returnType = std::move(typeType);
 
+					ValidateArgument nameArgument;
 					response::Value typeNameArg(response::Type::Map);
 					response::Value nonNullTypeNameArg(response::Type::Map);
 
@@ -2329,7 +2471,9 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 					typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
 					nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
 					nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
-					typeField.arguments[R"gql(name)gql"] = std::move(nonNullTypeNameArg);
+					nameArgument.type = std::move(nonNullTypeNameArg);
+
+					typeField.arguments[R"gql(name)gql"] = std::move(nameArgument);
 
 					fields[R"gql(__type)gql"] = std::move(typeField);
 				}
@@ -2554,25 +2698,36 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		alias = name;
 	}
 
-	std::queue<std::string> argumentNames;
-	std::map<std::string, schema_location> argumentLocations;
 	ValidateFieldArguments validateArguments;
+	std::map<std::string, schema_location> argumentLocations;
+	std::queue<std::string> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &validateArguments, &argumentNames , &argumentLocations](const peg::ast_node& child)
+		[this, &name, &validateArguments, &argumentLocations, &argumentNames](const peg::ast_node& child)
 	{
 		for (auto& argument : child.children)
 		{
 			auto argumentName = argument->children.front()->string();
 			auto position = argument->begin();
 
-			argumentLocations[argumentName] = { position.line, position.byte_in_line };
+			if (validateArguments.find(argumentName) != validateArguments.end())
+			{
+				// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
+				std::ostringstream message;
+
+				message << "Conflicting argument type: " << _scopedType
+					<< " field: " << name
+					<< " name: " << argumentName;
+
+				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				continue;
+			}
 
 			ValidateArgumentValueVisitor visitor;
 
 			visitor.visit(*argument->children.back());
 			validateArguments[argumentName] = visitor.getArgumentValue();
-
+			argumentLocations[argumentName] = { position.line, position.byte_in_line };
 			argumentNames.push(std::move(argumentName));
 		}
 	});
@@ -2622,16 +2777,56 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 				message << "Undefined argument type: " << _scopedType
 					<< " field: " << name
-					<< " argument: " << argumentName;
+					<< " name: " << argumentName;
 
 				_errors.push_back({ message.str(), argumentLocations[argumentName] });
 			}
+		}
 
-			//const auto& argument = validateField.arguments[argumentName];
+		for (auto& argument : itrField->second.arguments)
+		{
+			if (argument.second.defaultValue)
+			{
+				// The argument has a default value.
+				continue;
+			}
+
+			auto itrArgument = validateField.arguments.find(argument.first);
+
+			if (itrArgument != validateField.arguments.end()
+				&& itrArgument->second.value)
+			{
+				// The value was not null.
+				continue;
+			}
+
+			// See if the argument is wrapped in NON_NULL
+			auto itrKind = argument.second.type.find(R"gql(kind)gql");
+
+			if (itrKind != argument.second.type.end()
+				&& itrKind->second.type() == response::Type::EnumValue
+				&& introspection::TypeKind::NON_NULL == ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+			{
+				// http://spec.graphql.org/June2018/#sec-Required-Arguments
+				auto position = field.begin();
+				std::ostringstream message;
+
+				message << "Missing argument type: " << _scopedType
+					<< " field: " << name
+					<< " name: " << argument.first;
+
+				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			}
 		}
 	}
 
 	_selectionFields.insert({ std::move(alias), std::move(validateField) });
+
+	peg::on_first_child<peg::directives>(field,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::FIELD, child);
+	});
 
 	const peg::ast_node* selection = nullptr;
 
@@ -2722,6 +2917,12 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		return;
 	}
 
+	peg::on_first_child<peg::directives>(fragmentSpread,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::FRAGMENT_SPREAD, child);
+	});
+
 	const auto& selection = *itr->second.children.back();
 	std::string innerType{ itr->second.children[1]->children.front()->string_view() };
 	auto outerType = std::move(_scopedType);
@@ -2752,6 +2953,12 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 		innerType = _scopedType;
 	}
 
+	peg::on_first_child<peg::directives>(inlineFragment,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::INLINE_FRAGMENT, child);
+	});
+
 	peg::on_first_child<peg::selection_set>(inlineFragment,
 		[this, &innerType](const peg::ast_node& selection)
 	{
@@ -2763,6 +2970,122 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 
 		_scopedType = std::move(outerType);
 	});
+}
+
+void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives)
+{
+	for (const auto& directive : directives.children)
+	{
+		std::string directiveName;
+
+		peg::on_first_child<peg::directive_name>(*directive,
+			[&directiveName](const peg::ast_node& child)
+		{
+			directiveName = child.string_view();
+		});
+
+		auto itrDirective = _directives.find(directiveName);
+
+		if (itrDirective == _directives.end())
+		{
+			// http://spec.graphql.org/June2018/#sec-Directives-Are-Defined
+			auto position = directive->begin();
+			std::ostringstream message;
+
+			message << "Undefined directive name: " << directiveName;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			continue;
+		}
+
+		peg::on_first_child<peg::arguments>(*directive,
+			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child)
+		{
+			ValidateFieldArguments validateArguments;
+			std::map<std::string, schema_location> argumentLocations;
+			std::queue<std::string> argumentNames;
+
+			for (auto& argument : child.children)
+			{
+				auto position = argument->begin();
+				auto argumentName = argument->children.front()->string();
+
+				if (validateArguments.find(argumentName) != validateArguments.end())
+				{
+					// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
+					std::ostringstream message;
+
+					message << "Conflicting argument directive: " << directiveName
+						<< " name: " << argumentName;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					continue;
+				}
+
+				ValidateArgumentValueVisitor visitor;
+
+				visitor.visit(*argument->children.back());
+				validateArguments[argumentName] = visitor.getArgumentValue();
+				argumentLocations[argumentName] = { position.line, position.byte_in_line };
+				argumentNames.push(std::move(argumentName));
+			}
+
+			while (!argumentNames.empty())
+			{
+				auto argumentName = std::move(argumentNames.front());
+
+				argumentNames.pop();
+
+				auto itrArgument = itrDirective->second.arguments.find(argumentName);
+
+				if (itrArgument == itrDirective->second.arguments.end())
+				{
+					// http://spec.graphql.org/June2018/#sec-Argument-Names
+					std::ostringstream message;
+
+					message << "Undefined argument directive: " << directiveName
+						<< " name: " << argumentName;
+
+					_errors.push_back({ message.str(), argumentLocations[argumentName] });
+				}
+			}
+
+			for (auto& argument : itrDirective->second.arguments)
+			{
+				if (argument.second.defaultValue)
+				{
+					// The argument has a default value.
+					continue;
+				}
+
+				auto itrArgument = validateArguments.find(argument.first);
+
+				if (itrArgument != validateArguments.end()
+					&& itrArgument->second.value)
+				{
+					// The value was not null.
+					continue;
+				}
+
+				// See if the argument is wrapped in NON_NULL
+				auto itrKind = argument.second.type.find(R"gql(kind)gql");
+
+				if (itrKind != argument.second.type.end()
+					&& itrKind->second.type() == response::Type::EnumValue
+					&& introspection::TypeKind::NON_NULL == ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+				{
+					// http://spec.graphql.org/June2018/#sec-Required-Arguments
+					auto position = directive->begin();
+					std::ostringstream message;
+
+					message << "Missing argument directive: " << directiveName
+						<< " name: " << argument.first;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				}
+			}
+		});
+	}
 }
 
 // FragmentDefinitionVisitor visits the AST and collects all of the fragment

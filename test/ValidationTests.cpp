@@ -476,7 +476,7 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 
 	auto errors = _service->validate(*ast.root);
 
-	EXPECT_EQ(errors.size(), 8) << "4 conflicting fields + 4 unused fragments";
+	EXPECT_EQ(errors.size(), 9) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
 	ASSERT_GE(errors.size(), 4);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
@@ -677,10 +677,127 @@ TEST_F(ValidationExamplesCase, CounterExample118)
 
 	auto errors = _service->validate(*ast.root);
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), 1);
 	response::Value error1(response::Type::Map);
 	service::addErrorMessage(std::move(errors[0].message), error1);
 	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined argument type: Dog field: doesKnowCommand argument: command","locations":[{"line":2,"column":20}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined argument type: Dog field: doesKnowCommand name: command","locations":[{"line":2,"column":20}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample119)
+{
+	// http://spec.graphql.org/June2018/#example-4feee
+	auto ast = R"(fragment invalidArgName on Dog {
+			isHousetrained(atOtherHomes: true) @include(unless: false)
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Undefined argument directive: include name: unless","locations":[{"line":2,"column":48}]})js", response::toJSON(std::move(error1))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example120)
+{
+	// http://spec.graphql.org/June2018/#example-1891c
+	auto ast = R"(query {
+			arguments {
+				multipleReqs(x: 1, y: 2)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example121)
+{
+	// http://spec.graphql.org/June2018/#example-18fab
+	auto ast = R"(fragment multipleArgs on Arguments {
+			multipleReqs(x: 1, y: 2)
+		}
+
+		fragment multipleArgsReverseOrder on Arguments {
+			multipleReqs(y: 1, x: 2)
+		}
+
+		query q1 {
+			arguments {
+				...multipleArgs
+			}
+		}
+
+		query q2 {
+			arguments {
+				...multipleArgsReverseOrder
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example122)
+{
+	// http://spec.graphql.org/June2018/#example-503bd
+	auto ast = R"(fragment goodBooleanArg on Arguments {
+			booleanArgField(booleanArg: true)
+		}
+
+		fragment goodNonNullArg on Arguments {
+			nonNullBooleanArgField(nonNullBooleanArg: true)
+		}
+
+		query {
+			arguments {
+				...goodBooleanArg
+				...goodNonNullArg
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example123)
+{
+	// http://spec.graphql.org/June2018/#example-1f1d2
+	auto ast = R"(fragment goodBooleanArgDefault on Arguments {
+			booleanArgField
+		}
+
+		query {
+			arguments {
+				...goodBooleanArgDefault
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample124)
+{
+	// http://spec.graphql.org/June2018/#example-f12a1
+	auto ast = R"(fragment missingRequiredArg on Arguments {
+			nonNullBooleanArgField
+		})"_graphql;
+
+	auto errors = _service->validate(*ast.root);
+
+	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
+	ASSERT_GE(errors.size(), 1);
+	response::Value error1(response::Type::Map);
+	service::addErrorMessage(std::move(errors[0].message), error1);
+	service::addErrorLocation(errors[0].location, error1);
+	EXPECT_EQ(R"js({"message":"Missing argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
 }
