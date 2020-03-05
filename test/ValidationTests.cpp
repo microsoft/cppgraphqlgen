@@ -1091,3 +1091,96 @@ TEST_F(ValidationExamplesCase, Example140)
 
 	ASSERT_TRUE(errors.empty());
 }
+
+TEST_F(ValidationExamplesCase, Example141)
+{
+	// http://spec.graphql.org/June2018/#example-85110
+	auto query = R"(fragment petFragment on Pet {
+			name
+			... on Dog {
+				barkVolume
+			}
+		}
+
+		fragment catOrDogFragment on CatOrDog {
+			... on Cat {
+				meowVolume
+			}
+		}
+
+		query {
+			dog {
+				...petFragment
+				...catOrDogFragment
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample142)
+{
+	// http://spec.graphql.org/June2018/#example-a8dcc
+	auto query = R"(fragment sentientFragment on Sentient {
+			... on Dog {
+				barkVolume
+			}
+		}
+
+		fragment humanOrAlienFragment on HumanOrAlien {
+			... on Cat {
+				meowVolume
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 4) << "2 incompatible type + 2 unused fragments";
+	ASSERT_GE(errors.size(), size_t { 2 });
+	EXPECT_EQ(R"js({"message":"Incompatible target type on inline fragment name: Dog","locations":[{"line":2,"column":8}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Incompatible target type on inline fragment name: Cat","locations":[{"line":8,"column":8}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example143)
+{
+	// http://spec.graphql.org/June2018/#example-dc875
+	auto query = R"(fragment unionWithInterface on Pet {
+			...dogOrHumanFragment
+		}
+
+		fragment dogOrHumanFragment on DogOrHuman {
+			... on Dog {
+				barkVolume
+			}
+		}
+
+		query {
+			dog {
+				...unionWithInterface
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample144)
+{
+	// http://spec.graphql.org/June2018/#example-c9c63
+	auto query = R"(fragment nonIntersectingInterfaces on Pet {
+			...sentientFragment
+		}
+
+		fragment sentientFragment on Sentient {
+			name
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 3) << "1 incompatible type + 2 unused fragments";
+	ASSERT_GE(errors.size(), size_t { 1 });
+	EXPECT_EQ(R"js({"message":"Incompatible fragment spread target type: Sentient name: sentientFragment","locations":[{"line":2,"column":7}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}

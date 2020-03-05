@@ -1457,7 +1457,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	if (!matchesScopedType(innerType))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
-		auto position = typeCondition->begin();
+		auto position = fragmentSpread.begin();
 		std::ostringstream message;
 
 		message << "Incompatible fragment spread target type: " << innerType
