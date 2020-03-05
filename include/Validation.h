@@ -154,7 +154,12 @@ private:
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using TypeFields = std::map<std::string, FieldTypes>;
 
+	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
+	constexpr bool isScalarType(introspection::TypeKind kind);
+
+	bool matchesScopedType(const std::string& name) const;
+
 	TypeFields::const_iterator getScopedTypeFields();
 	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
 	static std::string getWrappedFieldType(const FieldTypes& fields, const std::string& name);
@@ -179,9 +184,11 @@ private:
 	using Directives = std::map<std::string, ValidateDirective>;
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
+	using MatchingTypes = std::map<std::string, std::set<std::string>>;
 
 	OperationTypes _operationTypes;
 	TypeKinds _typeKinds;
+	MatchingTypes _matchingTypes;
 	Directives _directives;
 
 	ExecutableNodes _fragmentDefinitions;

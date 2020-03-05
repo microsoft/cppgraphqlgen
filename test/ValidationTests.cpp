@@ -49,17 +49,11 @@ TEST_F(ValidationExamplesCase, CounterExample91)
 			color: String
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 2);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: color","locations":[{"line":4,"column":5}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Unexpected type definition","locations":[{"line":8,"column":3}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: color","locations":[{"line":4,"column":5}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Unexpected type definition","locations":[{"line":8,"column":3}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example92)
@@ -79,7 +73,7 @@ TEST_F(ValidationExamplesCase, Example92)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -101,13 +95,10 @@ TEST_F(ValidationExamplesCase, CounterExample93)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Duplicate operation name: getName","locations":[{"line":7,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Duplicate operation name: getName","locations":[{"line":7,"column":3}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample94)
@@ -125,13 +116,10 @@ TEST_F(ValidationExamplesCase, CounterExample94)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Duplicate operation name: dogOperation","locations":[{"line":7,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Duplicate operation name: dogOperation","locations":[{"line":7,"column":3}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example95)
@@ -143,7 +131,7 @@ TEST_F(ValidationExamplesCase, Example95)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -165,13 +153,10 @@ TEST_F(ValidationExamplesCase, CounterExample96)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Anonymous operation not alone","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Anonymous operation not alone","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example97)
@@ -184,7 +169,7 @@ TEST_F(ValidationExamplesCase, Example97)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -203,7 +188,7 @@ TEST_F(ValidationExamplesCase, Example98)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -219,13 +204,10 @@ TEST_F(ValidationExamplesCase, CounterExample99)
 			disallowedSecondRootField
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample100)
@@ -243,13 +225,10 @@ TEST_F(ValidationExamplesCase, CounterExample100)
 			disallowedSecondRootField
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample101)
@@ -263,13 +242,10 @@ TEST_F(ValidationExamplesCase, CounterExample101)
 			__typename
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 1);
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample102)
@@ -283,18 +259,12 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 			barkVolume: kawVolume
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: meowVolume","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: kawVolume","locations":[{"line":6,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: meowVolume","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined field type: Dog name: kawVolume","locations":[{"line":6,"column":4}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example103)
@@ -310,7 +280,7 @@ TEST_F(ValidationExamplesCase, Example103)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -322,14 +292,11 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 			nickname
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined field type: Pet name: nickname","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined field type: Pet name: nickname","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example105)
@@ -351,7 +318,7 @@ TEST_F(ValidationExamplesCase, Example105)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -364,18 +331,12 @@ TEST_F(ValidationExamplesCase, CounterExample106)
 			barkVolume
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: name","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: barkVolume","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: name","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Field on union type: CatOrDog name: barkVolume","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example107)
@@ -398,7 +359,7 @@ TEST_F(ValidationExamplesCase, Example107)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -411,14 +372,11 @@ TEST_F(ValidationExamplesCase, CounterExample108)
 			name
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: name","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: name","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example109)
@@ -446,7 +404,7 @@ TEST_F(ValidationExamplesCase, Example109)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -474,26 +432,14 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 			doesKnowCommand
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 9) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 4 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":8,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
-	response::Value error3(response::Type::Map);
-	service::addErrorMessage(std::move(errors[2].message), error3);
-	service::addErrorLocation(errors[2].location, error3);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":13,"column":4}]})js", response::toJSON(std::move(error3))) << "error should match";
-	response::Value error4(response::Type::Map);
-	service::addErrorMessage(std::move(errors[3].message), error4);
-	service::addErrorLocation(errors[3].location, error4);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":18,"column":4}]})js", response::toJSON(std::move(error4))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":3,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":8,"column":4}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":13,"column":4}]})js", response::toJSON(std::move(errors[2]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":18,"column":4}]})js", response::toJSON(std::move(errors[3]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example111)
@@ -524,7 +470,7 @@ TEST_F(ValidationExamplesCase, Example111)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -541,14 +487,11 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Conflicting field type: Cat name: meowVolume","locations":[{"line":6,"column":5}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Conflicting field type: Cat name: meowVolume","locations":[{"line":6,"column":5}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example113)
@@ -564,7 +507,7 @@ TEST_F(ValidationExamplesCase, Example113)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -578,14 +521,11 @@ TEST_F(ValidationExamplesCase, CounterExample114)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Field on scalar type: Int name: sinceWhen","locations":[{"line":3,"column":5}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Field on scalar type: Int name: sinceWhen","locations":[{"line":3,"column":5}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example115)
@@ -608,7 +548,7 @@ TEST_F(ValidationExamplesCase, Example115)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -628,21 +568,12 @@ TEST_F(ValidationExamplesCase, CounterExample116)
 			catOrDog
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_EQ(errors.size(), 3) << "3 invalid fields";
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Human","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Pet","locations":[{"line":6,"column":4}]})js", response::toJSON(std::move(error2))) << "error should match";
-	response::Value error3(response::Type::Map);
-	service::addErrorMessage(std::move(errors[2].message), error3);
-	service::addErrorLocation(errors[2].location, error3);
-	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: CatOrDog","locations":[{"line":10,"column":4}]})js", response::toJSON(std::move(error3))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Human","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: Pet","locations":[{"line":6,"column":4}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Missing fields on non-scalar type: CatOrDog","locations":[{"line":10,"column":4}]})js", response::toJSON(std::move(errors[2]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example117)
@@ -663,7 +594,7 @@ TEST_F(ValidationExamplesCase, Example117)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -675,14 +606,11 @@ TEST_F(ValidationExamplesCase, CounterExample118)
 			doesKnowCommand(command: CLEAN_UP_HOUSE)
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined argument type: Dog field: doesKnowCommand name: command","locations":[{"line":2,"column":20}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined argument type: Dog field: doesKnowCommand name: command","locations":[{"line":2,"column":20}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample119)
@@ -692,14 +620,11 @@ TEST_F(ValidationExamplesCase, CounterExample119)
 			isHousetrained(atOtherHomes: true) @include(unless: false)
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined argument directive: include name: unless","locations":[{"line":2,"column":48}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined argument directive: include name: unless","locations":[{"line":2,"column":48}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example120)
@@ -711,7 +636,7 @@ TEST_F(ValidationExamplesCase, Example120)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -739,7 +664,7 @@ TEST_F(ValidationExamplesCase, Example121)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -762,7 +687,7 @@ TEST_F(ValidationExamplesCase, Example122)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -780,7 +705,7 @@ TEST_F(ValidationExamplesCase, Example123)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -792,14 +717,11 @@ TEST_F(ValidationExamplesCase, CounterExample124)
 			nonNullBooleanArgField
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Missing argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Missing argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample125)
@@ -809,14 +731,11 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 			nonNullBooleanArgField(nonNullBooleanArg: null)
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Required non-null argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Required non-null argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example126)
@@ -839,7 +758,7 @@ TEST_F(ValidationExamplesCase, Example126)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -863,14 +782,11 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 1) << "1 duplicate fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Duplicate fragment name: fragmentOne","locations":[{"line":11,"column":3}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Duplicate fragment name: fragmentOne","locations":[{"line":11,"column":3}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example128)
@@ -900,7 +816,7 @@ TEST_F(ValidationExamplesCase, Example128)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -918,18 +834,12 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined target type on fragment definition: notOnExistingType name: NotInSchema","locations":[{"line":1,"column":28}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Undefined target type on inline fragment name: NotInSchema","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined target type on fragment definition: notOnExistingType name: NotInSchema","locations":[{"line":1,"column":28}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined target type on inline fragment name: NotInSchema","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example130)
@@ -957,7 +867,7 @@ TEST_F(ValidationExamplesCase, Example130)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -975,18 +885,12 @@ TEST_F(ValidationExamplesCase, CounterExample131)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Scalar target type on fragment definition: fragOnScalar name: Int","locations":[{"line":1,"column":23}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Scalar target type on inline fragment name: Boolean","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Scalar target type on fragment definition: fragOnScalar name: Int","locations":[{"line":1,"column":23}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Scalar target type on inline fragment name: Boolean","locations":[{"line":6,"column":8}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample132)
@@ -1002,14 +906,11 @@ TEST_F(ValidationExamplesCase, CounterExample132)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 1) << "1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Unused fragment definition name: nameFragment","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Unused fragment definition name: nameFragment","locations":[{"line":1,"column":1}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample133)
@@ -1021,14 +922,11 @@ TEST_F(ValidationExamplesCase, CounterExample133)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "1 undefined fragment + 1 missing field";
 	ASSERT_GE(errors.size(), size_t { 1 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Undefined fragment spread name: undefinedFragment","locations":[{"line":3,"column":8}]})js", response::toJSON(std::move(error1))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Undefined fragment spread name: undefinedFragment","locations":[{"line":3,"column":8}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, CounterExample134)
@@ -1050,18 +948,12 @@ TEST_F(ValidationExamplesCase, CounterExample134)
 			...nameFragment
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: nameFragment","locations":[{"line":14,"column":7}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: barkVolumeFragment","locations":[{"line":9,"column":7}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: nameFragment","locations":[{"line":14,"column":7}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: barkVolumeFragment","locations":[{"line":9,"column":7}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
 }
 
 TEST_F(ValidationExamplesCase, Example135)
@@ -1080,7 +972,7 @@ TEST_F(ValidationExamplesCase, Example135)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1110,16 +1002,88 @@ TEST_F(ValidationExamplesCase, CounterExample136)
 			}
 		})"_graphql;
 
-	auto errors = _service->validate(query);
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
 	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
-	response::Value error1(response::Type::Map);
-	service::addErrorMessage(std::move(errors[0].message), error1);
-	service::addErrorLocation(errors[0].location, error1);
-	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: dogFragment","locations":[{"line":19,"column":8}]})js", response::toJSON(std::move(error1))) << "error should match";
-	response::Value error2(response::Type::Map);
-	service::addErrorMessage(std::move(errors[1].message), error2);
-	service::addErrorLocation(errors[1].location, error2);
-	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: ownerFragment","locations":[{"line":11,"column":8}]})js", response::toJSON(std::move(error2))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: dogFragment","locations":[{"line":19,"column":8}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Cyclic fragment spread name: ownerFragment","locations":[{"line":11,"column":8}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example137)
+{
+	// http://spec.graphql.org/June2018/#example-0fc38
+	auto query = R"(fragment dogFragment on Dog {
+			... on Dog {
+				barkVolume
+			}
+		}
+
+		query {
+			dog {
+				...dogFragment
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample138)
+{
+	// http://spec.graphql.org/June2018/#example-4d411
+	auto query = R"(fragment catInDogFragmentInvalid on Dog {
+			... on Cat {
+				meowVolume
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 incompatible type + 1 unused fragment";
+	ASSERT_GE(errors.size(), size_t { 1 });
+	EXPECT_EQ(R"js({"message":"Incompatible target type on inline fragment name: Cat","locations":[{"line":2,"column":8}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example139)
+{
+	// http://spec.graphql.org/June2018/#example-2c8d0
+	auto query = R"(fragment petNameFragment on Pet {
+			name
+		}
+
+		fragment interfaceWithinObjectFragment on Dog {
+			...petNameFragment
+		}
+
+		query {
+			dog {
+				...interfaceWithinObjectFragment
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample140)
+{
+	// http://spec.graphql.org/June2018/#example-41843
+	auto query = R"(fragment catOrDogNameFragment on CatOrDog {
+			... on Cat {
+				meowVolume
+			}
+		}
+
+		fragment unionWithObjectFragment on Dog {
+			...catOrDogNameFragment
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 3) << "1 incompatible type + 2 unused fragment";
+	ASSERT_GE(errors.size(), size_t { 1 });
+	EXPECT_EQ(R"js({"message":"Incompatible fragment spread target type: catOrDogNameFragment name: CatOrDog","locations":[{"line":8,"column":31}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }

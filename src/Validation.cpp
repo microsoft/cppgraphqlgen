@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <iterator>
 
 namespace graphql::service {
 
@@ -259,6 +260,9 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 				types {
 					name
 					kind
+					possibleTypes {
+						name
+					}
 				}
 				directives {
 					name
@@ -350,7 +354,59 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 						&& itrKind != typeMembers.end()
 						&& itrKind->second.type() == response::Type::EnumValue)
 					{
-						_typeKinds[itrName->second.release<response::StringType>()] = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+						auto name = itrName->second.release<response::StringType>();
+						auto kind = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+
+						if (!isScalarType(kind))
+						{
+							if (kind == introspection::TypeKind::OBJECT)
+							{
+								_matchingTypes[name].insert(name);
+							}
+							else
+							{
+								auto itrPossibleTypes = std::find_if(typeMembers.begin(), typeMembers.end(),
+									[](const std::pair<std::string, response::Value>& entry) noexcept
+								{
+									return entry.first == R"gql(possibleTypes)gql";
+								});
+
+								if (itrPossibleTypes != typeMembers.end()
+									&& itrPossibleTypes->second.type() == response::Type::List)
+								{
+									std::set<std::string> matchingTypes;
+									auto matchingTypeEntries = itrPossibleTypes->second.release<response::ListType>();
+
+									for (auto& matchingTypeEntry : matchingTypeEntries)
+									{
+										if (matchingTypeEntry.type() != response::Type::Map)
+										{
+											continue;
+										}
+
+										auto matchingTypeMembers = matchingTypeEntry.release<response::MapType>();
+										auto itrMatchingTypeName = std::find_if(matchingTypeMembers.begin(), matchingTypeMembers.end(),
+											[](const std::pair<std::string, response::Value>& entry) noexcept
+										{
+											return entry.first == R"gql(name)gql";
+										});
+
+										if (itrMatchingTypeName != matchingTypeMembers.end()
+											&& itrMatchingTypeName->second.type() == response::Type::String)
+										{
+											matchingTypes.insert(itrMatchingTypeName->second.release<response::StringType>());
+										}
+									}
+
+									if (!matchingTypes.empty())
+									{
+										_matchingTypes[name] = std::move(matchingTypes);
+									}
+								}
+							}
+						}
+
+						_typeKinds[std::move(name)] = kind;
 					}
 				}
 			}
@@ -577,38 +633,21 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 
 	auto itrKind = _typeKinds.find(innerType);
 
-	if (itrKind == _typeKinds.end())
+	if (itrKind == _typeKinds.end()
+		|| isScalarType(itrKind->second))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
+		// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
-		message << "Undefined target type on fragment definition: " << name
+		message << (itrKind == _typeKinds.end() 
+			? "Undefined target type on fragment definition: "
+			: "Scalar target type on fragment definition: ") << name
 			<< " name: " << innerType;
 
 		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 		return;
-	}
-
-	switch (itrKind->second)
-	{
-		case introspection::TypeKind::OBJECT:
-		case introspection::TypeKind::INTERFACE:
-		case introspection::TypeKind::UNION:
-			break;
-
-		default:
-		{
-			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
-			auto position = typeCondition->begin();
-			std::ostringstream message;
-
-			message << "Scalar target type on fragment definition: " << name
-				<< " name: " << innerType;
-
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-			return;
-		}
 	}
 
 	_fragmentStack.insert(name);
@@ -763,13 +802,57 @@ ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(response::Lis
 	return result;
 }
 
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+std::optional<introspection::TypeKind> ValidateExecutableVisitor::getTypeKind(const std::string& name) const
 {
-	auto itrKind = _typeKinds.find(_scopedType);
+	auto itrKind = _typeKinds.find(name);
 
 	return (itrKind == _typeKinds.cend()
 		? std::nullopt
 		: std::make_optional(itrKind->second));
+}
+
+std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+{
+	return getTypeKind(_scopedType);
+}
+
+constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind kind)
+{
+	switch (kind)
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			return false;
+
+		default:
+			return true;
+	}
+}
+
+bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
+{
+	if (name == _scopedType)
+	{
+		return true;
+	}
+
+	auto itrScoped = _matchingTypes.find(_scopedType);
+	auto itrNamed = _matchingTypes.find(name);
+
+	if (itrScoped != _matchingTypes.end()
+		&& itrNamed != _matchingTypes.end())
+	{
+		auto itrMatch = std::find_if(itrScoped->second.begin(), itrScoped->second.end(),
+			[this, itrNamed](const std::string& matchingType) noexcept
+		{
+			return itrNamed->second.find(matchingType) != itrNamed->second.end();
+		});
+
+		return itrMatch != itrScoped->second.end();
+	}
+
+	return false;
 }
 
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::getScopedTypeFields()
@@ -777,27 +860,9 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	auto typeKind = getScopedTypeKind();
 	auto itrType = _typeFields.find(_scopedType);
 
-	if (itrType == _typeFields.cend())
-	{
-		if (!typeKind)
-		{
-			return itrType;
-		}
-
-		switch (*typeKind)
-		{
-			case introspection::TypeKind::OBJECT:
-			case introspection::TypeKind::INTERFACE:
-			case introspection::TypeKind::UNION:
-				// These are the only types which support sub-fields.
-				break;
-
-			default:
-				return itrType;
-		}
-	}
-
-	if (itrType == _typeFields.cend())
+	if (itrType == _typeFields.cend()
+		&& typeKind
+		&& !isScalarType(*typeKind))
 	{
 		std::ostringstream oss;
 
@@ -1329,27 +1394,17 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	{
 		auto itrInnerKind = _typeKinds.find(innerType);
 
-		if (itrInnerKind != _typeKinds.end())
+		if (itrInnerKind != _typeKinds.end()
+			&& !isScalarType(itrInnerKind->second))
 		{
-			switch (itrInnerKind->second)
-			{
-				case introspection::TypeKind::OBJECT:
-				case introspection::TypeKind::INTERFACE:
-				case introspection::TypeKind::UNION:
-				{
-					// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-					auto position = field.begin();
-					std::ostringstream message;
+			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+			auto position = field.begin();
+			std::ostringstream message;
 
-					message << "Missing fields on non-scalar type: " << innerType;
+			message << "Missing fields on non-scalar type: " << innerType;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
-					return;
-				}
-
-				default:
-					break;
-			}
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			return;
 		}
 	}
 
@@ -1396,7 +1451,22 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	});
 
 	const auto& selection = *itr->second.children.back();
-	std::string innerType{ itr->second.children[1]->children.front()->string_view() };
+	const auto& typeCondition = itr->second.children[1];
+	std::string innerType{ typeCondition->children.front()->string_view() };
+
+	if (!matchesScopedType(innerType))
+	{
+		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
+		auto position = typeCondition->begin();
+		std::ostringstream message;
+
+		message << "Incompatible fragment spread target type: " << innerType
+			<< " name: " << name;
+
+		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
 	auto outerType = std::move(_scopedType);
 
 	_fragmentStack.insert(name);
@@ -1432,34 +1502,30 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 	{
 		auto itrKind = _typeKinds.find(innerType);
 
-		if (_typeKinds.find(innerType) == _typeKinds.end())
+		if (itrKind == _typeKinds.end()
+			|| isScalarType(itrKind->second))
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
+			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 			std::ostringstream message;
 
-			message << "Undefined target type on inline fragment name: " << innerType;
+			message << (itrKind == _typeKinds.end()
+				? "Undefined target type on inline fragment name: "
+				: "Scalar target type on inline fragment name: ") << innerType;
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
 			return;
 		}
 
-		switch (itrKind->second)
+		if (!matchesScopedType(innerType))
 		{
-			case introspection::TypeKind::OBJECT:
-			case introspection::TypeKind::INTERFACE:
-			case introspection::TypeKind::UNION:
-				break;
+			// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
+			std::ostringstream message;
 
-			default:
-			{
-				// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
-				std::ostringstream message;
+			message << "Incompatible target type on inline fragment name: " << innerType;
 
-				message << "Scalar target type on inline fragment name: " << innerType;
-
-				_errors.push_back({ message.str(), std::move(typeConditionLocation) });
-				return;
-			}
+			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
+			return;
 		}
 	}
 
