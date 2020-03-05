@@ -1068,7 +1068,7 @@ TEST_F(ValidationExamplesCase, Example139)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample140)
+TEST_F(ValidationExamplesCase, Example140)
 {
 	// http://spec.graphql.org/June2018/#example-41843
 	auto query = R"(fragment catOrDogNameFragment on CatOrDog {
@@ -1079,11 +1079,15 @@ TEST_F(ValidationExamplesCase, CounterExample140)
 
 		fragment unionWithObjectFragment on Dog {
 			...catOrDogNameFragment
+		}
+
+		query {
+			dog {
+				...unionWithObjectFragment
+			}
 		})"_graphql;
 
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 3) << "1 incompatible type + 2 unused fragment";
-	ASSERT_GE(errors.size(), size_t { 1 });
-	EXPECT_EQ(R"js({"message":"Incompatible fragment spread target type: catOrDogNameFragment name: CatOrDog","locations":[{"line":8,"column":31}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	ASSERT_TRUE(errors.empty());
 }
