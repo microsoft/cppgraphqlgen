@@ -2022,6 +2022,8 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 
 void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives)
 {
+	std::set<std::string> uniqueDirectives;
+
 	for (const auto& directive : directives.children)
 	{
 		std::string directiveName;
@@ -2032,6 +2034,18 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 			directiveName = child.string_view();
 		});
 
+		if (!uniqueDirectives.insert(directiveName).second)
+		{
+			// http://spec.graphql.org/June2018/#sec-Directives-Are-Unique-Per-Location
+			auto position = directive->begin();
+			std::ostringstream message;
+
+			message << "Conflicting directive name: " << directiveName;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			continue;
+		}
+
 		auto itrDirective = _directives.find(directiveName);
 
 		if (itrDirective == _directives.end())
@@ -2041,6 +2055,52 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 			std::ostringstream message;
 
 			message << "Undefined directive name: " << directiveName;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			continue;
+		}
+
+		if (itrDirective->second.locations.find(location) == itrDirective->second.locations.end())
+		{
+			// http://spec.graphql.org/June2018/#sec-Directives-Are-In-Valid-Locations
+			auto position = directive->begin();
+			std::ostringstream message;
+
+			message << "Unexpected location for directive: " << directiveName;
+
+			switch (location)
+			{
+				case introspection::DirectiveLocation::QUERY:
+					message << " name: QUERY";
+					break;
+
+				case introspection::DirectiveLocation::MUTATION:
+					message << " name: MUTATION";
+					break;
+
+				case introspection::DirectiveLocation::SUBSCRIPTION:
+					message << " name: SUBSCRIPTION";
+					break;
+
+				case introspection::DirectiveLocation::FIELD:
+					message << " name: FIELD";
+					break;
+
+				case introspection::DirectiveLocation::FRAGMENT_DEFINITION:
+					message << " name: FRAGMENT_DEFINITION";
+					break;
+
+				case introspection::DirectiveLocation::FRAGMENT_SPREAD:
+					message << " name: FRAGMENT_SPREAD";
+					break;
+
+				case introspection::DirectiveLocation::INLINE_FRAGMENT:
+					message << " name: INLINE_FRAGMENT";
+					break;
+
+				default:
+					break;
+			}
 
 			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
 			continue;

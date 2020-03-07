@@ -1272,3 +1272,52 @@ TEST_F(ValidationExamplesCase, CounterExample149)
 	ASSERT_GE(errors.size(), size_t{ 1 });
 	EXPECT_EQ(R"js({"message":"Conflicting input field name: name","locations":[{"line":2,"column":37}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
+
+TEST_F(ValidationExamplesCase, CounterExample150)
+{
+	// http://spec.graphql.org/June2018/#example-55f3f
+	auto query = R"(query @skip(if: $foo) {
+			dog {
+				name
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 unexpected location";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Unexpected location for directive: skip name: QUERY","locations":[{"line":1,"column":7}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample151)
+{
+	// http://spec.graphql.org/June2018/#example-b2e6c
+	auto query = R"(query ($foo: Boolean = true, $bar: Boolean = false) {
+			dog @skip(if: $foo) @skip(if: $bar) {
+				name
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 conflicting directive";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Conflicting directive name: skip","locations":[{"line":2,"column":24}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example152)
+{
+	// http://spec.graphql.org/June2018/#example-c5ee9
+	auto query = R"(query ($foo: Boolean = true, $bar: Boolean = false) {
+			dog @skip(if: $foo) {
+				name
+			}
+			dog @skip(if: $bar) {
+				nickname
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
