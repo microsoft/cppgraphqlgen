@@ -102,7 +102,7 @@ struct ValidateArgumentValue
 class ValidateArgumentValueVisitor
 {
 public:
-	ValidateArgumentValueVisitor();
+	ValidateArgumentValueVisitor(std::vector<schema_error>& errors);
 
 	void visit(const peg::ast_node& value);
 
@@ -120,6 +120,7 @@ private:
 	void visitObjectValue(const peg::ast_node& objectValue);
 
 	ValidateArgumentValuePtr _argumentValue;
+	std::vector<schema_error>& _errors;
 };
 
 using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
@@ -153,6 +154,9 @@ private:
 
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using TypeFields = std::map<std::string, FieldTypes>;
+	using InputFieldTypes = ValidateTypeFieldArguments;
+	using InputTypeFields = std::map<std::string, InputFieldTypes>;
+	using EnumValues = std::map<std::string, std::set<std::string>>;
 
 	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
@@ -161,8 +165,13 @@ private:
 	bool matchesScopedType(const std::string& name) const;
 
 	TypeFields::const_iterator getScopedTypeFields();
-	static std::string getFieldType(const FieldTypes& fields, const std::string& name);
-	static std::string getWrappedFieldType(const FieldTypes& fields, const std::string& name);
+	InputTypeFields::const_iterator getInputTypeFields(const std::string& name);
+	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
+	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
+	template <class _FieldTypes>
+	static std::string getFieldType(const _FieldTypes& fields, const std::string& name);
+	template <class _FieldTypes>
+	static std::string getWrappedFieldType(const _FieldTypes& fields, const std::string& name);
 	static std::string getWrappedFieldType(const ValidateType& returnType);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
@@ -176,6 +185,8 @@ private:
 
 	void visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives);
 
+	bool validateInputValue(const ValidateArgumentValuePtr& argument, const ValidateType& type);
+
 	const Request& _service;
 	std::vector<schema_error> _errors;
 
@@ -185,11 +196,15 @@ private:
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
 	using MatchingTypes = std::map<std::string, std::set<std::string>>;
+	using VariableTypes = std::map<std::string, std::vector<ValidateArgument>>;
+	using ScalarTypes = std::set<std::string>;
 
 	OperationTypes _operationTypes;
 	TypeKinds _typeKinds;
 	MatchingTypes _matchingTypes;
 	Directives _directives;
+	EnumValues _enumValues;
+	ScalarTypes _scalarTypes;
 
 	ExecutableNodes _fragmentDefinitions;
 	ExecutableNodes _operationDefinitions;
@@ -199,6 +214,7 @@ private:
 	FragmentSet _fragmentCycles;
 	size_t _fieldCount = 0;
 	TypeFields _typeFields;
+	InputTypeFields _inputTypeFields;
 	std::string _scopedType;
 	std::map<std::string, ValidateField> _selectionFields;
 };

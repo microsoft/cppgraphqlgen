@@ -1184,3 +1184,91 @@ TEST_F(ValidationExamplesCase, CounterExample144)
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(R"js({"message":"Incompatible fragment spread target type: Sentient name: sentientFragment","locations":[{"line":2,"column":7}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
+
+TEST_F(ValidationExamplesCase, Example145)
+{
+	// http://spec.graphql.org/June2018/#example-7ee0e
+	auto query = R"(fragment goodBooleanArg on Arguments {
+			booleanArgField(booleanArg: true)
+		}
+
+		fragment coercedIntIntoFloatArg on Arguments {
+			# Note: The input coercion rules for Float allow Int literals.
+			floatArgField(floatArg: 123)
+		}
+
+		query goodComplexDefaultValue($search: ComplexInput = { name: "Fido" }) {
+			findDog(complex: $search)
+
+			arguments {
+				...goodBooleanArg
+				...coercedIntIntoFloatArg
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample146)
+{
+	// http://spec.graphql.org/June2018/#example-3a7c1
+	auto query = R"(fragment stringIntoInt on Arguments {
+			intArgField(intArg: "123")
+		}
+
+		query badComplexValue {
+			findDog(complex: { name: 123 })
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 5) << "2 expected values + 2 incompatible arguments + 1 unused fragment";
+	ASSERT_GE(errors.size(), size_t{ 4 });
+	EXPECT_EQ(R"js({"message":"Expected Int value","locations":[{"line":2,"column":24}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Incompatible argument type: Arguments field: intArgField name: intArg","locations":[{"line":2,"column":16}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Expected String value","locations":[{"line":6,"column":29}]})js", response::toJSON(std::move(errors[2]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Incompatible argument type: Query field: findDog name: complex","locations":[{"line":6,"column":12}]})js", response::toJSON(std::move(errors[3]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example147)
+{
+	// http://spec.graphql.org/June2018/#example-a940b
+	auto query = R"({
+			findDog(complex: { name: "Fido" })
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample148)
+{
+	// http://spec.graphql.org/June2018/#example-1a5f6
+	auto query = R"({
+			findDog(complex: { favoriteCookieFlavor: "Bacon" })
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 2 });
+	EXPECT_EQ(R"js({"message":"Undefined Input Object field type: ComplexInput name: favoriteCookieFlavor","locations":[{"line":2,"column":45}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Incompatible argument type: Query field: findDog name: complex","locations":[{"line":2,"column":12}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample149)
+{
+	// http://spec.graphql.org/June2018/#example-5d541
+	auto query = R"({
+			findDog(complex: { name: "Fido", name: "Fido" })
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 conflicting field";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Conflicting input field name: name","locations":[{"line":2,"column":37}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}

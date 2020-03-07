@@ -89,6 +89,16 @@ std::future<response::Value> ModifiedResult<validation::CatCommand>::convert(ser
 		});
 }
 
+template <>
+validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(const response::Value& value)
+{
+	auto valueName = service::ModifiedArgument<response::StringType>::require("name", value);
+
+	return {
+		std::move(valueName)
+	};
+}
+
 } /* namespace service */
 
 namespace validation {
@@ -103,6 +113,7 @@ Query::Query()
 		{ "pet", [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
 		{ "catOrDog", [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
 		{ "arguments", [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
+		{ "findDog", [this](service::ResolverParams&& params) { return resolveFindDog(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
@@ -181,6 +192,21 @@ std::future<response::Value> Query::resolveArguments(service::ResolverParams&& p
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<response::StringType>> Query::getFindDog(service::FieldParams&&, ComplexInput&&) const
+{
+	throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveFindDog(service::ResolverParams&& params)
+{
+	auto argComplex = service::ModifiedArgument<ComplexInput>::require("complex", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getFindDog(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argComplex));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
@@ -780,6 +806,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("DogCommand", typeDogCommand);
 	auto typeCatCommand = std::make_shared<introspection::EnumType>("CatCommand", R"md()md");
 	schema->AddType("CatCommand", typeCatCommand);
+	auto typeComplexInput = std::make_shared<introspection::InputObjectType>("ComplexInput", R"md(Support for [Example 145](http://spec.graphql.org/June2018/#example-7ee0e) - [Counter Example 146](http://spec.graphql.org/June2018/#example-3a7c1))md");
+	schema->AddType("ComplexInput", typeComplexInput);
 	auto typeCatOrDog = std::make_shared<introspection::UnionType>("CatOrDog", R"md()md");
 	schema->AddType("CatOrDog", typeCatOrDog);
 	auto typeDogOrHuman = std::make_shared<introspection::UnionType>("DogOrHuman", R"md()md");
@@ -820,6 +848,10 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		{ std::string{ service::s_namesCatCommand[static_cast<size_t>(validation::CatCommand::JUMP)] }, R"md()md", std::nullopt }
 	});
 
+	typeComplexInput->AddInputValues({
+		std::make_shared<introspection::InputValue>("name", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+	});
+
 	typeCatOrDog->AddPossibleTypes({
 		schema->LookupType("Cat"),
 		schema->LookupType("Dog")
@@ -845,7 +877,10 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("human", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human")),
 		std::make_shared<introspection::Field>("pet", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Pet")),
 		std::make_shared<introspection::Field>("catOrDog", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog")),
-		std::make_shared<introspection::Field>("arguments", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments"))
+		std::make_shared<introspection::Field>("arguments", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments")),
+		std::make_shared<introspection::Field>("findDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("complex", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ComplexInput")), R"gql()gql")
+		}), schema->LookupType("String"))
 	});
 	typeDog->AddInterfaces({
 		typePet

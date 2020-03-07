@@ -102,3 +102,13 @@ extend type Query {
 extend type Human {
   pets: [Pet!]!
 }
+
+"Support for [Example 145](http://spec.graphql.org/June2018/#example-7ee0e) - [Counter Example 146](http://spec.graphql.org/June2018/#example-3a7c1)"
+input ComplexInput {
+  name: String!
+}
+
+# http://spec.graphql.org/June2018/#example-7ee0e - http://spec.graphql.org/June2018/#example-3a7c1
+extend type Query {
+  findDog(complex: ComplexInput!): String
+}

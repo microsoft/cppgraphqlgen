@@ -78,7 +78,8 @@ ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentMap&& value)
 {
 }
 
-ValidateArgumentValueVisitor::ValidateArgumentValueVisitor()
+ValidateArgumentValueVisitor::ValidateArgumentValueVisitor(std::vector<schema_error>& errors)
+	: _errors(errors)
 {
 }
 
@@ -132,7 +133,7 @@ void ValidateArgumentValueVisitor::visit(const peg::ast_node& value)
 
 void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 {
-	ValidateArgumentVariable value { std::string { variable.string_view().substr(1) } };
+	ValidateArgumentVariable value{ std::string { variable.string_view().substr(1) } };
 	auto position = variable.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -141,7 +142,7 @@ void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 
 void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	response::IntType value { std::atoi(intValue.string().c_str()) };
+	response::IntType value{ std::atoi(intValue.string().c_str()) };
 	auto position = intValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -150,7 +151,7 @@ void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 
 void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	response::FloatType value { std::atof(floatValue.string().c_str()) };
+	response::FloatType value{ std::atof(floatValue.string().c_str()) };
 	auto position = floatValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -159,7 +160,7 @@ void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatVal
 
 void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	response::StringType value { stringValue.unescaped };
+	response::StringType value{ stringValue.unescaped };
 	auto position = stringValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -168,7 +169,7 @@ void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringV
 
 void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	response::BooleanType value { booleanValue.is_type<peg::true_keyword>() };
+	response::BooleanType value{ booleanValue.is_type<peg::true_keyword>() };
 	auto position = booleanValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -185,7 +186,7 @@ void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue
 
 void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	ValidateArgumentEnumValue value { enumValue.string() };
+	ValidateArgumentEnumValue value{ enumValue.string() };
 	auto position = enumValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -201,7 +202,7 @@ void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue
 
 	for (const auto& child : listValue.children)
 	{
-		ValidateArgumentValueVisitor visitor;
+		ValidateArgumentValueVisitor visitor(_errors);
 
 		visitor.visit(*child);
 		value.values.emplace_back(visitor.getArgumentValue());
@@ -218,10 +219,25 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 
 	for (const auto& field : objectValue.children)
 	{
-		ValidateArgumentValueVisitor visitor;
+		auto name = field->children.front()->string();
+
+		if (value.values.find(name) != value.values.end())
+		{
+			// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Uniqueness
+			auto position = field->begin();
+			std::ostringstream message;
+
+			message << "Conflicting input field name: " << name;
+
+			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			continue;
+		}
+
+
+		ValidateArgumentValueVisitor visitor(_errors);
 
 		visitor.visit(*field->children.back());
-		value.values[field->children.front()->string()] = visitor.getArgumentValue();
+		value.values[std::move(name)] = visitor.getArgumentValue();
 	}
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -261,6 +277,9 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 					name
 					kind
 					possibleTypes {
+						name
+					}
+					enumValues(includeDeprecated: true) {
 						name
 					}
 				}
@@ -404,6 +423,51 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 									}
 								}
 							}
+						}
+						else if (kind == introspection::TypeKind::ENUM)
+						{
+							auto itrEnumValues = std::find_if(typeMembers.begin(), typeMembers.end(),
+								[](const std::pair<std::string, response::Value>& entry) noexcept
+							{
+								return entry.first == R"gql(enumValues)gql";
+							});
+
+							if (itrEnumValues != typeMembers.end()
+								&& itrEnumValues->second.type() == response::Type::List)
+							{
+								std::set<std::string> enumValues;
+								auto enumValuesEntries = itrEnumValues->second.release<response::ListType>();
+
+								for (auto& enumValuesEntry : enumValuesEntries)
+								{
+									if (enumValuesEntry.type() != response::Type::Map)
+									{
+										continue;
+									}
+
+									auto enumValuesMembers = enumValuesEntry.release<response::MapType>();
+									auto itrEnumValuesName = std::find_if(enumValuesMembers.begin(), enumValuesMembers.end(),
+										[](const std::pair<std::string, response::Value>& entry) noexcept
+									{
+										return entry.first == R"gql(name)gql";
+									});
+
+									if (itrEnumValuesName != enumValuesMembers.end()
+										&& itrEnumValuesName->second.type() == response::Type::String)
+									{
+										enumValues.insert(itrEnumValuesName->second.release<response::StringType>());
+									}
+								}
+
+								if (!enumValues.empty())
+								{
+									_enumValues[name] = std::move(enumValues);
+								}
+							}
+						}
+						else if (kind == introspection::TypeKind::SCALAR)
+						{
+							_scalarTypes.insert(name);
 						}
 
 						_typeKinds[std::move(name)] = kind;
@@ -606,7 +670,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			message << "Unused fragment definition name: " << fragmentDefinition.first;
 
-			return schema_error { message.str(), { position.line, position.byte_in_line } };
+			return schema_error{ message.str(), { position.line, position.byte_in_line } };
 		});
 	}
 }
@@ -641,7 +705,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
-		message << (itrKind == _typeKinds.end() 
+		message << (itrKind == _typeKinds.end()
 			? "Undefined target type on fragment definition: "
 			: "Scalar target type on fragment definition: ") << name
 			<< " name: " << innerType;
@@ -715,9 +779,9 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 		peg::on_first_child<peg::operation_name>(operationDefinition,
 			[&name](const peg::ast_node& child)
-			{
-				name = child.string_view();
-			});
+		{
+			name = child.string_view();
+		});
 
 		auto position = operationDefinition.begin();
 		std::ostringstream error;
@@ -855,6 +919,330 @@ bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 	return false;
 }
 
+bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePtr& argument, const ValidateType& type)
+{
+	if (type.type() != response::Type::Map)
+	{
+		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		_errors.push_back({ "Unknown input type", argument.position });
+		return false;
+	}
+
+	if (argument.value
+		&& std::holds_alternative<ValidateArgumentVariable>(argument.value->data))
+	{
+		// NYI: Collect variable types. A variable can match anything for now.
+		return true;
+	}
+
+	auto itrKind = type.find(R"gql(kind)gql");
+
+	if (itrKind == type.end()
+		|| itrKind->second.type() != response::Type::EnumValue)
+	{
+		_errors.push_back({ "Unknown input type", argument.position });
+		return false;
+	}
+
+	auto kind = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+
+	if (!argument.value)
+	{
+		// The null literal matches any nullable type and does not match a non-nullable type.
+		if (kind == introspection::TypeKind::NON_NULL)
+		{
+			_errors.push_back({ "Expected Non-Null value", argument.position });
+			return false;
+		}
+
+		return true;
+	}
+
+	switch (kind)
+	{
+		case introspection::TypeKind::NON_NULL:
+		{
+			// Unwrap and check the next one.
+			auto itrOfType = type.find(R"gql(ofType)gql");
+
+			if (itrOfType == type.end()
+				|| itrOfType->second.type() != response::Type::Map)
+			{
+				_errors.push_back({ "Unknown Non-Null type", argument.position });
+				return false;
+			}
+
+			return validateInputValue(argument, itrOfType->second);
+		}
+
+		case introspection::TypeKind::LIST:
+		{
+			if (!std::holds_alternative<ValidateArgumentList>(argument.value->data))
+			{
+				_errors.push_back({ "Expected List value", argument.position });
+				return false;
+			}
+
+			auto itrOfType = type.find(R"gql(ofType)gql");
+
+			if (itrOfType == type.end()
+				|| itrOfType->second.type() != response::Type::Map)
+			{
+				_errors.push_back({ "Unknown List type", argument.position });
+				return false;
+			}
+
+			// Check every value against the target type.
+			for (const auto& value : std::get<ValidateArgumentList>(argument.value->data).values)
+			{
+				if (!validateInputValue(value, itrOfType->second))
+				{
+					// Error messages are added in the recursive call, so just bubble up the result.
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		case introspection::TypeKind::INPUT_OBJECT:
+		{
+			auto itrName = type.find(R"gql(name)gql");
+
+			if (itrName == type.end()
+				|| itrName->second.type() != response::Type::String)
+			{
+				_errors.push_back({ "Unknown Input Object type", argument.position });
+				return false;
+			}
+
+			const auto& name = itrName->second.get<response::StringType>();
+
+			if (!std::holds_alternative<ValidateArgumentMap>(argument.value->data))
+			{
+				std::ostringstream message;
+
+				message << "Expected Input Object value name: " << name;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			auto itrFields = getInputTypeFields(name);
+
+			if (itrFields == _inputTypeFields.end())
+			{
+				std::ostringstream message;
+
+				message << "Expected Input Object fields name: " << name;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
+			std::set<std::string> subFields;
+
+			// Check every value against the target type.
+			for (const auto& entry : values)
+			{
+				auto itrField = itrFields->second.find(entry.first);
+
+				if (itrField == itrFields->second.end())
+				{
+					// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Names
+					std::ostringstream message;
+
+					message << "Undefined Input Object field type: " << name
+						<< " name: " << entry.first;
+
+					_errors.push_back({ message.str(), entry.second.position });
+					return false;
+				}
+
+				if (entry.second.value
+					|| !itrField->second.defaultValue)
+				{
+					if (!validateInputValue(entry.second, itrField->second.type))
+					{
+						// Error messages are added in the recursive call, so just bubble up the result.
+						return false;
+					}
+				}
+
+				subFields.insert(entry.first);
+			}
+
+			// See if all required fields were specified.
+			for (const auto& entry : itrFields->second)
+			{
+				if (entry.second.defaultValue
+					|| subFields.find(entry.first) != subFields.end())
+				{
+					continue;
+				}
+
+				auto itrFieldKind = entry.second.type.find(R"gql(kind)gql");
+
+				if (itrFieldKind == entry.second.type.end()
+					|| itrFieldKind->second.type() != response::Type::EnumValue)
+				{
+					std::ostringstream message;
+
+					message << "Unknown Input Object field type: " << name
+						<< " name: " << entry.first;
+
+					_errors.push_back({ message.str(), argument.position });
+					return false;
+				}
+
+				auto fieldKind = ModifiedArgument<introspection::TypeKind>::convert(itrFieldKind->second);
+
+				if (fieldKind == introspection::TypeKind::NON_NULL)
+				{
+					// http://spec.graphql.org/June2018/#sec-Input-Object-Required-Fields
+					std::ostringstream message;
+
+					message << "Missing Input Object field type: " << name
+						<< " name: " << entry.first;
+
+					_errors.push_back({ message.str(), argument.position });
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		case introspection::TypeKind::ENUM:
+		{
+			auto itrName = type.find(R"gql(name)gql");
+
+			if (itrName == type.end()
+				|| itrName->second.type() != response::Type::String)
+			{
+				_errors.push_back({ "Unknown Enum value", argument.position });
+				return false;
+			}
+
+			const auto& name = itrName->second.get<response::StringType>();
+
+			if (!std::holds_alternative<ValidateArgumentEnumValue>(argument.value->data))
+			{
+				std::ostringstream message;
+
+				message << "Expected Enum value name: " << name;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			const auto& value = std::get<ValidateArgumentEnumValue>(argument.value->data).value;
+			auto itrEnumValues = _enumValues.find(name);
+
+			if (itrEnumValues == _enumValues.end()
+				|| itrEnumValues->second.find(value) == itrEnumValues->second.end())
+			{
+				std::ostringstream message;
+
+				message << "Undefined Enum value type: " << name
+					<< " name: " << value;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			return true;
+		}
+
+		case introspection::TypeKind::SCALAR:
+		{
+			auto itrName = type.find(R"gql(name)gql");
+
+			if (itrName == type.end()
+				|| itrName->second.type() != response::Type::String)
+			{
+				_errors.push_back({ "Unknown Scalar value", argument.position });
+				return false;
+			}
+
+			const auto& name = itrName->second.get<response::StringType>();
+			
+			if (name == R"gql(Int)gql")
+			{
+				if (!std::holds_alternative<response::IntType>(argument.value->data))
+				{
+					_errors.push_back({ "Expected Int value", argument.position });
+					return false;
+				}
+			}
+			else if (name == R"gql(Float)gql")
+			{
+				if (!std::holds_alternative<response::FloatType>(argument.value->data)
+					&& !std::holds_alternative<response::IntType>(argument.value->data))
+				{
+					_errors.push_back({ "Expected Float value", argument.position });
+					return false;
+				}
+			}
+			else if (name == R"gql(String)gql")
+			{
+				if (!std::holds_alternative<response::StringType>(argument.value->data))
+				{
+					_errors.push_back({ "Expected String value", argument.position });
+					return false;
+				}
+			}
+			else if (name == R"gql(ID)gql")
+			{
+				if (std::holds_alternative<response::StringType>(argument.value->data))
+				{
+					try
+					{
+						const auto& value = std::get<response::StringType>(argument.value->data);
+						auto decoded = Base64::fromBase64(value.data(), value.size());
+
+						return true;
+					}
+					catch (const schema_exception&)
+					{
+						// Eat the exception and fail validation
+					}
+				}
+
+				_errors.push_back({ "Expected ID value", argument.position });
+				return false;
+			}
+			else if (name == R"gql(Boolean)gql")
+			{
+				if (!std::holds_alternative<response::BooleanType>(argument.value->data))
+				{
+					_errors.push_back({ "Expected Boolean value", argument.position });
+					return false;
+				}
+			}
+
+			if (_scalarTypes.find(name) == _scalarTypes.end())
+			{
+				std::ostringstream message;
+
+				message << "Undefined Scalar type name: " << name;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			return true;
+		}
+
+		default:
+		{
+			_errors.push_back({ "Unexpected value type", argument.position });
+			return false;
+		}
+	}
+}
+
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::getScopedTypeFields()
 {
 	auto typeKind = getScopedTypeKind();
@@ -911,7 +1299,6 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 			nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
 
 			members = itrResponse->second.release<response::MapType>();
-
 			itrResponse = std::find_if(members.begin(), members.end(),
 				[](const std::pair<std::string, response::Value>& entry) noexcept
 			{
@@ -1027,7 +1414,70 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	return itrType;
 }
 
-std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, const std::string& name)
+ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::getInputTypeFields(const std::string& name)
+{
+	auto typeKind = getTypeKind(name);
+	auto itrType = _inputTypeFields.find(name);
+
+	if (itrType == _inputTypeFields.cend()
+		&& typeKind
+		&& *typeKind == introspection::TypeKind::INPUT_OBJECT)
+	{
+		std::ostringstream oss;
+
+		oss << R"gql(query {
+					__type(name: ")gql" << name << R"gql(") {
+						inputFields {
+							name
+							defaultValue
+							type {
+								...nestedType
+							}
+						}
+					}
+				}
+
+			fragment nestedType on __Type {
+				kind
+				name
+				ofType {
+					...nestedType
+				}
+			})gql";
+
+		auto data = executeQuery(oss.str());
+		auto members = data.release<response::MapType>();
+		auto itrResponse = std::find_if(members.begin(), members.end(),
+			[](const std::pair<std::string, response::Value>& entry) noexcept
+		{
+			return entry.first == R"gql(__type)gql";
+		});
+
+		if (itrResponse != members.end()
+			&& itrResponse->second.type() == response::Type::Map)
+		{
+			std::map<std::string, ValidateTypeField> fields;
+
+			members = itrResponse->second.release<response::MapType>();
+			itrResponse = std::find_if(members.begin(), members.end(),
+				[](const std::pair<std::string, response::Value>& entry) noexcept
+			{
+				return entry.first == R"gql(inputFields)gql";
+			});
+
+			if (itrResponse != members.end()
+				&& itrResponse->second.type() == response::Type::List)
+			{
+				itrType = _inputTypeFields.insert({ name, getArguments(itrResponse->second.release<response::ListType>()) }).first;
+			}
+		}
+	}
+
+	return itrType;
+}
+
+template <class _FieldTypes>
+std::string ValidateExecutableVisitor::getFieldType(const _FieldTypes& fields, const std::string& name)
 {
 	std::string result;
 	auto itrType = fields.find(name);
@@ -1040,9 +1490,9 @@ std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, co
 	// Iteratively expand nested types till we get the underlying field type.
 	const std::string nameMember{ R"gql(name)gql" };
 	const std::string ofTypeMember{ R"gql(ofType)gql" };
-	auto itrName = itrType->second.returnType.find(nameMember);
-	auto itrOfType = itrType->second.returnType.find(ofTypeMember);
-	auto itrEnd = itrType->second.returnType.end();
+	auto itrName = getValidateFieldType(itrType->second).find(nameMember);
+	auto itrOfType = getValidateFieldType(itrType->second).find(ofTypeMember);
+	auto itrEnd = getValidateFieldType(itrType->second).end();
 
 	do
 	{
@@ -1067,7 +1517,18 @@ std::string ValidateExecutableVisitor::getFieldType(const FieldTypes& fields, co
 	return result;
 }
 
-std::string ValidateExecutableVisitor::getWrappedFieldType(const FieldTypes& fields, const std::string& name)
+const ValidateType& ValidateExecutableVisitor::getValidateFieldType(const FieldTypes::mapped_type& value)
+{
+	return value.returnType;
+}
+
+const ValidateType& ValidateExecutableVisitor::getValidateFieldType(const InputFieldTypes::mapped_type& value)
+{
+	return value.type;
+}
+
+template <class _FieldTypes>
+std::string ValidateExecutableVisitor::getWrappedFieldType(const _FieldTypes& fields, const std::string& name)
 {
 	std::string result;
 	auto itrType = fields.find(name);
@@ -1077,7 +1538,7 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(const FieldTypes& fie
 		return result;
 	}
 
-	result = getWrappedFieldType(itrType->second.returnType);
+	result = getWrappedFieldType(getValidateFieldType(itrType->second));
 
 	return result;
 }
@@ -1085,7 +1546,7 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(const FieldTypes& fie
 std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& returnType)
 {
 	// Recursively expand nested types till we get the underlying field type.
-	const std::string nameMember { R"gql(name)gql" };
+	const std::string nameMember{ R"gql(name)gql" };
 	auto itrName = returnType.find(nameMember);
 	auto itrEnd = returnType.end();
 
@@ -1096,8 +1557,8 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& r
 	}
 
 	std::ostringstream oss;
-	const std::string kindMember { R"gql(kind)gql" };
-	const std::string ofTypeMember { R"gql(ofType)gql" };
+	const std::string kindMember{ R"gql(kind)gql" };
+	const std::string ofTypeMember{ R"gql(ofType)gql" };
 	auto itrKind = returnType.find(kindMember);
 	auto itrOfType = returnType.find(ofTypeMember);
 
@@ -1253,7 +1714,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				continue;
 			}
 
-			ValidateArgumentValueVisitor visitor;
+			ValidateArgumentValueVisitor visitor(_errors);
 
 			visitor.visit(*argument->children.back());
 			validateArguments[argumentName] = visitor.getArgumentValue();
@@ -1315,12 +1776,6 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 		for (auto& argument : itrField->second.arguments)
 		{
-			if (argument.second.defaultValue)
-			{
-				// The argument has a default value.
-				continue;
-			}
-
 			auto itrArgument = validateField.arguments.find(argument.first);
 			const bool missing = itrArgument == validateField.arguments.end();
 
@@ -1328,6 +1783,23 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				&& itrArgument->second.value)
 			{
 				// The value was not null.
+				if (!validateInputValue(itrArgument->second, argument.second.type))
+				{
+					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+					std::ostringstream message;
+
+					message << "Incompatible argument type: " << _scopedType
+						<< " field: " << name
+						<< " name: " << argument.first;
+
+					_errors.push_back({ message.str(), argumentLocations[argument.first] });
+				}
+
+				continue;
+			}
+			else if (argument.second.defaultValue)
+			{
+				// The argument has a default value.
 				continue;
 			}
 
@@ -1598,7 +2070,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					continue;
 				}
 
-				ValidateArgumentValueVisitor visitor;
+				ValidateArgumentValueVisitor visitor(_errors);
 
 				visitor.visit(*argument->children.back());
 				validateArguments[argumentName] = visitor.getArgumentValue();
@@ -1628,12 +2100,6 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 
 			for (auto& argument : itrDirective->second.arguments)
 			{
-				if (argument.second.defaultValue)
-				{
-					// The argument has a default value.
-					continue;
-				}
-
 				auto itrArgument = validateArguments.find(argument.first);
 				const bool missing = itrArgument == validateArguments.end();
 
@@ -1641,6 +2107,22 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					&& itrArgument->second.value)
 				{
 					// The value was not null.
+					if (!validateInputValue(itrArgument->second, argument.second.type))
+					{
+						// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+						std::ostringstream message;
+
+						message << "Incompatible argument directive: " << directiveName
+							<< " name: " << argument.first;
+
+						_errors.push_back({ message.str(), argumentLocations[argument.first] });
+					}
+
+					continue;
+				}
+				else if (argument.second.defaultValue)
+				{
+					// The argument has a default value.
 					continue;
 				}
 

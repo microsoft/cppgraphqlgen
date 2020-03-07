@@ -33,6 +33,11 @@ enum class CatCommand
 	JUMP
 };
 
+struct ComplexInput
+{
+	response::StringType name;
+};
+
 namespace object {
 
 class Query;
@@ -75,6 +80,7 @@ public:
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::optional<response::StringType>> getFindDog(service::FieldParams&& params, ComplexInput&& complexArg) const;
 
 private:
 	std::future<response::Value> resolveDog(service::ResolverParams&& params);
@@ -82,6 +88,7 @@ private:
 	std::future<response::Value> resolvePet(service::ResolverParams&& params);
 	std::future<response::Value> resolveCatOrDog(service::ResolverParams&& params);
 	std::future<response::Value> resolveArguments(service::ResolverParams&& params);
+	std::future<response::Value> resolveFindDog(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
