@@ -1923,7 +1923,7 @@ std::string ValidateExecutableVisitor::getFieldType(const _FieldTypes& fields, c
 		if (itrName != itrEnd
 			&& itrName->second.type() == response::Type::String)
 		{
-			result = itrName->second.get<response::StringType>();
+			result = itrName->second.template get<response::StringType>();
 		}
 		else if (itrOfType != itrEnd
 			&& itrOfType->second.type() == response::Type::Map)
