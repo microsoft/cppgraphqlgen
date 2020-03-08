@@ -928,6 +928,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				}
 
 				variableArgument.defaultValue = true;
+				variableArgument.nonNullDefaultValue = argument.value != nullptr;
 			}
 		}
 		
@@ -1068,6 +1069,8 @@ ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(response::Lis
 
 			argument.defaultValue = (itrDefaultValue != members.end()
 				&& itrDefaultValue->second.type() == response::Type::String);
+			argument.nonNullDefaultValue = argument.defaultValue
+				&& itrDefaultValue->second.get<response::StringType>() != R"gql(null)gql";
 			argument.type = std::move(itrType->second);
 
 			result[itrName->second.release<response::StringType>()] = std::move(argument);
@@ -1159,7 +1162,7 @@ bool ValidateExecutableVisitor::validateInputValue(bool hasNonNullDefaultValue, 
 
 			_referencedVariables.insert(variable.name);
 
-			return validateVariableType(hasNonNullDefaultValue || itrVariable->second.defaultValue, itrVariable->second.type, argument.position, type);
+			return validateVariableType(hasNonNullDefaultValue || itrVariable->second.nonNullDefaultValue, itrVariable->second.type, argument.position, type);
 		}
 		else
 		{
@@ -1299,7 +1302,7 @@ bool ValidateExecutableVisitor::validateInputValue(bool hasNonNullDefaultValue, 
 				if (entry.second.value
 					|| !itrField->second.defaultValue)
 				{
-					if (!validateInputValue(itrField->second.defaultValue, entry.second, itrField->second.type))
+					if (!validateInputValue(itrField->second.nonNullDefaultValue, entry.second, itrField->second.type))
 					{
 						// Error messages are added in the recursive call, so just bubble up the result.
 						return false;
@@ -2210,7 +2213,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				&& itrArgument->second.value)
 			{
 				// The value was not null.
-				if (!validateInputValue(argument.second.defaultValue, itrArgument->second, argument.second.type))
+				if (!validateInputValue(argument.second.nonNullDefaultValue, itrArgument->second, argument.second.type))
 				{
 					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 					std::ostringstream message;
@@ -2588,7 +2591,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					&& itrArgument->second.value)
 				{
 					// The value was not null.
-					if (!validateInputValue(argument.second.defaultValue, itrArgument->second, argument.second.type))
+					if (!validateInputValue(argument.second.nonNullDefaultValue, itrArgument->second, argument.second.type))
 					{
 						// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 						std::ostringstream message;

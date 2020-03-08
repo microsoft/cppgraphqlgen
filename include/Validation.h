@@ -16,6 +16,7 @@ using ValidateType = response::Value;
 struct ValidateArgument
 {
 	bool defaultValue = false;
+	bool nonNullDefaultValue = false;
 	ValidateType type;
 };
 
