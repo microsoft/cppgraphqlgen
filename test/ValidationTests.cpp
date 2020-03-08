@@ -73,7 +73,7 @@ TEST_F(ValidationExamplesCase, Example92)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -131,7 +131,7 @@ TEST_F(ValidationExamplesCase, Example95)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -169,7 +169,7 @@ TEST_F(ValidationExamplesCase, Example97)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -188,7 +188,7 @@ TEST_F(ValidationExamplesCase, Example98)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -280,7 +280,7 @@ TEST_F(ValidationExamplesCase, Example103)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -318,7 +318,7 @@ TEST_F(ValidationExamplesCase, Example105)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -359,7 +359,7 @@ TEST_F(ValidationExamplesCase, Example107)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -398,13 +398,13 @@ TEST_F(ValidationExamplesCase, Example109)
 			}
 		}
 
-		query q2 {
+		query q2 ($dogCommand: DogCommand!) {
 			dog {
 				...mergeIdenticalFieldsWithIdenticalValues
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -470,7 +470,7 @@ TEST_F(ValidationExamplesCase, Example111)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -507,7 +507,7 @@ TEST_F(ValidationExamplesCase, Example113)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -548,7 +548,7 @@ TEST_F(ValidationExamplesCase, Example115)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -594,7 +594,7 @@ TEST_F(ValidationExamplesCase, Example117)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -636,7 +636,7 @@ TEST_F(ValidationExamplesCase, Example120)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -664,7 +664,7 @@ TEST_F(ValidationExamplesCase, Example121)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -687,7 +687,7 @@ TEST_F(ValidationExamplesCase, Example122)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -705,7 +705,7 @@ TEST_F(ValidationExamplesCase, Example123)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -758,7 +758,7 @@ TEST_F(ValidationExamplesCase, Example126)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -816,7 +816,7 @@ TEST_F(ValidationExamplesCase, Example128)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -867,7 +867,7 @@ TEST_F(ValidationExamplesCase, Example130)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -972,7 +972,7 @@ TEST_F(ValidationExamplesCase, Example135)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1025,7 +1025,7 @@ TEST_F(ValidationExamplesCase, Example137)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1063,7 +1063,7 @@ TEST_F(ValidationExamplesCase, Example139)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1087,7 +1087,7 @@ TEST_F(ValidationExamplesCase, Example140)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1115,7 +1115,7 @@ TEST_F(ValidationExamplesCase, Example141)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1162,7 +1162,7 @@ TEST_F(ValidationExamplesCase, Example143)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1198,7 +1198,9 @@ TEST_F(ValidationExamplesCase, Example145)
 		}
 
 		query goodComplexDefaultValue($search: ComplexInput = { name: "Fido" }) {
-			findDog(complex: $search)
+			findDog(complex: $search) {
+				name
+			}
 
 			arguments {
 				...goodBooleanArg
@@ -1206,7 +1208,7 @@ TEST_F(ValidationExamplesCase, Example145)
 			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1219,7 +1221,9 @@ TEST_F(ValidationExamplesCase, CounterExample146)
 		}
 
 		query badComplexValue {
-			findDog(complex: { name: 123 })
+			findDog(complex: { name: 123 }) {
+				name
+			}
 		})"_graphql;
 
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
@@ -1236,10 +1240,12 @@ TEST_F(ValidationExamplesCase, Example147)
 {
 	// http://spec.graphql.org/June2018/#example-a940b
 	auto query = R"({
-			findDog(complex: { name: "Fido" })
+			findDog(complex: { name: "Fido" }) {
+				name
+			}
 		})"_graphql;
 
-	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }
@@ -1248,7 +1254,9 @@ TEST_F(ValidationExamplesCase, CounterExample148)
 {
 	// http://spec.graphql.org/June2018/#example-1a5f6
 	auto query = R"({
-			findDog(complex: { favoriteCookieFlavor: "Bacon" })
+			findDog(complex: { favoriteCookieFlavor: "Bacon" }) {
+				name
+			}
 		})"_graphql;
 
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
@@ -1263,7 +1271,9 @@ TEST_F(ValidationExamplesCase, CounterExample149)
 {
 	// http://spec.graphql.org/June2018/#example-5d541
 	auto query = R"({
-			findDog(complex: { name: "Fido", name: "Fido" })
+			findDog(complex: { name: "Fido", name: "Fido" }) {
+				name
+			}
 		})"_graphql;
 
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
@@ -1300,7 +1310,7 @@ TEST_F(ValidationExamplesCase, CounterExample151)
 
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 conflicting directive";
+	EXPECT_EQ(errors.size(), 2) << "1 conflicting directive + 1 unused variable";
 	ASSERT_GE(errors.size(), size_t{ 1 });
 	EXPECT_EQ(R"js({"message":"Conflicting directive name: skip","locations":[{"line":2,"column":24}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
 }
@@ -1317,7 +1327,448 @@ TEST_F(ValidationExamplesCase, Example152)
 			}
 		})"_graphql;
 
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample153)
+{
+	// http://spec.graphql.org/June2018/#example-b767a
+	auto query = R"(query houseTrainedQuery($atOtherHomes: Boolean, $atOtherHomes: Boolean) {
+			dog {
+				isHousetrained(atOtherHomes: $atOtherHomes)
+			}
+		})"_graphql;
+
 	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 conflicting variable";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Conflicting variable operation: houseTrainedQuery name: atOtherHomes","locations":[{"line":1,"column":49}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example154)
+{
+	// http://spec.graphql.org/June2018/#example-6f6b9
+	auto query = R"(query A($atOtherHomes: Boolean) {
+			...HouseTrainedFragment
+		}
+
+		query B($atOtherHomes: Boolean) {
+			...HouseTrainedFragment
+		}
+
+		fragment HouseTrainedFragment on Query {
+			dog {
+				isHousetrained(atOtherHomes: $atOtherHomes)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example155)
+{
+	// http://spec.graphql.org/June2018/#example-f3185
+	auto query = R"(query takesComplexInput($complexInput: ComplexInput) {
+			findDog(complex: $complexInput) {
+				name
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example156)
+{
+	// http://spec.graphql.org/June2018/#example-77f18
+	auto query = R"(query takesBoolean($atOtherHomes: Boolean) {
+			dog {
+				isHousetrained(atOtherHomes: $atOtherHomes)
+			}
+		}
+
+		query takesComplexInput($complexInput: ComplexInput) {
+			findDog(complex: $complexInput) {
+				name
+			}
+		}
+
+		query TakesListOfBooleanBang($booleans: [Boolean!]) {
+			booleanList(booleanListArg: $booleans)
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample157)
+{
+	// http://spec.graphql.org/June2018/#example-aeba9
+	auto query = R"(query takesCat($cat: Cat) {
+			dog {
+				name
+			}
+		}
+
+		query takesDogBang($dog: Dog!) {
+			dog {
+				name
+			}
+		}
+
+		query takesListOfPet($pets: [Pet]) {
+			dog {
+				name
+			}
+		}
+
+		query takesCatOrDog($catOrDog: CatOrDog) {
+			dog {
+				name
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 4) << "4 invalid variable types";
+	ASSERT_GE(errors.size(), size_t{ 4 });
+	EXPECT_EQ(R"js({"message":"Invalid variable type operation: takesCat name: cat","locations":[{"line":1,"column":22}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Invalid variable type operation: takesDogBang name: dog","locations":[{"line":7,"column":28}]})js", response::toJSON(std::move(errors[1]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Invalid variable type operation: takesListOfPet name: pets","locations":[{"line":13,"column":31}]})js", response::toJSON(std::move(errors[2]))) << "error should match";
+	EXPECT_EQ(R"js({"message":"Invalid variable type operation: takesCatOrDog name: catOrDog","locations":[{"line":19,"column":34}]})js", response::toJSON(std::move(errors[3]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example158)
+{
+	// http://spec.graphql.org/June2018/#example-a5099
+	auto query = R"(query variableIsDefined($atOtherHomes: Boolean) {
+			dog {
+				isHousetrained(atOtherHomes: $atOtherHomes)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample159)
+{
+	// http://spec.graphql.org/June2018/#example-c8425
+	auto query = R"(query variableIsNotDefined {
+			dog {
+				isHousetrained(atOtherHomes: $atOtherHomes)
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":3,"column":34}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example160)
+{
+	// http://spec.graphql.org/June2018/#example-f4a77
+	auto query = R"(query variableIsDefinedUsedInSingleFragment($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample161)
+{
+	// http://spec.graphql.org/June2018/#example-8c8db
+	auto query = R"(query variableIsNotDefinedUsedInSingleFragment {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":8,"column":33}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample162)
+{
+	// http://spec.graphql.org/June2018/#example-7b65c
+	auto query = R"(query variableIsNotDefinedUsedInNestedFragment {
+			dog {
+				...outerHousetrainedFragment
+			}
+		}
+
+		fragment outerHousetrainedFragment on Dog {
+			...isHousetrainedFragment
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":12,"column":33}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example163)
+{
+	// http://spec.graphql.org/June2018/#example-84129
+	auto query = R"(query housetrainedQueryOne($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		query housetrainedQueryTwo($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample164)
+{
+	// http://spec.graphql.org/June2018/#example-ef68a
+	auto query = R"(query housetrainedQueryOne($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		query housetrainedQueryTwoNotDefined {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":14,"column":33}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample165)
+{
+	// http://spec.graphql.org/June2018/#example-516af
+	auto query = R"(query variableUnused($atOtherHomes: Boolean) {
+			dog {
+				isHousetrained
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Unused variable name: atOtherHomes","locations":[{"line":1,"column":22}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example166)
+{
+	// http://spec.graphql.org/June2018/#example-ed1fa
+	auto query = R"(query variableUsedInFragment($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample167)
+{
+	// http://spec.graphql.org/June2018/#example-f6c72
+	auto query = R"(query variableNotUsedWithinFragment($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedWithoutVariableFragment
+			}
+		}
+
+		fragment isHousetrainedWithoutVariableFragment on Dog {
+			isHousetrained
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Unused variable name: atOtherHomes","locations":[{"line":1,"column":37}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample168)
+{
+	// http://spec.graphql.org/June2018/#example-5593f
+	auto query = R"(query queryWithUsedVar($atOtherHomes: Boolean) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		query queryWithExtraVar($atOtherHomes: Boolean, $extra: Int) {
+			dog {
+				...isHousetrainedFragment
+			}
+		}
+
+		fragment isHousetrainedFragment on Dog {
+			isHousetrained(atOtherHomes: $atOtherHomes)
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Unused variable name: extra","locations":[{"line":7,"column":51}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample169)
+{
+	// http://spec.graphql.org/June2018/#example-2028e
+	auto query = R"(query intCannotGoIntoBoolean($intArg: Int) {
+			arguments {
+				booleanArgField(booleanArg: $intArg)
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Incompatible variable type: Int name: Boolean","locations":[{"line":3,"column":33}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample170)
+{
+	// http://spec.graphql.org/June2018/#example-8d369
+	auto query = R"(query booleanListCannotGoIntoBoolean($booleanListArg: [Boolean]) {
+			arguments {
+				booleanArgField(booleanArg: $booleanListArg)
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Expected Scalar variable type","locations":[{"line":3,"column":33}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, CounterExample171)
+{
+	// http://spec.graphql.org/June2018/#example-ed727
+	auto query = R"(query booleanArgQuery($booleanArg: Boolean) {
+			arguments {
+				nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Expected Non-Null variable type","locations":[{"line":3,"column":47}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example172)
+{
+	// http://spec.graphql.org/June2018/#example-c5959
+	auto query = R"(query nonNullListToList($nonNullBooleanList: [Boolean]!) {
+			arguments {
+				booleanListArgField(booleanListArg: $nonNullBooleanList)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, CounterExample173)
+{
+	// http://spec.graphql.org/June2018/#example-64255
+	auto query = R"(query listToNonNullList($booleanList: [Boolean]) {
+			arguments {
+				nonNullBooleanListField(nonNullBooleanListArg: $booleanList)
+			}
+		})"_graphql;
+
+	auto errors = service::buildErrorValues(_service->validate(query)).release<response::ListType>();
+
+	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	ASSERT_GE(errors.size(), size_t{ 1 });
+	EXPECT_EQ(R"js({"message":"Expected Non-Null variable type","locations":[{"line":3,"column":52}]})js", response::toJSON(std::move(errors[0]))) << "error should match";
+}
+
+TEST_F(ValidationExamplesCase, Example174)
+{
+	// http://spec.graphql.org/June2018/#example-0877c
+	auto query = R"(query booleanArgQueryWithDefault($booleanArg: Boolean) {
+			arguments {
+				optionalNonNullBooleanArgField(optionalBooleanArg: $booleanArg)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example175)
+{
+	// http://spec.graphql.org/June2018/#example-d24d9
+	auto query = R"(query booleanArgQueryWithDefault($booleanArg: Boolean = true) {
+			arguments {
+				nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
 
 	ASSERT_TRUE(errors.empty());
 }

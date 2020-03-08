@@ -1274,6 +1274,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 	{
 		InputField field;
 		TypeVisitor fieldType;
+		service::schema_location defaultValueLocation;
 
 		for (const auto& child : fieldDefinition->children)
 		{
@@ -1290,6 +1291,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 			}
 			else if (child->is_type<peg::default_value>())
 			{
+				auto position = child->begin();
 				DefaultValueVisitor defaultValue;
 
 				defaultValue.visit(*child->children.back());
@@ -1297,6 +1299,8 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 				field.defaultValueString = child->children.back()->unescaped.empty() 
 					? child->children.back()->string_view()
 					: child->children.back()->unescaped;
+
+				defaultValueLocation = { position.line, position.byte_in_line };
 			}
 			else if (child->is_type<peg::description>())
 			{
@@ -1306,6 +1310,21 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 		std::tie(field.type, field.modifiers) = fieldType.getType();
 		field.position = fieldDefinition->begin();
+
+		if (!field.defaultValueString.empty()
+			&& field.defaultValue.type() == response::Type::Null
+			&& (field.modifiers.empty()
+				|| field.modifiers.front() != service::TypeModifier::Nullable))
+		{
+			std::ostringstream error;
+
+			error << "Expected Non-Null default value for field name: " << field.name
+				<< " line: " << defaultValueLocation.line
+				<< " column: " << (defaultValueLocation.byte_in_line + 1);
+
+			throw std::runtime_error(error.str());
+		}
+
 		inputFields.push_back(std::move(field));
 	}
 
@@ -3272,21 +3291,6 @@ std::string Generator::getIntrospectionType(const std::string& type, const TypeM
 
 	for (auto modifier : modifiers)
 	{
-		if (!nonNull)
-		{
-			switch (modifier)
-			{
-				case service::TypeModifier::None:
-				case service::TypeModifier::List:
-					// If the next modifier is None or List we should treat it as non-nullable.
-					nonNull = true;
-					break;
-
-				case service::TypeModifier::Nullable:
-					break;
-			}
-		}
-
 		if (nonNull)
 		{
 			switch (modifier)
@@ -3301,25 +3305,33 @@ std::string Generator::getIntrospectionType(const std::string& type, const TypeM
 				}
 
 				case service::TypeModifier::Nullable:
+				{
 					// If the next modifier is Nullable that cancels the non-nullable state.
 					nonNull = false;
 					break;
+				}
 			}
 		}
 
 		switch (modifier)
 		{
 			case service::TypeModifier::None:
-			case service::TypeModifier::Nullable:
+			{
+				nonNull = true;
 				break;
+			}
 
 			case service::TypeModifier::List:
 			{
+				nonNull = true;
 				introspectionType << R"cpp(schema->WrapType()cpp" << s_introspectionNamespace
 					<< R"cpp(::TypeKind::LIST, )cpp";
 				++wrapperCount;
 				break;
 			}
+
+			case service::TypeModifier::Nullable:
+				break;
 		}
 	}
 

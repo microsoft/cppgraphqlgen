@@ -92,10 +92,12 @@ std::future<response::Value> ModifiedResult<validation::CatCommand>::convert(ser
 template <>
 validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(const response::Value& value)
 {
-	auto valueName = service::ModifiedArgument<response::StringType>::require("name", value);
+	auto valueName = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("name", value);
+	auto valueOwner = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("owner", value);
 
 	return {
-		std::move(valueName)
+		std::move(valueName),
+		std::move(valueOwner)
 	};
 }
 
@@ -114,6 +116,7 @@ Query::Query()
 		{ "catOrDog", [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
 		{ "arguments", [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ "findDog", [this](service::ResolverParams&& params) { return resolveFindDog(std::move(params)); } },
+		{ "booleanList", [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
@@ -194,19 +197,34 @@ std::future<response::Value> Query::resolveArguments(service::ResolverParams&& p
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Query::getFindDog(service::FieldParams&&, ComplexInput&&) const
+service::FieldResult<std::shared_ptr<Dog>> Query::getFindDog(service::FieldParams&&, std::optional<ComplexInput>&&) const
 {
 	throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
 }
 
 std::future<response::Value> Query::resolveFindDog(service::ResolverParams&& params)
 {
-	auto argComplex = service::ModifiedArgument<ComplexInput>::require("complex", params.arguments);
+	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getFindDog(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argComplex));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::optional<response::BooleanType>> Query::getBooleanList(service::FieldParams&&, std::optional<std::vector<response::BooleanType>>&&) const
+{
+	throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveBooleanList(service::ResolverParams&& params)
+{
+	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getBooleanList(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanListArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
@@ -654,6 +672,7 @@ Arguments::Arguments()
 		{ "floatArgField", [this](service::ResolverParams&& params) { return resolveFloatArgField(std::move(params)); } },
 		{ "intArgField", [this](service::ResolverParams&& params) { return resolveIntArgField(std::move(params)); } },
 		{ "nonNullBooleanArgField", [this](service::ResolverParams&& params) { return resolveNonNullBooleanArgField(std::move(params)); } },
+		{ "nonNullBooleanListField", [this](service::ResolverParams&& params) { return resolveNonNullBooleanListField(std::move(params)); } },
 		{ "booleanListArgField", [this](service::ResolverParams&& params) { return resolveBooleanListArgField(std::move(params)); } },
 		{ "optionalNonNullBooleanArgField", [this](service::ResolverParams&& params) { return resolveOptionalNonNullBooleanArgField(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
@@ -737,6 +756,21 @@ std::future<response::Value> Arguments::resolveNonNullBooleanArgField(service::R
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
+service::FieldResult<std::optional<std::vector<response::BooleanType>>> Arguments::getNonNullBooleanListField(service::FieldParams&&, std::optional<std::vector<response::BooleanType>>&&) const
+{
+	throw std::runtime_error(R"ex(Arguments::getNonNullBooleanListField is not implemented)ex");
+}
+
+std::future<response::Value> Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params)
+{
+	auto argNonNullBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getNonNullBooleanListField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argNonNullBooleanListArg));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
 service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> Arguments::getBooleanListArgField(service::FieldParams&&, std::vector<std::optional<response::BooleanType>>&&) const
 {
 	throw std::runtime_error(R"ex(Arguments::getBooleanListArgField is not implemented)ex");
@@ -806,7 +840,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddType("DogCommand", typeDogCommand);
 	auto typeCatCommand = std::make_shared<introspection::EnumType>("CatCommand", R"md()md");
 	schema->AddType("CatCommand", typeCatCommand);
-	auto typeComplexInput = std::make_shared<introspection::InputObjectType>("ComplexInput", R"md(Support for [Example 145](http://spec.graphql.org/June2018/#example-7ee0e) - [Counter Example 146](http://spec.graphql.org/June2018/#example-3a7c1))md");
+	auto typeComplexInput = std::make_shared<introspection::InputObjectType>("ComplexInput", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md");
 	schema->AddType("ComplexInput", typeComplexInput);
 	auto typeCatOrDog = std::make_shared<introspection::UnionType>("CatOrDog", R"md()md");
 	schema->AddType("CatOrDog", typeCatOrDog);
@@ -849,7 +883,8 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	});
 
 	typeComplexInput->AddInputValues({
-		std::make_shared<introspection::InputValue>("name", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql")
+		std::make_shared<introspection::InputValue>("name", R"md()md", schema->LookupType("String"), R"gql()gql"),
+		std::make_shared<introspection::InputValue>("owner", R"md()md", schema->LookupType("String"), R"gql()gql")
 	});
 
 	typeCatOrDog->AddPossibleTypes({
@@ -877,10 +912,13 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("human", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human")),
 		std::make_shared<introspection::Field>("pet", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Pet")),
 		std::make_shared<introspection::Field>("catOrDog", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog")),
-		std::make_shared<introspection::Field>("arguments", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments")),
-		std::make_shared<introspection::Field>("findDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("complex", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ComplexInput")), R"gql()gql")
-		}), schema->LookupType("String"))
+		std::make_shared<introspection::Field>("arguments", R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments")),
+		std::make_shared<introspection::Field>("findDog", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("complex", R"md()md", schema->LookupType("ComplexInput"), R"gql()gql")
+		}), schema->LookupType("Dog")),
+		std::make_shared<introspection::Field>("booleanList", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("booleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql")
+		}), schema->LookupType("Boolean"))
 	});
 	typeDog->AddInterfaces({
 		typePet
@@ -909,7 +947,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	});
 	typeHuman->AddFields({
 		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("pets", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
+		std::make_shared<introspection::Field>("pets", R"md(Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
 	});
 	typeCat->AddInterfaces({
 		typePet
@@ -953,9 +991,12 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("nonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("nonNullBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<introspection::Field>("nonNullBooleanListField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("nonNullBooleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))),
 		std::make_shared<introspection::Field>("booleanListArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("booleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))), R"gql()gql")
-		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean")))),
+		}), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))),
 		std::make_shared<introspection::Field>("optionalNonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("optionalBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql(false)gql")
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))

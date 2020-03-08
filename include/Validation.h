@@ -137,6 +137,31 @@ struct ValidateField
 	ValidateFieldArguments arguments;
 };
 
+using ValidateTypeKinds = std::map<std::string, introspection::TypeKind>;
+
+// ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
+// a variable type in an operation definition as if it came from an Introspection query.
+class ValidateVariableTypeVisitor
+{
+public:
+	ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds);
+
+	void visit(const peg::ast_node& typeName);
+
+	bool isInputType() const;
+	ValidateType getType();
+
+private:
+	void visitNamedType(const peg::ast_node& namedType);
+	void visitListType(const peg::ast_node& listType);
+	void visitNonNullType(const peg::ast_node& nonNullType);
+
+	const ValidateTypeKinds& _typeKinds;
+
+	bool _isInputType = false;
+	ValidateType _variableType;
+};
+
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service schema.
 class ValidateExecutableVisitor
 {
@@ -185,22 +210,26 @@ private:
 
 	void visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives);
 
-	bool validateInputValue(const ValidateArgumentValuePtr& argument, const ValidateType& type);
+	bool validateInputValue(bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument, const ValidateType& type);
+	bool validateVariableType(bool isNonNull, const ValidateType& variableType, const schema_location& position, const ValidateType& inputType);
+
 
 	const Request& _service;
 	std::vector<schema_error> _errors;
 
 	using OperationTypes = std::map<std::string_view, std::string>;
-	using TypeKinds = std::map<std::string, introspection::TypeKind>;
 	using Directives = std::map<std::string, ValidateDirective>;
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
 	using MatchingTypes = std::map<std::string, std::set<std::string>>;
-	using VariableTypes = std::map<std::string, std::vector<ValidateArgument>>;
 	using ScalarTypes = std::set<std::string>;
+	using VariableDefinitions = std::map<std::string, const peg::ast_node&>;
+	using VariableTypes = std::map<std::string, ValidateArgument>;
+	using OperationVariables = std::optional<VariableTypes>;
+	using VariableSet = std::set<std::string>;
 
 	OperationTypes _operationTypes;
-	TypeKinds _typeKinds;
+	ValidateTypeKinds _typeKinds;
 	MatchingTypes _matchingTypes;
 	Directives _directives;
 	EnumValues _enumValues;
@@ -209,6 +238,9 @@ private:
 	ExecutableNodes _fragmentDefinitions;
 	ExecutableNodes _operationDefinitions;
 
+	OperationVariables _operationVariables;
+	VariableDefinitions _variableDefinitions;
+	VariableSet _referencedVariables;
 	FragmentSet _referencedFragments;
 	FragmentSet _fragmentStack;
 	FragmentSet _fragmentCycles;

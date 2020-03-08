@@ -89,26 +89,32 @@ type Arguments {
   floatArgField(floatArg: Float): Float
   intArgField(intArg: Int): Int
   nonNullBooleanArgField(nonNullBooleanArg: Boolean!): Boolean!
+  nonNullBooleanListField(nonNullBooleanListArg: [Boolean!]): [Boolean!]
   booleanListArgField(booleanListArg: [Boolean]!): [Boolean]
   optionalNonNullBooleanArgField(optionalBooleanArg: Boolean! = false): Boolean!
 }
 
 # http://spec.graphql.org/June2018/#example-1891c
 extend type Query {
+  "Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c)"
   arguments: Arguments
 }
 
 # http://spec.graphql.org/June2018/#example-6bbad
 extend type Human {
+  "Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad)"
   pets: [Pet!]!
 }
 
-"Support for [Example 145](http://spec.graphql.org/June2018/#example-7ee0e) - [Counter Example 146](http://spec.graphql.org/June2018/#example-3a7c1)"
+"[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
 input ComplexInput {
-  name: String!
+  name: String
+  owner: String
 }
 
-# http://spec.graphql.org/June2018/#example-7ee0e - http://spec.graphql.org/June2018/#example-3a7c1
 extend type Query {
-  findDog(complex: ComplexInput!): String
+  "[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
+  findDog(complex: ComplexInput): Dog
+  "[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
+  booleanList(booleanListArg: [Boolean!]): Boolean
 }

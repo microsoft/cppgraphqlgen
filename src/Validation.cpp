@@ -259,6 +259,101 @@ bool ValidateField::operator==(const ValidateField& other) const
 			|| (fieldName == other.fieldName && arguments == other.arguments));
 }
 
+ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds)
+	: _typeKinds(typeKinds)
+	, _variableType(response::Type::Map)
+{
+	// kind and either name or ofType
+	_variableType.reserve(2);
+}
+
+void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
+{
+	if (typeName.is_type<peg::nonnull_type>())
+	{
+		visitNonNullType(typeName);
+	}
+	else if (typeName.is_type<peg::list_type>())
+	{
+		visitListType(typeName);
+	}
+	else if (typeName.is_type<peg::named_type>())
+	{
+		visitNamedType(typeName);
+	}
+}
+
+void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
+{
+	auto name = namedType.string();
+	auto itrKind = _typeKinds.find(name);
+
+	if (itrKind == _typeKinds.end())
+	{
+		return;
+	}
+
+	response::Value kind(response::Type::EnumValue);
+
+	switch (itrKind->second)
+	{
+		case introspection::TypeKind::SCALAR:
+			kind.set<response::StringType>(R"gql(SCALAR)gql");
+			break;
+
+		case introspection::TypeKind::ENUM:
+			kind.set<response::StringType>(R"gql(ENUM)gql");
+			break;
+
+		case introspection::TypeKind::INPUT_OBJECT:
+			kind.set<response::StringType>(R"gql(INPUT_OBJECT)gql");
+			break;
+
+		default:
+			return;
+	}
+
+	_isInputType = true;
+	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
+	_variableType.emplace_back(R"gql(name)gql", response::Value(std::move(name)));
+}
+
+void ValidateVariableTypeVisitor::visitListType(const peg::ast_node& listType)
+{
+	response::Value kind(response::Type::EnumValue);
+	ValidateVariableTypeVisitor visitor(_typeKinds);
+
+	kind.set<response::StringType>(R"gql(LIST)gql");
+	visitor.visit(*listType.children.front());
+	_isInputType = visitor.isInputType();
+	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
+	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+}
+
+void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
+{
+	response::Value kind(response::Type::EnumValue);
+	ValidateVariableTypeVisitor visitor(_typeKinds);
+
+	kind.set<response::StringType>(R"gql(NON_NULL)gql");
+	visitor.visit(*nonNullType.children.front());
+	_isInputType = visitor.isInputType();
+	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
+	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+}
+
+bool ValidateVariableTypeVisitor::isInputType() const
+{
+	return _isInputType;
+}
+
+ValidateType ValidateVariableTypeVisitor::getType()
+{
+	auto result = std::move(_variableType);
+
+	return result;
+}
+
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 	: _service(service)
 {
@@ -684,16 +779,16 @@ std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 
 void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fragmentDefinition)
 {
-	const auto name = fragmentDefinition.children.front()->string();
-	const auto& selection = *fragmentDefinition.children.back();
-	const auto& typeCondition = fragmentDefinition.children[1];
-	auto innerType = typeCondition->children.front()->string();
-
 	peg::on_first_child<peg::directives>(fragmentDefinition,
 		[this](const peg::ast_node& child)
 	{
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_DEFINITION, child);
 	});
+
+	const auto name = fragmentDefinition.children.front()->string();
+	const auto& selection = *fragmentDefinition.children.back();
+	const auto& typeCondition = fragmentDefinition.children[1];
+	auto innerType = typeCondition->children.front()->string();
 
 	auto itrKind = _typeKinds.find(innerType);
 
@@ -734,18 +829,111 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		operationType = child.string_view();
 	});
 
-	auto itrType = _operationTypes.find(operationType);
+	std::string operationName;
 
-	if (itrType == _operationTypes.cend())
+	peg::on_first_child<peg::operation_name>(operationDefinition,
+		[&operationName](const peg::ast_node& child)
 	{
-		auto position = operationDefinition.begin();
-		std::ostringstream error;
+		operationName = child.string_view();
+	});
 
-		error << "Unsupported operation type: " << operationType;
+	_operationVariables = std::make_optional<VariableTypes>();
 
-		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
-		return;
-	}
+	peg::for_each_child<peg::variable>(operationDefinition,
+		[this, &operationName](const peg::ast_node& variable)
+	{
+		std::string variableName;
+		ValidateArgument variableArgument;
+
+		for (const auto& child : variable.children)
+		{
+			if (child->is_type<peg::variable_name>())
+			{
+				// Skip the $ prefix
+				variableName = child->string_view().substr(1);
+
+				if (_operationVariables->find(variableName) != _operationVariables->end())
+				{
+					// http://spec.graphql.org/June2018/#sec-Variable-Uniqueness
+					auto position = child->begin();
+					std::ostringstream message;
+
+					message << "Conflicting variable";
+
+					if (!operationName.empty())
+					{
+						message << " operation: " << operationName;
+					}
+
+					message << " name: " << variableName;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					return;
+				}
+			}
+			else if (child->is_type<peg::named_type>()
+				|| child->is_type<peg::list_type>()
+				|| child->is_type<peg::nonnull_type>())
+			{
+				ValidateVariableTypeVisitor visitor(_typeKinds);
+
+				visitor.visit(*child);
+
+				if (!visitor.isInputType())
+				{
+					// http://spec.graphql.org/June2018/#sec-Variables-Are-Input-Types
+					auto position = child->begin();
+					std::ostringstream message;
+
+					message << "Invalid variable type";
+
+					if (!operationName.empty())
+					{
+						message << " operation: " << operationName;
+					}
+
+					message << " name: " << variableName;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					return;
+				}
+
+				variableArgument.type = visitor.getType();
+			}
+			else if (child->is_type<peg::default_value>())
+			{
+				ValidateArgumentValueVisitor visitor(_errors);
+
+				visitor.visit(*child->children.back());
+
+				auto argument = visitor.getArgumentValue();
+
+				if (!validateInputValue(false, argument, variableArgument.type))
+				{
+					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+					auto position = child->begin();
+					std::ostringstream message;
+
+					message << "Incompatible variable default value";
+
+					if (!operationName.empty())
+					{
+						message << " operation: " << operationName;
+					}
+
+					message << " name: " << variableName;
+
+					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					return;
+				}
+
+				variableArgument.defaultValue = true;
+			}
+		}
+		
+		_variableDefinitions.insert({ variableName, variable });
+		_operationVariables->insert({ std::move(variableName), std::move(variableArgument) });
+	});
 
 	peg::on_first_child<peg::directives>(operationDefinition,
 		[this, &operationType](const peg::ast_node& child)
@@ -764,6 +952,19 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		visitDirectives(location, child);
 	});
 
+	auto itrType = _operationTypes.find(operationType);
+
+	if (itrType == _operationTypes.cend())
+	{
+		auto position = operationDefinition.begin();
+		std::ostringstream error;
+
+		error << "Unsupported operation type: " << operationType;
+
+		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		return;
+	}
+
 	_scopedType = itrType->second;
 	_fieldCount = 0;
 
@@ -775,22 +976,14 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		&& operationType == strSubscription)
 	{
 		// http://spec.graphql.org/June2018/#sec-Single-root-field
-		std::string name;
-
-		peg::on_first_child<peg::operation_name>(operationDefinition,
-			[&name](const peg::ast_node& child)
-		{
-			name = child.string_view();
-		});
-
 		auto position = operationDefinition.begin();
 		std::ostringstream error;
 
 		error << "Subscription with more than one root field";
 
-		if (!name.empty())
+		if (!operationName.empty())
 		{
-			error << " name: " << name;
+			error << " name: " << operationName;
 		}
 
 		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
@@ -799,6 +992,24 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	_scopedType.clear();;
 	_fragmentStack.clear();
 	_selectionFields.clear();
+
+	for (const auto& variable : _variableDefinitions)
+	{
+		if (_referencedVariables.find(variable.first) == _referencedVariables.end())
+		{
+			// http://spec.graphql.org/June2018/#sec-All-Variables-Used
+			auto position = variable.second.begin();
+			std::ostringstream error;
+
+			error << "Unused variable name: " << variable.first;
+
+			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		}
+	}
+
+	_operationVariables.reset();
+	_variableDefinitions.clear();
+	_referencedVariables.clear();
 }
 
 void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
@@ -919,11 +1130,10 @@ bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 	return false;
 }
 
-bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePtr& argument, const ValidateType& type)
+bool ValidateExecutableVisitor::validateInputValue(bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument, const ValidateType& type)
 {
 	if (type.type() != response::Type::Map)
 	{
-		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 		_errors.push_back({ "Unknown input type", argument.position });
 		return false;
 	}
@@ -931,8 +1141,33 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 	if (argument.value
 		&& std::holds_alternative<ValidateArgumentVariable>(argument.value->data))
 	{
-		// NYI: Collect variable types. A variable can match anything for now.
-		return true;
+		if (_operationVariables)
+		{
+			const auto& variable = std::get<ValidateArgumentVariable>(argument.value->data);
+			auto itrVariable = _operationVariables->find(variable.name);
+
+			if (itrVariable == _operationVariables->end())
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Uses-Defined
+				std::ostringstream message;
+
+				message << "Undefined variable name: " << variable.name;
+
+				_errors.push_back({ message.str(), argument.position });
+				return false;
+			}
+
+			_referencedVariables.insert(variable.name);
+
+			return validateVariableType(hasNonNullDefaultValue || itrVariable->second.defaultValue, itrVariable->second.type, argument.position, type);
+		}
+		else
+		{
+			// In fragment definitions, variables can hold any type. It's only when we are transitively
+			// visiting them through an operation definition that they are assigned a type, and the type
+			// may not be exactly the same in all operations definitions which reference the fragment.
+			return true;
+		}
 	}
 
 	auto itrKind = type.find(R"gql(kind)gql");
@@ -949,7 +1184,8 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 	if (!argument.value)
 	{
 		// The null literal matches any nullable type and does not match a non-nullable type.
-		if (kind == introspection::TypeKind::NON_NULL)
+		if (kind == introspection::TypeKind::NON_NULL
+			&& !hasNonNullDefaultValue)
 		{
 			_errors.push_back({ "Expected Non-Null value", argument.position });
 			return false;
@@ -972,7 +1208,7 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 				return false;
 			}
 
-			return validateInputValue(argument, itrOfType->second);
+			return validateInputValue(hasNonNullDefaultValue, argument, itrOfType->second);
 		}
 
 		case introspection::TypeKind::LIST:
@@ -995,7 +1231,7 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 			// Check every value against the target type.
 			for (const auto& value : std::get<ValidateArgumentList>(argument.value->data).values)
 			{
-				if (!validateInputValue(value, itrOfType->second))
+				if (!validateInputValue(false, value, itrOfType->second))
 				{
 					// Error messages are added in the recursive call, so just bubble up the result.
 					return false;
@@ -1063,7 +1299,7 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 				if (entry.second.value
 					|| !itrField->second.defaultValue)
 				{
-					if (!validateInputValue(entry.second, itrField->second.type))
+					if (!validateInputValue(itrField->second.defaultValue, entry.second, itrField->second.type))
 					{
 						// Error messages are added in the recursive call, so just bubble up the result.
 						return false;
@@ -1241,6 +1477,191 @@ bool ValidateExecutableVisitor::validateInputValue(const ValidateArgumentValuePt
 			return false;
 		}
 	}
+}
+
+bool ValidateExecutableVisitor::validateVariableType(bool isNonNull, const ValidateType& variableType, const schema_location& position, const ValidateType& inputType)
+{
+	if (variableType.type() != response::Type::Map)
+	{
+		_errors.push_back({ "Unknown variable type", position });
+		return false;
+	}
+
+	auto itrVariableKind = variableType.find(R"gql(kind)gql");
+
+	if (itrVariableKind == variableType.end()
+		|| itrVariableKind->second.type() != response::Type::EnumValue)
+	{
+		_errors.push_back({ "Unknown variable type", position });
+		return false;
+	}
+
+	auto variableKind = ModifiedArgument<introspection::TypeKind>::convert(itrVariableKind->second);
+
+	if (variableKind == introspection::TypeKind::NON_NULL)
+	{
+		auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
+
+		if (itrVariableOfType == variableType.end()
+			|| itrVariableOfType->second.type() != response::Type::Map)
+		{
+			_errors.push_back({ "Unknown Non-Null variable type", position });
+			return false;
+		}
+
+		return validateVariableType(true, itrVariableOfType->second, position, inputType);
+	}
+
+	if (inputType.type() != response::Type::Map)
+	{
+		_errors.push_back({ "Unknown input type", position });
+		return false;
+	}
+
+	auto itrInputKind = inputType.find(R"gql(kind)gql");
+
+	if (itrInputKind == inputType.end()
+		|| itrInputKind->second.type() != response::Type::EnumValue)
+	{
+		_errors.push_back({ "Unknown input type", position });
+		return false;
+	}
+
+	auto inputKind = ModifiedArgument<introspection::TypeKind>::convert(itrInputKind->second);
+
+	switch (inputKind)
+	{
+		case introspection::TypeKind::NON_NULL:
+		{
+			if (!isNonNull)
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				_errors.push_back({ "Expected Non-Null variable type", position });
+				return false;
+			}
+
+			// Unwrap and check the next one.
+			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
+
+			if (itrInputOfType == inputType.end()
+				|| itrInputOfType->second.type() != response::Type::Map)
+			{
+				_errors.push_back({ "Unknown Non-Null input type", position });
+				return false;
+			}
+
+			return validateVariableType(false, variableType, position, itrInputOfType->second);
+		}
+
+		case introspection::TypeKind::LIST:
+		{
+			if (variableKind != inputKind)
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				_errors.push_back({ "Expected List variable type", position });
+				return false;
+			}
+
+			// Unwrap and check the next one.
+			auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
+
+			if (itrVariableOfType == variableType.end()
+				|| itrVariableOfType->second.type() != response::Type::Map)
+			{
+				_errors.push_back({ "Unknown List variable type", position });
+				return false;
+			}
+
+			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
+
+			if (itrInputOfType == inputType.end()
+				|| itrInputOfType->second.type() != response::Type::Map)
+			{
+				_errors.push_back({ "Unknown List input type", position });
+				return false;
+			}
+
+			return validateVariableType(false, itrVariableOfType->second, position, itrInputOfType->second);
+		}
+
+		case introspection::TypeKind::INPUT_OBJECT:
+		{
+			if (variableKind != inputKind)
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				_errors.push_back({ "Expected Input Object variable type", position });
+				return false;
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::ENUM:
+		{
+			if (variableKind != inputKind)
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				_errors.push_back({ "Expected Enum variable type", position });
+				return false;
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::SCALAR:
+		{
+			if (variableKind != inputKind)
+			{
+				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				_errors.push_back({ "Expected Scalar variable type", position });
+				return false;
+			}
+
+			break;
+		}
+
+		default:
+		{
+			// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+			_errors.push_back({ "Unexpected input type", position });
+			return false;
+		}
+	}
+
+	auto itrVariableName = variableType.find(R"gql(name)gql");
+
+	if (itrVariableName == variableType.end()
+		|| itrVariableName->second.type() != response::Type::String)
+	{
+		_errors.push_back({ "Unknown variable type", position });
+		return false;
+	}
+
+	const auto& variableName = itrVariableName->second.get<response::StringType>();
+
+	auto itrInputName = inputType.find(R"gql(name)gql");
+
+	if (itrInputName == inputType.end()
+		|| itrInputName->second.type() != response::Type::String)
+	{
+		_errors.push_back({ "Unknown input type", position });
+		return false;
+	}
+
+	const auto& inputName = itrInputName->second.get<response::StringType>();
+
+	if (variableName != inputName)
+	{
+		// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+		std::ostringstream message;
+
+		message << "Incompatible variable type: " << variableName << " name: " << inputName;
+
+		_errors.push_back({ message.str(), position });
+		return false;
+	}
+
+	return true;
 }
 
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::getScopedTypeFields()
@@ -1587,6 +2008,12 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& r
 
 void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 {
+	peg::on_first_child<peg::directives>(field,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::FIELD, child);
+	});
+
 	std::string name;
 
 	peg::on_first_child<peg::field_name>(field,
@@ -1783,7 +2210,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				&& itrArgument->second.value)
 			{
 				// The value was not null.
-				if (!validateInputValue(itrArgument->second, argument.second.type))
+				if (!validateInputValue(argument.second.defaultValue, itrArgument->second, argument.second.type))
 				{
 					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 					std::ostringstream message;
@@ -1826,12 +2253,6 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	_selectionFields.insert({ std::move(alias), std::move(validateField) });
-
-	peg::on_first_child<peg::directives>(field,
-		[this](const peg::ast_node& child)
-	{
-		visitDirectives(introspection::DirectiveLocation::FIELD, child);
-	});
 
 	const peg::ast_node* selection = nullptr;
 
@@ -1885,6 +2306,12 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
+	peg::on_first_child<peg::directives>(fragmentSpread,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::FRAGMENT_SPREAD, child);
+	});
+
 	const std::string name(fragmentSpread.children.front()->string_view());
 	auto itr = _fragmentDefinitions.find(name);
 
@@ -1915,12 +2342,6 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 		return;
 	}
-
-	peg::on_first_child<peg::directives>(fragmentSpread,
-		[this](const peg::ast_node& child)
-	{
-		visitDirectives(introspection::DirectiveLocation::FRAGMENT_SPREAD, child);
-	});
 
 	const auto& selection = *itr->second.children.back();
 	const auto& typeCondition = itr->second.children[1];
@@ -1954,6 +2375,12 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
+	peg::on_first_child<peg::directives>(inlineFragment,
+		[this](const peg::ast_node& child)
+	{
+		visitDirectives(introspection::DirectiveLocation::INLINE_FRAGMENT, child);
+	});
+
 	std::string innerType;
 	schema_location typeConditionLocation;
 
@@ -2000,12 +2427,6 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 			return;
 		}
 	}
-
-	peg::on_first_child<peg::directives>(inlineFragment,
-		[this](const peg::ast_node& child)
-	{
-		visitDirectives(introspection::DirectiveLocation::INLINE_FRAGMENT, child);
-	});
 
 	peg::on_first_child<peg::selection_set>(inlineFragment,
 		[this, &innerType](const peg::ast_node& selection)
@@ -2167,7 +2588,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					&& itrArgument->second.value)
 				{
 					// The value was not null.
-					if (!validateInputValue(itrArgument->second, argument.second.type))
+					if (!validateInputValue(argument.second.defaultValue, itrArgument->second, argument.second.type))
 					{
 						// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 						std::ostringstream message;
