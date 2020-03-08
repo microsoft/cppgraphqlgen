@@ -569,10 +569,23 @@ struct ModifiedResult
 
 			wrappedParams.errorPath.push(size_t { 0 });
 
-			for (auto& entry : wrappedResult)
+			if constexpr (!std::is_reference_v<typename std::decay_t<decltype(wrappedResult)>::reference>)
 			{
-				children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
-				++std::get<size_t>(wrappedParams.errorPath.back());
+				// Special handling for std::vector<> specializations which don't return a reference to the underlying type,
+				// i.e. std::vector<bool> on many platforms. Copy the values from the std::vector<> rather than moving them.
+				for (auto entry : wrappedResult)
+				{
+					children.push(convert<Other...>(entry, ResolverParams(wrappedParams)));
+					++std::get<size_t>(wrappedParams.errorPath.back());
+				}
+			}
+			else
+			{
+				for (auto& entry : wrappedResult)
+				{
+					children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
+					++std::get<size_t>(wrappedParams.errorPath.back());
+				}
 			}
 
 			response::Value data(response::Type::List);
