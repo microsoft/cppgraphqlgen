@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -34,7 +34,9 @@ service::FieldResult<response::IdType> Folder::getId(service::FieldParams&&) con
 
 std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -46,7 +48,9 @@ service::FieldResult<std::optional<response::StringType>> Folder::getName(servic
 
 std::future<response::Value> Folder::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -58,7 +62,9 @@ service::FieldResult<response::IntType> Folder::getUnreadCount(service::FieldPar
 
 std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCount(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
@@ -70,7 +76,7 @@ std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& 
 
 } /* namespace object */
 
-void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, std::shared_ptr<introspection::Schema> schema)
+void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeFolder->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

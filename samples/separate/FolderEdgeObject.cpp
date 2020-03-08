@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Folder>> FolderEdge::getNode(service::Field
 
 std::future<response::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<response::Value> FolderEdge::getCursor(service::FieldParams
 
 std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -56,7 +60,7 @@ std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
-void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, std::shared_ptr<introspection::Schema> schema)
+void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeFolderEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),

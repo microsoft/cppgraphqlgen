@@ -3,28 +3,28 @@
 
 #pragma once
 
-#ifndef MUTATIONOBJECT_H
-#define MUTATIONOBJECT_H
+#ifndef EXPENSIVEOBJECT_H
+#define EXPENSIVEOBJECT_H
 
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
 
-class Mutation
+class Expensive
 	: public service::Object
 {
 protected:
-	explicit Mutation();
+	explicit Expensive();
 
 public:
-	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
+	virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
+	std::future<response::Value> resolveOrder(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace graphql::today::object */
 
-#endif // MUTATIONOBJECT_H
+#endif // EXPENSIVEOBJECT_H

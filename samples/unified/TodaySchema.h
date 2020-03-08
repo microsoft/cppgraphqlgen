@@ -6,7 +6,7 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
-#include <graphqlservice/GraphQLService.h>
+#include "graphqlservice/GraphQLService.h"
 
 #include <memory>
 #include <string>
@@ -53,6 +53,7 @@ class Appointment;
 class Task;
 class Folder;
 class NestedType;
+class Expensive;
 
 } /* namespace object */
 
@@ -67,7 +68,7 @@ class Query
 	: public service::Object
 {
 protected:
-	Query();
+	explicit Query();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const;
@@ -79,6 +80,7 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
 
 private:
 	std::future<response::Value> resolveNode(service::ResolverParams&& params);
@@ -90,6 +92,7 @@ private:
 	std::future<response::Value> resolveUnreadCountsById(service::ResolverParams&& params);
 	std::future<response::Value> resolveNested(service::ResolverParams&& params);
 	std::future<response::Value> resolveUnimplemented(service::ResolverParams&& params);
+	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
@@ -102,7 +105,7 @@ class PageInfo
 	: public service::Object
 {
 protected:
-	PageInfo();
+	explicit PageInfo();
 
 public:
 	virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const;
@@ -119,7 +122,7 @@ class AppointmentEdge
 	: public service::Object
 {
 protected:
-	AppointmentEdge();
+	explicit AppointmentEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const;
@@ -136,7 +139,7 @@ class AppointmentConnection
 	: public service::Object
 {
 protected:
-	AppointmentConnection();
+	explicit AppointmentConnection();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
@@ -153,7 +156,7 @@ class TaskEdge
 	: public service::Object
 {
 protected:
-	TaskEdge();
+	explicit TaskEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const;
@@ -170,7 +173,7 @@ class TaskConnection
 	: public service::Object
 {
 protected:
-	TaskConnection();
+	explicit TaskConnection();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
@@ -187,7 +190,7 @@ class FolderEdge
 	: public service::Object
 {
 protected:
-	FolderEdge();
+	explicit FolderEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const;
@@ -204,7 +207,7 @@ class FolderConnection
 	: public service::Object
 {
 protected:
-	FolderConnection();
+	explicit FolderConnection();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const;
@@ -221,7 +224,7 @@ class CompleteTaskPayload
 	: public service::Object
 {
 protected:
-	CompleteTaskPayload();
+	explicit CompleteTaskPayload();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const;
@@ -238,7 +241,7 @@ class Mutation
 	: public service::Object
 {
 protected:
-	Mutation();
+	explicit Mutation();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
@@ -253,7 +256,7 @@ class Subscription
 	: public service::Object
 {
 protected:
-	Subscription();
+	explicit Subscription();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const;
@@ -271,7 +274,7 @@ class Appointment
 	, public Node
 {
 protected:
-	Appointment();
+	explicit Appointment();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
@@ -293,7 +296,7 @@ class Task
 	, public Node
 {
 protected:
-	Task();
+	explicit Task();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
@@ -313,7 +316,7 @@ class Folder
 	, public Node
 {
 protected:
-	Folder();
+	explicit Folder();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
@@ -332,7 +335,7 @@ class NestedType
 	: public service::Object
 {
 protected:
-	NestedType();
+	explicit NestedType();
 
 public:
 	virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const;
@@ -345,13 +348,28 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
+class Expensive
+	: public service::Object
+{
+protected:
+	explicit Expensive();
+
+public:
+	virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const;
+
+private:
+	std::future<response::Value> resolveOrder(service::ResolverParams&& params);
+
+	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+};
+
 } /* namespace object */
 
 class Operations
 	: public service::Request
 {
 public:
-	Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
+	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
 private:
 	std::shared_ptr<object::Query> _query;
@@ -359,7 +377,7 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 
 } /* namespace today */
 } /* namespace graphql */

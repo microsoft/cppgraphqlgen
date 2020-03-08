@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "SeparateToday.h"
+#include "TodayMock.h"
 
-#include <graphqlservice/JSONResponse.h>
+#include "graphqlservice/JSONResponse.h"
 
 #include <iterator>
 #include <iostream>
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		std::cout << response::toJSON(service->resolve(nullptr, *query.root, ((argc > 2) ? argv[2] : ""), response::Value(response::Type::Map)).get()) << std::endl;
+		std::cout << response::toJSON(service->resolve(nullptr, query, ((argc > 2) ? argv[2] : ""), response::Value(response::Type::Map)).get()) << std::endl;
 	}
 	catch (const std::runtime_error& ex)
 	{

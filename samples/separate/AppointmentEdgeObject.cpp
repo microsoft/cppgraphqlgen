@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Appointment>> AppointmentEdge::getNode(serv
 
 std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<response::Value> AppointmentEdge::getCursor(service::FieldP
 
 std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -56,7 +60,7 @@ std::future<response::Value> AppointmentEdge::resolve_typename(service::Resolver
 
 } /* namespace object */
 
-void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, std::shared_ptr<introspection::Schema> schema)
+void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeAppointmentEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),

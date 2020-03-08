@@ -3,7 +3,7 @@
 
 #include "TodaySchema.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -100,6 +100,7 @@ Query::Query()
 		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
 		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
+		{ "expensive", [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
 		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
@@ -118,7 +119,9 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::F
 std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -134,7 +137,9 @@ std::future<response::Value> Query::resolveAppointments(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getAppointments(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<AppointmentConnection>::convert(std::move(result), std::move(params));
 }
@@ -150,7 +155,9 @@ std::future<response::Value> Query::resolveTasks(service::ResolverParams&& param
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTasks(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<TaskConnection>::convert(std::move(result), std::move(params));
 }
@@ -166,7 +173,9 @@ std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
 	auto argLast = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("last", params.arguments);
 	auto argBefore = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("before", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCounts(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFirst), std::move(argAfter), std::move(argLast), std::move(argBefore));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<FolderConnection>::convert(std::move(result), std::move(params));
 }
@@ -201,7 +210,9 @@ std::future<response::Value> Query::resolveAppointmentsById(service::ResolverPar
 	auto argIds = (pairIds.second
 		? std::move(pairIds.first)
 		: service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", defaultArguments));
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getAppointmentsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -214,7 +225,9 @@ service::FieldResult<std::vector<std::shared_ptr<Task>>> Query::getTasksById(ser
 std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTasksById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -227,7 +240,9 @@ service::FieldResult<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCount
 std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCountsById(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIds));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -239,7 +254,9 @@ service::FieldResult<std::shared_ptr<NestedType>> Query::getNested(service::Fiel
 
 std::future<response::Value> Query::resolveNested(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
@@ -251,9 +268,25 @@ service::FieldResult<response::StringType> Query::getUnimplemented(service::Fiel
 
 std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnimplemented(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<std::vector<std::shared_ptr<Expensive>>> Query::getExpensive(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
+}
+
+std::future<response::Value> Query::resolveExpensive(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getExpensive(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Expensive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
@@ -291,7 +324,9 @@ service::FieldResult<response::BooleanType> PageInfo::getHasNextPage(service::Fi
 
 std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHasNextPage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -303,7 +338,9 @@ service::FieldResult<response::BooleanType> PageInfo::getHasPreviousPage(service
 
 std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHasPreviousPage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -331,7 +368,9 @@ service::FieldResult<std::shared_ptr<Appointment>> AppointmentEdge::getNode(serv
 
 std::future<response::Value> AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -343,7 +382,9 @@ service::FieldResult<response::Value> AppointmentEdge::getCursor(service::FieldP
 
 std::future<response::Value> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -371,7 +412,9 @@ service::FieldResult<std::shared_ptr<PageInfo>> AppointmentConnection::getPageIn
 
 std::future<response::Value> AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
@@ -383,7 +426,9 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>
 
 std::future<response::Value> AppointmentConnection::resolveEdges(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getEdges(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -411,7 +456,9 @@ service::FieldResult<std::shared_ptr<Task>> TaskEdge::getNode(service::FieldPara
 
 std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -423,7 +470,9 @@ service::FieldResult<response::Value> TaskEdge::getCursor(service::FieldParams&&
 
 std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -451,7 +500,9 @@ service::FieldResult<std::shared_ptr<PageInfo>> TaskConnection::getPageInfo(serv
 
 std::future<response::Value> TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
@@ -463,7 +514,9 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> Task
 
 std::future<response::Value> TaskConnection::resolveEdges(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getEdges(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -491,7 +544,9 @@ service::FieldResult<std::shared_ptr<Folder>> FolderEdge::getNode(service::Field
 
 std::future<response::Value> FolderEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -503,7 +558,9 @@ service::FieldResult<response::Value> FolderEdge::getCursor(service::FieldParams
 
 std::future<response::Value> FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -531,7 +588,9 @@ service::FieldResult<std::shared_ptr<PageInfo>> FolderConnection::getPageInfo(se
 
 std::future<response::Value> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPageInfo(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
@@ -543,7 +602,9 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> Fo
 
 std::future<response::Value> FolderConnection::resolveEdges(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getEdges(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -571,7 +632,9 @@ service::FieldResult<std::shared_ptr<Task>> CompleteTaskPayload::getTask(service
 
 std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTask(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -583,7 +646,9 @@ service::FieldResult<std::optional<response::StringType>> CompleteTaskPayload::g
 
 std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getClientMutationId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -611,7 +676,9 @@ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> Mutation::applyComple
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = applyCompleteTask(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
@@ -639,7 +706,9 @@ service::FieldResult<std::shared_ptr<Appointment>> Subscription::getNextAppointm
 
 std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNextAppointmentChange(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -652,7 +721,9 @@ service::FieldResult<std::shared_ptr<service::Object>> Subscription::getNodeChan
 std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNodeChange(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argId));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
@@ -683,7 +754,9 @@ service::FieldResult<response::IdType> Appointment::getId(service::FieldParams&&
 
 std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -695,7 +768,9 @@ service::FieldResult<std::optional<response::Value>> Appointment::getWhen(servic
 
 std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getWhen(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -707,7 +782,9 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getSubjec
 
 std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSubject(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -719,7 +796,9 @@ service::FieldResult<response::BooleanType> Appointment::getIsNow(service::Field
 
 std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsNow(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -749,7 +828,9 @@ service::FieldResult<response::IdType> Task::getId(service::FieldParams&&) const
 
 std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -761,7 +842,9 @@ service::FieldResult<std::optional<response::StringType>> Task::getTitle(service
 
 std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTitle(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -773,7 +856,9 @@ service::FieldResult<response::BooleanType> Task::getIsComplete(service::FieldPa
 
 std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsComplete(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -803,7 +888,9 @@ service::FieldResult<response::IdType> Folder::getId(service::FieldParams&&) con
 
 std::future<response::Value> Folder::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -815,7 +902,9 @@ service::FieldResult<std::optional<response::StringType>> Folder::getName(servic
 
 std::future<response::Value> Folder::resolveName(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -827,7 +916,9 @@ service::FieldResult<response::IntType> Folder::getUnreadCount(service::FieldPar
 
 std::future<response::Value> Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnreadCount(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
@@ -855,7 +946,9 @@ service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParam
 
 std::future<response::Value> NestedType::resolveDepth(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDepth(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
@@ -867,7 +960,9 @@ service::FieldResult<std::shared_ptr<NestedType>> NestedType::getNested(service:
 
 std::future<response::Value> NestedType::resolveNested(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
@@ -875,6 +970,35 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 std::future<response::Value> NestedType::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
+}
+
+Expensive::Expensive()
+	: service::Object({
+		"Expensive"
+	}, {
+		{ "order", [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+	})
+{
+}
+
+service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
+}
+
+std::future<response::Value> Expensive::resolveOrder(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = getOrder(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+}
+
+std::future<response::Value> Expensive::resolve_typename(service::ResolverParams&& params)
+{
+	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Expensive)gql" }, std::move(params));
 }
 
 } /* namespace object */
@@ -891,7 +1015,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 {
 }
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor", R"md()md"));
 	schema->AddType("DateTime", std::make_shared<introspection::ScalarType>("DateTime", R"md()md"));
@@ -933,6 +1057,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	schema->AddType("Folder", typeFolder);
 	auto typeNestedType = std::make_shared<introspection::ObjectType>("NestedType", R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
 	schema->AddType("NestedType", typeNestedType);
+	auto typeExpensive = std::make_shared<introspection::ObjectType>("Expensive", R"md()md");
+	schema->AddType("Expensive", typeExpensive);
 
 	typeTaskState->AddEnumValues({
 		{ std::string{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)] }, R"md()md", std::nullopt },
@@ -989,7 +1115,8 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 			std::make_shared<introspection::InputValue>("ids", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql")
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Folder")))),
 		std::make_shared<introspection::Field>("nested", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
-		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
+		std::make_shared<introspection::Field>("unimplemented", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<introspection::Field>("expensive", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive")))))
 	});
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
@@ -1001,7 +1128,7 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	});
 	typeAppointmentConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge"))))
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge")))
 	});
 	typeTaskEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
@@ -1009,7 +1136,7 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	});
 	typeTaskConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge"))))
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge")))
 	});
 	typeFolderEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
@@ -1017,7 +1144,7 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	});
 	typeFolderConnection->AddFields({
 		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge"))))
+		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
 	});
 	typeCompleteTaskPayload->AddFields({
 		std::make_shared<introspection::Field>("task", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
@@ -1062,6 +1189,9 @@ void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema)
 	typeNestedType->AddFields({
 		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
 		std::make_shared<introspection::Field>("nested", R"md(Link to the next level)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+	});
+	typeExpensive->AddFields({
+		std::make_shared<introspection::Field>("order", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({

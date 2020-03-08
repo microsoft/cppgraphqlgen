@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -35,7 +35,9 @@ service::FieldResult<response::IdType> Appointment::getId(service::FieldParams&&
 
 std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -47,7 +49,9 @@ service::FieldResult<std::optional<response::Value>> Appointment::getWhen(servic
 
 std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getWhen(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -59,7 +63,9 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getSubjec
 
 std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSubject(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -71,7 +77,9 @@ service::FieldResult<response::BooleanType> Appointment::getIsNow(service::Field
 
 std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsNow(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -83,7 +91,7 @@ std::future<response::Value> Appointment::resolve_typename(service::ResolverPara
 
 } /* namespace object */
 
-void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, std::shared_ptr<introspection::Schema> schema)
+void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeAppointment->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<response::BooleanType> PageInfo::getHasNextPage(service::Fi
 
 std::future<response::Value> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHasNextPage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<response::BooleanType> PageInfo::getHasPreviousPage(service
 
 std::future<response::Value> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHasPreviousPage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -56,7 +60,7 @@ std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, std::shared_ptr<introspection::Schema> schema)
+void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typePageInfo->AddFields({
 		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),

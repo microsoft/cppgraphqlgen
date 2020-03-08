@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <graphqlservice/GraphQLResponse.h>
+#include "graphqlservice/GraphQLResponse.h"
 
 using namespace graphql;
 

@@ -9,7 +9,7 @@
 #ifndef GRAPHQLGRAMMAR_H
 #define GRAPHQLGRAMMAR_H
 
-#include <graphqlservice/GraphQLTree.h>
+#include "graphqlservice/GraphQLTree.h"
 
 #define TAO_PEGTL_NAMESPACE tao::graphqlpeg
 

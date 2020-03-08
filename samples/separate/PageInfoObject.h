@@ -14,7 +14,7 @@ class PageInfo
 	: public service::Object
 {
 protected:
-	PageInfo();
+	explicit PageInfo();
 
 public:
 	virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const;

@@ -14,7 +14,7 @@ class TaskEdge
 	: public service::Object
 {
 protected:
-	TaskEdge();
+	explicit TaskEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const;

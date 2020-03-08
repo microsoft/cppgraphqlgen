@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <graphqlservice/GraphQLParse.h>
-#include <graphqlservice/GraphQLTree.h>
-#include <graphqlservice/GraphQLGrammar.h>
+#include "graphqlservice/GraphQLParse.h"
+#include "graphqlservice/GraphQLTree.h"
+#include "graphqlservice/GraphQLGrammar.h"
 
 #include <tao/pegtl/contrib/unescape.hpp>
 

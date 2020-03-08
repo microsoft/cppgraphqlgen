@@ -6,7 +6,7 @@
 #ifndef JSONRESPONSE_H
 #define JSONRESPONSE_H
 
-#include <graphqlservice/GraphQLResponse.h>
+#include "graphqlservice/GraphQLResponse.h"
 
 namespace graphql::response {
 

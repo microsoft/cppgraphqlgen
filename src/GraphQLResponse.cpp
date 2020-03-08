@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <graphqlservice/GraphQLResponse.h>
+#include "graphqlservice/GraphQLResponse.h"
 
 #include <stdexcept>
 #include <variant>
@@ -66,39 +66,39 @@ struct TypedData : std::variant<
 	FloatType>
 {
 };
-	
+
 Value::Value(Type type /*= Type::Null*/)
 	: _type(type)
 {
 	switch (type)
 	{
 		case Type::Map:
-			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<MapData>() });
+			_data = std::make_unique<TypedData>(TypedData { std::make_optional<MapData>() });
 			break;
 
 		case Type::List:
-			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<ListData>() });
+			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ListData>() });
 			break;
 
 		case Type::String:
 		case Type::EnumValue:
-			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<StringOrEnumData>() });
+			_data = std::make_unique<TypedData>(TypedData { std::make_optional<StringOrEnumData>() });
 			break;
 
 		case Type::Scalar:
-			_data = std::make_unique<TypedData>(TypedData{ std::make_optional<ScalarData>() });
+			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ScalarData>() });
 			break;
 
 		case Type::Boolean:
-			_data = std::make_unique<TypedData>(TypedData{ BooleanType{ false } });
+			_data = std::make_unique<TypedData>(TypedData { BooleanType{ false } });
 			break;
 
 		case Type::Int:
-			_data = std::make_unique<TypedData>(TypedData{ IntType{ 0 } });
+			_data = std::make_unique<TypedData>(TypedData { IntType{ 0 } });
 			break;
 
 		case Type::Float:
-			_data = std::make_unique<TypedData>(TypedData{ FloatType{ 0.0 } });
+			_data = std::make_unique<TypedData>(TypedData { FloatType{ 0.0 } });
 			break;
 
 		default:
@@ -115,31 +115,31 @@ Value::~Value()
 
 Value::Value(const char* value)
 	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData{ StringOrEnumData{ StringType{ value }, false } }))
+	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData{ StringType{ value }, false } }))
 {
 }
 
 Value::Value(StringType&& value)
 	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData{ StringOrEnumData{ std::move(value), false } }))
+	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData{ std::move(value), false } }))
 {
 }
 
 Value::Value(BooleanType value)
 	: _type(Type::Boolean)
-	, _data(std::make_unique<TypedData>(TypedData{ value }))
+	, _data(std::make_unique<TypedData>(TypedData { value }))
 {
 }
 
 Value::Value(IntType value)
 	: _type(Type::Int)
-	, _data(std::make_unique<TypedData>(TypedData{ value }))
+	, _data(std::make_unique<TypedData>(TypedData { value }))
 {
 }
 
 Value::Value(FloatType value)
 	: _type(Type::Float)
-	, _data(std::make_unique<TypedData>(TypedData{ value }))
+	, _data(std::make_unique<TypedData>(TypedData { value }))
 {
 }
 
@@ -151,7 +151,7 @@ Value::Value(Value&& other) noexcept
 
 Value::Value(const Value& other)
 	: _type(other.type())
-	, _data(std::make_unique<TypedData>(other._data ? *other._data : TypedData{}))
+	, _data(std::make_unique<TypedData>(other._data ? *other._data : TypedData {}))
 {
 }
 
@@ -291,7 +291,7 @@ MapType::const_iterator Value::begin() const
 	{
 		throw std::logic_error("Invalid call to Value::end for MapType");
 	}
-	
+
 	return std::get<std::optional<MapData>>(*_data)->map.cbegin();
 }
 

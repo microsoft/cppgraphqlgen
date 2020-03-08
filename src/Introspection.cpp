@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 namespace graphql::introspection {
 
@@ -32,12 +32,23 @@ void Schema::AddType(response::StringType&& name, std::shared_ptr<object::Type> 
 
 const std::shared_ptr<object::Type>& Schema::LookupType(const response::StringType& name) const
 {
-	if (_typeMap.find(name) == _typeMap.cend())
+	auto itr = _typeMap.find(name);
+
+	if (itr == _typeMap.cend())
 	{
-		throw service::schema_exception { { "type not found" } };
+		std::ostringstream message;
+
+		message << "Type not found";
+
+		if (!name.empty())
+		{
+			message << " name: " << name;
+		}
+
+		throw service::schema_exception { { message.str() } };
 	}
 
-	return _types[_typeMap.find(name)->second].second;
+	return _types[itr->second].second;
 }
 
 const std::shared_ptr<object::Type>& Schema::WrapType(TypeKind kind, const std::shared_ptr<object::Type>& ofType)
@@ -60,11 +71,11 @@ void Schema::AddDirective(std::shared_ptr<object::Directive> directive)
 	_directives.emplace_back(std::move(directive));
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(service::FieldParams&&) const
+service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(service::FieldParams&& params) const
 {
 	auto spThis = shared_from_this();
 
-	return std::async(std::launch::deferred,
+	return std::async(params.launch,
 		[this, spThis]()
 	{
 		std::vector<std::shared_ptr<object::Type>> result(_types.size());
@@ -175,6 +186,11 @@ ObjectType::ObjectType(response::StringType&& name, response::StringType&& descr
 void ObjectType::AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces)
 {
 	_interfaces = std::move(interfaces);
+
+	for (const auto& interface : _interfaces)
+	{
+		interface->AddPossibleType(std::static_pointer_cast<ObjectType>(shared_from_this()));
+	}
 }
 
 void ObjectType::AddFields(std::vector<std::shared_ptr<Field>> fields)
@@ -213,7 +229,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_interfaces.size());
 
 	std::copy(_interfaces.cbegin(), _interfaces.cend(), result->begin());
-	
+
 	return { std::move(result) };
 }
 
@@ -221,6 +237,11 @@ InterfaceType::InterfaceType(response::StringType&& name, response::StringType&&
 	: BaseType(std::move(description))
 	, _name(std::move(name))
 {
+}
+
+void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
+{
+	_possibleTypes.push_back(possibleType);
 }
 
 void InterfaceType::AddFields(std::vector<std::shared_ptr<Field>> fields)
@@ -250,7 +271,20 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
 		return deprecated
 			|| !field->getIsDeprecated(service::FieldParams(params, response::Value(response::Type::Map))).get();
 	});
-	
+
+	return { std::move(result) };
+}
+
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> InterfaceType::getPossibleTypes(service::FieldParams&&) const
+{
+	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_possibleTypes.size());
+
+	std::transform(_possibleTypes.cbegin(), _possibleTypes.cend(), result->begin(),
+		[](const std::weak_ptr<object::Type>& weak)
+	{
+		return weak.lock();
+	});
+
 	return { std::move(result) };
 }
 
@@ -505,20 +539,20 @@ Directive::Directive(response::StringType&& name, response::StringType&& descrip
 	: _name(std::move(name))
 	, _description(std::move(description))
 	, _locations([](std::vector<response::StringType>&& locationsArg) -> std::vector<DirectiveLocation>
+	{
+		std::vector<DirectiveLocation> result(locationsArg.size());
+
+		std::transform(locationsArg.begin(), locationsArg.end(), result.begin(),
+			[](std::string& name) -> DirectiveLocation
 		{
-			std::vector<DirectiveLocation> result(locationsArg.size());
+			response::Value location(response::Type::EnumValue);
 
-			std::transform(locationsArg.begin(), locationsArg.end(), result.begin(),
-				[](std::string& name) -> DirectiveLocation
-				{
-					response::Value location(response::Type::EnumValue);
+			location.set<response::StringType>(std::move(name));
+			return service::ModifiedArgument<DirectiveLocation>::convert(location);
+		});
 
-					location.set<response::StringType>(std::move(name));
-					return service::ModifiedArgument<DirectiveLocation>::convert(location);
-				});
-
-			return result;
-		}(std::move(locations)))
+		return result;
+	}(std::move(locations)))
 	, _args(std::move(args))
 {
 }

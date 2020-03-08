@@ -19,6 +19,7 @@ struct ast
 {
 	std::shared_ptr<ast_input> input;
 	std::shared_ptr<ast_node> root;
+	bool validated = false;
 };
 
 ast parseString(std::string_view input);

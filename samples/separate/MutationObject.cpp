@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> Mutation::applyComple
 std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = applyCompleteTask(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argInput));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
 }
@@ -44,7 +46,7 @@ std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, std::shared_ptr<introspection::Schema> schema)
+void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeMutation->AddFields({
 		std::make_shared<introspection::Field>("completeTask", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({

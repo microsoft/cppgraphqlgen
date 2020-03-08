@@ -15,7 +15,7 @@ class Task
 	, public Node
 {
 protected:
-	Task();
+	explicit Task();
 
 public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;

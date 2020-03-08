@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<std::shared_ptr<Task>> TaskEdge::getNode(service::FieldPara
 
 std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<response::Value> TaskEdge::getCursor(service::FieldParams&&
 
 std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
@@ -56,7 +60,7 @@ std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, std::shared_ptr<introspection::Schema> schema)
+void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeTaskEdge->AddFields({
 		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),

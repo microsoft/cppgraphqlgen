@@ -6,7 +6,7 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
-#include <graphqlservice/GraphQLService.h>
+#include "graphqlservice/GraphQLService.h"
 
 #include <memory>
 #include <string>
@@ -54,6 +54,7 @@ class Appointment;
 class Task;
 class Folder;
 class NestedType;
+class Expensive;
 
 } /* namespace object */
 
@@ -66,7 +67,7 @@ class Operations
 	: public service::Request
 {
 public:
-	Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
+	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
 private:
 	std::shared_ptr<object::Query> _query;
@@ -74,23 +75,24 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
-void AddQueryDetails(std::shared_ptr<introspection::ObjectType> typeQuery, std::shared_ptr<introspection::Schema> schema);
-void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, std::shared_ptr<introspection::Schema> schema);
-void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, std::shared_ptr<introspection::Schema> schema);
-void AddAppointmentConnectionDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentConnection, std::shared_ptr<introspection::Schema> schema);
-void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, std::shared_ptr<introspection::Schema> schema);
-void AddTaskConnectionDetails(std::shared_ptr<introspection::ObjectType> typeTaskConnection, std::shared_ptr<introspection::Schema> schema);
-void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, std::shared_ptr<introspection::Schema> schema);
-void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeFolderConnection, std::shared_ptr<introspection::Schema> schema);
-void AddCompleteTaskPayloadDetails(std::shared_ptr<introspection::ObjectType> typeCompleteTaskPayload, std::shared_ptr<introspection::Schema> schema);
-void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, std::shared_ptr<introspection::Schema> schema);
-void AddSubscriptionDetails(std::shared_ptr<introspection::ObjectType> typeSubscription, std::shared_ptr<introspection::Schema> schema);
-void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, std::shared_ptr<introspection::Schema> schema);
-void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, std::shared_ptr<introspection::Schema> schema);
-void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, std::shared_ptr<introspection::Schema> schema);
-void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, std::shared_ptr<introspection::Schema> schema);
+void AddQueryDetails(std::shared_ptr<introspection::ObjectType> typeQuery, const std::shared_ptr<introspection::Schema>& schema);
+void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, const std::shared_ptr<introspection::Schema>& schema);
+void AddAppointmentEdgeDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentEdge, const std::shared_ptr<introspection::Schema>& schema);
+void AddAppointmentConnectionDetails(std::shared_ptr<introspection::ObjectType> typeAppointmentConnection, const std::shared_ptr<introspection::Schema>& schema);
+void AddTaskEdgeDetails(std::shared_ptr<introspection::ObjectType> typeTaskEdge, const std::shared_ptr<introspection::Schema>& schema);
+void AddTaskConnectionDetails(std::shared_ptr<introspection::ObjectType> typeTaskConnection, const std::shared_ptr<introspection::Schema>& schema);
+void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, const std::shared_ptr<introspection::Schema>& schema);
+void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeFolderConnection, const std::shared_ptr<introspection::Schema>& schema);
+void AddCompleteTaskPayloadDetails(std::shared_ptr<introspection::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<introspection::Schema>& schema);
+void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, const std::shared_ptr<introspection::Schema>& schema);
+void AddSubscriptionDetails(std::shared_ptr<introspection::ObjectType> typeSubscription, const std::shared_ptr<introspection::Schema>& schema);
+void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, const std::shared_ptr<introspection::Schema>& schema);
+void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, const std::shared_ptr<introspection::Schema>& schema);
+void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, const std::shared_ptr<introspection::Schema>& schema);
+void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, const std::shared_ptr<introspection::Schema>& schema);
+void AddExpensiveDetails(std::shared_ptr<introspection::ObjectType> typeExpensive, const std::shared_ptr<introspection::Schema>& schema);
 
-void AddTypesToSchema(std::shared_ptr<introspection::Schema> schema);
+void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 
 } /* namespace today */
 } /* namespace graphql */

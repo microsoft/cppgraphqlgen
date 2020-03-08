@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <graphqlservice/JSONResponse.h>
+#include "graphqlservice/JSONResponse.h"
 
 #define RAPIDJSON_NAMESPACE graphql::rapidjson
 #include <rapidjson/rapidjson.h>

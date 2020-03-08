@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -34,7 +34,9 @@ service::FieldResult<response::IdType> Task::getId(service::FieldParams&&) const
 
 std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
@@ -46,7 +48,9 @@ service::FieldResult<std::optional<response::StringType>> Task::getTitle(service
 
 std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTitle(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
@@ -58,7 +62,9 @@ service::FieldResult<response::BooleanType> Task::getIsComplete(service::FieldPa
 
 std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsComplete(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
@@ -70,7 +76,7 @@ std::future<response::Value> Task::resolve_typename(service::ResolverParams&& pa
 
 } /* namespace object */
 
-void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, std::shared_ptr<introspection::Schema> schema)
+void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeTask->AddInterfaces({
 		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))

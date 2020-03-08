@@ -5,6 +5,15 @@ cmake_minimum_required(VERSION 3.8.2)
 
 find_package(GTest MODULE REQUIRED)
 
+add_executable(validation_tests ValidationTests.cpp)
+target_link_libraries(validation_tests PRIVATE
+  validationgraphql
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+add_bigobj_flag(validation_tests)
+gtest_add_tests(TARGET validation_tests)
+
 add_executable(today_tests TodayTests.cpp)
 target_link_libraries(today_tests PRIVATE
   unifiedgraphql

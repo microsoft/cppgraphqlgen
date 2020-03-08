@@ -14,3 +14,4 @@ AppointmentObject.cpp
 TaskObject.cpp
 FolderObject.cpp
 NestedTypeObject.cpp
+ExpensiveObject.cpp

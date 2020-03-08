@@ -3,7 +3,7 @@
 
 #include "TodayObjects.h"
 
-#include <graphqlservice/Introspection.h>
+#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +32,9 @@ service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParam
 
 std::future<response::Value> NestedType::resolveDepth(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDepth(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
@@ -44,7 +46,9 @@ service::FieldResult<std::shared_ptr<NestedType>> NestedType::getNested(service:
 
 std::future<response::Value> NestedType::resolveNested(service::ResolverParams&& params)
 {
+	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
+	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
@@ -56,7 +60,7 @@ std::future<response::Value> NestedType::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
-void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, std::shared_ptr<introspection::Schema> schema)
+void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, const std::shared_ptr<introspection::Schema>& schema)
 {
 	typeNestedType->AddFields({
 		std::make_shared<introspection::Field>("depth", R"md(Depth of the nested element)md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),

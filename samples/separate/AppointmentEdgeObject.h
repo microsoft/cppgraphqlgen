@@ -14,7 +14,7 @@ class AppointmentEdge
 	: public service::Object
 {
 protected:
-	AppointmentEdge();
+	explicit AppointmentEdge();
 
 public:
 	virtual service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const;

@@ -46,8 +46,8 @@ struct ValueTypeTraits
 	// Set by r-value reference, get by const reference, and release by value. The only types
 	// that actually support all 3 methods are StringType and ScalarType, everything else
 	// overrides some subset of these types with a template specialization.
-	using set_type = ValueType &&;
-	using get_type = const ValueType &;
+	using set_type = ValueType&&;
+	using get_type = const ValueType&;
 	using release_type = ValueType;
 };
 
@@ -55,7 +55,7 @@ template <>
 struct ValueTypeTraits<MapType>
 {
 	// Get by const reference and release by value.
-	using get_type = const MapType &;
+	using get_type = const MapType&;
 	using release_type = MapType;
 };
 
@@ -63,7 +63,7 @@ template <>
 struct ValueTypeTraits<ListType>
 {
 	// Get by const reference and release by value.
-	using get_type = const ListType &;
+	using get_type = const ListType&;
 	using release_type = ListType;
 };
 
