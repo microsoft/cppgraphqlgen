@@ -46,10 +46,11 @@ The document must use a UTF-8 encoding. If you need to handle documents in
 another encoding you will need to convert them to UTF-8 before parsing.
 
 If you need to convert the encoding at runtime, I would recommend using
-`std::wstring_convert`, with the cavevat that it has been
+`std::wstring_convert`, with the caveat that it has been
 [deprecated](https://en.cppreference.com/w/cpp/locale/wstring_convert) in
 C++17. You could keep using it until it is replaced in the standard, you
 could use a portable non-standard library like
 [ICU](http://site.icu-project.org/design/cpp), or you could use
 platform-specific conversion routines like
-[WideCharToMultiByte](https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte) on Windows.
+[WideCharToMultiByte](https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte)
+on Windows instead.
