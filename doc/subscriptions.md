@@ -64,6 +64,17 @@ for every required field in the subscription `query`.
 void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 ```
 
+By default, `deliver` invokes all of the `SubscriptionCallback` listeners with `std::future`
+payloads which are resolved on-demand but synchronously, using `std::launch::deferred` with the
+`std::async` function. There's also a version of each overload which  lets you substitute the
+`std::launch::async` option to begin executing the queries and invoke the callbacks on multiple
+threads in parallel:
+```cpp
+void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+```
+
 ## Handling Multiple Operation Types
 
 Some service implementations (e.g. Apollo over HTTP) use a single pipe to

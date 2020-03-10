@@ -108,9 +108,9 @@ Command line options:
   --separate-files       Generate separate files for each of the types
 ```
 
-I've only tested this with Boost 1.69.0, but I expect it will work fine with most other versions. The Boost dependencies
-are only used by the `schemagen` utility at or before your build, so you probably don't need to redistribute it or the
-Boost libraries with your project.
+I've tested this with several versions of Boost going back to 1.65.0. I expect it will work fine with most versions of
+Boost after that. The Boost dependencies are only used by the `schemagen` utility at or before your build, so you
+probably don't need to redistribute it or the Boost libraries with your project.
 
 If you are building shared libraries on Windows (DLLs) using vcpkg or `BUILD_SHARED_LIBS=ON` in CMake, be aware that this
 adds a runtime dependency on a Boost DLL. The `schemagen` tool won't run without it. However, in addition to automating
@@ -148,10 +148,10 @@ All of the generated files are in the [samples](samples/) directory. There are t
 the generated code, one which creates a single pair of files (`samples/unified/`), and one which uses the
 `--separate-files` flag with `schemagen` to generate individual header and source files (`samples/separate/`)
 for each of the object types which need to be implemeneted. The only difference between
-[UnifiedToday.h](samples/today/UnifiedToday.h)
-and [SeparateToday.h](samples/today/SeparateToday.h) should be that the `SeparateToday` use a generated
-[TodayObjects.h](samples/separate/TodayObjects.h) convenience header which includes all of the inidividual
-object header along with the rest of the schema in [TodaySchema.h](samples/separate/TodaySchema.h).
+[TodayMock.h](samples/today/TodayMock.h) with and without `IMPL_SEPARATE_TODAY` defined should be that the
+`--separate-files` option generates a [TodayObjects.h](samples/separate/TodayObjects.h) convenience header
+which includes all of the inidividual object header along with the rest of the schema in
+[TodaySchema.h](samples/separate/TodaySchema.h).
 
 # Build and Test
 
