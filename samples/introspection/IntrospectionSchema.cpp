@@ -672,7 +672,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		R"gql(FIELD_DEFINITION)gql",
 		R"gql(ENUM_VALUE)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("reason", R"md()md", schema->LookupType("String"), R"gql(No longer supported)gql")
+		std::make_shared<introspection::InputValue>("reason", R"md()md", schema->LookupType("String"), R"gql("No longer supported")gql")
 	})));
 }
 

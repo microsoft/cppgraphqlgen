@@ -202,7 +202,6 @@ struct ast_selector<string_value>
 			}
 		}
 
-		n->remove_content();
 		n->children.clear();
 	}
 };

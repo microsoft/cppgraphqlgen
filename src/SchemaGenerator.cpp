@@ -1296,9 +1296,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValue.visit(*child->children.back());
 				field.defaultValue = defaultValue.getValue();
-				field.defaultValueString = child->children.back()->unescaped.empty() 
-					? child->children.back()->string_view()
-					: child->children.back()->unescaped;
+				field.defaultValueString = child->children.back()->string_view();
 
 				defaultValueLocation = { position.line, position.byte_in_line };
 			}
