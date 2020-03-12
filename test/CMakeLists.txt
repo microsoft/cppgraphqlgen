@@ -51,3 +51,20 @@ target_include_directories(response_tests PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET response_tests)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy graphqlservice.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlservice.pdb ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.pdb ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.pdb ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS graphqlservice graphqljson graphqlpeg
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+
+  add_dependencies(validation_tests copy_test_dlls)
+  add_dependencies(today_tests copy_test_dlls)
+  add_dependencies(argument_tests copy_test_dlls)
+  add_dependencies(pegtl_tests copy_test_dlls)
+  add_dependencies(response_tests copy_test_dlls)
+endif()

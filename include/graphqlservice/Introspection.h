@@ -23,7 +23,7 @@ class Field;
 class InputValue;
 class EnumValue;
 
-class Schema : public object::Schema
+class GRAPHQLSERVICE_EXPORT Schema : public object::Schema
 {
 public:
 	explicit Schema();
@@ -54,7 +54,7 @@ private:
 	std::unordered_map<std::shared_ptr<object::Type>, std::shared_ptr<object::Type>> _listWrappers;
 };
 
-class BaseType : public object::Type
+class GRAPHQLSERVICE_EXPORT BaseType : public object::Type
 {
 public:
 	// Accessors
@@ -74,7 +74,7 @@ private:
 	const response::StringType _description;
 };
 
-class ScalarType : public BaseType
+class GRAPHQLSERVICE_EXPORT ScalarType : public BaseType
 {
 public:
 	explicit ScalarType(response::StringType&& name, response::StringType&& description);
@@ -87,7 +87,7 @@ private:
 	const response::StringType _name;
 };
 
-class ObjectType : public BaseType
+class GRAPHQLSERVICE_EXPORT ObjectType : public BaseType
 {
 public:
 	explicit ObjectType(response::StringType&& name, response::StringType&& description);
@@ -108,7 +108,7 @@ private:
 	std::vector<std::shared_ptr<Field>> _fields;
 };
 
-class InterfaceType : public BaseType
+class GRAPHQLSERVICE_EXPORT InterfaceType : public BaseType
 {
 public:
 	explicit InterfaceType(response::StringType&& name, response::StringType&& description);
@@ -129,7 +129,7 @@ private:
 	std::vector<std::weak_ptr<ObjectType>> _possibleTypes;
 };
 
-class UnionType : public BaseType
+class GRAPHQLSERVICE_EXPORT UnionType : public BaseType
 {
 public:
 	explicit UnionType(response::StringType&& name, response::StringType&& description);
@@ -147,14 +147,14 @@ private:
 	std::vector<std::weak_ptr<object::Type>> _possibleTypes;
 };
 
-struct EnumValueType
+struct GRAPHQLSERVICE_EXPORT EnumValueType
 {
 	response::StringType value;
 	response::StringType description;
 	std::optional<response::StringType> deprecationReason;
 };
 
-class EnumType : public BaseType
+class GRAPHQLSERVICE_EXPORT EnumType : public BaseType
 {
 public:
 	explicit EnumType(response::StringType&& name, response::StringType&& description);
@@ -172,7 +172,7 @@ private:
 	std::vector<std::shared_ptr<object::EnumValue>> _enumValues;
 };
 
-class InputObjectType : public BaseType
+class GRAPHQLSERVICE_EXPORT InputObjectType : public BaseType
 {
 public:
 	explicit InputObjectType(response::StringType&& name, response::StringType&& description);
@@ -190,7 +190,7 @@ private:
 	std::vector<std::shared_ptr<InputValue>> _inputValues;
 };
 
-class WrapperType : public BaseType
+class GRAPHQLSERVICE_EXPORT WrapperType : public BaseType
 {
 public:
 	explicit WrapperType(TypeKind kind, const std::shared_ptr<object::Type>& ofType);
@@ -204,7 +204,7 @@ private:
 	const std::weak_ptr<object::Type> _ofType;
 };
 
-class Field : public object::Field
+class GRAPHQLSERVICE_EXPORT Field : public object::Field
 {
 public:
 	explicit Field(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::Type>& type);
@@ -225,7 +225,7 @@ private:
 	const std::weak_ptr<object::Type> _type;
 };
 
-class InputValue : public object::InputValue
+class GRAPHQLSERVICE_EXPORT InputValue : public object::InputValue
 {
 public:
 	explicit InputValue(response::StringType&& name, response::StringType&& description, const std::shared_ptr<object::Type>& type, response::StringType&& defaultValue);
@@ -243,7 +243,7 @@ private:
 	const response::StringType _defaultValue;
 };
 
-class EnumValue : public object::EnumValue
+class GRAPHQLSERVICE_EXPORT EnumValue : public object::EnumValue
 {
 public:
 	explicit EnumValue(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason);
@@ -260,7 +260,7 @@ private:
 	const std::optional<response::StringType> _deprecationReason;
 };
 
-class Directive : public object::Directive
+class GRAPHQLSERVICE_EXPORT Directive : public object::Directive
 {
 public:
 	explicit Directive(response::StringType&& name, response::StringType&& description, std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args);

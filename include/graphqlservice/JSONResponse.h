@@ -6,13 +6,23 @@
 #ifndef JSONRESPONSE_H
 #define JSONRESPONSE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_JSONRESPONSE_DLL
+		#define JSONRESPONSE_EXPORT __declspec(dllexport)
+	#else // !IMPL_JSONRESPONSE_DLL
+		#define JSONRESPONSE_EXPORT __declspec(dllimport)
+	#endif // !IMPL_JSONRESPONSE_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define JSONRESPONSE_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include "graphqlservice/GraphQLResponse.h"
 
 namespace graphql::response {
 
-std::string toJSON(Value&& response);
+JSONRESPONSE_EXPORT std::string toJSON(Value&& response);
 
-Value parseJSON(const std::string& json);
+JSONRESPONSE_EXPORT Value parseJSON(const std::string& json);
 
 } /* namespace graphql::response */
 

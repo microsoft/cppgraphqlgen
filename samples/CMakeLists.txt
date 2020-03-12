@@ -83,8 +83,8 @@ foreach(CPP_FILE IN LISTS SEPARATE_SCHEMA_FILES)
   list(APPEND SEPARATE_SCHEMA_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/separate/${CPP_FILE}")
 endforeach(CPP_FILE)
 
-add_library(separateschema OBJECT ${SEPARATE_SCHEMA_PATHS})
-add_dependencies(separateschema graphqlservice)
+add_library(separateschema STATIC ${SEPARATE_SCHEMA_PATHS})
+target_link_libraries(separateschema PUBLIC graphqlservice)
 target_compile_definitions(separateschema PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
@@ -97,15 +97,10 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_dependencies(separateschema update_samples)
 endif()
 
-add_library(separategraphql
-  today/TodayMock.cpp
-  $<TARGET_OBJECTS:separateschema>)
-add_dependencies(separategraphql separateschema)
-target_link_libraries(separategraphql PUBLIC graphqlservice)
+add_library(separategraphql STATIC today/TodayMock.cpp)
+target_link_libraries(separategraphql PUBLIC separateschema)
 target_compile_definitions(separategraphql PUBLIC IMPL_SEPARATE_TODAY)
-target_include_directories(separategraphql PUBLIC
-  $<TARGET_PROPERTY:separateschema,INCLUDE_DIRECTORIES>
-  today)
+target_include_directories(separategraphql PUBLIC today)
 
 add_executable(sample today/sample.cpp)
 target_link_libraries(sample PRIVATE
@@ -116,10 +111,23 @@ target_include_directories(sample PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy graphqlservice.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlservice.pdb ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.pdb ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.dll ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.pdb ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS graphqlservice graphqljson graphqlpeg
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+
+  add_dependencies(sample copy_sample_dlls)
+endif()
+
 if(GRAPHQL_BUILD_TESTS)
   # tests
-  add_library(unifiedschema OBJECT unified/TodaySchema.cpp)
-  add_dependencies(unifiedschema graphqlservice)
+  add_library(unifiedschema STATIC unified/TodaySchema.cpp)
+  target_link_libraries(unifiedschema PUBLIC graphqlservice)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -131,17 +139,12 @@ if(GRAPHQL_BUILD_TESTS)
     add_dependencies(unifiedschema update_samples)
   endif()
 
-  add_library(unifiedgraphql
-    today/TodayMock.cpp
-    $<TARGET_OBJECTS:unifiedschema>)
-  add_dependencies(unifiedgraphql unifiedschema)
-  target_link_libraries(unifiedgraphql PUBLIC graphqlservice)
-  target_include_directories(unifiedgraphql PUBLIC
-    $<TARGET_PROPERTY:unifiedschema,INCLUDE_DIRECTORIES>
-    today)
+  add_library(unifiedgraphql STATIC today/TodayMock.cpp)
+  target_link_libraries(unifiedgraphql PUBLIC unifiedschema)
+  target_include_directories(unifiedgraphql PUBLIC today)
   add_bigobj_flag(unifiedgraphql)
 
-  add_library(validationgraphql
+  add_library(validationgraphql STATIC
     validation/ValidationMock.cpp
     validation/ValidationSchema.cpp)
   target_link_libraries(validationgraphql PUBLIC graphqlservice)

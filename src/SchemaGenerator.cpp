@@ -1798,7 +1798,14 @@ class Schema;
 		// Output the full declarations
 		for (const auto& interfaceType : _interfaceTypes)
 		{
-			headerFile << R"cpp(struct )cpp" << interfaceType.cppType << R"cpp(
+			headerFile << R"cpp(struct )cpp";
+
+			if (_isIntrospection)
+			{
+				headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
+			}
+
+			headerFile << interfaceType.cppType << R"cpp(
 {
 )cpp";
 
@@ -1887,6 +1894,11 @@ private:
 		headerFile << std::endl;
 	}
 
+	if (_isIntrospection)
+	{
+		headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
+	}
+
 	headerFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema>& schema);
 
 )cpp";
@@ -1896,7 +1908,14 @@ private:
 
 void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
-	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
+	headerFile << R"cpp(class )cpp";
+
+	if (_isIntrospection)
+	{
+		headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
+	}
+
+	headerFile << objectType.cppType << R"cpp(
 	: public service::Object)cpp";
 
 	for (const auto& interfaceName : objectType.interfaces)

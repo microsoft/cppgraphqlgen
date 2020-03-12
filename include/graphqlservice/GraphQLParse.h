@@ -6,6 +6,16 @@
 #ifndef GRAPHQLPARSE_H
 #define GRAPHQLPARSE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLPEG_DLL
+		#define GRAPHQLPEG_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLPEG_DLL
+		#define GRAPHQLPEG_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLPEG_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLPEG_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include <memory>
 #include <string_view>
 
@@ -22,12 +32,12 @@ struct ast
 	bool validated = false;
 };
 
-ast parseString(std::string_view input);
-ast parseFile(std::string_view filename);
+GRAPHQLPEG_EXPORT ast parseString(std::string_view input);
+GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
 
 } /* namespace peg */
 
-peg::ast operator "" _graphql(const char* text, size_t size);
+GRAPHQLPEG_EXPORT peg::ast operator "" _graphql(const char* text, size_t size);
 
 } /* namespace graphql */
 

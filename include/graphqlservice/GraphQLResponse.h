@@ -6,6 +6,16 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLRESPONSE_LIB
+		#define GRAPHQLRESPONSE_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLRESPONSE_LIB
+		#define GRAPHQLRESPONSE_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLRESPONSE_LIB
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLRESPONSE_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -100,7 +110,7 @@ struct ValueTypeTraits<IdType>
 struct TypedData;
 
 // Represent a discriminated union of GraphQL response value types.
-struct Value
+struct GRAPHQLRESPONSE_EXPORT Value
 {
 	Value(Type type = Type::Null);
 	~Value();
@@ -177,6 +187,26 @@ private:
 	const Type _type;
 	std::unique_ptr<TypedData> _data;
 };
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the specialized template methods
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<StringType>(StringType&& value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<BooleanType>(BooleanType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<IntType>(IntType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
+template <> GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const ListType& Value::get<ListType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const StringType& Value::get<StringType>() const;
+template <> GRAPHQLRESPONSE_EXPORT BooleanType Value::get<BooleanType>() const;
+template <> GRAPHQLRESPONSE_EXPORT IntType Value::get<IntType>() const;
+template <> GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
+template <> GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
+template <> GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
+template <> GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
+template <> GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
+#endif // GRAPHQL_DLLEXPORTS
 
 } /* namespace graphql::response */
 

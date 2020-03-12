@@ -60,7 +60,7 @@ class InputValue;
 class EnumValue;
 class Directive;
 
-class Schema
+class GRAPHQLSERVICE_EXPORT Schema
 	: public service::Object
 {
 protected:
@@ -83,7 +83,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class Type
+class GRAPHQLSERVICE_EXPORT Type
 	: public service::Object
 {
 protected:
@@ -114,7 +114,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class Field
+class GRAPHQLSERVICE_EXPORT Field
 	: public service::Object
 {
 protected:
@@ -139,7 +139,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class InputValue
+class GRAPHQLSERVICE_EXPORT InputValue
 	: public service::Object
 {
 protected:
@@ -160,7 +160,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class EnumValue
+class GRAPHQLSERVICE_EXPORT EnumValue
 	: public service::Object
 {
 protected:
@@ -181,7 +181,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class Directive
+class GRAPHQLSERVICE_EXPORT Directive
 	: public service::Object
 {
 protected:
@@ -204,7 +204,7 @@ private:
 
 } /* namespace object */
 
-void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */

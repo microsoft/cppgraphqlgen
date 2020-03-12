@@ -6,6 +6,16 @@
 #ifndef GRAPHQLSERVICE_H
 #define GRAPHQLSERVICE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLSERVICE_DLL
+		#define GRAPHQLSERVICE_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLSERVICE_DLL
+		#define GRAPHQLSERVICE_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLSERVICE_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLSERVICE_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
@@ -30,7 +40,7 @@
 namespace graphql::service {
 
 // Errors should have a message string, and optional locations and a path.
-void addErrorMessage(std::string&& message, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Value& error);
 
 struct schema_location
 {
@@ -38,24 +48,24 @@ struct schema_location
 	size_t byte_in_line = 0;
 };
 
-void addErrorLocation(const schema_location& location, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorLocation(const schema_location& location, response::Value& error);
 
 using path_segment = std::variant<std::string, size_t>;
 using field_path = std::queue<path_segment>;
 
-void addErrorPath(field_path&& path, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorPath(field_path&& path, response::Value& error);
 
-struct schema_error
+struct GRAPHQLSERVICE_EXPORT schema_error
 {
 	std::string message;
 	schema_location location;
 	field_path path;
 };
 
-response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
+GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
-class schema_exception : public std::exception
+class GRAPHQLSERVICE_EXPORT schema_exception : public std::exception
 {
 public:
 	explicit schema_exception(std::vector<schema_error>&& structuredErrors);
@@ -82,7 +92,7 @@ private:
 // per-request state that you want to maintain throughout the request (e.g. optimizing or batching
 // backend requests), you can inherit from RequestState and pass it to Request::resolve to correlate the
 // asynchronous/recursive callbacks and accumulate state in it.
-struct RequestState : std::enable_shared_from_this<RequestState>
+struct GRAPHQLSERVICE_EXPORT RequestState : std::enable_shared_from_this<RequestState>
 {
 };
 
@@ -104,7 +114,7 @@ constexpr std::string_view strSubscription { "subscription"sv };
 }
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
-struct SelectionSetParams
+struct GRAPHQLSERVICE_EXPORT SelectionSetParams
 {
 	// The lifetime of each of these borrowed references is guaranteed until the future returned
 	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer. 
@@ -126,7 +136,7 @@ struct SelectionSetParams
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
-struct FieldParams : SelectionSetParams
+struct GRAPHQLSERVICE_EXPORT FieldParams : SelectionSetParams
 {
 	explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
@@ -164,7 +174,7 @@ private:
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
 // (with optional aliases and sub-selections) and potentially references to other fragments.
-class Fragment
+class GRAPHQLSERVICE_EXPORT Fragment
 {
 public:
 	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
@@ -187,7 +197,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
 // a single field.
-struct ResolverParams : SelectionSetParams
+struct GRAPHQLSERVICE_EXPORT ResolverParams : SelectionSetParams
 {
 	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
 		std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
@@ -212,7 +222,7 @@ using Resolver = std::function<std::future<response::Value>(ResolverParams&&)>;
 using ResolverMap = std::unordered_map<std::string, Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
-class Base64
+class GRAPHQLSERVICE_EXPORT Base64
 {
 public:
 	// Map a single Base64-encoded character to its 6-bit integer value.
@@ -402,6 +412,16 @@ using BooleanArgument = ModifiedArgument<response::BooleanType>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <> GRAPHQLSERVICE_EXPORT response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert(const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
 using TypeNames = std::unordered_set<std::string>;
@@ -410,7 +430,7 @@ using TypeNames = std::unordered_set<std::string>;
 // and @skip directives, and calls through to the resolver functor for each selected field with
 // its arguments. This may be a recursive process for fields which return another complex type,
 // in which case it requires its own selection set.
-class Object : public std::enable_shared_from_this<Object>
+class GRAPHQLSERVICE_EXPORT Object : public std::enable_shared_from_this<Object>
 {
 public:
 	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
@@ -747,12 +767,23 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
+#endif // GRAPHQL_DLLEXPORTS
+
 using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
 // query.
-struct SubscriptionParams
+struct GRAPHQLSERVICE_EXPORT SubscriptionParams
 {
 	std::shared_ptr<RequestState> state;
 	peg::ast query;
@@ -807,7 +838,7 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
 // also needs the values of the request variables.
-class Request : public std::enable_shared_from_this<Request>
+class GRAPHQLSERVICE_EXPORT Request : public std::enable_shared_from_this<Request>
 {
 protected:
 	explicit Request(TypeMap&& operationTypes);

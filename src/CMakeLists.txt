@@ -19,16 +19,32 @@ target_include_directories(graphqlpeg PUBLIC
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 add_bigobj_flag(graphqlpeg)
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlpeg
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLPEG_DLL)
+endif()
+
 # graphqlresponse
-add_library(graphqlresponse OBJECT GraphQLResponse.cpp)
+add_library(graphqlresponse STATIC GraphQLResponse.cpp)
 target_include_directories(graphqlresponse PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlresponse PUBLIC
+    GRAPHQL_DLLEXPORTS
+    IMPL_GRAPHQLRESPONSE_LIB)
+endif()
+
 # schemagen
 add_executable(schemagen
-  $<TARGET_OBJECTS:graphqlresponse>
-  SchemaGenerator.cpp)
-target_link_libraries(schemagen PRIVATE graphqlpeg)
+  SchemaGenerator.cpp
+  $<TARGET_PROPERTY:graphqlpeg,SOURCES>
+  $<TARGET_PROPERTY:graphqlresponse,SOURCES>)
+target_include_directories(schemagen PRIVATE
+  $<TARGET_PROPERTY:graphqlpeg,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:graphqlresponse,INTERFACE_INCLUDE_DIRECTORIES>)
+add_bigobj_flag(schemagen)
 
 set(BOOST_COMPONENTS program_options)
 set(BOOST_LIBRARIES Boost::program_options)
@@ -87,16 +103,22 @@ endif()
 
 # graphqlservice
 add_library(graphqlservice
-  $<TARGET_OBJECTS:graphqlresponse>
   GraphQLService.cpp
   Introspection.cpp
   Validation.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
 target_link_libraries(graphqlservice PUBLIC
-  graphqlpeg
-  Threads::Threads)
+    graphqlpeg
+    Threads::Threads)
+target_link_libraries(graphqlservice PRIVATE graphqlresponse)
 target_include_directories(graphqlservice SYSTEM PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/../include)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlservice
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLSERVICE_DLL)
+endif()
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
@@ -111,7 +133,14 @@ if(GRAPHQL_USE_RAPIDJSON)
 
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson JSONResponse.cpp)
+  target_link_libraries(graphqljson PRIVATE graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+
+  if(WIN32 AND BUILD_SHARED_LIBS)
+    target_compile_definitions(graphqljson
+      PUBLIC GRAPHQL_DLLEXPORTS
+      PRIVATE IMPL_JSONRESPONSE_DLL)
+  endif()
 endif()
 
 # graphqljson
@@ -134,6 +163,7 @@ endif()
 
 install(TARGETS
     graphqlpeg
+    graphqlresponse
     graphqlservice
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
