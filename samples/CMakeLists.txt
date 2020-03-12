@@ -112,14 +112,11 @@ target_include_directories(sample PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy graphqlservice.dll ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy graphqlservice.pdb ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.dll ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy graphqljson.pdb ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.dll ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy graphqlpeg.pdb ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS graphqlservice graphqljson graphqlpeg
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+  add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS graphqlservice graphqljson graphqlpeg graphqlresponse)
 
   add_dependencies(sample copy_sample_dlls)
 endif()

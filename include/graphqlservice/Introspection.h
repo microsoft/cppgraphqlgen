@@ -23,18 +23,18 @@ class Field;
 class InputValue;
 class EnumValue;
 
-class GRAPHQLSERVICE_EXPORT Schema : public object::Schema
+class Schema : public object::Schema
 {
 public:
-	explicit Schema();
+	GRAPHQLSERVICE_EXPORT explicit Schema();
 
-	void AddQueryType(std::shared_ptr<ObjectType> query);
-	void AddMutationType(std::shared_ptr<ObjectType> mutation);
-	void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
-	void AddType(response::StringType&& name, std::shared_ptr<object::Type> type);
-	const std::shared_ptr<object::Type>& LookupType(const response::StringType& name) const;
-	const std::shared_ptr<object::Type>& WrapType(TypeKind kind, const std::shared_ptr<object::Type>& ofType);
-	void AddDirective(std::shared_ptr<object::Directive> directive);
+	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
+	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
+	GRAPHQLSERVICE_EXPORT void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
+	GRAPHQLSERVICE_EXPORT void AddType(response::StringType&& name, std::shared_ptr<object::Type> type);
+	GRAPHQLSERVICE_EXPORT const std::shared_ptr<object::Type>& LookupType(const response::StringType& name) const;
+	GRAPHQLSERVICE_EXPORT const std::shared_ptr<object::Type>& WrapType(TypeKind kind, const std::shared_ptr<object::Type>& ofType);
+	GRAPHQLSERVICE_EXPORT void AddDirective(std::shared_ptr<object::Directive> directive);
 
 	// Accessors
 	service::FieldResult<std::vector<std::shared_ptr<object::Type>>> getTypes(service::FieldParams&& params) const override;
@@ -54,7 +54,7 @@ private:
 	std::unordered_map<std::shared_ptr<object::Type>, std::shared_ptr<object::Type>> _listWrappers;
 };
 
-class GRAPHQLSERVICE_EXPORT BaseType : public object::Type
+class BaseType : public object::Type
 {
 public:
 	// Accessors
@@ -74,10 +74,10 @@ private:
 	const response::StringType _description;
 };
 
-class GRAPHQLSERVICE_EXPORT ScalarType : public BaseType
+class ScalarType : public BaseType
 {
 public:
-	explicit ScalarType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit ScalarType(response::StringType&& name, response::StringType&& description);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -87,13 +87,13 @@ private:
 	const response::StringType _name;
 };
 
-class GRAPHQLSERVICE_EXPORT ObjectType : public BaseType
+class ObjectType : public BaseType
 {
 public:
-	explicit ObjectType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit ObjectType(response::StringType&& name, response::StringType&& description);
 
-	void AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces);
-	void AddFields(std::vector<std::shared_ptr<Field>> fields);
+	GRAPHQLSERVICE_EXPORT void AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -108,13 +108,13 @@ private:
 	std::vector<std::shared_ptr<Field>> _fields;
 };
 
-class GRAPHQLSERVICE_EXPORT InterfaceType : public BaseType
+class InterfaceType : public BaseType
 {
 public:
-	explicit InterfaceType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit InterfaceType(response::StringType&& name, response::StringType&& description);
 
-	void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
-	void AddFields(std::vector<std::shared_ptr<Field>> fields);
+	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -129,12 +129,12 @@ private:
 	std::vector<std::weak_ptr<ObjectType>> _possibleTypes;
 };
 
-class GRAPHQLSERVICE_EXPORT UnionType : public BaseType
+class UnionType : public BaseType
 {
 public:
-	explicit UnionType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit UnionType(response::StringType&& name, response::StringType&& description);
 
-	void AddPossibleTypes(std::vector<std::weak_ptr<object::Type>> possibleTypes);
+	GRAPHQLSERVICE_EXPORT void AddPossibleTypes(std::vector<std::weak_ptr<object::Type>> possibleTypes);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -147,19 +147,19 @@ private:
 	std::vector<std::weak_ptr<object::Type>> _possibleTypes;
 };
 
-struct GRAPHQLSERVICE_EXPORT EnumValueType
+struct EnumValueType
 {
 	response::StringType value;
 	response::StringType description;
 	std::optional<response::StringType> deprecationReason;
 };
 
-class GRAPHQLSERVICE_EXPORT EnumType : public BaseType
+class EnumType : public BaseType
 {
 public:
-	explicit EnumType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit EnumType(response::StringType&& name, response::StringType&& description);
 
-	void AddEnumValues(std::vector<EnumValueType> enumValues);
+	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::vector<EnumValueType> enumValues);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -172,12 +172,12 @@ private:
 	std::vector<std::shared_ptr<object::EnumValue>> _enumValues;
 };
 
-class GRAPHQLSERVICE_EXPORT InputObjectType : public BaseType
+class InputObjectType : public BaseType
 {
 public:
-	explicit InputObjectType(response::StringType&& name, response::StringType&& description);
+	GRAPHQLSERVICE_EXPORT explicit InputObjectType(response::StringType&& name, response::StringType&& description);
 
-	void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
+	GRAPHQLSERVICE_EXPORT void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -190,10 +190,10 @@ private:
 	std::vector<std::shared_ptr<InputValue>> _inputValues;
 };
 
-class GRAPHQLSERVICE_EXPORT WrapperType : public BaseType
+class WrapperType : public BaseType
 {
 public:
-	explicit WrapperType(TypeKind kind, const std::shared_ptr<object::Type>& ofType);
+	GRAPHQLSERVICE_EXPORT explicit WrapperType(TypeKind kind, const std::shared_ptr<object::Type>& ofType);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const override;
@@ -204,10 +204,10 @@ private:
 	const std::weak_ptr<object::Type> _ofType;
 };
 
-class GRAPHQLSERVICE_EXPORT Field : public object::Field
+class Field : public object::Field
 {
 public:
-	explicit Field(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::Type>& type);
+	GRAPHQLSERVICE_EXPORT explicit Field(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason, std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::Type>& type);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
@@ -225,10 +225,10 @@ private:
 	const std::weak_ptr<object::Type> _type;
 };
 
-class GRAPHQLSERVICE_EXPORT InputValue : public object::InputValue
+class InputValue : public object::InputValue
 {
 public:
-	explicit InputValue(response::StringType&& name, response::StringType&& description, const std::shared_ptr<object::Type>& type, response::StringType&& defaultValue);
+	GRAPHQLSERVICE_EXPORT explicit InputValue(response::StringType&& name, response::StringType&& description, const std::shared_ptr<object::Type>& type, response::StringType&& defaultValue);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
@@ -243,10 +243,10 @@ private:
 	const response::StringType _defaultValue;
 };
 
-class GRAPHQLSERVICE_EXPORT EnumValue : public object::EnumValue
+class EnumValue : public object::EnumValue
 {
 public:
-	explicit EnumValue(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason);
+	GRAPHQLSERVICE_EXPORT explicit EnumValue(response::StringType&& name, response::StringType&& description, std::optional<response::StringType>&& deprecationReason);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
@@ -260,10 +260,10 @@ private:
 	const std::optional<response::StringType> _deprecationReason;
 };
 
-class GRAPHQLSERVICE_EXPORT Directive : public object::Directive
+class Directive : public object::Directive
 {
 public:
-	explicit Directive(response::StringType&& name, response::StringType&& description, std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args);
+	GRAPHQLSERVICE_EXPORT explicit Directive(response::StringType&& name, response::StringType&& description, std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;

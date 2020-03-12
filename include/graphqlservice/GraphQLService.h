@@ -55,7 +55,7 @@ using field_path = std::queue<path_segment>;
 
 GRAPHQLSERVICE_EXPORT void addErrorPath(field_path&& path, response::Value& error);
 
-struct GRAPHQLSERVICE_EXPORT schema_error
+struct schema_error
 {
 	std::string message;
 	schema_location location;
@@ -65,21 +65,21 @@ struct GRAPHQLSERVICE_EXPORT schema_error
 GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
-class GRAPHQLSERVICE_EXPORT schema_exception : public std::exception
+class schema_exception : public std::exception
 {
 public:
-	explicit schema_exception(std::vector<schema_error>&& structuredErrors);
-	explicit schema_exception(std::vector<std::string>&& messages);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<schema_error>&& structuredErrors);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
 
-	const char* what() const noexcept override;
+	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
 
-	const std::vector<schema_error>& getStructuredErrors() const noexcept;
-	std::vector<schema_error> getStructuredErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<schema_error>& getStructuredErrors() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
 
-	const response::Value& getErrors() const noexcept;
-	response::Value getErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT const response::Value& getErrors() const noexcept;
+	GRAPHQLSERVICE_EXPORT response::Value getErrors() noexcept;
 
 private:
 	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
@@ -92,7 +92,7 @@ private:
 // per-request state that you want to maintain throughout the request (e.g. optimizing or batching
 // backend requests), you can inherit from RequestState and pass it to Request::resolve to correlate the
 // asynchronous/recursive callbacks and accumulate state in it.
-struct GRAPHQLSERVICE_EXPORT RequestState : std::enable_shared_from_this<RequestState>
+struct RequestState : std::enable_shared_from_this<RequestState>
 {
 };
 
@@ -114,7 +114,7 @@ constexpr std::string_view strSubscription { "subscription"sv };
 }
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
-struct GRAPHQLSERVICE_EXPORT SelectionSetParams
+struct SelectionSetParams
 {
 	// The lifetime of each of these borrowed references is guaranteed until the future returned
 	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer. 
@@ -136,9 +136,9 @@ struct GRAPHQLSERVICE_EXPORT SelectionSetParams
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
-struct GRAPHQLSERVICE_EXPORT FieldParams : SelectionSetParams
+struct FieldParams : SelectionSetParams
 {
-	explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be destroyed,
 	// but you can move it into another instance of response::Value to keep it alive longer.
@@ -174,7 +174,7 @@ private:
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
 // (with optional aliases and sub-selections) and potentially references to other fragments.
-class GRAPHQLSERVICE_EXPORT Fragment
+class Fragment
 {
 public:
 	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
@@ -197,13 +197,13 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
 // a single field.
-struct GRAPHQLSERVICE_EXPORT ResolverParams : SelectionSetParams
+struct ResolverParams : SelectionSetParams
 {
-	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
+	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
 		std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
 		const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables);
 
-	schema_location getLocation() const;
+	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
@@ -222,7 +222,7 @@ using Resolver = std::function<std::future<response::Value>(ResolverParams&&)>;
 using ResolverMap = std::unordered_map<std::string, Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
-class GRAPHQLSERVICE_EXPORT Base64
+class Base64
 {
 public:
 	// Map a single Base64-encoded character to its 6-bit integer value.
@@ -236,7 +236,7 @@ public:
 	}
 
 	// Convert a Base64-encoded string to a vector of bytes.
-	static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
+	GRAPHQLSERVICE_EXPORT static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
 
 	// Map a single 6-bit integer value to its Base64-encoded character.
 	static constexpr char toBase64(uint8_t i) noexcept
@@ -249,7 +249,7 @@ public:
 	}
 
 	// Convert a set of bytes to Base64.
-	static std::string toBase64(const std::vector<uint8_t>& bytes);
+	GRAPHQLSERVICE_EXPORT static std::string toBase64(const std::vector<uint8_t>& bytes);
 
 private:
 	static constexpr char padding = '=';
@@ -430,15 +430,15 @@ using TypeNames = std::unordered_set<std::string>;
 // and @skip directives, and calls through to the resolver functor for each selected field with
 // its arguments. This may be a recursive process for fields which return another complex type,
 // in which case it requires its own selection set.
-class GRAPHQLSERVICE_EXPORT Object : public std::enable_shared_from_this<Object>
+class Object : public std::enable_shared_from_this<Object>
 {
 public:
-	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
-	virtual ~Object() = default;
+	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
+	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
-	std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
-	bool matchesType(const std::string& typeName) const;
+	GRAPHQLSERVICE_EXPORT bool matchesType(const std::string& typeName) const;
 
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The implementer
@@ -446,8 +446,8 @@ protected:
 	// testing directives which were included at the operation or fragment level. It's up to sub-classes
 	// to decide if they want to use const_cast, mutable members, or separate storage in the RequestState
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(const SelectionSetParams& params) const;
-	virtual void endSelectionSet(const SelectionSetParams& params) const;
+	GRAPHQLSERVICE_EXPORT virtual void beginSelectionSet(const SelectionSetParams& params) const;
+	GRAPHQLSERVICE_EXPORT virtual void endSelectionSet(const SelectionSetParams& params) const;
 
 	std::mutex _resolverMutex {};
 
@@ -783,7 +783,7 @@ using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
 // query.
-struct GRAPHQLSERVICE_EXPORT SubscriptionParams
+struct SubscriptionParams
 {
 	std::shared_ptr<RequestState> state;
 	peg::ast query;
@@ -838,35 +838,35 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
 // also needs the values of the request variables.
-class GRAPHQLSERVICE_EXPORT Request : public std::enable_shared_from_this<Request>
+class Request : public std::enable_shared_from_this<Request>
 {
 protected:
-	explicit Request(TypeMap&& operationTypes);
-	virtual ~Request() = default;
+	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
+	GRAPHQLSERVICE_EXPORT virtual ~Request() = default;
 
 public:
-	std::vector<schema_error> validate(peg::ast& query) const;
+	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
 
-	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
+	GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
-	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
-	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
-	void unsubscribe(SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
+	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
 
-	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
-	void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 private:
 	std::future<response::Value> resolveValidated(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;

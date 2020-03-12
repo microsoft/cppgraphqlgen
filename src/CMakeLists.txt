@@ -26,24 +26,22 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # graphqlresponse
-add_library(graphqlresponse STATIC GraphQLResponse.cpp)
-target_include_directories(graphqlresponse PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+add_library(graphqlresponse GraphQLResponse.cpp)
+target_include_directories(graphqlresponse PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  target_compile_definitions(graphqlresponse PUBLIC
-    GRAPHQL_DLLEXPORTS
-    IMPL_GRAPHQLRESPONSE_LIB)
+  target_compile_definitions(graphqlresponse
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLRESPONSE_DLL)
 endif()
 
 # schemagen
-add_executable(schemagen
-  SchemaGenerator.cpp
-  $<TARGET_PROPERTY:graphqlpeg,SOURCES>
-  $<TARGET_PROPERTY:graphqlresponse,SOURCES>)
-target_include_directories(schemagen PRIVATE
-  $<TARGET_PROPERTY:graphqlpeg,INTERFACE_INCLUDE_DIRECTORIES>
-  $<TARGET_PROPERTY:graphqlresponse,INTERFACE_INCLUDE_DIRECTORIES>)
+add_executable(schemagen SchemaGenerator.cpp)
+target_link_libraries(schemagen PRIVATE
+  graphqlpeg
+  graphqlresponse)
 add_bigobj_flag(schemagen)
 
 set(BOOST_COMPONENTS program_options)
@@ -110,7 +108,7 @@ add_library(graphqlservice
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     Threads::Threads)
-target_link_libraries(graphqlservice PRIVATE graphqlresponse)
+target_link_libraries(graphqlservice PUBLIC graphqlresponse)
 target_include_directories(graphqlservice SYSTEM PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/../include)
 
@@ -133,7 +131,7 @@ if(GRAPHQL_USE_RAPIDJSON)
 
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson JSONResponse.cpp)
-  target_link_libraries(graphqljson PRIVATE graphqlresponse)
+  target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 
   if(WIN32 AND BUILD_SHARED_LIBS)

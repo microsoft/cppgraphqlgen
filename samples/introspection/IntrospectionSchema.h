@@ -60,7 +60,7 @@ class InputValue;
 class EnumValue;
 class Directive;
 
-class GRAPHQLSERVICE_EXPORT Schema
+class Schema
 	: public service::Object
 {
 protected:
@@ -83,7 +83,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class GRAPHQLSERVICE_EXPORT Type
+class Type
 	: public service::Object
 {
 protected:
@@ -114,7 +114,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class GRAPHQLSERVICE_EXPORT Field
+class Field
 	: public service::Object
 {
 protected:
@@ -139,7 +139,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class GRAPHQLSERVICE_EXPORT InputValue
+class InputValue
 	: public service::Object
 {
 protected:
@@ -160,7 +160,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class GRAPHQLSERVICE_EXPORT EnumValue
+class EnumValue
 	: public service::Object
 {
 protected:
@@ -181,7 +181,7 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
 
-class GRAPHQLSERVICE_EXPORT Directive
+class Directive
 	: public service::Object
 {
 protected:
