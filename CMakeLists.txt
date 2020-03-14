@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.8.2)
-project(cppgraphqlgen VERSION 3.0.0)
+project(cppgraphqlgen VERSION 3.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -11,11 +11,6 @@ set(GRAPHQL_INSTALL_TOOLS_DIR bin CACHE PATH "schemagen install directory")
 set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install directory")
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  # Let CMake figure out the exports for the SHARED library (DLL) on Windows.
-  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif()
 
 function(add_bigobj_flag target)
   if(MSVC)

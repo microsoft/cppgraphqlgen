@@ -1887,6 +1887,11 @@ private:
 		headerFile << std::endl;
 	}
 
+	if (_isIntrospection)
+	{
+		headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
+	}
+
 	headerFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp" << s_introspectionNamespace << R"cpp(::Schema>& schema);
 
 )cpp";

@@ -6,6 +6,16 @@
 #ifndef GRAPHQLSERVICE_H
 #define GRAPHQLSERVICE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLSERVICE_DLL
+		#define GRAPHQLSERVICE_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLSERVICE_DLL
+		#define GRAPHQLSERVICE_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLSERVICE_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLSERVICE_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
@@ -30,7 +40,7 @@
 namespace graphql::service {
 
 // Errors should have a message string, and optional locations and a path.
-void addErrorMessage(std::string&& message, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Value& error);
 
 struct schema_location
 {
@@ -38,12 +48,12 @@ struct schema_location
 	size_t byte_in_line = 0;
 };
 
-void addErrorLocation(const schema_location& location, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorLocation(const schema_location& location, response::Value& error);
 
 using path_segment = std::variant<std::string, size_t>;
 using field_path = std::queue<path_segment>;
 
-void addErrorPath(field_path&& path, response::Value& error);
+GRAPHQLSERVICE_EXPORT void addErrorPath(field_path&& path, response::Value& error);
 
 struct schema_error
 {
@@ -52,24 +62,24 @@ struct schema_error
 	field_path path;
 };
 
-response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
+GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
 {
 public:
-	explicit schema_exception(std::vector<schema_error>&& structuredErrors);
-	explicit schema_exception(std::vector<std::string>&& messages);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<schema_error>&& structuredErrors);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
 
-	const char* what() const noexcept override;
+	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
 
-	const std::vector<schema_error>& getStructuredErrors() const noexcept;
-	std::vector<schema_error> getStructuredErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<schema_error>& getStructuredErrors() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
 
-	const response::Value& getErrors() const noexcept;
-	response::Value getErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT const response::Value& getErrors() const noexcept;
+	GRAPHQLSERVICE_EXPORT response::Value getErrors() noexcept;
 
 private:
 	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
@@ -128,7 +138,7 @@ struct SelectionSetParams
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
 struct FieldParams : SelectionSetParams
 {
-	explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be destroyed,
 	// but you can move it into another instance of response::Value to keep it alive longer.
@@ -189,11 +199,11 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 // a single field.
 struct ResolverParams : SelectionSetParams
 {
-	explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
+	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams, const peg::ast_node& field,
 		std::string&& fieldName, response::Value&& arguments, response::Value&& fieldDirectives,
 		const peg::ast_node* selection, const FragmentMap& fragments, const response::Value& variables);
 
-	schema_location getLocation() const;
+	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
@@ -226,7 +236,7 @@ public:
 	}
 
 	// Convert a Base64-encoded string to a vector of bytes.
-	static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
+	GRAPHQLSERVICE_EXPORT static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
 
 	// Map a single 6-bit integer value to its Base64-encoded character.
 	static constexpr char toBase64(uint8_t i) noexcept
@@ -239,7 +249,7 @@ public:
 	}
 
 	// Convert a set of bytes to Base64.
-	static std::string toBase64(const std::vector<uint8_t>& bytes);
+	GRAPHQLSERVICE_EXPORT static std::string toBase64(const std::vector<uint8_t>& bytes);
 
 private:
 	static constexpr char padding = '=';
@@ -402,6 +412,16 @@ using BooleanArgument = ModifiedArgument<response::BooleanType>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <> GRAPHQLSERVICE_EXPORT response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value);
+template <> GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert(const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
 using TypeNames = std::unordered_set<std::string>;
@@ -413,12 +433,12 @@ using TypeNames = std::unordered_set<std::string>;
 class Object : public std::enable_shared_from_this<Object>
 {
 public:
-	explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
-	virtual ~Object() = default;
+	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
+	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
-	std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const SelectionSetParams& selectionSetParams, const peg::ast_node& selection, const FragmentMap& fragments, const response::Value& variables) const;
 
-	bool matchesType(const std::string& typeName) const;
+	GRAPHQLSERVICE_EXPORT bool matchesType(const std::string& typeName) const;
 
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The implementer
@@ -426,8 +446,8 @@ protected:
 	// testing directives which were included at the operation or fragment level. It's up to sub-classes
 	// to decide if they want to use const_cast, mutable members, or separate storage in the RequestState
 	// to accumulate state. By default these callbacks should treat the Object itself as const.
-	virtual void beginSelectionSet(const SelectionSetParams& params) const;
-	virtual void endSelectionSet(const SelectionSetParams& params) const;
+	GRAPHQLSERVICE_EXPORT virtual void beginSelectionSet(const SelectionSetParams& params) const;
+	GRAPHQLSERVICE_EXPORT virtual void endSelectionSet(const SelectionSetParams& params) const;
 
 	std::mutex _resolverMutex {};
 
@@ -747,6 +767,17 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value>&& result, ResolverParams&& params);
+template <> GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
+#endif // GRAPHQL_DLLEXPORTS
+
 using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
@@ -810,32 +841,32 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 class Request : public std::enable_shared_from_this<Request>
 {
 protected:
-	explicit Request(TypeMap&& operationTypes);
-	virtual ~Request() = default;
+	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
+	GRAPHQLSERVICE_EXPORT virtual ~Request() = default;
 
 public:
-	std::vector<schema_error> validate(peg::ast& query) const;
+	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
 
-	std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
+	GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
 
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
-	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
-	SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
-	void unsubscribe(SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
+	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
 
-	void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
-	void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
 
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
-	std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
 
 private:
 	std::future<response::Value> resolveValidated(std::launch launch, const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;

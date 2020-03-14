@@ -204,7 +204,7 @@ private:
 
 } /* namespace object */
 
-void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */

@@ -2217,6 +2217,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 
 			document.emplace_back(std::string { strData }, response::Value());
 			document.emplace_back(std::string { strErrors }, ex.getErrors());
+			promise.set_value(std::move(document));
 
 			result = promise.get_future();
 		}

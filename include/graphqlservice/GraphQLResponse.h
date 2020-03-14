@@ -6,6 +6,16 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLRESPONSE_DLL
+		#define GRAPHQLRESPONSE_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLRESPONSE_DLL
+		#define GRAPHQLRESPONSE_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLRESPONSE_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLRESPONSE_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -102,47 +112,47 @@ struct TypedData;
 // Represent a discriminated union of GraphQL response value types.
 struct Value
 {
-	Value(Type type = Type::Null);
-	~Value();
+	GRAPHQLRESPONSE_EXPORT Value(Type type = Type::Null);
+	GRAPHQLRESPONSE_EXPORT ~Value();
 
-	explicit Value(const char* value);
-	explicit Value(StringType&& value);
-	explicit Value(BooleanType value);
-	explicit Value(IntType value);
-	explicit Value(FloatType value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(const char* value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(StringType&& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
 
-	Value(Value&& other) noexcept;
-	explicit Value(const Value& other);
+	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
+	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
 
-	Value& operator=(Value&& rhs) noexcept;
-	Value& operator=(const Value& rhs) = delete;
+	GRAPHQLRESPONSE_EXPORT Value& operator=(Value&& rhs) noexcept;
+	GRAPHQLRESPONSE_EXPORT Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
-	bool operator==(const Value& rhs) const noexcept;
-	bool operator!=(const Value& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT bool operator!=(const Value& rhs) const noexcept;
 
 	// Check the Type
-	Type type() const noexcept;
+	GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
 
 	// JSON doesn't distinguish between Type::String and Type::EnumValue, so if this value comes
 	// from JSON and it's a string we need to track the fact that it can be interpreted as either.
-	Value&& from_json() noexcept;
-	bool maybe_enum() const noexcept;
+	GRAPHQLRESPONSE_EXPORT Value&& from_json() noexcept;
+	GRAPHQLRESPONSE_EXPORT bool maybe_enum() const noexcept;
 
 	// Valid for Type::Map or Type::List
-	void reserve(size_t count);
-	size_t size() const;
+	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
+	GRAPHQLRESPONSE_EXPORT size_t size() const;
 
 	// Valid for Type::Map
-	void emplace_back(std::string&& name, Value&& value);
-	MapType::const_iterator find(const std::string& name) const;
-	MapType::const_iterator begin() const;
-	MapType::const_iterator end() const;
-	const Value& operator[](const std::string& name) const;
+	GRAPHQLRESPONSE_EXPORT void emplace_back(std::string&& name, Value&& value);
+	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(const std::string& name) const;
+	GRAPHQLRESPONSE_EXPORT MapType::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT MapType::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT const Value& operator[](const std::string& name) const;
 
 	// Valid for Type::List
-	void emplace_back(Value&& value);
-	const Value& operator[](size_t index) const;
+	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
+	GRAPHQLRESPONSE_EXPORT const Value& operator[](size_t index) const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -177,6 +187,26 @@ private:
 	const Type _type;
 	std::unique_ptr<TypedData> _data;
 };
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the specialized template methods
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<StringType>(StringType&& value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<BooleanType>(BooleanType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<IntType>(IntType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
+template <> GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
+template <> GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const ListType& Value::get<ListType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const StringType& Value::get<StringType>() const;
+template <> GRAPHQLRESPONSE_EXPORT BooleanType Value::get<BooleanType>() const;
+template <> GRAPHQLRESPONSE_EXPORT IntType Value::get<IntType>() const;
+template <> GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
+template <> GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
+template <> GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
+template <> GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
+template <> GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
+template <> GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
+#endif // GRAPHQL_DLLEXPORTS
 
 } /* namespace graphql::response */
 
