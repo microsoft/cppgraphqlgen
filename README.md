@@ -26,7 +26,7 @@ app and your native/hybrid app.
 ## Related projects
 
 I created a couple of sample projects that work with the latest version to demonstrate integrating the
-[schema.today.graphql](./samples/today/schema.today.graphql) service into an Electron app. They're available under
+[schema.today.graphql](./samples/schema.today.graphql) service into an Electron app. They're available under
 my personal account, feel free to use either or both of these as a starting point to integrate your own generated
 service with Node or Electron. PRs with links to your own samples are always welcome.
 
@@ -126,9 +126,9 @@ configuration.
 ## API references
 
 See [GraphQLService.h](include/graphqlservice/GraphQLService.h) for the base types implemented in
-the `graphql::service` namespace. Take a look at [UnifiedToday.h](samples/today/UnifiedToday.h) and
-[UnifiedToday.cpp](samples/today/UnifiedToday.cpp) to see a sample implementation of a custom schema defined
-in [schema.today.graphql](samples/today/schema.today.graphql) for testing purposes.
+the `graphql::service` namespace. Take a look at [TodayMock.h](samples/today/TodayMock.h) and
+[TodayMock.cpp](samples/today/TodayMock.cpp) to see a sample implementation of a custom schema defined
+in [schema.today.graphql](samples/schema.today.graphql) for testing purposes.
 
 ### Additional Documentation
 

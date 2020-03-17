@@ -90,7 +90,7 @@ throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
 ```
 
 Although the `id field` does not take any arguments according to the sample
-[schema](../samples/today/schema.today.graphql), this example also shows how
+[schema](../samples/schema.today.graphql), this example also shows how
 every `getField` method takes a `graphql::service::FieldParams` struct as
 its first parameter. There are more details on this in the [fieldparams.md](./fieldparams.md)
 document.
