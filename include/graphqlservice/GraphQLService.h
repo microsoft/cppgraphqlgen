@@ -486,7 +486,7 @@ struct ModifiedResult
 			std::shared_ptr<U>,
 			U>;
 
-		using future_type = typename std::conditional_t<std::is_base_of_v<Object, Type>,
+		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
 			FieldResult<std::shared_ptr<Object>>,
 			FieldResult<type>>&&;
 	};
@@ -542,7 +542,7 @@ struct ModifiedResult
 
 			promise.set_value(std::move(wrappedResult));
 
-			return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
+			return ModifiedResult::convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
 		}, std::move(result), std::move(params));
 	}
 
@@ -572,7 +572,7 @@ struct ModifiedResult
 
 			promise.set_value(std::move(*wrappedResult));
 
-			return convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
+			return ModifiedResult::convert<Other...>(promise.get_future(), std::move(wrappedParams)).get();
 		}, std::move(result), std::move(params));
 	}
 
@@ -595,7 +595,7 @@ struct ModifiedResult
 				// i.e. std::vector<bool> on many platforms. Copy the values from the std::vector<> rather than moving them.
 				for (auto entry : wrappedResult)
 				{
-					children.push(convert<Other...>(entry, ResolverParams(wrappedParams)));
+					children.push(ModifiedResult::convert<Other...>(entry, ResolverParams(wrappedParams)));
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 			}
@@ -603,7 +603,7 @@ struct ModifiedResult
 			{
 				for (auto& entry : wrappedResult)
 				{
-					children.push(convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
+					children.push(ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 			}
