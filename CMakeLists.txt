@@ -31,7 +31,13 @@ if(NOT pegtl_FOUND)
   add_subdirectory(PEGTL)
 endif()
 
-option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
+option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
+
+if(GRAPHQL_BUILD_SCHEMAGEN)
+  option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
+else()
+  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
+endif()
 
 add_subdirectory(cmake)
 add_subdirectory(src)

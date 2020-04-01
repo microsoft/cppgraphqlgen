@@ -38,28 +38,30 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # schemagen
-add_executable(schemagen SchemaGenerator.cpp)
-target_link_libraries(schemagen PRIVATE
-  graphqlpeg
-  graphqlresponse)
-add_bigobj_flag(schemagen)
-
-set(BOOST_COMPONENTS program_options)
-set(BOOST_LIBRARIES Boost::program_options)
-
-if(NOT MSVC)
-  set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-  set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-  target_compile_options(schemagen PRIVATE -DUSE_BOOST_FILESYSTEM)
+if(GRAPHQL_BUILD_SCHEMAGEN)
+  add_executable(schemagen SchemaGenerator.cpp)
+  target_link_libraries(schemagen PRIVATE
+    graphqlpeg
+    graphqlresponse)
+  add_bigobj_flag(schemagen)
+  
+  set(BOOST_COMPONENTS program_options)
+  set(BOOST_LIBRARIES Boost::program_options)
+  
+  if(NOT MSVC)
+    set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
+    set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
+    target_compile_options(schemagen PRIVATE -DUSE_BOOST_FILESYSTEM)
+  endif()
+  
+  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
+  
+  install(TARGETS schemagen
+    EXPORT cppgraphqlgen-targets
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
+    CONFIGURATIONS Release)
 endif()
-
-find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
-
-install(TARGETS schemagen
-  EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
-  CONFIGURATIONS Release)
 
 # introspection
 if(GRAPHQL_UPDATE_SAMPLES)
