@@ -589,7 +589,7 @@ struct ModifiedResult
 
 			wrappedParams.errorPath.push(size_t { 0 });
 
-			if constexpr (!std::is_reference_v<typename std::decay_t<decltype(wrappedResult)>::reference>)
+			if constexpr (!std::is_reference_v<typename std::decay_t<decltype(wrappedFuture.get())>::reference>)
 			{
 				// Special handling for std::vector<> specializations which don't return a reference to the underlying type,
 				// i.e. std::vector<bool> on many platforms. Copy the values from the std::vector<> rather than moving them.
