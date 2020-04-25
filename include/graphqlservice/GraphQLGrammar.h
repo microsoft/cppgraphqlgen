@@ -1107,7 +1107,7 @@ struct directive_definition_start
 };
 
 struct directive_definition_content
-	: seq<star<ignored>, one<'@'>, directive_name, arguments_definition, plus<ignored>, on_keyword, plus<ignored>, directive_locations>
+	: seq<star<ignored>, one<'@'>, directive_name, opt<star<ignored>, arguments_definition>, plus<ignored>, on_keyword, plus<ignored>, directive_locations>
 {
 };
 
