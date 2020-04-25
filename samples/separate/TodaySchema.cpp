@@ -183,6 +183,9 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	AddNestedTypeDetails(typeNestedType, schema);
 	AddExpensiveDetails(typeExpensive, schema);
 
+	schema->AddDirective(std::make_shared<introspection::Directive>("id", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD_DEFINITION)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>()));
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
 		R"gql(SUBSCRIPTION)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({

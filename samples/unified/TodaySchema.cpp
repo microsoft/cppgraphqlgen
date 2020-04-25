@@ -1194,6 +1194,9 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::Field>("order", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 
+	schema->AddDirective(std::make_shared<introspection::Directive>("id", R"md()md", std::vector<response::StringType>({
+		R"gql(FIELD_DEFINITION)gql"
+	}), std::vector<std::shared_ptr<introspection::InputValue>>()));
 	schema->AddDirective(std::make_shared<introspection::Directive>("subscriptionTag", R"md()md", std::vector<response::StringType>({
 		R"gql(SUBSCRIPTION)gql"
 	}), std::vector<std::shared_ptr<introspection::InputValue>>({

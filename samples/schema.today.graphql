@@ -9,6 +9,8 @@ schema {
 
 scalar ItemCursor
 
+directive @id on FIELD_DEFINITION
+
 "Root Query type"
 type Query {
     """[Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification)"""
