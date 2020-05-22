@@ -5,7 +5,7 @@
 
 #include "graphqlservice/GraphQLGrammar.h"
 
-#include <tao/pegtl/analyze.hpp>
+#include <tao/pegtl/contrib/analyze.hpp>
 
 using namespace graphql;
 using namespace graphql::peg;

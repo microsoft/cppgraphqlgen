@@ -45,7 +45,7 @@ GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Valu
 struct schema_location
 {
 	size_t line = 0;
-	size_t byte_in_line = 0;
+	size_t column = 1;
 };
 
 GRAPHQLSERVICE_EXPORT void addErrorLocation(const schema_location& location, response::Value& error);

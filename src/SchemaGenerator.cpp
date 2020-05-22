@@ -383,7 +383,7 @@ void Generator::validateSchema()
 			if (itrPosition != _typePositions.cend())
 			{
 				error << " line: " << itrPosition->second.line
-					<< " column: " << (itrPosition->second.byte_in_line + 1);
+					<< " column: " << itrPosition->second.column;
 			}
 
 			throw std::runtime_error(error.str());
@@ -513,7 +513,7 @@ void Generator::validateSchema()
 				if (itrPosition != _typePositions.cend())
 				{
 					error << " line: " << itrPosition->second.line
-						<< " column: " << (itrPosition->second.byte_in_line + 1);
+						<< " column: " << itrPosition->second.column;
 				}
 
 				throw std::runtime_error(error.str());
@@ -558,7 +558,7 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optiona
 			if (entry.position)
 			{
 				error << " line: " << entry.position->line
-					<< " column: " << (entry.position->byte_in_line + 1);
+					<< " column: " << entry.position->column;
 			}
 
 			throw std::runtime_error(error.str());
@@ -595,7 +595,7 @@ void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optiona
 				if (entry.position)
 				{
 					error << " line: " << entry.position->line
-						<< " column: " << (entry.position->byte_in_line + 1);
+						<< " column: " << entry.position->column;
 				}
 
 				throw std::runtime_error(error.str());
@@ -626,7 +626,7 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 			if (entry.position)
 			{
 				error << " line: " << entry.position->line
-					<< " column: " << (entry.position->byte_in_line + 1);
+					<< " column: " << entry.position->column;
 			}
 
 			throw std::runtime_error(error.str());
@@ -655,7 +655,7 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 				if (entry.position)
 				{
 					error << " line: " << entry.position->line
-						<< " column: " << (entry.position->byte_in_line + 1);
+						<< " column: " << entry.position->column;
 				}
 
 				throw std::runtime_error(error.str());
@@ -1298,7 +1298,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 				field.defaultValue = defaultValue.getValue();
 				field.defaultValueString = child->children.back()->string_view();
 
-				defaultValueLocation = { position.line, position.byte_in_line };
+				defaultValueLocation = { position.line, position.column };
 			}
 			else if (child->is_type<peg::description>())
 			{
@@ -1318,7 +1318,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 			error << "Expected Non-Null default value for field name: " << field.name
 				<< " line: " << defaultValueLocation.line
-				<< " column: " << (defaultValueLocation.byte_in_line + 1);
+				<< " column: " << defaultValueLocation.column;
 
 			throw std::runtime_error(error.str());
 		}
@@ -3608,10 +3608,10 @@ int main(int argc, char** argv)
 		std::cerr << "Invalid GraphQL: " << pe.what()
 			<< std::endl;
 
-		for (const auto& position : pe.positions)
+		for (const auto& position : pe.positions())
 		{
 			std::cerr << "\tline: " << position.line
-				<< " column: " << (position.byte_in_line + 1)
+				<< " column: " << position.column
 				<< std::endl;
 		}
 

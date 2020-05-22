@@ -88,7 +88,7 @@ struct ast_selector<escaped_unicode>
 			}
 		}
 
-		throw parse_error("invalid escaped unicode code point", { n->begin(), n->end() });
+		throw parse_error("invalid escaped unicode code point", n->begin());
 	}
 };
 
@@ -141,7 +141,7 @@ struct ast_selector<escaped_char>
 			}
 		}
 
-		throw parse_error("invalid escaped character sequence", { n->begin(), n->end() });
+		throw parse_error("invalid escaped character sequence", n->begin());
 	}
 };
 
@@ -574,7 +574,7 @@ struct ast_control
 	static const std::string error_message;
 
 	template <typename Input, typename... State>
-	static void raise(const Input& in, State&&...)
+	[[noreturn]] static void raise(const Input& in, State&&...)
 	{
 		throw parse_error(error_message, in);
 	}
