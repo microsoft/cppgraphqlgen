@@ -137,7 +137,7 @@ void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 	auto position = variable.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
@@ -146,7 +146,7 @@ void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 	auto position = intValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
@@ -155,7 +155,7 @@ void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatVal
 	auto position = floatValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringValue)
@@ -164,7 +164,7 @@ void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringV
 	auto position = stringValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
@@ -173,7 +173,7 @@ void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& boolea
 	auto position = booleanValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue)
@@ -181,7 +181,7 @@ void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue
 	auto position = nullValue.begin();
 
 	_argumentValue.value.reset();
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
@@ -190,7 +190,7 @@ void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue
 	auto position = enumValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue)
@@ -209,7 +209,7 @@ void ValidateArgumentValueVisitor::visitListValue(const peg::ast_node& listValue
 	}
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectValue)
@@ -229,7 +229,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 
 			message << "Conflicting input field name: " << name;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 			continue;
 		}
 
@@ -241,7 +241,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	}
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
-	_argumentValue.position = { position.line, position.byte_in_line };
+	_argumentValue.position = { position.line, position.column };
 }
 
 ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateFieldArguments&& arguments)
@@ -677,7 +677,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			error << "Duplicate fragment name: " << inserted.first->first;
 
-			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ error.str(), { position.line, position.column } });
 		}
 	});
 
@@ -703,7 +703,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			error << "Duplicate operation name: " << inserted.first->first;
 
-			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ error.str(), { position.line, position.column } });
 		}
 	});
 
@@ -721,7 +721,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
 			auto position = itr->second.begin();
 
-			_errors.push_back({ "Anonymous operation not alone", { position.line, position.byte_in_line } });
+			_errors.push_back({ "Anonymous operation not alone", { position.line, position.column } });
 		}
 	}
 
@@ -741,7 +741,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			// http://spec.graphql.org/June2018/#sec-Executable-Definitions
 			auto position = child->begin();
 
-			_errors.push_back({ "Unexpected type definition", { position.line, position.byte_in_line } });
+			_errors.push_back({ "Unexpected type definition", { position.line, position.column } });
 		}
 	}
 
@@ -765,7 +765,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			message << "Unused fragment definition name: " << fragmentDefinition.first;
 
-			return schema_error{ message.str(), { position.line, position.byte_in_line } };
+			return schema_error{ message.str(), { position.line, position.column } };
 		});
 	}
 }
@@ -805,7 +805,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 			: "Scalar target type on fragment definition: ") << name
 			<< " name: " << innerType;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -867,7 +867,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					message << " name: " << variableName;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					_errors.push_back({ message.str(), { position.line, position.column } });
 					return;
 				}
 			}
@@ -894,7 +894,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					message << " name: " << variableName;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					_errors.push_back({ message.str(), { position.line, position.column } });
 					return;
 				}
 
@@ -923,7 +923,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					message << " name: " << variableName;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					_errors.push_back({ message.str(), { position.line, position.column } });
 					return;
 				}
 
@@ -962,7 +962,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 		error << "Unsupported operation type: " << operationType;
 
-		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ error.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -987,7 +987,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			error << " name: " << operationName;
 		}
 
-		_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ error.str(), { position.line, position.column } });
 	}
 
 	_scopedType.clear();;
@@ -1004,7 +1004,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 			error << "Unused variable name: " << variable.first;
 
-			_errors.push_back({ error.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ error.str(), { position.line, position.column } });
 		}
 	}
 
@@ -2036,7 +2036,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		message << "Field on unknown type: " << _scopedType
 			<< " name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -2053,7 +2053,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		message << "Field on scalar type: " << _scopedType
 			<< " name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -2079,7 +2079,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				message << "Field on union type: " << _scopedType
 					<< " name: " << name;
 
-				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				_errors.push_back({ message.str(), { position.line, position.column } });
 				return;
 			}
 
@@ -2102,7 +2102,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		message << "Undefined field type: " << _scopedType
 			<< " name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -2140,7 +2140,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 					<< " field: " << name
 					<< " name: " << argumentName;
 
-				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				_errors.push_back({ message.str(), { position.line, position.column } });
 				continue;
 			}
 
@@ -2148,7 +2148,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			visitor.visit(*argument->children.back());
 			validateArguments[argumentName] = visitor.getArgumentValue();
-			argumentLocations[argumentName] = { position.line, position.byte_in_line };
+			argumentLocations[argumentName] = { position.line, position.column };
 			argumentNames.push(std::move(argumentName));
 		}
 	});
@@ -2175,7 +2175,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			message << "Conflicting field type: " << _scopedType
 				<< " name: " << name;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 		}
 	}
 
@@ -2250,7 +2250,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 					<< " field: " << name
 					<< " name: " << argument.first;
 
-				_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+				_errors.push_back({ message.str(), { position.line, position.column } });
 			}
 		}
 	}
@@ -2299,7 +2299,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			message << "Missing fields on non-scalar type: " << innerType;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 			return;
 		}
 	}
@@ -2326,7 +2326,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 		message << "Undefined fragment spread name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -2340,7 +2340,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 			message << "Cyclic fragment spread name: " << name;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 		}
 
 		return;
@@ -2359,7 +2359,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		message << "Incompatible fragment spread target type: " << innerType
 			<< " name: " << name;
 
-		_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
@@ -2393,7 +2393,7 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 		auto position = child.begin();
 
 		innerType = child.children.front()->string();
-		typeConditionLocation = { position.line, position.byte_in_line };
+		typeConditionLocation = { position.line, position.column };
 	});
 
 	if (innerType.empty())
@@ -2466,7 +2466,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 
 			message << "Conflicting directive name: " << directiveName;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 			continue;
 		}
 
@@ -2480,7 +2480,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 
 			message << "Undefined directive name: " << directiveName;
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 			continue;
 		}
 
@@ -2526,7 +2526,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					break;
 			}
 
-			_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+			_errors.push_back({ message.str(), { position.line, position.column } });
 			continue;
 		}
 
@@ -2550,7 +2550,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 					message << "Conflicting argument directive: " << directiveName
 						<< " name: " << argumentName;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					_errors.push_back({ message.str(), { position.line, position.column } });
 					continue;
 				}
 
@@ -2558,7 +2558,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 
 				visitor.visit(*argument->children.back());
 				validateArguments[argumentName] = visitor.getArgumentValue();
-				argumentLocations[argumentName] = { position.line, position.byte_in_line };
+				argumentLocations[argumentName] = { position.line, position.column };
 				argumentNames.push(std::move(argumentName));
 			}
 
@@ -2626,7 +2626,7 @@ void ValidateExecutableVisitor::visitDirectives(introspection::DirectiveLocation
 						"Required non-null argument directive: ") << directiveName
 						<< " name: " << argument.first;
 
-					_errors.push_back({ message.str(), { position.line, position.byte_in_line } });
+					_errors.push_back({ message.str(), { position.line, position.column } });
 				}
 			}
 		});
