@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(GRAPHQL_INSTALL_INCLUDE_DIR include CACHE PATH "Header file install directory")
 set(GRAPHQL_INSTALL_TOOLS_DIR bin CACHE PATH "schemagen install directory")
 set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install directory")
+set(GRAPHQL_INSTALL_CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES} CACHE STRING "Configurations which perform a full install")
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
 

@@ -59,8 +59,8 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   
   install(TARGETS schemagen
     EXPORT cppgraphqlgen-targets
-    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME}
-    CONFIGURATIONS Release)
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
 endif()
 
 # introspection
@@ -111,8 +111,8 @@ target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     Threads::Threads)
 target_link_libraries(graphqlservice PUBLIC graphqlresponse)
-target_include_directories(graphqlservice SYSTEM PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/../include)
+target_include_directories(graphqlservice PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
@@ -155,8 +155,8 @@ if(BUILD_GRAPHQLJSON)
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/JSONResponse.h
-    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
-    CONFIGURATIONS Release)
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
 endif()
@@ -178,8 +178,8 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/Introspection.h
     ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice
-  CONFIGURATIONS Release)
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::

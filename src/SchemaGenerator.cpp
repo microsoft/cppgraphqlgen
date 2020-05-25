@@ -764,7 +764,10 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 	peg::on_first_child<peg::description>(objectTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Object;
@@ -828,7 +831,10 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Interface;
@@ -886,7 +892,10 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Input;
@@ -944,7 +953,10 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 	peg::on_first_child<peg::description>(enumTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Enum;
@@ -987,9 +999,12 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 			});
 
 			peg::on_first_child<peg::description>(child,
-				[&value](const peg::ast_node& enumValue)
+				[&value](const peg::ast_node& description)
 			{
-				value.description = enumValue.children.front()->unescaped;
+				if (!description.children.empty())
+				{
+					value.description = description.children.front()->unescaped;
+				}
 			});
 
 			peg::on_first_child<peg::directives>(child,
@@ -1058,7 +1073,10 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Scalar;
@@ -1081,7 +1099,10 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 	peg::on_first_child<peg::description>(unionTypeDefinition,
 		[&description](const peg::ast_node& child)
 	{
-		description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			description = child.children.front()->unescaped;
+		}
 	});
 
 	_schemaTypes[name] = SchemaType::Union;
@@ -1132,7 +1153,10 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	peg::on_first_child<peg::description>(directiveDefinition,
 		[&directive](const peg::ast_node& child)
 	{
-		directive.description = child.children.front()->unescaped;
+		if (!child.children.empty())
+		{
+			directive.description = child.children.front()->unescaped;
+		}
 	});
 
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
@@ -1206,7 +1230,8 @@ OutputFieldList Generator::getOutputFields(const std::vector<std::unique_ptr<peg
 			{
 				fieldType.visit(*child);
 			}
-			else if (child->is_type<peg::description>())
+			else if (child->is_type<peg::description>()
+				&& !child->children.empty())
 			{
 				field.description = child->children.front()->unescaped;
 			}
@@ -1300,7 +1325,8 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 
 				defaultValueLocation = { position.line, position.column };
 			}
-			else if (child->is_type<peg::description>())
+			else if (child->is_type<peg::description>()
+				&& !child->children.empty())
 			{
 				field.description = child->children.front()->unescaped;
 			}
