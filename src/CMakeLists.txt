@@ -111,8 +111,8 @@ target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     Threads::Threads)
 target_link_libraries(graphqlservice PUBLIC graphqlresponse)
-target_include_directories(graphqlservice SYSTEM PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/../include)
+target_include_directories(graphqlservice PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
