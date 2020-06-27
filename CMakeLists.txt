@@ -2,7 +2,31 @@
 # Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.8.2)
-project(cppgraphqlgen VERSION 3.2.0)
+
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/version.txt" VERSION_FILE)
+
+# Get the latest release tag from git if possible.
+execute_process(COMMAND git describe --tags --long
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  OUTPUT_VARIABLE LATEST_VERSION_TAG
+  ERROR_QUIET
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if("${LATEST_VERSION_TAG}" MATCHES "^v([0-9]+\\.[0-9]+\\.[0-9]+)-[0-9]+-[0-9a-z]+$")
+  # The latest tag matched the pattern we expected, extract the version number.
+  set(LATEST_VERSION "${CMAKE_MATCH_1}")
+  message(STATUS "Latest tagged release: v${LATEST_VERSION}")
+
+  # Update version.txt so source archives without the release tags can still get the same version.
+  file(WRITE "${VERSION_FILE}" "${LATEST_VERSION}")
+else()
+  # Just read the last updated version from version.txt.
+  file(READ "${VERSION_FILE}" LATEST_VERSION)
+endif()
+
+message(STATUS "Latest version: ${LATEST_VERSION}")
+
+project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 
