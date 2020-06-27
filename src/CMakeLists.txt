@@ -12,6 +12,7 @@ endfunction()
 
 # graphqlpeg
 add_library(graphqlpeg GraphQLTree.cpp)
+add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -27,6 +28,7 @@ endif()
 
 # graphqlresponse
 add_library(graphqlresponse GraphQLResponse.cpp)
+add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
@@ -40,6 +42,7 @@ endif()
 # schemagen
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
+  add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
   target_link_libraries(schemagen PRIVATE
     graphqlpeg
     graphqlresponse)
@@ -108,6 +111,7 @@ add_library(graphqlservice
   Introspection.cpp
   Validation.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
+add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     Threads::Threads)
@@ -134,6 +138,7 @@ if(GRAPHQL_USE_RAPIDJSON)
 
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson JSONResponse.cpp)
+  add_library(cppgraphqlgen::graphqljson ALIAS graphqljson)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 
