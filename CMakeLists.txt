@@ -3,28 +3,27 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
+# Default to the last updated version from version.txt.
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/version.txt" VERSION_FILE)
+file(READ "${VERSION_FILE}" LATEST_VERSION)
 
-# Get the latest release tag from git if possible.
-execute_process(COMMAND git describe --tags --long
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  OUTPUT_VARIABLE LATEST_VERSION_TAG
-  ERROR_QUIET
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  # Get the latest release tag from git if possible.
+  execute_process(COMMAND git describe --tags --long
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE LATEST_VERSION_TAG
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-if("${LATEST_VERSION_TAG}" MATCHES "^v([0-9]+\\.[0-9]+\\.[0-9]+)-[0-9]+-[0-9a-z]+$")
-  # The latest tag matched the pattern we expected, extract the version number.
-  set(LATEST_VERSION "${CMAKE_MATCH_1}")
-  message(STATUS "Latest tagged release: v${LATEST_VERSION}")
+  if(LATEST_VERSION_TAG MATCHES "^v([0-9]+\\.[0-9]+\\.[0-9]+)-[0-9]+-[0-9a-z]+$"
+    AND CMAKE_MATCH_1 VERSION_GREATER LATEST_VERSION)
+    # The latest tag matched the pattern we expected and it's newer, so use that as the latest version.
+    set(LATEST_VERSION "${CMAKE_MATCH_1}")
 
-  # Update version.txt so source archives without the release tags can still get the same version.
-  file(WRITE "${VERSION_FILE}" "${LATEST_VERSION}")
-else()
-  # Just read the last updated version from version.txt.
-  file(READ "${VERSION_FILE}" LATEST_VERSION)
+    # Update version.txt so source archives without the release tags still get the same version.
+    file(WRITE "${VERSION_FILE}" "${LATEST_VERSION}")
+  endif()
 endif()
-
-message(STATUS "Latest version: ${LATEST_VERSION}")
 
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
