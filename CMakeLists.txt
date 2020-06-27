@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.8.2)
 
 # Default to the last updated version from version.txt.
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/version.txt" VERSION_FILE)
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.txt" VERSION_FILE)
 file(READ "${VERSION_FILE}" LATEST_VERSION)
 
 if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
