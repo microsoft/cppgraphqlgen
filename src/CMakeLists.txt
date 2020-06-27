@@ -95,6 +95,7 @@ else()
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp .
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h include/graphqlservice
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
