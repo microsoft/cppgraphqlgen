@@ -736,6 +736,7 @@ std::future<response::Value> Subscription::resolve_typename(service::ResolverPar
 Appointment::Appointment()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Appointment"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
@@ -811,6 +812,7 @@ std::future<response::Value> Appointment::resolve_typename(service::ResolverPara
 Task::Task()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Task"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
@@ -871,6 +873,7 @@ std::future<response::Value> Task::resolve_typename(service::ResolverParams&& pa
 Folder::Folder()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Folder"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },

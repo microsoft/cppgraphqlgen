@@ -17,6 +17,7 @@ namespace object {
 Appointment::Appointment()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Appointment"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },

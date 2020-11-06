@@ -520,6 +520,35 @@ void Generator::validateSchema()
 			}
 		}
 	}
+
+	// Validate the objects that are possible types for unions and add the unions to
+	// the list of matching types for the objects.
+	for (const auto& entry : _unionTypes)
+	{
+		for (const auto& objectName : entry.options)
+		{
+			auto itr = _objectNames.find(objectName);
+
+			if (itr == _objectNames.cend())
+			{
+				std::ostringstream error;
+				auto itrPosition = _typePositions.find(entry.type);
+
+				error << "Unknown type: " << objectName
+					  << " included by: " << entry.type;
+
+				if (itrPosition != _typePositions.cend())
+				{
+					error << " line: " << itrPosition->second.line
+						  << " column: " << itrPosition->second.column;
+				}
+
+				throw std::runtime_error(error.str());
+			}
+
+			_objectTypes[itr->second].unions.push_back(entry.type);
+		}
+	}
 }
 
 void Generator::fixupOutputFieldList(OutputFieldList& fields, const std::optional<std::unordered_set<std::string>>& interfaceFields, const std::optional<std::string_view>& accessor)
@@ -776,7 +805,8 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 
 	auto cppName = getSafeCppName(name);
 
-	_objectTypes.push_back({ std::move(name), std::move(cppName), {}, {}, std::move(description) });
+	_objectTypes.push_back(
+		{ std::move(name), std::move(cppName), {}, {}, {}, std::move(description) });
 
 	visitObjectTypeExtension(objectTypeDefinition);
 }
@@ -2747,6 +2777,12 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 	for (const auto& interfaceName : objectType.interfaces)
 	{
 		sourceFile << R"cpp(		")cpp" << interfaceName << R"cpp(",
+)cpp";
+	}
+
+	for (const auto& unionName : objectType.unions)
+	{
+		sourceFile << R"cpp(		")cpp" << unionName << R"cpp(",
 )cpp";
 	}
 
