@@ -247,6 +247,8 @@ std::future<response::Value> Query::resolve_type(service::ResolverParams&& param
 Dog::Dog()
 	: service::Object({
 		"Pet",
+		"CatOrDog",
+		"DogOrHuman",
 		"Dog"
 	}, {
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -354,6 +356,7 @@ std::future<response::Value> Dog::resolve_typename(service::ResolverParams&& par
 Alien::Alien()
 	: service::Object({
 		"Sentient",
+		"HumanOrAlien",
 		"Alien"
 	}, {
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -399,6 +402,8 @@ std::future<response::Value> Alien::resolve_typename(service::ResolverParams&& p
 Human::Human()
 	: service::Object({
 		"Sentient",
+		"DogOrHuman",
+		"HumanOrAlien",
 		"Human"
 	}, {
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -444,6 +449,7 @@ std::future<response::Value> Human::resolve_typename(service::ResolverParams&& p
 Cat::Cat()
 	: service::Object({
 		"Pet",
+		"CatOrDog",
 		"Cat"
 	}, {
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },

@@ -17,6 +17,7 @@ namespace object {
 Folder::Folder()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Folder"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },

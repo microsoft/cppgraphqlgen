@@ -1343,3 +1343,73 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
+
+TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
+{
+	auto query = R"({
+			appointments {
+				edges {
+					node {
+						...AppointmentUnionFragment
+					}
+				}
+			}
+		}
+
+		fragment AppointmentUnionFragment on UnionType {
+			...on Appointment {
+				appointmentId: id
+				subject
+				when
+				isNow
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(20);
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(20), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto appointments = service::ScalarArgument::require("appointments", data);
+		const auto appointmentEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
+		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
+			<< "appointment should be an object";
+		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
+	}
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}

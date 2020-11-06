@@ -200,6 +200,7 @@ struct ObjectType
 	std::string type;
 	std::string cppType;
 	std::vector<std::string> interfaces;
+	std::vector<std::string> unions;
 	OutputFieldList fields;
 	std::string description;
 };

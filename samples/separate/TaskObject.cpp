@@ -17,6 +17,7 @@ namespace object {
 Task::Task()
 	: service::Object({
 		"Node",
+		"UnionType",
 		"Task"
 	}, {
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
