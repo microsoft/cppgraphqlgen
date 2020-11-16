@@ -382,7 +382,7 @@ struct input_value
 };
 
 struct list_entry
-	: input_value
+	: input_value_content
 {
 };
 
