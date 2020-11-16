@@ -391,6 +391,19 @@ TEST(PegtlCase, ParseTodaySchema)
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
 
+TEST(PegtlCase, ParseVariableDefaultEmptyList)
+{
+	memory_input<> input(R"gql(
+		query QueryWithEmptyListVariable($empty: [Boolean!]! = []) {
+			fieldWithArg(arg: $empty)
+		})gql",
+		"ParseVariableDefaultEmptyList");
+
+	const bool result = parse<document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
 TEST(PegtlCase, AnalyzeGrammar)
 {
 	ASSERT_EQ(0, analyze<document>(true)) << "there shuldn't be any infinite loops in the PEG version of the grammar";
