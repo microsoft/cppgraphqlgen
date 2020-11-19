@@ -589,13 +589,15 @@ struct ModifiedResult
 
 			wrappedParams.errorPath.push(size_t { 0 });
 
-			if constexpr (!std::is_reference_v<typename std::decay_t<decltype(wrappedFuture.get())>::reference>)
+			using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
+
+			if constexpr (!std::is_same_v<std::decay_t<typename vector_type::reference>, typename vector_type::value_type>)
 			{
 				// Special handling for std::vector<> specializations which don't return a reference to the underlying type,
 				// i.e. std::vector<bool> on many platforms. Copy the values from the std::vector<> rather than moving them.
-				for (auto entry : wrappedResult)
+				for (typename vector_type::value_type entry : wrappedResult)
 				{
-					children.push(ModifiedResult::convert<Other...>(entry, ResolverParams(wrappedParams)));
+					children.push(ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(wrappedParams)));
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 			}
