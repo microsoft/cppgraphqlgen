@@ -913,6 +913,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
+	const ResolverContext _resolverContext;
 	const std::shared_ptr<RequestState>& _state;
 	const response::Value& _operationDirectives;
 	const field_path _path;
@@ -930,7 +931,8 @@ private:
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables,
 	const TypeNames& typeNames, const ResolverMap& resolvers)
-	: _state(selectionSetParams.state)
+	: _resolverContext(selectionSetParams.resolverContext)
+	, _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
 	, _path(selectionSetParams.errorPath)
 	, _launch(selectionSetParams.launch)
@@ -1065,6 +1067,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	path.push({ alias });
 
 	SelectionSetParams selectionSetParams {
+		_resolverContext,
 		_state,
 		_operationDirectives,
 		_fragmentDirectives.top().fragmentDefinitionDirectives,
@@ -1445,21 +1448,25 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments);
+	OperationDefinitionVisitor(ResolverContext resolverContext, std::launch launch, std::shared_ptr<RequestState> state,
+		const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments);
 
 	std::future<response::Value> getValue();
 
 	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
 
 private:
+	const ResolverContext _resolverContext;
 	const std::launch _launch;
 	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
 	std::future<response::Value> _result;
 };
 
-OperationDefinitionVisitor::OperationDefinitionVisitor(std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments)
-	: _launch(launch)
+OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverContext, std::launch launch, std::shared_ptr<RequestState> state,
+	const TypeMap& operations, response::Value&& variables, FragmentMap&& fragments)
+	: _resolverContext(resolverContext)
+	, _launch(launch)
 	, _params(std::make_shared<OperationData>(
 		std::move(state),
 		std::move(variables),
@@ -1534,11 +1541,12 @@ void OperationDefinitionVisitor::visit(const std::string& operationType, const p
 
 	// Keep the params alive until the deferred lambda has executed
 	_result = std::async(_launch,
-		[selectionLaunch = _launch, params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
+		[selectionContext = _resolverContext, selectionLaunch = _launch, params = std::move(_params), operation = itr->second](const peg::ast_node& selection)
 	{
 		// The top level object doesn't come from inside of a fragment, so all of the fragment directives are empty.
 		const response::Value emptyFragmentDirectives(response::Type::Map);
 		const SelectionSetParams selectionSetParams {
+			selectionContext,
 			params->state,
 			params->directives,
 			emptyFragmentDirectives,
@@ -1998,14 +2006,20 @@ std::future<response::Value> Request::resolveValidated(std::launch launch, const
 			throw schema_exception { { schema_error{ message.str(), { position.line, position.column } } } };
 		}
 
+		const bool isMutation = (operationDefinition.first == strMutation);
+
 		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
-		if (operationDefinition.first == strMutation)
+		if (isMutation)
 		{
 			// Force mutations to perform serial execution
 			launch = std::launch::deferred;
 		}
 
-		OperationDefinitionVisitor operationVisitor(launch, state, _operations, std::move(variables), std::move(fragments));
+		const auto resolverContext = isMutation
+			? ResolverContext::Mutation
+			: ResolverContext::Query;
+
+		OperationDefinitionVisitor operationVisitor(resolverContext, launch, state, _operations, std::move(variables), std::move(fragments));
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
@@ -2193,6 +2207,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 		std::future<response::Value> result;
 		response::Value emptyFragmentDirectives(response::Type::Map);
 		const SelectionSetParams selectionSetParams {
+			ResolverContext::Subscription,
 			registration->data->state,
 			registration->data->directives,
 			emptyFragmentDirectives,
