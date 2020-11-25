@@ -113,9 +113,33 @@ constexpr std::string_view strSubscription { "subscription"sv };
 
 }
 
+// Resolvers may be called in multiple different Operation contexts.
+enum class ResolverContext
+{
+	// Resolving a Query operation.
+	Query,
+
+	// Resolving a Mutation operation.
+	Mutation,
+
+	// Adding a Subscription. If you need to prepare to send events for this Subsciption
+	// (e.g. registering an event sink of your own), this is a chance to do that.
+	NotifySubscribe,
+
+	// Resolving a Subscription event.
+	Subscription,
+
+	// Removing a Subscription. If there are no more Subscriptions registered this is an
+	// opportunity to release resources which are no longer needed.
+	NotifyUnsubscribe,
+};
+
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
 struct SelectionSetParams
 {
+	// Context for this selection set.
+	const ResolverContext resolverContext;
+
 	// The lifetime of each of these borrowed references is guaranteed until the future returned
 	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer. 
 	const std::shared_ptr<RequestState>& state;
@@ -855,7 +879,10 @@ public:
 	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
 	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
+	GRAPHQLSERVICE_EXPORT std::future<SubscriptionKey> subscribe(std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
+
 	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT std::future<void> unsubscribe(std::launch launch, SubscriptionKey key);
 
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;

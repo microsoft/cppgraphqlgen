@@ -1413,3 +1413,85 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
+
+size_t today::NextAppointmentChange::_notifySubscribeCount = 0;
+size_t today::NextAppointmentChange::_subscriptionCount = 0;
+size_t today::NextAppointmentChange::_notifyUnsubscribeCount = 0;
+
+TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
+{
+	auto query = peg::parseString(R"(subscription TestSubscription {
+			nextAppointment: nextAppointmentChange {
+				nextAppointmentId: id
+				when
+				subject
+				isNow
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(21);
+	bool calledCallback = false;
+	const auto notifySubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionBegin = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	auto key = _service->subscribe(std::launch::async, service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
+		[&calledCallback](std::future<response::Value> response)
+	{
+		calledCallback = true;
+	});
+	_service->unsubscribe(std::launch::async, key.get()).get();
+	const auto notifySubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionEnd = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+
+	try
+	{
+		EXPECT_FALSE(calledCallback);
+		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd) << "should pass NotifySubscribe once";
+		EXPECT_EQ(subscriptionBegin, subscriptionEnd) << "should not pass Subscription";
+		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd) << "should pass NotifyUnsubscribe once";
+	}
+	catch (service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
+TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
+{
+	auto query = peg::parseString(R"(subscription TestSubscription {
+			nextAppointment: nextAppointmentChange {
+				nextAppointmentId: id
+				when
+				subject
+				isNow
+			}
+		})");
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(21);
+	bool calledCallback = false;
+	const auto notifySubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionBegin = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	auto key = _service->subscribe(std::launch::deferred, service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
+		[&calledCallback](std::future<response::Value> response)
+	{
+		calledCallback = true;
+	});
+	_service->unsubscribe(std::launch::deferred, key.get()).get();
+	const auto notifySubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionEnd = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+
+	try
+	{
+		EXPECT_FALSE(calledCallback);
+		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd) << "should pass NotifySubscribe once";
+		EXPECT_EQ(subscriptionBegin, subscriptionEnd) << "should not pass Subscription";
+		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd) << "should pass NotifyUnsubscribe once";
+	}
+	catch (service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
