@@ -2110,13 +2110,11 @@ std::future<SubscriptionKey> Request::subscribe(std::launch launch, Subscription
 	{
 		const auto key = spThis->subscribe(std::move(paramsFuture), std::move(callbackFuture));
 		const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
-		const auto itrSubscription = spThis->_subscriptions.find(key);
 
-		if (itrOperation != spThis->_operations.cend()
-			&& itrSubscription != spThis->_subscriptions.cend())
+		if (itrOperation != spThis->_operations.cend())
 		{
 			const auto& operation = itrOperation->second;
-			const auto& registration = itrSubscription->second;
+			const auto& registration = spThis->_subscriptions.at(key);
 			response::Value emptyFragmentDirectives(response::Type::Map);
 			const SelectionSetParams selectionSetParams {
 				ResolverContext::NotifySubscribe,
@@ -2129,7 +2127,16 @@ std::future<SubscriptionKey> Request::subscribe(std::launch launch, Subscription
 				launch,
 			};
 
-			operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables).get();
+			try
+			{
+				operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables).get();
+			}
+			catch (const std::exception& ex)
+			{
+				// Rethrow the exception, but don't leave it subscribed if the resolver failed.
+				spThis->unsubscribe(key);
+				throw ex;
+			}
 		}
 
 		return key;
@@ -2170,13 +2177,11 @@ std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 	return std::async(launch, [spThis = shared_from_this(), launch, key]()
 	{
 		const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
-		const auto itrSubscription = spThis->_subscriptions.find(key);
 
-		if (itrOperation != spThis->_operations.cend()
-			&& itrSubscription != spThis->_subscriptions.cend())
+		if (itrOperation != spThis->_operations.cend())
 		{
 			const auto& operation = itrOperation->second;
-			const auto& registration = itrSubscription->second;
+			const auto& registration = spThis->_subscriptions.at(key);
 			response::Value emptyFragmentDirectives(response::Type::Map);
 			const SelectionSetParams selectionSetParams {
 				ResolverContext::NotifyUnsubscribe,
