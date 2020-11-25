@@ -879,10 +879,10 @@ public:
 	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
 
 	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
-	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
+	GRAPHQLSERVICE_EXPORT std::future<SubscriptionKey> subscribe(std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-	GRAPHQLSERVICE_EXPORT void unsubscribe(std::launch launch, SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT std::future<void> unsubscribe(std::launch launch, SubscriptionKey key);
 
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;

@@ -434,8 +434,50 @@ public:
 	{
 	}
 
+	static size_t getCount(service::ResolverContext resolverContext)
+	{
+		switch (resolverContext)
+		{
+			case service::ResolverContext::NotifySubscribe:
+				return _notifySubscribeCount;
+
+			case service::ResolverContext::Subscription:
+				return _subscriptionCount;
+
+			case service::ResolverContext::NotifyUnsubscribe:
+				return _notifyUnsubscribeCount;
+
+			default:
+				throw std::runtime_error("Unexpected ResolverContext");
+		}
+	}
+
 	service::FieldResult<std::shared_ptr<object::Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 	{
+		switch (params.resolverContext)
+		{
+			case service::ResolverContext::NotifySubscribe:
+			{
+				++_notifySubscribeCount;
+				break;
+			}
+
+			case service::ResolverContext::Subscription:
+			{
+				++_subscriptionCount;
+				break;
+			}
+
+			case service::ResolverContext::NotifyUnsubscribe:
+			{
+				++_notifyUnsubscribeCount;
+				break;
+			}
+
+			default:
+				throw std::runtime_error("Unexpected ResolverContext");
+		}
+
 		return std::static_pointer_cast<object::Appointment>(_changeNextAppointment(params.state));
 	}
 
@@ -446,6 +488,10 @@ public:
 
 private:
 	nextAppointmentChange _changeNextAppointment;
+
+	static size_t _notifySubscribeCount;
+	static size_t _subscriptionCount;
+	static size_t _notifyUnsubscribeCount;
 };
 
 class NodeChange : public object::Subscription

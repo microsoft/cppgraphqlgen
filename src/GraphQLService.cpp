@@ -2104,37 +2104,36 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	return key;
 }
 
-SubscriptionKey Request::subscribe(std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
+std::future<SubscriptionKey> Request::subscribe(std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
-	const auto key = subscribe(std::move(params), std::move(callback));
-	const auto itrOperation = _operations.find(std::string { strSubscription });
-	const auto itrSubscription = _subscriptions.find(key);
-
-	if (itrOperation != _operations.cend()
-		&& itrSubscription != _subscriptions.cend())
+	return std::async(launch, [spThis = shared_from_this(), launch](SubscriptionParams&& paramsFuture, SubscriptionCallback&& callbackFuture)
 	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = itrSubscription->second;
-		response::Value emptyFragmentDirectives(response::Type::Map);
-		const SelectionSetParams selectionSetParams {
-			ResolverContext::NotifySubscribe,
-			registration->data->state,
-			registration->data->directives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives,
-			{},
-			launch,
-		};
+		const auto key = spThis->subscribe(std::move(paramsFuture), std::move(callbackFuture));
+		const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
+		const auto itrSubscription = spThis->_subscriptions.find(key);
 
-		std::async(launch,
-			[](std::future<response::Value> document)
+		if (itrOperation != spThis->_operations.cend()
+			&& itrSubscription != spThis->_subscriptions.cend())
 		{
-			return document.get();
-		}, operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables)).get();
-	}
+			const auto& operation = itrOperation->second;
+			const auto& registration = itrSubscription->second;
+			response::Value emptyFragmentDirectives(response::Type::Map);
+			const SelectionSetParams selectionSetParams {
+				ResolverContext::NotifySubscribe,
+				registration->data->state,
+				registration->data->directives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives,
+				{},
+				launch,
+			};
 
-	return key;
+			operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables).get();
+		}
+
+		return key;
+	}, std::move(params), std::move(callback));
 }
 
 void Request::unsubscribe(SubscriptionKey key)
@@ -2166,36 +2165,35 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-void Request::unsubscribe(std::launch launch, SubscriptionKey key)
+std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 {
-	const auto itrOperation = _operations.find(std::string { strSubscription });
-	const auto itrSubscription = _subscriptions.find(key);
-
-	if (itrOperation != _operations.cend()
-		&& itrSubscription != _subscriptions.cend())
+	return std::async(launch, [spThis = shared_from_this(), launch, key]()
 	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = itrSubscription->second;
-		response::Value emptyFragmentDirectives(response::Type::Map);
-		const SelectionSetParams selectionSetParams {
-			ResolverContext::NotifyUnsubscribe,
-			registration->data->state,
-			registration->data->directives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives,
-			emptyFragmentDirectives,
-			{},
-			launch,
-		};
+		const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
+		const auto itrSubscription = spThis->_subscriptions.find(key);
 
-		std::async(launch,
-			[](std::future<response::Value> document)
+		if (itrOperation != spThis->_operations.cend()
+			&& itrSubscription != spThis->_subscriptions.cend())
 		{
-			return document.get();
-		}, operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables)).get();
-	}
+			const auto& operation = itrOperation->second;
+			const auto& registration = itrSubscription->second;
+			response::Value emptyFragmentDirectives(response::Type::Map);
+			const SelectionSetParams selectionSetParams {
+				ResolverContext::NotifyUnsubscribe,
+				registration->data->state,
+				registration->data->directives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives,
+				emptyFragmentDirectives,
+				{},
+				launch,
+			};
 
-	unsubscribe(key);
+			operation->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables).get();
+		}
+
+		spThis->unsubscribe(key);
+	});
 }
 
 void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
