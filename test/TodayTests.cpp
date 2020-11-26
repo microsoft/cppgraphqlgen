@@ -1495,3 +1495,61 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
+
+TEST_F(TodayServiceCase, MutateSetFloat)
+{
+	auto query = R"(mutation {
+			setFloat(value: 0.1)
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(22);
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+		ASSERT_TRUE(data.type() == response::Type::Map);
+		const auto setFloat = service::FloatArgument::require("setFloat", data);
+		ASSERT_EQ(0.1, setFloat) << "should return the value that was set";
+		ASSERT_EQ(0.1, today::Mutation::getFloat()) << "should save the value in the Mutation static member";
+	}
+	catch (service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
+TEST_F(TodayServiceCase, MutateCoerceSetFloat)
+{
+	auto query = R"(mutation {
+			coerceFloat: setFloat(value: 1)
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(22);
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr != result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(errorsItr->second));
+		}
+		const auto data = service::ScalarArgument::require("data", result);
+		ASSERT_TRUE(data.type() == response::Type::Map);
+		const auto coerceFloat = service::FloatArgument::require("coerceFloat", data);
+		ASSERT_EQ(1.0, coerceFloat) << "should return the value that was coerced from an int";
+		ASSERT_EQ(1.0, today::Mutation::getFloat()) << "should save the value in the Mutation static member";
+	}
+	catch (service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}

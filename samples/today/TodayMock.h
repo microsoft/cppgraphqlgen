@@ -402,10 +402,14 @@ public:
 
 	explicit Mutation(completeTaskMutation&& mutateCompleteTask);
 
+	static double getFloat() noexcept;
+
 	service::FieldResult<std::shared_ptr<object::CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& input) const final;
+	service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final;
 
 private:
 	completeTaskMutation _mutateCompleteTask;
+	static std::optional<response::FloatType> _setFloat;
 };
 
 class Subscription : public object::Subscription

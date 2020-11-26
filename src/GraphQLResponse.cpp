@@ -363,12 +363,20 @@ void Value::set<BooleanType>(BooleanType value)
 template <>
 void Value::set<IntType>(IntType value)
 {
-	if (type() != Type::Int)
+	if (type() == Type::Float)
 	{
-		throw std::logic_error("Invalid call to Value::set for IntType");
+		// Coerce IntType to FloatType
+		*_data = { static_cast<FloatType>(value) };
 	}
+	else
+	{
+		if (type() != Type::Int)
+		{
+			throw std::logic_error("Invalid call to Value::set for IntType");
+		}
 
-	*_data = { value };
+		*_data = { value };
+	}
 }
 
 template <>
@@ -452,6 +460,12 @@ IntType Value::get<IntType>() const
 template <>
 FloatType Value::get<FloatType>() const
 {
+	if (type() == Type::Int)
+	{
+		// Coerce IntType to FloatType
+		return static_cast<FloatType>(std::get<IntType>(*_data));
+	}
+
 	if (type() != Type::Float)
 	{
 		throw std::logic_error("Invalid call to Value::get for FloatType");

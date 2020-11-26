@@ -366,8 +366,8 @@ struct input_value_content
 	: sor<list_value
 	, object_value
 	, variable_value
-	, integer_value
 	, float_value
+	, integer_value
 	, string_value
 	, bool_value
 	, null_keyword

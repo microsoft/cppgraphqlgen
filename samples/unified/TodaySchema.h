@@ -245,9 +245,11 @@ protected:
 
 public:
 	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
+	virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const;
 
 private:
 	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
+	std::future<response::Value> resolveSetFloat(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 };
