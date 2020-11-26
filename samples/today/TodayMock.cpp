@@ -394,6 +394,19 @@ service::FieldResult<std::shared_ptr<object::CompleteTaskPayload>> Mutation::app
 	return promise.get_future();
 }
 
+std::optional<response::FloatType> Mutation::_setFloat = std::nullopt;
+
+double Mutation::getFloat() noexcept
+{
+	return *_setFloat;
+}
+
+service::FieldResult<response::FloatType> Mutation::applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const
+{
+	_setFloat = std::make_optional(valueArg);
+	return valueArg;
+}
+
 std::stack<CapturedParams> NestedType::_capturedParams;
 
 NestedType::NestedType(service::FieldParams&& params, int depth)

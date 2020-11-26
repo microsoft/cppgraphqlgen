@@ -667,7 +667,8 @@ Mutation::Mutation()
 		"Mutation"
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ R"gql(completeTask)gql"sv, [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } }
+		{ R"gql(completeTask)gql"sv, [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } },
+		{ R"gql(setFloat)gql"sv, [this](service::ResolverParams&& params) { return resolveSetFloat(std::move(params)); } }
 	})
 {
 }
@@ -685,6 +686,21 @@ std::future<response::Value> Mutation::resolveCompleteTask(service::ResolverPara
 	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
+}
+
+service::FieldResult<response::FloatType> Mutation::applySetFloat(service::FieldParams&&, response::FloatType&&) const
+{
+	throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+}
+
+std::future<response::Value> Mutation::resolveSetFloat(service::ResolverParams&& params)
+{
+	auto argValue = service::ModifiedArgument<response::FloatType>::require("value", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = applySetFloat(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argValue));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::FloatType>::convert(std::move(result), std::move(params));
 }
 
 std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
@@ -1160,7 +1176,10 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	typeMutation->AddFields({
 		std::make_shared<introspection::Field>("completeTask", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
 			std::make_shared<introspection::InputValue>("input", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql")
-		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")))
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload"))),
+		std::make_shared<introspection::Field>("setFloat", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
+			std::make_shared<introspection::InputValue>("value", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql")
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")))
 	});
 	typeSubscription->AddFields({
 		std::make_shared<introspection::Field>("nextAppointmentChange", R"md()md", std::make_optional<response::StringType>(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"), std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Appointment")),

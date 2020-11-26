@@ -87,6 +87,7 @@ type CompleteTaskPayload {
 
 type Mutation {
     completeTask(input: CompleteTaskInput!) : CompleteTaskPayload!
+    setFloat(value: Float!): Float!
 }
 
 type Subscription {
