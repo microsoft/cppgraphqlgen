@@ -677,7 +677,8 @@ response::IntType ModifiedArgument<response::IntType>::convert(const response::V
 template <>
 response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Type::Float)
+	if (value.type() != response::Type::Float
+		&& value.type() != response::Type::Int)
 	{
 		throw schema_exception { { "not a float" } };
 	}
@@ -726,8 +727,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 	return Base64::fromBase64(encoded.c_str(), encoded.size());
 }
 
-template <>
-std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType>&& result, ResolverParams&& params)
+void blockSubFields(const ResolverParams& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
@@ -739,6 +739,12 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldRes
 
 		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
 	}
+}
+
+template <>
+std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldResult<response::IntType>&& result, ResolverParams&& params)
+{
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::IntType&& value, const ResolverParams&)
@@ -750,16 +756,7 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(FieldRes
 template <>
 std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldResult<response::FloatType>&& result, ResolverParams&& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-	if (params.selection != nullptr)
-	{
-		auto position = params.selection->begin();
-		std::ostringstream error;
-
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
-	}
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::FloatType&& value, const ResolverParams&)
@@ -771,16 +768,7 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(FieldR
 template <>
 std::future<response::Value> ModifiedResult<response::StringType>::convert(FieldResult<response::StringType>&& result, ResolverParams&& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-	if (params.selection != nullptr)
-	{
-		auto position = params.selection->begin();
-		std::ostringstream error;
-
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
-	}
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::StringType&& value, const ResolverParams&)
@@ -792,16 +780,7 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(Field
 template <>
 std::future<response::Value> ModifiedResult<response::BooleanType>::convert(FieldResult<response::BooleanType>&& result, ResolverParams&& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-	if (params.selection != nullptr)
-	{
-		auto position = params.selection->begin();
-		std::ostringstream error;
-
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
-	}
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::BooleanType&& value, const ResolverParams&)
@@ -813,16 +792,7 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(Fiel
 template <>
 std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResult<response::Value>&& result, ResolverParams&& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-	if (params.selection != nullptr)
-	{
-		auto position = params.selection->begin();
-		std::ostringstream error;
-
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
-	}
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::Value&& value, const ResolverParams&)
@@ -834,16 +804,7 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(FieldResul
 template <>
 std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResult<response::IdType>&& result, ResolverParams&& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-	if (params.selection != nullptr)
-	{
-		auto position = params.selection->begin();
-		std::ostringstream error;
-
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
-	}
+	blockSubFields(params);
 
 	return resolve(std::move(result), std::move(params),
 		[](response::IdType&& value, const ResolverParams&)
@@ -852,8 +813,7 @@ std::future<response::Value> ModifiedResult<response::IdType>::convert(FieldResu
 	});
 }
 
-template <>
-std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params)
+void requireSubFields(const ResolverParams& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 	if (params.selection == nullptr)
@@ -865,6 +825,12 @@ std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::sh
 
 		throw schema_exception { { schema_error{ error.str(), { position.line, position.column }, { params.errorPath } } } };
 	}
+}
+
+template <>
+std::future<response::Value> ModifiedResult<Object>::convert(FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params)
+{
+	requireSubFields(params);
 
 	return std::async(params.launch,
 		[](FieldResult<std::shared_ptr<Object>>&& resultFuture, ResolverParams&& paramsFuture)
