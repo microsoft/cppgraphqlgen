@@ -125,7 +125,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
 
 	GRAPHQLRESPONSE_EXPORT Value& operator=(Value&& rhs) noexcept;
-	GRAPHQLRESPONSE_EXPORT Value& operator=(const Value& rhs) = delete;
+	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
 	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
