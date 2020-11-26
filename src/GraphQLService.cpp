@@ -6,9 +6,9 @@
 
 #include "Validation.h"
 
-#include <iostream>
 #include <algorithm>
 #include <array>
+#include <iostream>
 #include <stack>
 
 namespace graphql::service {
@@ -1002,9 +1002,13 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	const auto itr = _resolvers.find(name);
+	const auto [itr, itrEnd] = std::equal_range(_resolvers.cbegin(), _resolvers.cend(), std::make_pair(std::string_view { name }, Resolver {}),
+		[](const auto& lhs, const auto& rhs) noexcept
+	{
+		return lhs.first < rhs.first;
+	});
 
-	if (itr == _resolvers.cend())
+	if (itr == itrEnd)
 	{
 		std::promise<response::Value> promise;
 		auto position = field.begin();

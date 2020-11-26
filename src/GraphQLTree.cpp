@@ -7,11 +7,11 @@
 
 #include <tao/pegtl/contrib/unescape.hpp>
 
+#include <functional>
 #include <memory>
+#include <numeric>
 #include <stack>
 #include <tuple>
-#include <functional>
-#include <numeric>
 
 namespace graphql {
 namespace peg {

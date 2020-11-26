@@ -7,9 +7,11 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
+
+using namespace std::literals;
 
 namespace graphql::today {
 namespace object {
@@ -18,9 +20,9 @@ TaskEdge::TaskEdge()
 	: service::Object({
 		"TaskEdge"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
+		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } }
 	})
 {
 }

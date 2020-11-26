@@ -7,9 +7,11 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
+
+using namespace std::literals;
 
 namespace graphql::today {
 namespace object {
@@ -20,11 +22,11 @@ Appointment::Appointment()
 		"UnionType",
 		"Appointment"
 	}, {
-		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
-		{ "when", [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
-		{ "subject", [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
-		{ "isNow", [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(isNow)gql"sv, [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
+		{ R"gql(subject)gql"sv, [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
+		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } }
 	})
 {
 }

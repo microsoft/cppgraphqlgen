@@ -3,9 +3,9 @@
 
 #include "graphqlservice/GraphQLResponse.h"
 
+#include <optional>
 #include <stdexcept>
 #include <variant>
-#include <optional>
 
 namespace graphql::response {
 

@@ -13,13 +13,12 @@ namespace fs = boost::filesystem;
 namespace fs = std::filesystem;
 #endif
 
-#include <stdexcept>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cctype>
+#include <fstream>
+#include <iostream>
 #include <regex>
-
+#include <stdexcept>
+#include <sstream>
 
 namespace graphql::schema {
 
@@ -2092,11 +2091,15 @@ bool Generator::outputSource() const noexcept
 	sourceFile << R"cpp(#include "graphqlservice/Introspection.h"
 
 #include <algorithm>
-#include <functional>
-#include <sstream>
-#include <unordered_map>
-#include <exception>
 #include <array>
+#include <functional>
+#include <stdexcept>
+#include <sstream>
+#include <string_view>
+#include <tuple>
+#include <vector>
+
+using namespace std::literals;
 
 )cpp";
 
@@ -2767,6 +2770,8 @@ Operations::Operations()cpp";
 
 void Generator::outputObjectImplementation(std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const
 {
+	using namespace std::literals;
+
 	// Output the protected constructor which calls through to the service::Object constructor
 	// with arguments that declare the set of types it implements and bind the fields to the
 	// resolver methods.
@@ -2790,9 +2795,35 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 	}, {
 )cpp";
 
+	std::map<std::string_view, std::string> resolvers;
+
+	std::transform(objectType.fields.cbegin(), objectType.fields.cend(), std::inserter(resolvers, resolvers.begin()),
+		[](const OutputField& outputField) noexcept
+	{
+		std::string fieldName(outputField.cppName);
+
+		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+
+		std::ostringstream output;
+
+		output << R"cpp(		{ R"gql()cpp" << outputField.name
+			<< R"cpp()gql"sv, [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
+			<< R"cpp((std::move(params)); } })cpp";
+
+		return std::make_pair(std::string_view { outputField.name }, output.str());
+	});
+
+	resolvers["__typename"sv] = R"cpp(		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp"s;
+
+	if (isQueryType)
+	{
+		resolvers["__schema"sv] = R"cpp(		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } })cpp"s;
+		resolvers["__type"sv] = R"cpp(		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp"s;
+	}
+
 	bool firstField = true;
 
-	for (const auto& outputField : objectType.fields)
+	for (const auto& resolver : resolvers)
 	{
 		if (!firstField)
 		{
@@ -2801,28 +2832,7 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 		}
 
 		firstField = false;
-
-		std::string fieldName(outputField.cppName);
-
-		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-		sourceFile << R"cpp(		{ ")cpp" << outputField.name
-			<< R"cpp(", [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
-			<< R"cpp((std::move(params)); } })cpp";
-	}
-
-	if (!firstField)
-	{
-		sourceFile << R"cpp(,
-)cpp";
-	}
-
-	sourceFile << R"cpp(		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp";
-
-	if (isQueryType)
-	{
-		sourceFile << R"cpp(,
-		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
-		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp";
+		sourceFile << resolver.second;
 	}
 
 	sourceFile << R"cpp(
@@ -3502,9 +3512,11 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
+
+using namespace std::literals;
 
 )cpp";
 

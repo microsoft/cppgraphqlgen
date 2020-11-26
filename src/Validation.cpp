@@ -5,8 +5,8 @@
 
 #include "Validation.h"
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 
 namespace graphql::service {

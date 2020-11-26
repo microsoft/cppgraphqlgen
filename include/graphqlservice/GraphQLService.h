@@ -19,23 +19,24 @@
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
-#include <memory>
-#include <optional>
-#include <variant>
-#include <string_view>
-#include <string>
-#include <sstream>
-#include <vector>
 #include <functional>
-#include <unordered_map>
-#include <unordered_set>
+#include <future>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <stdexcept>
 #include <type_traits>
-#include <future>
-#include <mutex>
-#include <queue>
-#include <map>
-#include <set>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <variant>
+#include <vector>
 
 namespace graphql::service {
 
@@ -243,7 +244,7 @@ struct ResolverParams : SelectionSetParams
 };
 
 using Resolver = std::function<std::future<response::Value>(ResolverParams&&)>;
-using ResolverMap = std::unordered_map<std::string, Resolver>;
+using ResolverMap = std::vector<std::pair<std::string_view, Resolver>>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
 class Base64

@@ -6,11 +6,15 @@
 #include "graphqlservice/Introspection.h"
 
 #include <algorithm>
-#include <functional>
-#include <sstream>
-#include <unordered_map>
-#include <exception>
 #include <array>
+#include <functional>
+#include <stdexcept>
+#include <sstream>
+#include <string_view>
+#include <tuple>
+#include <vector>
+
+using namespace std::literals;
 
 namespace graphql {
 namespace service {
@@ -91,19 +95,19 @@ Query::Query()
 	: service::Object({
 		"Query"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "appointments", [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
-		{ "tasks", [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
-		{ "unreadCounts", [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
-		{ "appointmentsById", [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
-		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
-		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
-		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
-		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
-		{ "expensive", [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
-		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
+		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
+		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(appointments)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
+		{ R"gql(appointmentsById)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
+		{ R"gql(expensive)gql"sv, [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
+		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
+		{ R"gql(tasks)gql"sv, [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
+		{ R"gql(tasksById)gql"sv, [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
+		{ R"gql(unimplemented)gql"sv, [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
+		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
+		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
 	, _schema(std::make_shared<introspection::Schema>())
 {
@@ -310,9 +314,9 @@ PageInfo::PageInfo()
 	: service::Object({
 		"PageInfo"
 	}, {
-		{ "hasNextPage", [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
-		{ "hasPreviousPage", [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(hasNextPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
+		{ R"gql(hasPreviousPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } }
 	})
 {
 }
@@ -354,9 +358,9 @@ AppointmentEdge::AppointmentEdge()
 	: service::Object({
 		"AppointmentEdge"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
+		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } }
 	})
 {
 }
@@ -398,9 +402,9 @@ AppointmentConnection::AppointmentConnection()
 	: service::Object({
 		"AppointmentConnection"
 	}, {
-		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
-		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
+		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } }
 	})
 {
 }
@@ -442,9 +446,9 @@ TaskEdge::TaskEdge()
 	: service::Object({
 		"TaskEdge"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
+		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } }
 	})
 {
 }
@@ -486,9 +490,9 @@ TaskConnection::TaskConnection()
 	: service::Object({
 		"TaskConnection"
 	}, {
-		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
-		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
+		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } }
 	})
 {
 }
@@ -530,9 +534,9 @@ FolderEdge::FolderEdge()
 	: service::Object({
 		"FolderEdge"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "cursor", [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
+		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } }
 	})
 {
 }
@@ -574,9 +578,9 @@ FolderConnection::FolderConnection()
 	: service::Object({
 		"FolderConnection"
 	}, {
-		{ "pageInfo", [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
-		{ "edges", [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
+		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } }
 	})
 {
 }
@@ -618,9 +622,9 @@ CompleteTaskPayload::CompleteTaskPayload()
 	: service::Object({
 		"CompleteTaskPayload"
 	}, {
-		{ "task", [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } },
-		{ "clientMutationId", [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(clientMutationId)gql"sv, [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } },
+		{ R"gql(task)gql"sv, [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } }
 	})
 {
 }
@@ -662,8 +666,8 @@ Mutation::Mutation()
 	: service::Object({
 		"Mutation"
 	}, {
-		{ "completeTask", [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(completeTask)gql"sv, [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } }
 	})
 {
 }
@@ -692,9 +696,9 @@ Subscription::Subscription()
 	: service::Object({
 		"Subscription"
 	}, {
-		{ "nextAppointmentChange", [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } },
-		{ "nodeChange", [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(nextAppointmentChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } },
+		{ R"gql(nodeChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } }
 	})
 {
 }
@@ -739,11 +743,11 @@ Appointment::Appointment()
 		"UnionType",
 		"Appointment"
 	}, {
-		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
-		{ "when", [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
-		{ "subject", [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
-		{ "isNow", [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(isNow)gql"sv, [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
+		{ R"gql(subject)gql"sv, [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
+		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } }
 	})
 {
 }
@@ -815,10 +819,10 @@ Task::Task()
 		"UnionType",
 		"Task"
 	}, {
-		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
-		{ "title", [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } },
-		{ "isComplete", [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(isComplete)gql"sv, [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } },
+		{ R"gql(title)gql"sv, [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } }
 	})
 {
 }
@@ -876,10 +880,10 @@ Folder::Folder()
 		"UnionType",
 		"Folder"
 	}, {
-		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
-		{ "unreadCount", [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
+		{ R"gql(unreadCount)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } }
 	})
 {
 }
@@ -935,9 +939,9 @@ NestedType::NestedType()
 	: service::Object({
 		"NestedType"
 	}, {
-		{ "depth", [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
-		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(depth)gql"sv, [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
+		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } }
 	})
 {
 }
@@ -979,8 +983,8 @@ Expensive::Expensive()
 	: service::Object({
 		"Expensive"
 	}, {
-		{ "order", [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(order)gql"sv, [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } }
 	})
 {
 }
