@@ -6,11 +6,15 @@
 #include "graphqlservice/Introspection.h"
 
 #include <algorithm>
-#include <functional>
-#include <sstream>
-#include <unordered_map>
-#include <exception>
 #include <array>
+#include <functional>
+#include <stdexcept>
+#include <sstream>
+#include <string_view>
+#include <tuple>
+#include <vector>
+
+using namespace std::literals;
 
 namespace graphql {
 namespace service {

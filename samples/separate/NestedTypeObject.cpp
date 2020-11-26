@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
 
 namespace graphql::today {
 namespace object {
@@ -18,9 +18,9 @@ NestedType::NestedType()
 	: service::Object({
 		"NestedType"
 	}, {
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "depth", [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
-		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } }
 	})
 {
 }

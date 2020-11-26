@@ -10,8 +10,8 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/reader.h>
 
-#include <stack>
 #include <limits>
+#include <stack>
 #include <stdexcept>
 
 namespace graphql::response {

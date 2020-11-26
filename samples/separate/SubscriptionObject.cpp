@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
 
 namespace graphql::today {
 namespace object {
@@ -18,9 +18,9 @@ Subscription::Subscription()
 	: service::Object({
 		"Subscription"
 	}, {
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "nextAppointmentChange", [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } },
-		{ "nodeChange", [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ "nodeChange", [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } }
 	})
 {
 }

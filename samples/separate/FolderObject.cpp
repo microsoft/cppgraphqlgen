@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
 
 namespace graphql::today {
 namespace object {
@@ -20,10 +20,10 @@ Folder::Folder()
 		"UnionType",
 		"Folder"
 	}, {
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
-		{ "unreadCount", [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ "unreadCount", [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } }
 	})
 {
 }

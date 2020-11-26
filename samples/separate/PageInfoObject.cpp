@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
 
 namespace graphql::today {
 namespace object {
@@ -18,9 +18,9 @@ PageInfo::PageInfo()
 	: service::Object({
 		"PageInfo"
 	}, {
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "hasNextPage", [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
-		{ "hasPreviousPage", [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
+		{ "hasPreviousPage", [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } }
 	})
 {
 }

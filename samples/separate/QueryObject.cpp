@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
-#include <exception>
 
 namespace graphql::today {
 namespace object {
@@ -18,19 +18,19 @@ Query::Query()
 	: service::Object({
 		"Query"
 	}, {
-		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
-		{ "appointments", [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
-		{ "tasks", [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
-		{ "unreadCounts", [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
-		{ "appointmentsById", [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
-		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
-		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } },
-		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
-		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
-		{ "expensive", [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
-		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } }
+		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
+		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ "appointments", [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
+		{ "appointmentsById", [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
+		{ "expensive", [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
+		{ "nested", [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ "node", [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
+		{ "tasks", [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
+		{ "tasksById", [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
+		{ "unimplemented", [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
+		{ "unreadCounts", [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
+		{ "unreadCountsById", [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
 	, _schema(std::make_shared<introspection::Schema>())
 {
