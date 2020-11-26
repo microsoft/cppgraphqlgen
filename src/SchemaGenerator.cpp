@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 #include <fstream>
 #include <iostream>
 #include <regex>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 namespace graphql::schema {
 
@@ -2093,8 +2093,8 @@ bool Generator::outputSource() const noexcept
 #include <algorithm>
 #include <array>
 #include <functional>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -3512,8 +3512,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 #include <algorithm>
 #include <functional>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 
 using namespace std::literals;

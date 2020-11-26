@@ -5,10 +5,10 @@
 
 #include "graphqlservice/JSONResponse.h"
 
-#include <iterator>
-#include <iostream>
-#include <stdexcept>
 #include <cstdio>
+#include <iostream>
+#include <iterator>
+#include <stdexcept>
 
 using namespace graphql;
 
