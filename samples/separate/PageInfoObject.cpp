@@ -11,6 +11,8 @@
 #include <sstream>
 #include <unordered_map>
 
+using namespace std::literals;
+
 namespace graphql::today {
 namespace object {
 
@@ -18,9 +20,9 @@ PageInfo::PageInfo()
 	: service::Object({
 		"PageInfo"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "hasNextPage", [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
-		{ "hasPreviousPage", [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(hasNextPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
+		{ R"gql(hasPreviousPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } }
 	})
 {
 }

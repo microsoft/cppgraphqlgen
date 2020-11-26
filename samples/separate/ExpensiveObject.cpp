@@ -11,6 +11,8 @@
 #include <sstream>
 #include <unordered_map>
 
+using namespace std::literals;
+
 namespace graphql::today {
 namespace object {
 
@@ -18,8 +20,8 @@ Expensive::Expensive()
 	: service::Object({
 		"Expensive"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "order", [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(order)gql"sv, [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } }
 	})
 {
 }

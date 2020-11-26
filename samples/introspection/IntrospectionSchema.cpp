@@ -122,12 +122,12 @@ Schema::Schema()
 	: service::Object({
 		"__Schema"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "directives", [this](service::ResolverParams&& params) { return resolveDirectives(std::move(params)); } },
-		{ "mutationType", [this](service::ResolverParams&& params) { return resolveMutationType(std::move(params)); } },
-		{ "queryType", [this](service::ResolverParams&& params) { return resolveQueryType(std::move(params)); } },
-		{ "subscriptionType", [this](service::ResolverParams&& params) { return resolveSubscriptionType(std::move(params)); } },
-		{ "types", [this](service::ResolverParams&& params) { return resolveTypes(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(directives)gql"sv, [this](service::ResolverParams&& params) { return resolveDirectives(std::move(params)); } },
+		{ R"gql(mutationType)gql"sv, [this](service::ResolverParams&& params) { return resolveMutationType(std::move(params)); } },
+		{ R"gql(queryType)gql"sv, [this](service::ResolverParams&& params) { return resolveQueryType(std::move(params)); } },
+		{ R"gql(subscriptionType)gql"sv, [this](service::ResolverParams&& params) { return resolveSubscriptionType(std::move(params)); } },
+		{ R"gql(types)gql"sv, [this](service::ResolverParams&& params) { return resolveTypes(std::move(params)); } }
 	})
 {
 }
@@ -186,16 +186,16 @@ Type::Type()
 	: service::Object({
 		"__Type"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "description", [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
-		{ "enumValues", [this](service::ResolverParams&& params) { return resolveEnumValues(std::move(params)); } },
-		{ "fields", [this](service::ResolverParams&& params) { return resolveFields(std::move(params)); } },
-		{ "inputFields", [this](service::ResolverParams&& params) { return resolveInputFields(std::move(params)); } },
-		{ "interfaces", [this](service::ResolverParams&& params) { return resolveInterfaces(std::move(params)); } },
-		{ "kind", [this](service::ResolverParams&& params) { return resolveKind(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
-		{ "ofType", [this](service::ResolverParams&& params) { return resolveOfType(std::move(params)); } },
-		{ "possibleTypes", [this](service::ResolverParams&& params) { return resolvePossibleTypes(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(enumValues)gql"sv, [this](service::ResolverParams&& params) { return resolveEnumValues(std::move(params)); } },
+		{ R"gql(fields)gql"sv, [this](service::ResolverParams&& params) { return resolveFields(std::move(params)); } },
+		{ R"gql(inputFields)gql"sv, [this](service::ResolverParams&& params) { return resolveInputFields(std::move(params)); } },
+		{ R"gql(interfaces)gql"sv, [this](service::ResolverParams&& params) { return resolveInterfaces(std::move(params)); } },
+		{ R"gql(kind)gql"sv, [this](service::ResolverParams&& params) { return resolveKind(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
+		{ R"gql(ofType)gql"sv, [this](service::ResolverParams&& params) { return resolveOfType(std::move(params)); } },
+		{ R"gql(possibleTypes)gql"sv, [this](service::ResolverParams&& params) { return resolvePossibleTypes(std::move(params)); } }
 	})
 {
 }
@@ -320,13 +320,13 @@ Field::Field()
 	: service::Object({
 		"__Field"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "args", [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
-		{ "deprecationReason", [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } },
-		{ "description", [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
-		{ "isDeprecated", [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
-		{ "type", [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
+		{ R"gql(deprecationReason)gql"sv, [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } },
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(isDeprecated)gql"sv, [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
+		{ R"gql(type)gql"sv, [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } }
 	})
 {
 }
@@ -394,11 +394,11 @@ InputValue::InputValue()
 	: service::Object({
 		"__InputValue"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "defaultValue", [this](service::ResolverParams&& params) { return resolveDefaultValue(std::move(params)); } },
-		{ "description", [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
-		{ "type", [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(defaultValue)gql"sv, [this](service::ResolverParams&& params) { return resolveDefaultValue(std::move(params)); } },
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
+		{ R"gql(type)gql"sv, [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } }
 	})
 {
 }
@@ -448,11 +448,11 @@ EnumValue::EnumValue()
 	: service::Object({
 		"__EnumValue"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "deprecationReason", [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } },
-		{ "description", [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
-		{ "isDeprecated", [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(deprecationReason)gql"sv, [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } },
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(isDeprecated)gql"sv, [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } }
 	})
 {
 }
@@ -502,11 +502,11 @@ Directive::Directive()
 	: service::Object({
 		"__Directive"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "args", [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
-		{ "description", [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
-		{ "locations", [this](service::ResolverParams&& params) { return resolveLocations(std::move(params)); } },
-		{ "name", [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(locations)gql"sv, [this](service::ResolverParams&& params) { return resolveLocations(std::move(params)); } },
+		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } }
 	})
 {
 }

@@ -11,6 +11,8 @@
 #include <sstream>
 #include <unordered_map>
 
+using namespace std::literals;
+
 namespace graphql::today {
 namespace object {
 
@@ -20,10 +22,10 @@ Task::Task()
 		"UnionType",
 		"Task"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "id", [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
-		{ "isComplete", [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } },
-		{ "title", [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(isComplete)gql"sv, [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } },
+		{ R"gql(title)gql"sv, [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } }
 	})
 {
 }

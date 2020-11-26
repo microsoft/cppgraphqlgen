@@ -2806,19 +2806,19 @@ void Generator::outputObjectImplementation(std::ostream& sourceFile, const Objec
 
 		std::ostringstream output;
 
-		output << R"cpp(		{ ")cpp" << outputField.name
-			<< R"cpp(", [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
+		output << R"cpp(		{ R"gql()cpp" << outputField.name
+			<< R"cpp()gql"sv, [this](service::ResolverParams&& params) { return resolve)cpp" << fieldName
 			<< R"cpp((std::move(params)); } })cpp";
 
 		return std::make_pair(std::string_view { outputField.name }, output.str());
 	});
 
-	resolvers["__typename"sv] = R"cpp(		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp"s;
+	resolvers["__typename"sv] = R"cpp(		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp"s;
 
 	if (isQueryType)
 	{
-		resolvers["__schema"sv] = R"cpp(		{ "__schema", [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } })cpp"s;
-		resolvers["__type"sv] = R"cpp(		{ "__type", [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp"s;
+		resolvers["__schema"sv] = R"cpp(		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } })cpp"s;
+		resolvers["__type"sv] = R"cpp(		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp"s;
 	}
 
 	bool firstField = true;
@@ -3515,6 +3515,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 #include <stdexcept>
 #include <sstream>
 #include <unordered_map>
+
+using namespace std::literals;
 
 )cpp";
 

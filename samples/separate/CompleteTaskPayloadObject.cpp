@@ -11,6 +11,8 @@
 #include <sstream>
 #include <unordered_map>
 
+using namespace std::literals;
+
 namespace graphql::today {
 namespace object {
 
@@ -18,9 +20,9 @@ CompleteTaskPayload::CompleteTaskPayload()
 	: service::Object({
 		"CompleteTaskPayload"
 	}, {
-		{ "__typename", [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ "clientMutationId", [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } },
-		{ "task", [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(clientMutationId)gql"sv, [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } },
+		{ R"gql(task)gql"sv, [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } }
 	})
 {
 }
