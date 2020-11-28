@@ -7,7 +7,6 @@
 
 using namespace graphql;
 
-
 TEST(ResponseCase, ValueConstructorFromStringLiteral)
 {
 	auto expected = "Test String";

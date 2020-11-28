@@ -6,6 +6,7 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
+// clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
 	#ifdef IMPL_GRAPHQLRESPONSE_DLL
 		#define GRAPHQLRESPONSE_EXPORT __declspec(dllexport)
@@ -15,6 +16,7 @@
 #else // !GRAPHQL_DLLEXPORTS
 	#define GRAPHQLRESPONSE_EXPORT
 #endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -28,15 +30,15 @@ namespace graphql::response {
 // of the [June 2018 spec](https://facebook.github.io/graphql/June2018/#sec-Serialization-Format).
 enum class Type : uint8_t
 {
-	Map,		// JSON Object
-	List,		// JSON Array
-	String,		// JSON String
-	Null,		// JSON null
-	Boolean,	// JSON true or false
-	Int,		// JSON Number
-	Float,		// JSON Number
-	EnumValue,	// JSON String
-	Scalar,		// JSON any type
+	Map,	   // JSON Object
+	List,	   // JSON Array
+	String,	   // JSON String
+	Null,	   // JSON null
+	Boolean,   // JSON true or false
+	Int,	   // JSON Number
+	Float,	   // JSON Number
+	EnumValue, // JSON String
+	Scalar,	   // JSON any type
 };
 
 struct Value;
@@ -157,12 +159,14 @@ struct Value
 	// Specialized for all single-value Types.
 	template <typename ValueType>
 	void set(typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
-		typename ValueTypeTraits<ValueType>::set_type> value);
+		typename ValueTypeTraits<ValueType>::set_type>
+			value);
 
 	// Specialized for all Types.
 	template <typename ValueType>
 	typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
-		typename ValueTypeTraits<ValueType>::get_type> get() const;
+		typename ValueTypeTraits<ValueType>::get_type>
+	get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
@@ -170,15 +174,21 @@ struct Value
 
 	// Compatibility wrappers
 	template <typename ReferenceType>
-	[[deprecated("Use the unqualified Value::set<> specialization instead of specializing on the r-value reference.")]]
-	void set(typename std::enable_if_t<std::is_rvalue_reference_v<ReferenceType>, ReferenceType> value)
+	[[deprecated("Use the unqualified Value::set<> specialization instead of specializing on the "
+				 "r-value reference.")]] void
+	set(typename std::enable_if_t<std::is_rvalue_reference_v<ReferenceType>, ReferenceType> value)
 	{
 		set<std::decay_t<ReferenceType>>(std::move(value));
 	}
 
 	template <typename ReferenceType>
-	[[deprecated("Use the unqualified Value::get<> specialization instead of specializing on the const reference.")]]
-	typename std::enable_if_t<std::is_lvalue_reference_v<ReferenceType> && std::is_const_v<typename std::remove_reference_t<ReferenceType>>, ReferenceType> get() const
+	[[deprecated("Use the unqualified Value::get<> specialization instead of specializing on the "
+				 "const reference.")]]
+	typename std::enable_if_t<
+		std::is_lvalue_reference_v<
+			ReferenceType> && std::is_const_v<typename std::remove_reference_t<ReferenceType>>,
+		ReferenceType>
+	get() const
 	{
 		return get<std::decay_t<ReferenceType>>();
 	}
@@ -190,22 +200,38 @@ private:
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the specialized template methods
-template <> GRAPHQLRESPONSE_EXPORT void Value::set<StringType>(StringType&& value);
-template <> GRAPHQLRESPONSE_EXPORT void Value::set<BooleanType>(BooleanType value);
-template <> GRAPHQLRESPONSE_EXPORT void Value::set<IntType>(IntType value);
-template <> GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
-template <> GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
-template <> GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
-template <> GRAPHQLRESPONSE_EXPORT const ListType& Value::get<ListType>() const;
-template <> GRAPHQLRESPONSE_EXPORT const StringType& Value::get<StringType>() const;
-template <> GRAPHQLRESPONSE_EXPORT BooleanType Value::get<BooleanType>() const;
-template <> GRAPHQLRESPONSE_EXPORT IntType Value::get<IntType>() const;
-template <> GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
-template <> GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
-template <> GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
-template <> GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
-template <> GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
-template <> GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
+template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<StringType>(StringType&& value);
+template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<BooleanType>(BooleanType value);
+template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<IntType>(IntType value);
+template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
+template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
+template <>
+GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT const ListType& Value::get<ListType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT const StringType& Value::get<StringType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT BooleanType Value::get<BooleanType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT IntType Value::get<IntType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
+template <>
+GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
+template <>
+GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
+template <>
+GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
 #endif // GRAPHQL_DLLEXPORTS
 
 } /* namespace graphql::response */

@@ -6,6 +6,7 @@
 #ifndef JSONRESPONSE_H
 #define JSONRESPONSE_H
 
+// clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
 	#ifdef IMPL_JSONRESPONSE_DLL
 		#define JSONRESPONSE_EXPORT __declspec(dllexport)
@@ -15,6 +16,7 @@
 #else // !GRAPHQL_DLLEXPORTS
 	#define JSONRESPONSE_EXPORT
 #endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
 
 #include "graphqlservice/GraphQLResponse.h"
 

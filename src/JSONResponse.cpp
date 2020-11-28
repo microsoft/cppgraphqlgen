@@ -6,9 +6,9 @@
 #define RAPIDJSON_NAMESPACE graphql::rapidjson
 #include <rapidjson/rapidjson.h>
 
+#include <rapidjson/reader.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-#include <rapidjson/reader.h>
 
 #include <limits>
 #include <stack>
@@ -107,8 +107,7 @@ std::string toJSON(Value&& response)
 	return buffer.GetString();
 }
 
-struct ResponseHandler
-	: rapidjson::BaseReaderHandler<rapidjson::UTF8<>, ResponseHandler>
+struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, ResponseHandler>
 {
 	ResponseHandler()
 	{

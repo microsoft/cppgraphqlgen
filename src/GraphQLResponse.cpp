@@ -37,8 +37,7 @@ struct StringOrEnumData
 {
 	bool operator==(const StringOrEnumData& rhs) const
 	{
-		return string == rhs.string
-			&& from_json == rhs.from_json;
+		return string == rhs.string && from_json == rhs.from_json;
 	}
 
 	StringType string;
@@ -56,14 +55,9 @@ struct ScalarData
 	ScalarType scalar;
 };
 
-struct TypedData : std::variant<
-	std::optional<MapData>,
-	std::optional<ListData>,
-	std::optional<StringOrEnumData>,
-	std::optional<ScalarData>,
-	BooleanType,
-	IntType,
-	FloatType>
+struct TypedData
+	: std::variant<std::optional<MapData>, std::optional<ListData>, std::optional<StringOrEnumData>,
+		  std::optional<ScalarData>, BooleanType, IntType, FloatType>
 {
 };
 
@@ -82,7 +76,8 @@ Value::Value(Type type /*= Type::Null*/)
 
 		case Type::String:
 		case Type::EnumValue:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<StringOrEnumData>() });
+			_data =
+				std::make_unique<TypedData>(TypedData { std::make_optional<StringOrEnumData>() });
 			break;
 
 		case Type::Scalar:
@@ -90,15 +85,15 @@ Value::Value(Type type /*= Type::Null*/)
 			break;
 
 		case Type::Boolean:
-			_data = std::make_unique<TypedData>(TypedData { BooleanType{ false } });
+			_data = std::make_unique<TypedData>(TypedData { BooleanType { false } });
 			break;
 
 		case Type::Int:
-			_data = std::make_unique<TypedData>(TypedData { IntType{ 0 } });
+			_data = std::make_unique<TypedData>(TypedData { IntType { 0 } });
 			break;
 
 		case Type::Float:
-			_data = std::make_unique<TypedData>(TypedData { FloatType{ 0.0 } });
+			_data = std::make_unique<TypedData>(TypedData { FloatType { 0.0 } });
 			break;
 
 		default:
@@ -115,13 +110,14 @@ Value::~Value()
 
 Value::Value(const char* value)
 	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData{ StringType{ value }, false } }))
+	, _data(std::make_unique<TypedData>(
+		  TypedData { StringOrEnumData { StringType { value }, false } }))
 {
 }
 
 Value::Value(StringType&& value)
 	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData{ std::move(value), false } }))
+	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData { std::move(value), false } }))
 {
 }
 
@@ -196,8 +192,7 @@ Value&& Value::from_json() noexcept
 bool Value::maybe_enum() const noexcept
 {
 	return type() == Type::EnumValue
-		|| (type() == Type::String
-			&& std::get<std::optional<StringOrEnumData>>(*_data)->from_json);
+		|| (type() == Type::String && std::get<std::optional<StringOrEnumData>>(*_data)->from_json);
 }
 
 void Value::reserve(size_t count)
@@ -340,8 +335,7 @@ const Value& Value::operator[](size_t index) const
 template <>
 void Value::set<StringType>(StringType&& value)
 {
-	if (type() != Type::String
-		&& type() != Type::EnumValue)
+	if (type() != Type::String && type() != Type::EnumValue)
 	{
 		throw std::logic_error("Invalid call to Value::set for StringType");
 	}
@@ -398,7 +392,7 @@ void Value::set<ScalarType>(ScalarType&& value)
 		throw std::logic_error("Invalid call to Value::set for ScalarType");
 	}
 
-	*_data = { ScalarData{ std::move(value) } };
+	*_data = { ScalarData { std::move(value) } };
 }
 
 template <>
@@ -426,8 +420,7 @@ const ListType& Value::get<ListType>() const
 template <>
 const StringType& Value::get<StringType>() const
 {
-	if (type() != Type::String
-		&& type() != Type::EnumValue)
+	if (type() != Type::String && type() != Type::EnumValue)
 	{
 		throw std::logic_error("Invalid call to Value::get for StringType");
 	}
@@ -517,8 +510,7 @@ ListType Value::release<ListType>()
 template <>
 StringType Value::release<StringType>()
 {
-	if (type() != Type::String
-		&& type() != Type::EnumValue)
+	if (type() != Type::String && type() != Type::EnumValue)
 	{
 		throw std::logic_error("Invalid call to Value::release for StringType");
 	}
