@@ -423,7 +423,7 @@ struct ModifiedArgument
 	}
 
 	// Wrap require with modifiers in a try/catch block.
-	template <TypeModifier Modifier, TypeModifier... Other>
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool> find(
 		const std::string& name, const response::Value& arguments) noexcept
 	{

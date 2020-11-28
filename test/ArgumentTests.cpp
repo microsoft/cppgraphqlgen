@@ -291,3 +291,43 @@ TEST(ArgumentsCase, ScalarArgumentString)
 	ASSERT_EQ(response::Type::String, actual.type()) << "should parse the object";
 	ASSERT_EQ("foobar", actual.get<response::StringType>()) << "should match the value";
 }
+
+TEST(ArgumentsCase, FindArgumentNoTemplateArguments)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", response::Value("foobar"));
+	std::pair<response::Value, bool> actual { {}, false };
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::find("scalar", response);
+	}
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+
+	ASSERT_TRUE(actual.second) << "should find the argument";
+	ASSERT_EQ(response::Type::String, actual.first.type()) << "should parse the object";
+	ASSERT_EQ("foobar", actual.first.get<response::StringType>()) << "should match the value";
+}
+
+TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
+{
+	response::Value response(response::Type::Map);
+	response.emplace_back("scalar", response::Value("foobar"));
+	std::pair<response::Value, bool> actual { {}, false };
+
+	try
+	{
+		actual = service::ModifiedArgument<response::Value>::find<>("scalar", response);
+	}
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+
+	ASSERT_TRUE(actual.second) << "should find the argument";
+	ASSERT_EQ(response::Type::String, actual.first.type()) << "should parse the object";
+	ASSERT_EQ("foobar", actual.first.get<response::StringType>()) << "should match the value";
+}
