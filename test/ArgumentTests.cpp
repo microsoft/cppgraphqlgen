@@ -9,7 +9,6 @@
 
 using namespace graphql;
 
-
 TEST(ArgumentsCase, ListArgumentStrings)
 {
 	auto parsed = response::parseJSON(R"js({"value":[
@@ -23,7 +22,7 @@ TEST(ArgumentsCase, ListArgumentStrings)
 	{
 		actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -47,16 +46,18 @@ TEST(ArgumentsCase, ListArgumentStringsNonNullable)
 
 	try
 	{
-		auto actual = service::StringArgument::require<service::TypeModifier::List>("value", parsed);
+		auto actual =
+			service::StringArgument::require<service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		exceptionWhat = response::toJSON(ex.getErrors());
 		caughtException = true;
 	}
 
 	ASSERT_TRUE(caughtException);
-	EXPECT_EQ(R"js([{"message":"Invalid argument: value error: not a string"}])js", exceptionWhat) << "exception should match";
+	EXPECT_EQ(R"js([{"message":"Invalid argument: value error: not a string"}])js", exceptionWhat)
+		<< "exception should match";
 }
 
 TEST(ArgumentsCase, ListArgumentStringsNullable)
@@ -71,12 +72,10 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 
 	try
 	{
-		actual = service::StringArgument::require<
-			service::TypeModifier::List,
-			service::TypeModifier::Nullable
-		>("value", parsed);
+		actual = service::StringArgument::require<service::TypeModifier::List,
+			service::TypeModifier::Nullable>("value", parsed);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -101,12 +100,10 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 
 	try
 	{
-		actual = service::StringArgument::require<
-			service::TypeModifier::List,
-			service::TypeModifier::List
-		>("value", parsed);
+		actual = service::StringArgument::require<service::TypeModifier::List,
+			service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -130,13 +127,11 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 
 	try
 	{
-		actual = service::StringArgument::require<
-			service::TypeModifier::List,
+		actual = service::StringArgument::require<service::TypeModifier::List,
 			service::TypeModifier::Nullable,
-			service::TypeModifier::List
-		>("value", parsed);
+			service::TypeModifier::List>("value", parsed);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -160,7 +155,7 @@ TEST(ArgumentsCase, TaskStateEnum)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -181,15 +176,18 @@ TEST(ArgumentsCase, TaskStateEnumFromString)
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		caughtException = true;
 		exceptionWhat = response::toJSON(ex.getErrors());
 	}
 
-	EXPECT_NE(today::TaskState::Started, actual) << "should not parse the enum from a known string value";
+	EXPECT_NE(today::TaskState::Started, actual)
+		<< "should not parse the enum from a known string value";
 	ASSERT_TRUE(caughtException);
-	EXPECT_EQ(R"js([{"message":"Invalid argument: status error: not a valid TaskState value"}])js", exceptionWhat) << "exception should match";
+	EXPECT_EQ(R"js([{"message":"Invalid argument: status error: not a valid TaskState value"}])js",
+		exceptionWhat)
+		<< "exception should match";
 }
 
 TEST(ArgumentsCase, TaskStateEnumFromJSONString)
@@ -199,12 +197,11 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 	response.emplace_back("status", status.from_json());
 	today::TaskState actual = static_cast<today::TaskState>(-1);
 
-
 	try
 	{
 		actual = service::ModifiedArgument<today::TaskState>::require("status", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -223,7 +220,7 @@ TEST(ArgumentsCase, ScalarArgumentMap)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -246,7 +243,7 @@ TEST(ArgumentsCase, ScalarArgumentList)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -268,7 +265,7 @@ TEST(ArgumentsCase, ScalarArgumentNull)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -286,7 +283,7 @@ TEST(ArgumentsCase, ScalarArgumentString)
 	{
 		actual = service::ModifiedArgument<response::Value>::require("scalar", response);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}

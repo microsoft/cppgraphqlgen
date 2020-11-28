@@ -12,7 +12,6 @@ using namespace graphql::peg;
 
 using namespace tao::graphqlpeg;
 
-
 TEST(PegtlCase, ParseKitchenSinkQuery)
 {
 	memory_input<> input(R"gql(
@@ -74,7 +73,8 @@ TEST(PegtlCase, ParseKitchenSinkQuery)
 		{
 		  unnamed(truthy: true, falsey: false, nullish: null),
 		  query
-		})gql", "ParseKitchenSinkQuery");
+		})gql",
+		"ParseKitchenSinkQuery");
 
 	const bool result = parse<document>(input);
 
@@ -161,7 +161,8 @@ TEST(PegtlCase, ParseKitchenSinkSchema)
 		directive @include(if: Boolean!)
 		  on FIELD
 		   | FRAGMENT_SPREAD
-		   | INLINE_FRAGMENT)gql", "ParseKitchenSinkSchema");
+		   | INLINE_FRAGMENT)gql",
+		"ParseKitchenSinkSchema");
 
 	const bool result = parse<document>(input);
 
@@ -229,7 +230,8 @@ TEST(PegtlCase, ParseKitchenSink)
 		{
 		  unnamed(truthy: true, falsey: false, nullish: null),
 		  query
-		})gql", "ParseKitchenSinkSchema");
+		})gql",
+		"ParseKitchenSinkSchema");
 
 	const bool result = parse<document>(input);
 
@@ -268,7 +270,8 @@ TEST(PegtlCase, ParseTodayQuery)
 					}
 				}
 			}
-		})gql", "ParseTodayQuery");
+		})gql",
+		"ParseTodayQuery");
 
 	const bool result = parse<document>(input);
 
@@ -384,7 +387,8 @@ TEST(PegtlCase, ParseTodaySchema)
 			id: ID!
 			name: String
 			unreadCount: Int!
-		})gql", "ParseTodaySchema");
+		})gql",
+		"ParseTodaySchema");
 
 	const bool result = parse<document>(input);
 
@@ -406,5 +410,6 @@ TEST(PegtlCase, ParseVariableDefaultEmptyList)
 
 TEST(PegtlCase, AnalyzeGrammar)
 {
-	ASSERT_EQ(0, analyze<document>(true)) << "there shuldn't be any infinite loops in the PEG version of the grammar";
+	ASSERT_EQ(0, analyze<document>(true))
+		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
 }

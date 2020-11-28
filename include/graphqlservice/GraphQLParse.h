@@ -6,6 +6,7 @@
 #ifndef GRAPHQLPARSE_H
 #define GRAPHQLPARSE_H
 
+// clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
 	#ifdef IMPL_GRAPHQLPEG_DLL
 		#define GRAPHQLPEG_EXPORT __declspec(dllexport)
@@ -15,6 +16,7 @@
 #else // !GRAPHQL_DLLEXPORTS
 	#define GRAPHQLPEG_EXPORT
 #endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
 
 #include <memory>
 #include <string_view>
@@ -37,7 +39,7 @@ GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
 
 } /* namespace peg */
 
-GRAPHQLPEG_EXPORT peg::ast operator "" _graphql(const char* text, size_t size);
+GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(const char* text, size_t size);
 
 } /* namespace graphql */
 

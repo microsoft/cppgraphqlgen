@@ -6,8 +6,8 @@
 #ifndef SCHEMAGENERATOR_H
 #define SCHEMAGENERATOR_H
 
-#include "graphqlservice/GraphQLService.h"
 #include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/GraphQLService.h"
 
 #include <array>
 #include <cstdio>
@@ -174,7 +174,7 @@ struct OutputField
 	std::optional<tao::graphqlpeg::position> position;
 	bool interfaceField = false;
 	bool inheritedField = false;
-	std::string_view accessor{ strGet };
+	std::string_view accessor { strGet };
 };
 
 using OutputFieldList = std::vector<OutputField>;
@@ -255,7 +255,8 @@ private:
 class NamespaceScope
 {
 public:
-	explicit NamespaceScope(std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
+	explicit NamespaceScope(
+		std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
 	NamespaceScope(NamespaceScope&& other) noexcept;
 	~NamespaceScope() noexcept;
 
@@ -268,7 +269,8 @@ private:
 	std::string_view _cppNamespace;
 };
 
-// Keep track of whether we want to add a blank separator line once some additional content is about to be output.
+// Keep track of whether we want to add a blank separator line once some additional content is about
+// to be output.
 class PendingBlankLine
 {
 public:
@@ -316,7 +318,8 @@ private:
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
 	static const std::string& getSafeCppName(const std::string& type) noexcept;
-	static OutputFieldList getOutputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
+	static OutputFieldList getOutputFields(
+		const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
 
 	// Recursively visit a Type node until we reach a NamedType and we've
@@ -361,7 +364,9 @@ private:
 	};
 
 	void validateSchema();
-	void fixupOutputFieldList(OutputFieldList& fields, const std::optional<std::unordered_set<std::string>>& interfaceFields, const std::optional<std::string_view>& accessor);
+	void fixupOutputFieldList(OutputFieldList& fields,
+		const std::optional<std::unordered_set<std::string>>& interfaceFields,
+		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
 
 	const std::string& getCppType(const std::string& type) const noexcept;
@@ -369,20 +374,25 @@ private:
 	std::string getOutputCppType(const OutputField& field) const noexcept;
 
 	bool outputHeader() const noexcept;
-	void outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectDeclaration(
+		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
 	std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
-	void outputObjectImplementation(std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectImplementation(
+		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
 	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
-	std::string getArgumentDefaultValue(size_t level, const response::Value& defaultValue) const noexcept;
-	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken, const char* argumentsToken, const char* defaultToken) const noexcept;
+	std::string getArgumentDefaultValue(
+		size_t level, const response::Value& defaultValue) const noexcept;
+	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken,
+		const char* argumentsToken, const char* defaultToken) const noexcept;
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
-	std::string getIntrospectionType(const std::string& type, const TypeModifierStack& modifiers) const noexcept;
+	std::string getIntrospectionType(
+		const std::string& type, const TypeModifierStack& modifiers) const noexcept;
 
 	std::vector<std::string> outputSeparateFiles() const noexcept;
 

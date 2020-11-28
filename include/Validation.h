@@ -74,15 +74,9 @@ struct ValidateArgumentMap
 	std::map<std::string, ValidateArgumentValuePtr> values;
 };
 
-using ValidateArgumentVariant = std::variant<
-	ValidateArgumentVariable,
-	response::IntType,
-	response::FloatType,
-	response::StringType,
-	response::BooleanType,
-	ValidateArgumentEnumValue,
-	ValidateArgumentList,
-	ValidateArgumentMap>;
+using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
+	response::FloatType, response::StringType, response::BooleanType, ValidateArgumentEnumValue,
+	ValidateArgumentList, ValidateArgumentMap>;
 
 struct ValidateArgumentValue
 {
@@ -128,7 +122,8 @@ using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
-	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType, const std::string& fieldName, ValidateFieldArguments&& arguments);
+	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType,
+		const std::string& fieldName, ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
@@ -163,7 +158,8 @@ private:
 	ValidateType _variableType;
 };
 
-// ValidateExecutableVisitor visits the AST and validates that it is executable against the service schema.
+// ValidateExecutableVisitor visits the AST and validates that it is executable against the service
+// schema.
 class ValidateExecutableVisitor
 {
 public:
@@ -209,11 +205,13 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	void visitDirectives(introspection::DirectiveLocation location, const peg::ast_node& directives);
+	void visitDirectives(
+		introspection::DirectiveLocation location, const peg::ast_node& directives);
 
-	bool validateInputValue(bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument, const ValidateType& type);
-	bool validateVariableType(bool isNonNull, const ValidateType& variableType, const schema_location& position, const ValidateType& inputType);
-
+	bool validateInputValue(bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument,
+		const ValidateType& type);
+	bool validateVariableType(bool isNonNull, const ValidateType& variableType,
+		const schema_location& position, const ValidateType& inputType);
 
 	const Request& _service;
 	std::vector<schema_error> _errors;
