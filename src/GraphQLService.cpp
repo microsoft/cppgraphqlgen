@@ -1530,12 +1530,14 @@ void OperationDefinitionVisitor::visit(const std::string& operationType, const p
 	}, std::cref(*operationDefinition.children.back()));
 }
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field, response::Value&& arguments,
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field,
+	response::Value&& arguments, response::Value&& fieldDirectives,
 	peg::ast&& query, std::string&& operationName, SubscriptionCallback&& callback,
 	const peg::ast_node& selection)
 	: data(std::move(data))
 	, field(std::move(field))
 	, arguments(std::move(arguments))
+	, fieldDirectives(std::move(fieldDirectives))
 	, query(std::move(query))
 	, operationName(std::move(operationName))
 	, callback(std::move(callback))
@@ -1566,6 +1568,7 @@ private:
 	const std::shared_ptr<Object>& _subscriptionObject;
 	SubscriptionName _field;
 	response::Value _arguments;
+	response::Value _fieldDirectives;
 	std::shared_ptr<SubscriptionData> _result;
 };
 
@@ -1630,6 +1633,7 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 			std::move(_fragments)),
 		std::move(_field),
 		std::move(_arguments),
+		std::move(_fieldDirectives),
 		std::move(_params.query),
 		std::move(_params.operationName),
 		std::move(_callback),
@@ -1669,6 +1673,8 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 	{
 		return;
 	}
+
+	_fieldDirectives = directiveVisitor.getDirectives();
 
 	response::Value arguments(response::Type::Map);
 
@@ -2176,35 +2182,76 @@ void Request::deliver(const SubscriptionName& name, const std::shared_ptr<Object
 	deliver(std::launch::deferred, name, subscriptionObject);
 }
 
-void Request::deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
-{
-	deliver(launch, name, SubscriptionArguments {}, subscriptionObject);
-}
-
 void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	deliver(std::launch::deferred, name, arguments, subscriptionObject);
 }
 
+void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments,
+	const SubscriptionArguments& directives, const std::shared_ptr<Object>& subscriptionObject) const
+{
+	deliver(std::launch::deferred, name, arguments, directives, subscriptionObject);
+}
+
+void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
+	const std::shared_ptr<Object>& subscriptionObject) const
+{
+	deliver(std::launch::deferred, name, applyArguments, subscriptionObject);
+}
+
+void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
+	const SubscriptionFilterCallback& applyDirectives, const std::shared_ptr<Object>& subscriptionObject) const
+{
+	deliver(std::launch::deferred, name, applyArguments, applyDirectives, subscriptionObject);
+}
+
+void Request::deliver(std::launch launch, const SubscriptionName& name,
+	const std::shared_ptr<Object>& subscriptionObject) const
+{
+	deliver(launch, name, SubscriptionArguments {}, SubscriptionArguments {}, subscriptionObject);
+}
+
 void Request::deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
-	SubscriptionFilterCallback exactMatch = [&arguments](response::MapType::const_reference required) noexcept -> bool
-	{
+	deliver(launch, name, arguments, SubscriptionArguments {}, subscriptionObject);
+}
+
+void Request::deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+	const std::shared_ptr<Object>& subscriptionObject) const
+{
+	SubscriptionFilterCallback argumentsMatch =
+		[&arguments](response::MapType::const_reference required) noexcept -> bool {
 		auto itrArgument = arguments.find(required.first);
 
-		return (itrArgument != arguments.cend()
-			&& itrArgument->second == required.second);
+		return (itrArgument != arguments.cend() && itrArgument->second == required.second);
 	};
 
-	deliver(launch, name, exactMatch, subscriptionObject);
+	SubscriptionFilterCallback directivesMatch =
+		[&directives](response::MapType::const_reference required) noexcept -> bool {
+		auto itrDirective = directives.find(required.first);
+
+		return (itrDirective != directives.cend() && itrDirective->second == required.second);
+	};
+
+	deliver(launch, name, argumentsMatch, directivesMatch, subscriptionObject);
 }
 
-void Request::deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
-	deliver(std::launch::deferred, name, apply, subscriptionObject);
+	deliver(
+		launch,
+		name,
+		applyArguments,
+		[](response::MapType::const_reference) noexcept {
+			return true;
+		},
+		subscriptionObject);
 }
 
-void Request::deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const
+void Request::deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments, const SubscriptionFilterCallback& applyDirectives,
+	const std::shared_ptr<Object>& subscriptionObject) const
 {
 	const auto& optionalOrDefaultSubscription = subscriptionObject
 		? subscriptionObject
@@ -2230,7 +2277,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 		// in this event, don't deliver the event to this subscription
 		for (const auto& required : subscriptionArguments)
 		{
-			if (!apply(required))
+			if (!applyArguments(required))
 			{
 				matchedArguments = false;
 				break;
@@ -2238,6 +2285,25 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 		}
 
 		if (!matchedArguments)
+		{
+			continue;
+		}
+
+		// If the field in this subscription had field directives that did not match what was
+		// provided in this event, don't deliver the event to this subscription
+		const auto& subscriptionFieldDirectives = registration->fieldDirectives;
+		bool matchedFieldDirectives = true;
+
+		for (const auto& required : subscriptionFieldDirectives)
+		{
+			if (!applyDirectives(required))
+			{
+				matchedFieldDirectives = false;
+				break;
+			}
+		}
+
+		if (!matchedFieldDirectives)
 		{
 			continue;
 		}
@@ -2257,13 +2323,17 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 
 		try
 		{
-			result = std::async(launch,
-				[registration](std::future<response::Value> document)
-			{
-				return document.get();
-			}, optionalOrDefaultSubscription->resolve(selectionSetParams, registration->selection, registration->data->fragments, registration->data->variables));
+			result = std::async(
+				launch,
+				[registration](std::future<response::Value> document) {
+					return document.get();
+				},
+				optionalOrDefaultSubscription->resolve(selectionSetParams,
+					registration->selection,
+					registration->data->fragments,
+					registration->data->variables));
 		}
-		catch (schema_exception & ex)
+		catch (schema_exception& ex)
 		{
 			std::promise<response::Value> promise;
 			response::Value document(response::Type::Map);
@@ -2275,11 +2345,12 @@ void Request::deliver(std::launch launch, const SubscriptionName& name, const Su
 			result = promise.get_future();
 		}
 
-		callbacks.push(std::async(launch,
-			[registration](std::future<response::Value> document)
-		{
-			registration->callback(std::move(document));
-		}, std::move(result)));
+		callbacks.push(std::async(
+			launch,
+			[registration](std::future<response::Value> document) {
+				registration->callback(std::move(document));
+			},
+			std::move(result)));
 	}
 
 	while (!callbacks.empty())

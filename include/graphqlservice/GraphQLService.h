@@ -848,7 +848,8 @@ using SubscriptionName = std::string;
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
-	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field, response::Value&& arguments,
+	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field,
+		response::Value&& arguments, response::Value&& fieldDirectives,
 		peg::ast&& query, std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
@@ -856,6 +857,7 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 
 	SubscriptionName field;
 	response::Value arguments;
+	response::Value fieldDirectives;
 	peg::ast query;
 	std::string operationName;
 	SubscriptionCallback callback;
@@ -887,11 +889,15 @@ public:
 
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const SubscriptionArguments& directives, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments, const SubscriptionFilterCallback& applyDirectives, const std::shared_ptr<Object>& subscriptionObject) const;
 
 	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const SubscriptionArguments& directives, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments, const std::shared_ptr<Object>& subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments, const SubscriptionFilterCallback& applyDirectives, const std::shared_ptr<Object>& subscriptionObject) const;
 
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference instead.")]]
 	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const;
