@@ -37,9 +37,9 @@ exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of
 
 ## Installation process
 
-I've tested this on Windows with both Visual Studio 2017 and 2019, and on Linux using an Ubuntu 18.04 LTS instance running in
-WSL with both gcc 7.3.0 and clang 6.0.0. The key compiler requirement is support for C++17, earlier versions of gcc and clang
-may not have enough support for that.
+I've tested this on Windows with both Visual Studio 2017 and 2019, and on Linux using an Ubuntu 20.04 LTS instance running in
+WSL with both gcc 9.3.0 and clang 10.0.0. The key compiler requirement is support for C++17 including std::filesystem, earlier
+versions of gcc and clang may not have enough support for that.
 
 The easiest way to get all of these and to build `cppgraphqlgen` in one step is to use
 [microsoft/vcpkg](https://github.com/microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
@@ -68,7 +68,7 @@ means you need to include an acknowledgement along with the license text.
 - GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.0.0,
 which is part of [The Art of C++](https://taocpp.github.io/) library collection. I've added this as a sub-module, so you
 do not need to install this separately. If you already have 3.0.0 installed where CMake can find it, it will use that
-instead of the sub-module and avoid installing another copy of PEGTL. _Note: PEGTL 3.0.0 is currently at pre-release._
+instead of the sub-module and avoid installing another copy of PEGTL.
 
 ### graphqlservice
 
