@@ -238,6 +238,8 @@ private:
 	// builds the validation context (lookup maps)
 	void addScalar(const std::string& scalarName);
 	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
+	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
+	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
 	TypeFields::const_iterator addTypeFields(
 		const std::string& typeName, const response::Value& typeDescriptionMap);
 	InputTypeFields::const_iterator addInputTypeFields(

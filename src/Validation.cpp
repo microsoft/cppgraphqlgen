@@ -482,41 +482,11 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 						{
 							if (kind == introspection::TypeKind::OBJECT)
 							{
-								_matchingTypes[name].insert(name);
+								addObject(name, entry);
 							}
 							else
 							{
-								const auto& itrPossibleTypes = entry.find(R"gql(possibleTypes)gql");
-								if (itrPossibleTypes != entry.end()
-									&& itrPossibleTypes->second.type() == response::Type::List)
-								{
-									std::set<std::string> matchingTypes;
-									const auto& matchingTypeEntries =
-										itrPossibleTypes->second.get<response::ListType>();
-
-									for (const auto& matchingTypeEntry : matchingTypeEntries)
-									{
-										if (matchingTypeEntry.type() != response::Type::Map)
-										{
-											continue;
-										}
-
-										const auto& itrMatchingTypeName =
-											matchingTypeEntry.find(R"gql(name)gql");
-										if (itrMatchingTypeName != matchingTypeEntry.end()
-											&& itrMatchingTypeName->second.type()
-												== response::Type::String)
-										{
-											matchingTypes.insert(itrMatchingTypeName->second
-																	 .get<response::StringType>());
-										}
-									}
-
-									if (!matchingTypes.empty())
-									{
-										_matchingTypes[name] = std::move(matchingTypes);
-									}
-								}
+								addInterfaceOrUnion(name, entry);
 							}
 						}
 						else if (kind == introspection::TypeKind::ENUM)
@@ -1834,6 +1804,56 @@ void ValidateExecutableVisitor::addEnum(
 		if (!enumValues.empty())
 		{
 			_enumValues[enumName] = std::move(enumValues);
+		}
+	}
+}
+
+void ValidateExecutableVisitor::addObject(
+	const std::string& name, const response::Value& typeDescriptionMap)
+{
+	auto itr = _matchingTypes.find(name);
+	if (itr != _matchingTypes.cend())
+	{
+		itr->second.insert(name);
+	}
+	else
+	{
+		_matchingTypes.insert({ name, { name } });
+	}
+}
+
+void ValidateExecutableVisitor::addInterfaceOrUnion(
+	const std::string& name, const response::Value& typeDescriptionMap)
+{
+	const auto& itrPossibleTypes = typeDescriptionMap.find(R"gql(possibleTypes)gql");
+	if (itrPossibleTypes != typeDescriptionMap.end()
+		&& itrPossibleTypes->second.type() == response::Type::List)
+	{
+		const auto& matchingTypeEntries = itrPossibleTypes->second.get<response::ListType>();
+		auto itr = _matchingTypes.find(name);
+
+		for (const auto& matchingTypeEntry : matchingTypeEntries)
+		{
+			if (matchingTypeEntry.type() != response::Type::Map)
+			{
+				continue;
+			}
+
+			const auto& itrMatchingTypeName = matchingTypeEntry.find(R"gql(name)gql");
+			if (itrMatchingTypeName != matchingTypeEntry.end()
+				&& itrMatchingTypeName->second.type() == response::Type::String)
+			{
+				const auto& matchingTypeName =
+					itrMatchingTypeName->second.get<response::StringType>();
+				if (itr != _matchingTypes.cend())
+				{
+					itr->second.insert(matchingTypeName);
+				}
+				else
+				{
+					itr = _matchingTypes.insert({ name, { matchingTypeName } }).first;
+				}
+			}
 		}
 	}
 }
