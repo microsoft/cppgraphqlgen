@@ -172,7 +172,7 @@ public:
 private:
 	response::Value executeQuery(std::string_view query) const;
 
-	static ValidateTypeFieldArguments getArguments(response::ListType&& argumentsMember);
+	static ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
 
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using TypeFields = std::map<std::string, FieldTypes>;
