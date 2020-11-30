@@ -1112,6 +1112,7 @@ constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind k
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
 		case introspection::TypeKind::UNION:
+		case introspection::TypeKind::INPUT_OBJECT:
 			return false;
 
 		default:
