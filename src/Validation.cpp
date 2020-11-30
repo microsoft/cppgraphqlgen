@@ -1809,29 +1809,18 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 			})gql";
 
 		auto data = executeQuery(oss.str());
-		auto members = data.release<response::MapType>();
-		auto itrResponse = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& entry) noexcept {
-				return entry.first == R"gql(__type)gql";
-			});
+		const auto& itrResponse = data.find(R"gql(__type)gql");
 
-		if (itrResponse != members.end() && itrResponse->second.type() == response::Type::Map)
+		if (itrResponse != data.end() && itrResponse->second.type() == response::Type::Map)
 		{
 			std::map<std::string, ValidateTypeField> fields;
 
-			members = itrResponse->second.release<response::MapType>();
-			itrResponse = std::find_if(members.begin(),
-				members.end(),
-				[](const std::pair<std::string, response::Value>& entry) noexcept {
-					return entry.first == R"gql(inputFields)gql";
-				});
-
-			if (itrResponse != members.end() && itrResponse->second.type() == response::Type::List)
+			const auto& itrFields = itrResponse->second.find(R"gql(inputFields)gql");
+			if (itrFields != itrResponse->second.end() && itrFields->second.type() == response::Type::List)
 			{
 				itrType = _inputTypeFields
 							  .insert({ name,
-								  getArguments(itrResponse->second.release<response::ListType>()) })
+								  getArguments(itrFields->second.get<response::ListType>()) })
 							  .first;
 			}
 		}
