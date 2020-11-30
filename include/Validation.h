@@ -186,8 +186,8 @@ private:
 
 	bool matchesScopedType(const std::string& name) const;
 
-	TypeFields::const_iterator getScopedTypeFields();
-	InputTypeFields::const_iterator getInputTypeFields(const std::string& name);
+	TypeFields::const_iterator getScopedTypeFields() const;
+	InputTypeFields::const_iterator getInputTypeFields(const std::string& name) const;
 	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
 	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
 	template <class _FieldTypes>
@@ -239,13 +239,12 @@ private:
 	void addScalar(const std::string& scalarName);
 	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
 	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
+	void addInputObject(const std::string& name, const response::Value& typeDescriptionMap);
 	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
 	void addDirective(const std::string& name, const response::ListType& locations,
 		const response::Value& descriptionMap);
-	TypeFields::const_iterator addTypeFields(
-		const std::string& typeName, const response::Value& typeDescriptionMap);
-	InputTypeFields::const_iterator addInputTypeFields(
-		const std::string& typeName, const response::Value& typeDescriptionMap);
+	void addTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
+	void addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
 
 	// These members store information that's specific to a single query and changes every time we
 	// visit a new one. They must be reset in between queries.

@@ -484,6 +484,10 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 							{
 								addObject(name, entry);
 							}
+							else if (kind == introspection::TypeKind::INPUT_OBJECT)
+							{
+								addInputObject(name, entry);
+							}
 							else
 							{
 								addInterfaceOrUnion(name, entry);
@@ -1553,54 +1557,12 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 }
 
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::
-	getScopedTypeFields()
+	getScopedTypeFields() const
 {
-	auto typeKind = getScopedTypeKind();
-	ValidateExecutableVisitor::TypeFields::const_iterator itrType = _typeFields.find(_scopedType);
-
-	if (itrType == _typeFields.cend() && typeKind && !isScalarType(*typeKind))
-	{
-		std::ostringstream oss;
-
-		oss << R"gql(query {
-					__type(name: ")gql"
-			<< _scopedType << R"gql(") {
-						fields(includeDeprecated: true) {
-							name
-							type {
-								...nestedType
-							}
-							args {
-								name
-								defaultValue
-								type {
-									...nestedType
-								}
-							}
-						}
-					}
-				}
-
-			fragment nestedType on __Type {
-				kind
-				name
-				ofType {
-					...nestedType
-				}
-			})gql";
-
-		auto data = executeQuery(oss.str());
-		const auto& itrResponse = data.find(R"gql(__type)gql");
-		if (itrResponse != data.end() && itrResponse->second.type() == response::Type::Map)
-		{
-			itrType = addTypeFields(_scopedType, itrResponse->second);
-		}
-	}
-
-	return itrType;
+	return _typeFields.find(_scopedType);
 }
 
-ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::addTypeFields(
+void ValidateExecutableVisitor::addTypeFields(
 	const std::string& typeName, const response::Value& typeDescriptionMap)
 {
 	std::map<std::string, ValidateTypeField> fields;
@@ -1695,64 +1657,24 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	typenameField.returnType = std::move(notNullTypenameType);
 	fields[R"gql(__typename)gql"] = std::move(typenameField);
 
-	return _typeFields.insert({ typeName, std::move(fields) }).first;
+	_typeFields.insert({ typeName, std::move(fields) });
 }
 
 ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
-	getInputTypeFields(const std::string& name)
+	getInputTypeFields(const std::string& name) const
 {
-	auto typeKind = getTypeKind(name);
-	InputTypeFields::const_iterator itrType = _inputTypeFields.find(name);
-
-	if (itrType == _inputTypeFields.cend() && typeKind
-		&& *typeKind == introspection::TypeKind::INPUT_OBJECT)
-	{
-		std::ostringstream oss;
-
-		oss << R"gql(query {
-					__type(name: ")gql"
-			<< name << R"gql(") {
-						inputFields {
-							name
-							defaultValue
-							type {
-								...nestedType
-							}
-						}
-					}
-				}
-
-			fragment nestedType on __Type {
-				kind
-				name
-				ofType {
-					...nestedType
-				}
-			})gql";
-
-		auto data = executeQuery(oss.str());
-		const auto& itrResponse = data.find(R"gql(__type)gql");
-
-		if (itrResponse != data.end() && itrResponse->second.type() == response::Type::Map)
-		{
-			itrType = addInputTypeFields(name, itrResponse->second);
-		}
-	}
-
-	return itrType;
+	return _inputTypeFields.find(name);
 }
 
-ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
-	addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap)
+void ValidateExecutableVisitor::addInputTypeFields(
+	const std::string& typeName, const response::Value& typeDescriptionMap)
 {
 	const auto& itrFields = typeDescriptionMap.find(R"gql(inputFields)gql");
 	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
 	{
-		return _inputTypeFields
-			.insert({ typeName, getArguments(itrFields->second.get<response::ListType>()) })
-			.first;
+		_inputTypeFields.insert(
+			{ typeName, getArguments(itrFields->second.get<response::ListType>()) });
 	}
-	return _inputTypeFields.cend();
 }
 
 void ValidateExecutableVisitor::addEnum(
@@ -1799,6 +1721,24 @@ void ValidateExecutableVisitor::addObject(
 	{
 		_matchingTypes.insert({ name, { name } });
 	}
+
+	addTypeFields(name, typeDescriptionMap);
+}
+
+void ValidateExecutableVisitor::addInputObject(
+	const std::string& name, const response::Value& typeDescriptionMap)
+{
+	auto itr = _matchingTypes.find(name);
+	if (itr != _matchingTypes.cend())
+	{
+		itr->second.insert(name);
+	}
+	else
+	{
+		_matchingTypes.insert({ name, { name } });
+	}
+
+	addInputTypeFields(name, typeDescriptionMap);
 }
 
 void ValidateExecutableVisitor::addInterfaceOrUnion(
@@ -1835,6 +1775,8 @@ void ValidateExecutableVisitor::addInterfaceOrUnion(
 			}
 		}
 	}
+
+	addTypeFields(name, typeDescriptionMap);
 }
 
 void ValidateExecutableVisitor::addScalar(const std::string& scalarName)
