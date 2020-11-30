@@ -236,6 +236,8 @@ private:
 	ScalarTypes _scalarTypes;
 
 	// builds the validation context (lookup maps)
+	void addScalar(const std::string& scalarName);
+	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
 	TypeFields::const_iterator addTypeFields(
 		const std::string& typeName, const response::Value& typeDescriptionMap);
 	InputTypeFields::const_iterator addInputTypeFields(

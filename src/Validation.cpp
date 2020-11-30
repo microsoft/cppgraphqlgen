@@ -521,41 +521,11 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 						}
 						else if (kind == introspection::TypeKind::ENUM)
 						{
-							const auto& itrEnumValues = entry.find(R"gql(enumValues)gql");
-							if (itrEnumValues != entry.end()
-								&& itrEnumValues->second.type() == response::Type::List)
-							{
-								std::set<std::string> enumValues;
-								const auto& enumValuesEntries =
-									itrEnumValues->second.get<response::ListType>();
-
-								for (const auto& enumValuesEntry : enumValuesEntries)
-								{
-									if (enumValuesEntry.type() != response::Type::Map)
-									{
-										continue;
-									}
-
-									const auto& itrEnumValuesName =
-										enumValuesEntry.find(R"gql(name)gql");
-									if (itrEnumValuesName != enumValuesEntry.end()
-										&& itrEnumValuesName->second.type()
-											== response::Type::String)
-									{
-										enumValues.insert(
-											itrEnumValuesName->second.get<response::StringType>());
-									}
-								}
-
-								if (!enumValues.empty())
-								{
-									_enumValues[name] = std::move(enumValues);
-								}
-							}
+							addEnum(name, entry);
 						}
 						else if (kind == introspection::TypeKind::SCALAR)
 						{
-							_scalarTypes.insert(name);
+							addScalar(name);
 						}
 
 						_typeKinds[std::move(name)] = kind;
@@ -1834,6 +1804,43 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 			.first;
 	}
 	return _inputTypeFields.cend();
+}
+
+void ValidateExecutableVisitor::addEnum(
+	const std::string& enumName, const response::Value& enumDescriptionMap)
+{
+	const auto& itrEnumValues = enumDescriptionMap.find(R"gql(enumValues)gql");
+	if (itrEnumValues != enumDescriptionMap.end()
+		&& itrEnumValues->second.type() == response::Type::List)
+	{
+		std::set<std::string> enumValues;
+		const auto& enumValuesEntries = itrEnumValues->second.get<response::ListType>();
+
+		for (const auto& enumValuesEntry : enumValuesEntries)
+		{
+			if (enumValuesEntry.type() != response::Type::Map)
+			{
+				continue;
+			}
+
+			const auto& itrEnumValuesName = enumValuesEntry.find(R"gql(name)gql");
+			if (itrEnumValuesName != enumValuesEntry.end()
+				&& itrEnumValuesName->second.type() == response::Type::String)
+			{
+				enumValues.insert(itrEnumValuesName->second.get<response::StringType>());
+			}
+		}
+
+		if (!enumValues.empty())
+		{
+			_enumValues[enumName] = std::move(enumValues);
+		}
+	}
+}
+
+void ValidateExecutableVisitor::addScalar(const std::string& scalarName)
+{
+	_scalarTypes.insert(scalarName);
 }
 
 template <class _FieldTypes>
