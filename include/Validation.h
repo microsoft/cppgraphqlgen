@@ -235,6 +235,12 @@ private:
 	EnumValues _enumValues;
 	ScalarTypes _scalarTypes;
 
+	// builds the validation context (lookup maps)
+	TypeFields::const_iterator addTypeFields(
+		const std::string& typeName, const response::Value& typeDescriptionMap);
+	InputTypeFields::const_iterator addInputTypeFields(
+		const std::string& typeName, const response::Value& typeDescriptionMap);
+
 	// These members store information that's specific to a single query and changes every time we
 	// visit a new one. They must be reset in between queries.
 	ExecutableNodes _fragmentDefinitions;

@@ -1637,7 +1637,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	getScopedTypeFields()
 {
 	auto typeKind = getScopedTypeKind();
-	auto itrType = _typeFields.find(_scopedType);
+	ValidateExecutableVisitor::TypeFields::const_iterator itrType = _typeFields.find(_scopedType);
 
 	if (itrType == _typeFields.cend() && typeKind && !isScalarType(*typeKind))
 	{
@@ -1674,113 +1674,116 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 		const auto& itrResponse = data.find(R"gql(__type)gql");
 		if (itrResponse != data.end() && itrResponse->second.type() == response::Type::Map)
 		{
-			std::map<std::string, ValidateTypeField> fields;
-			response::Value scalarKind(response::Type::EnumValue);
-			response::Value nonNullKind(response::Type::EnumValue);
-
-			scalarKind.set<response::StringType>(R"gql(SCALAR)gql");
-			nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
-
-			const auto& itrFields = itrResponse->second.find(R"gql(fields)gql");
-			if (itrFields != itrResponse->second.end() && itrFields->second.type() == response::Type::List)
-			{
-				const auto& entries = itrFields->second.get<response::ListType>();
-
-				for (const auto& entry : entries)
-				{
-					if (entry.type() != response::Type::Map)
-					{
-						continue;
-					}
-
-					const auto& itrFieldName = entry.find(R"gql(name)gql");
-					const auto& itrFieldType = entry.find(R"gql(type)gql");
-
-					if (itrFieldName != entry.end()
-						&& itrFieldName->second.type() == response::Type::String
-						&& itrFieldType != entry.end()
-						&& itrFieldType->second.type() == response::Type::Map)
-					{
-						const auto& fieldName = itrFieldName->second.get<response::StringType>();
-						ValidateTypeField subField;
-
-						subField.returnType = ValidateType(itrFieldType->second);
-
-						const auto& itrArgs = entry.find(R"gql(args)gql");
-						if (itrArgs != entry.end()
-							&& itrArgs->second.type() == response::Type::List)
-						{
-							subField.arguments =
-								getArguments(itrArgs->second.get<response::ListType>());
-						}
-
-						fields[std::move(fieldName)] = std::move(subField);
-					}
-				}
-
-				if (_scopedType == _operationTypes[strQuery])
-				{
-					response::Value objectKind(response::Type::EnumValue);
-
-					objectKind.set<response::StringType>(R"gql(OBJECT)gql");
-
-					ValidateTypeField schemaField;
-					response::Value schemaType(response::Type::Map);
-					response::Value notNullSchemaType(response::Type::Map);
-
-					schemaType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-					schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
-					notNullSchemaType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-					notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
-					schemaField.returnType = std::move(notNullSchemaType);
-					fields[R"gql(__schema)gql"] = std::move(schemaField);
-
-					ValidateTypeField typeField;
-					response::Value typeType(response::Type::Map);
-
-					typeType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-					typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
-					typeField.returnType = std::move(typeType);
-
-					ValidateArgument nameArgument;
-					response::Value typeNameArg(response::Type::Map);
-					response::Value nonNullTypeNameArg(response::Type::Map);
-
-					typeNameArg.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-					typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-					nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-					nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
-					nameArgument.type = std::move(nonNullTypeNameArg);
-
-					typeField.arguments[R"gql(name)gql"] = std::move(nameArgument);
-
-					fields[R"gql(__type)gql"] = std::move(typeField);
-				}
-			}
-
-			ValidateTypeField typenameField;
-			response::Value typenameType(response::Type::Map);
-			response::Value notNullTypenameType(response::Type::Map);
-
-			typenameType.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-			typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-			notNullTypenameType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-			notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
-			typenameField.returnType = std::move(notNullTypenameType);
-			fields[R"gql(__typename)gql"] = std::move(typenameField);
-
-			itrType = _typeFields.insert({ _scopedType, std::move(fields) }).first;
+			itrType = addTypeFields(_scopedType, itrResponse->second);
 		}
 	}
 
 	return itrType;
 }
 
+ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::addTypeFields(
+	const std::string& typeName, const response::Value& typeDescriptionMap)
+{
+	std::map<std::string, ValidateTypeField> fields;
+	response::Value scalarKind(response::Type::EnumValue);
+	response::Value nonNullKind(response::Type::EnumValue);
+
+	scalarKind.set<response::StringType>(R"gql(SCALAR)gql");
+	nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
+
+	const auto& itrFields = typeDescriptionMap.find(R"gql(fields)gql");
+	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
+	{
+		const auto& entries = itrFields->second.get<response::ListType>();
+
+		for (const auto& entry : entries)
+		{
+			if (entry.type() != response::Type::Map)
+			{
+				continue;
+			}
+
+			const auto& itrFieldName = entry.find(R"gql(name)gql");
+			const auto& itrFieldType = entry.find(R"gql(type)gql");
+
+			if (itrFieldName != entry.end() && itrFieldName->second.type() == response::Type::String
+				&& itrFieldType != entry.end()
+				&& itrFieldType->second.type() == response::Type::Map)
+			{
+				const auto& fieldName = itrFieldName->second.get<response::StringType>();
+				ValidateTypeField subField;
+
+				subField.returnType = ValidateType(itrFieldType->second);
+
+				const auto& itrArgs = entry.find(R"gql(args)gql");
+				if (itrArgs != entry.end() && itrArgs->second.type() == response::Type::List)
+				{
+					subField.arguments = getArguments(itrArgs->second.get<response::ListType>());
+				}
+
+				fields[std::move(fieldName)] = std::move(subField);
+			}
+		}
+
+		if (typeName == _operationTypes[strQuery])
+		{
+			response::Value objectKind(response::Type::EnumValue);
+
+			objectKind.set<response::StringType>(R"gql(OBJECT)gql");
+
+			ValidateTypeField schemaField;
+			response::Value schemaType(response::Type::Map);
+			response::Value notNullSchemaType(response::Type::Map);
+
+			schemaType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
+			schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
+			notNullSchemaType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
+			notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
+			schemaField.returnType = std::move(notNullSchemaType);
+			fields[R"gql(__schema)gql"] = std::move(schemaField);
+
+			ValidateTypeField typeField;
+			response::Value typeType(response::Type::Map);
+
+			typeType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
+			typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
+			typeField.returnType = std::move(typeType);
+
+			ValidateArgument nameArgument;
+			response::Value typeNameArg(response::Type::Map);
+			response::Value nonNullTypeNameArg(response::Type::Map);
+
+			typeNameArg.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
+			typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
+			nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
+			nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
+			nameArgument.type = std::move(nonNullTypeNameArg);
+
+			typeField.arguments[R"gql(name)gql"] = std::move(nameArgument);
+
+			fields[R"gql(__type)gql"] = std::move(typeField);
+		}
+	}
+
+	ValidateTypeField typenameField;
+	response::Value typenameType(response::Type::Map);
+	response::Value notNullTypenameType(response::Type::Map);
+
+	typenameType.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
+	typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
+	notNullTypenameType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
+	notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
+	typenameField.returnType = std::move(notNullTypenameType);
+	fields[R"gql(__typename)gql"] = std::move(typenameField);
+
+	return _typeFields.insert({ typeName, std::move(fields) }).first;
+}
+
 ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
 	getInputTypeFields(const std::string& name)
 {
 	auto typeKind = getTypeKind(name);
-	auto itrType = _inputTypeFields.find(name);
+	InputTypeFields::const_iterator itrType = _inputTypeFields.find(name);
 
 	if (itrType == _inputTypeFields.cend() && typeKind
 		&& *typeKind == introspection::TypeKind::INPUT_OBJECT)
@@ -1813,20 +1816,24 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 
 		if (itrResponse != data.end() && itrResponse->second.type() == response::Type::Map)
 		{
-			std::map<std::string, ValidateTypeField> fields;
-
-			const auto& itrFields = itrResponse->second.find(R"gql(inputFields)gql");
-			if (itrFields != itrResponse->second.end() && itrFields->second.type() == response::Type::List)
-			{
-				itrType = _inputTypeFields
-							  .insert({ name,
-								  getArguments(itrFields->second.get<response::ListType>()) })
-							  .first;
-			}
+			itrType = addInputTypeFields(name, itrResponse->second);
 		}
 	}
 
 	return itrType;
+}
+
+ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
+	addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap)
+{
+	const auto& itrFields = typeDescriptionMap.find(R"gql(inputFields)gql");
+	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
+	{
+		return _inputTypeFields
+			.insert({ typeName, getArguments(itrFields->second.get<response::ListType>()) })
+			.first;
+	}
+	return _inputTypeFields.cend();
 }
 
 template <class _FieldTypes>
