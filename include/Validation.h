@@ -170,8 +170,6 @@ public:
 	std::vector<schema_error> getStructuredErrors();
 
 private:
-	response::Value executeQuery(std::string_view query) const;
-
 	static ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
 
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
@@ -213,7 +211,6 @@ private:
 	bool validateVariableType(bool isNonNull, const ValidateType& variableType,
 		const schema_location& position, const ValidateType& inputType);
 
-	const Request& _service;
 	std::vector<schema_error> _errors;
 
 	using OperationTypes = std::map<std::string_view, std::string>;

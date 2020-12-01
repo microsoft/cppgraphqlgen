@@ -421,14 +421,29 @@ ValidateType ValidateVariableTypeVisitor::getType()
 }
 
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
-	: _service(service)
 {
 	// TODO: we should execute this query only once per schema,
 	// maybe it can be done and cached inside the Request itself to allow
 	// this. Alternatively it could be provided at compile-time such as schema.json
 	// that is parsed, this would allow us to drop introspection from the Request
 	// and still have it to work
-	auto data = executeQuery(introspectionQuery);
+	auto ast = peg::parseString(introspectionQuery);
+	// This is taking advantage of the fact that during validation we can choose to execute
+	// unvalidated queries against the Introspection schema. This way we can use fragment
+	// cycles to expand an arbitrary number of wrapper types.
+	ast.validated = true;
+
+	std::shared_ptr<RequestState> state;
+	const std::string operationName;
+	response::Value variables(response::Type::Map);
+	auto result = service.resolve(state, ast, operationName, std::move(variables)).get();
+	const auto& itrData = result.find(std::string { strData });
+	if (itrData == result.end())
+	{
+		return;
+	}
+
+	const auto& data = itrData->second;
 	const auto& itrSchema = data.find(R"gql(__schema)gql");
 	if (itrSchema != data.end() && itrSchema->second.type() == response::Type::Map)
 	{
@@ -534,35 +549,6 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 			}
 		}
 	}
-}
-
-response::Value ValidateExecutableVisitor::executeQuery(std::string_view query) const
-{
-	auto ast = peg::parseString(query);
-
-	// This is taking advantage of the fact that during validation we can choose to execute
-	// unvalidated queries against the Introspection schema. This way we can use fragment
-	// cycles to expand an arbitrary number of wrapper types.
-	ast.validated = true;
-
-	response::Value data(response::Type::Map);
-	std::shared_ptr<RequestState> state;
-	const std::string operationName;
-	response::Value variables(response::Type::Map);
-	auto result = _service.resolve(state, ast, operationName, std::move(variables)).get();
-	auto members = result.release<response::MapType>();
-	auto itrResponse = std::find_if(members.begin(),
-		members.end(),
-		[](const std::pair<std::string, response::Value>& entry) noexcept {
-			return entry.first == strData;
-		});
-
-	if (itrResponse != members.end())
-	{
-		data = std::move(itrResponse->second);
-	}
-
-	return data;
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
