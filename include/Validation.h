@@ -167,6 +167,13 @@ public:
 	using FieldTypes = std::map<std::string, ValidateTypeField>;
 	using InputFieldTypes = ValidateTypeFieldArguments;
 
+	struct OperationTypes
+	{
+		std::string queryType;
+		std::string mutationType;
+		std::string subscriptionType;
+	};
+
 	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
 	const ValidateTypeKinds& getTypeKinds() const;
 	std::optional<std::reference_wrapper<const std::set<std::string>>> getMatchingTypes(
@@ -180,7 +187,7 @@ public:
 	std::optional<std::reference_wrapper<const ValidateDirective>> getDirective(
 		const std::string& name) const;
 	std::optional<std::reference_wrapper<const std::string>> getOperationType(
-		const std::string& name) const;
+		const std::string_view& name) const;
 
 	bool isKnownScalar(const std::string& name) const;
 
@@ -203,7 +210,6 @@ private:
 	using InputTypeFields = std::map<std::string, InputFieldTypes>;
 	using EnumValues = std::map<std::string, std::set<std::string>>;
 
-	using OperationTypes = std::map<std::string_view, std::string>;
 	using Directives = std::map<std::string, ValidateDirective>;
 	using MatchingTypes = std::map<std::string, std::set<std::string>>;
 	using ScalarTypes = std::set<std::string>;

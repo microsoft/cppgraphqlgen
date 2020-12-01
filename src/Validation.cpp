@@ -469,15 +469,15 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 				{
 					if (member.first == R"gql(queryType)gql")
 					{
-						_operationTypes[strQuery] = itrType->second.get<response::StringType>();
+						_operationTypes.queryType = itrType->second.get<response::StringType>();
 					}
 					else if (member.first == R"gql(mutationType)gql")
 					{
-						_operationTypes[strMutation] = itrType->second.get<response::StringType>();
+						_operationTypes.mutationType = itrType->second.get<response::StringType>();
 					}
 					else if (member.first == R"gql(subscriptionType)gql")
 					{
-						_operationTypes[strSubscription] =
+						_operationTypes.subscriptionType =
 							itrType->second.get<response::StringType>();
 					}
 				}
@@ -865,7 +865,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			visitDirectives(location, child);
 		});
 
-	const auto& typeRef = _validationContext->getOperationType(std::string { operationType });
+	const auto& typeRef = _validationContext->getOperationType(operationType);
 	if (!typeRef)
 	{
 		auto position = operationDefinition.begin();
@@ -1021,14 +1021,23 @@ std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext
 }
 
 std::optional<std::reference_wrapper<const std::string>> ValidationContext::getOperationType(
-	const std::string& name) const
+	const std::string_view& name) const
 {
-	const auto& itr = _operationTypes.find(name);
-	if (itr == _operationTypes.cend())
+	if (name == strQuery)
 	{
-		return std::nullopt;
+		return std::optional<std::reference_wrapper<const std::string>>(_operationTypes.queryType);
 	}
-	return std::optional<std::reference_wrapper<const std::string>>(itr->second);
+	if (name == strMutation)
+	{
+		return std::optional<std::reference_wrapper<const std::string>>(
+			_operationTypes.mutationType);
+	}
+	if (name == strSubscription)
+	{
+		return std::optional<std::reference_wrapper<const std::string>>(
+			_operationTypes.subscriptionType);
+	}
+	return std::nullopt;
 }
 
 std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
@@ -1668,7 +1677,7 @@ void ValidationContext::addTypeFields(
 			}
 		}
 
-		if (typeName == _operationTypes[strQuery])
+		if (typeName == _operationTypes.queryType)
 		{
 			response::Value objectKind(response::Type::EnumValue);
 
