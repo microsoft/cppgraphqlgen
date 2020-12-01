@@ -11,24 +11,359 @@
 
 namespace graphql::service {
 
-using ValidateType = response::Value;
+class ValidateType
+{
+public:
+	virtual introspection::TypeKind kind() const = 0;
+	virtual const std::string_view name() const = 0;
+	virtual bool isInputType() const = 0;
+	virtual bool isValid() const = 0;
+	virtual std::shared_ptr<const ValidateType> getInnerType() const = 0;
+	virtual bool operator==(const ValidateType& other) const = 0;
+
+	static constexpr bool isKindInput(introspection::TypeKind typeKind)
+	{
+		switch (typeKind)
+		{
+			case introspection::TypeKind::SCALAR:
+			case introspection::TypeKind::ENUM:
+			case introspection::TypeKind::INPUT_OBJECT:
+				return true;
+			default:
+				return false;
+		}
+	}
+};
+
+class NamedValidateType
+	: public ValidateType
+	, public std::enable_shared_from_this<NamedValidateType>
+{
+public:
+	std::string _name;
+
+	NamedValidateType(const std::string_view& name)
+		: _name(std::string(name))
+	{
+	}
+
+	virtual const std::string_view name() const
+	{
+		return _name;
+	}
+
+	virtual bool isValid() const
+	{
+		return !name().empty();
+	}
+
+	virtual std::shared_ptr<const ValidateType> getInnerType() const
+	{
+		return shared_from_this();
+	}
+
+	virtual bool operator==(const ValidateType& other) const
+	{
+		if (this == &other)
+		{
+			return true;
+		}
+
+		if (kind() != other.kind())
+		{
+			return false;
+		}
+
+		return _name == other.name();
+	}
+};
+
+template <introspection::TypeKind typeKind>
+class NamedType : public NamedValidateType
+{
+public:
+	NamedType<typeKind>(const std::string_view& name)
+		: NamedValidateType(name)
+	{
+	}
+
+	virtual introspection::TypeKind kind() const
+	{
+		return typeKind;
+	}
+
+	virtual bool isInputType() const
+	{
+		return ValidateType::isKindInput(typeKind);
+	}
+};
+
+using ScalarType = NamedType<introspection::TypeKind::SCALAR>;
+
+class EnumType : public NamedType<introspection::TypeKind::ENUM>
+{
+public:
+	EnumType(const std::string_view& name, std::set<const std::string>&& values)
+		: NamedType<introspection::TypeKind::ENUM>(name)
+		, _values(std::move(values))
+	{
+	}
+
+	const std::set<const std::string>& values() const
+	{
+		return _values;
+	}
+
+private:
+	std::set<const std::string> _values;
+};
+
+template <introspection::TypeKind typeKind>
+class WrapperOfType : public ValidateType
+{
+public:
+	WrapperOfType<typeKind>(std::shared_ptr<ValidateType> ofType)
+		: _ofType(std::move(ofType))
+	{
+	}
+
+	std::shared_ptr<ValidateType> ofType() const
+	{
+		return _ofType;
+	}
+
+	virtual introspection::TypeKind kind() const
+	{
+		return typeKind;
+	}
+
+	virtual const std::string_view name() const
+	{
+		return _name;
+	}
+
+	virtual bool isInputType() const
+	{
+		return _ofType ? _ofType->isInputType() : false;
+	}
+
+	virtual bool isValid() const
+	{
+		return _ofType ? _ofType->isValid() : false;
+	}
+
+	virtual std::shared_ptr<const ValidateType> getInnerType() const
+	{
+		return _ofType ? _ofType->getInnerType() : nullptr;
+	}
+
+	virtual bool operator==(const ValidateType& otherType) const
+	{
+		if (this == &otherType)
+		{
+			return true;
+		}
+
+		if (typeKind != otherType.kind())
+		{
+			return false;
+		}
+
+		const auto& other = static_cast<const WrapperOfType<typeKind>&>(otherType);
+		if (_ofType == other.ofType())
+		{
+			return true;
+		}
+		if (_ofType && other.ofType())
+		{
+			return *_ofType == *other.ofType();
+		}
+		return false;
+	}
+
+private:
+	std::shared_ptr<ValidateType> _ofType;
+	static inline const std::string_view _name = ""sv;
+};
+
+using ListOfType = WrapperOfType<introspection::TypeKind::LIST>;
+using NonNullOfType = WrapperOfType<introspection::TypeKind::NON_NULL>;
 
 struct ValidateArgument
 {
+	std::shared_ptr<ValidateType> type;
 	bool defaultValue = false;
 	bool nonNullDefaultValue = false;
-	ValidateType type;
 };
 
-using ValidateTypeFieldArguments = std::map<std::string, ValidateArgument>;
+using ValidateTypeFieldArguments = std::unordered_map<std::string, ValidateArgument>;
 
 struct ValidateTypeField
 {
-	ValidateType returnType;
+	std::shared_ptr<ValidateType> returnType;
 	ValidateTypeFieldArguments arguments;
 };
 
-using ValidateDirectiveArguments = std::map<std::string, ValidateArgument>;
+using ValidateDirectiveArguments = std::unordered_map<std::string, ValidateArgument>;
+
+template <typename FieldType>
+class ContainerValidateType : public NamedValidateType
+{
+public:
+	ContainerValidateType<FieldType>(const std::string_view& name)
+		: NamedValidateType(name)
+	{
+	}
+
+	using FieldsContainer = std::unordered_map<std::string, FieldType>;
+
+	std::optional<std::reference_wrapper<const FieldType>> getField(const std::string& name) const
+	{
+		const auto& itr = _fields.find(name);
+		if (itr == _fields.cend())
+		{
+			return std::nullopt;
+		}
+
+		return std::optional<std::reference_wrapper<const FieldType>>(itr->second);
+	}
+
+	void setFields(FieldsContainer&& fields)
+	{
+		_fields = std::move(fields);
+	}
+
+	typename FieldsContainer::const_iterator begin() const
+	{
+		return _fields.cbegin();
+	}
+
+	typename FieldsContainer::const_iterator end() const
+	{
+		return _fields.cend();
+	}
+
+	virtual bool matchesType(const ValidateType& other) const
+	{
+		if (*this == other)
+		{
+			return true;
+		}
+
+		switch (other.kind())
+		{
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				return static_cast<const ContainerValidateType&>(other).matchesType(*this);
+
+			default:
+				return false;
+		}
+	}
+
+private:
+	FieldsContainer _fields;
+};
+
+template <introspection::TypeKind typeKind, typename FieldType>
+class ContainerType : public ContainerValidateType<FieldType>
+{
+public:
+	ContainerType<typeKind, FieldType>(const std::string_view& name)
+		: ContainerValidateType<FieldType>(name)
+	{
+	}
+
+	virtual introspection::TypeKind kind() const
+	{
+		return typeKind;
+	}
+
+	virtual bool isInputType() const
+	{
+		return ValidateType::isKindInput(typeKind);
+	}
+};
+
+using ObjectType = ContainerType<introspection::TypeKind::OBJECT, ValidateTypeField>;
+using InputObjectType = ContainerType<introspection::TypeKind::INPUT_OBJECT, ValidateArgument>;
+
+class PossibleTypesContainerValidateType : public ContainerValidateType<ValidateTypeField>
+{
+public:
+	PossibleTypesContainerValidateType(const std::string_view& name)
+		: ContainerValidateType<ValidateTypeField>(name)
+	{
+	}
+
+	const std::set<const ValidateType*>& possibleTypes() const
+	{
+		return _possibleTypes;
+	}
+
+	virtual bool matchesType(const ValidateType& other) const
+	{
+		if (*this == other)
+		{
+			return true;
+		}
+
+		switch (other.kind())
+		{
+			case introspection::TypeKind::OBJECT:
+				return _possibleTypes.find(&other) != _possibleTypes.cend();
+
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+			{
+				const auto& types =
+					static_cast<const PossibleTypesContainerValidateType&>(other).possibleTypes();
+				for (const auto& itr : _possibleTypes)
+				{
+					if (types.find(itr) != types.cend())
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+
+			default:
+				return false;
+		}
+	}
+
+	void setPossibleTypes(std::set<const ValidateType*>&& possibleTypes)
+	{
+		_possibleTypes = std::move(possibleTypes);
+	}
+
+private:
+	std::set<const ValidateType*> _possibleTypes;
+};
+
+template <introspection::TypeKind typeKind>
+class PossibleTypesContainer : public PossibleTypesContainerValidateType
+{
+public:
+	PossibleTypesContainer<typeKind>(const std::string_view& name)
+		: PossibleTypesContainerValidateType(name)
+	{
+	}
+
+	virtual introspection::TypeKind kind() const
+	{
+		return typeKind;
+	}
+
+	virtual bool isInputType() const
+	{
+		return ValidateType::isKindInput(typeKind);
+	}
+};
+
+using InterfaceType = PossibleTypesContainer<introspection::TypeKind::INTERFACE>;
+using UnionType = PossibleTypesContainer<introspection::TypeKind::UNION>;
 
 struct ValidateDirective
 {
@@ -122,40 +457,40 @@ using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
-	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType,
-		const std::string& fieldName, ValidateFieldArguments&& arguments);
+	ValidateField(std::shared_ptr<const ValidateType> returnType,
+		std::shared_ptr<const ValidateType>&& objectType, const std::string& fieldName,
+		ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
-	std::string returnType;
-	std::optional<std::string> objectType;
+	std::shared_ptr<const ValidateType> returnType;
+	std::shared_ptr<const ValidateType> objectType;
 	std::string fieldName;
 	ValidateFieldArguments arguments;
 };
 
-using ValidateTypeKinds = std::map<std::string, introspection::TypeKind>;
+class ValidationContext;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
 class ValidateVariableTypeVisitor
 {
 public:
-	ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds);
+	ValidateVariableTypeVisitor(const ValidationContext& validationContext);
 
 	void visit(const peg::ast_node& typeName);
 
 	bool isInputType() const;
-	ValidateType getType();
+	std::shared_ptr<ValidateType> getType();
 
 private:
 	void visitNamedType(const peg::ast_node& namedType);
 	void visitListType(const peg::ast_node& listType);
 	void visitNonNullType(const peg::ast_node& nonNullType);
 
-	const ValidateTypeKinds& _typeKinds;
+	const ValidationContext& _validationContext;
 
-	bool _isInputType = false;
-	ValidateType _variableType;
+	std::shared_ptr<ValidateType> _variableType;
 };
 
 class ValidationContext
@@ -164,9 +499,6 @@ public:
 	ValidationContext(const Request& service);
 	ValidationContext(const response::Value& introspectionQuery);
 
-	using FieldTypes = std::map<std::string, ValidateTypeField>;
-	using InputFieldTypes = ValidateTypeFieldArguments;
-
 	struct OperationTypes
 	{
 		std::string queryType;
@@ -174,67 +506,96 @@ public:
 		std::string subscriptionType;
 	};
 
-	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
-	const ValidateTypeKinds& getTypeKinds() const;
-	std::optional<std::reference_wrapper<const std::set<std::string>>> getMatchingTypes(
-		const std::string& name) const;
-	std::optional<std::reference_wrapper<const FieldTypes>> getTypeFields(
-		const std::string& name) const;
-	std::optional<std::reference_wrapper<const InputFieldTypes>> getInputTypeFields(
-		const std::string& name) const;
-	std::optional<std::reference_wrapper<const std::set<std::string>>> getEnumValues(
-		const std::string& name) const;
 	std::optional<std::reference_wrapper<const ValidateDirective>> getDirective(
 		const std::string& name) const;
 	std::optional<std::reference_wrapper<const std::string>> getOperationType(
 		const std::string_view& name) const;
 
-	bool isKnownScalar(const std::string& name) const;
-
-	template <class _FieldTypes>
-	static std::string getFieldType(const _FieldTypes& fields, const std::string& name);
-	template <class _FieldTypes>
-	static std::string getWrappedFieldType(const _FieldTypes& fields, const std::string& name);
-	static std::string getWrappedFieldType(const ValidateType& returnType);
-
-	static constexpr bool isScalarType(introspection::TypeKind kind);
+	template <typename T = NamedValidateType,
+		typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<T> getNamedValidateType(const std::string_view& name) const;
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<ListOfType> getListOfType(std::shared_ptr<T>&& ofType) const;
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<NonNullOfType> getNonNullOfType(std::shared_ptr<T>&& ofType) const;
 
 private:
 	void populate(const response::Value& introspectionQuery);
 
-	static ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
-	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
-	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
+	struct
+	{
+		std::shared_ptr<ScalarType> string;
+		std::shared_ptr<NonNullOfType> nonNullString;
+	} commonTypes;
 
-	using TypeFields = std::map<std::string, FieldTypes>;
-	using InputTypeFields = std::map<std::string, InputFieldTypes>;
-	using EnumValues = std::map<std::string, std::set<std::string>>;
+	ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
 
 	using Directives = std::map<std::string, ValidateDirective>;
-	using MatchingTypes = std::map<std::string, std::set<std::string>>;
-	using ScalarTypes = std::set<std::string>;
 
 	// These members store Introspection schema information which does not change between queries.
 	OperationTypes _operationTypes;
-	ValidateTypeKinds _typeKinds;
-	MatchingTypes _matchingTypes;
 	Directives _directives;
-	EnumValues _enumValues;
-	ScalarTypes _scalarTypes;
 
-	TypeFields _typeFields;
-	InputTypeFields _inputTypeFields;
+	std::unordered_map<const ValidateType*, std::shared_ptr<ListOfType>> _listOfCache;
+	std::unordered_map<const ValidateType*, std::shared_ptr<NonNullOfType>> _nonNullCache;
+	std::unordered_map<std::string_view, std::shared_ptr<NamedValidateType>> _namedCache;
+
+	template <typename T,
+		typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<T> makeNamedValidateType(T&& typeDef);
+
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<ListOfType> makeListOfType(std::shared_ptr<T>&& ofType);
+
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<ListOfType> makeListOfType(std::shared_ptr<T>& ofType)
+	{
+		return makeListOfType(std::shared_ptr<T>(ofType));
+	}
+
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<NonNullOfType> makeNonNullOfType(std::shared_ptr<T>&& ofType);
+
+	template <typename T,
+		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
+	std::shared_ptr<NonNullOfType> makeNonNullOfType(std::shared_ptr<T>& ofType)
+	{
+		return makeNonNullOfType(std::shared_ptr<T>(ofType));
+	}
+
+	std::shared_ptr<ScalarType> makeScalarType(const std::string_view& name)
+	{
+		return makeNamedValidateType(ScalarType { name });
+	}
+
+	std::shared_ptr<ObjectType> makeObjectType(const std::string_view& name)
+	{
+		return makeNamedValidateType(ObjectType { name });
+	}
+
+	std::shared_ptr<ValidateType> getTypeFromMap(const response::Value& typeMap);
 
 	// builds the validation context (lookup maps)
-	void addScalar(const std::string& scalarName);
-	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
-	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
-	void addInputObject(const std::string& name, const response::Value& typeDescriptionMap);
-	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
+	void addScalar(const std::string_view& scalarName);
+	void addEnum(const std::string_view& enumName, const response::Value& enumDescriptionMap);
+	void addObject(const std::string_view& name);
+	void addInputObject(const std::string_view& name);
+	void addInterface(const std::string_view& name, const response::Value& typeDescriptionMap);
+	void addUnion(const std::string_view& name, const response::Value& typeDescriptionMap);
 	void addDirective(const std::string& name, const response::ListType& locations,
 		const response::Value& descriptionMap);
-	void addTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
-	void addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
+
+	void addTypeFields(std::shared_ptr<ContainerValidateType<ValidateTypeField>> type,
+		const response::Value& typeDescriptionMap);
+	void addPossibleTypes(std::shared_ptr<PossibleTypesContainerValidateType> type,
+		const response::Value& typeDescriptionMap);
+	void addInputTypeFields(
+		std::shared_ptr<InputObjectType> type, const response::Value& typeDescriptionMap);
 };
 
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service
@@ -252,11 +613,7 @@ public:
 	std::vector<schema_error> getStructuredErrors();
 
 private:
-	std::optional<introspection::TypeKind> getScopedTypeKind() const;
-	bool matchesScopedType(const std::string& name) const;
-
-	std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>> getScopedTypeFields()
-		const;
+	bool matchesScopedType(const ValidateType& name) const;
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -299,8 +656,12 @@ private:
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
-	std::string _scopedType;
+	std::shared_ptr<const ValidateType> _scopedType;
 	std::map<std::string, ValidateField> _selectionFields;
+	struct
+	{
+		std::shared_ptr<ValidateType> nonNullString;
+	} commonTypes;
 };
 
 } /* namespace graphql::service */

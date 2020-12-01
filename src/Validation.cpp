@@ -309,9 +309,10 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	_argumentValue.position = { position.line, position.column };
 }
 
-ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType,
-	const std::string& fieldName, ValidateFieldArguments&& arguments)
-	: returnType(std::move(returnType))
+ValidateField::ValidateField(std::shared_ptr<const ValidateType> returnType,
+	std::shared_ptr<const ValidateType>&& objectType, const std::string& fieldName,
+	ValidateFieldArguments&& arguments)
+	: returnType(returnType)
 	, objectType(std::move(objectType))
 	, fieldName(fieldName)
 	, arguments(std::move(arguments))
@@ -320,17 +321,14 @@ ValidateField::ValidateField(std::string&& returnType, std::optional<std::string
 
 bool ValidateField::operator==(const ValidateField& other) const
 {
-	return returnType == other.returnType
-		&& ((objectType && other.objectType && *objectType != *other.objectType)
+	return *returnType == *other.returnType
+		&& ((objectType && other.objectType && objectType.get() != other.objectType.get())
 			|| (fieldName == other.fieldName && arguments == other.arguments));
 }
 
-ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds)
-	: _typeKinds(typeKinds)
-	, _variableType(response::Type::Map)
+ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(const ValidationContext& validationContext)
+	: _validationContext(validationContext)
 {
-	// kind and either name or ofType
-	_variableType.reserve(2);
 }
 
 void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
@@ -351,69 +349,33 @@ void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
 
 void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 {
-	auto name = namedType.string();
-	auto itrKind = _typeKinds.find(name);
-
-	if (itrKind == _typeKinds.end())
-	{
-		return;
-	}
-
-	response::Value kind(response::Type::EnumValue);
-
-	switch (itrKind->second)
-	{
-		case introspection::TypeKind::SCALAR:
-			kind.set<response::StringType>(R"gql(SCALAR)gql");
-			break;
-
-		case introspection::TypeKind::ENUM:
-			kind.set<response::StringType>(R"gql(ENUM)gql");
-			break;
-
-		case introspection::TypeKind::INPUT_OBJECT:
-			kind.set<response::StringType>(R"gql(INPUT_OBJECT)gql");
-			break;
-
-		default:
-			return;
-	}
-
-	_isInputType = true;
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(name)gql", response::Value(std::move(name)));
+	_variableType = _validationContext.getNamedValidateType(namedType.string_view());
 }
 
 void ValidateVariableTypeVisitor::visitListType(const peg::ast_node& listType)
 {
-	response::Value kind(response::Type::EnumValue);
-	ValidateVariableTypeVisitor visitor(_typeKinds);
+	ValidateVariableTypeVisitor visitor(_validationContext);
 
-	kind.set<response::StringType>(R"gql(LIST)gql");
 	visitor.visit(*listType.children.front());
-	_isInputType = visitor.isInputType();
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+
+	_variableType = _validationContext.getListOfType(visitor.getType());
 }
 
 void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
 {
-	response::Value kind(response::Type::EnumValue);
-	ValidateVariableTypeVisitor visitor(_typeKinds);
+	ValidateVariableTypeVisitor visitor(_validationContext);
 
-	kind.set<response::StringType>(R"gql(NON_NULL)gql");
 	visitor.visit(*nonNullType.children.front());
-	_isInputType = visitor.isInputType();
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+
+	_variableType = _validationContext.getNonNullOfType(visitor.getType());
 }
 
 bool ValidateVariableTypeVisitor::isInputType() const
 {
-	return _isInputType;
+	return _variableType && _variableType->isInputType();
 }
 
-ValidateType ValidateVariableTypeVisitor::getType()
+std::shared_ptr<ValidateType> ValidateVariableTypeVisitor::getType()
 {
 	auto result = std::move(_variableType);
 
@@ -448,6 +410,9 @@ ValidationContext::ValidationContext(const response::Value& introspectionQuery)
 
 void ValidationContext::populate(const response::Value& introspectionQuery)
 {
+	commonTypes.string = makeScalarType("String");
+	commonTypes.nonNullString = makeNonNullOfType(commonTypes.string);
+
 	const auto& itrData = introspectionQuery.find(std::string { strData });
 	if (itrData == introspectionQuery.end())
 	{
@@ -486,6 +451,8 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 				&& member.first == R"gql(types)gql")
 			{
 				const auto& entries = member.second.get<response::ListType>();
+
+				// first iteration add the named types
 				for (const auto& entry : entries)
 				{
 					if (entry.type() != response::Type::Map)
@@ -504,20 +471,21 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 						const auto& kind =
 							ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
 
-						if (!isScalarType(kind))
+						if (kind == introspection::TypeKind::OBJECT)
 						{
-							if (kind == introspection::TypeKind::OBJECT)
-							{
-								addObject(name, entry);
-							}
-							else if (kind == introspection::TypeKind::INPUT_OBJECT)
-							{
-								addInputObject(name, entry);
-							}
-							else
-							{
-								addInterfaceOrUnion(name, entry);
-							}
+							addObject(name);
+						}
+						else if (kind == introspection::TypeKind::INPUT_OBJECT)
+						{
+							addInputObject(name);
+						}
+						else if (kind == introspection::TypeKind::INTERFACE)
+						{
+							addInterface(name, entry);
+						}
+						else if (kind == introspection::TypeKind::UNION)
+						{
+							addUnion(name, entry);
 						}
 						else if (kind == introspection::TypeKind::ENUM)
 						{
@@ -527,8 +495,46 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 						{
 							addScalar(name);
 						}
+					}
+				}
 
-						_typeKinds[std::move(name)] = kind;
+				// second iteration add the fields that refer to given types
+				for (const auto& entry : entries)
+				{
+					if (entry.type() != response::Type::Map)
+					{
+						continue;
+					}
+
+					const auto& itrName = entry.find(R"gql(name)gql");
+					const auto& itrKind = entry.find(R"gql(kind)gql");
+
+					if (itrName != entry.end() && itrName->second.type() == response::Type::String
+						&& itrKind != entry.end()
+						&& itrKind->second.type() == response::Type::EnumValue)
+					{
+						const auto& name = itrName->second.get<response::StringType>();
+						const auto& kind =
+							ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+
+						if (kind == introspection::TypeKind::OBJECT)
+						{
+							auto type = getNamedValidateType<ObjectType>(name);
+							addTypeFields(type, entry);
+						}
+						else if (kind == introspection::TypeKind::INTERFACE
+							|| kind == introspection::TypeKind::UNION)
+						{
+							auto type =
+								getNamedValidateType<PossibleTypesContainerValidateType>(name);
+							addTypeFields(type, entry);
+							addPossibleTypes(type, entry);
+						}
+						else if (kind == introspection::TypeKind::INPUT_OBJECT)
+						{
+							auto type = getNamedValidateType<InputObjectType>(name);
+							addInputTypeFields(type, entry);
+						}
 					}
 				}
 			}
@@ -563,7 +569,7 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 }
 
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
-	: _validationContext(std::make_shared<const ValidationContext>(service))
+	: ValidateExecutableVisitor(std::make_shared<const ValidationContext>(service))
 {
 }
 
@@ -571,6 +577,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(
 	std::shared_ptr<const ValidationContext> validationContext)
 	: _validationContext(validationContext)
 {
+	commonTypes.nonNullString = _validationContext->getNonNullOfType(
+		_validationContext->getNamedValidateType<ScalarType>("String"));
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
@@ -707,20 +715,19 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	const auto name = fragmentDefinition.children.front()->string();
 	const auto& selection = *fragmentDefinition.children.back();
 	const auto& typeCondition = fragmentDefinition.children[1];
-	auto innerType = typeCondition->children.front()->string();
+	const auto& innerTypeName = typeCondition->children.front()->string_view();
+	const auto& innerType = _validationContext->getNamedValidateType(innerTypeName);
 
-	auto kind = _validationContext->getTypeKind(innerType);
-
-	if (!kind || _validationContext->isScalarType(*kind))
+	if (!innerType || innerType->isInputType())
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
 		// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
-		message << (!kind ? "Undefined target type on fragment definition: "
-						  : "Scalar target type on fragment definition: ")
-				<< name << " name: " << innerType;
+		message << (!innerType ? "Undefined target type on fragment definition: "
+							   : "Scalar target type on fragment definition: ")
+				<< name << " name: " << innerTypeName;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
@@ -731,7 +738,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 
 	visitSelection(selection);
 
-	_scopedType.clear();
+	_scopedType.reset();
 	_fragmentStack.clear();
 	_selectionFields.clear();
 }
@@ -788,7 +795,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(_validationContext->getTypeKinds());
+					ValidateVariableTypeVisitor visitor(*_validationContext);
 
 					visitor.visit(*child);
 
@@ -821,7 +828,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					auto argument = visitor.getArgumentValue();
 
-					if (!validateInputValue(false, argument, variableArgument.type))
+					if (!validateInputValue(false, argument, *variableArgument.type))
 					{
 						// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 						auto position = child->begin();
@@ -877,7 +884,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		return;
 	}
 
-	_scopedType = typeRef.value();
+	_scopedType = _validationContext->getNamedValidateType(typeRef.value().get());
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
@@ -900,7 +907,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		_errors.push_back({ error.str(), { position.line, position.column } });
 	}
 
-	_scopedType.clear();
+	_scopedType.reset();
 	_fragmentStack.clear();
 	_selectionFields.clear();
 
@@ -966,47 +973,13 @@ ValidateTypeFieldArguments ValidationContext::getArguments(const response::ListT
 				&& itrDefaultValue->second.type() == response::Type::String);
 			argument.nonNullDefaultValue = argument.defaultValue
 				&& itrDefaultValue->second.get<response::StringType>() != R"gql(null)gql";
-			argument.type = ValidateType(itrType->second);
+			argument.type = getTypeFromMap(itrType->second);
 
 			result[itrName->second.get<response::StringType>()] = std::move(argument);
 		}
 	}
 
 	return result;
-}
-
-std::optional<introspection::TypeKind> ValidationContext::getTypeKind(const std::string& name) const
-{
-	auto itrKind = _typeKinds.find(name);
-
-	return (itrKind == _typeKinds.cend() ? std::nullopt : std::make_optional(itrKind->second));
-}
-
-const ValidateTypeKinds& ValidationContext::getTypeKinds() const
-{
-	return _typeKinds;
-}
-
-std::optional<std::reference_wrapper<const std::set<std::string>>> ValidationContext::
-	getMatchingTypes(const std::string& name) const
-{
-	const auto& itr = _matchingTypes.find(name);
-	if (itr == _matchingTypes.cend())
-	{
-		return std::nullopt;
-	}
-	return std::optional<std::reference_wrapper<const std::set<std::string>>>(itr->second);
-}
-
-std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>> ValidationContext::
-	getTypeFields(const std::string& name) const
-{
-	const auto& itr = _typeFields.find(name);
-	if (itr == _typeFields.cend())
-	{
-		return std::nullopt;
-	}
-	return std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>>(itr->second);
 }
 
 std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
@@ -1040,62 +1013,61 @@ std::optional<std::reference_wrapper<const std::string>> ValidationContext::getO
 	return std::nullopt;
 }
 
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+template <typename T, typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type*>
+std::shared_ptr<T> ValidationContext::getNamedValidateType(const std::string_view& name) const
 {
-	return _validationContext->getTypeKind(_scopedType);
+	const auto& itr = _namedCache.find(name);
+	if (itr != _namedCache.cend())
+	{
+		return std::dynamic_pointer_cast<T>(itr->second);
+	}
+
+	return nullptr;
 }
 
-constexpr bool ValidationContext::isScalarType(introspection::TypeKind kind)
+template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
+std::shared_ptr<ListOfType> ValidationContext::getListOfType(std::shared_ptr<T>&& ofType) const
 {
-	switch (kind)
+	const auto& itr = _listOfCache.find(ofType.get());
+	if (itr != _listOfCache.cend())
 	{
-		case introspection::TypeKind::OBJECT:
+		return itr->second;
+	}
+
+	return nullptr;
+}
+
+template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
+std::shared_ptr<NonNullOfType> ValidationContext::getNonNullOfType(
+	std::shared_ptr<T>&& ofType) const
+{
+	const auto& itr = _nonNullCache.find(ofType.get());
+	if (itr != _nonNullCache.cend())
+	{
+		return itr->second;
+	}
+
+	return nullptr;
+}
+
+bool ValidateExecutableVisitor::matchesScopedType(const ValidateType& otherType) const
+{
+	switch (_scopedType->kind())
+	{
 		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::UNION:
-		case introspection::TypeKind::INPUT_OBJECT:
-			return false;
-
+			return static_cast<const ContainerValidateType<ValidateTypeField>&>(*_scopedType)
+				.matchesType(otherType);
 		default:
-			return true;
+			return false;
 	}
-}
-
-bool ValidationContext::isKnownScalar(const std::string& name) const
-{
-	const auto& itr = _scalarTypes.find(name);
-	return itr != _scalarTypes.cend();
-}
-
-bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
-{
-	if (name == _scopedType)
-	{
-		return true;
-	}
-
-	const auto& scoped = _validationContext->getMatchingTypes(_scopedType);
-	const auto& named = _validationContext->getMatchingTypes(name);
-
-	if (scoped && named)
-	{
-		const std::set<std::string>& scopedSet = scoped.value().get();
-		const std::set<std::string>& namedSet = named.value().get();
-		auto itrMatch = std::find_if(scopedSet.cbegin(),
-			scopedSet.cend(),
-			[this, namedSet](const std::string& matchingType) noexcept {
-				return namedSet.find(matchingType) != namedSet.cend();
-			});
-
-		return itrMatch != scopedSet.cend();
-	}
-
-	return false;
 }
 
 bool ValidateExecutableVisitor::validateInputValue(
 	bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument, const ValidateType& type)
 {
-	if (type.type() != response::Type::Map)
+	if (!type.isValid())
 	{
 		_errors.push_back({ "Unknown input type", argument.position });
 		return false;
@@ -1123,7 +1095,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 			return validateVariableType(
 				hasNonNullDefaultValue || itrVariable->second.nonNullDefaultValue,
-				itrVariable->second.type,
+				*itrVariable->second.type,
 				argument.position,
 				type);
 		}
@@ -1137,20 +1109,10 @@ bool ValidateExecutableVisitor::validateInputValue(
 		}
 	}
 
-	auto itrKind = type.find(R"gql(kind)gql");
-
-	if (itrKind == type.end() || itrKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown input type", argument.position });
-		return false;
-	}
-
-	auto kind = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
-
 	if (!argument.value)
 	{
 		// The null literal matches any nullable type and does not match a non-nullable type.
-		if (kind == introspection::TypeKind::NON_NULL && !hasNonNullDefaultValue)
+		if (type.kind() == introspection::TypeKind::NON_NULL && !hasNonNullDefaultValue)
 		{
 			_errors.push_back({ "Expected Non-Null value", argument.position });
 			return false;
@@ -1159,20 +1121,18 @@ bool ValidateExecutableVisitor::validateInputValue(
 		return true;
 	}
 
-	switch (kind)
+	switch (type.kind())
 	{
 		case introspection::TypeKind::NON_NULL:
 		{
-			// Unwrap and check the next one.
-			auto itrOfType = type.find(R"gql(ofType)gql");
-
-			if (itrOfType == type.end() || itrOfType->second.type() != response::Type::Map)
+			const auto& ofType = static_cast<const NonNullOfType&>(type).ofType();
+			if (!ofType)
 			{
 				_errors.push_back({ "Unknown Non-Null type", argument.position });
 				return false;
 			}
 
-			return validateInputValue(hasNonNullDefaultValue, argument, itrOfType->second);
+			return validateInputValue(hasNonNullDefaultValue, argument, *ofType);
 		}
 
 		case introspection::TypeKind::LIST:
@@ -1183,9 +1143,8 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			auto itrOfType = type.find(R"gql(ofType)gql");
-
-			if (itrOfType == type.end() || itrOfType->second.type() != response::Type::Map)
+			const auto& ofType = static_cast<const ListOfType&>(type).ofType();
+			if (!ofType)
 			{
 				_errors.push_back({ "Unknown List type", argument.position });
 				return false;
@@ -1194,7 +1153,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			// Check every value against the target type.
 			for (const auto& value : std::get<ValidateArgumentList>(argument.value->data).values)
 			{
-				if (!validateInputValue(false, value, itrOfType->second))
+				if (!validateInputValue(false, value, *ofType))
 				{
 					// Error messages are added in the recursive call, so just bubble up the result.
 					return false;
@@ -1206,16 +1165,13 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::INPUT_OBJECT:
 		{
-			auto itrName = type.find(R"gql(name)gql");
-
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (!type.isValid())
 			{
 				_errors.push_back({ "Unknown Input Object type", argument.position });
 				return false;
 			}
 
-			const auto& name = itrName->second.get<response::StringType>();
-
+			const auto& name = type.name();
 			if (!std::holds_alternative<ValidateArgumentMap>(argument.value->data))
 			{
 				std::ostringstream message;
@@ -1226,26 +1182,16 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			const auto& fieldsRef = _validationContext->getInputTypeFields(name);
-			if (!fieldsRef)
-			{
-				std::ostringstream message;
+			const auto& inputObj = static_cast<const InputObjectType&>(type);
 
-				message << "Expected Input Object fields name: " << name;
-
-				_errors.push_back({ message.str(), argument.position });
-				return false;
-			}
-
-			const auto& fields = fieldsRef.value().get();
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
 			std::set<std::string> subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
 			{
-				const auto& itrField = fields.find(entry.first);
-				if (itrField == fields.cend())
+				const auto& fieldOpt = inputObj.getField(entry.first);
+				if (!fieldOpt)
 				{
 					// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Names
 					std::ostringstream message;
@@ -1257,11 +1203,11 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 
-				if (entry.second.value || !itrField->second.defaultValue)
+				const auto& field = fieldOpt.value().get();
+
+				if (entry.second.value || !field.defaultValue)
 				{
-					if (!validateInputValue(itrField->second.nonNullDefaultValue,
-							entry.second,
-							itrField->second.type))
+					if (!validateInputValue(field.nonNullDefaultValue, entry.second, *field.type))
 					{
 						// Error messages are added in the recursive call, so just bubble up the
 						// result.
@@ -1273,30 +1219,14 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			// See if all required fields were specified.
-			for (const auto& entry : fields)
+			for (const auto& entry : inputObj)
 			{
 				if (entry.second.defaultValue || subFields.find(entry.first) != subFields.end())
 				{
 					continue;
 				}
 
-				auto itrFieldKind = entry.second.type.find(R"gql(kind)gql");
-
-				if (itrFieldKind == entry.second.type.end()
-					|| itrFieldKind->second.type() != response::Type::EnumValue)
-				{
-					std::ostringstream message;
-
-					message << "Unknown Input Object field type: " << name
-							<< " name: " << entry.first;
-
-					_errors.push_back({ message.str(), argument.position });
-					return false;
-				}
-
-				auto fieldKind =
-					ModifiedArgument<introspection::TypeKind>::convert(itrFieldKind->second);
-
+				auto fieldKind = entry.second.type->kind();
 				if (fieldKind == introspection::TypeKind::NON_NULL)
 				{
 					// http://spec.graphql.org/June2018/#sec-Input-Object-Required-Fields
@@ -1315,16 +1245,13 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::ENUM:
 		{
-			auto itrName = type.find(R"gql(name)gql");
-
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (!type.isValid())
 			{
 				_errors.push_back({ "Unknown Enum value", argument.position });
 				return false;
 			}
 
-			const auto& name = itrName->second.get<response::StringType>();
-
+			const auto& name = type.name();
 			if (!std::holds_alternative<ValidateArgumentEnumValue>(argument.value->data))
 			{
 				std::ostringstream message;
@@ -1336,10 +1263,9 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& value = std::get<ValidateArgumentEnumValue>(argument.value->data).value;
-			const auto& enumValuesRef = _validationContext->getEnumValues(name);
+			const auto& enumValues = static_cast<const EnumType&>(type).values();
 
-			if (!enumValuesRef
-				|| enumValuesRef.value().get().find(value) == enumValuesRef.value().get().end())
+			if (enumValues.find(value) == enumValues.cend())
 			{
 				std::ostringstream message;
 
@@ -1354,16 +1280,13 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::SCALAR:
 		{
-			auto itrName = type.find(R"gql(name)gql");
-
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (!type.isValid())
 			{
 				_errors.push_back({ "Unknown Scalar value", argument.position });
 				return false;
 			}
 
-			const auto& name = itrName->second.get<response::StringType>();
-
+			const auto& name = type.name();
 			if (name == R"gql(Int)gql")
 			{
 				if (!std::holds_alternative<response::IntType>(argument.value->data))
@@ -1418,16 +1341,6 @@ bool ValidateExecutableVisitor::validateInputValue(
 				}
 			}
 
-			if (!_validationContext->isKnownScalar(name))
-			{
-				std::ostringstream message;
-
-				message << "Undefined Scalar type name: " << name;
-
-				_errors.push_back({ message.str(), argument.position });
-				return false;
-			}
-
 			return true;
 		}
 
@@ -1443,53 +1356,20 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 	const ValidateType& variableType, const schema_location& position,
 	const ValidateType& inputType)
 {
-	if (variableType.type() != response::Type::Map)
-	{
-		_errors.push_back({ "Unknown variable type", position });
-		return false;
-	}
-
-	auto itrVariableKind = variableType.find(R"gql(kind)gql");
-
-	if (itrVariableKind == variableType.end()
-		|| itrVariableKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown variable type", position });
-		return false;
-	}
-
-	auto variableKind = ModifiedArgument<introspection::TypeKind>::convert(itrVariableKind->second);
-
+	auto variableKind = variableType.kind();
 	if (variableKind == introspection::TypeKind::NON_NULL)
 	{
-		auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
-
-		if (itrVariableOfType == variableType.end()
-			|| itrVariableOfType->second.type() != response::Type::Map)
+		const auto variableOfType = static_cast<const NonNullOfType&>(variableType).ofType();
+		if (!variableOfType)
 		{
 			_errors.push_back({ "Unknown Non-Null variable type", position });
 			return false;
 		}
 
-		return validateVariableType(true, itrVariableOfType->second, position, inputType);
+		return validateVariableType(true, *variableOfType, position, inputType);
 	}
 
-	if (inputType.type() != response::Type::Map)
-	{
-		_errors.push_back({ "Unknown input type", position });
-		return false;
-	}
-
-	auto itrInputKind = inputType.find(R"gql(kind)gql");
-
-	if (itrInputKind == inputType.end() || itrInputKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown input type", position });
-		return false;
-	}
-
-	auto inputKind = ModifiedArgument<introspection::TypeKind>::convert(itrInputKind->second);
-
+	auto inputKind = inputType.kind();
 	switch (inputKind)
 	{
 		case introspection::TypeKind::NON_NULL:
@@ -1502,16 +1382,14 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
-
-			if (itrInputOfType == inputType.end()
-				|| itrInputOfType->second.type() != response::Type::Map)
+			const auto inputOfType = static_cast<const NonNullOfType&>(inputType).ofType();
+			if (!inputOfType)
 			{
 				_errors.push_back({ "Unknown Non-Null input type", position });
 				return false;
 			}
 
-			return validateVariableType(false, variableType, position, itrInputOfType->second);
+			return validateVariableType(false, variableType, position, *inputOfType);
 		}
 
 		case introspection::TypeKind::LIST:
@@ -1524,28 +1402,22 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
+			const auto variableOfType = static_cast<const ListOfType&>(variableType).ofType();
 
-			if (itrVariableOfType == variableType.end()
-				|| itrVariableOfType->second.type() != response::Type::Map)
+			if (!variableOfType)
 			{
 				_errors.push_back({ "Unknown List variable type", position });
 				return false;
 			}
 
-			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
-
-			if (itrInputOfType == inputType.end()
-				|| itrInputOfType->second.type() != response::Type::Map)
+			const auto inputOfType = static_cast<const ListOfType&>(inputType).ofType();
+			if (!inputOfType)
 			{
 				_errors.push_back({ "Unknown List input type", position });
 				return false;
 			}
 
-			return validateVariableType(false,
-				itrVariableOfType->second,
-				position,
-				itrInputOfType->second);
+			return validateVariableType(false, *variableOfType, position, *inputOfType);
 		}
 
 		case introspection::TypeKind::INPUT_OBJECT:
@@ -1592,26 +1464,19 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		}
 	}
 
-	auto itrVariableName = variableType.find(R"gql(name)gql");
-
-	if (itrVariableName == variableType.end()
-		|| itrVariableName->second.type() != response::Type::String)
+	const auto& variableName = variableType.name();
+	if (variableName.empty())
 	{
 		_errors.push_back({ "Unknown variable type", position });
 		return false;
 	}
 
-	const auto& variableName = itrVariableName->second.get<response::StringType>();
-
-	auto itrInputName = inputType.find(R"gql(name)gql");
-
-	if (itrInputName == inputType.end() || itrInputName->second.type() != response::Type::String)
+	const auto& inputName = inputType.name();
+	if (inputName.empty())
 	{
 		_errors.push_back({ "Unknown input type", position });
 		return false;
 	}
-
-	const auto& inputName = itrInputName->second.get<response::StringType>();
 
 	if (variableName != inputName)
 	{
@@ -1627,21 +1492,11 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 	return true;
 }
 
-std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>>
-ValidateExecutableVisitor::getScopedTypeFields() const
-{
-	return _validationContext->getTypeFields(_scopedType);
-}
-
 void ValidationContext::addTypeFields(
-	const std::string& typeName, const response::Value& typeDescriptionMap)
+	std::shared_ptr<ContainerValidateType<ValidateTypeField>> type,
+	const response::Value& typeDescriptionMap)
 {
-	std::map<std::string, ValidateTypeField> fields;
-	response::Value scalarKind(response::Type::EnumValue);
-	response::Value nonNullKind(response::Type::EnumValue);
-
-	scalarKind.set<response::StringType>(R"gql(SCALAR)gql");
-	nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
+	std::unordered_map<std::string, ValidateTypeField> fields;
 
 	const auto& itrFields = typeDescriptionMap.find(R"gql(fields)gql");
 	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
@@ -1665,7 +1520,7 @@ void ValidationContext::addTypeFields(
 				const auto& fieldName = itrFieldName->second.get<response::StringType>();
 				ValidateTypeField subField;
 
-				subField.returnType = ValidateType(itrFieldType->second);
+				subField.returnType = getTypeFromMap(itrFieldType->second);
 
 				const auto& itrArgs = entry.find(R"gql(args)gql");
 				if (itrArgs != entry.end() && itrArgs->second.type() == response::Type::List)
@@ -1677,102 +1532,72 @@ void ValidationContext::addTypeFields(
 			}
 		}
 
-		if (typeName == _operationTypes.queryType)
+		if (type->name() == _operationTypes.queryType)
 		{
-			response::Value objectKind(response::Type::EnumValue);
+			fields[R"gql(__schema)gql"] =
+				ValidateTypeField { makeNonNullOfType(makeObjectType(R"gql(__Schema)gql")) };
 
-			objectKind.set<response::StringType>(R"gql(OBJECT)gql");
-
-			ValidateTypeField schemaField;
-			response::Value schemaType(response::Type::Map);
-			response::Value notNullSchemaType(response::Type::Map);
-
-			schemaType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-			schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
-			notNullSchemaType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-			notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
-			schemaField.returnType = std::move(notNullSchemaType);
-			fields[R"gql(__schema)gql"] = std::move(schemaField);
-
-			ValidateTypeField typeField;
-			response::Value typeType(response::Type::Map);
-
-			typeType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-			typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
-			typeField.returnType = std::move(typeType);
-
-			ValidateArgument nameArgument;
-			response::Value typeNameArg(response::Type::Map);
-			response::Value nonNullTypeNameArg(response::Type::Map);
-
-			typeNameArg.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-			typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-			nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-			nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
-			nameArgument.type = std::move(nonNullTypeNameArg);
-
-			typeField.arguments[R"gql(name)gql"] = std::move(nameArgument);
-
-			fields[R"gql(__type)gql"] = std::move(typeField);
+			fields[R"gql(__type)gql"] = ValidateTypeField { makeObjectType(R"gql(__Type)gql"),
+				ValidateTypeFieldArguments {
+					{ R"gql(name)gql", ValidateArgument { commonTypes.nonNullString } } } };
 		}
 	}
 
-	ValidateTypeField typenameField;
-	response::Value typenameType(response::Type::Map);
-	response::Value notNullTypenameType(response::Type::Map);
+	fields[R"gql(__typename)gql"] = ValidateTypeField { commonTypes.nonNullString };
 
-	typenameType.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-	typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-	notNullTypenameType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-	notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
-	typenameField.returnType = std::move(notNullTypenameType);
-	fields[R"gql(__typename)gql"] = std::move(typenameField);
-
-	_typeFields.insert({ typeName, std::move(fields) });
+	type->setFields(std::move(fields));
 }
 
-std::optional<std::reference_wrapper<const ValidationContext::InputFieldTypes>> ValidationContext::
-	getInputTypeFields(const std::string& name) const
+void ValidationContext::addPossibleTypes(std::shared_ptr<PossibleTypesContainerValidateType> type,
+	const response::Value& typeDescriptionMap)
 {
-	const auto& itr = _inputTypeFields.find(name);
-	if (itr == _inputTypeFields.cend())
+	const auto& itrPossibleTypes = typeDescriptionMap.find(R"gql(possibleTypes)gql");
+	std::set<const ValidateType*> possibleTypes;
+
+	if (itrPossibleTypes != typeDescriptionMap.end()
+		&& itrPossibleTypes->second.type() == response::Type::List)
 	{
-		return std::nullopt;
+		const auto& matchingTypeEntries = itrPossibleTypes->second.get<response::ListType>();
+
+		for (const auto& matchingTypeEntry : matchingTypeEntries)
+		{
+			if (matchingTypeEntry.type() != response::Type::Map)
+			{
+				continue;
+			}
+
+			const auto& itrMatchingTypeName = matchingTypeEntry.find(R"gql(name)gql");
+			if (itrMatchingTypeName != matchingTypeEntry.end()
+				&& itrMatchingTypeName->second.type() == response::Type::String)
+			{
+				const auto& possibleType =
+					getNamedValidateType(itrMatchingTypeName->second.get<response::StringType>());
+				possibleTypes.insert(possibleType.get());
+			}
+		}
 	}
-	return std::optional<std::reference_wrapper<const ValidationContext::InputFieldTypes>>(
-		itr->second);
+
+	type->setPossibleTypes(std::move(possibleTypes));
 }
 
 void ValidationContext::addInputTypeFields(
-	const std::string& typeName, const response::Value& typeDescriptionMap)
+	std::shared_ptr<InputObjectType> type, const response::Value& typeDescriptionMap)
 {
 	const auto& itrFields = typeDescriptionMap.find(R"gql(inputFields)gql");
 	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
 	{
-		_inputTypeFields.insert(
-			{ typeName, getArguments(itrFields->second.get<response::ListType>()) });
+		type->setFields(getArguments(itrFields->second.get<response::ListType>()));
 	}
-}
-
-std::optional<std::reference_wrapper<const std::set<std::string>>> ValidationContext::getEnumValues(
-	const std::string& name) const
-{
-	const auto& itr = _enumValues.find(name);
-	if (itr == _enumValues.cend())
-	{
-		return std::nullopt;
-	}
-	return std::optional<std::reference_wrapper<const std::set<std::string>>>(itr->second);
 }
 
 void ValidationContext::addEnum(
-	const std::string& enumName, const response::Value& enumDescriptionMap)
+	const std::string_view& enumName, const response::Value& enumDescriptionMap)
 {
 	const auto& itrEnumValues = enumDescriptionMap.find(R"gql(enumValues)gql");
 	if (itrEnumValues != enumDescriptionMap.end()
 		&& itrEnumValues->second.type() == response::Type::List)
 	{
-		std::set<std::string> enumValues;
+		std::set<const std::string> enumValues;
 		const auto& enumValuesEntries = itrEnumValues->second.get<response::ListType>();
 
 		for (const auto& enumValuesEntry : enumValuesEntries)
@@ -1792,84 +1617,48 @@ void ValidationContext::addEnum(
 
 		if (!enumValues.empty())
 		{
-			_enumValues[enumName] = std::move(enumValues);
+			makeNamedValidateType(EnumType { enumName, std::move(enumValues) });
 		}
 	}
 }
 
-void ValidationContext::addObject(
-	const std::string& name, const response::Value& typeDescriptionMap)
+void ValidationContext::addObject(const std::string_view& name)
 {
-	auto itr = _matchingTypes.find(name);
-	if (itr != _matchingTypes.cend())
-	{
-		itr->second.insert(name);
-	}
-	else
-	{
-		_matchingTypes.insert({ name, { name } });
-	}
-
-	addTypeFields(name, typeDescriptionMap);
+	makeNamedValidateType(ObjectType { name });
 }
 
-void ValidationContext::addInputObject(
-	const std::string& name, const response::Value& typeDescriptionMap)
+void ValidationContext::addInputObject(const std::string_view& name)
 {
-	auto itr = _matchingTypes.find(name);
-	if (itr != _matchingTypes.cend())
-	{
-		itr->second.insert(name);
-	}
-	else
-	{
-		_matchingTypes.insert({ name, { name } });
-	}
-
-	addInputTypeFields(name, typeDescriptionMap);
+	makeNamedValidateType(InputObjectType { name });
 }
 
-void ValidationContext::addInterfaceOrUnion(
-	const std::string& name, const response::Value& typeDescriptionMap)
+void ValidationContext::addInterface(
+	const std::string_view& name, const response::Value& typeDescriptionMap)
 {
-	const auto& itrPossibleTypes = typeDescriptionMap.find(R"gql(possibleTypes)gql");
-	if (itrPossibleTypes != typeDescriptionMap.end()
-		&& itrPossibleTypes->second.type() == response::Type::List)
-	{
-		const auto& matchingTypeEntries = itrPossibleTypes->second.get<response::ListType>();
-		auto itr = _matchingTypes.find(name);
-
-		for (const auto& matchingTypeEntry : matchingTypeEntries)
-		{
-			if (matchingTypeEntry.type() != response::Type::Map)
-			{
-				continue;
-			}
-
-			const auto& itrMatchingTypeName = matchingTypeEntry.find(R"gql(name)gql");
-			if (itrMatchingTypeName != matchingTypeEntry.end()
-				&& itrMatchingTypeName->second.type() == response::Type::String)
-			{
-				const auto& matchingTypeName =
-					itrMatchingTypeName->second.get<response::StringType>();
-				if (itr != _matchingTypes.cend())
-				{
-					itr->second.insert(matchingTypeName);
-				}
-				else
-				{
-					itr = _matchingTypes.insert({ name, { matchingTypeName } }).first;
-				}
-			}
-		}
-	}
-
-	addTypeFields(name, typeDescriptionMap);
+	makeNamedValidateType(InterfaceType { name });
 }
 
-void ValidationContext::addScalar(const std::string& scalarName)
+void ValidationContext::addUnion(
+	const std::string_view& name, const response::Value& typeDescriptionMap)
 {
-	_scalarTypes.insert(scalarName);
+	makeNamedValidateType(UnionType { name });
+}
+
+template <typename T, typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type*>
+std::shared_ptr<T> ValidationContext::makeNamedValidateType(T&& typeDef)
+{
+	const std::string_view key(typeDef.name());
+
+	const auto& itr = _namedCache.find(key);
+	if (itr != _namedCache.cend())
+	{
+		return std::dynamic_pointer_cast<T>(itr->second);
+	}
+
+	auto type = std::make_shared<T>(std::move(typeDef));
+	_namedCache.insert({ type->name(), type });
+
+	return type;
 }
 
 void ValidationContext::addDirective(const std::string& name, const response::ListType& locations,
@@ -1897,110 +1686,83 @@ void ValidationContext::addDirective(const std::string& name, const response::Li
 	_directives[name] = std::move(directive);
 }
 
-template <class _FieldTypes>
-std::string ValidationContext::getFieldType(const _FieldTypes& fields, const std::string& name)
+template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
+std::shared_ptr<ListOfType> ValidationContext::makeListOfType(std::shared_ptr<T>&& ofType)
 {
-	std::string result;
-	auto itrType = fields.find(name);
+	const ValidateType* key = ofType.get();
 
-	if (itrType == fields.end())
+	const auto& itr = _listOfCache.find(key);
+	if (itr != _listOfCache.cend())
 	{
-		return result;
+		return itr->second;
 	}
 
-	// Iteratively expand nested types till we get the underlying field type.
-	const std::string nameMember { R"gql(name)gql" };
-	const std::string ofTypeMember { R"gql(ofType)gql" };
-	auto itrName = getValidateFieldType(itrType->second).find(nameMember);
-	auto itrOfType = getValidateFieldType(itrType->second).find(ofTypeMember);
-	auto itrEnd = getValidateFieldType(itrType->second).end();
+	return _listOfCache.insert({ key, std::make_shared<ListOfType>(std::move(ofType)) })
+		.first->second;
+}
 
-	do
+template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
+std::shared_ptr<NonNullOfType> ValidationContext::makeNonNullOfType(std::shared_ptr<T>&& ofType)
+{
+	const ValidateType* key = ofType.get();
+
+	const auto& itr = _nonNullCache.find(key);
+	if (itr != _nonNullCache.cend())
 	{
-		if (itrName != itrEnd && itrName->second.type() == response::Type::String)
-		{
-			result = itrName->second.template get<response::StringType>();
-		}
-		else if (itrOfType != itrEnd && itrOfType->second.type() == response::Type::Map)
-		{
-			itrEnd = itrOfType->second.end();
-			itrName = itrOfType->second.find(nameMember);
-			itrOfType = itrOfType->second.find(ofTypeMember);
-		}
-		else
-		{
-			break;
-		}
-	} while (result.empty());
-
-	return result;
-}
-
-const ValidateType& ValidationContext::getValidateFieldType(const FieldTypes::mapped_type& value)
-{
-	return value.returnType;
-}
-
-const ValidateType& ValidationContext::getValidateFieldType(
-	const InputFieldTypes::mapped_type& value)
-{
-	return value.type;
-}
-
-template <class _FieldTypes>
-std::string ValidationContext::getWrappedFieldType(
-	const _FieldTypes& fields, const std::string& name)
-{
-	std::string result;
-	auto itrType = fields.find(name);
-
-	if (itrType == fields.end())
-	{
-		return result;
+		return itr->second;
 	}
 
-	result = getWrappedFieldType(getValidateFieldType(itrType->second));
-
-	return result;
+	return _nonNullCache.insert({ key, std::make_shared<NonNullOfType>(std::move(ofType)) })
+		.first->second;
 }
 
-std::string ValidationContext::getWrappedFieldType(const ValidateType& returnType)
+std::shared_ptr<ValidateType> ValidationContext::getTypeFromMap(const response::Value& typeMap)
 {
-	// Recursively expand nested types till we get the underlying field type.
-	const std::string nameMember { R"gql(name)gql" };
-	auto itrName = returnType.find(nameMember);
-	auto itrEnd = returnType.end();
-
-	if (itrName != itrEnd && itrName->second.type() == response::Type::String)
+	const auto& itrKind = typeMap.find(R"gql(kind)gql");
+	if (itrKind == typeMap.end() || itrKind->second.type() != response::Type::EnumValue)
 	{
-		return itrName->second.get<response::StringType>();
+		return std::shared_ptr<ValidateType>();
 	}
 
-	std::ostringstream oss;
-	const std::string kindMember { R"gql(kind)gql" };
-	const std::string ofTypeMember { R"gql(ofType)gql" };
-	auto itrKind = returnType.find(kindMember);
-	auto itrOfType = returnType.find(ofTypeMember);
-
-	if (itrKind != itrEnd && itrKind->second.type() == response::Type::EnumValue
-		&& itrOfType != itrEnd && itrOfType->second.type() == response::Type::Map)
+	introspection::TypeKind kind =
+		ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+	const auto& itrName = typeMap.find(R"gql(name)gql");
+	if (itrName != typeMap.end() && itrName->second.type() == response::Type::String)
 	{
-		switch (ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+		const auto& name = itrName->second.get<response::StringType>();
+		if (!name.empty())
 		{
-			case introspection::TypeKind::LIST:
-				oss << '[' << getWrappedFieldType(itrOfType->second) << ']';
-				break;
-
-			case introspection::TypeKind::NON_NULL:
-				oss << getWrappedFieldType(itrOfType->second) << '!';
-				break;
-
-			default:
-				break;
+			return getNamedValidateType(name);
 		}
 	}
 
-	return oss.str();
+	const auto& itrOfType = typeMap.find(R"gql(ofType)gql");
+	if (itrOfType != typeMap.end() && itrOfType->second.type() == response::Type::Map)
+	{
+		std::shared_ptr<ValidateType> ofType = getTypeFromMap(itrOfType->second);
+		if (ofType)
+		{
+			if (kind == introspection::TypeKind::LIST)
+			{
+				return makeListOfType(std::move(ofType));
+			}
+			else if (kind == introspection::TypeKind::NON_NULL)
+			{
+				return makeNonNullOfType(std::move(ofType));
+			}
+		}
+
+		// should never reach
+		return nullptr;
+	}
+
+	// should never reach
+	return nullptr;
+}
+
+void ValidationContext::addScalar(const std::string_view& scalarName)
+{
+	makeNamedValidateType(ScalarType { scalarName });
 }
 
 void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
@@ -2015,46 +1777,34 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		name = child.string_view();
 	});
 
-	auto kind = getScopedTypeKind();
-
-	if (!kind)
+	if (!_scopedType)
 	{
 		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 		auto position = field.begin();
 		std::ostringstream message;
 
-		message << "Field on unknown type: " << _scopedType << " name: " << name;
+		message << "Field on unknown type: " << _scopedType->name() << " name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
-	std::string innerType;
-	std::string wrappedType;
-	const auto& typeRef = getScopedTypeFields();
+	std::shared_ptr<ValidateType> wrappedType;
+	std::optional<std::reference_wrapper<const ValidateTypeField>> objectFieldRef;
 
-	if (!typeRef)
-	{
-		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-		auto position = field.begin();
-		std::ostringstream message;
-
-		message << "Field on scalar type: " << _scopedType << " name: " << name;
-
-		_errors.push_back({ message.str(), { position.line, position.column } });
-		return;
-	}
-
-	const auto& type = typeRef.value().get();
-
-	switch (*kind)
+	switch (_scopedType->kind())
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
 		{
 			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-			innerType = _validationContext->getFieldType(type, name);
-			wrappedType = _validationContext->getWrappedFieldType(type, name);
+			objectFieldRef =
+				static_cast<const ContainerValidateType<ValidateTypeField>&>(*_scopedType)
+					.getField(name);
+			if (objectFieldRef)
+			{
+				wrappedType = objectFieldRef.value().get().returnType;
+			}
 			break;
 		}
 
@@ -2066,29 +1816,35 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				auto position = field.begin();
 				std::ostringstream message;
 
-				message << "Field on union type: " << _scopedType << " name: " << name;
+				message << "Field on union type: " << _scopedType->name() << " name: " << name;
 
 				_errors.push_back({ message.str(), { position.line, position.column } });
 				return;
 			}
 
 			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-			innerType = "String";
-			wrappedType = "String!";
+			wrappedType = commonTypes.nonNullString;
 			break;
 		}
 
 		default:
-			break;
+			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+			auto position = field.begin();
+			std::ostringstream message;
+
+			message << "Field on scalar type: " << _scopedType->name() << " name: " << name;
+
+			_errors.push_back({ message.str(), { position.line, position.column } });
+			return;
 	}
 
-	if (innerType.empty())
+	if (!wrappedType)
 	{
 		// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
 		auto position = field.begin();
 		std::ostringstream message;
 
-		message << "Undefined field type: " << _scopedType << " name: " << name;
+		message << "Undefined field type: " << _scopedType->name() << " name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
@@ -2122,8 +1878,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 					// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
 					std::ostringstream message;
 
-					message << "Conflicting argument type: " << _scopedType << " field: " << name
-							<< " name: " << argumentName;
+					message << "Conflicting argument type: " << _scopedType->name()
+							<< " field: " << name << " name: " << argumentName;
 
 					_errors.push_back({ message.str(), { position.line, position.column } });
 					continue;
@@ -2138,9 +1894,9 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 		});
 
-	std::optional<std::string> objectType =
-		(*kind == introspection::TypeKind::OBJECT ? std::make_optional(_scopedType) : std::nullopt);
-	ValidateField validateField(std::move(wrappedType),
+	std::shared_ptr<const ValidateType> objectType =
+		(_scopedType->kind() == introspection::TypeKind::OBJECT ? _scopedType : nullptr);
+	ValidateField validateField(wrappedType,
 		std::move(objectType),
 		name,
 		std::move(validateArguments));
@@ -2159,36 +1915,36 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			auto position = field.begin();
 			std::ostringstream message;
 
-			message << "Conflicting field type: " << _scopedType << " name: " << name;
+			message << "Conflicting field type: " << _scopedType->name() << " name: " << name;
 
 			_errors.push_back({ message.str(), { position.line, position.column } });
 		}
 	}
 
-	const auto& itrField = type.find(name);
-	if (itrField != type.end())
+	if (objectFieldRef)
 	{
+		const auto& objectField = objectFieldRef.value().get();
 		while (!argumentNames.empty())
 		{
 			auto argumentName = std::move(argumentNames.front());
 
 			argumentNames.pop();
 
-			auto itrArgument = itrField->second.arguments.find(argumentName);
+			auto itrArgument = objectField.arguments.find(argumentName);
 
-			if (itrArgument == itrField->second.arguments.end())
+			if (itrArgument == objectField.arguments.end())
 			{
 				// http://spec.graphql.org/June2018/#sec-Argument-Names
 				std::ostringstream message;
 
-				message << "Undefined argument type: " << _scopedType << " field: " << name
+				message << "Undefined argument type: " << _scopedType->name() << " field: " << name
 						<< " name: " << argumentName;
 
 				_errors.push_back({ message.str(), argumentLocations[argumentName] });
 			}
 		}
 
-		for (auto& argument : itrField->second.arguments)
+		for (auto& argument : objectField.arguments)
 		{
 			auto itrArgument = validateField.arguments.find(argument.first);
 			const bool missing = itrArgument == validateField.arguments.end();
@@ -2198,13 +1954,13 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				// The value was not null.
 				if (!validateInputValue(argument.second.nonNullDefaultValue,
 						itrArgument->second,
-						argument.second.type))
+						*argument.second.type))
 				{
 					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 					std::ostringstream message;
 
-					message << "Incompatible argument type: " << _scopedType << " field: " << name
-							<< " name: " << argument.first;
+					message << "Incompatible argument type: " << _scopedType->name()
+							<< " field: " << name << " name: " << argument.first;
 
 					_errors.push_back({ message.str(), argumentLocations[argument.first] });
 				}
@@ -2218,12 +1974,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 
 			// See if the argument is wrapped in NON_NULL
-			auto itrKind = argument.second.type.find(R"gql(kind)gql");
-
-			if (itrKind != argument.second.type.end()
-				&& itrKind->second.type() == response::Type::EnumValue
-				&& introspection::TypeKind::NON_NULL
-					== ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+			if (argument.second.type->kind() == introspection::TypeKind::NON_NULL)
 			{
 				// http://spec.graphql.org/June2018/#sec-Required-Arguments
 				auto position = field.begin();
@@ -2231,7 +1982,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 				message << (missing ? "Missing argument type: "
 									: "Required non-null argument type: ")
-						<< _scopedType << " field: " << name << " name: " << argument.first;
+						<< _scopedType->name() << " field: " << name << " name: " << argument.first;
 
 				_errors.push_back({ message.str(), { position.line, position.column } });
 			}
@@ -2256,11 +2007,10 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 		_fieldCount = 0;
 		_selectionFields.clear();
-		_scopedType = std::move(innerType);
+		_scopedType = wrappedType->getInnerType();
 
 		visitSelection(*selection);
 
-		innerType = std::move(_scopedType);
 		_scopedType = std::move(outerType);
 		_selectionFields = std::move(outerFields);
 		subFieldCount = _fieldCount;
@@ -2269,14 +2019,14 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	if (subFieldCount == 0)
 	{
-		const auto& innerKind = _validationContext->getTypeKind(innerType);
-		if (innerKind && !_validationContext->isScalarType(innerKind.value()))
+		const auto& innerType = wrappedType->getInnerType();
+		if (!innerType->isInputType())
 		{
 			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 			auto position = field.begin();
 			std::ostringstream message;
 
-			message << "Missing fields on non-scalar type: " << innerType;
+			message << "Missing fields on non-scalar type: " << innerType->name();
 
 			_errors.push_back({ message.str(), { position.line, position.column } });
 			return;
@@ -2325,15 +2075,17 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	const auto& selection = *itr->second.children.back();
 	const auto& typeCondition = itr->second.children[1];
-	std::string innerType { typeCondition->children.front()->string_view() };
+	const auto& innerType =
+		_validationContext->getNamedValidateType(typeCondition->children.front()->string_view());
 
-	if (!matchesScopedType(innerType))
+	if (!matchesScopedType(*innerType))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
 		auto position = fragmentSpread.begin();
 		std::ostringstream message;
 
-		message << "Incompatible fragment spread target type: " << innerType << " name: " << name;
+		message << "Incompatible fragment spread target type: " << innerType->name()
+				<< " name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
@@ -2358,44 +2110,46 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 		visitDirectives(introspection::DirectiveLocation::INLINE_FRAGMENT, child);
 	});
 
-	std::string innerType;
+	std::string_view innerTypeName;
 	schema_location typeConditionLocation;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
-		[&innerType, &typeConditionLocation](const peg::ast_node& child) {
+		[&innerTypeName, &typeConditionLocation](const peg::ast_node& child) {
 			auto position = child.begin();
 
-			innerType = child.children.front()->string();
+			innerTypeName = child.children.front()->string_view();
 			typeConditionLocation = { position.line, position.column };
 		});
 
-	if (innerType.empty())
+	std::shared_ptr<const ValidateType> innerType;
+
+	if (innerTypeName.empty())
 	{
 		innerType = _scopedType;
 	}
 	else
 	{
-		auto kind = _validationContext->getTypeKind(innerType);
-		if (!kind || _validationContext->isScalarType(kind.value()))
+		innerType = _validationContext->getNamedValidateType(innerTypeName);
+		if (!innerType || innerType->isInputType())
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
 			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 			std::ostringstream message;
 
-			message << (!kind ? "Undefined target type on inline fragment name: "
-							  : "Scalar target type on inline fragment name: ")
-					<< innerType;
+			message << (!innerType ? "Undefined target type on inline fragment name: "
+								   : "Scalar target type on inline fragment name: ")
+					<< innerTypeName;
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
 			return;
 		}
 
-		if (!matchesScopedType(innerType))
+		if (!matchesScopedType(*innerType))
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
 			std::ostringstream message;
 
-			message << "Incompatible target type on inline fragment name: " << innerType;
+			message << "Incompatible target type on inline fragment name: " << innerType->name();
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
 			return;
@@ -2560,7 +2314,7 @@ void ValidateExecutableVisitor::visitDirectives(
 						// The value was not null.
 						if (!validateInputValue(argument.second.nonNullDefaultValue,
 								itrArgument->second,
-								argument.second.type))
+								*argument.second.type))
 						{
 							// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 							std::ostringstream message;
@@ -2580,12 +2334,7 @@ void ValidateExecutableVisitor::visitDirectives(
 					}
 
 					// See if the argument is wrapped in NON_NULL
-					auto itrKind = argument.second.type.find(R"gql(kind)gql");
-
-					if (itrKind != argument.second.type.end()
-						&& itrKind->second.type() == response::Type::EnumValue
-						&& introspection::TypeKind::NON_NULL
-							== ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+					if (argument.second.type->kind() == introspection::TypeKind::NON_NULL)
 					{
 						// http://spec.graphql.org/June2018/#sec-Required-Arguments
 						auto position = directive->begin();
