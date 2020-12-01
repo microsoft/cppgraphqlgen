@@ -158,41 +158,99 @@ private:
 	ValidateType _variableType;
 };
 
+class ValidationContext
+{
+public:
+	ValidationContext(const Request& service);
+	ValidationContext(const response::Value& introspectionQuery);
+
+	using FieldTypes = std::map<std::string, ValidateTypeField>;
+	using InputFieldTypes = ValidateTypeFieldArguments;
+
+	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
+	const ValidateTypeKinds& getTypeKinds() const;
+	std::optional<std::reference_wrapper<const std::set<std::string>>> getMatchingTypes(
+		const std::string& name) const;
+	std::optional<std::reference_wrapper<const FieldTypes>> getTypeFields(
+		const std::string& name) const;
+	std::optional<std::reference_wrapper<const InputFieldTypes>> getInputTypeFields(
+		const std::string& name) const;
+	std::optional<std::reference_wrapper<const std::set<std::string>>> getEnumValues(
+		const std::string& name) const;
+	std::optional<std::reference_wrapper<const ValidateDirective>> getDirective(
+		const std::string& name) const;
+	std::optional<std::reference_wrapper<const std::string>> getOperationType(
+		const std::string& name) const;
+
+	bool isKnownScalar(const std::string& name) const;
+
+	template <class _FieldTypes>
+	static std::string getFieldType(const _FieldTypes& fields, const std::string& name);
+	template <class _FieldTypes>
+	static std::string getWrappedFieldType(const _FieldTypes& fields, const std::string& name);
+	static std::string getWrappedFieldType(const ValidateType& returnType);
+
+	static constexpr bool isScalarType(introspection::TypeKind kind);
+
+private:
+	void populate(const response::Value& introspectionQuery);
+
+	static ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
+	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
+	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
+
+	using TypeFields = std::map<std::string, FieldTypes>;
+	using InputTypeFields = std::map<std::string, InputFieldTypes>;
+	using EnumValues = std::map<std::string, std::set<std::string>>;
+
+	using OperationTypes = std::map<std::string_view, std::string>;
+	using Directives = std::map<std::string, ValidateDirective>;
+	using MatchingTypes = std::map<std::string, std::set<std::string>>;
+	using ScalarTypes = std::set<std::string>;
+
+	// These members store Introspection schema information which does not change between queries.
+	OperationTypes _operationTypes;
+	ValidateTypeKinds _typeKinds;
+	MatchingTypes _matchingTypes;
+	Directives _directives;
+	EnumValues _enumValues;
+	ScalarTypes _scalarTypes;
+
+	TypeFields _typeFields;
+	InputTypeFields _inputTypeFields;
+
+	// builds the validation context (lookup maps)
+	void addScalar(const std::string& scalarName);
+	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
+	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
+	void addInputObject(const std::string& name, const response::Value& typeDescriptionMap);
+	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
+	void addDirective(const std::string& name, const response::ListType& locations,
+		const response::Value& descriptionMap);
+	void addTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
+	void addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
+};
+
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service
 // schema.
 class ValidateExecutableVisitor
 {
 public:
+	// Legacy, left for compatibility reasons. Services should create a ValidationContext and pass
+	// it
 	ValidateExecutableVisitor(const Request& service);
+	ValidateExecutableVisitor(std::shared_ptr<const ValidationContext> validationContext);
 
 	void visit(const peg::ast_node& root);
 
 	std::vector<schema_error> getStructuredErrors();
 
 private:
-	static ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
-
-	using FieldTypes = std::map<std::string, ValidateTypeField>;
-	using TypeFields = std::map<std::string, FieldTypes>;
-	using InputFieldTypes = ValidateTypeFieldArguments;
-	using InputTypeFields = std::map<std::string, InputFieldTypes>;
-	using EnumValues = std::map<std::string, std::set<std::string>>;
-
-	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
 	std::optional<introspection::TypeKind> getScopedTypeKind() const;
-	constexpr bool isScalarType(introspection::TypeKind kind);
-
 	bool matchesScopedType(const std::string& name) const;
 
-	TypeFields::const_iterator getScopedTypeFields() const;
-	InputTypeFields::const_iterator getInputTypeFields(const std::string& name) const;
-	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
-	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
-	template <class _FieldTypes>
-	static std::string getFieldType(const _FieldTypes& fields, const std::string& name);
-	template <class _FieldTypes>
-	static std::string getWrappedFieldType(const _FieldTypes& fields, const std::string& name);
-	static std::string getWrappedFieldType(const ValidateType& returnType);
+	std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>> getScopedTypeFields()
+		const;
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -211,37 +269,16 @@ private:
 	bool validateVariableType(bool isNonNull, const ValidateType& variableType,
 		const schema_location& position, const ValidateType& inputType);
 
+	std::shared_ptr<const ValidationContext> _validationContext;
+
 	std::vector<schema_error> _errors;
 
-	using OperationTypes = std::map<std::string_view, std::string>;
-	using Directives = std::map<std::string, ValidateDirective>;
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
-	using MatchingTypes = std::map<std::string, std::set<std::string>>;
-	using ScalarTypes = std::set<std::string>;
 	using VariableDefinitions = std::map<std::string, const peg::ast_node&>;
 	using VariableTypes = std::map<std::string, ValidateArgument>;
 	using OperationVariables = std::optional<VariableTypes>;
 	using VariableSet = std::set<std::string>;
-
-	// These members store Introspection schema information which does not change between queries.
-	OperationTypes _operationTypes;
-	ValidateTypeKinds _typeKinds;
-	MatchingTypes _matchingTypes;
-	Directives _directives;
-	EnumValues _enumValues;
-	ScalarTypes _scalarTypes;
-
-	// builds the validation context (lookup maps)
-	void addScalar(const std::string& scalarName);
-	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
-	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
-	void addInputObject(const std::string& name, const response::Value& typeDescriptionMap);
-	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
-	void addDirective(const std::string& name, const response::ListType& locations,
-		const response::Value& descriptionMap);
-	void addTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
-	void addInputTypeFields(const std::string& typeName, const response::Value& typeDescriptionMap);
 
 	// These members store information that's specific to a single query and changes every time we
 	// visit a new one. They must be reset in between queries.
@@ -256,8 +293,6 @@ private:
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
-	TypeFields _typeFields;
-	InputTypeFields _inputTypeFields;
 	std::string _scopedType;
 	std::map<std::string, ValidateField> _selectionFields;
 };

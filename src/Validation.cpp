@@ -420,7 +420,7 @@ ValidateType ValidateVariableTypeVisitor::getType()
 	return result;
 }
 
-ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
+ValidationContext::ValidationContext(const Request& service)
 {
 	// TODO: we should execute this query only once per schema,
 	// maybe it can be done and cached inside the Request itself to allow
@@ -437,8 +437,19 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 	const std::string operationName;
 	response::Value variables(response::Type::Map);
 	auto result = service.resolve(state, ast, operationName, std::move(variables)).get();
-	const auto& itrData = result.find(std::string { strData });
-	if (itrData == result.end())
+
+	populate(result);
+}
+
+ValidationContext::ValidationContext(const response::Value& introspectionQuery)
+{
+	populate(introspectionQuery);
+}
+
+void ValidationContext::populate(const response::Value& introspectionQuery)
+{
+	const auto& itrData = introspectionQuery.find(std::string { strData });
+	if (itrData == introspectionQuery.end())
 	{
 		return;
 	}
@@ -549,6 +560,17 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 			}
 		}
 	}
+}
+
+ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
+	: _validationContext(std::make_shared<const ValidationContext>(service))
+{
+}
+
+ValidateExecutableVisitor::ValidateExecutableVisitor(
+	std::shared_ptr<const ValidationContext> validationContext)
+	: _validationContext(validationContext)
+{
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
@@ -687,17 +709,17 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	const auto& typeCondition = fragmentDefinition.children[1];
 	auto innerType = typeCondition->children.front()->string();
 
-	auto itrKind = _typeKinds.find(innerType);
+	auto kind = _validationContext->getTypeKind(innerType);
 
-	if (itrKind == _typeKinds.end() || isScalarType(itrKind->second))
+	if (!kind || _validationContext->isScalarType(*kind))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
 		// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
-		message << (itrKind == _typeKinds.end() ? "Undefined target type on fragment definition: "
-												: "Scalar target type on fragment definition: ")
+		message << (!kind ? "Undefined target type on fragment definition: "
+						  : "Scalar target type on fragment definition: ")
 				<< name << " name: " << innerType;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
@@ -766,7 +788,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(_typeKinds);
+					ValidateVariableTypeVisitor visitor(_validationContext->getTypeKinds());
 
 					visitor.visit(*child);
 
@@ -843,9 +865,8 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			visitDirectives(location, child);
 		});
 
-	auto itrType = _operationTypes.find(operationType);
-
-	if (itrType == _operationTypes.cend())
+	const auto& typeRef = _validationContext->getOperationType(std::string { operationType });
+	if (!typeRef)
 	{
 		auto position = operationDefinition.begin();
 		std::ostringstream error;
@@ -856,7 +877,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		return;
 	}
 
-	_scopedType = itrType->second;
+	_scopedType = typeRef.value();
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
@@ -921,7 +942,7 @@ void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
 	}
 }
 
-ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(const response::ListType& args)
+ValidateTypeFieldArguments ValidationContext::getArguments(const response::ListType& args)
 {
 	ValidateTypeFieldArguments result;
 
@@ -954,20 +975,68 @@ ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(const respons
 	return result;
 }
 
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getTypeKind(
-	const std::string& name) const
+std::optional<introspection::TypeKind> ValidationContext::getTypeKind(const std::string& name) const
 {
 	auto itrKind = _typeKinds.find(name);
 
 	return (itrKind == _typeKinds.cend() ? std::nullopt : std::make_optional(itrKind->second));
 }
 
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+const ValidateTypeKinds& ValidationContext::getTypeKinds() const
 {
-	return getTypeKind(_scopedType);
+	return _typeKinds;
 }
 
-constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind kind)
+std::optional<std::reference_wrapper<const std::set<std::string>>> ValidationContext::
+	getMatchingTypes(const std::string& name) const
+{
+	const auto& itr = _matchingTypes.find(name);
+	if (itr == _matchingTypes.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const std::set<std::string>>>(itr->second);
+}
+
+std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>> ValidationContext::
+	getTypeFields(const std::string& name) const
+{
+	const auto& itr = _typeFields.find(name);
+	if (itr == _typeFields.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>>(itr->second);
+}
+
+std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
+	const std::string& name) const
+{
+	const auto& itr = _directives.find(name);
+	if (itr == _directives.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const ValidateDirective>>(itr->second);
+}
+
+std::optional<std::reference_wrapper<const std::string>> ValidationContext::getOperationType(
+	const std::string& name) const
+{
+	const auto& itr = _operationTypes.find(name);
+	if (itr == _operationTypes.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const std::string>>(itr->second);
+}
+
+std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
+{
+	return _validationContext->getTypeKind(_scopedType);
+}
+
+constexpr bool ValidationContext::isScalarType(introspection::TypeKind kind)
 {
 	switch (kind)
 	{
@@ -982,6 +1051,12 @@ constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind k
 	}
 }
 
+bool ValidationContext::isKnownScalar(const std::string& name) const
+{
+	const auto& itr = _scalarTypes.find(name);
+	return itr != _scalarTypes.cend();
+}
+
 bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 {
 	if (name == _scopedType)
@@ -989,18 +1064,20 @@ bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 		return true;
 	}
 
-	auto itrScoped = _matchingTypes.find(_scopedType);
-	auto itrNamed = _matchingTypes.find(name);
+	const auto& scoped = _validationContext->getMatchingTypes(_scopedType);
+	const auto& named = _validationContext->getMatchingTypes(name);
 
-	if (itrScoped != _matchingTypes.end() && itrNamed != _matchingTypes.end())
+	if (scoped && named)
 	{
-		auto itrMatch = std::find_if(itrScoped->second.begin(),
-			itrScoped->second.end(),
-			[this, itrNamed](const std::string& matchingType) noexcept {
-				return itrNamed->second.find(matchingType) != itrNamed->second.end();
+		const std::set<std::string>& scopedSet = scoped.value().get();
+		const std::set<std::string>& namedSet = named.value().get();
+		auto itrMatch = std::find_if(scopedSet.cbegin(),
+			scopedSet.cend(),
+			[this, namedSet](const std::string& matchingType) noexcept {
+				return namedSet.find(matchingType) != namedSet.cend();
 			});
 
-		return itrMatch != itrScoped->second.end();
+		return itrMatch != scopedSet.cend();
 	}
 
 	return false;
@@ -1140,9 +1217,8 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			auto itrFields = getInputTypeFields(name);
-
-			if (itrFields == _inputTypeFields.end())
+			const auto& fieldsRef = _validationContext->getInputTypeFields(name);
+			if (!fieldsRef)
 			{
 				std::ostringstream message;
 
@@ -1152,15 +1228,15 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
+			const auto& fields = fieldsRef.value().get();
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
 			std::set<std::string> subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
 			{
-				auto itrField = itrFields->second.find(entry.first);
-
-				if (itrField == itrFields->second.end())
+				const auto& itrField = fields.find(entry.first);
+				if (itrField == fields.cend())
 				{
 					// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Names
 					std::ostringstream message;
@@ -1188,7 +1264,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			// See if all required fields were specified.
-			for (const auto& entry : itrFields->second)
+			for (const auto& entry : fields)
 			{
 				if (entry.second.defaultValue || subFields.find(entry.first) != subFields.end())
 				{
@@ -1251,10 +1327,10 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& value = std::get<ValidateArgumentEnumValue>(argument.value->data).value;
-			auto itrEnumValues = _enumValues.find(name);
+			const auto& enumValuesRef = _validationContext->getEnumValues(name);
 
-			if (itrEnumValues == _enumValues.end()
-				|| itrEnumValues->second.find(value) == itrEnumValues->second.end())
+			if (!enumValuesRef
+				|| enumValuesRef.value().get().find(value) == enumValuesRef.value().get().end())
 			{
 				std::ostringstream message;
 
@@ -1333,7 +1409,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 				}
 			}
 
-			if (_scalarTypes.find(name) == _scalarTypes.end())
+			if (!_validationContext->isKnownScalar(name))
 			{
 				std::ostringstream message;
 
@@ -1542,13 +1618,13 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 	return true;
 }
 
-ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::
-	getScopedTypeFields() const
+std::optional<std::reference_wrapper<const ValidationContext::FieldTypes>>
+ValidateExecutableVisitor::getScopedTypeFields() const
 {
-	return _typeFields.find(_scopedType);
+	return _validationContext->getTypeFields(_scopedType);
 }
 
-void ValidateExecutableVisitor::addTypeFields(
+void ValidationContext::addTypeFields(
 	const std::string& typeName, const response::Value& typeDescriptionMap)
 {
 	std::map<std::string, ValidateTypeField> fields;
@@ -1646,13 +1722,19 @@ void ValidateExecutableVisitor::addTypeFields(
 	_typeFields.insert({ typeName, std::move(fields) });
 }
 
-ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
+std::optional<std::reference_wrapper<const ValidationContext::InputFieldTypes>> ValidationContext::
 	getInputTypeFields(const std::string& name) const
 {
-	return _inputTypeFields.find(name);
+	const auto& itr = _inputTypeFields.find(name);
+	if (itr == _inputTypeFields.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const ValidationContext::InputFieldTypes>>(
+		itr->second);
 }
 
-void ValidateExecutableVisitor::addInputTypeFields(
+void ValidationContext::addInputTypeFields(
 	const std::string& typeName, const response::Value& typeDescriptionMap)
 {
 	const auto& itrFields = typeDescriptionMap.find(R"gql(inputFields)gql");
@@ -1663,7 +1745,18 @@ void ValidateExecutableVisitor::addInputTypeFields(
 	}
 }
 
-void ValidateExecutableVisitor::addEnum(
+std::optional<std::reference_wrapper<const std::set<std::string>>> ValidationContext::getEnumValues(
+	const std::string& name) const
+{
+	const auto& itr = _enumValues.find(name);
+	if (itr == _enumValues.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const std::set<std::string>>>(itr->second);
+}
+
+void ValidationContext::addEnum(
 	const std::string& enumName, const response::Value& enumDescriptionMap)
 {
 	const auto& itrEnumValues = enumDescriptionMap.find(R"gql(enumValues)gql");
@@ -1695,7 +1788,7 @@ void ValidateExecutableVisitor::addEnum(
 	}
 }
 
-void ValidateExecutableVisitor::addObject(
+void ValidationContext::addObject(
 	const std::string& name, const response::Value& typeDescriptionMap)
 {
 	auto itr = _matchingTypes.find(name);
@@ -1711,7 +1804,7 @@ void ValidateExecutableVisitor::addObject(
 	addTypeFields(name, typeDescriptionMap);
 }
 
-void ValidateExecutableVisitor::addInputObject(
+void ValidationContext::addInputObject(
 	const std::string& name, const response::Value& typeDescriptionMap)
 {
 	auto itr = _matchingTypes.find(name);
@@ -1727,7 +1820,7 @@ void ValidateExecutableVisitor::addInputObject(
 	addInputTypeFields(name, typeDescriptionMap);
 }
 
-void ValidateExecutableVisitor::addInterfaceOrUnion(
+void ValidationContext::addInterfaceOrUnion(
 	const std::string& name, const response::Value& typeDescriptionMap)
 {
 	const auto& itrPossibleTypes = typeDescriptionMap.find(R"gql(possibleTypes)gql");
@@ -1765,13 +1858,13 @@ void ValidateExecutableVisitor::addInterfaceOrUnion(
 	addTypeFields(name, typeDescriptionMap);
 }
 
-void ValidateExecutableVisitor::addScalar(const std::string& scalarName)
+void ValidationContext::addScalar(const std::string& scalarName)
 {
 	_scalarTypes.insert(scalarName);
 }
 
-void ValidateExecutableVisitor::addDirective(const std::string& name,
-	const response::ListType& locations, const response::Value& descriptionMap)
+void ValidationContext::addDirective(const std::string& name, const response::ListType& locations,
+	const response::Value& descriptionMap)
 {
 	ValidateDirective directive;
 
@@ -1796,8 +1889,7 @@ void ValidateExecutableVisitor::addDirective(const std::string& name,
 }
 
 template <class _FieldTypes>
-std::string ValidateExecutableVisitor::getFieldType(
-	const _FieldTypes& fields, const std::string& name)
+std::string ValidationContext::getFieldType(const _FieldTypes& fields, const std::string& name)
 {
 	std::string result;
 	auto itrType = fields.find(name);
@@ -1835,20 +1927,19 @@ std::string ValidateExecutableVisitor::getFieldType(
 	return result;
 }
 
-const ValidateType& ValidateExecutableVisitor::getValidateFieldType(
-	const FieldTypes::mapped_type& value)
+const ValidateType& ValidationContext::getValidateFieldType(const FieldTypes::mapped_type& value)
 {
 	return value.returnType;
 }
 
-const ValidateType& ValidateExecutableVisitor::getValidateFieldType(
+const ValidateType& ValidationContext::getValidateFieldType(
 	const InputFieldTypes::mapped_type& value)
 {
 	return value.type;
 }
 
 template <class _FieldTypes>
-std::string ValidateExecutableVisitor::getWrappedFieldType(
+std::string ValidationContext::getWrappedFieldType(
 	const _FieldTypes& fields, const std::string& name)
 {
 	std::string result;
@@ -1864,7 +1955,7 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(
 	return result;
 }
 
-std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& returnType)
+std::string ValidationContext::getWrappedFieldType(const ValidateType& returnType)
 {
 	// Recursively expand nested types till we get the underlying field type.
 	const std::string nameMember { R"gql(name)gql" };
@@ -1931,9 +2022,9 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	std::string innerType;
 	std::string wrappedType;
-	auto itrType = getScopedTypeFields();
+	const auto& typeRef = getScopedTypeFields();
 
-	if (itrType == _typeFields.cend())
+	if (!typeRef)
 	{
 		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 		auto position = field.begin();
@@ -1945,14 +2036,16 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
+	const auto& type = typeRef.value().get();
+
 	switch (*kind)
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
 		{
 			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-			innerType = getFieldType(itrType->second, name);
-			wrappedType = getWrappedFieldType(itrType->second, name);
+			innerType = _validationContext->getFieldType(type, name);
+			wrappedType = _validationContext->getWrappedFieldType(type, name);
 			break;
 		}
 
@@ -2063,9 +2156,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		}
 	}
 
-	auto itrField = itrType->second.find(name);
-
-	if (itrField != itrType->second.end())
+	const auto& itrField = type.find(name);
+	if (itrField != type.end())
 	{
 		while (!argumentNames.empty())
 		{
@@ -2168,9 +2260,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	if (subFieldCount == 0)
 	{
-		auto itrInnerKind = _typeKinds.find(innerType);
-
-		if (itrInnerKind != _typeKinds.end() && !isScalarType(itrInnerKind->second))
+		const auto& innerKind = _validationContext->getTypeKind(innerType);
+		if (innerKind && !_validationContext->isScalarType(innerKind.value()))
 		{
 			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 			auto position = field.begin();
@@ -2275,17 +2366,15 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 	}
 	else
 	{
-		auto itrKind = _typeKinds.find(innerType);
-
-		if (itrKind == _typeKinds.end() || isScalarType(itrKind->second))
+		auto kind = _validationContext->getTypeKind(innerType);
+		if (!kind || _validationContext->isScalarType(kind.value()))
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
 			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 			std::ostringstream message;
 
-			message << (itrKind == _typeKinds.end()
-					? "Undefined target type on inline fragment name: "
-					: "Scalar target type on inline fragment name: ")
+			message << (!kind ? "Undefined target type on inline fragment name: "
+							  : "Scalar target type on inline fragment name: ")
 					<< innerType;
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
@@ -2342,9 +2431,8 @@ void ValidateExecutableVisitor::visitDirectives(
 			continue;
 		}
 
-		auto itrDirective = _directives.find(directiveName);
-
-		if (itrDirective == _directives.end())
+		const auto& validateDirectiveRef = _validationContext->getDirective(directiveName);
+		if (!validateDirectiveRef)
 		{
 			// http://spec.graphql.org/June2018/#sec-Directives-Are-Defined
 			auto position = directive->begin();
@@ -2356,7 +2444,8 @@ void ValidateExecutableVisitor::visitDirectives(
 			continue;
 		}
 
-		if (itrDirective->second.locations.find(location) == itrDirective->second.locations.end())
+		const auto& validateDirective = validateDirectiveRef.value().get();
+		if (validateDirective.locations.find(location) == validateDirective.locations.end())
 		{
 			// http://spec.graphql.org/June2018/#sec-Directives-Are-In-Valid-Locations
 			auto position = directive->begin();
@@ -2403,7 +2492,7 @@ void ValidateExecutableVisitor::visitDirectives(
 		}
 
 		peg::on_first_child<peg::arguments>(*directive,
-			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child) {
+			[this, &directive, &directiveName, &validateDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
 				std::map<std::string, schema_location> argumentLocations;
 				std::queue<std::string> argumentNames;
@@ -2439,9 +2528,8 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					argumentNames.pop();
 
-					auto itrArgument = itrDirective->second.arguments.find(argumentName);
-
-					if (itrArgument == itrDirective->second.arguments.end())
+					const auto& itrArgument = validateDirective.arguments.find(argumentName);
+					if (itrArgument == validateDirective.arguments.cend())
 					{
 						// http://spec.graphql.org/June2018/#sec-Argument-Names
 						std::ostringstream message;
@@ -2453,7 +2541,7 @@ void ValidateExecutableVisitor::visitDirectives(
 					}
 				}
 
-				for (auto& argument : itrDirective->second.arguments)
+				for (const auto& argument : validateDirective.arguments)
 				{
 					auto itrArgument = validateArguments.find(argument.first);
 					const bool missing = itrArgument == validateArguments.end();
