@@ -956,7 +956,8 @@ class ValidateExecutableVisitor;
 class Request : public std::enable_shared_from_this<Request>
 {
 protected:
-	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
+	GRAPHQLSERVICE_EXPORT explicit Request(
+		TypeMap&& operationTypes, const response::Value* introspectionQuery = nullptr);
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
