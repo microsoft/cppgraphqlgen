@@ -26,8 +26,21 @@ if(WIN32 AND BUILD_SHARED_LIBS)
     PRIVATE IMPL_GRAPHQLPEG_DLL)
 endif()
 
+# graphqlerror
+add_library(graphqlerror GraphQLError.cpp)
+add_library(cppgraphqlgen::graphqlerror ALIAS graphqlerror)
+target_include_directories(graphqlerror PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlerror
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLERROR_DLL)
+endif()
+
 # graphqlresponse
-add_library(graphqlresponse GraphQLResponse.cpp)
+add_library(graphqlresponse GraphQLResponse.cpp GraphQLError.cpp)
 add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -45,6 +58,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
   target_link_libraries(schemagen PRIVATE
     graphqlpeg
+    graphqlerror
     graphqlresponse)
   add_bigobj_flag(schemagen)
   
@@ -157,6 +171,7 @@ add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     Threads::Threads)
+target_link_libraries(graphqlservice PUBLIC graphqlerror)
 target_link_libraries(graphqlservice PUBLIC graphqlresponse)
 target_include_directories(graphqlservice PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
@@ -211,6 +226,7 @@ endif()
 
 install(TARGETS
     graphqlpeg
+    graphqlerror
     graphqlresponse
     graphqlservice
   EXPORT cppgraphqlgen-targets
@@ -220,6 +236,7 @@ install(TARGETS
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLError.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h

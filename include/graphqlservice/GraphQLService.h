@@ -18,6 +18,7 @@
 #endif // !GRAPHQL_DLLEXPORTS
 // clang-format on
 
+#include "graphqlservice/GraphQLError.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
@@ -45,51 +46,32 @@ namespace graphql::service {
 // Errors should have a message string, and optional locations and a path.
 GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Value& error);
 
-struct schema_location
-{
-	size_t line = 0;
-	size_t column = 1;
-};
+using schema_location = graphql::error::schema_location;
 
 GRAPHQLSERVICE_EXPORT void addErrorLocation(
 	const schema_location& location, response::Value& error);
 
-using path_segment = std::variant<std::string, size_t>;
-using field_path = std::queue<path_segment>;
+using path_segment = graphql::error::path_segment;
+using field_path = graphql::error::field_path;
 
 GRAPHQLSERVICE_EXPORT void addErrorPath(field_path&& path, response::Value& error);
 
-struct schema_error
-{
-	std::string message;
-	schema_location location;
-	field_path path;
-};
+using schema_error = graphql::error::schema_error;
 
 GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
 	const std::vector<schema_error>& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
-class schema_exception : public std::exception
+class schema_exception : public graphql::error::schema_exception
 {
 public:
 	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<schema_error>&& structuredErrors);
 	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
 
-	schema_exception() = delete;
-
-	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
-
-	GRAPHQLSERVICE_EXPORT const std::vector<schema_error>& getStructuredErrors() const noexcept;
-	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
-
 	GRAPHQLSERVICE_EXPORT const response::Value& getErrors() const noexcept;
 	GRAPHQLSERVICE_EXPORT response::Value getErrors() noexcept;
 
 private:
-	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
-
-	std::vector<schema_error> _structuredErrors;
 	response::Value _errors;
 };
 

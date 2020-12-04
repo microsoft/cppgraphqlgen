@@ -115,8 +115,9 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlerror> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS graphqlservice graphqljson graphqlpeg graphqlresponse)
+    DEPENDS graphqlservice graphqljson graphqlpeg graphqlerror graphqlresponse)
 
   add_dependencies(sample copy_sample_dlls)
 endif()
