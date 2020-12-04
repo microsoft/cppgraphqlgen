@@ -50,13 +50,55 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   
   set(BOOST_COMPONENTS program_options)
   set(BOOST_LIBRARIES Boost::program_options)
-  
-  if(NOT MSVC)
-    set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-    set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-    target_compile_options(schemagen PRIVATE -DUSE_BOOST_FILESYSTEM)
+
+  # Try compiling a test program with std::filesystem or one of its alternatives.
+  function(check_filesystem_impl FILESYSTEM_HEADER FILESYSTEM_NAMESPACE OPTIONAL_LIBS OUT_RESULT)
+    set(TEST_FILE "test_${OUT_RESULT}.cpp")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp.in ${TEST_FILE} @ONLY)
+
+    try_compile(TEST_RESULT
+      ${CMAKE_CURRENT_BINARY_DIR}
+      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+      CXX_STANDARD 17)
+
+    if(NOT TEST_RESULT)
+      # Retry with each of the optional libraries.
+      foreach(OPTIONAL_LIB IN LISTS OPTIONAL_LIBS)
+        try_compile(TEST_RESULT
+          ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+          LINK_LIBRARIES ${OPTIONAL_LIB}
+          CXX_STANDARD 17)
+
+        if(TEST_RESULT)
+          # Looks like the optional library was required, go ahead and add it to the link options.
+          target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
+          break()
+        endif()
+      endforeach(OPTIONAL_LIB)
+    endif()
+
+    set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
+  endfunction(check_filesystem_impl)
+
+  # Try compiling a minimal program with each header/namespace, in order of preference:
+  #   C++17: #include <filesystem> // std::filesystem
+  #   Experimental C++17: #include <experimental/filesystem> // std::experimental::filesystem
+  #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
+  check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
+  if(STD_FILESYTEM)
+    target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
+  else()
+    check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
+    if(STD_EXPERIMENTAL_FILESYTEM)
+      target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+    else()
+      set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
+      set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
+      target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
+    endif()
   endif()
-  
+
   find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
   target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
   

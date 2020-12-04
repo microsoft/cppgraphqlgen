@@ -5,13 +5,24 @@
 
 #include <boost/program_options.hpp>
 
-#ifdef USE_BOOST_FILESYSTEM
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+// clang-format off
+#ifdef USE_STD_FILESYSTEM
+	#include <filesystem>
+	namespace fs = std::filesystem;
 #else
-#include <filesystem>
-namespace fs = std::filesystem;
+	#ifdef USE_STD_EXPERIMENTAL_FILESYSTEM
+		#include <experimental/filesystem>
+		namespace fs = std::experimental::filesystem;
+	#else
+		#ifdef USE_BOOST_FILESYSTEM
+			#include <boost/filesystem.hpp>
+			namespace fs = boost::filesystem;
+		#else
+			#error "No std::filesystem implementation defined"
+		#endif
+	#endif
 #endif
+// clang-format on
 
 #include <cctype>
 #include <fstream>
