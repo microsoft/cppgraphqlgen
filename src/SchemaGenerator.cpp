@@ -5,8 +5,15 @@
 
 #include <boost/program_options.hpp>
 
-#include <cctype>
+#ifdef USE_BOOST_FILESYSTEM
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
 #include <filesystem>
+namespace fs = std::filesystem;
+#endif
+
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -297,11 +304,11 @@ std::string Generator::getHeaderDir() const noexcept
 {
 	if (_isIntrospection)
 	{
-		return (std::filesystem::path { "include" } / "graphqlservice").string();
+		return (fs::path { "include" } / "graphqlservice").string();
 	}
 	else if (_options.paths)
 	{
-		return std::filesystem::path { _options.paths->headerPath }.string();
+		return fs::path { _options.paths->headerPath }.string();
 	}
 	else
 	{
@@ -317,13 +324,13 @@ std::string Generator::getSourceDir() const noexcept
 	}
 	else
 	{
-		return std::filesystem::path(_options.paths->sourcePath).string();
+		return fs::path(_options.paths->sourcePath).string();
 	}
 }
 
 std::string Generator::getHeaderPath() const noexcept
 {
-	std::filesystem::path fullPath { _headerDir };
+	fs::path fullPath { _headerDir };
 
 	if (_isIntrospection)
 	{
@@ -341,7 +348,7 @@ std::string Generator::getObjectHeaderPath() const noexcept
 {
 	if (_options.separateFiles)
 	{
-		std::filesystem::path fullPath { _headerDir };
+		fs::path fullPath { _headerDir };
 
 		fullPath /= (_options.customSchema->filenamePrefix + "Objects.h");
 		return fullPath.string();
@@ -352,7 +359,7 @@ std::string Generator::getObjectHeaderPath() const noexcept
 
 std::string Generator::getSourcePath() const noexcept
 {
-	std::filesystem::path fullPath { _sourceDir };
+	fs::path fullPath { _sourceDir };
 
 	if (_isIntrospection)
 	{
@@ -1659,8 +1666,7 @@ std::string Generator::getOutputCppType(const OutputField& field) const noexcept
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { headerFile,
-		std::filesystem::path(_headerPath).filename().string() };
+	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
 
 	headerFile << R"cpp(#include "graphqlservice/GraphQLService.h"
 
@@ -2042,8 +2048,8 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	if (!_isIntrospection)
 	{
-		sourceFile << R"cpp(#include ")cpp"
-				   << std::filesystem::path(_objectHeaderPath).filename().string() << R"cpp("
+		sourceFile << R"cpp(#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
+				   << R"cpp("
 
 )cpp";
 	}
@@ -3421,8 +3427,8 @@ std::string Generator::getIntrospectionType(
 std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 {
 	std::vector<std::string> files;
-	const std::filesystem::path headerDir(_headerDir);
-	const std::filesystem::path sourceDir(_sourceDir);
+	const fs::path headerDir(_headerDir);
+	const fs::path sourceDir(_sourceDir);
 	std::string queryType;
 
 	for (const auto& operation : _operationTypes)
@@ -3437,10 +3443,10 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	// Output a convenience header
 	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
 	IncludeGuardScope includeGuard { objectHeaderFile,
-		std::filesystem::path(_objectHeaderPath).filename().string() };
+		fs::path(_objectHeaderPath).filename().string() };
 
-	objectHeaderFile << R"cpp(#include ")cpp"
-					 << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+	objectHeaderFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string()
+					 << R"cpp("
 
 )cpp";
 
@@ -3474,8 +3480,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
 		IncludeGuardScope includeGuard { headerFile, headerFilename };
 
-		headerFile << R"cpp(#include ")cpp"
-				   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -3498,7 +3503,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include ")cpp" << std::filesystem::path(_objectHeaderPath).filename().string()
+#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
 				   << R"cpp("
 
 #include "graphqlservice/Introspection.h"
