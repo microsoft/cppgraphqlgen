@@ -28,6 +28,11 @@ struct schema_location
 {
 	size_t line = 0;
 	size_t column = 1;
+
+	GRAPHQLERROR_EXPORT bool operator==(const schema_location& rhs) const noexcept
+	{
+		return line == rhs.line && column == rhs.column;
+	}
 };
 
 using path_segment = std::variant<std::string, size_t>;
@@ -38,6 +43,11 @@ struct schema_error
 	std::string message;
 	schema_location location;
 	field_path path;
+
+	GRAPHQLERROR_EXPORT bool operator==(const schema_error& rhs) const noexcept
+	{
+		return location == rhs.location && message == rhs.message && path == rhs.path;
+	}
 };
 
 // This exception bubbles up 1 or more error messages to the JSON results.
