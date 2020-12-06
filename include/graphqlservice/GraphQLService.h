@@ -947,6 +947,9 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 	const peg::ast_node& selection;
 };
 
+// Forward declare just the class type so we can reference it in the Request::_validation member.
+class ValidateExecutableVisitor;
+
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
 // also needs the values of the request variables.
@@ -954,7 +957,7 @@ class Request : public std::enable_shared_from_this<Request>
 {
 protected:
 	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
-	GRAPHQLSERVICE_EXPORT virtual ~Request() = default;
+	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
 	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
@@ -1025,6 +1028,7 @@ private:
 		const std::string& operationName, response::Value&& variables) const;
 
 	TypeMap _operations;
+	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
