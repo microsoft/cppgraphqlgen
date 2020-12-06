@@ -227,6 +227,7 @@ private:
 	using OperationVariables = std::optional<VariableTypes>;
 	using VariableSet = std::set<std::string>;
 
+	// These members store Introspection schema information which does not change between queries.
 	OperationTypes _operationTypes;
 	ValidateTypeKinds _typeKinds;
 	MatchingTypes _matchingTypes;
@@ -234,15 +235,18 @@ private:
 	EnumValues _enumValues;
 	ScalarTypes _scalarTypes;
 
+	// These members store information that's specific to a single query and changes every time we
+	// visit a new one. They must be reset in between queries.
 	ExecutableNodes _fragmentDefinitions;
 	ExecutableNodes _operationDefinitions;
+	FragmentSet _referencedFragments;
+	FragmentSet _fragmentCycles;
 
+	// These members store state for the visitor. They implicitly reset each time we call visit.
 	OperationVariables _operationVariables;
 	VariableDefinitions _variableDefinitions;
 	VariableSet _referencedVariables;
-	FragmentSet _referencedFragments;
 	FragmentSet _fragmentStack;
-	FragmentSet _fragmentCycles;
 	size_t _fieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
