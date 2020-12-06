@@ -792,6 +792,12 @@ std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 {
 	auto errors = std::move(_errors);
 
+	// Reset all of the state for this query, but keep the Introspection schema information.
+	_fragmentDefinitions.clear();
+	_operationDefinitions.clear();
+	_referencedFragments.clear();
+	_fragmentCycles.clear();
+
 	return errors;
 }
 

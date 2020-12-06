@@ -1759,7 +1759,15 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 
 Request::Request(TypeMap&& operationTypes)
 	: _operations(std::move(operationTypes))
+	, _validation(std::make_unique<ValidateExecutableVisitor>(*this))
 {
+}
+
+Request::~Request()
+{
+	// The default implementation is fine, but it can't be declared as = default because it needs to
+	// know how to destroy the _validation member and it can't do that with just a forward
+	// declaration of the class.
 }
 
 std::vector<schema_error> Request::validate(peg::ast& query) const
@@ -1768,11 +1776,8 @@ std::vector<schema_error> Request::validate(peg::ast& query) const
 
 	if (!query.validated)
 	{
-		ValidateExecutableVisitor visitor(*this);
-
-		visitor.visit(*query.root);
-
-		errors = visitor.getStructuredErrors();
+		_validation->visit(*query.root);
+		errors = _validation->getStructuredErrors();
 		query.validated = errors.empty();
 	}
 
