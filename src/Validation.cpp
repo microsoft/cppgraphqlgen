@@ -521,31 +521,10 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
 						&& itrLocations != entry.end()
 						&& itrLocations->second.type() == response::Type::List)
 					{
-						ValidateDirective directive;
+						const auto& name = itrName->second.get<response::StringType>();
 						const auto& locations = itrLocations->second.get<response::ListType>();
 
-						for (const auto& location : locations)
-						{
-							if (location.type() != response::Type::EnumValue)
-							{
-								continue;
-							}
-
-							directive.locations.insert(
-								ModifiedArgument<introspection::DirectiveLocation>::convert(
-									location));
-						}
-
-						const auto& itrArgs = entry.find(R"gql(args)gql");
-						if (itrArgs != entry.end()
-							&& itrArgs->second.type() == response::Type::List)
-						{
-							directive.arguments =
-								getArguments(itrArgs->second.get<response::ListType>());
-						}
-
-						_directives[itrName->second.get<response::StringType>()] =
-							std::move(directive);
+						addDirective(name, locations, entry);
 					}
 				}
 			}
@@ -1861,6 +1840,31 @@ void ValidateExecutableVisitor::addInterfaceOrUnion(
 void ValidateExecutableVisitor::addScalar(const std::string& scalarName)
 {
 	_scalarTypes.insert(scalarName);
+}
+
+void ValidateExecutableVisitor::addDirective(const std::string& name,
+	const response::ListType& locations, const response::Value& descriptionMap)
+{
+	ValidateDirective directive;
+
+	for (const auto& location : locations)
+	{
+		if (location.type() != response::Type::EnumValue)
+		{
+			continue;
+		}
+
+		directive.locations.insert(
+			ModifiedArgument<introspection::DirectiveLocation>::convert(location));
+	}
+
+	const auto& itrArgs = descriptionMap.find(R"gql(args)gql");
+	if (itrArgs != descriptionMap.end() && itrArgs->second.type() == response::Type::List)
+	{
+		directive.arguments = getArguments(itrArgs->second.get<response::ListType>());
+	}
+
+	_directives[name] = std::move(directive);
 }
 
 template <class _FieldTypes>

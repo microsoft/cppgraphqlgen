@@ -240,6 +240,8 @@ private:
 	void addEnum(const std::string& enumName, const response::Value& enumDescriptionMap);
 	void addObject(const std::string& name, const response::Value& typeDescriptionMap);
 	void addInterfaceOrUnion(const std::string& name, const response::Value& typeDescriptionMap);
+	void addDirective(const std::string& name, const response::ListType& locations,
+		const response::Value& descriptionMap);
 	TypeFields::const_iterator addTypeFields(
 		const std::string& typeName, const response::Value& typeDescriptionMap);
 	InputTypeFields::const_iterator addInputTypeFields(
