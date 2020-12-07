@@ -15,81 +15,22 @@ namespace graphql::service {
 
 void addErrorMessage(std::string&& message, response::Value& error)
 {
-	error.emplace_back(std::string { strMessage }, response::Value(std::move(message)));
+	graphql::response::addErrorMessage(std::move(message), error);
 }
 
 void addErrorLocation(const schema_location& location, response::Value& error)
 {
-	if (location.line == 0)
-	{
-		return;
-	}
-
-	response::Value errorLocation(response::Type::Map);
-
-	errorLocation.reserve(2);
-	errorLocation.emplace_back(std::string { strLine },
-		response::Value(static_cast<response::IntType>(location.line)));
-	errorLocation.emplace_back(std::string { strColumn },
-		response::Value(static_cast<response::IntType>(location.column)));
-
-	response::Value errorLocations(response::Type::List);
-
-	errorLocations.reserve(1);
-	errorLocations.emplace_back(std::move(errorLocation));
-
-	error.emplace_back(std::string { strLocations }, std::move(errorLocations));
+	graphql::response::addErrorLocation(location, error);
 }
 
 void addErrorPath(field_path&& path, response::Value& error)
 {
-	if (path.empty())
-	{
-		return;
-	}
-
-	response::Value errorPath(response::Type::List);
-
-	errorPath.reserve(path.size());
-	while (!path.empty())
-	{
-		auto& segment = path.front();
-
-		if (std::holds_alternative<std::string>(segment))
-		{
-			errorPath.emplace_back(response::Value(std::move(std::get<std::string>(segment))));
-		}
-		else if (std::holds_alternative<size_t>(segment))
-		{
-			errorPath.emplace_back(
-				response::Value(static_cast<response::IntType>(std::get<size_t>(segment))));
-		}
-
-		path.pop();
-	}
-
-	error.emplace_back(std::string { strPath }, std::move(errorPath));
+	graphql::response::addErrorPath(std::move(path), error);
 }
 
 response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors)
 {
-	response::Value errors(response::Type::List);
-
-	errors.reserve(structuredErrors.size());
-
-	for (auto error : structuredErrors)
-	{
-		response::Value entry(response::Type::Map);
-
-		entry.reserve(3);
-		addErrorMessage(std::move(error.message), entry);
-		addErrorLocation(error.location, entry);
-		addErrorPath(std::move(error.path), entry);
-
-		errors.emplace_back(std::move(entry));
-	}
-
-	return errors;
+	return graphql::response::buildErrorValues(structuredErrors);
 }
 
 schema_exception::schema_exception(std::vector<schema_error>&& structuredErrors)
@@ -801,12 +742,7 @@ std::future<response::Value> ModifiedResult<Object>::convert(
 
 			if (!wrappedResult)
 			{
-				response::Value document(response::Type::Map);
-
-				document.emplace_back(std::string { strData },
-					response::Value(response::Type::Null));
-
-				return document;
+				return response::Value(response::ResultType());
 			}
 
 			return wrappedResult
@@ -1020,7 +956,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		for (auto& message : messages)
 		{
-			if (message.location.line == 0)
+			if (message.location == graphql::error::emptyLocation)
 			{
 				message.location = { position.line, position.column };
 			}
@@ -1211,7 +1147,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 		selectionSetParams.launch,
 		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& children) {
 			response::Value data(response::Type::Map);
-			response::Value errors(response::Type::List);
+			std::vector<schema_error> errors;
 
 			while (!children.empty())
 			{
@@ -1220,42 +1156,32 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 				try
 				{
 					auto value = children.front().second.get();
-					auto members = value.release<response::MapType>();
-
-					for (auto& entry : members)
+					auto result = value.release<response::ResultType>();
+					if (result.errors.size())
 					{
-						if (entry.second.type() == response::Type::List && entry.first == strErrors)
+						errors.reserve(errors.size() + result.errors.size());
+						for (auto& error : result.errors)
 						{
-							auto errorEntries = entry.second.release<response::ListType>();
-
-							for (auto& errorEntry : errorEntries)
-							{
-								errors.emplace_back(std::move(errorEntry));
-							}
+							errors.emplace_back(std::move(error));
 						}
-						else if (entry.first == strData)
-						{
-							auto itrData = data.find(name);
+					}
+					auto itrData = data.find(name);
 
-							if (itrData == data.end())
-							{
-								data.emplace_back(std::move(name), std::move(entry.second));
-							}
-							else if (itrData->second != entry.second)
-							{
-								std::ostringstream message;
-								response::Value error(response::Type::Map);
+					if (itrData == data.end())
+					{
+						data.emplace_back(std::move(name), std::move(result.data));
+					}
+					else if (itrData->second != result.data)
+					{
+						std::ostringstream message;
 
-								message << "Ambiguous field error name: " << name;
-								addErrorMessage(message.str(), error);
-								errors.emplace_back(std::move(error));
-							}
-						}
+						message << "Ambiguous field error name: " << name;
+						errors.emplace_back(schema_error { message.str() });
 					}
 				}
 				catch (schema_exception& scx)
 				{
-					auto messages = scx.getErrors().release<response::ListType>();
+					auto messages = scx.getStructuredErrors();
 
 					errors.reserve(errors.size() + messages.size());
 					for (auto& error : messages)
@@ -1274,10 +1200,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 					message << "Field error name: " << name << " unknown error: " << ex.what();
 
-					response::Value error(response::Type::Map);
-
-					addErrorMessage(message.str(), error);
-					errors.emplace_back(std::move(error));
+					errors.emplace_back(schema_error { message.str() });
 
 					if (data.find(name) == data.end())
 					{
@@ -1288,16 +1211,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 				children.pop();
 			}
 
-			response::Value result(response::Type::Map);
-
-			result.emplace_back(std::string { strData }, std::move(data));
-
-			if (errors.size() > 0)
-			{
-				result.emplace_back(std::string { strErrors }, std::move(errors));
-			}
-
-			return result;
+			return response::Value(response::ResultType { std::move(data), std::move(errors) });
 		},
 		std::move(selections));
 }
@@ -1826,7 +1740,12 @@ std::future<response::Value> Request::resolve(std::launch launch,
 		return promise.get_future();
 	}
 
-	return resolveValidated(launch, state, *query.root, operationName, std::move(variables));
+	return std::async(
+		launch,
+		[](std::future<response::Value> result) {
+			return result.get().toMap();
+		},
+		resolveValidated(launch, state, *query.root, operationName, std::move(variables)));
 }
 
 std::future<response::Value> Request::resolveValidated(std::launch launch,
@@ -2269,7 +2188,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			result = std::async(
 				launch,
 				[registration](std::future<response::Value> document) {
-					return document.get();
+					return document.get().toMap();
 				},
 				optionalOrDefaultSubscription->resolve(selectionSetParams,
 					registration->selection,

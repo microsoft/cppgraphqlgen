@@ -87,13 +87,13 @@ namespace {
 
 using namespace std::literals;
 
-constexpr std::string_view strData { "data"sv };
-constexpr std::string_view strErrors { "errors"sv };
-constexpr std::string_view strMessage { "message"sv };
-constexpr std::string_view strLocations { "locations"sv };
-constexpr std::string_view strLine { "line"sv };
-constexpr std::string_view strColumn { "column"sv };
-constexpr std::string_view strPath { "path"sv };
+constexpr std::string_view strData = response::strData;
+constexpr std::string_view strErrors = response::strErrors;
+constexpr std::string_view strMessage = response::strMessage;
+constexpr std::string_view strLocations = response::strLocations;
+constexpr std::string_view strLine = response::strLine;
+constexpr std::string_view strColumn = response::strColumn;
+constexpr std::string_view strPath = response::strPath;
 constexpr std::string_view strQuery { "query"sv };
 constexpr std::string_view strMutation { "mutation"sv };
 constexpr std::string_view strSubscription { "subscription"sv };
@@ -571,11 +571,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					response::Value document(response::Type::Map);
-
-					document.emplace_back(std::string { strData }, response::Value());
-
-					return document;
+					return response::Value(response::ResultType());
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -609,11 +605,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					response::Value document(response::Type::Map);
-
-					document.emplace_back(std::string { strData }, response::Value());
-
-					return document;
+					return response::Value(response::ResultType());
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -668,7 +660,7 @@ struct ModifiedResult
 				}
 
 				response::Value data(response::Type::List);
-				response::Value errors(response::Type::List);
+				std::vector<schema_error> errors;
 
 				wrappedParams.errorPath.back() = size_t { 0 };
 
@@ -677,45 +669,32 @@ struct ModifiedResult
 					try
 					{
 						auto value = children.front().get();
-						auto members = value.release<response::MapType>();
-
-						for (auto& entry : members)
+						auto result = value.release<response::ResultType>();
+						if (result.errors.size())
 						{
-							if (entry.second.type() == response::Type::List
-								&& entry.first == strErrors)
+							errors.reserve(errors.size() + result.errors.size());
+							for (auto& error : result.errors)
 							{
-								auto errorEntries = entry.second.release<response::ListType>();
-
-								for (auto& errorEntry : errorEntries)
-								{
-									errors.emplace_back(std::move(errorEntry));
-								}
-							}
-							else if (entry.first == strData)
-							{
-								data.emplace_back(std::move(entry.second));
+								errors.emplace_back(std::move(error));
 							}
 						}
+						data.emplace_back(std::move(result.data));
 					}
 					catch (schema_exception& scx)
 					{
 						auto messages = scx.getStructuredErrors();
 
 						errors.reserve(errors.size() + messages.size());
-						for (auto& message : messages)
+						for (auto& error : messages)
 						{
-							response::Value error(response::Type::Map);
-
-							error.reserve(3);
-							addErrorMessage(std::move(message.message), error);
-							addErrorLocation(message.location.line > 0
-									? message.location
-									: wrappedParams.getLocation(),
-								error);
-							addErrorPath(field_path { message.path.empty() ? wrappedParams.errorPath
-																		   : message.path },
-								error);
-
+							if (error.location == graphql::error::emptyLocation)
+							{
+								error.location = wrappedParams.getLocation();
+							}
+							if (error.path.empty())
+							{
+								error.path = field_path { wrappedParams.errorPath };
+							}
 							errors.emplace_back(std::move(error));
 						}
 					}
@@ -727,12 +706,8 @@ struct ModifiedResult
 								<< " unknown error: " << ex.what();
 
 						schema_location location = wrappedParams.getLocation();
-						response::Value error(response::Type::Map);
-
-						error.reserve(3);
-						addErrorMessage(message.str(), error);
-						addErrorLocation(location, error);
-						addErrorPath(field_path { wrappedParams.errorPath }, error);
+						field_path path { wrappedParams.errorPath };
+						schema_error error { message.str(), std::move(location), std::move(path) };
 
 						errors.emplace_back(std::move(error));
 					}
@@ -741,17 +716,7 @@ struct ModifiedResult
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 
-				response::Value document(response::Type::Map);
-
-				document.reserve(2);
-				document.emplace_back(std::string { strData }, std::move(data));
-
-				if (errors.size() > 0)
-				{
-					document.emplace_back(std::string { strErrors }, std::move(errors));
-				}
-
-				return document;
+				return response::Value(response::ResultType { std::move(data), std::move(errors) });
 			},
 			std::move(result),
 			std::move(params));
@@ -772,7 +737,7 @@ private:
 				ResolverParams&& paramsFuture,
 				ResolverCallback&& resolverFuture) noexcept {
 				response::Value data;
-				response::Value errors(response::Type::List);
+				std::vector<schema_error> errors;
 
 				try
 				{
@@ -783,19 +748,8 @@ private:
 					auto messages = scx.getStructuredErrors();
 
 					errors.reserve(errors.size() + messages.size());
-					for (auto& message : messages)
+					for (auto& error : messages)
 					{
-						response::Value error(response::Type::Map);
-
-						error.reserve(3);
-						addErrorMessage(std::move(message.message), error);
-						addErrorLocation(message.location.line > 0 ? message.location
-																   : paramsFuture.getLocation(),
-							error);
-						addErrorPath(field_path { message.path.empty() ? paramsFuture.errorPath
-																	   : message.path },
-							error);
-
 						errors.emplace_back(std::move(error));
 					}
 				}
@@ -806,27 +760,13 @@ private:
 					message << "Field name: " << paramsFuture.fieldName
 							<< " unknown error: " << ex.what();
 
-					response::Value error(response::Type::Map);
-
-					error.reserve(3);
-					addErrorMessage(message.str(), error);
-					addErrorLocation(paramsFuture.getLocation(), error);
-					addErrorPath(std::move(paramsFuture.errorPath), error);
-
+					schema_error error { message.str(),
+						paramsFuture.getLocation(),
+						paramsFuture.errorPath };
 					errors.emplace_back(std::move(error));
 				}
 
-				response::Value document(response::Type::Map);
-
-				document.reserve(2);
-				document.emplace_back(std::string { strData }, std::move(data));
-
-				if (errors.size() > 0)
-				{
-					document.emplace_back(std::string { strErrors }, std::move(errors));
-				}
-
-				return document;
+				return response::Value(response::ResultType { std::move(data), std::move(errors) });
 			},
 			std::move(result),
 			std::move(params),

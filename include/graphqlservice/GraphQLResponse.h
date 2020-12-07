@@ -18,6 +18,8 @@
 #endif // !GRAPHQL_DLLEXPORTS
 // clang-format on
 
+#include "graphqlservice/GraphQLError.h"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -39,6 +41,7 @@ enum class Type : uint8_t
 	Float,	   // JSON Number
 	EnumValue, // JSON String
 	Scalar,	   // JSON any type
+	Result,	   // pair of data=Value, errors=vector<schema_error>
 };
 
 struct Value;
@@ -51,6 +54,7 @@ using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
 using IdType = std::vector<uint8_t>;
+struct ResultType;
 
 template <typename ValueType>
 struct ValueTypeTraits
@@ -104,6 +108,14 @@ struct ValueTypeTraits<FloatType>
 };
 
 template <>
+struct ValueTypeTraits<ResultType>
+{
+	// Get by const reference and release by value.
+	using get_type = const ResultType&;
+	using release_type = ResultType;
+};
+
+template <>
 struct ValueTypeTraits<IdType>
 {
 	// ID values are represented as a String, there's no separate handling of this type.
@@ -122,6 +134,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(ResultType&& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -155,6 +168,9 @@ struct Value
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
 	GRAPHQLRESPONSE_EXPORT const Value& operator[](size_t index) const;
+
+	// Valid for Type::Result
+	GRAPHQLRESPONSE_EXPORT Value toMap();
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -197,6 +213,46 @@ private:
 	std::unique_ptr<TypedData> _data;
 };
 
+struct ResultType
+{
+	Value data = Value(Type::Null);
+	std::vector<graphql::error::schema_error> errors = {};
+
+	ResultType& operator=(const ResultType& other) = delete;
+
+	GRAPHQLRESPONSE_EXPORT bool operator==(const ResultType& rhs) const noexcept
+	{
+		return data == rhs.data && errors == rhs.errors;
+	}
+
+	GRAPHQLRESPONSE_EXPORT size_t size() const;
+};
+
+namespace {
+
+using namespace std::literals;
+
+constexpr std::string_view strData { "data"sv };
+constexpr std::string_view strErrors { "errors"sv };
+constexpr std::string_view strMessage { "message"sv };
+constexpr std::string_view strLocations { "locations"sv };
+constexpr std::string_view strLine { "line"sv };
+constexpr std::string_view strColumn { "column"sv };
+constexpr std::string_view strPath { "path"sv };
+
+} // namespace
+
+// Errors should have a message string, and optional locations and a path.
+GRAPHQLRESPONSE_EXPORT void addErrorMessage(std::string&& message, Value& error);
+
+GRAPHQLRESPONSE_EXPORT void addErrorLocation(
+	const graphql::error::schema_location& location, Value& error);
+
+GRAPHQLRESPONSE_EXPORT void addErrorPath(graphql::error::field_path&& path, Value& error);
+
+GRAPHQLRESPONSE_EXPORT Value buildErrorValues(
+	const std::vector<graphql::error::schema_error>& structuredErrors);
+
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the specialized template methods
 template <>
@@ -224,6 +280,8 @@ GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
 template <>
+GRAPHQLRESPONSE_EXPORT const ResultType& Value::get<ResultType>() const;
+template <>
 GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
 template <>
 GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
@@ -231,6 +289,8 @@ template <>
 GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
 template <>
 GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
+template <>
+GRAPHQLRESPONSE_EXPORT ResultType Value::release<ResultType>();
 #endif // GRAPHQL_DLLEXPORTS
 
 } /* namespace graphql::response */

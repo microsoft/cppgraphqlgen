@@ -35,6 +35,8 @@ struct schema_location
 	}
 };
 
+constexpr schema_location emptyLocation {};
+
 using path_segment = std::variant<std::string, size_t>;
 using field_path = std::queue<path_segment>;
 

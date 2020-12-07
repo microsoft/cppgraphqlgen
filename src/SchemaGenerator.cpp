@@ -3229,6 +3229,10 @@ std::string Generator::getArgumentDefaultValue(
 )cpp";
 			break;
 		}
+
+		default:
+			// should never reach
+			std::cerr << "Unexpected reponse type: " << (int)defaultValue.type() << std::endl;
 	}
 
 	return argumentDefaultValue.str();
