@@ -199,7 +199,7 @@ void ValidateArgumentValueVisitor::visit(const peg::ast_node& value)
 
 void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 {
-	ValidateArgumentVariable value { std::string { variable.string_view().substr(1) } };
+	ValidateArgumentVariable value { variable.string_view().substr(1) };
 	auto position = variable.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -763,8 +763,8 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 	peg::for_each_child<peg::variable>(operationDefinition,
 		[this, &operationName](const peg::ast_node& variable) {
-			std::string variableName;
-			ValidateArgument variableArgument;
+			std::string_view variableName;
+			VariableDefinition variableArgument;
 
 			for (const auto& child : variable.children)
 			{
@@ -852,8 +852,9 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				}
 			}
 
-			_variableDefinitions.insert({ variableName, variable });
-			_operationVariables->insert({ std::move(variableName), std::move(variableArgument) });
+			const auto& position = variable.begin();
+			variableArgument.position = { position.line, position.column };
+			_operationVariables->insert({ variableName, std::move(variableArgument) });
 		});
 
 	peg::on_first_child<peg::directives>(operationDefinition,
@@ -911,12 +912,12 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	_fragmentStack.clear();
 	_selectionFields.clear();
 
-	for (const auto& variable : _variableDefinitions)
+	for (const auto& variable : *_operationVariables)
 	{
-		if (_referencedVariables.find(variable.first) == _referencedVariables.end())
+		if (_referencedVariables.find(&variable.second) == _referencedVariables.end())
 		{
 			// http://spec.graphql.org/June2018/#sec-All-Variables-Used
-			auto position = variable.second.begin();
+			auto position = variable.second.position;
 			std::ostringstream error;
 
 			error << "Unused variable name: " << variable.first;
@@ -926,7 +927,6 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	}
 
 	_operationVariables.reset();
-	_variableDefinitions.clear();
 	_referencedVariables.clear();
 }
 
@@ -1091,11 +1091,12 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			_referencedVariables.insert(variable.name);
+			const auto& variableDefinition = itrVariable->second;
+			_referencedVariables.insert(&variableDefinition);
 
 			return validateVariableType(
-				hasNonNullDefaultValue || itrVariable->second.nonNullDefaultValue,
-				*itrVariable->second.type,
+				hasNonNullDefaultValue || variableDefinition.nonNullDefaultValue,
+				*variableDefinition.type,
 				argument.position,
 				type);
 		}

@@ -198,6 +198,11 @@ struct ValidateArgument
 
 using ValidateTypeFieldArguments = std::unordered_map<std::string, ValidateArgument>;
 
+struct VariableDefinition : public ValidateArgument
+{
+	schema_location position;
+};
+
 struct ValidateTypeField
 {
 	std::shared_ptr<ValidateType> returnType;
@@ -375,7 +380,7 @@ struct ValidateArgumentVariable
 {
 	bool operator==(const ValidateArgumentVariable& other) const;
 
-	std::string name;
+	const std::string_view name;
 };
 
 struct ValidateArgumentEnumValue
@@ -638,10 +643,9 @@ private:
 
 	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string>;
-	using VariableDefinitions = std::map<std::string, const peg::ast_node&>;
-	using VariableTypes = std::map<std::string, ValidateArgument>;
+	using VariableTypes = std::unordered_map<std::string_view, VariableDefinition>;
 	using OperationVariables = std::optional<VariableTypes>;
-	using VariableSet = std::set<std::string>;
+	using VariableSet = std::unordered_set<const VariableDefinition*>;
 
 	// These members store information that's specific to a single query and changes every time we
 	// visit a new one. They must be reset in between queries.
@@ -652,7 +656,6 @@ private:
 
 	// These members store state for the visitor. They implicitly reset each time we call visit.
 	OperationVariables _operationVariables;
-	VariableDefinitions _variableDefinitions;
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
