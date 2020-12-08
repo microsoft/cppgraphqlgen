@@ -983,9 +983,10 @@ ValidateTypeFieldArguments ValidationContext::getArguments(const response::ListT
 }
 
 std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
-	const std::string& name) const
+	const std::string_view& name) const
 {
-	const auto& itr = _directives.find(name);
+	// TODO: string is a work around, the directives map will be moved to string_view soon
+	const auto& itr = _directives.find(std::string { name });
 	if (itr == _directives.cend())
 	{
 		return std::nullopt;
@@ -1660,8 +1661,8 @@ std::shared_ptr<T> ValidationContext::makeNamedValidateType(T&& typeDef)
 	return type;
 }
 
-void ValidationContext::addDirective(const std::string& name, const response::ListType& locations,
-	const response::Value& descriptionMap)
+void ValidationContext::addDirective(const std::string_view& name,
+	const response::ListType& locations, const response::Value& descriptionMap)
 {
 	ValidateDirective directive;
 
@@ -1682,7 +1683,8 @@ void ValidationContext::addDirective(const std::string& name, const response::Li
 		directive.arguments = getArguments(itrArgs->second.get<response::ListType>());
 	}
 
-	_directives[name] = std::move(directive);
+	// TODO: string is a work around, the directives will be moved to string_view soon
+	_directives[std::string { name }] = std::move(directive);
 }
 
 template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
@@ -2171,11 +2173,11 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 void ValidateExecutableVisitor::visitDirectives(
 	introspection::DirectiveLocation location, const peg::ast_node& directives)
 {
-	std::set<std::string> uniqueDirectives;
+	std::unordered_set<std::string_view> uniqueDirectives;
 
 	for (const auto& directive : directives.children)
 	{
-		std::string directiveName;
+		std::string_view directiveName;
 
 		peg::on_first_child<peg::directive_name>(*directive,
 			[&directiveName](const peg::ast_node& child) {

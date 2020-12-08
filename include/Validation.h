@@ -515,7 +515,7 @@ public:
 	};
 
 	std::optional<std::reference_wrapper<const ValidateDirective>> getDirective(
-		const std::string& name) const;
+		const std::string_view& name) const;
 	std::optional<std::reference_wrapper<const std::string>> getOperationType(
 		const std::string_view& name) const;
 
@@ -540,7 +540,7 @@ private:
 
 	ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
 
-	using Directives = std::map<std::string, ValidateDirective>;
+	using Directives = std::unordered_map<std::string, ValidateDirective>;
 
 	// These members store Introspection schema information which does not change between queries.
 	OperationTypes _operationTypes;
@@ -595,7 +595,7 @@ private:
 	void addInputObject(const std::string_view& name);
 	void addInterface(const std::string_view& name, const response::Value& typeDescriptionMap);
 	void addUnion(const std::string_view& name, const response::Value& typeDescriptionMap);
-	void addDirective(const std::string& name, const response::ListType& locations,
+	void addDirective(const std::string_view& name, const response::ListType& locations,
 		const response::Value& descriptionMap);
 
 	void addTypeFields(std::shared_ptr<ContainerValidateType<ValidateTypeField>> type,
