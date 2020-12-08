@@ -285,7 +285,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 
 	for (const auto& field : objectValue.children)
 	{
-		auto name = field->children.front()->string();
+		const auto& name = field->children.front()->string_view();
 
 		if (value.values.find(name) != value.values.end())
 		{
@@ -310,7 +310,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 }
 
 ValidateField::ValidateField(std::shared_ptr<const ValidateType> returnType,
-	std::shared_ptr<const ValidateType>&& objectType, const std::string& fieldName,
+	std::shared_ptr<const ValidateType>&& objectType, const std::string_view& fieldName,
 	ValidateFieldArguments&& arguments)
 	: returnType(returnType)
 	, objectType(std::move(objectType))
@@ -1186,7 +1186,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			const auto& inputObj = static_cast<const InputObjectType&>(type);
 
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
-			std::set<std::string> subFields;
+			std::unordered_set<std::string_view> subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
@@ -1770,7 +1770,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		visitDirectives(introspection::DirectiveLocation::FIELD, child);
 	});
 
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -1849,7 +1849,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	std::string alias;
+	std::string_view alias;
 
 	peg::on_first_child<peg::alias_name>(field, [&alias](const peg::ast_node& child) {
 		alias = child.string_view();
@@ -1861,15 +1861,15 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	ValidateFieldArguments validateArguments;
-	std::map<std::string, schema_location> argumentLocations;
-	std::queue<std::string> argumentNames;
+	std::unordered_map<std::string_view, schema_location> argumentLocations;
+	std::queue<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
 			const peg::ast_node& child) {
 			for (auto& argument : child.children)
 			{
-				auto argumentName = argument->children.front()->string();
+				const auto& argumentName = argument->children.front()->string_view();
 				auto position = argument->begin();
 
 				if (validateArguments.find(argumentName) != validateArguments.end())
@@ -1929,7 +1929,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			argumentNames.pop();
 
-			auto itrArgument = objectField.arguments.find(argumentName);
+			// TODO: string is a work around, the arguments set will be moved to string_view soon
+			auto itrArgument = objectField.arguments.find(std::string { argumentName });
 
 			if (itrArgument == objectField.arguments.end())
 			{
@@ -2256,13 +2257,13 @@ void ValidateExecutableVisitor::visitDirectives(
 		peg::on_first_child<peg::arguments>(*directive,
 			[this, &directive, &directiveName, &validateDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
-				std::map<std::string, schema_location> argumentLocations;
-				std::queue<std::string> argumentNames;
+				std::unordered_map<std::string_view, schema_location> argumentLocations;
+				std::queue<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)
 				{
 					auto position = argument->begin();
-					auto argumentName = argument->children.front()->string();
+					const auto& argumentName = argument->children.front()->string_view();
 
 					if (validateArguments.find(argumentName) != validateArguments.end())
 					{
@@ -2281,7 +2282,7 @@ void ValidateExecutableVisitor::visitDirectives(
 					visitor.visit(*argument->children.back());
 					validateArguments[argumentName] = visitor.getArgumentValue();
 					argumentLocations[argumentName] = { position.line, position.column };
-					argumentNames.push(std::move(argumentName));
+					argumentNames.push(argumentName);
 				}
 
 				while (!argumentNames.empty())
@@ -2290,7 +2291,10 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					argumentNames.pop();
 
-					const auto& itrArgument = validateDirective.arguments.find(argumentName);
+					// TODO: string is a work around, the arguments set will be moved to string_view
+					// soon
+					const auto& itrArgument =
+						validateDirective.arguments.find(std::string { argumentName });
 					if (itrArgument == validateDirective.arguments.cend())
 					{
 						// http://spec.graphql.org/June2018/#sec-Argument-Names

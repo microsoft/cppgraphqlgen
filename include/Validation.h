@@ -223,9 +223,11 @@ public:
 
 	using FieldsContainer = std::unordered_map<std::string, FieldType>;
 
-	std::optional<std::reference_wrapper<const FieldType>> getField(const std::string& name) const
+	std::optional<std::reference_wrapper<const FieldType>> getField(
+		const std::string_view& name) const
 	{
-		const auto& itr = _fields.find(name);
+		// TODO: string is a work around, the _fields set will be moved to string_view soon
+		const auto& itr = _fields.find(std::string { name });
 		if (itr == _fields.cend())
 		{
 			return std::nullopt;
@@ -412,7 +414,7 @@ struct ValidateArgumentMap
 {
 	bool operator==(const ValidateArgumentMap& other) const;
 
-	std::map<std::string, ValidateArgumentValuePtr> values;
+	std::unordered_map<std::string_view, ValidateArgumentValuePtr> values;
 };
 
 using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
@@ -459,19 +461,19 @@ private:
 	std::vector<schema_error>& _errors;
 };
 
-using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
+using ValidateFieldArguments = std::unordered_map<std::string_view, ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
 	ValidateField(std::shared_ptr<const ValidateType> returnType,
-		std::shared_ptr<const ValidateType>&& objectType, const std::string& fieldName,
+		std::shared_ptr<const ValidateType>&& objectType, const std::string_view& fieldName,
 		ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
 	std::shared_ptr<const ValidateType> returnType;
 	std::shared_ptr<const ValidateType> objectType;
-	std::string fieldName;
+	std::string_view fieldName;
 	ValidateFieldArguments arguments;
 };
 
@@ -661,7 +663,7 @@ private:
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
 	std::shared_ptr<const ValidateType> _scopedType;
-	std::map<std::string, ValidateField> _selectionFields;
+	std::unordered_map<std::string_view, ValidateField> _selectionFields;
 	struct
 	{
 		std::shared_ptr<ValidateType> nonNullString;
