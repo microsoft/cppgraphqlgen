@@ -644,8 +644,8 @@ private:
 
 	std::vector<schema_error> _errors;
 
-	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
-	using FragmentSet = std::unordered_set<std::string>;
+	using ExecutableNodes = std::unordered_map<std::string_view, const peg::ast_node&>;
+	using FragmentSet = std::unordered_set<std::string_view>;
 	using VariableTypes = std::unordered_map<std::string_view, VariableDefinition>;
 	using OperationVariables = std::optional<VariableTypes>;
 	using VariableSet = std::unordered_set<const VariableDefinition*>;
@@ -653,7 +653,6 @@ private:
 	// These members store information that's specific to a single query and changes every time we
 	// visit a new one. They must be reset in between queries.
 	ExecutableNodes _fragmentDefinitions;
-	ExecutableNodes _operationDefinitions;
 	FragmentSet _referencedFragments;
 	FragmentSet _fragmentCycles;
 

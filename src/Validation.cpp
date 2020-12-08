@@ -588,7 +588,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		[this](const peg::ast_node& fragmentDefinition) {
 			const auto& fragmentName = fragmentDefinition.children.front();
 			const auto inserted =
-				_fragmentDefinitions.insert({ fragmentName->string(), fragmentDefinition });
+				_fragmentDefinitions.insert({ fragmentName->string_view(), fragmentDefinition });
 
 			if (!inserted.second)
 			{
@@ -602,18 +602,21 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			}
 		});
 
+	std::unordered_set<std::string_view> definedOperations;
+	schema_location unamedOperationLocation;
+
 	// Visit all of the operation definitions and check for duplicates.
 	peg::for_each_child<peg::operation_definition>(root,
-		[this](const peg::ast_node& operationDefinition) {
-			std::string operationName;
+		[this, &definedOperations, &unamedOperationLocation](
+			const peg::ast_node& operationDefinition) {
+			std::string_view operationName;
 
 			peg::on_first_child<peg::operation_name>(operationDefinition,
 				[&operationName](const peg::ast_node& child) {
 					operationName = child.string_view();
 				});
 
-			const auto inserted =
-				_operationDefinitions.insert({ std::move(operationName), operationDefinition });
+			const auto inserted = definedOperations.insert(operationName);
 
 			if (!inserted.second)
 			{
@@ -621,28 +624,25 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 				auto position = operationDefinition.begin();
 				std::ostringstream error;
 
-				error << "Duplicate operation name: " << inserted.first->first;
+				error << "Duplicate operation name: " << operationName;
 
 				_errors.push_back({ error.str(), { position.line, position.column } });
+			}
+			else if (operationName.empty())
+			{
+				auto position = operationDefinition.begin();
+				unamedOperationLocation = { position.line, position.column };
 			}
 		});
 
 	// Check for lone anonymous operations.
-	if (_operationDefinitions.size() > 1)
+	if (definedOperations.size() > 1)
 	{
-		auto itr = std::find_if(_operationDefinitions.cbegin(),
-			_operationDefinitions.cend(),
-			[](const std::pair<const std::string, const peg::ast_node&>& entry) noexcept {
-				return entry.first.empty();
-			});
-
-		if (itr != _operationDefinitions.cend())
+		if (definedOperations.find("") != definedOperations.cend())
 		{
 			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
-			auto position = itr->second.begin();
-
-			_errors.push_back(
-				{ "Anonymous operation not alone", { position.line, position.column } });
+			_errors.push_back({ "Anonymous operation not alone",
+				{ unamedOperationLocation.line, unamedOperationLocation.column } });
 		}
 	}
 
@@ -681,7 +681,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		std::transform(unreferencedFragments.cbegin(),
 			unreferencedFragments.cend(),
 			_errors.begin() + originalSize,
-			[](const std::pair<const std::string, const peg::ast_node&>&
+			[](const std::pair<const std::string_view, const peg::ast_node&>&
 					fragmentDefinition) noexcept {
 				auto position = fragmentDefinition.second.begin();
 				std::ostringstream message;
@@ -699,7 +699,6 @@ std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 
 	// Reset all of the state for this query, but keep the Introspection schema information.
 	_fragmentDefinitions.clear();
-	_operationDefinitions.clear();
 	_referencedFragments.clear();
 	_fragmentCycles.clear();
 
@@ -712,7 +711,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_DEFINITION, child);
 	});
 
-	const auto name = fragmentDefinition.children.front()->string();
+	const auto name = fragmentDefinition.children.front()->string_view();
 	const auto& selection = *fragmentDefinition.children.back();
 	const auto& typeCondition = fragmentDefinition.children[1];
 	const auto& innerTypeName = typeCondition->children.front()->string_view();
@@ -2044,7 +2043,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_SPREAD, child);
 	});
 
-	const std::string name(fragmentSpread.children.front()->string_view());
+	const std::string_view name(fragmentSpread.children.front()->string_view());
 	auto itr = _fragmentDefinitions.find(name);
 
 	if (itr == _fragmentDefinitions.cend())
