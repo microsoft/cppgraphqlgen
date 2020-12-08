@@ -252,7 +252,7 @@ void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue
 
 void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	ValidateArgumentEnumValue value { enumValue.string() };
+	ValidateArgumentEnumValue value { enumValue.string_view() };
 	auto position = enumValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -1264,9 +1264,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& value = std::get<ValidateArgumentEnumValue>(argument.value->data).value;
-			const auto& enumValues = static_cast<const EnumType&>(type).values();
-
-			if (enumValues.find(value) == enumValues.cend())
+			if (!static_cast<const EnumType&>(type).find(value))
 			{
 				std::ostringstream message;
 
@@ -1598,7 +1596,7 @@ void ValidationContext::addEnum(
 	if (itrEnumValues != enumDescriptionMap.end()
 		&& itrEnumValues->second.type() == response::Type::List)
 	{
-		std::set<const std::string> enumValues;
+		std::unordered_set<std::string> enumValues;
 		const auto& enumValuesEntries = itrEnumValues->second.get<response::ListType>();
 
 		for (const auto& enumValuesEntry : enumValuesEntries)

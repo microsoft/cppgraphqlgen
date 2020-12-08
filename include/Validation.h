@@ -103,19 +103,20 @@ using ScalarType = NamedType<introspection::TypeKind::SCALAR>;
 class EnumType : public NamedType<introspection::TypeKind::ENUM>
 {
 public:
-	EnumType(const std::string_view& name, std::set<const std::string>&& values)
+	EnumType(const std::string_view& name, std::unordered_set<std::string>&& values)
 		: NamedType<introspection::TypeKind::ENUM>(name)
 		, _values(std::move(values))
 	{
 	}
 
-	const std::set<const std::string>& values() const
+	bool find(const std::string_view& key) const
 	{
-		return _values;
+		// TODO: in the future the set will be of string_view
+		return _values.find(std::string { key }) != _values.end();
 	}
 
 private:
-	std::set<const std::string> _values;
+	std::unordered_set<std::string> _values;
 };
 
 template <introspection::TypeKind typeKind>
@@ -387,7 +388,7 @@ struct ValidateArgumentEnumValue
 {
 	bool operator==(const ValidateArgumentEnumValue& other) const;
 
-	std::string value;
+	const std::string_view value;
 };
 
 struct ValidateArgumentValue;
