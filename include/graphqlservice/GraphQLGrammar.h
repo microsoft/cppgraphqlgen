@@ -35,6 +35,23 @@ void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 }
 
 template <typename Rule>
+const ast_node* find_child(const ast_node& n, std::function<bool(const ast_node&)>&& func)
+{
+	for (const auto& child : n.children)
+	{
+		if (child->is_type<Rule>())
+		{
+			if (func(*child))
+			{
+				return child.get();
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+template <typename Rule>
 void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)

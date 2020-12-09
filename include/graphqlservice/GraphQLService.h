@@ -870,7 +870,7 @@ GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<Object>::conve
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
+using TypeMap = std::unordered_map<std::string_view, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
@@ -945,8 +945,14 @@ protected:
 public:
 	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
 
-	GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*> findOperationDefinition(
-		const peg::ast_node& root, const std::string& operationName) const;
+	[[deprecated(
+		"Use the Request::findOperationDefinition overload which takes a string_view reference "
+		"instead.")]] GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*>
+	findOperationDefinition(
+		const peg::ast_node& root, const std::string& operationName) const noexcept;
+
+	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
+		const peg::ast_node& root, const std::string_view& operationName) const noexcept;
 
 	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
 		const std::shared_ptr<RequestState>& state, peg::ast& query,

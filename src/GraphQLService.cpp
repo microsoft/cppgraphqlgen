@@ -1369,7 +1369,7 @@ public:
 
 	std::future<response::Value> getValue();
 
-	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
+	void visit(const std::string_view& operationType, const peg::ast_node& operationDefinition);
 
 private:
 	const ResolverContext _resolverContext;
@@ -1398,7 +1398,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 }
 
 void OperationDefinitionVisitor::visit(
-	const std::string& operationType, const peg::ast_node& operationDefinition)
+	const std::string_view& operationType, const peg::ast_node& operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 
@@ -1743,92 +1743,43 @@ std::vector<schema_error> Request::validate(peg::ast& query) const
 }
 
 std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(
-	const peg::ast_node& root, const std::string& operationName) const
+	const peg::ast_node& root, const std::string& operationName) const noexcept
+{
+	auto result = findOperationDefinition(root, std::string_view { operationName });
+
+	return std::pair<std::string, const peg::ast_node*> { std::string { result.first },
+		result.second };
+}
+
+std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefinition(
+	const peg::ast_node& root, const std::string_view& operationName) const noexcept
 {
 	bool hasAnonymous = false;
-	std::unordered_set<std::string> usedNames;
-	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
+	std::pair<std::string_view, const peg::ast_node*> result = { {}, nullptr };
 
-	peg::for_each_child<peg::operation_definition>(root,
-		[this, &hasAnonymous, &usedNames, &operationName, &result](
-			const peg::ast_node& operationDefinition) {
-			std::string operationType(strQuery);
+	peg::find_child<peg::operation_definition>(root,
+		[this, &hasAnonymous, &operationName, &result](const peg::ast_node& operationDefinition) {
+			std::string_view operationType = strQuery;
 
 			peg::on_first_child<peg::operation_type>(operationDefinition,
 				[&operationType](const peg::ast_node& child) {
 					operationType = child.string_view();
 				});
 
-			std::string name;
+			std::string_view name;
 
 			peg::on_first_child<peg::operation_name>(operationDefinition,
 				[&name](const peg::ast_node& child) {
 					name = child.string_view();
 				});
 
-			std::vector<schema_error> errors;
-			auto position = operationDefinition.begin();
-
-			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
-			if (!usedNames.insert(name).second)
+			if (operationName.empty() || name == operationName)
 			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Multiple anonymous operations";
-				}
-				else
-				{
-					message << "Duplicate named operations name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
+				result = { operationType, &operationDefinition };
+				return true;
 			}
 
-			hasAnonymous = hasAnonymous || name.empty();
-
-			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
-			if (name.empty() ? usedNames.size() > 1 : hasAnonymous)
-			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Unexpected anonymous operation";
-				}
-				else
-				{
-					message << "Unexpected named operation name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
-			}
-
-			auto itr = _operations.find(operationType);
-
-			if (itr == _operations.cend())
-			{
-				std::ostringstream message;
-
-				message << "Unsupported operation type: " << operationType;
-
-				if (!name.empty())
-				{
-					message << " name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
-			}
-
-			if (!errors.empty())
-			{
-				throw schema_exception(std::move(errors));
-			}
-			else if (operationName.empty() || name == operationName)
-			{
-				result = { std::move(operationType), &operationDefinition };
-			}
+			return false;
 		});
 
 	return result;
@@ -1909,7 +1860,8 @@ std::future<response::Value> Request::resolveValidated(std::launch launch,
 			});
 
 		auto fragments = fragmentVisitor.getFragments();
-		auto operationDefinition = findOperationDefinition(root, operationName);
+		auto operationDefinition =
+			findOperationDefinition(root, std::string_view { operationName });
 
 		if (!operationDefinition.second)
 		{
@@ -1994,7 +1946,8 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
-	auto operationDefinition = findOperationDefinition(*params.query.root, params.operationName);
+	auto operationDefinition =
+		findOperationDefinition(*params.query.root, std::string_view { params.operationName });
 
 	if (!operationDefinition.second)
 	{
