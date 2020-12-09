@@ -12,7 +12,6 @@
 
 namespace graphql::service {
 
-
 bool ValidateArgumentVariable::operator==(const ValidateArgumentVariable& other) const
 {
 	return name == other.name;
@@ -315,17 +314,11 @@ std::shared_ptr<ValidateType> ValidateVariableTypeVisitor::getType()
 	return result;
 }
 
-ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
-	: ValidateExecutableVisitor(std::make_shared<const IntrospectionValidationContext>(service))
-{
-}
-
-ValidateExecutableVisitor::ValidateExecutableVisitor(
-	std::shared_ptr<const ValidationContext> validationContext)
+ValidateExecutableVisitor::ValidateExecutableVisitor(const ValidationContext& validationContext)
 	: _validationContext(validationContext)
 {
-	commonTypes.nonNullString = _validationContext->getNonNullOfType(
-		_validationContext->getNamedValidateType<ScalarType>("String"));
+	commonTypes.nonNullString = _validationContext.getNonNullOfType(
+		_validationContext.getNamedValidateType<ScalarType>("String"));
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
@@ -462,7 +455,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	const auto& selection = *fragmentDefinition.children.back();
 	const auto& typeCondition = fragmentDefinition.children[1];
 	const auto& innerTypeName = typeCondition->children.front()->string_view();
-	const auto& innerType = _validationContext->getNamedValidateType(innerTypeName);
+	const auto& innerType = _validationContext.getNamedValidateType(innerTypeName);
 
 	if (!innerType || innerType->isInputType())
 	{
@@ -541,7 +534,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(*_validationContext);
+					ValidateVariableTypeVisitor visitor(_validationContext);
 
 					visitor.visit(*child);
 
@@ -619,7 +612,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			visitDirectives(location, child);
 		});
 
-	const auto& typeRef = _validationContext->getOperationType(operationType);
+	const auto& typeRef = _validationContext.getOperationType(operationType);
 	if (!typeRef)
 	{
 		auto position = operationDefinition.begin();
@@ -631,7 +624,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		return;
 	}
 
-	_scopedType = _validationContext->getNamedValidateType(typeRef.value().get());
+	_scopedType = _validationContext.getNamedValidateType(typeRef.value().get());
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
@@ -694,8 +687,6 @@ void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
 		}
 	}
 }
-
-
 
 bool ValidateExecutableVisitor::matchesScopedType(const ValidateType& otherType) const
 {
@@ -1450,7 +1441,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	const auto& selection = *itr->second.children.back();
 	const auto& typeCondition = itr->second.children[1];
 	const auto& innerType =
-		_validationContext->getNamedValidateType(typeCondition->children.front()->string_view());
+		_validationContext.getNamedValidateType(typeCondition->children.front()->string_view());
 
 	if (!matchesScopedType(*innerType))
 	{
@@ -1503,7 +1494,7 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 	}
 	else
 	{
-		innerType = _validationContext->getNamedValidateType(innerTypeName);
+		innerType = _validationContext.getNamedValidateType(innerTypeName);
 		if (!innerType || innerType->isInputType())
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
@@ -1568,7 +1559,7 @@ void ValidateExecutableVisitor::visitDirectives(
 			continue;
 		}
 
-		const auto& validateDirectiveRef = _validationContext->getDirective(directiveName);
+		const auto& validateDirectiveRef = _validationContext.getDirective(directiveName);
 		if (!validateDirectiveRef)
 		{
 			// http://spec.graphql.org/June2018/#sec-Directives-Are-Defined

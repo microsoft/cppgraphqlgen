@@ -108,11 +108,6 @@ fragment TypeRef on __Type {
 
 IntrospectionValidationContext::IntrospectionValidationContext(const Request& service)
 {
-	// TODO: we should execute this query only once per schema,
-	// maybe it can be done and cached inside the Request itself to allow
-	// this. Alternatively it could be provided at compile-time such as schema.json
-	// that is parsed, this would allow us to drop introspection from the Request
-	// and still have it to work
 	auto ast = peg::parseString(introspectionQuery);
 	// This is taking advantage of the fact that during validation we can choose to execute
 	// unvalidated queries against the Introspection schema. This way we can use fragment
@@ -122,24 +117,24 @@ IntrospectionValidationContext::IntrospectionValidationContext(const Request& se
 	std::shared_ptr<RequestState> state;
 	const std::string operationName;
 	response::Value variables(response::Type::Map);
-	auto result = service.resolve(state, ast, operationName, std::move(variables)).get();
+	_introspectionQuery = service.resolve(state, ast, operationName, std::move(variables)).get();
 
-	populate(result);
+	populate();
 }
 
-IntrospectionValidationContext::IntrospectionValidationContext(
-	const response::Value& introspectionQuery)
+IntrospectionValidationContext::IntrospectionValidationContext(response::Value&& introspectionQuery)
+	: _introspectionQuery(std::move(introspectionQuery))
 {
-	populate(introspectionQuery);
+	populate();
 }
 
-void IntrospectionValidationContext::populate(const response::Value& introspectionQuery)
+void IntrospectionValidationContext::populate()
 {
 	commonTypes.string = makeScalarType("String");
 	commonTypes.nonNullString = makeNonNullOfType(commonTypes.string);
 
-	const auto& itrData = introspectionQuery.find(std::string { strData });
-	if (itrData == introspectionQuery.end())
+	const auto& itrData = _introspectionQuery.find(std::string { strData });
+	if (itrData == _introspectionQuery.end())
 	{
 		return;
 	}

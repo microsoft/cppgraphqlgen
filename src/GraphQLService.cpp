@@ -1614,11 +1614,19 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 	}
 }
 
-Request::Request(TypeMap&& operationTypes, const response::Value* introspectionQuery)
+Request::Request(TypeMap&& operationTypes)
 	: _operations(std::move(operationTypes))
-	, _validation(std::make_unique<ValidateExecutableVisitor>(introspectionQuery
-			  ? std::make_shared<IntrospectionValidationContext>(*introspectionQuery)
-			  : std::make_shared<IntrospectionValidationContext>(*this)))
+	, _validationContext(std::make_unique<IntrospectionValidationContext>(*this))
+	, _validation(std::make_unique<ValidateExecutableVisitor>(*_validationContext))
+{
+}
+
+Request::Request(TypeMap&& operationTypes, std::unique_ptr<ValidationContext>&& validationContext)
+	: _operations(std::move(operationTypes))
+	, _validationContext(validationContext
+			  ? std::move(validationContext)
+			  : std::make_unique<IntrospectionValidationContext>(*this))
+	, _validation(std::make_unique<ValidateExecutableVisitor>(*_validationContext))
 {
 }
 

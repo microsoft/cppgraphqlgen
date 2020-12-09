@@ -18,7 +18,7 @@
 #endif // !GRAPHQL_DLLEXPORTS
 // clang-format on
 
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/IntrospectionSchema.h"
 
 #include <optional>
@@ -532,14 +532,17 @@ private:
 	std::unordered_map<std::string_view, std::shared_ptr<NamedValidateType>> _namedCache;
 };
 
+class Request;
+
 class IntrospectionValidationContext : public ValidationContext
 {
 public:
 	IntrospectionValidationContext(const Request& service);
-	IntrospectionValidationContext(const response::Value& introspectionQuery);
+	IntrospectionValidationContext(response::Value&& introspectionQuery);
 
 private:
-	void populate(const response::Value& introspectionQuery);
+	response::Value _introspectionQuery;
+	void populate();
 
 	struct
 	{

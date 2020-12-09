@@ -906,6 +906,7 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 
 // Forward declare just the class type so we can reference it in the Request::_validation member.
 class ValidateExecutableVisitor;
+class ValidationContext;
 
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
@@ -913,8 +914,9 @@ class ValidateExecutableVisitor;
 class Request : public std::enable_shared_from_this<Request>
 {
 protected:
+	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
 	GRAPHQLSERVICE_EXPORT explicit Request(
-		TypeMap&& operationTypes, const response::Value* introspectionQuery = nullptr);
+		TypeMap&& operationTypes, std::unique_ptr<ValidationContext>&& validationContext);
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
@@ -992,6 +994,7 @@ private:
 		const std::string& operationName, response::Value&& variables) const;
 
 	TypeMap _operations;
+	std::unique_ptr<ValidationContext> _validationContext;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;

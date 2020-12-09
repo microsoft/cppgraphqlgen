@@ -142,10 +142,7 @@ private:
 class ValidateExecutableVisitor
 {
 public:
-	// Legacy, left for compatibility reasons. Services should create a ValidationContext and pass
-	// it
-	ValidateExecutableVisitor(const Request& service);
-	ValidateExecutableVisitor(std::shared_ptr<const ValidationContext> validationContext);
+	ValidateExecutableVisitor(const ValidationContext& validationContext);
 
 	void visit(const peg::ast_node& root);
 
@@ -171,7 +168,7 @@ private:
 	bool validateVariableType(bool isNonNull, const ValidateType& variableType,
 		const schema_location& position, const ValidateType& inputType);
 
-	std::shared_ptr<const ValidationContext> _validationContext;
+	const ValidationContext& _validationContext;
 
 	std::vector<schema_error> _errors;
 
