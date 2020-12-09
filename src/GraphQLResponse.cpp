@@ -9,91 +9,592 @@
 
 namespace graphql::response {
 
-// Type::Map
-struct MapData
+struct TypedData
 {
-	bool operator==(const MapData& rhs) const
+	TypedData& operator=(const TypedData&) = delete;
+
+	virtual ~TypedData()
 	{
-		return map == rhs.map;
 	}
 
+	virtual Type type() const noexcept = 0;
+	virtual bool operator==(const TypedData& rhs) const noexcept = 0;
+
+	virtual std::unique_ptr<TypedData> copy() const
+	{
+		throw std::logic_error("Invalid copy of Value");
+	}
+
+	virtual void setString(StringType&& value)
+	{
+		throw std::logic_error("Invalid call to Value::set for StringType");
+	}
+
+	virtual void setBoolean(BooleanType value)
+	{
+		throw std::logic_error("Invalid call to Value::set for BooleanType");
+	}
+
+	virtual void setInt(IntType value)
+	{
+		throw std::logic_error("Invalid call to Value::set for IntType");
+	}
+
+	virtual void setFloat(FloatType value)
+	{
+		throw std::logic_error("Invalid call to Value::set for FloatType");
+	}
+
+	virtual void setScalar(ScalarType&& value)
+	{
+		throw std::logic_error("Invalid call to Value::set for ScalarType");
+	}
+
+	virtual const StringType& getString() const
+	{
+		throw std::logic_error("Invalid call to Value::get for StringType");
+	}
+
+	virtual BooleanType getBoolean() const
+	{
+		throw std::logic_error("Invalid call to Value::get for BooleanType");
+	}
+
+	virtual IntType getInt() const
+	{
+		throw std::logic_error("Invalid call to Value::get for IntType");
+	}
+
+	virtual FloatType getFloat() const
+	{
+		throw std::logic_error("Invalid call to Value::get for FloatType");
+	}
+
+	virtual const ScalarType& getScalar() const
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	virtual const MapType& getMap() const
+	{
+		throw std::logic_error("Invalid call to Value::get for MapType");
+	}
+
+	virtual const ListType& getList() const
+	{
+		throw std::logic_error("Invalid call to Value::get for ListType");
+	}
+
+	virtual StringType releaseString()
+	{
+		throw std::logic_error("Invalid call to Value::release for StringType");
+	}
+
+	virtual ScalarType releaseScalar()
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	virtual MapType releaseMap()
+	{
+		throw std::logic_error("Invalid call to Value::release for MapType");
+	}
+
+	virtual ListType releaseList() const
+	{
+		throw std::logic_error("Invalid call to Value::release for ListType");
+	}
+
+	// Valid for Type::Map or Type::List
+	virtual void reserve(size_t count)
+	{
+		throw std::logic_error("Invalid call to Value::reserve");
+	}
+
+	virtual size_t size() const
+	{
+		throw std::logic_error("Invalid call to Value::size");
+	}
+
+	// Valid for Type::Map
+	virtual void emplace_back(std::string&& name, Value&& value)
+	{
+		throw std::logic_error("Invalid call to Value::emplace_back for MapType");
+	}
+
+	virtual MapType::const_iterator find(const std::string& name) const
+	{
+		throw std::logic_error("Invalid call to Value::find for MapType");
+	}
+
+	virtual MapType::const_iterator begin() const
+	{
+		throw std::logic_error("Invalid call to Value::begin for MapType");
+	}
+
+	virtual MapType::const_iterator end() const
+	{
+		throw std::logic_error("Invalid call to Value::end for MapType");
+	}
+
+	// Valid for Type::List
+	virtual void emplace_back(Value&& value)
+	{
+		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
+	}
+
+	virtual const Value& operator[](size_t index) const
+	{
+		throw std::logic_error("Invalid call to Value::operator[] for ListType");
+	}
+};
+
+struct BooleanData final : public TypedData
+{
+	BooleanData(BooleanType value = false)
+		: _value(value)
+	{
+	}
+
+	Type type() const noexcept final
+	{
+		return Type::Boolean;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+
+		return _value == static_cast<const BooleanData&>(rhs)._value;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<BooleanData>(_value);
+	}
+
+	BooleanType getBoolean() const final
+	{
+		return _value;
+	}
+
+	void setBoolean(BooleanType value) final
+	{
+		_value = value;
+	}
+
+private:
+	BooleanType _value;
+};
+
+struct IntData final : public TypedData
+{
+	IntData(IntType value = 0)
+		: _value(value)
+	{
+	}
+
+	Type type() const noexcept final
+	{
+		return Type::Int;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+
+		return _value == static_cast<const IntData&>(rhs)._value;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<IntData>(*this);
+	}
+
+	IntType getInt() const final
+	{
+		return _value;
+	}
+
+	void setInt(IntType value) final
+	{
+		_value = value;
+	}
+
+	FloatType getFloat() const final
+	{
+		return _value;
+	}
+
+	void setFloat(FloatType value) final
+	{
+		_value = value;
+	}
+
+private:
+	IntType _value;
+};
+
+struct FloatData final : public TypedData
+{
+	FloatData(FloatType value = 0)
+		: _value(value)
+	{
+	}
+
+	Type type() const noexcept final
+	{
+		return Type::Float;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+
+		return _value == static_cast<const FloatData&>(rhs)._value;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<FloatData>(_value);
+	}
+
+	IntType getInt() const final
+	{
+		return _value;
+	}
+
+	void setInt(IntType value) final
+	{
+		_value = value;
+	}
+
+	FloatType getFloat() const final
+	{
+		return _value;
+	}
+
+	void setFloat(FloatType value) final
+	{
+		_value = value;
+	}
+
+private:
+	FloatType _value;
+};
+
+// Type::Map
+struct MapData final : public TypedData
+{
+	Type type() const noexcept final
+	{
+		return Type::Map;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+		return map == static_cast<const MapData&>(rhs).map;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<MapData>(*this);
+	}
+
+	void reserve(size_t count) final
+	{
+		map.reserve(count);
+		members.reserve(count);
+	}
+
+	size_t size() const final
+	{
+		return map.size();
+	}
+
+	void emplace_back(std::string&& name, Value&& value) final
+	{
+		if (members.find(name) != members.cend())
+		{
+			throw std::runtime_error("Duplicate Map member");
+		}
+
+		members.insert({ name, map.size() });
+		map.emplace_back(std::make_pair(std::move(name), std::move(value)));
+	}
+
+	MapType::const_iterator find(const std::string& name) const final
+	{
+		const auto& itr = members.find(name);
+
+		if (itr == members.cend())
+		{
+			return map.cend();
+		}
+
+		return map.cbegin() + itr->second;
+	}
+
+	MapType::const_iterator begin() const final
+	{
+		return map.cbegin();
+	}
+
+	MapType::const_iterator end() const final
+	{
+		return map.cend();
+	}
+
+	const MapType& getMap() const final
+	{
+		return map;
+	}
+
+	MapType releaseMap() final
+	{
+		MapType result = std::move(map);
+
+		members.clear();
+
+		return result;
+	}
+
+private:
 	MapType map;
 	std::unordered_map<std::string, size_t> members;
 };
 
 // Type::List
-struct ListData
+struct ListData final : public TypedData
 {
-	bool operator==(const ListData& rhs) const
+	Type type() const noexcept final
 	{
-		return list == rhs.list;
+		return Type::List;
 	}
 
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+		return list == static_cast<const ListData&>(rhs).list;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<ListData>(*this);
+	}
+
+	void reserve(size_t count) final
+	{
+		list.reserve(count);
+	}
+
+	size_t size() const final
+	{
+		return list.size();
+	}
+
+	void emplace_back(Value&& value) final
+	{
+		list.emplace_back(std::move(value));
+	}
+
+	const Value& operator[](size_t index) const final
+	{
+		return list.at(index);
+	}
+
+	const ListType& getList() const final
+	{
+		return list;
+	}
+
+	ListType releaseList() const final
+	{
+		auto result = std::move(list);
+
+		return result;
+	}
+
+private:
 	ListType list;
 };
 
-// Type::String or Type::EnumValue
-struct StringOrEnumData
+struct CommonStringData : public TypedData
 {
-	bool operator==(const StringOrEnumData& rhs) const
+	CommonStringData(std::string&& value = "")
+		: _value(std::move(value))
 	{
-		return string == rhs.string && from_json == rhs.from_json;
 	}
 
-	StringType string;
-	bool from_json = false;
+	Type type() const noexcept
+	{
+		return Type::String;
+	}
+
+	void setString(StringType&& value) final
+	{
+		_value = std::move(value);
+	}
+
+	const StringType& getString() const final
+	{
+		return _value;
+	}
+
+	StringType releaseString() final
+	{
+		StringType result = std::move(_value);
+
+		return result;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+
+		return _value == static_cast<const CommonStringData&>(rhs)._value;
+	}
+
+protected:
+	StringType _value;
+};
+
+struct StringData final : public CommonStringData
+{
+	StringData(std::string&& value = "")
+		: CommonStringData(std::move(value))
+	{
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<StringData>(std::string { _value });
+	}
+};
+
+struct JSONStringData final : public CommonStringData
+{
+	JSONStringData(std::string&& value = "")
+		: CommonStringData(std::move(value))
+	{
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<JSONStringData>(std::string { _value });
+	}
+};
+
+struct EnumData final : public CommonStringData
+{
+	EnumData(std::string&& value = "")
+		: CommonStringData(std::move(value))
+	{
+	}
+
+	Type type() const noexcept final
+	{
+		return Type::EnumValue;
+	}
+
+	std::unique_ptr<TypedData> copy() const final
+	{
+		return std::make_unique<EnumData>(std::string { _value });
+	}
 };
 
 // Type::Scalar
-struct ScalarData
+struct ScalarData : public TypedData
 {
-	bool operator==(const ScalarData& rhs) const
+	ScalarData()
+		: TypedData()
 	{
-		return scalar == rhs.scalar;
 	}
 
+	Type type() const noexcept final
+	{
+		return Type::Scalar;
+	}
+
+	bool operator==(const TypedData& rhs) const noexcept final
+	{
+		if (typeid(*this).name() != typeid(rhs).name())
+		{
+			return false;
+		}
+
+		return scalar == static_cast<const ScalarData&>(rhs).scalar;
+	}
+
+	const ScalarType& getScalar() const final
+	{
+		return scalar;
+	}
+
+	ScalarType releaseScalar() final
+	{
+		ScalarType result = std::move(scalar);
+
+		return result;
+	}
+
+private:
 	ScalarType scalar;
 };
 
-struct TypedData
-	: std::variant<std::optional<MapData>, std::optional<ListData>, std::optional<StringOrEnumData>,
-		  std::optional<ScalarData>, BooleanType, IntType, FloatType>
-{
-};
-
 Value::Value(Type type /*= Type::Null*/)
-	: _type(type)
 {
 	switch (type)
 	{
 		case Type::Map:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<MapData>() });
+			_data = std::make_unique<MapData>();
 			break;
 
 		case Type::List:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ListData>() });
+			_data = std::make_unique<ListData>();
 			break;
 
 		case Type::String:
+			_data = std::make_unique<StringData>();
+			break;
+
 		case Type::EnumValue:
-			_data =
-				std::make_unique<TypedData>(TypedData { std::make_optional<StringOrEnumData>() });
+			_data = std::make_unique<EnumData>();
 			break;
 
 		case Type::Scalar:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ScalarData>() });
+			_data = std::make_unique<ScalarData>();
 			break;
 
 		case Type::Boolean:
-			_data = std::make_unique<TypedData>(TypedData { BooleanType { false } });
+			_data = std::make_unique<BooleanData>();
 			break;
 
 		case Type::Int:
-			_data = std::make_unique<TypedData>(TypedData { IntType { 0 } });
+			_data = std::make_unique<IntData>();
 			break;
 
 		case Type::Float:
-			_data = std::make_unique<TypedData>(TypedData { FloatType { 0.0 } });
+			_data = std::make_unique<FloatData>();
 			break;
 
 		default:
@@ -109,45 +610,37 @@ Value::~Value()
 }
 
 Value::Value(const char* value)
-	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(
-		  TypedData { StringOrEnumData { StringType { value }, false } }))
+	: _data(std::make_unique<StringData>(value))
 {
 }
 
 Value::Value(StringType&& value)
-	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData { std::move(value), false } }))
+	: _data(std::make_unique<StringData>(std::move(value)))
 {
 }
 
 Value::Value(BooleanType value)
-	: _type(Type::Boolean)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(std::make_unique<BooleanData>(value))
 {
 }
 
 Value::Value(IntType value)
-	: _type(Type::Int)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(std::make_unique<IntData>(value))
 {
 }
 
 Value::Value(FloatType value)
-	: _type(Type::Float)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(std::make_unique<FloatData>(value))
 {
 }
 
 Value::Value(Value&& other) noexcept
-	: _type(other.type())
-	, _data(std::move(other._data))
+	: _data(std::move(other._data))
 {
 }
 
 Value::Value(const Value& other)
-	: _type(other.type())
-	, _data(std::make_unique<TypedData>(other._data ? *other._data : TypedData {}))
+	: _data(other._data ? other._data->copy() : nullptr)
 {
 }
 
@@ -155,7 +648,6 @@ Value& Value::operator=(Value&& rhs) noexcept
 {
 	if (&rhs != this)
 	{
-		const_cast<Type&>(_type) = rhs._type;
 		_data = std::move(rhs._data);
 	}
 
@@ -169,7 +661,16 @@ bool Value::operator==(const Value& rhs) const noexcept
 		return false;
 	}
 
-	return !_data || *_data == *rhs._data;
+	if (_data == rhs._data)
+	{
+		return true;
+	}
+	else if (_data && rhs._data)
+	{
+		return *_data == *rhs._data;
+	}
+
+	return false;
 }
 
 bool Value::operator!=(const Value& rhs) const noexcept
@@ -179,69 +680,46 @@ bool Value::operator!=(const Value& rhs) const noexcept
 
 Type Value::type() const noexcept
 {
-	return _data ? _type : Type::Null;
+	return _data ? _data->type() : Type::Null;
 }
 
 Value&& Value::from_json() noexcept
 {
-	std::get<std::optional<StringOrEnumData>>(*_data)->from_json = true;
+	_data = std::make_unique<JSONStringData>(_data->releaseString());
 
 	return std::move(*this);
 }
 
 bool Value::maybe_enum() const noexcept
 {
-	return type() == Type::EnumValue
-		|| (type() == Type::String && std::get<std::optional<StringOrEnumData>>(*_data)->from_json);
+	if (type() == Type::EnumValue)
+	{
+		return true;
+	}
+	else if (type() != Type::String)
+	{
+		return false;
+	}
+
+	return !!dynamic_cast<JSONStringData*>(_data.get());
 }
 
 void Value::reserve(size_t count)
 {
-	switch (type())
+	if (!_data)
 	{
-		case Type::Map:
-		{
-			auto& mapData = std::get<std::optional<MapData>>(*_data);
-
-			mapData->members.reserve(count);
-			mapData->map.reserve(count);
-			break;
-		}
-
-		case Type::List:
-		{
-			auto& listData = std::get<std::optional<ListData>>(*_data);
-
-			listData->list.reserve(count);
-			break;
-		}
-
-		default:
-			throw std::logic_error("Invalid call to Value::reserve");
+		throw std::logic_error("Invalid call to Value::reserve");
 	}
+	_data->reserve(count);
 }
 
 size_t Value::size() const
 {
-	switch (type())
+	if (!_data)
 	{
-		case Type::Map:
-		{
-			const auto& mapData = std::get<std::optional<MapData>>(*_data);
-
-			return mapData->map.size();
-		}
-
-		case Type::List:
-		{
-			const auto& listData = std::get<std::optional<ListData>>(*_data);
-
-			return listData->list.size();
-		}
-
-		default:
-			throw std::logic_error("Invalid call to Value::size");
+		throw std::logic_error("Invalid call to Value::size");
 	}
+	return _data->size();
 }
 
 void Value::emplace_back(std::string&& name, Value&& value)
@@ -251,15 +729,7 @@ void Value::emplace_back(std::string&& name, Value&& value)
 		throw std::logic_error("Invalid call to Value::emplace_back for MapType");
 	}
 
-	auto& mapData = std::get<std::optional<MapData>>(*_data);
-
-	if (mapData->members.find(name) != mapData->members.cend())
-	{
-		throw std::runtime_error("Duplicate Map member");
-	}
-
-	mapData->members.insert({ name, mapData->map.size() });
-	mapData->map.emplace_back(std::make_pair(std::move(name), std::move(value)));
+	return _data->emplace_back(std::move(name), std::move(value));
 }
 
 MapType::const_iterator Value::find(const std::string& name) const
@@ -269,25 +739,17 @@ MapType::const_iterator Value::find(const std::string& name) const
 		throw std::logic_error("Invalid call to Value::find for MapType");
 	}
 
-	const auto& mapData = std::get<std::optional<MapData>>(*_data);
-	const auto itr = mapData->members.find(name);
-
-	if (itr == mapData->members.cend())
-	{
-		return mapData->map.cend();
-	}
-
-	return mapData->map.cbegin() + itr->second;
+	return _data->find(name);
 }
 
 MapType::const_iterator Value::begin() const
 {
 	if (type() != Type::Map)
 	{
-		throw std::logic_error("Invalid call to Value::end for MapType");
+		throw std::logic_error("Invalid call to Value::begin for MapType");
 	}
 
-	return std::get<std::optional<MapData>>(*_data)->map.cbegin();
+	return _data->begin();
 }
 
 MapType::const_iterator Value::end() const
@@ -297,7 +759,7 @@ MapType::const_iterator Value::end() const
 		throw std::logic_error("Invalid call to Value::end for MapType");
 	}
 
-	return std::get<std::optional<MapData>>(*_data)->map.cend();
+	return _data->end();
 }
 
 const Value& Value::operator[](const std::string& name) const
@@ -319,17 +781,17 @@ void Value::emplace_back(Value&& value)
 		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
 	}
 
-	std::get<std::optional<ListData>>(*_data)->list.emplace_back(std::move(value));
+	_data->emplace_back(std::move(value));
 }
 
 const Value& Value::operator[](size_t index) const
 {
 	if (type() != Type::List)
 	{
-		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
+		throw std::logic_error("Invalid call to Value::operator[] for ListType");
 	}
 
-	return std::get<std::optional<ListData>>(*_data)->list.at(index);
+	return _data->operator[](index);
 }
 
 template <>
@@ -340,7 +802,7 @@ void Value::set<StringType>(StringType&& value)
 		throw std::logic_error("Invalid call to Value::set for StringType");
 	}
 
-	std::get<std::optional<StringOrEnumData>>(*_data)->string = std::move(value);
+	_data->setString(std::move(value));
 }
 
 template <>
@@ -351,26 +813,18 @@ void Value::set<BooleanType>(BooleanType value)
 		throw std::logic_error("Invalid call to Value::set for BooleanType");
 	}
 
-	*_data = { value };
+	_data->setBoolean(value);
 }
 
 template <>
 void Value::set<IntType>(IntType value)
 {
-	if (type() == Type::Float)
+	if (type() == Type::Float || type() == Type::Int)
 	{
-		// Coerce IntType to FloatType
-		*_data = { static_cast<FloatType>(value) };
+		throw std::logic_error("Invalid call to Value::set for IntType");
 	}
-	else
-	{
-		if (type() != Type::Int)
-		{
-			throw std::logic_error("Invalid call to Value::set for IntType");
-		}
 
-		*_data = { value };
-	}
+	_data->setInt(value);
 }
 
 template <>
@@ -381,7 +835,7 @@ void Value::set<FloatType>(FloatType value)
 		throw std::logic_error("Invalid call to Value::set for FloatType");
 	}
 
-	*_data = { value };
+	_data->setFloat(value);
 }
 
 template <>
@@ -392,7 +846,7 @@ void Value::set<ScalarType>(ScalarType&& value)
 		throw std::logic_error("Invalid call to Value::set for ScalarType");
 	}
 
-	*_data = { ScalarData { std::move(value) } };
+	_data->setScalar(std::move(value));
 }
 
 template <>
@@ -403,7 +857,7 @@ const MapType& Value::get<MapType>() const
 		throw std::logic_error("Invalid call to Value::get for MapType");
 	}
 
-	return std::get<std::optional<MapData>>(*_data)->map;
+	return _data->getMap();
 }
 
 template <>
@@ -414,7 +868,7 @@ const ListType& Value::get<ListType>() const
 		throw std::logic_error("Invalid call to Value::get for ListType");
 	}
 
-	return std::get<std::optional<ListData>>(*_data)->list;
+	return _data->getList();
 }
 
 template <>
@@ -425,7 +879,7 @@ const StringType& Value::get<StringType>() const
 		throw std::logic_error("Invalid call to Value::get for StringType");
 	}
 
-	return std::get<std::optional<StringOrEnumData>>(*_data)->string;
+	return _data->getString();
 }
 
 template <>
@@ -436,7 +890,7 @@ BooleanType Value::get<BooleanType>() const
 		throw std::logic_error("Invalid call to Value::get for BooleanType");
 	}
 
-	return std::get<BooleanType>(*_data);
+	return _data->getBoolean();
 }
 
 template <>
@@ -447,24 +901,18 @@ IntType Value::get<IntType>() const
 		throw std::logic_error("Invalid call to Value::get for IntType");
 	}
 
-	return std::get<IntType>(*_data);
+	return _data->getInt();
 }
 
 template <>
 FloatType Value::get<FloatType>() const
 {
-	if (type() == Type::Int)
-	{
-		// Coerce IntType to FloatType
-		return static_cast<FloatType>(std::get<IntType>(*_data));
-	}
-
-	if (type() != Type::Float)
+	if (type() != Type::Int && type() != Type::Float)
 	{
 		throw std::logic_error("Invalid call to Value::get for FloatType");
 	}
 
-	return std::get<FloatType>(*_data);
+	return _data->getFloat();
 }
 
 template <>
@@ -475,7 +923,7 @@ const ScalarType& Value::get<ScalarType>() const
 		throw std::logic_error("Invalid call to Value::get for ScalarType");
 	}
 
-	return std::get<std::optional<ScalarData>>(*_data)->scalar;
+	return _data->getScalar();
 }
 
 template <>
@@ -486,12 +934,7 @@ MapType Value::release<MapType>()
 		throw std::logic_error("Invalid call to Value::release for MapType");
 	}
 
-	auto& mapData = std::get<std::optional<MapData>>(*_data);
-	MapType result = std::move(mapData->map);
-
-	mapData->members.clear();
-
-	return result;
+	return _data->releaseMap();
 }
 
 template <>
@@ -502,9 +945,7 @@ ListType Value::release<ListType>()
 		throw std::logic_error("Invalid call to Value::release for ListType");
 	}
 
-	ListType result = std::move(std::get<std::optional<ListData>>(*_data)->list);
-
-	return result;
+	return _data->releaseList();
 }
 
 template <>
@@ -515,12 +956,7 @@ StringType Value::release<StringType>()
 		throw std::logic_error("Invalid call to Value::release for StringType");
 	}
 
-	auto& stringData = std::get<std::optional<StringOrEnumData>>(*_data);
-	StringType result = std::move(stringData->string);
-
-	stringData->from_json = false;
-
-	return result;
+	return _data->releaseString();
 }
 
 template <>
@@ -531,9 +967,7 @@ ScalarType Value::release<ScalarType>()
 		throw std::logic_error("Invalid call to Value::release for ScalarType");
 	}
 
-	ScalarType result = std::move(std::get<std::optional<ScalarData>>(*_data)->scalar);
-
-	return result;
+	return _data->releaseScalar();
 }
 
 } /* namespace graphql::response */

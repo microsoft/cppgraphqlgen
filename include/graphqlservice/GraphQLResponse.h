@@ -194,7 +194,6 @@ struct Value
 	}
 
 private:
-	const Type _type;
 	std::unique_ptr<TypedData> _data;
 };
 
