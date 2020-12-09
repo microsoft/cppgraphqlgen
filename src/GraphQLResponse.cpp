@@ -295,6 +295,12 @@ private:
 // Type::Map
 struct MapData final : public TypedData
 {
+	MapData()
+		: map(std::make_shared<MapType>())
+		, members(std::make_shared<std::unordered_map<std::string, size_t>>())
+	{
+	}
+
 	Type type() const noexcept final
 	{
 		return Type::Map;
@@ -306,7 +312,17 @@ struct MapData final : public TypedData
 		{
 			return false;
 		}
-		return map == static_cast<const MapData&>(rhs).map;
+
+		const auto& otherMap = static_cast<const MapData&>(rhs).map;
+		if (map == otherMap)
+		{
+			return true;
+		}
+		else if (map && otherMap)
+		{
+			return *map == *otherMap;
+		}
+		return false;
 	}
 
 	std::unique_ptr<TypedData> copy() const final
@@ -314,72 +330,100 @@ struct MapData final : public TypedData
 		return std::make_unique<MapData>(*this);
 	}
 
+	void willModify()
+	{
+		if (map.unique())
+		{
+			return;
+		}
+
+		map = std::make_shared<MapType>(*map);
+		members = std::make_shared<std::unordered_map<std::string, size_t>>(*members);
+	}
+
 	void reserve(size_t count) final
 	{
-		map.reserve(count);
-		members.reserve(count);
+		willModify();
+		map->reserve(count);
+		members->reserve(count);
 	}
 
 	size_t size() const final
 	{
-		return map.size();
+		if (!map)
+		{
+			return 0;
+		}
+		return map->size();
 	}
 
 	void emplace_back(std::string&& name, Value&& value) final
 	{
-		if (members.find(name) != members.cend())
+		willModify();
+
+		if (members->find(name) != members->cend())
 		{
 			throw std::runtime_error("Duplicate Map member");
 		}
 
-		members.insert({ name, map.size() });
-		map.emplace_back(std::make_pair(std::move(name), std::move(value)));
+		members->insert({ name, map->size() });
+		map->emplace_back(std::make_pair(std::move(name), std::move(value)));
 	}
 
 	MapType::const_iterator find(const std::string& name) const final
 	{
-		const auto& itr = members.find(name);
+		const auto& itr = members->find(name);
 
-		if (itr == members.cend())
+		if (itr == members->cend())
 		{
-			return map.cend();
+			return map->cend();
 		}
 
-		return map.cbegin() + itr->second;
+		return map->cbegin() + itr->second;
 	}
 
 	MapType::const_iterator begin() const final
 	{
-		return map.cbegin();
+		return map->cbegin();
 	}
 
 	MapType::const_iterator end() const final
 	{
-		return map.cend();
+		return map->cend();
 	}
 
 	const MapType& getMap() const final
 	{
-		return map;
+		return *map;
 	}
 
 	MapType releaseMap() final
 	{
-		MapType result = std::move(map);
+		if (!map.unique())
+		{
+			return MapType(*map);
+		}
 
-		members.clear();
+		MapType result = std::move(*map);
+
+		members->clear();
 
 		return result;
 	}
 
 private:
-	MapType map;
-	std::unordered_map<std::string, size_t> members;
+	std::shared_ptr<MapType> map;
+	std::shared_ptr<std::unordered_map<std::string, size_t>> members;
 };
 
 // Type::List
 struct ListData final : public TypedData
 {
+	ListData()
+		: list(std::make_shared<ListType>())
+	{
+	}
+
 	Type type() const noexcept final
 	{
 		return Type::List;
@@ -391,7 +435,17 @@ struct ListData final : public TypedData
 		{
 			return false;
 		}
-		return list == static_cast<const ListData&>(rhs).list;
+
+		const auto& otherList = static_cast<const ListData&>(rhs).list;
+		if (list == otherList)
+		{
+			return true;
+		}
+		else if (list && otherList)
+		{
+			return *list == *otherList;
+		}
+		return false;
 	}
 
 	std::unique_ptr<TypedData> copy() const final
@@ -399,46 +453,67 @@ struct ListData final : public TypedData
 		return std::make_unique<ListData>(*this);
 	}
 
+	void willModify()
+	{
+		if (list.unique())
+		{
+			return;
+		}
+
+		list = std::make_shared<ListType>(*list);
+	}
+
 	void reserve(size_t count) final
 	{
-		list.reserve(count);
+		willModify();
+		list->reserve(count);
 	}
 
 	size_t size() const final
 	{
-		return list.size();
+		if (!list)
+		{
+			return 0;
+		}
+		return list->size();
 	}
 
 	void emplace_back(Value&& value) final
 	{
-		list.emplace_back(std::move(value));
+		willModify();
+		list->emplace_back(std::move(value));
 	}
 
 	const Value& operator[](size_t index) const final
 	{
-		return list.at(index);
+		return list->at(index);
 	}
 
 	const ListType& getList() const final
 	{
-		return list;
+		return *list;
 	}
 
 	ListType releaseList() const final
 	{
-		auto result = std::move(list);
+		if (!list.unique())
+		{
+			return ListType(*list);
+		}
+
+		auto result = std::move(*list);
 
 		return result;
 	}
 
 private:
-	ListType list;
+	std::shared_ptr<ListType> list;
 };
 
 struct CommonStringData : public TypedData
 {
 	CommonStringData(std::string&& value = "")
-		: _value(std::move(value))
+		: _value(std::make_shared<StringType>(std::move(value)))
 	{
 	}
 
@@ -449,17 +524,29 @@ struct CommonStringData : public TypedData
 
 	void setString(StringType&& value) final
 	{
-		_value = std::move(value);
+		if (!_value.unique())
+		{
+			_value = std::make_shared<StringType>(std::move(value));
+		}
+		else
+		{
+			_value->assign(std::move(value));
+		}
 	}
 
 	const StringType& getString() const final
 	{
-		return _value;
+		return *_value;
 	}
 
 	StringType releaseString() final
 	{
-		StringType result = std::move(_value);
+		if (!_value.unique())
+		{
+			return StringType(*_value);
+		}
+
+		StringType result = std::move(*_value);
 
 		return result;
 	}
@@ -471,11 +558,20 @@ struct CommonStringData : public TypedData
 			return false;
 		}
 
-		return _value == static_cast<const CommonStringData&>(rhs)._value;
+		const auto& otherValue = static_cast<const CommonStringData&>(rhs)._value;
+		if (_value == otherValue)
+		{
+			return true;
+		}
+		else if (_value && otherValue)
+		{
+			return *_value == *otherValue;
+		}
+		return false;
 	}
 
 protected:
-	StringType _value;
+	std::shared_ptr<StringType> _value;
 };
 
 struct StringData final : public CommonStringData
@@ -487,7 +583,7 @@ struct StringData final : public CommonStringData
 
 	std::unique_ptr<TypedData> copy() const final
 	{
-		return std::make_unique<StringData>(std::string { _value });
+		return std::make_unique<StringData>(*this);
 	}
 };
 
@@ -500,7 +596,7 @@ struct JSONStringData final : public CommonStringData
 
 	std::unique_ptr<TypedData> copy() const final
 	{
-		return std::make_unique<JSONStringData>(std::string { _value });
+		return std::make_unique<JSONStringData>(*this);
 	}
 };
 
@@ -518,7 +614,7 @@ struct EnumData final : public CommonStringData
 
 	std::unique_ptr<TypedData> copy() const final
 	{
-		return std::make_unique<EnumData>(std::string { _value });
+		return std::make_unique<EnumData>(*this);
 	}
 };
 
