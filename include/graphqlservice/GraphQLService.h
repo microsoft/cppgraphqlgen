@@ -182,6 +182,44 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
+	std::future<response::Value> get_future_result()
+	{
+		if (std::holds_alternative<std::future<T>>(_value))
+		{
+			return std::async(
+				std::launch::deferred,
+				[](auto&& future) {
+					return response::Value(response::ResultType { response::Value(future.get()) });
+				},
+				std::move(std::get<std::future<T>>(std::move(_value))));
+		}
+
+		std::promise<response::Value> promise;
+		promise.set_value(response::Value(
+			response::ResultType { response::Value(std::get<T>(std::move(_value))) }));
+		return promise.get_future();
+	}
+
+	template <typename C>
+	std::future<response::Value> get_future_result(C converter)
+	{
+		if (std::holds_alternative<std::future<T>>(_value))
+		{
+			return std::async(
+				std::launch::deferred,
+				[&converter](auto&& future) {
+					return response::Value(
+						response::ResultType { response::Value(converter(future.get())) });
+				},
+				std::move(std::get<std::future<T>>(std::move(_value))));
+		}
+
+		std::promise<response::Value> promise;
+		promise.set_value(response::Value(
+			response::ResultType { response::Value(converter(std::get<T>(std::move(_value)))) }));
+		return promise.get_future();
+	}
+
 private:
 	std::variant<T, std::future<T>> _value;
 };
