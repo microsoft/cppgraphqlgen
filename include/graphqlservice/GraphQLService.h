@@ -224,6 +224,14 @@ struct SelectionSetParams
 	const std::launch launch = std::launch::deferred;
 };
 
+// Propagate data and errors together without bundling them into a response::Value struct until
+// we're ready to return from the top level Operation.
+struct ResolverResult
+{
+	response::Value data;
+	std::vector<schema_error> errors;
+};
+
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
 struct FieldParams : SelectionSetParams
 {
@@ -260,6 +268,42 @@ public:
 		}
 
 		return std::get<T>(std::move(_value));
+	}
+
+	std::future<ResolverResult> get_future_result()
+	{
+		if (std::holds_alternative<std::future<T>>(_value))
+		{
+			return std::async(
+				std::launch::deferred,
+				[](auto&& future) {
+					return ResolverResult { response::Value(future.get()) };
+				},
+				std::move(std::get<std::future<T>>(std::move(_value))));
+		}
+
+		std::promise<ResolverResult> promise;
+		promise.set_value(ResolverResult { response::Value(std::get<T>(std::move(_value))) });
+		return promise.get_future();
+	}
+
+	template <typename C>
+	std::future<ResolverResult> get_future_result(C converter)
+	{
+		if (std::holds_alternative<std::future<T>>(_value))
+		{
+			return std::async(
+				std::launch::deferred,
+				[&converter](auto&& future) {
+					return ResolverResult { response::Value(converter(future.get())) };
+				},
+				std::move(std::get<std::future<T>>(std::move(_value))));
+		}
+
+		std::promise<ResolverResult> promise;
+		promise.set_value(
+			ResolverResult { response::Value(converter(std::get<T>(std::move(_value)))) });
+		return promise.get_future();
 	}
 
 private:
@@ -321,14 +365,6 @@ struct ResolverParams : SelectionSetParams
 	// resolvers recursively through ResolverParams.
 	const FragmentMap& fragments;
 	const response::Value& variables;
-};
-
-// Propagate data and errors together without bundling them into a response::Value struct until
-// we're ready to return from the top level Operation.
-struct ResolverResult
-{
-	response::Value data;
-	std::vector<schema_error> errors;
 };
 
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;

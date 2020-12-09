@@ -752,11 +752,7 @@ std::future<ResolverResult> ModifiedResult<response::IntType>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::IntType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return result.get_future_result();
 }
 
 template <>
@@ -765,11 +761,7 @@ std::future<ResolverResult> ModifiedResult<response::FloatType>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::FloatType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return result.get_future_result();
 }
 
 template <>
@@ -778,11 +770,7 @@ std::future<ResolverResult> ModifiedResult<response::StringType>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::StringType&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
-		});
+	return result.get_future_result();
 }
 
 template <>
@@ -791,11 +779,7 @@ std::future<ResolverResult> ModifiedResult<response::BooleanType>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::BooleanType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return result.get_future_result();
 }
 
 template <>
@@ -804,11 +788,7 @@ std::future<ResolverResult> ModifiedResult<response::Value>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::Value&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
-		});
+	return result.get_future_result();
 }
 
 template <>
@@ -817,11 +797,9 @@ std::future<ResolverResult> ModifiedResult<response::IdType>::convert(
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(Base64::toBase64(value));
-		});
+	std::string (*converter)(const response::IdType&) = &Base64::toBase64;
+
+	return result.get_future_result(converter);
 }
 
 void requireSubFields(const ResolverParams& params)
