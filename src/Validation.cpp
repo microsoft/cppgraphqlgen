@@ -316,7 +316,7 @@ std::shared_ptr<ValidateType> ValidateVariableTypeVisitor::getType()
 }
 
 ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
-	: ValidateExecutableVisitor(std::make_shared<const ValidationContext>(service))
+	: ValidateExecutableVisitor(std::make_shared<const IntrospectionValidationContext>(service))
 {
 }
 

@@ -393,9 +393,6 @@ struct ValidateDirective
 class ValidationContext
 {
 public:
-	ValidationContext(const Request& service);
-	ValidationContext(const response::Value& introspectionQuery);
-
 	struct OperationTypes
 	{
 		std::string queryType;
@@ -447,34 +444,40 @@ public:
 		return nullptr;
 	}
 
-private:
-	void populate(const response::Value& introspectionQuery);
-
-	struct
-	{
-		std::shared_ptr<ScalarType> string;
-		std::shared_ptr<NonNullOfType> nonNullString;
-	} commonTypes;
-
-	ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
-
-	using Directives = std::unordered_map<std::string, ValidateDirective>;
-
-	// These members store Introspection schema information which does not change between queries.
-	OperationTypes _operationTypes;
-	Directives _directives;
-
-	std::unordered_map<const ValidateType*, std::shared_ptr<ListOfType>> _listOfCache;
-	std::unordered_map<const ValidateType*, std::shared_ptr<NonNullOfType>> _nonNullCache;
-	std::unordered_map<std::string_view, std::shared_ptr<NamedValidateType>> _namedCache;
-
+protected:
 	template <typename T,
 		typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type* = nullptr>
-	std::shared_ptr<T> makeNamedValidateType(T&& typeDef);
+	std::shared_ptr<T> makeNamedValidateType(T&& typeDef)
+	{
+		const std::string_view key(typeDef.name());
+
+		const auto& itr = _namedCache.find(key);
+		if (itr != _namedCache.cend())
+		{
+			return std::dynamic_pointer_cast<T>(itr->second);
+		}
+
+		auto type = std::make_shared<T>(std::move(typeDef));
+		_namedCache.insert({ type->name(), type });
+
+		return type;
+	}
 
 	template <typename T,
 		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
-	std::shared_ptr<ListOfType> makeListOfType(std::shared_ptr<T>&& ofType);
+	std::shared_ptr<ListOfType> makeListOfType(std::shared_ptr<T>&& ofType)
+	{
+		const ValidateType* key = ofType.get();
+
+		const auto& itr = _listOfCache.find(key);
+		if (itr != _listOfCache.cend())
+		{
+			return itr->second;
+		}
+
+		return _listOfCache.insert({ key, std::make_shared<ListOfType>(std::move(ofType)) })
+			.first->second;
+	}
 
 	template <typename T,
 		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
@@ -485,7 +488,19 @@ private:
 
 	template <typename T,
 		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
-	std::shared_ptr<NonNullOfType> makeNonNullOfType(std::shared_ptr<T>&& ofType);
+	std::shared_ptr<NonNullOfType> makeNonNullOfType(std::shared_ptr<T>&& ofType)
+	{
+		const ValidateType* key = ofType.get();
+
+		const auto& itr = _nonNullCache.find(key);
+		if (itr != _nonNullCache.cend())
+		{
+			return itr->second;
+		}
+
+		return _nonNullCache.insert({ key, std::make_shared<NonNullOfType>(std::move(ofType)) })
+			.first->second;
+	}
 
 	template <typename T,
 		typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type* = nullptr>
@@ -504,9 +519,38 @@ private:
 		return makeNamedValidateType(ObjectType { name });
 	}
 
+	using Directives = std::unordered_map<std::string, ValidateDirective>;
+
+	OperationTypes _operationTypes;
+	Directives _directives;
+
+private:
+	// These members store Introspection schema information which does not change between queries.
+
+	std::unordered_map<const ValidateType*, std::shared_ptr<ListOfType>> _listOfCache;
+	std::unordered_map<const ValidateType*, std::shared_ptr<NonNullOfType>> _nonNullCache;
+	std::unordered_map<std::string_view, std::shared_ptr<NamedValidateType>> _namedCache;
+};
+
+class IntrospectionValidationContext : public ValidationContext
+{
+public:
+	IntrospectionValidationContext(const Request& service);
+	IntrospectionValidationContext(const response::Value& introspectionQuery);
+
+private:
+	void populate(const response::Value& introspectionQuery);
+
+	struct
+	{
+		std::shared_ptr<ScalarType> string;
+		std::shared_ptr<NonNullOfType> nonNullString;
+	} commonTypes;
+
+	ValidateTypeFieldArguments getArguments(const response::ListType& argumentsMember);
+
 	std::shared_ptr<ValidateType> getTypeFromMap(const response::Value& typeMap);
 
-	// builds the validation context (lookup maps)
 	void addScalar(const std::string_view& scalarName);
 	void addEnum(const std::string_view& enumName, const response::Value& enumDescriptionMap);
 	void addObject(const std::string_view& name);

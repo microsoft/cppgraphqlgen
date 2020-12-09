@@ -5,6 +5,38 @@
 
 namespace graphql::service {
 
+std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
+	const std::string_view& name) const
+{
+	// TODO: string is a work around, the directives map will be moved to string_view soon
+	const auto& itr = _directives.find(std::string { name });
+	if (itr == _directives.cend())
+	{
+		return std::nullopt;
+	}
+	return std::optional<std::reference_wrapper<const ValidateDirective>>(itr->second);
+}
+
+std::optional<std::reference_wrapper<const std::string>> ValidationContext::getOperationType(
+	const std::string_view& name) const
+{
+	if (name == strQuery)
+	{
+		return std::optional<std::reference_wrapper<const std::string>>(_operationTypes.queryType);
+	}
+	if (name == strMutation)
+	{
+		return std::optional<std::reference_wrapper<const std::string>>(
+			_operationTypes.mutationType);
+	}
+	if (name == strSubscription)
+	{
+		return std::optional<std::reference_wrapper<const std::string>>(
+			_operationTypes.subscriptionType);
+	}
+	return std::nullopt;
+}
+
 constexpr std::string_view introspectionQuery = R"gql(
 query IntrospectionQuery {
   __schema {
@@ -74,7 +106,7 @@ fragment TypeRef on __Type {
 }
 )gql";
 
-ValidationContext::ValidationContext(const Request& service)
+IntrospectionValidationContext::IntrospectionValidationContext(const Request& service)
 {
 	// TODO: we should execute this query only once per schema,
 	// maybe it can be done and cached inside the Request itself to allow
@@ -95,12 +127,13 @@ ValidationContext::ValidationContext(const Request& service)
 	populate(result);
 }
 
-ValidationContext::ValidationContext(const response::Value& introspectionQuery)
+IntrospectionValidationContext::IntrospectionValidationContext(
+	const response::Value& introspectionQuery)
 {
 	populate(introspectionQuery);
 }
 
-void ValidationContext::populate(const response::Value& introspectionQuery)
+void IntrospectionValidationContext::populate(const response::Value& introspectionQuery)
 {
 	commonTypes.string = makeScalarType("String");
 	commonTypes.nonNullString = makeNonNullOfType(commonTypes.string);
@@ -260,7 +293,8 @@ void ValidationContext::populate(const response::Value& introspectionQuery)
 	}
 }
 
-ValidateTypeFieldArguments ValidationContext::getArguments(const response::ListType& args)
+ValidateTypeFieldArguments IntrospectionValidationContext::getArguments(
+	const response::ListType& args)
 {
 	ValidateTypeFieldArguments result;
 
@@ -293,39 +327,7 @@ ValidateTypeFieldArguments ValidationContext::getArguments(const response::ListT
 	return result;
 }
 
-std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
-	const std::string_view& name) const
-{
-	// TODO: string is a work around, the directives map will be moved to string_view soon
-	const auto& itr = _directives.find(std::string { name });
-	if (itr == _directives.cend())
-	{
-		return std::nullopt;
-	}
-	return std::optional<std::reference_wrapper<const ValidateDirective>>(itr->second);
-}
-
-std::optional<std::reference_wrapper<const std::string>> ValidationContext::getOperationType(
-	const std::string_view& name) const
-{
-	if (name == strQuery)
-	{
-		return std::optional<std::reference_wrapper<const std::string>>(_operationTypes.queryType);
-	}
-	if (name == strMutation)
-	{
-		return std::optional<std::reference_wrapper<const std::string>>(
-			_operationTypes.mutationType);
-	}
-	if (name == strSubscription)
-	{
-		return std::optional<std::reference_wrapper<const std::string>>(
-			_operationTypes.subscriptionType);
-	}
-	return std::nullopt;
-}
-
-void ValidationContext::addTypeFields(
+void IntrospectionValidationContext::addTypeFields(
 	std::shared_ptr<ContainerValidateType<ValidateTypeField>> type,
 	const response::Value& typeDescriptionMap)
 {
@@ -381,7 +383,8 @@ void ValidationContext::addTypeFields(
 	type->setFields(std::move(fields));
 }
 
-void ValidationContext::addPossibleTypes(std::shared_ptr<PossibleTypesContainerValidateType> type,
+void IntrospectionValidationContext::addPossibleTypes(
+	std::shared_ptr<PossibleTypesContainerValidateType> type,
 	const response::Value& typeDescriptionMap)
 {
 	const auto& itrPossibleTypes = typeDescriptionMap.find(R"gql(possibleTypes)gql");
@@ -413,7 +416,7 @@ void ValidationContext::addPossibleTypes(std::shared_ptr<PossibleTypesContainerV
 	type->setPossibleTypes(std::move(possibleTypes));
 }
 
-void ValidationContext::addInputTypeFields(
+void IntrospectionValidationContext::addInputTypeFields(
 	std::shared_ptr<InputObjectType> type, const response::Value& typeDescriptionMap)
 {
 	const auto& itrFields = typeDescriptionMap.find(R"gql(inputFields)gql");
@@ -423,7 +426,7 @@ void ValidationContext::addInputTypeFields(
 	}
 }
 
-void ValidationContext::addEnum(
+void IntrospectionValidationContext::addEnum(
 	const std::string_view& enumName, const response::Value& enumDescriptionMap)
 {
 	const auto& itrEnumValues = enumDescriptionMap.find(R"gql(enumValues)gql");
@@ -455,46 +458,29 @@ void ValidationContext::addEnum(
 	}
 }
 
-void ValidationContext::addObject(const std::string_view& name)
+void IntrospectionValidationContext::addObject(const std::string_view& name)
 {
 	makeNamedValidateType(ObjectType { name });
 }
 
-void ValidationContext::addInputObject(const std::string_view& name)
+void IntrospectionValidationContext::addInputObject(const std::string_view& name)
 {
 	makeNamedValidateType(InputObjectType { name });
 }
 
-void ValidationContext::addInterface(
+void IntrospectionValidationContext::addInterface(
 	const std::string_view& name, const response::Value& typeDescriptionMap)
 {
 	makeNamedValidateType(InterfaceType { name });
 }
 
-void ValidationContext::addUnion(
+void IntrospectionValidationContext::addUnion(
 	const std::string_view& name, const response::Value& typeDescriptionMap)
 {
 	makeNamedValidateType(UnionType { name });
 }
 
-template <typename T, typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type*>
-std::shared_ptr<T> ValidationContext::makeNamedValidateType(T&& typeDef)
-{
-	const std::string_view key(typeDef.name());
-
-	const auto& itr = _namedCache.find(key);
-	if (itr != _namedCache.cend())
-	{
-		return std::dynamic_pointer_cast<T>(itr->second);
-	}
-
-	auto type = std::make_shared<T>(std::move(typeDef));
-	_namedCache.insert({ type->name(), type });
-
-	return type;
-}
-
-void ValidationContext::addDirective(const std::string_view& name,
+void IntrospectionValidationContext::addDirective(const std::string_view& name,
 	const response::ListType& locations, const response::Value& descriptionMap)
 {
 	ValidateDirective directive;
@@ -520,37 +506,8 @@ void ValidationContext::addDirective(const std::string_view& name,
 	_directives[std::string { name }] = std::move(directive);
 }
 
-template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
-std::shared_ptr<ListOfType> ValidationContext::makeListOfType(std::shared_ptr<T>&& ofType)
-{
-	const ValidateType* key = ofType.get();
-
-	const auto& itr = _listOfCache.find(key);
-	if (itr != _listOfCache.cend())
-	{
-		return itr->second;
-	}
-
-	return _listOfCache.insert({ key, std::make_shared<ListOfType>(std::move(ofType)) })
-		.first->second;
-}
-
-template <typename T, typename std::enable_if<std::is_base_of<ValidateType, T>::value>::type*>
-std::shared_ptr<NonNullOfType> ValidationContext::makeNonNullOfType(std::shared_ptr<T>&& ofType)
-{
-	const ValidateType* key = ofType.get();
-
-	const auto& itr = _nonNullCache.find(key);
-	if (itr != _nonNullCache.cend())
-	{
-		return itr->second;
-	}
-
-	return _nonNullCache.insert({ key, std::make_shared<NonNullOfType>(std::move(ofType)) })
-		.first->second;
-}
-
-std::shared_ptr<ValidateType> ValidationContext::getTypeFromMap(const response::Value& typeMap)
+std::shared_ptr<ValidateType> IntrospectionValidationContext::getTypeFromMap(
+	const response::Value& typeMap)
 {
 	const auto& itrKind = typeMap.find(R"gql(kind)gql");
 	if (itrKind == typeMap.end() || itrKind->second.type() != response::Type::EnumValue)
@@ -594,7 +551,7 @@ std::shared_ptr<ValidateType> ValidationContext::getTypeFromMap(const response::
 	return nullptr;
 }
 
-void ValidationContext::addScalar(const std::string_view& scalarName)
+void IntrospectionValidationContext::addScalar(const std::string_view& scalarName)
 {
 	makeNamedValidateType(ScalarType { scalarName });
 }
