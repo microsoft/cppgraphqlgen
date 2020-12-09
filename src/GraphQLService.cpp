@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <list>
 #include <stack>
 
 namespace graphql::service {
@@ -778,7 +779,7 @@ public:
 
 	void visit(const peg::ast_node& selection);
 
-	std::queue<std::pair<std::string, std::future<response::Value>>> getValues();
+	std::list<std::pair<std::string, std::future<response::Value>>> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -796,8 +797,8 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::stack<FragmentDirectives> _fragmentDirectives;
-	std::unordered_set<std::string> _names;
-	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
+	std::unordered_set<std::string_view> _names;
+	std::list<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
@@ -818,7 +819,7 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		response::Value(response::Type::Map) });
 }
 
-std::queue<std::pair<std::string, std::future<response::Value>>> SelectionVisitor::getValues()
+std::list<std::pair<std::string, std::future<response::Value>>> SelectionVisitor::getValues()
 {
 	auto values = std::move(_values);
 
@@ -843,30 +844,27 @@ void SelectionVisitor::visit(const peg::ast_node& selection)
 
 void SelectionVisitor::visitField(const peg::ast_node& field)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
 		name = child.string_view();
 	});
 
-	std::string alias;
+	std::string_view aliasView = name;
 
-	peg::on_first_child<peg::alias_name>(field, [&alias](const peg::ast_node& child) {
-		alias = child.string_view();
+	peg::on_first_child<peg::alias_name>(field, [&aliasView](const peg::ast_node& child) {
+		aliasView = child.string_view();
 	});
 
-	if (alias.empty())
-	{
-		alias = name;
-	}
-
-	if (!_names.insert(alias).second)
+	if (!_names.insert(aliasView).second)
 	{
 		// Skip resolving fields which map to the same response name as a field we've already
 		// resolved. Validation should handle merging multiple references to the same field or
 		// to compatible fields.
 		return;
 	}
+
+	std::string alias(aliasView);
 
 	const auto [itr, itrEnd] = std::equal_range(_resolvers.cbegin(),
 		_resolvers.cend(),
@@ -886,7 +884,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		promise.set_exception(std::make_exception_ptr(schema_exception {
 			{ schema_error { error.str(), { position.line, position.column }, { _path } } } }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ std::move(alias), promise.get_future() });
 		return;
 	}
 
@@ -946,7 +944,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			_fragments,
 			_variables));
 
-		_values.push({ std::move(alias), std::move(result) });
+		_values.push_back({ std::move(alias), std::move(result) });
 	}
 	catch (schema_exception& scx)
 	{
@@ -969,7 +967,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		promise.set_exception(std::make_exception_ptr(schema_exception { std::move(messages) }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ std::move(alias), promise.get_future() });
 	}
 	catch (const std::exception& ex)
 	{
@@ -984,7 +982,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				std::move(selectionSetParams.errorPath) } } }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ std::move(alias), promise.get_future() });
 	}
 }
 
@@ -1122,7 +1120,7 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	std::queue<std::pair<std::string, std::future<response::Value>>> selections;
+	std::list<std::pair<std::string, std::future<response::Value>>> selections;
 
 	beginSelectionSet(selectionSetParams);
 
@@ -1132,20 +1130,14 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 		visitor.visit(*child);
 
-		auto values = visitor.getValues();
-
-		while (!values.empty())
-		{
-			selections.push(std::move(values.front()));
-			values.pop();
-		}
+		selections.splice(selections.end(), visitor.getValues());
 	}
 
 	endSelectionSet(selectionSetParams);
 
 	return std::async(
 		selectionSetParams.launch,
-		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& children) {
+		[](std::list<std::pair<std::string, std::future<response::Value>>>&& children) {
 			response::Value data(response::Type::Map);
 			std::vector<schema_error> errors;
 
@@ -1165,14 +1157,14 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 							errors.emplace_back(std::move(error));
 						}
 					}
-					auto itrData = data.find(name);
 
-					if (itrData == data.end())
+					try
 					{
 						data.emplace_back(std::move(name), std::move(result.data));
 					}
-					else if (itrData->second != result.data)
+					catch (std::runtime_error& e)
 					{
+						// Duplicate Map member
 						std::ostringstream message;
 
 						message << "Ambiguous field error name: " << name;
@@ -1189,9 +1181,13 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 						errors.emplace_back(std::move(error));
 					}
 
-					if (data.find(name) == data.end())
+					try
 					{
 						data.emplace_back(std::move(name), {});
+					}
+					catch (std::runtime_error& e)
+					{
+						// Duplicate Map member
 					}
 				}
 				catch (const std::exception& ex)
@@ -1202,13 +1198,17 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 					errors.emplace_back(schema_error { message.str() });
 
-					if (data.find(name) == data.end())
+					try
 					{
 						data.emplace_back(std::move(name), {});
 					}
+					catch (std::runtime_error& e)
+					{
+						// Duplicate Map member
+					}
 				}
 
-				children.pop();
+				children.pop_front();
 			}
 
 			return response::Value(response::ResultType { std::move(data), std::move(errors) });
