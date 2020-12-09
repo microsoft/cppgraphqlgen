@@ -189,14 +189,13 @@ public:
 			return std::async(
 				std::launch::deferred,
 				[](auto&& future) {
-					return response::Value(response::ResultType { response::Value(future.get()) });
+					return response::Value(future.get());
 				},
 				std::move(std::get<std::future<T>>(std::move(_value))));
 		}
 
 		std::promise<response::Value> promise;
-		promise.set_value(response::Value(
-			response::ResultType { response::Value(std::get<T>(std::move(_value))) }));
+		promise.set_value(response::Value(std::get<T>(std::move(_value))));
 		return promise.get_future();
 	}
 
@@ -208,15 +207,13 @@ public:
 			return std::async(
 				std::launch::deferred,
 				[&converter](auto&& future) {
-					return response::Value(
-						response::ResultType { response::Value(converter(future.get())) });
+					return response::Value(converter(future.get()));
 				},
 				std::move(std::get<std::future<T>>(std::move(_value))));
 		}
 
 		std::promise<response::Value> promise;
-		promise.set_value(response::Value(
-			response::ResultType { response::Value(converter(std::get<T>(std::move(_value)))) }));
+		promise.set_value(response::Value(converter(std::get<T>(std::move(_value)))));
 		return promise.get_future();
 	}
 
@@ -609,7 +606,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					return response::Value(response::ResultType());
+					return response::Value();
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -643,7 +640,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					return response::Value(response::ResultType());
+					return response::Value();
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -708,16 +705,22 @@ struct ModifiedResult
 				{
 					try
 					{
-						auto result = future.get().release<response::ResultType>();
-						if (result.errors.size())
+						auto value = future.get();
+						if (value.type() == response::Type::Result)
 						{
-							errors.reserve(errors.size() + result.errors.size());
-							for (auto& error : result.errors)
+							auto result = value.release<response::ResultType>();
+							if (result.errors.size())
 							{
-								errors.emplace_back(std::move(error));
+								errors.reserve(errors.size() + result.errors.size());
+								for (auto& error : result.errors)
+								{
+									errors.emplace_back(std::move(error));
+								}
 							}
+							value = std::move(result.data);
 						}
-						data.emplace_back(std::move(result.data));
+
+						data.emplace_back(std::move(value));
 					}
 					catch (schema_exception& scx)
 					{
@@ -754,6 +757,11 @@ struct ModifiedResult
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 
+				if (errors.size() == 0)
+				{
+					return std::move(data);
+				}
+
 				return response::Value(response::ResultType { std::move(data), std::move(errors) });
 			},
 			std::move(result),
@@ -774,22 +782,13 @@ private:
 			[](auto&& resultFuture,
 				ResolverParams&& paramsFuture,
 				ResolverCallback&& resolverFuture) noexcept {
-				response::Value data;
-				std::vector<schema_error> errors;
-
 				try
 				{
-					data = resolverFuture(resultFuture.get(), paramsFuture);
+					return resolverFuture(resultFuture.get(), paramsFuture);
 				}
 				catch (schema_exception& scx)
 				{
-					auto messages = scx.getStructuredErrors();
-
-					errors.reserve(errors.size() + messages.size());
-					for (auto& error : messages)
-					{
-						errors.emplace_back(std::move(error));
-					}
+					return response::Value(response::ResultType { {}, scx.getStructuredErrors() });
 				}
 				catch (const std::exception& ex)
 				{
@@ -798,13 +797,11 @@ private:
 					message << "Field name: " << paramsFuture.fieldName
 							<< " unknown error: " << ex.what();
 
-					schema_error error { message.str(),
-						paramsFuture.getLocation(),
-						paramsFuture.errorPath };
-					errors.emplace_back(std::move(error));
+					return response::Value(response::ResultType { {},
+						{ { message.str(),
+							paramsFuture.getLocation(),
+							paramsFuture.errorPath } } });
 				}
-
-				return response::Value(response::ResultType { std::move(data), std::move(errors) });
 			},
 			std::move(result),
 			std::move(params),

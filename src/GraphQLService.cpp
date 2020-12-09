@@ -721,7 +721,7 @@ std::future<response::Value> ModifiedResult<Object>::convert(
 
 			if (!wrappedResult)
 			{
-				return response::Value(response::ResultType());
+				return response::Value();
 			}
 
 			return wrappedResult
@@ -1126,19 +1126,23 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 				try
 				{
 					auto value = children.front().second.get();
-					auto result = value.release<response::ResultType>();
-					if (result.errors.size())
+					if (value.type() == response::Type::Result)
 					{
-						errors.reserve(errors.size() + result.errors.size());
-						for (auto& error : result.errors)
+						auto result = value.release<response::ResultType>();
+						if (result.errors.size())
 						{
-							errors.emplace_back(std::move(error));
+							errors.reserve(errors.size() + result.errors.size());
+							for (auto& error : result.errors)
+							{
+								errors.emplace_back(std::move(error));
+							}
 						}
+						value = std::move(result.data);
 					}
 
 					try
 					{
-						data.emplace_back(std::move(name), std::move(result.data));
+						data.emplace_back(std::move(name), std::move(value));
 					}
 					catch (std::runtime_error& e)
 					{
@@ -1187,6 +1191,11 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 				}
 
 				children.pop_front();
+			}
+
+			if (errors.size() == 0)
+			{
+				return std::move(data);
 			}
 
 			return response::Value(response::ResultType { std::move(data), std::move(errors) });
@@ -1721,7 +1730,15 @@ std::future<response::Value> Request::resolve(std::launch launch,
 	return std::async(
 		launch,
 		[](std::future<response::Value> result) {
-			return result.get().toMap();
+			auto value = result.get();
+			if (value.type() == response::Type::Result)
+			{
+				return value.toMap();
+			}
+
+			response::Value document(response::Type::Map);
+			document.emplace_back(std::string { strData }, std::move(value));
+			return std::move(document);
 		},
 		resolveValidated(launch, state, *query.root, operationName, std::move(variables)));
 }
@@ -2166,7 +2183,15 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			result = std::async(
 				launch,
 				[registration](std::future<response::Value> document) {
-					return document.get().toMap();
+					auto value = document.get();
+					if (value.type() == response::Type::Result)
+					{
+						return value.toMap();
+					}
+
+					response::Value result(response::Type::Map);
+					result.emplace_back(std::string { strData }, std::move(value));
+					return std::move(result);
 				},
 				optionalOrDefaultSubscription->resolve(selectionSetParams,
 					registration->selection,
