@@ -633,7 +633,7 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 		auto resultFuture = std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& objectType) {
 				return std::static_pointer_cast<Object>(objectType.get());
 			},
@@ -662,7 +662,7 @@ struct ModifiedResult
 		ResolverParams&& params)
 	{
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -696,7 +696,7 @@ struct ModifiedResult
 			"this is the optional version");
 
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -724,7 +724,7 @@ struct ModifiedResult
 		ResolverParams&& params)
 	{
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, const ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 				std::vector<std::future<ResolverResult>> children;
