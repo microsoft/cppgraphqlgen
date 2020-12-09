@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <list>
 
 namespace graphql::service {
 
@@ -1863,7 +1864,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	ValidateFieldArguments validateArguments;
 	std::unordered_map<std::string_view, schema_location> argumentLocations;
-	std::queue<std::string_view> argumentNames;
+	std::list<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
@@ -1890,7 +1891,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				visitor.visit(*argument->children.back());
 				validateArguments[argumentName] = visitor.getArgumentValue();
 				argumentLocations[argumentName] = { position.line, position.column };
-				argumentNames.push(std::move(argumentName));
+				argumentNames.push_back(std::move(argumentName));
 			}
 		});
 
@@ -1928,7 +1929,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		{
 			auto argumentName = std::move(argumentNames.front());
 
-			argumentNames.pop();
+			argumentNames.pop_front();
 
 			// TODO: string is a work around, the arguments set will be moved to string_view soon
 			auto itrArgument = objectField.arguments.find(std::string { argumentName });
@@ -2259,7 +2260,7 @@ void ValidateExecutableVisitor::visitDirectives(
 			[this, &directive, &directiveName, &validateDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
 				std::unordered_map<std::string_view, schema_location> argumentLocations;
-				std::queue<std::string_view> argumentNames;
+				std::list<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)
 				{
@@ -2283,14 +2284,14 @@ void ValidateExecutableVisitor::visitDirectives(
 					visitor.visit(*argument->children.back());
 					validateArguments[argumentName] = visitor.getArgumentValue();
 					argumentLocations[argumentName] = { position.line, position.column };
-					argumentNames.push(argumentName);
+					argumentNames.push_back(argumentName);
 				}
 
 				while (!argumentNames.empty())
 				{
 					auto argumentName = std::move(argumentNames.front());
 
-					argumentNames.pop();
+					argumentNames.pop_front();
 
 					// TODO: string is a work around, the arguments set will be moved to string_view
 					// soon
