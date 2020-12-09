@@ -630,7 +630,8 @@ struct ModifiedResult
 			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
-				std::queue<std::future<response::Value>> children;
+				std::vector<std::future<response::Value>> children(wrappedResult.size());
+				size_t idx = 0;
 
 				wrappedParams.errorPath.push(size_t { 0 });
 
@@ -644,8 +645,8 @@ struct ModifiedResult
 					// Copy the values from the std::vector<> rather than moving them.
 					for (typename vector_type::value_type entry : wrappedResult)
 					{
-						children.push(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
+						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
+							ResolverParams(wrappedParams));
 						++std::get<size_t>(wrappedParams.errorPath.back());
 					}
 				}
@@ -653,8 +654,8 @@ struct ModifiedResult
 				{
 					for (auto& entry : wrappedResult)
 					{
-						children.push(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
+						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
+							ResolverParams(wrappedParams));
 						++std::get<size_t>(wrappedParams.errorPath.back());
 					}
 				}
@@ -663,13 +664,13 @@ struct ModifiedResult
 				std::vector<schema_error> errors;
 
 				wrappedParams.errorPath.back() = size_t { 0 };
+				data.reserve(children.size());
 
-				while (!children.empty())
+				for (auto& future : children)
 				{
 					try
 					{
-						auto value = children.front().get();
-						auto result = value.release<response::ResultType>();
+						auto result = future.get().release<response::ResultType>();
 						if (result.errors.size())
 						{
 							errors.reserve(errors.size() + result.errors.size());
@@ -712,7 +713,6 @@ struct ModifiedResult
 						errors.emplace_back(std::move(error));
 					}
 
-					children.pop();
 					++std::get<size_t>(wrappedParams.errorPath.back());
 				}
 
