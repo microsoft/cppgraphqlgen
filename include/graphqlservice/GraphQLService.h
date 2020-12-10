@@ -131,7 +131,7 @@ struct SelectionSetParams
 		const response::Value& fragmentSpreadDirectives_,
 		const response::Value& inlineFragmentDirectives_,
 		std::optional<std::reference_wrapper<const SelectionSetParams>> parent_,
-		field_path ownErrorPath_, const std::launch launch_ = std::launch::deferred)
+		const path_segment&& ownErrorPath_, const std::launch launch_ = std::launch::deferred)
 		: resolverContext(resolverContext_)
 		, state(state_)
 		, operationDirectives(operationDirectives_)
@@ -139,7 +139,7 @@ struct SelectionSetParams
 		, fragmentSpreadDirectives(fragmentSpreadDirectives_)
 		, inlineFragmentDirectives(inlineFragmentDirectives_)
 		, parent(parent_)
-		, ownErrorPath(ownErrorPath_)
+		, ownErrorPath(std::move(ownErrorPath_))
 		, launch(launch_)
 	{
 	}
@@ -161,20 +161,38 @@ struct SelectionSetParams
 
 	// Field error path to this selection set.
 	std::optional<std::reference_wrapper<const SelectionSetParams>> parent;
-	field_path ownErrorPath;
+	const path_segment ownErrorPath;
 
 	field_path errorPath() const
 	{
 		if (!parent)
 		{
-			return ownErrorPath;
+			if (std::holds_alternative<std::string_view>(ownErrorPath))
+			{
+				if (std::get<std::string_view>(ownErrorPath) == "")
+				{
+					return {};
+				}
+			}
+			else if (std::holds_alternative<std::string>(ownErrorPath))
+			{
+				if (std::get<std::string>(ownErrorPath) == "")
+				{
+					return {};
+				}
+			}
+			else if (std::holds_alternative<size_t>(ownErrorPath))
+			{
+				if (std::get<std::size_t>(ownErrorPath) == 0)
+				{
+					return {};
+				}
+			}
+			return { { ownErrorPath } };
 		}
 
 		field_path result = parent.value().get().errorPath();
-		for (const auto& itr : ownErrorPath)
-		{
-			result.push_back(itr);
-		}
+		result.push_back(ownErrorPath);
 
 		return result;
 	}
@@ -183,7 +201,7 @@ struct SelectionSetParams
 	const std::launch launch = std::launch::deferred;
 
 	GRAPHQLSERVICE_EXPORT SelectionSetParams(
-		const SelectionSetParams& parent, field_path&& ownErrorPath_)
+		const SelectionSetParams& parent, const path_segment&& ownErrorPath_)
 		: resolverContext(parent.resolverContext)
 		, state(parent.state)
 		, operationDirectives(parent.operationDirectives)
@@ -305,7 +323,7 @@ struct ResolverParams : SelectionSetParams
 		const FragmentMap& fragments, const response::Value& variables);
 
 	GRAPHQLSERVICE_EXPORT explicit ResolverParams(
-		const ResolverParams& parent, field_path&& ownErrorPath);
+		const ResolverParams& parent, const path_segment&& ownErrorPath);
 
 	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
 
@@ -731,7 +749,7 @@ struct ModifiedResult
 					// Copy the values from the std::vector<> rather than moving them.
 					for (typename vector_type::value_type entry : wrappedResult)
 					{
-						auto itemParams = ResolverParams(wrappedParams, { { idx } });
+						auto itemParams = ResolverParams(wrappedParams, { idx });
 						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
 							std::move(itemParams));
 					}
@@ -740,7 +758,7 @@ struct ModifiedResult
 				{
 					for (auto& entry : wrappedResult)
 					{
-						auto itemParams = ResolverParams(wrappedParams, { { idx } });
+						auto itemParams = ResolverParams(wrappedParams, { idx });
 						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
 							std::move(itemParams));
 					}

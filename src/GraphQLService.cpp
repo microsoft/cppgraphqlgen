@@ -403,7 +403,7 @@ ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams,
 {
 }
 
-ResolverParams::ResolverParams(const ResolverParams& parent, field_path&& ownErrorPath_)
+ResolverParams::ResolverParams(const ResolverParams& parent, const path_segment&& ownErrorPath_)
 	: SelectionSetParams(parent, std::move(ownErrorPath_))
 	, field(parent.field)
 	, fieldName(parent.fieldName)
@@ -910,7 +910,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		_fragmentDirectives.top().fragmentSpreadDirectives,
 		_fragmentDirectives.top().inlineFragmentDirectives,
 		_selectionSetParams,
-		{ { aliasView } },
+		{ aliasView },
 		_selectionSetParams.launch,
 	};
 
