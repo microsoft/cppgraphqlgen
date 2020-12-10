@@ -56,10 +56,10 @@ class NamedValidateType
 	, public std::enable_shared_from_this<NamedValidateType>
 {
 public:
-	std::string _name;
+	std::string_view _name;
 
 	NamedValidateType(const std::string_view& name)
-		: _name(std::string(name))
+		: _name(name)
 	{
 	}
 
@@ -119,7 +119,7 @@ using ScalarType = NamedType<introspection::TypeKind::SCALAR>;
 class EnumType final : public NamedType<introspection::TypeKind::ENUM>
 {
 public:
-	EnumType(const std::string_view& name, std::unordered_set<std::string>&& values)
+	EnumType(const std::string_view& name, std::unordered_set<std::string_view>&& values)
 		: NamedType<introspection::TypeKind::ENUM>(name)
 		, _values(std::move(values))
 	{
@@ -127,12 +127,11 @@ public:
 
 	bool find(const std::string_view& key) const
 	{
-		// TODO: in the future the set will be of string_view
-		return _values.find(std::string { key }) != _values.end();
+		return _values.find(key) != _values.end();
 	}
 
 private:
-	std::unordered_set<std::string> _values;
+	std::unordered_set<std::string_view> _values;
 };
 
 template <introspection::TypeKind typeKind>
@@ -213,7 +212,7 @@ struct ValidateArgument
 	bool nonNullDefaultValue = false;
 };
 
-using ValidateTypeFieldArguments = std::unordered_map<std::string, ValidateArgument>;
+using ValidateTypeFieldArguments = std::unordered_map<std::string_view, ValidateArgument>;
 
 struct ValidateTypeField
 {
@@ -221,7 +220,7 @@ struct ValidateTypeField
 	ValidateTypeFieldArguments arguments;
 };
 
-using ValidateDirectiveArguments = std::unordered_map<std::string, ValidateArgument>;
+using ValidateDirectiveArguments = std::unordered_map<std::string_view, ValidateArgument>;
 
 template <typename FieldType>
 class ContainerValidateType : public NamedValidateType
@@ -232,13 +231,12 @@ public:
 	{
 	}
 
-	using FieldsContainer = std::unordered_map<std::string, FieldType>;
+	using FieldsContainer = std::unordered_map<std::string_view, FieldType>;
 
 	std::optional<std::reference_wrapper<const FieldType>> getField(
 		const std::string_view& name) const
 	{
-		// TODO: string is a work around, the _fields set will be moved to string_view soon
-		const auto& itr = _fields.find(std::string { name });
+		const auto& itr = _fields.find(name);
 		if (itr == _fields.cend())
 		{
 			return std::nullopt;
@@ -395,15 +393,15 @@ class ValidationContext
 public:
 	struct OperationTypes
 	{
-		std::string queryType;
-		std::string mutationType;
-		std::string subscriptionType;
+		std::string_view queryType;
+		std::string_view mutationType;
+		std::string_view subscriptionType;
 	};
 
 	GRAPHQLVALIDATION_EXPORT std::optional<std::reference_wrapper<const ValidateDirective>>
 	getDirective(const std::string_view& name) const;
-	GRAPHQLVALIDATION_EXPORT std::optional<std::reference_wrapper<const std::string>>
-	getOperationType(const std::string_view& name) const;
+	GRAPHQLVALIDATION_EXPORT const std::string_view getOperationType(
+		const std::string_view& name) const;
 
 	template <typename T = NamedValidateType,
 		typename std::enable_if<std::is_base_of<NamedValidateType, T>::value>::type* = nullptr>
@@ -519,7 +517,7 @@ protected:
 		return makeNamedValidateType(ObjectType { name });
 	}
 
-	using Directives = std::unordered_map<std::string, ValidateDirective>;
+	using Directives = std::unordered_map<std::string_view, ValidateDirective>;
 
 	OperationTypes _operationTypes;
 	Directives _directives;

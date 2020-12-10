@@ -491,7 +491,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			operationType = child.string_view();
 		});
 
-	std::string operationName;
+	std::string_view operationName;
 
 	peg::on_first_child<peg::operation_name>(operationDefinition,
 		[&operationName](const peg::ast_node& child) {
@@ -612,8 +612,8 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			visitDirectives(location, child);
 		});
 
-	const auto& typeRef = _validationContext.getOperationType(operationType);
-	if (!typeRef)
+	const auto& type = _validationContext.getOperationType(operationType);
+	if (type.empty())
 	{
 		auto position = operationDefinition.begin();
 		std::ostringstream error;
@@ -624,7 +624,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		return;
 	}
 
-	_scopedType = _validationContext.getNamedValidateType(typeRef.value().get());
+	_scopedType = _validationContext.getNamedValidateType(type);
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
@@ -1294,8 +1294,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			argumentNames.pop_front();
 
-			// TODO: string is a work around, the arguments set will be moved to string_view soon
-			auto itrArgument = objectField.arguments.find(std::string { argumentName });
+			auto itrArgument = objectField.arguments.find(argumentName);
 
 			if (itrArgument == objectField.arguments.end())
 			{
@@ -1656,10 +1655,7 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					argumentNames.pop_front();
 
-					// TODO: string is a work around, the arguments set will be moved to string_view
-					// soon
-					const auto& itrArgument =
-						validateDirective.arguments.find(std::string { argumentName });
+					const auto& itrArgument = validateDirective.arguments.find(argumentName);
 					if (itrArgument == validateDirective.arguments.cend())
 					{
 						// http://spec.graphql.org/June2018/#sec-Argument-Names

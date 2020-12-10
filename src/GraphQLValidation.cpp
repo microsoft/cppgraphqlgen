@@ -8,8 +8,7 @@ namespace graphql::service {
 std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext::getDirective(
 	const std::string_view& name) const
 {
-	// TODO: string is a work around, the directives map will be moved to string_view soon
-	const auto& itr = _directives.find(std::string { name });
+	const auto& itr = _directives.find(name);
 	if (itr == _directives.cend())
 	{
 		return std::nullopt;
@@ -17,24 +16,21 @@ std::optional<std::reference_wrapper<const ValidateDirective>> ValidationContext
 	return std::optional<std::reference_wrapper<const ValidateDirective>>(itr->second);
 }
 
-std::optional<std::reference_wrapper<const std::string>> ValidationContext::getOperationType(
-	const std::string_view& name) const
+const std::string_view ValidationContext::getOperationType(const std::string_view& name) const
 {
 	if (name == strQuery)
 	{
-		return std::optional<std::reference_wrapper<const std::string>>(_operationTypes.queryType);
+		return _operationTypes.queryType;
 	}
 	if (name == strMutation)
 	{
-		return std::optional<std::reference_wrapper<const std::string>>(
-			_operationTypes.mutationType);
+		return _operationTypes.mutationType;
 	}
 	if (name == strSubscription)
 	{
-		return std::optional<std::reference_wrapper<const std::string>>(
-			_operationTypes.subscriptionType);
+		return _operationTypes.subscriptionType;
 	}
-	return std::nullopt;
+	return "";
 }
 
 constexpr std::string_view introspectionQuery = R"gql(
@@ -115,9 +111,8 @@ IntrospectionValidationContext::IntrospectionValidationContext(const Request& se
 	ast.validated = true;
 
 	std::shared_ptr<RequestState> state;
-	const std::string operationName;
 	response::Value variables(response::Type::Map);
-	_introspectionQuery = service.resolve(state, ast, operationName, std::move(variables)).get();
+	_introspectionQuery = service.resolve(state, ast, "", std::move(variables)).get();
 
 	populate();
 }
@@ -326,7 +321,7 @@ void IntrospectionValidationContext::addTypeFields(
 	std::shared_ptr<ContainerValidateType<ValidateTypeField>> type,
 	const response::Value& typeDescriptionMap)
 {
-	std::unordered_map<std::string, ValidateTypeField> fields;
+	std::unordered_map<std::string_view, ValidateTypeField> fields;
 
 	const auto& itrFields = typeDescriptionMap.find(R"gql(fields)gql");
 	if (itrFields != typeDescriptionMap.end() && itrFields->second.type() == response::Type::List)
@@ -428,7 +423,7 @@ void IntrospectionValidationContext::addEnum(
 	if (itrEnumValues != enumDescriptionMap.end()
 		&& itrEnumValues->second.type() == response::Type::List)
 	{
-		std::unordered_set<std::string> enumValues;
+		std::unordered_set<std::string_view> enumValues;
 		const auto& enumValuesEntries = itrEnumValues->second.get<response::ListType>();
 
 		for (const auto& enumValuesEntry : enumValuesEntries)
@@ -497,8 +492,7 @@ void IntrospectionValidationContext::addDirective(const std::string_view& name,
 		directive.arguments = getArguments(itrArgs->second.get<response::ListType>());
 	}
 
-	// TODO: string is a work around, the directives will be moved to string_view soon
-	_directives[std::string { name }] = std::move(directive);
+	_directives[name] = std::move(directive);
 }
 
 std::shared_ptr<ValidateType> IntrospectionValidationContext::getTypeFromMap(
