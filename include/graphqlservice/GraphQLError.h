@@ -18,9 +18,11 @@
 #endif // !GRAPHQL_DLLEXPORTS
 // clang-format on
 
-#include <queue>
+#include <list>
+#include <string_view>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace graphql::error {
 
@@ -37,8 +39,20 @@ struct schema_location
 
 constexpr schema_location emptyLocation {};
 
-using path_segment = std::variant<std::string, size_t>;
-using field_path = std::queue<path_segment>;
+using path_segment = std::variant<std::string_view, std::string, size_t>;
+
+struct field_path : public std::list<path_segment>
+{
+	void pop()
+	{
+		pop_front();
+	}
+
+	void push(path_segment&& segment)
+	{
+		push_back(std::move(segment));
+	}
+};
 
 struct schema_error
 {

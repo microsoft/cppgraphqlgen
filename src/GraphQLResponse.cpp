@@ -1235,6 +1235,11 @@ void addErrorPath(graphql::error::field_path&& path, Value& error)
 		{
 			errorPath.emplace_back(response::Value(std::move(std::get<std::string>(segment))));
 		}
+		if (std::holds_alternative<std::string_view>(segment))
+		{
+			errorPath.emplace_back(
+				response::Value(std::string(std::get<std::string_view>(segment))));
+		}
 		else if (std::holds_alternative<size_t>(segment))
 		{
 			errorPath.emplace_back(

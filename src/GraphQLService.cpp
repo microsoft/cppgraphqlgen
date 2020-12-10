@@ -767,7 +767,7 @@ private:
 	const ResolverContext _resolverContext;
 	const std::shared_ptr<RequestState>& _state;
 	const response::Value& _operationDirectives;
-	const field_path _path;
+	const field_path& _path;
 	const std::launch _launch;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
@@ -898,7 +898,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	auto path = _path;
 
-	path.push({ alias });
+	path.push({ aliasView });
 
 	SelectionSetParams selectionSetParams {
 		_resolverContext,
