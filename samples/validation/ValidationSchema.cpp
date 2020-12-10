@@ -115,8 +115,10 @@ Query::Query()
 	: service::Object({
 		"Query"
 	}, {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
+#endif
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } },
@@ -126,10 +128,14 @@ Query::Query()
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } }
 	})
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	, _schema(std::make_shared<introspection::Schema>())
+#endif
 {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	introspection::AddTypesToSchema(_schema);
 	validation::AddTypesToSchema(_schema);
+#endif
 }
 
 service::FieldResult<std::shared_ptr<Dog>> Query::getDog(service::FieldParams&&) const
@@ -237,6 +243,7 @@ std::future<response::Value> Query::resolve_typename(service::ResolverParams&& p
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
@@ -248,6 +255,7 @@ std::future<response::Value> Query::resolve_type(service::ResolverParams&& param
 
 	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 }
+#endif
 
 Dog::Dog()
 	: service::Object({
@@ -845,6 +853,11 @@ public:
 		auto typeString = makeNamedValidateType(service::ScalarType { "String" });
 
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
+
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		auto type__TypeKind = makeNamedValidateType(service::EnumType { "__TypeKind", {
 				"SCALAR",
 				"OBJECT",
@@ -875,6 +888,7 @@ public:
 				"INPUT_OBJECT",
 				"INPUT_FIELD_DEFINITION"
 			} });
+#endif
 		auto typeDogCommand = makeNamedValidateType(service::EnumType { "DogCommand", {
 				"SIT",
 				"DOWN",
@@ -884,21 +898,33 @@ public:
 				"JUMP"
 			} });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeComplexInput = makeNamedValidateType(service::InputObjectType { "ComplexInput" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeCatOrDog = makeNamedValidateType(service::UnionType { "CatOrDog" });
 		auto typeDogOrHuman = makeNamedValidateType(service::UnionType { "DogOrHuman" });
 		auto typeHumanOrAlien = makeNamedValidateType(service::UnionType { "HumanOrAlien" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeSentient = makeNamedValidateType(service::InterfaceType { "Sentient" });
 		auto typePet = makeNamedValidateType(service::InterfaceType { "Pet" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		auto type__Schema = makeNamedValidateType(service::ObjectType { "__Schema" });
 		auto type__Type = makeNamedValidateType(service::ObjectType { "__Type" });
 		auto type__Field = makeNamedValidateType(service::ObjectType { "__Field" });
 		auto type__InputValue = makeNamedValidateType(service::ObjectType { "__InputValue" });
 		auto type__EnumValue = makeNamedValidateType(service::ObjectType { "__EnumValue" });
 		auto type__Directive = makeNamedValidateType(service::ObjectType { "__Directive" });
+#endif
 		auto typeQuery = makeNamedValidateType(service::ObjectType { "Query" });
 		auto typeDog = makeNamedValidateType(service::ObjectType { "Dog" });
 		auto typeAlien = makeNamedValidateType(service::ObjectType { "Alien" });
@@ -910,11 +936,17 @@ public:
 		auto typeMessage = makeNamedValidateType(service::ObjectType { "Message" });
 		auto typeArguments = makeNamedValidateType(service::ObjectType { "Arguments" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeComplexInput->setFields({
 				{ "name", { typeString, 0, 0 } },
 				{ "owner", { typeString, 0, 0 } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeCatOrDog->setPossibleTypes({
 				typeCat.get(),
 				typeDog.get()
@@ -937,6 +969,9 @@ public:
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeSentient->setPossibleTypes({
 				typeAlien.get(),
 				typeHuman.get()
@@ -954,6 +989,8 @@ public:
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		type__Schema->setFields({
 				{ "types", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__Type))), {  } } },
 				{ "queryType", { makeNonNullOfType(type__Type), {  } } },
@@ -1004,6 +1041,7 @@ public:
 				{ "args", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__InputValue))), {  } } },
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
+#endif
 		typeQuery->setFields({
 				{ "dog", { typeDog, {  } } },
 				{ "human", { typeHuman, {  } } },
@@ -1011,10 +1049,14 @@ public:
 				{ "catOrDog", { typeCatOrDog, {  } } },
 				{ "arguments", { typeArguments, {  } } },
 				{ "findDog", { typeDog, { { "complex", { typeComplexInput, 0, 0 } } } } },
-				{ "booleanList", { typeBoolean, { { "booleanListArg", { makeListOfType(makeNonNullOfType(typeBoolean)), 0, 0 } } } } },
-				{ "__schema", { makeNonNullOfType(type__Schema), {  } } },
-				{ "__type", { type__Type, { { "name", { makeNonNullOfType(typeString), 0, 0 } } } } },
-				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+				{ "booleanList", { typeBoolean, { { "booleanListArg", { makeListOfType(makeNonNullOfType(typeBoolean)), 0, 0 } } } } }
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, { "__schema", { makeNonNullOfType(type__Schema), {  } } }
+#endif
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, { "__type", { type__Type, { { "name", { makeNonNullOfType(typeString), 0, 0 } } } } }
+#endif
+				, { "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 		typeDog->setFields({
 				{ "name", { makeNonNullOfType(typeString), {  } } },
@@ -1073,9 +1115,12 @@ public:
 			});
 
 		_directives = {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 			{ "skip", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
 			{ "include", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
-			{ "deprecated", { { introspection::DirectiveLocation::FIELD_DEFINITION, introspection::DirectiveLocation::ENUM_VALUE }, { { "reason", { typeString, 1, 1 } } } } }
+			{ "deprecated", { { introspection::DirectiveLocation::FIELD_DEFINITION, introspection::DirectiveLocation::ENUM_VALUE }, { { "reason", { typeString, 1, 1 } } } } },
+#endif
+
 		};
 
 		_operationTypes.queryType = "Query";
@@ -1097,6 +1142,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 {
 }
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	auto typeDogCommand = std::make_shared<introspection::EnumType>("DogCommand", R"md()md");
@@ -1269,6 +1315,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddMutationType(typeMutation);
 	schema->AddSubscriptionType(typeSubscription);
 }
+#endif
 
 } /* namespace validation */
 } /* namespace graphql */

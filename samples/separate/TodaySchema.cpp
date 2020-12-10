@@ -102,9 +102,14 @@ public:
 		auto typeInt = makeNamedValidateType(service::ScalarType { "Int" });
 		auto typeString = makeNamedValidateType(service::ScalarType { "String" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeItemCursor = makeNamedValidateType(service::ScalarType { "ItemCursor" });
 		auto typeDateTime = makeNamedValidateType(service::ScalarType { "DateTime" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		auto type__TypeKind = makeNamedValidateType(service::EnumType { "__TypeKind", {
 				"SCALAR",
 				"OBJECT",
@@ -135,6 +140,7 @@ public:
 				"INPUT_OBJECT",
 				"INPUT_FIELD_DEFINITION"
 			} });
+#endif
 		auto typeTaskState = makeNamedValidateType(service::EnumType { "TaskState", {
 				"New",
 				"Started",
@@ -142,18 +148,30 @@ public:
 				"Unassigned"
 			} });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeCompleteTaskInput = makeNamedValidateType(service::InputObjectType { "CompleteTaskInput" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeUnionType = makeNamedValidateType(service::UnionType { "UnionType" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		auto typeNode = makeNamedValidateType(service::InterfaceType { "Node" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		auto type__Schema = makeNamedValidateType(service::ObjectType { "__Schema" });
 		auto type__Type = makeNamedValidateType(service::ObjectType { "__Type" });
 		auto type__Field = makeNamedValidateType(service::ObjectType { "__Field" });
 		auto type__InputValue = makeNamedValidateType(service::ObjectType { "__InputValue" });
 		auto type__EnumValue = makeNamedValidateType(service::ObjectType { "__EnumValue" });
 		auto type__Directive = makeNamedValidateType(service::ObjectType { "__Directive" });
+#endif
 		auto typeQuery = makeNamedValidateType(service::ObjectType { "Query" });
 		auto typePageInfo = makeNamedValidateType(service::ObjectType { "PageInfo" });
 		auto typeAppointmentEdge = makeNamedValidateType(service::ObjectType { "AppointmentEdge" });
@@ -171,12 +189,18 @@ public:
 		auto typeNestedType = makeNamedValidateType(service::ObjectType { "NestedType" });
 		auto typeExpensive = makeNamedValidateType(service::ObjectType { "Expensive" });
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeCompleteTaskInput->setFields({
 				{ "id", { makeNonNullOfType(typeID), 0, 0 } },
 				{ "isComplete", { typeBoolean, 1, 1 } },
 				{ "clientMutationId", { typeString, 0, 0 } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeUnionType->setPossibleTypes({
 				typeAppointment.get(),
 				typeTask.get(),
@@ -186,6 +210,9 @@ public:
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+#endif
 		typeNode->setPossibleTypes({
 				typeAppointment.get(),
 				typeTask.get(),
@@ -196,6 +223,8 @@ public:
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		type__Schema->setFields({
 				{ "types", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__Type))), {  } } },
 				{ "queryType", { makeNonNullOfType(type__Type), {  } } },
@@ -246,6 +275,7 @@ public:
 				{ "args", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__InputValue))), {  } } },
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
+#endif
 		typeQuery->setFields({
 				{ "node", { typeNode, { { "id", { makeNonNullOfType(typeID), 0, 0 } } } } },
 				{ "appointments", { makeNonNullOfType(typeAppointmentConnection), { { "first", { typeInt, 0, 0 } }, { "after", { typeItemCursor, 0, 0 } }, { "last", { typeInt, 0, 0 } }, { "before", { typeItemCursor, 0, 0 } } } } },
@@ -256,10 +286,14 @@ public:
 				{ "unreadCountsById", { makeNonNullOfType(makeListOfType(typeFolder)), { { "ids", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeID))), 0, 0 } } } } },
 				{ "nested", { makeNonNullOfType(typeNestedType), {  } } },
 				{ "unimplemented", { makeNonNullOfType(typeString), {  } } },
-				{ "expensive", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeExpensive))), {  } } },
-				{ "__schema", { makeNonNullOfType(type__Schema), {  } } },
-				{ "__type", { type__Type, { { "name", { makeNonNullOfType(typeString), 0, 0 } } } } },
-				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+				{ "expensive", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeExpensive))), {  } } }
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, { "__schema", { makeNonNullOfType(type__Schema), {  } } }
+#endif
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, { "__type", { type__Type, { { "name", { makeNonNullOfType(typeString), 0, 0 } } } } }
+#endif
+				, { "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 		typePageInfo->setFields({
 				{ "hasNextPage", { makeNonNullOfType(typeBoolean), {  } } },
@@ -341,9 +375,11 @@ public:
 			});
 
 		_directives = {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 			{ "skip", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
 			{ "include", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
 			{ "deprecated", { { introspection::DirectiveLocation::FIELD_DEFINITION, introspection::DirectiveLocation::ENUM_VALUE }, { { "reason", { typeString, 1, 1 } } } } },
+#endif
 			{ "id", { { introspection::DirectiveLocation::FIELD_DEFINITION }, {  } } },
 			{ "subscriptionTag", { { introspection::DirectiveLocation::SUBSCRIPTION }, { { "field", { typeString, 0, 0 } } } } },
 			{ "queryTag", { { introspection::DirectiveLocation::QUERY }, { { "query", { makeNonNullOfType(typeString), 0, 0 } } } } },
@@ -372,6 +408,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 {
 }
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	schema->AddType("ItemCursor", std::make_shared<introspection::ScalarType>("ItemCursor", R"md()md"));
@@ -495,6 +532,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 	schema->AddMutationType(typeMutation);
 	schema->AddSubscriptionType(typeSubscription);
 }
+#endif
 
 } /* namespace today */
 } /* namespace graphql */

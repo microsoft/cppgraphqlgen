@@ -92,7 +92,9 @@ void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, con
 void AddNestedTypeDetails(std::shared_ptr<introspection::ObjectType> typeNestedType, const std::shared_ptr<introspection::Schema>& schema);
 void AddExpensiveDetails(std::shared_ptr<introspection::ObjectType> typeExpensive, const std::shared_ptr<introspection::Schema>& schema);
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+#endif
 
 } /* namespace today */
 } /* namespace graphql */

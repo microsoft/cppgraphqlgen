@@ -20,8 +20,10 @@ Query::Query()
 	: service::Object({
 		"Query"
 	}, {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
+#endif
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(appointments)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
 		{ R"gql(appointmentsById)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
@@ -34,10 +36,14 @@ Query::Query()
 		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
 		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	, _schema(std::make_shared<introspection::Schema>())
+#endif
 {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	introspection::AddTypesToSchema(_schema);
 	today::AddTypesToSchema(_schema);
+#endif
 }
 
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
@@ -223,6 +229,7 @@ std::future<response::Value> Query::resolve_typename(service::ResolverParams&& p
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
@@ -234,6 +241,7 @@ std::future<response::Value> Query::resolve_type(service::ResolverParams&& param
 
 	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 }
+#endif
 
 } /* namespace object */
 

@@ -95,10 +95,12 @@ private:
 	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
+#endif
 };
 
 class PageInfo
@@ -379,7 +381,9 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+#endif
 
 } /* namespace today */
 } /* namespace graphql */

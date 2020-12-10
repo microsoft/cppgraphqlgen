@@ -33,6 +33,7 @@ settings.json
 /test/pegtl_tests
 /test/response_tests
 /test/today_tests
+/test/nointrospection_tests
 build/
 install/
 isenseconfig/

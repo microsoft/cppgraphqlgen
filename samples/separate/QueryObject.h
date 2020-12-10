@@ -41,10 +41,12 @@ private:
 	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<introspection::Schema> _schema;
+#endif
 };
 
 } /* namespace graphql::today::object */

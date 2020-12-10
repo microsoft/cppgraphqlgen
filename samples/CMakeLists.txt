@@ -111,6 +111,15 @@ target_include_directories(sample PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
+add_executable(sample_nointrospection today/sample.cpp)
+target_link_libraries(sample_nointrospection PRIVATE
+  unifiednointrospectiongraphql
+  graphqljson)
+target_include_directories(sample_nointrospection PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
@@ -141,6 +150,26 @@ if(GRAPHQL_BUILD_TESTS)
   target_link_libraries(unifiedgraphql PUBLIC unifiedschema)
   target_include_directories(unifiedgraphql PUBLIC today)
   add_bigobj_flag(unifiedgraphql)
+
+  add_library(unifiednointrospectionschema STATIC unified/TodaySchema.cpp)
+  target_compile_definitions(unifiednointrospectionschema PUBLIC SCHEMAGEN_DISABLE_INTROSPECTION=1)
+  target_link_libraries(unifiednointrospectionschema PUBLIC graphqlservice)
+  target_include_directories(unifiednointrospectionschema PUBLIC
+    ${CMAKE_CURRENT_BINARY_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+    unified)
+
+  if(GRAPHQL_UPDATE_SAMPLES)
+    # wait for the sample update to complete
+    add_dependencies(unifiednointrospectionschema update_samples)
+  endif()
+
+  add_library(unifiednointrospectiongraphql STATIC today/TodayMock.cpp)
+  target_compile_definitions(unifiednointrospectiongraphql PUBLIC SCHEMAGEN_DISABLE_INTROSPECTION=1)
+  target_link_libraries(unifiednointrospectiongraphql PUBLIC unifiednointrospectionschema)
+  target_include_directories(unifiednointrospectiongraphql PUBLIC today)
+  add_bigobj_flag(unifiednointrospectiongraphql)
 
   add_library(validationgraphql STATIC
     validation/ValidationMock.cpp

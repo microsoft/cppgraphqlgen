@@ -555,6 +555,7 @@ std::future<response::Value> Directive::resolve_typename(service::ResolverParams
 
 } /* namespace object */
 
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 {
 	schema->AddType("Boolean", std::make_shared<introspection::ScalarType>("Boolean", R"md(Built-in type)md"));
@@ -680,6 +681,7 @@ void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
 		std::make_shared<introspection::InputValue>("reason", R"md()md", schema->LookupType("String"), R"gql("No longer supported")gql")
 	})));
 }
+#endif
 
 } /* namespace introspection */
 } /* namespace graphql */

@@ -404,7 +404,7 @@ protected:
 	static void outputValidationObjectTypeListSetFields(
 		std::ostream& sourceFile, const ObjectTypeList& objectTypes, const std::string& queryType);
 	static void outputValidationDirectiveList(
-		std::ostream& sourceFile, const DirectiveList& directives, bool& firstDirective);
+		std::ostream& sourceFile, const DirectiveList& directives);
 
 	static void outputValidationInputField(std::ostream& sourceFile, const InputField& inputField);
 	static void outputValidationInputFieldListArrayBody(std::ostream& sourceFile,

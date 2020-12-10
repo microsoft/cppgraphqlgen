@@ -1913,6 +1913,8 @@ private:
 		headerFile << std::endl;
 	}
 
+	headerFile << R"cpp(#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	if (_isIntrospection)
 	{
 		headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
@@ -1920,6 +1922,7 @@ private:
 
 	headerFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp"
 			   << s_introspectionNamespace << R"cpp(::Schema>& schema);
+#endif
 
 )cpp";
 
@@ -1982,12 +1985,13 @@ private:
 
 		if (isQueryType)
 		{
-			headerFile
-				<< R"cpp(	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
+			headerFile << R"cpp(#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<)cpp"
-				<< s_introspectionNamespace << R"cpp(::Schema> _schema;
+					   << s_introspectionNamespace << R"cpp(::Schema> _schema;
+#endif
 )cpp";
 		}
 	}
@@ -2339,7 +2343,8 @@ Operations::Operations()cpp";
 		sourceFile << std::endl;
 	}
 
-	sourceFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<)cpp"
+	sourceFile << R"cpp(#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+void AddTypesToSchema(const std::shared_ptr<)cpp"
 			   << s_introspectionNamespace << R"cpp(::Schema>& schema)
 {
 )cpp";
@@ -2745,6 +2750,7 @@ Operations::Operations()cpp";
 	}
 
 	sourceFile << R"cpp(}
+#endif
 
 )cpp";
 
@@ -2977,59 +2983,121 @@ void Generator::outputValidationObjectTypeListSetFields(
 			if (foundSchema && foundType)
 			{
 				outputValidationSetFields(sourceFile, objectType.type, objectType.fields);
+				return;
 			}
 
-			auto fields = objectType.fields;
+			bool firstField = true;
+
+			sourceFile << R"cpp(		type)cpp" << objectType.type << R"cpp(->setFields({
+)cpp";
+
+			bool foundTypename = false;
+
+			for (const auto& field : objectType.fields)
+			{
+				if (field.name == "__typename")
+				{
+					foundTypename = true;
+				}
+
+				if (!firstField)
+				{
+					sourceFile << R"cpp(,
+)cpp";
+				}
+
+				firstField = false;
+				sourceFile << R"cpp(				)cpp";
+				outputValidationOutputField(sourceFile, field);
+			}
+
 			if (!foundSchema)
 			{
-				fields.push_back({ "__Schema",
-					"__schema",
-					"__Schema",
-					{},
-					OutputFieldType::Builtin,
-					{},
-					"",
-					std::nullopt,
-					std::nullopt,
-					false,
-					false,
-					{ strGet } });
-			}
-			if (!foundType)
-			{
-				fields.push_back({ "__Type",
-					"__type",
-					"__Type",
-					{ { "String",
-						"name",
-						"name",
-						"",
-						response::Value(),
-						InputFieldType::Builtin,
+				sourceFile << R"cpp(
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, )cpp";
+				outputValidationOutputField(sourceFile,
+					{ "__Schema",
+						"__schema",
+						"__Schema",
+						{},
+						OutputFieldType::Builtin,
 						{},
 						"",
-						std::nullopt } },
-					OutputFieldType::Builtin,
-					{ service::TypeModifier::Nullable },
-					"",
-					std::nullopt,
-					std::nullopt,
-					false,
-					false,
-					{ strGet } });
+						std::nullopt,
+						std::nullopt,
+						false,
+						false,
+						{ strGet } });
+				sourceFile << R"cpp(
+#endif)cpp";
 			}
-			outputValidationSetFields(sourceFile, objectType.type, fields);
+
+			if (!foundType)
+			{
+				sourceFile << R"cpp(
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+				, )cpp";
+				outputValidationOutputField(sourceFile,
+					{ "__Type",
+						"__type",
+						"__Type",
+						{ { "String",
+							"name",
+							"name",
+							"",
+							response::Value(),
+							InputFieldType::Builtin,
+							{},
+							"",
+							std::nullopt } },
+						OutputFieldType::Builtin,
+						{ service::TypeModifier::Nullable },
+						"",
+						std::nullopt,
+						std::nullopt,
+						false,
+						false,
+						{ strGet } });
+				sourceFile << R"cpp(
+#endif)cpp";
+			}
+
+			if (!foundTypename)
+			{
+				sourceFile << R"cpp(
+				, )cpp";
+				outputValidationOutputField(sourceFile,
+					{ "String",
+						"__typename",
+						"String",
+						{},
+						OutputFieldType::Builtin,
+						{},
+						"",
+						std::nullopt,
+						std::nullopt,
+						false,
+						false,
+						{ strGet } });
+			}
+
+			sourceFile << R"cpp(
+			});
+)cpp";
 		}
 	}
 }
 
 void Generator::outputValidationDirectiveList(
-	std::ostream& sourceFile, const DirectiveList& directives, bool& firstDirective)
+	std::ostream& sourceFile, const DirectiveList& directives)
 {
 	if (directives.empty())
 	{
 		return;
 	}
+
+	bool firstDirective = true;
 
 	for (const auto& directive : directives)
 	{
@@ -3223,66 +3291,117 @@ public:
 				   << builtinType.first << R"cpp(" });
 )cpp";
 	}
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationScalarsList(sourceFile, introspectionGenerator.GetScalarTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationScalarsList(sourceFile, _scalarTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationEnumsList(sourceFile, introspectionGenerator.GetEnumTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationEnumsList(sourceFile, _enumTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationInputTypeList(sourceFile, introspectionGenerator.GetInputTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationInputTypeList(sourceFile, _inputTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationUnionTypeList(sourceFile, introspectionGenerator.GetUnionTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationUnionTypeList(sourceFile, _unionTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationInterfaceTypeList(sourceFile, introspectionGenerator.GetInterfaceTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationInterfaceTypeList(sourceFile, _interfaceTypes);
-	sourceFile << std::endl;
 
 	std::unordered_map<std::string, std::vector<std::string>> interfacePossibleTypes;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationObjectTypeList(sourceFile,
 		introspectionGenerator.GetObjectTypes(),
 		interfacePossibleTypes);
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationObjectTypeList(sourceFile, _objectTypes, interfacePossibleTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationInputTypeListSetFields(sourceFile, introspectionGenerator.GetInputTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationInputTypeListSetFields(sourceFile, _inputTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationUnionTypeListSetFieldsAndPossibleTypes(sourceFile,
 		introspectionGenerator.GetUnionTypes());
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationUnionTypeListSetFieldsAndPossibleTypes(sourceFile, _unionTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationInterfaceTypeListSetFieldsAndPossibleTypes(sourceFile,
 		introspectionGenerator.GetInterfaceTypes(),
 		interfacePossibleTypes);
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationInterfaceTypeListSetFieldsAndPossibleTypes(sourceFile,
 		_interfaceTypes,
 		interfacePossibleTypes);
-	sourceFile << std::endl;
 
+	sourceFile << R"cpp(
+
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+)cpp";
 	outputValidationObjectTypeListSetFields(sourceFile,
 		introspectionGenerator.GetObjectTypes(),
 		queryType);
+	sourceFile << R"cpp(#endif
+)cpp";
 	outputValidationObjectTypeListSetFields(sourceFile, _objectTypes, queryType);
 
 	sourceFile << R"cpp(
 		_directives = {
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 )cpp";
-	bool firstDirective = true;
-	outputValidationDirectiveList(sourceFile,
-		introspectionGenerator.GetDirectives(),
-		firstDirective);
-	outputValidationDirectiveList(sourceFile, _directives, firstDirective);
+	outputValidationDirectiveList(sourceFile, introspectionGenerator.GetDirectives());
+	sourceFile << R"cpp(,
+#endif
+)cpp";
+	outputValidationDirectiveList(sourceFile, _directives);
 
 	sourceFile << R"cpp(
 		};
@@ -3355,10 +3474,18 @@ void Generator::outputObjectImplementation(
 
 	if (isQueryType)
 	{
-		resolvers["__schema"sv] =
-			R"cpp(		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } })cpp"s;
-		resolvers["__type"sv] =
-			R"cpp(		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp"s;
+		sourceFile << R"cpp(#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
+		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp";
+
+		if (resolvers.size() > 0)
+		{
+			sourceFile << R"cpp(,)cpp";
+		}
+
+		sourceFile << R"cpp(
+#endif
+)cpp";
 	}
 
 	bool firstField = true;
@@ -3381,8 +3508,10 @@ void Generator::outputObjectImplementation(
 	if (isQueryType)
 	{
 		sourceFile << R"cpp(
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 	, _schema(std::make_shared<)cpp"
-				   << s_introspectionNamespace << R"cpp(::Schema>()))cpp";
+				   << s_introspectionNamespace << R"cpp(::Schema>())
+#endif)cpp";
 	}
 
 	sourceFile << R"cpp(
@@ -3391,10 +3520,12 @@ void Generator::outputObjectImplementation(
 
 	if (isQueryType)
 	{
-		sourceFile << R"cpp(	)cpp" << s_introspectionNamespace
+		sourceFile << R"cpp(#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
+	)cpp" << s_introspectionNamespace
 				   << R"cpp(::AddTypesToSchema(_schema);
 	)cpp" << _schemaNamespace
 				   << R"cpp(::AddTypesToSchema(_schema);
+#endif
 )cpp";
 	}
 
@@ -3521,6 +3652,7 @@ std::future<response::Value> )cpp"
 	{
 		sourceFile
 			<< R"cpp(
+#ifndef SCHEMAGEN_DISABLE_INTROSPECTION
 std::future<response::Value> )cpp"
 			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params)
 {
@@ -3536,6 +3668,7 @@ std::future<response::Value> )cpp"
 			<< s_introspectionNamespace
 			<< R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
 }
+#endif
 )cpp";
 	}
 }
