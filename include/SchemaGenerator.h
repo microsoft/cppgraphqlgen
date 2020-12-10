@@ -237,6 +237,7 @@ struct GeneratorOptions
 	const bool verbose = false;
 	const bool separateFiles = false;
 	const bool noStubs = false;
+	const bool noIntrospection = false;
 };
 
 // RAII object to help with emitting matching include guard begin and end statements
