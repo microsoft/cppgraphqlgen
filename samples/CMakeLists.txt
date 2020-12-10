@@ -121,6 +121,20 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_dependencies(sample copy_sample_dlls)
 endif()
 
+# benchmark
+add_executable(benchmark today/benchmark.cpp)
+target_link_libraries(benchmark PRIVATE
+  separategraphql
+  graphqljson)
+target_include_directories(benchmark PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_dependencies(benchmark copy_sample_dlls)
+endif()
+
 if(GRAPHQL_BUILD_TESTS)
   # tests
   add_library(unifiedschema STATIC unified/TodaySchema.cpp)
