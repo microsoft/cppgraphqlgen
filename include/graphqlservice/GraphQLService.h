@@ -300,7 +300,7 @@ using FragmentMap = std::unordered_map<std::string, Fragment>;
 struct ResolverParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams,
-		const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments,
+		const peg::ast_node& field, const std::string_view& fieldName, response::Value&& arguments,
 		response::Value&& fieldDirectives, const peg::ast_node* selection,
 		const FragmentMap& fragments, const response::Value& variables);
 
@@ -311,7 +311,7 @@ struct ResolverParams : SelectionSetParams
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
-	std::string fieldName;
+	const std::string_view& fieldName;
 	response::Value arguments { response::Type::Map };
 	response::Value fieldDirectives { response::Type::Map };
 	const peg::ast_node* selection;

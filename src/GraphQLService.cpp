@@ -389,12 +389,12 @@ const response::Value& Fragment::getDirectives() const
 }
 
 ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams,
-	const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments,
+	const peg::ast_node& field, const std::string_view& fieldName, response::Value&& arguments,
 	response::Value&& fieldDirectives, const peg::ast_node* selection, const FragmentMap& fragments,
 	const response::Value& variables)
 	: SelectionSetParams(selectionSetParams)
 	, field(field)
-	, fieldName(std::move(fieldName))
+	, fieldName(fieldName)
 	, arguments(std::move(arguments))
 	, fieldDirectives(std::move(fieldDirectives))
 	, selection(selection)
@@ -918,7 +918,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	{
 		auto result = itr->second(ResolverParams(selectionSetParams,
 			field,
-			std::string(alias),
+			aliasView,
 			std::move(arguments),
 			directiveVisitor.getDirectives(),
 			selection,
