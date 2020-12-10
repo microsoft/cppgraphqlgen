@@ -4,6 +4,7 @@
 #include "TodaySchema.h"
 
 #include "graphqlservice/Introspection.h"
+#include "graphqlservice/GraphQLValidation.h"
 
 #include <algorithm>
 #include <array>
@@ -1026,12 +1027,281 @@ std::future<response::Value> Expensive::resolve_typename(service::ResolverParams
 
 } /* namespace object */
 
+class ValidationContext : public service::ValidationContext
+{
+public:
+	ValidationContext()
+	{
+		auto typeBoolean = makeNamedValidateType(service::ScalarType { "Boolean" });
+		auto typeFloat = makeNamedValidateType(service::ScalarType { "Float" });
+		auto typeID = makeNamedValidateType(service::ScalarType { "ID" });
+		auto typeInt = makeNamedValidateType(service::ScalarType { "Int" });
+		auto typeString = makeNamedValidateType(service::ScalarType { "String" });
+
+		auto typeItemCursor = makeNamedValidateType(service::ScalarType { "ItemCursor" });
+		auto typeDateTime = makeNamedValidateType(service::ScalarType { "DateTime" });
+
+		auto type__TypeKind = makeNamedValidateType(service::EnumType { "__TypeKind", {
+				"SCALAR",
+				"OBJECT",
+				"INTERFACE",
+				"UNION",
+				"ENUM",
+				"INPUT_OBJECT",
+				"LIST",
+				"NON_NULL"
+			} });
+		auto type__DirectiveLocation = makeNamedValidateType(service::EnumType { "__DirectiveLocation", {
+				"QUERY",
+				"MUTATION",
+				"SUBSCRIPTION",
+				"FIELD",
+				"FRAGMENT_DEFINITION",
+				"FRAGMENT_SPREAD",
+				"INLINE_FRAGMENT",
+				"SCHEMA",
+				"SCALAR",
+				"OBJECT",
+				"FIELD_DEFINITION",
+				"ARGUMENT_DEFINITION",
+				"INTERFACE",
+				"UNION",
+				"ENUM",
+				"ENUM_VALUE",
+				"INPUT_OBJECT",
+				"INPUT_FIELD_DEFINITION"
+			} });
+		auto typeTaskState = makeNamedValidateType(service::EnumType { "TaskState", {
+				"New",
+				"Started",
+				"Complete",
+				"Unassigned"
+			} });
+
+		auto typeCompleteTaskInput = makeNamedValidateType(service::InputObjectType { "CompleteTaskInput" });
+
+		auto typeUnionType = makeNamedValidateType(service::UnionType { "UnionType" });
+
+		auto typeNode = makeNamedValidateType(service::InterfaceType { "Node" });
+
+		auto type__Schema = makeNamedValidateType(service::ObjectType { "__Schema" });
+		auto type__Type = makeNamedValidateType(service::ObjectType { "__Type" });
+		auto type__Field = makeNamedValidateType(service::ObjectType { "__Field" });
+		auto type__InputValue = makeNamedValidateType(service::ObjectType { "__InputValue" });
+		auto type__EnumValue = makeNamedValidateType(service::ObjectType { "__EnumValue" });
+		auto type__Directive = makeNamedValidateType(service::ObjectType { "__Directive" });
+		auto typeQuery = makeNamedValidateType(service::ObjectType { "Query" });
+		auto typePageInfo = makeNamedValidateType(service::ObjectType { "PageInfo" });
+		auto typeAppointmentEdge = makeNamedValidateType(service::ObjectType { "AppointmentEdge" });
+		auto typeAppointmentConnection = makeNamedValidateType(service::ObjectType { "AppointmentConnection" });
+		auto typeTaskEdge = makeNamedValidateType(service::ObjectType { "TaskEdge" });
+		auto typeTaskConnection = makeNamedValidateType(service::ObjectType { "TaskConnection" });
+		auto typeFolderEdge = makeNamedValidateType(service::ObjectType { "FolderEdge" });
+		auto typeFolderConnection = makeNamedValidateType(service::ObjectType { "FolderConnection" });
+		auto typeCompleteTaskPayload = makeNamedValidateType(service::ObjectType { "CompleteTaskPayload" });
+		auto typeMutation = makeNamedValidateType(service::ObjectType { "Mutation" });
+		auto typeSubscription = makeNamedValidateType(service::ObjectType { "Subscription" });
+		auto typeAppointment = makeNamedValidateType(service::ObjectType { "Appointment" });
+		auto typeTask = makeNamedValidateType(service::ObjectType { "Task" });
+		auto typeFolder = makeNamedValidateType(service::ObjectType { "Folder" });
+		auto typeNestedType = makeNamedValidateType(service::ObjectType { "NestedType" });
+		auto typeExpensive = makeNamedValidateType(service::ObjectType { "Expensive" });
+
+		typeCompleteTaskInput->setFields({
+				{ "id", { makeNonNullOfType(typeID), 0, 0 } },
+				{ "isComplete", { typeBoolean, 1, 1 } },
+				{ "clientMutationId", { typeString, 0, 0 } }
+			});
+
+		typeUnionType->setPossibleTypes({
+				typeAppointment.get(),
+				typeTask.get(),
+				typeFolder.get()
+			});
+		typeUnionType->setFields({
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+
+		typeNode->setPossibleTypes({
+				typeAppointment.get(),
+				typeTask.get(),
+				typeFolder.get()
+			});
+		typeNode->setFields({
+				{ "id", { makeNonNullOfType(typeID), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+
+		type__Schema->setFields({
+				{ "types", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__Type))), {  } } },
+				{ "queryType", { makeNonNullOfType(type__Type), {  } } },
+				{ "mutationType", { type__Type, {  } } },
+				{ "subscriptionType", { type__Type, {  } } },
+				{ "directives", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__Directive))), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		type__Type->setFields({
+				{ "kind", { makeNonNullOfType(type__TypeKind), {  } } },
+				{ "name", { typeString, {  } } },
+				{ "description", { typeString, {  } } },
+				{ "fields", { makeListOfType(makeNonNullOfType(type__Field)), { { "includeDeprecated", { typeBoolean, 1, 1 } } } } },
+				{ "interfaces", { makeListOfType(makeNonNullOfType(type__Type)), {  } } },
+				{ "possibleTypes", { makeListOfType(makeNonNullOfType(type__Type)), {  } } },
+				{ "enumValues", { makeListOfType(makeNonNullOfType(type__EnumValue)), { { "includeDeprecated", { typeBoolean, 1, 1 } } } } },
+				{ "inputFields", { makeListOfType(makeNonNullOfType(type__InputValue)), {  } } },
+				{ "ofType", { type__Type, {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		type__Field->setFields({
+				{ "name", { makeNonNullOfType(typeString), {  } } },
+				{ "description", { typeString, {  } } },
+				{ "args", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__InputValue))), {  } } },
+				{ "type", { makeNonNullOfType(type__Type), {  } } },
+				{ "isDeprecated", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "deprecationReason", { typeString, {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		type__InputValue->setFields({
+				{ "name", { makeNonNullOfType(typeString), {  } } },
+				{ "description", { typeString, {  } } },
+				{ "type", { makeNonNullOfType(type__Type), {  } } },
+				{ "defaultValue", { typeString, {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		type__EnumValue->setFields({
+				{ "name", { makeNonNullOfType(typeString), {  } } },
+				{ "description", { typeString, {  } } },
+				{ "isDeprecated", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "deprecationReason", { typeString, {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		type__Directive->setFields({
+				{ "name", { makeNonNullOfType(typeString), {  } } },
+				{ "description", { typeString, {  } } },
+				{ "locations", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__DirectiveLocation))), {  } } },
+				{ "args", { makeNonNullOfType(makeListOfType(makeNonNullOfType(type__InputValue))), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeQuery->setFields({
+				{ "node", { typeNode, { { "id", { makeNonNullOfType(typeID), 0, 0 } } } } },
+				{ "appointments", { makeNonNullOfType(typeAppointmentConnection), { { "first", { typeInt, 0, 0 } }, { "after", { typeItemCursor, 0, 0 } }, { "last", { typeInt, 0, 0 } }, { "before", { typeItemCursor, 0, 0 } } } } },
+				{ "tasks", { makeNonNullOfType(typeTaskConnection), { { "first", { typeInt, 0, 0 } }, { "after", { typeItemCursor, 0, 0 } }, { "last", { typeInt, 0, 0 } }, { "before", { typeItemCursor, 0, 0 } } } } },
+				{ "unreadCounts", { makeNonNullOfType(typeFolderConnection), { { "first", { typeInt, 0, 0 } }, { "after", { typeItemCursor, 0, 0 } }, { "last", { typeInt, 0, 0 } }, { "before", { typeItemCursor, 0, 0 } } } } },
+				{ "appointmentsById", { makeNonNullOfType(makeListOfType(typeAppointment)), { { "ids", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeID))), 1, 1 } } } } },
+				{ "tasksById", { makeNonNullOfType(makeListOfType(typeTask)), { { "ids", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeID))), 0, 0 } } } } },
+				{ "unreadCountsById", { makeNonNullOfType(makeListOfType(typeFolder)), { { "ids", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeID))), 0, 0 } } } } },
+				{ "nested", { makeNonNullOfType(typeNestedType), {  } } },
+				{ "unimplemented", { makeNonNullOfType(typeString), {  } } },
+				{ "expensive", { makeNonNullOfType(makeListOfType(makeNonNullOfType(typeExpensive))), {  } } },
+				{ "__schema", { makeNonNullOfType(type__Schema), {  } } },
+				{ "__type", { type__Type, { { "name", { makeNonNullOfType(typeString), 0, 0 } } } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typePageInfo->setFields({
+				{ "hasNextPage", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "hasPreviousPage", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeAppointmentEdge->setFields({
+				{ "node", { typeAppointment, {  } } },
+				{ "cursor", { makeNonNullOfType(typeItemCursor), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeAppointmentConnection->setFields({
+				{ "pageInfo", { makeNonNullOfType(typePageInfo), {  } } },
+				{ "edges", { makeListOfType(typeAppointmentEdge), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeTaskEdge->setFields({
+				{ "node", { typeTask, {  } } },
+				{ "cursor", { makeNonNullOfType(typeItemCursor), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeTaskConnection->setFields({
+				{ "pageInfo", { makeNonNullOfType(typePageInfo), {  } } },
+				{ "edges", { makeListOfType(typeTaskEdge), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeFolderEdge->setFields({
+				{ "node", { typeFolder, {  } } },
+				{ "cursor", { makeNonNullOfType(typeItemCursor), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeFolderConnection->setFields({
+				{ "pageInfo", { makeNonNullOfType(typePageInfo), {  } } },
+				{ "edges", { makeListOfType(typeFolderEdge), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeCompleteTaskPayload->setFields({
+				{ "task", { typeTask, {  } } },
+				{ "clientMutationId", { typeString, {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeMutation->setFields({
+				{ "completeTask", { makeNonNullOfType(typeCompleteTaskPayload), { { "input", { makeNonNullOfType(typeCompleteTaskInput), 0, 0 } } } } },
+				{ "setFloat", { makeNonNullOfType(typeFloat), { { "value", { makeNonNullOfType(typeFloat), 0, 0 } } } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeSubscription->setFields({
+				{ "nextAppointmentChange", { typeAppointment, {  } } },
+				{ "nodeChange", { makeNonNullOfType(typeNode), { { "id", { makeNonNullOfType(typeID), 0, 0 } } } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeAppointment->setFields({
+				{ "id", { makeNonNullOfType(typeID), {  } } },
+				{ "when", { typeDateTime, {  } } },
+				{ "subject", { typeString, {  } } },
+				{ "isNow", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeTask->setFields({
+				{ "id", { makeNonNullOfType(typeID), {  } } },
+				{ "title", { typeString, {  } } },
+				{ "isComplete", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeFolder->setFields({
+				{ "id", { makeNonNullOfType(typeID), {  } } },
+				{ "name", { typeString, {  } } },
+				{ "unreadCount", { makeNonNullOfType(typeInt), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeNestedType->setFields({
+				{ "depth", { makeNonNullOfType(typeInt), {  } } },
+				{ "nested", { makeNonNullOfType(typeNestedType), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+		typeExpensive->setFields({
+				{ "order", { makeNonNullOfType(typeInt), {  } } },
+				{ "__typename", { makeNonNullOfType(typeString), {  } } }
+			});
+
+		_directives = {
+			{ "skip", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
+			{ "include", { { introspection::DirectiveLocation::FIELD, introspection::DirectiveLocation::FRAGMENT_SPREAD, introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "if", { makeNonNullOfType(typeBoolean), 0, 0 } } } } },
+			{ "deprecated", { { introspection::DirectiveLocation::FIELD_DEFINITION, introspection::DirectiveLocation::ENUM_VALUE }, { { "reason", { typeString, 1, 1 } } } } },
+			{ "id", { { introspection::DirectiveLocation::FIELD_DEFINITION }, {  } } },
+			{ "subscriptionTag", { { introspection::DirectiveLocation::SUBSCRIPTION }, { { "field", { typeString, 0, 0 } } } } },
+			{ "queryTag", { { introspection::DirectiveLocation::QUERY }, { { "query", { makeNonNullOfType(typeString), 0, 0 } } } } },
+			{ "fieldTag", { { introspection::DirectiveLocation::FIELD }, { { "field", { makeNonNullOfType(typeString), 0, 0 } } } } },
+			{ "fragmentDefinitionTag", { { introspection::DirectiveLocation::FRAGMENT_DEFINITION }, { { "fragmentDefinition", { makeNonNullOfType(typeString), 0, 0 } } } } },
+			{ "fragmentSpreadTag", { { introspection::DirectiveLocation::FRAGMENT_SPREAD }, { { "fragmentSpread", { makeNonNullOfType(typeString), 0, 0 } } } } },
+			{ "inlineFragmentTag", { { introspection::DirectiveLocation::INLINE_FRAGMENT }, { { "inlineFragment", { makeNonNullOfType(typeString), 0, 0 } } } } }
+		};
+
+		_operationTypes.queryType = "Query";
+		_operationTypes.mutationType = "Mutation";
+		_operationTypes.subscriptionType = "Subscription";
+	}
+};
+
+
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	})
+	}, std::make_unique<ValidationContext>())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))

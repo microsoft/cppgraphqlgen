@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/Introspection.h"
+#include "graphqlservice/GraphQLValidation.h"
 
 #include <algorithm>
 #include <array>

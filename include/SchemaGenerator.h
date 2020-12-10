@@ -293,7 +293,7 @@ public:
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
 
-private:
+protected:
 	std::string getHeaderDir() const noexcept;
 	std::string getSourceDir() const noexcept;
 	std::string getHeaderPath() const noexcept;
@@ -381,6 +381,42 @@ private:
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
+
+	static void outputValidationScalarsList(
+		std::ostream& sourceFile, const ScalarTypeList& scalars);
+	static void outputValidationEnumsList(std::ostream& sourceFile, const EnumTypeList& enums);
+	static void outputValidationInputTypeList(
+		std::ostream& sourceFile, const InputTypeList& inputTypes);
+	static void outputValidationInputTypeListSetFields(
+		std::ostream& sourceFile, const InputTypeList& inputTypes);
+	static void outputValidationUnionTypeList(
+		std::ostream& sourceFile, const UnionTypeList& unionTypes);
+	static void outputValidationUnionTypeListSetFieldsAndPossibleTypes(
+		std::ostream& sourceFile, const UnionTypeList& unionTypes);
+	static void outputValidationInterfaceTypeList(
+		std::ostream& sourceFile, const InterfaceTypeList& interfaceTypes);
+	static void outputValidationInterfaceTypeListSetFieldsAndPossibleTypes(std::ostream& sourceFile,
+		const InterfaceTypeList& interfaceTypes,
+		const std::unordered_map<std::string, std::vector<std::string>>& interfacePossibleTypes);
+	static void outputValidationObjectTypeList(std::ostream& sourceFile,
+		const ObjectTypeList& objectTypes,
+		std::unordered_map<std::string, std::vector<std::string>>& interfacePossibleTypes);
+	static void outputValidationObjectTypeListSetFields(
+		std::ostream& sourceFile, const ObjectTypeList& objectTypes, const std::string& queryType);
+	static void outputValidationDirectiveList(
+		std::ostream& sourceFile, const DirectiveList& directives, bool& firstDirective);
+
+	static void outputValidationInputField(std::ostream& sourceFile, const InputField& inputField);
+	static void outputValidationInputFieldListArrayBody(std::ostream& sourceFile,
+		const InputFieldList& list, const std::string indent, const std::string separator);
+	static void outputValidationOutputField(
+		std::ostream& sourceFile, const OutputField& outputField);
+	static void outputValidationSetFields(
+		std::ostream& sourceFile, const std::string& cppType, const OutputFieldList& list);
+	static void outputValidationSetPossibleTypes(std::ostream& sourceFile,
+		const std::string& cppType, const std::vector<std::string>& options);
+
+	void outputValidationContext(std::ostream& sourceFile) const;
 	void outputObjectImplementation(
 		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
 	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
@@ -393,6 +429,8 @@ private:
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 	std::string getIntrospectionType(
 		const std::string& type, const TypeModifierStack& modifiers) const noexcept;
+	static std::string getValidationType(
+		const std::string& type, const TypeModifierStack& modifiers) noexcept;
 
 	std::vector<std::string> outputSeparateFiles() const noexcept;
 
@@ -428,6 +466,50 @@ private:
 	DirectiveList _directives;
 	PositionMap _directivePositions;
 	OperationTypeList _operationTypes;
+};
+
+class IntrospectionValidationContextGenerator : Generator
+{
+public:
+	IntrospectionValidationContextGenerator()
+		: Generator({ std::nullopt, std::nullopt, false, false, false })
+	{
+	}
+
+	const ScalarTypeList& GetScalarTypes() const
+	{
+		return _scalarTypes;
+	}
+
+	const EnumTypeList& GetEnumTypes() const
+	{
+		return _enumTypes;
+	}
+
+	const InputTypeList& GetInputTypes() const
+	{
+		return _inputTypes;
+	}
+
+	const UnionTypeList& GetUnionTypes() const
+	{
+		return _unionTypes;
+	}
+
+	const InterfaceTypeList& GetInterfaceTypes() const
+	{
+		return _interfaceTypes;
+	}
+
+	const ObjectTypeList& GetObjectTypes() const
+	{
+		return _objectTypes;
+	}
+
+	const DirectiveList& GetDirectives() const
+	{
+		return _directives;
+	}
 };
 
 } /* namespace graphql::schema */
