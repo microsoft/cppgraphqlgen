@@ -141,7 +141,24 @@ struct SelectionSetParams
 	const response::Value& inlineFragmentDirectives;
 
 	// Field error path to this selection set.
-	field_path errorPath;
+	std::optional<std::reference_wrapper<const SelectionSetParams>> parent;
+	field_path ownErrorPath;
+
+	field_path errorPath() const
+	{
+		if (!parent)
+		{
+			return ownErrorPath;
+		}
+
+		field_path result = parent.value().get().errorPath();
+		for (const auto& itr : ownErrorPath)
+		{
+			result.push_back(itr);
+		}
+
+		return result;
+	}
 
 	// Async launch policy for sub-field resolvers.
 	const std::launch launch = std::launch::deferred;
@@ -668,7 +685,7 @@ struct ModifiedResult
 				std::vector<std::future<response::Value>> children(wrappedResult.size());
 				size_t idx = 0;
 
-				wrappedParams.errorPath.push(size_t { 0 });
+				wrappedParams.ownErrorPath.push(size_t { 0 });
 
 				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
 
@@ -682,7 +699,7 @@ struct ModifiedResult
 					{
 						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.ownErrorPath.back());
 					}
 				}
 				else
@@ -691,14 +708,14 @@ struct ModifiedResult
 					{
 						children[idx++] = ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.ownErrorPath.back());
 					}
 				}
 
 				response::Value data(response::Type::List);
 				std::vector<schema_error> errors;
 
-				wrappedParams.errorPath.back() = size_t { 0 };
+				wrappedParams.ownErrorPath.back() = size_t { 0 };
 				data.reserve(children.size());
 
 				for (auto& future : children)
@@ -735,7 +752,7 @@ struct ModifiedResult
 							}
 							if (error.path.empty())
 							{
-								error.path = field_path { wrappedParams.errorPath };
+								error.path = wrappedParams.errorPath();
 							}
 							errors.emplace_back(std::move(error));
 						}
@@ -748,13 +765,13 @@ struct ModifiedResult
 								<< " unknown error: " << ex.what();
 
 						schema_location location = wrappedParams.getLocation();
-						field_path path { wrappedParams.errorPath };
+						field_path path = wrappedParams.errorPath();
 						schema_error error { message.str(), std::move(location), std::move(path) };
 
 						errors.emplace_back(std::move(error));
 					}
 
-					++std::get<size_t>(wrappedParams.errorPath.back());
+					++std::get<size_t>(wrappedParams.ownErrorPath.back());
 				}
 
 				if (errors.size() == 0)
@@ -800,7 +817,7 @@ private:
 					return response::Value(response::ResultType { {},
 						{ { message.str(),
 							paramsFuture.getLocation(),
-							paramsFuture.errorPath } } });
+							paramsFuture.errorPath() } } });
 				}
 			},
 			std::move(result),

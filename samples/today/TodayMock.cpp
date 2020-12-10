@@ -186,10 +186,10 @@ struct EdgeConstraints
 	using vec_type = std::vector<std::shared_ptr<_Object>>;
 	using itr_type = typename vec_type::const_iterator;
 
-	EdgeConstraints(const std::shared_ptr<service::RequestState>& state, service::field_path&& path,
+	EdgeConstraints(const std::shared_ptr<service::RequestState>& state, const service::SelectionSetParams& params,
 		const vec_type& objects)
 		: _state(state)
-		, _path(std::move(path))
+		, _params(params)
 		, _objects(objects)
 	{
 	}
@@ -240,7 +240,7 @@ struct EdgeConstraints
 
 				error << "Invalid argument: first value: " << *first;
 				throw service::schema_exception {
-					{ service::schema_error { error.str(), {}, _path } }
+					{ service::schema_error { error.str(), {}, _params.errorPath() } }
 				};
 			}
 
@@ -258,7 +258,7 @@ struct EdgeConstraints
 
 				error << "Invalid argument: last value: " << *last;
 				throw service::schema_exception {
-					{ service::schema_error { error.str(), {}, _path } }
+					{ service::schema_error { error.str(), {}, _params.errorPath() } }
 				};
 			}
 
@@ -278,7 +278,7 @@ struct EdgeConstraints
 
 private:
 	const std::shared_ptr<service::RequestState>& _state;
-	const service::field_path _path;
+	const service::SelectionSetParams& _params;
 	const vec_type& _objects;
 };
 
@@ -295,11 +295,11 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
 			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			service::SelectionSetParams&& params) {
 			loadAppointments(state);
 
 			EdgeConstraints<Appointment, AppointmentConnection> constraints(state,
-				std::move(path),
+				params,
 				_appointments);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
@@ -309,7 +309,7 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 		std::move(after),
 		std::move(last),
 		std::move(before),
-		std::move(params.errorPath));
+		std::move(params));
 }
 
 service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
@@ -325,10 +325,10 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
 			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			service::SelectionSetParams&& params) {
 			loadTasks(state);
 
-			EdgeConstraints<Task, TaskConnection> constraints(state, std::move(path), _tasks);
+			EdgeConstraints<Task, TaskConnection> constraints(state, params, _tasks);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 			return std::static_pointer_cast<object::TaskConnection>(connection);
@@ -337,7 +337,7 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 		std::move(after),
 		std::move(last),
 		std::move(before),
-		std::move(params.errorPath));
+		std::move(params));
 }
 
 service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
@@ -353,11 +353,11 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
 			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			service::SelectionSetParams&& params) {
 			loadUnreadCounts(state);
 
 			EdgeConstraints<Folder, FolderConnection> constraints(state,
-				std::move(path),
+				params,
 				_unreadCounts);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
@@ -367,7 +367,7 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 		std::move(after),
 		std::move(last),
 		std::move(before),
-		std::move(params.errorPath));
+		std::move(params));
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(

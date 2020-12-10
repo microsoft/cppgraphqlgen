@@ -632,7 +632,7 @@ void blockSubFields(const ResolverParams& params)
 
 		throw schema_exception { { schema_error { error.str(),
 			{ position.line, position.column },
-			{ params.errorPath } } } };
+			{ params.errorPath() } } } };
 	}
 }
 
@@ -704,7 +704,7 @@ void requireSubFields(const ResolverParams& params)
 
 		throw schema_exception { { schema_error { error.str(),
 			{ position.line, position.column },
-			{ params.errorPath } } } };
+			{ params.errorPath() } } } };
 	}
 }
 
@@ -764,11 +764,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	const ResolverContext _resolverContext;
-	const std::shared_ptr<RequestState>& _state;
-	const response::Value& _operationDirectives;
-	const field_path& _path;
-	const std::launch _launch;
+	const SelectionSetParams& _selectionSetParams;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -782,11 +778,7 @@ private:
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
 	const ResolverMap& resolvers)
-	: _resolverContext(selectionSetParams.resolverContext)
-	, _state(selectionSetParams.state)
-	, _operationDirectives(selectionSetParams.operationDirectives)
-	, _path(selectionSetParams.errorPath)
-	, _launch(selectionSetParams.launch)
+	: _selectionSetParams(selectionSetParams)
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -860,7 +852,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		error << "Unknown field name: " << name;
 
 		promise.set_exception(std::make_exception_ptr(schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _path } } } }));
+			{ schema_error { error.str(), { position.line, position.column }, { _selectionSetParams.errorPath() } } } }));
 
 		_values.push_back({ std::move(alias), promise.get_future() });
 		return;
@@ -896,19 +888,16 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		selection = &child;
 	});
 
-	auto path = _path;
-
-	path.push({ aliasView });
-
 	SelectionSetParams selectionSetParams {
-		_resolverContext,
-		_state,
-		_operationDirectives,
+		_selectionSetParams.resolverContext,
+		_selectionSetParams.state,
+		_selectionSetParams.operationDirectives,
 		_fragmentDirectives.top().fragmentDefinitionDirectives,
 		_fragmentDirectives.top().fragmentSpreadDirectives,
 		_fragmentDirectives.top().inlineFragmentDirectives,
-		std::move(path),
-		_launch,
+		_selectionSetParams,
+		{ { aliasView } },
+		_selectionSetParams.launch,
 	};
 
 	try
@@ -939,7 +928,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 			if (message.path.empty())
 			{
-				message.path = { selectionSetParams.errorPath };
+				message.path = { selectionSetParams.errorPath() };
 			}
 		}
 
@@ -958,7 +947,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		promise.set_exception(
 			std::make_exception_ptr(schema_exception { { schema_error { message.str(),
 				{ position.line, position.column },
-				std::move(selectionSetParams.errorPath) } } }));
+				selectionSetParams.errorPath() } } }));
 
 		_values.push_back({ std::move(alias), promise.get_future() });
 	}
@@ -977,7 +966,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		error << "Unknown fragment name: " << name;
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _path } } }
+			{ schema_error { error.str(), { position.line, position.column }, { _selectionSetParams.errorPath() } } }
 		};
 	}
 
@@ -1368,6 +1357,7 @@ void OperationDefinitionVisitor::visit(
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
+				std::nullopt,
 				{},
 				selectionLaunch,
 			};
@@ -1943,6 +1933,7 @@ std::future<SubscriptionKey> Request::subscribe(
 					emptyFragmentDirectives,
 					emptyFragmentDirectives,
 					emptyFragmentDirectives,
+					std::nullopt,
 					{},
 					launch,
 				};
@@ -2016,6 +2007,7 @@ std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
+				std::nullopt,
 				{},
 				launch,
 			};
@@ -2182,6 +2174,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
+			std::nullopt,
 			{},
 			launch,
 		};
