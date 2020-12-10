@@ -154,6 +154,12 @@ public:
 		return _isNow;
 	}
 
+	service::FieldResult<std::optional<response::StringType>> getForceError(
+		service::FieldParams&&) const final
+	{
+		throw std::runtime_error(R"ex(this error was forced)ex");
+	}
+
 private:
 	response::IdType _id;
 	std::string _when;

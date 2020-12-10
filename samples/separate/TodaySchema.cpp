@@ -350,6 +350,7 @@ public:
 				{ "when", { typeDateTime, {  } } },
 				{ "subject", { typeString, {  } } },
 				{ "isNow", { makeNonNullOfType(typeBoolean), {  } } },
+				{ "forceError", { typeString, {  } } },
 				{ "__typename", { makeNonNullOfType(typeString), {  } } }
 			});
 		typeTask->setFields({

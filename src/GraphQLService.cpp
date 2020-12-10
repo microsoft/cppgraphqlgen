@@ -403,6 +403,18 @@ ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams,
 {
 }
 
+ResolverParams::ResolverParams(const ResolverParams& parent, field_path&& ownErrorPath_)
+	: SelectionSetParams(parent, std::move(ownErrorPath_))
+	, field(parent.field)
+	, fieldName(parent.fieldName)
+	, arguments(parent.arguments)
+	, fieldDirectives(parent.fieldDirectives)
+	, selection(parent.selection)
+	, fragments(parent.fragments)
+	, variables(parent.variables)
+{
+}
+
 schema_location ResolverParams::getLocation() const
 {
 	auto position = field.begin();
@@ -851,8 +863,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		error << "Unknown field name: " << name;
 
-		promise.set_exception(std::make_exception_ptr(schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _selectionSetParams.errorPath() } } } }));
+		promise.set_exception(
+			std::make_exception_ptr(schema_exception { { schema_error { error.str(),
+				{ position.line, position.column },
+				{ _selectionSetParams.errorPath() } } } }));
 
 		_values.push_back({ std::move(alias), promise.get_future() });
 		return;
@@ -965,9 +979,9 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 		error << "Unknown fragment name: " << name;
 
-		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _selectionSetParams.errorPath() } } }
-		};
+		throw schema_exception { { schema_error { error.str(),
+			{ position.line, position.column },
+			{ _selectionSetParams.errorPath() } } } };
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
