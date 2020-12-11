@@ -79,15 +79,15 @@ std::future<response::Value> Folder::resolve_typename(service::ResolverParams&& 
 
 } /* namespace object */
 
-void AddFolderDetails(std::shared_ptr<introspection::ObjectType> typeFolder, const std::shared_ptr<introspection::Schema>& schema)
+void AddFolderDetails(std::shared_ptr<schema::ObjectType> typeFolder, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolder->AddInterfaces({
-		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))
+		std::static_pointer_cast<schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
 	});
 	typeFolder->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("unreadCount", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(unreadCount)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 }
 

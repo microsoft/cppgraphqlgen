@@ -150,6 +150,7 @@ endif()
 # graphqlservice
 add_library(graphqlservice
   GraphQLService.cpp
+  GraphQLSchema.cpp
   Introspection.cpp
   Validation.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
@@ -221,6 +222,7 @@ install(TARGETS
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLSchema.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h

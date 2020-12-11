@@ -6,6 +6,7 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
+#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
 #include <memory>
@@ -95,6 +96,8 @@ private:
 	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+
+	std::shared_ptr<schema::Schema> _schema;
 };
 
 class PageInfo
@@ -374,6 +377,8 @@ private:
 	std::shared_ptr<object::Mutation> _mutation;
 	std::shared_ptr<object::Subscription> _subscription;
 };
+
+void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } /* namespace today */
 } /* namespace graphql */

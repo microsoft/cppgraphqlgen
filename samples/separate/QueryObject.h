@@ -44,7 +44,7 @@ private:
 	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
 
-	std::shared_ptr<introspection::Schema> _schema;
+	std::shared_ptr<schema::Schema> _schema;
 };
 
 } /* namespace graphql::today::object */

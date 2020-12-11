@@ -62,4 +62,12 @@ std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
+void AddTaskEdgeDetails(std::shared_ptr<schema::ObjectType> typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
+{
+	typeTaskEdge->AddFields({
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+	});
+}
+
 } /* namespace graphql::today */

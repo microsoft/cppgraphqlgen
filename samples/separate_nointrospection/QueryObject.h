@@ -41,6 +41,8 @@ private:
 	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+
+	std::shared_ptr<schema::Schema> _schema;
 };
 
 } /* namespace graphql::today::object */

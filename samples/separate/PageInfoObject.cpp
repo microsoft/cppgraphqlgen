@@ -62,11 +62,11 @@ std::future<response::Value> PageInfo::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddPageInfoDetails(std::shared_ptr<introspection::ObjectType> typePageInfo, const std::shared_ptr<introspection::Schema>& schema)
+void AddPageInfoDetails(std::shared_ptr<schema::ObjectType> typePageInfo, const std::shared_ptr<schema::Schema>& schema)
 {
 	typePageInfo->AddFields({
-		std::make_shared<introspection::Field>("hasNextPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("hasPreviousPage", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<schema::Field>(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<schema::Field>(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 }
 

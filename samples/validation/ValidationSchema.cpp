@@ -125,7 +125,7 @@ Query::Query()
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } }
 	})
-	, _schema(std::make_shared<introspection::Schema>())
+	, _schema(std::make_shared<schema::Schema>())
 {
 	introspection::AddTypesToSchema(_schema);
 	validation::AddTypesToSchema(_schema);
@@ -238,14 +238,16 @@ std::future<response::Value> Query::resolve_typename(service::ResolverParams&& p
 
 std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(_schema), std::move(params));
+	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
 }
 
 std::future<response::Value> Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
+	const auto& baseType = _schema->LookupType(argName);
+	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::Type>(baseType) : nullptr };
 
-	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(_schema->LookupType(argName), std::move(params));
+	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 Dog::Dog()
@@ -837,178 +839,178 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	})
+	}, nullptr)
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))
 {
 }
 
-void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
+void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
-	auto typeDogCommand = std::make_shared<introspection::EnumType>("DogCommand", R"md()md");
-	schema->AddType("DogCommand", typeDogCommand);
-	auto typeCatCommand = std::make_shared<introspection::EnumType>("CatCommand", R"md()md");
-	schema->AddType("CatCommand", typeCatCommand);
-	auto typeComplexInput = std::make_shared<introspection::InputObjectType>("ComplexInput", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md");
-	schema->AddType("ComplexInput", typeComplexInput);
-	auto typeCatOrDog = std::make_shared<introspection::UnionType>("CatOrDog", R"md()md");
-	schema->AddType("CatOrDog", typeCatOrDog);
-	auto typeDogOrHuman = std::make_shared<introspection::UnionType>("DogOrHuman", R"md()md");
-	schema->AddType("DogOrHuman", typeDogOrHuman);
-	auto typeHumanOrAlien = std::make_shared<introspection::UnionType>("HumanOrAlien", R"md()md");
-	schema->AddType("HumanOrAlien", typeHumanOrAlien);
-	auto typeSentient = std::make_shared<introspection::InterfaceType>("Sentient", R"md()md");
-	schema->AddType("Sentient", typeSentient);
-	auto typePet = std::make_shared<introspection::InterfaceType>("Pet", R"md()md");
-	schema->AddType("Pet", typePet);
-	auto typeQuery = std::make_shared<introspection::ObjectType>("Query", R"md(GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d))md");
-	schema->AddType("Query", typeQuery);
-	auto typeDog = std::make_shared<introspection::ObjectType>("Dog", R"md()md");
-	schema->AddType("Dog", typeDog);
-	auto typeAlien = std::make_shared<introspection::ObjectType>("Alien", R"md()md");
-	schema->AddType("Alien", typeAlien);
-	auto typeHuman = std::make_shared<introspection::ObjectType>("Human", R"md()md");
-	schema->AddType("Human", typeHuman);
-	auto typeCat = std::make_shared<introspection::ObjectType>("Cat", R"md()md");
-	schema->AddType("Cat", typeCat);
-	auto typeMutation = std::make_shared<introspection::ObjectType>("Mutation", R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
-	schema->AddType("Mutation", typeMutation);
-	auto typeMutateDogResult = std::make_shared<introspection::ObjectType>("MutateDogResult", R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
-	schema->AddType("MutateDogResult", typeMutateDogResult);
-	auto typeSubscription = std::make_shared<introspection::ObjectType>("Subscription", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
-	schema->AddType("Subscription", typeSubscription);
-	auto typeMessage = std::make_shared<introspection::ObjectType>("Message", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
-	schema->AddType("Message", typeMessage);
-	auto typeArguments = std::make_shared<introspection::ObjectType>("Arguments", R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md");
-	schema->AddType("Arguments", typeArguments);
+	auto typeDogCommand = std::make_shared<schema::EnumType>(R"gql(DogCommand)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(DogCommand)gql"sv, typeDogCommand);
+	auto typeCatCommand = std::make_shared<schema::EnumType>(R"gql(CatCommand)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(CatCommand)gql"sv, typeCatCommand);
+	auto typeComplexInput = std::make_shared<schema::InputObjectType>(R"gql(ComplexInput)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv);
+	schema->AddType(R"gql(ComplexInput)gql"sv, typeComplexInput);
+	auto typeCatOrDog = std::make_shared<schema::UnionType>(R"gql(CatOrDog)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(CatOrDog)gql"sv, typeCatOrDog);
+	auto typeDogOrHuman = std::make_shared<schema::UnionType>(R"gql(DogOrHuman)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(DogOrHuman)gql"sv, typeDogOrHuman);
+	auto typeHumanOrAlien = std::make_shared<schema::UnionType>(R"gql(HumanOrAlien)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(HumanOrAlien)gql"sv, typeHumanOrAlien);
+	auto typeSentient = std::make_shared<schema::InterfaceType>(R"gql(Sentient)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
+	auto typePet = std::make_shared<schema::InterfaceType>(R"gql(Pet)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Pet)gql"sv, typePet);
+	auto typeQuery = std::make_shared<schema::ObjectType>(R"gql(Query)gql"sv, R"md(GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d))md");
+	schema->AddType(R"gql(Query)gql"sv, typeQuery);
+	auto typeDog = std::make_shared<schema::ObjectType>(R"gql(Dog)gql"sv, R"md()md");
+	schema->AddType(R"gql(Dog)gql"sv, typeDog);
+	auto typeAlien = std::make_shared<schema::ObjectType>(R"gql(Alien)gql"sv, R"md()md");
+	schema->AddType(R"gql(Alien)gql"sv, typeAlien);
+	auto typeHuman = std::make_shared<schema::ObjectType>(R"gql(Human)gql"sv, R"md()md");
+	schema->AddType(R"gql(Human)gql"sv, typeHuman);
+	auto typeCat = std::make_shared<schema::ObjectType>(R"gql(Cat)gql"sv, R"md()md");
+	schema->AddType(R"gql(Cat)gql"sv, typeCat);
+	auto typeMutation = std::make_shared<schema::ObjectType>(R"gql(Mutation)gql"sv, R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
+	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
+	auto typeMutateDogResult = std::make_shared<schema::ObjectType>(R"gql(MutateDogResult)gql"sv, R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
+	schema->AddType(R"gql(MutateDogResult)gql"sv, typeMutateDogResult);
+	auto typeSubscription = std::make_shared<schema::ObjectType>(R"gql(Subscription)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
+	auto typeMessage = std::make_shared<schema::ObjectType>(R"gql(Message)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	schema->AddType(R"gql(Message)gql"sv, typeMessage);
+	auto typeArguments = std::make_shared<schema::ObjectType>(R"gql(Arguments)gql"sv, R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md");
+	schema->AddType(R"gql(Arguments)gql"sv, typeArguments);
 
 	typeDogCommand->AddEnumValues({
-		{ std::string{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::SIT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::DOWN)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::HEEL)] }, R"md()md", std::nullopt }
+		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::SIT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::DOWN)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::HEEL)], R"md()md"sv, std::nullopt }
 	});
 	typeCatCommand->AddEnumValues({
-		{ std::string{ service::s_namesCatCommand[static_cast<size_t>(validation::CatCommand::JUMP)] }, R"md()md", std::nullopt }
+		{ service::s_namesCatCommand[static_cast<size_t>(validation::CatCommand::JUMP)], R"md()md"sv, std::nullopt }
 	});
 
 	typeComplexInput->AddInputValues({
-		std::make_shared<introspection::InputValue>("name", R"md()md", schema->LookupType("String"), R"gql()gql"),
-		std::make_shared<introspection::InputValue>("owner", R"md()md", schema->LookupType("String"), R"gql()gql")
+		std::make_shared<schema::InputValue>(R"gql(name)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv),
+		std::make_shared<schema::InputValue>(R"gql(owner)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
 	});
 
 	typeCatOrDog->AddPossibleTypes({
-		schema->LookupType("Cat"),
-		schema->LookupType("Dog")
+		schema->LookupType(R"gql(Cat)gql"sv),
+		schema->LookupType(R"gql(Dog)gql"sv)
 	});
 	typeDogOrHuman->AddPossibleTypes({
-		schema->LookupType("Dog"),
-		schema->LookupType("Human")
+		schema->LookupType(R"gql(Dog)gql"sv),
+		schema->LookupType(R"gql(Human)gql"sv)
 	});
 	typeHumanOrAlien->AddPossibleTypes({
-		schema->LookupType("Human"),
-		schema->LookupType("Alien")
+		schema->LookupType(R"gql(Human)gql"sv),
+		schema->LookupType(R"gql(Alien)gql"sv)
 	});
 
 	typeSentient->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
 	});
 	typePet->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
 	});
 
 	typeQuery->AddFields({
-		std::make_shared<introspection::Field>("dog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Dog")),
-		std::make_shared<introspection::Field>("human", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human")),
-		std::make_shared<introspection::Field>("pet", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Pet")),
-		std::make_shared<introspection::Field>("catOrDog", R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("CatOrDog")),
-		std::make_shared<introspection::Field>("arguments", R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Arguments")),
-		std::make_shared<introspection::Field>("findDog", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("complex", R"md()md", schema->LookupType("ComplexInput"), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(dog)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Dog")),
+		std::make_shared<schema::Field>(R"gql(human)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Human")),
+		std::make_shared<schema::Field>(R"gql(pet)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Pet")),
+		std::make_shared<schema::Field>(R"gql(catOrDog)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("CatOrDog")),
+		std::make_shared<schema::Field>(R"gql(arguments)gql"sv, R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Arguments")),
+		std::make_shared<schema::Field>(R"gql(findDog)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType("ComplexInput"), R"gql()gql"sv)
 		}), schema->LookupType("Dog")),
-		std::make_shared<introspection::Field>("booleanList", R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("booleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(booleanList)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql"sv)
 		}), schema->LookupType("Boolean"))
 	});
 	typeDog->AddInterfaces({
 		typePet
 	});
 	typeDog->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("nickname", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("barkVolume", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Int")),
-		std::make_shared<introspection::Field>("doesKnowCommand", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("dogCommand", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("DogCommand")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<schema::Field>(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(barkVolume)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Int")),
+		std::make_shared<schema::Field>(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(dogCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("DogCommand")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("isHousetrained", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("atOtherHomes", R"md()md", schema->LookupType("Boolean"), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(isHousetrained)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(atOtherHomes)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("owner", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Human"))
+		std::make_shared<schema::Field>(R"gql(owner)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Human"))
 	});
 	typeAlien->AddInterfaces({
 		typeSentient
 	});
 	typeAlien->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("homePlanet", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<schema::Field>(R"gql(homePlanet)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
 	});
 	typeHuman->AddInterfaces({
 		typeSentient
 	});
 	typeHuman->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("pets", R"md(Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<schema::Field>(R"gql(pets)gql"sv, R"md(Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
 	});
 	typeCat->AddInterfaces({
 		typePet
 	});
 	typeCat->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("nickname", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("doesKnowCommand", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("catCommand", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CatCommand")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<schema::Field>(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(catCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CatCommand")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("meowVolume", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Int"))
+		std::make_shared<schema::Field>(R"gql(meowVolume)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Int"))
 	});
 	typeMutation->AddFields({
-		std::make_shared<introspection::Field>("mutateDog", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("MutateDogResult"))
+		std::make_shared<schema::Field>(R"gql(mutateDog)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("MutateDogResult"))
 	});
 	typeMutateDogResult->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 	typeSubscription->AddFields({
-		std::make_shared<introspection::Field>("newMessage", R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
-		std::make_shared<introspection::Field>("disallowedSecondRootField", R"md(Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<schema::Field>(R"gql(newMessage)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
+		std::make_shared<schema::Field>(R"gql(disallowedSecondRootField)gql"sv, R"md(Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 	typeMessage->AddFields({
-		std::make_shared<introspection::Field>("body", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("sender", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		std::make_shared<schema::Field>(R"gql(body)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(sender)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
 	});
 	typeArguments->AddFields({
-		std::make_shared<introspection::Field>("multipleReqs", R"md(Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab))md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("x", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"),
-			std::make_shared<introspection::InputValue>("y", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(multipleReqs)gql"sv, R"md(Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(x)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(y)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
-		std::make_shared<introspection::Field>("booleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("booleanArg", R"md()md", schema->LookupType("Boolean"), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(booleanArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(booleanArg)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql()gql"sv)
 		}), schema->LookupType("Boolean")),
-		std::make_shared<introspection::Field>("floatArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("floatArg", R"md()md", schema->LookupType("Float"), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(floatArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(floatArg)gql"sv, R"md()md"sv, schema->LookupType("Float"), R"gql()gql"sv)
 		}), schema->LookupType("Float")),
-		std::make_shared<introspection::Field>("intArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("intArg", R"md()md", schema->LookupType("Int"), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(intArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(intArg)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv)
 		}), schema->LookupType("Int")),
-		std::make_shared<introspection::Field>("nonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("nonNullBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(nonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(nonNullBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("nonNullBooleanListField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("nonNullBooleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(nonNullBooleanListField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(nonNullBooleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))),
-		std::make_shared<introspection::Field>("booleanListArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("booleanListArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(booleanListArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("optionalNonNullBooleanArgField", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("optionalBooleanArg", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql(false)gql")
+		std::make_shared<schema::Field>(R"gql(optionalNonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(optionalBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql(false)gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 

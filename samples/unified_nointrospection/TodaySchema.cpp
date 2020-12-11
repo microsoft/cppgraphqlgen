@@ -107,7 +107,10 @@ Query::Query()
 		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
 		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
+	, _schema(std::make_shared<schema::Schema>())
 {
+	introspection::AddTypesToSchema(_schema);
+	today::AddTypesToSchema(_schema);
 }
 
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const
@@ -1014,11 +1017,232 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	})
+	}, nullptr)
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))
 {
+}
+
+void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
+{
+	schema->AddType(R"gql(ItemCursor)gql"sv, std::make_shared<schema::ScalarType>(R"gql(ItemCursor)gql"sv, R"md()md"));
+	schema->AddType(R"gql(DateTime)gql"sv, std::make_shared<schema::ScalarType>(R"gql(DateTime)gql"sv, R"md()md"));
+	auto typeTaskState = std::make_shared<schema::EnumType>(R"gql(TaskState)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(TaskState)gql"sv, typeTaskState);
+	auto typeCompleteTaskInput = std::make_shared<schema::InputObjectType>(R"gql(CompleteTaskInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(CompleteTaskInput)gql"sv, typeCompleteTaskInput);
+	auto typeUnionType = std::make_shared<schema::UnionType>(R"gql(UnionType)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
+	auto typeNode = std::make_shared<schema::InterfaceType>(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
+	schema->AddType(R"gql(Node)gql"sv, typeNode);
+	auto typeQuery = std::make_shared<schema::ObjectType>(R"gql(Query)gql"sv, R"md(Root Query type)md");
+	schema->AddType(R"gql(Query)gql"sv, typeQuery);
+	auto typePageInfo = std::make_shared<schema::ObjectType>(R"gql(PageInfo)gql"sv, R"md()md");
+	schema->AddType(R"gql(PageInfo)gql"sv, typePageInfo);
+	auto typeAppointmentEdge = std::make_shared<schema::ObjectType>(R"gql(AppointmentEdge)gql"sv, R"md()md");
+	schema->AddType(R"gql(AppointmentEdge)gql"sv, typeAppointmentEdge);
+	auto typeAppointmentConnection = std::make_shared<schema::ObjectType>(R"gql(AppointmentConnection)gql"sv, R"md()md");
+	schema->AddType(R"gql(AppointmentConnection)gql"sv, typeAppointmentConnection);
+	auto typeTaskEdge = std::make_shared<schema::ObjectType>(R"gql(TaskEdge)gql"sv, R"md()md");
+	schema->AddType(R"gql(TaskEdge)gql"sv, typeTaskEdge);
+	auto typeTaskConnection = std::make_shared<schema::ObjectType>(R"gql(TaskConnection)gql"sv, R"md()md");
+	schema->AddType(R"gql(TaskConnection)gql"sv, typeTaskConnection);
+	auto typeFolderEdge = std::make_shared<schema::ObjectType>(R"gql(FolderEdge)gql"sv, R"md()md");
+	schema->AddType(R"gql(FolderEdge)gql"sv, typeFolderEdge);
+	auto typeFolderConnection = std::make_shared<schema::ObjectType>(R"gql(FolderConnection)gql"sv, R"md()md");
+	schema->AddType(R"gql(FolderConnection)gql"sv, typeFolderConnection);
+	auto typeCompleteTaskPayload = std::make_shared<schema::ObjectType>(R"gql(CompleteTaskPayload)gql"sv, R"md()md");
+	schema->AddType(R"gql(CompleteTaskPayload)gql"sv, typeCompleteTaskPayload);
+	auto typeMutation = std::make_shared<schema::ObjectType>(R"gql(Mutation)gql"sv, R"md()md");
+	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
+	auto typeSubscription = std::make_shared<schema::ObjectType>(R"gql(Subscription)gql"sv, R"md()md");
+	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
+	auto typeAppointment = std::make_shared<schema::ObjectType>(R"gql(Appointment)gql"sv, R"md()md");
+	schema->AddType(R"gql(Appointment)gql"sv, typeAppointment);
+	auto typeTask = std::make_shared<schema::ObjectType>(R"gql(Task)gql"sv, R"md()md");
+	schema->AddType(R"gql(Task)gql"sv, typeTask);
+	auto typeFolder = std::make_shared<schema::ObjectType>(R"gql(Folder)gql"sv, R"md()md");
+	schema->AddType(R"gql(Folder)gql"sv, typeFolder);
+	auto typeNestedType = std::make_shared<schema::ObjectType>(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	schema->AddType(R"gql(NestedType)gql"sv, typeNestedType);
+	auto typeExpensive = std::make_shared<schema::ObjectType>(R"gql(Expensive)gql"sv, R"md()md");
+	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
+
+	typeTaskState->AddEnumValues({
+		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Started)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Complete)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"sv) }
+	});
+
+	typeCompleteTaskInput->AddInputValues({
+		std::make_shared<schema::InputValue>(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
+		std::make_shared<schema::InputValue>(R"gql(isComplete)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(true)gql"sv),
+		std::make_shared<schema::InputValue>(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+	});
+
+	typeUnionType->AddPossibleTypes({
+		schema->LookupType(R"gql(Appointment)gql"sv),
+		schema->LookupType(R"gql(Task)gql"sv),
+		schema->LookupType(R"gql(Folder)gql"sv)
+	});
+
+	typeNode->AddFields({
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+	});
+
+	typeQuery->AddFields({
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		}), schema->LookupType("Node")),
+		std::make_shared<schema::Field>(R"gql(appointments)gql"sv, R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("AppointmentConnection"))),
+		std::make_shared<schema::Field>(R"gql(tasks)gql"sv, R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskConnection"))),
+		std::make_shared<schema::Field>(R"gql(unreadCounts)gql"sv, R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
+			std::make_shared<schema::InputValue>(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("FolderConnection"))),
+		std::make_shared<schema::Field>(R"gql(appointmentsById)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Appointment")))),
+		std::make_shared<schema::Field>(R"gql(tasksById)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Task")))),
+		std::make_shared<schema::Field>(R"gql(unreadCountsById)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Folder")))),
+		std::make_shared<schema::Field>(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
+		std::make_shared<schema::Field>(R"gql(unimplemented)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		std::make_shared<schema::Field>(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive")))))
+	});
+	typePageInfo->AddFields({
+		std::make_shared<schema::Field>(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		std::make_shared<schema::Field>(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+	});
+	typeAppointmentEdge->AddFields({
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+	});
+	typeAppointmentConnection->AddFields({
+		std::make_shared<schema::Field>(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<schema::Field>(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge")))
+	});
+	typeTaskEdge->AddFields({
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+	});
+	typeTaskConnection->AddFields({
+		std::make_shared<schema::Field>(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<schema::Field>(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge")))
+	});
+	typeFolderEdge->AddFields({
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Folder")),
+		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+	});
+	typeFolderConnection->AddFields({
+		std::make_shared<schema::Field>(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<schema::Field>(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
+	});
+	typeCompleteTaskPayload->AddFields({
+		std::make_shared<schema::Field>(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<schema::Field>(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
+	});
+	typeMutation->AddFields({
+		std::make_shared<schema::Field>(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload"))),
+		std::make_shared<schema::Field>(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")))
+	});
+	typeSubscription->AddFields({
+		std::make_shared<schema::Field>(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"sv), std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<schema::Field>(R"gql(nodeChange)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Node")))
+	});
+	typeAppointment->AddInterfaces({
+		typeNode
+	});
+	typeAppointment->AddFields({
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("DateTime")),
+		std::make_shared<schema::Field>(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+	});
+	typeTask->AddInterfaces({
+		typeNode
+	});
+	typeTask->AddFields({
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+	});
+	typeFolder->AddInterfaces({
+		typeNode
+	});
+	typeFolder->AddFields({
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(unreadCount)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+	});
+	typeNestedType->AddFields({
+		std::make_shared<schema::Field>(R"gql(depth)gql"sv, R"md(Depth of the nested element)md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
+		std::make_shared<schema::Field>(R"gql(nested)gql"sv, R"md(Link to the next level)md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+	});
+	typeExpensive->AddFields({
+		std::make_shared<schema::Field>(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+	});
+
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(id)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::FIELD_DEFINITION
+	}), std::vector<std::shared_ptr<schema::InputValue>>()));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(subscriptionTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::SUBSCRIPTION
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+	})));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(queryTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::QUERY
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+	})));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(fieldTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::FIELD
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(field)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+	})));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(fragmentDefinitionTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::FRAGMENT_DEFINITION
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(fragmentDefinition)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+	})));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(fragmentSpreadTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::FRAGMENT_SPREAD
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(fragmentSpread)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+	})));
+	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(inlineFragmentTag)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+		introspection::DirectiveLocation::INLINE_FRAGMENT
+	}), std::vector<std::shared_ptr<schema::InputValue>>({
+		std::make_shared<schema::InputValue>(R"gql(inlineFragment)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+	})));
+
+	schema->AddQueryType(typeQuery);
+	schema->AddMutationType(typeMutation);
+	schema->AddSubscriptionType(typeSubscription);
 }
 
 } /* namespace today */

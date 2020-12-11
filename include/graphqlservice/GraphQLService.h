@@ -40,7 +40,14 @@
 #include <variant>
 #include <vector>
 
-namespace graphql::service {
+namespace graphql {
+namespace schema {
+
+class Schema;
+
+} // namespace schema
+
+namespace service {
 
 // Errors should have a message string, and optional locations and a path.
 GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Value& error);
@@ -956,7 +963,8 @@ class ValidateExecutableVisitor;
 class Request : public std::enable_shared_from_this<Request>
 {
 protected:
-	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap&& operationTypes);
+	GRAPHQLSERVICE_EXPORT explicit Request(
+		TypeMap&& operationTypes, const std::shared_ptr<schema::Schema>& schema);
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
@@ -1034,6 +1042,7 @@ private:
 	SubscriptionKey _nextKey = 0;
 };
 
-} /* namespace graphql::service */
+} // namespace service
+} // namespace graphql
 
 #endif // GRAPHQLSERVICE_H

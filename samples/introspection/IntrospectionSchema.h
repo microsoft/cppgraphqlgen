@@ -6,6 +6,7 @@
 #ifndef INTROSPECTIONSCHEMA_H
 #define INTROSPECTIONSCHEMA_H
 
+#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
 #include <memory>
@@ -204,7 +205,7 @@ private:
 
 } /* namespace object */
 
-GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */

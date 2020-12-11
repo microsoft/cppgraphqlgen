@@ -62,4 +62,12 @@ std::future<response::Value> NestedType::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
+void AddNestedTypeDetails(std::shared_ptr<schema::ObjectType> typeNestedType, const std::shared_ptr<schema::Schema>& schema)
+{
+	typeNestedType->AddFields({
+		std::make_shared<schema::Field>(R"gql(depth)gql"sv, R"md(Depth of the nested element)md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
+		std::make_shared<schema::Field>(R"gql(nested)gql"sv, R"md(Link to the next level)md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+	});
+}
+
 } /* namespace graphql::today */

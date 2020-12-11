@@ -64,14 +64,14 @@ std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&
 
 } /* namespace object */
 
-void AddMutationDetails(std::shared_ptr<introspection::ObjectType> typeMutation, const std::shared_ptr<introspection::Schema>& schema)
+void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeMutation->AddFields({
-		std::make_shared<introspection::Field>("completeTask", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("input", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload"))),
-		std::make_shared<introspection::Field>("setFloat", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("value", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql")
+		std::make_shared<schema::Field>(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
 		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")))
 	});
 }

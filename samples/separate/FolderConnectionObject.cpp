@@ -62,11 +62,11 @@ std::future<response::Value> FolderConnection::resolve_typename(service::Resolve
 
 } /* namespace object */
 
-void AddFolderConnectionDetails(std::shared_ptr<introspection::ObjectType> typeFolderConnection, const std::shared_ptr<introspection::Schema>& schema)
+void AddFolderConnectionDetails(std::shared_ptr<schema::ObjectType> typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderConnection->AddFields({
-		std::make_shared<introspection::Field>("pageInfo", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		std::make_shared<introspection::Field>("edges", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
+		std::make_shared<schema::Field>(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
+		std::make_shared<schema::Field>(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
 	});
 }
 

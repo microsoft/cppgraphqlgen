@@ -62,11 +62,11 @@ std::future<response::Value> CompleteTaskPayload::resolve_typename(service::Reso
 
 } /* namespace object */
 
-void AddCompleteTaskPayloadDetails(std::shared_ptr<introspection::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<introspection::Schema>& schema)
+void AddCompleteTaskPayloadDetails(std::shared_ptr<schema::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeCompleteTaskPayload->AddFields({
-		std::make_shared<introspection::Field>("task", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<introspection::Field>("clientMutationId", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		std::make_shared<schema::Field>(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Task")),
+		std::make_shared<schema::Field>(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
 	});
 }
 

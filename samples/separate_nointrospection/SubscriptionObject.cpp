@@ -63,4 +63,14 @@ std::future<response::Value> Subscription::resolve_typename(service::ResolverPar
 
 } /* namespace object */
 
+void AddSubscriptionDetails(std::shared_ptr<schema::ObjectType> typeSubscription, const std::shared_ptr<schema::Schema>& schema)
+{
+	typeSubscription->AddFields({
+		std::make_shared<schema::Field>(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"sv), std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Appointment")),
+		std::make_shared<schema::Field>(R"gql(nodeChange)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
+			std::make_shared<schema::InputValue>(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Node")))
+	});
+}
+
 } /* namespace graphql::today */

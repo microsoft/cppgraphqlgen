@@ -94,16 +94,16 @@ std::future<response::Value> Appointment::resolve_typename(service::ResolverPara
 
 } /* namespace object */
 
-void AddAppointmentDetails(std::shared_ptr<introspection::ObjectType> typeAppointment, const std::shared_ptr<introspection::Schema>& schema)
+void AddAppointmentDetails(std::shared_ptr<schema::ObjectType> typeAppointment, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeAppointment->AddInterfaces({
-		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))
+		std::static_pointer_cast<schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
 	});
 	typeAppointment->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("when", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("DateTime")),
-		std::make_shared<introspection::Field>("subject", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isNow", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("DateTime")),
+		std::make_shared<schema::Field>(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 }
 

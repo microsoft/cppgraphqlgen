@@ -79,15 +79,15 @@ std::future<response::Value> Task::resolve_typename(service::ResolverParams&& pa
 
 } /* namespace object */
 
-void AddTaskDetails(std::shared_ptr<introspection::ObjectType> typeTask, const std::shared_ptr<introspection::Schema>& schema)
+void AddTaskDetails(std::shared_ptr<schema::ObjectType> typeTask, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeTask->AddInterfaces({
-		std::static_pointer_cast<introspection::InterfaceType>(schema->LookupType("Node"))
+		std::static_pointer_cast<schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
 	});
 	typeTask->AddFields({
-		std::make_shared<introspection::Field>("id", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		std::make_shared<introspection::Field>("title", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isComplete", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		std::make_shared<schema::Field>(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
+		std::make_shared<schema::Field>(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
+		std::make_shared<schema::Field>(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
 	});
 }
 

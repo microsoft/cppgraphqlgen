@@ -47,10 +47,10 @@ std::future<response::Value> Expensive::resolve_typename(service::ResolverParams
 
 } /* namespace object */
 
-void AddExpensiveDetails(std::shared_ptr<introspection::ObjectType> typeExpensive, const std::shared_ptr<introspection::Schema>& schema)
+void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeExpensive->AddFields({
-		std::make_shared<introspection::Field>("order", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+		std::make_shared<schema::Field>(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 }
 

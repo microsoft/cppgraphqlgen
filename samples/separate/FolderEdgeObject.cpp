@@ -62,11 +62,11 @@ std::future<response::Value> FolderEdge::resolve_typename(service::ResolverParam
 
 } /* namespace object */
 
-void AddFolderEdgeDetails(std::shared_ptr<introspection::ObjectType> typeFolderEdge, const std::shared_ptr<introspection::Schema>& schema)
+void AddFolderEdgeDetails(std::shared_ptr<schema::ObjectType> typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderEdge->AddFields({
-		std::make_shared<introspection::Field>("node", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("Folder")),
-		std::make_shared<introspection::Field>("cursor", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Folder")),
+		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 }
 
