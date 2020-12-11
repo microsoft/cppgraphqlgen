@@ -286,7 +286,7 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
-void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+std::shared_ptr<schema::Schema> GetSchema();
 
 } /* namespace validation */
 } /* namespace graphql */

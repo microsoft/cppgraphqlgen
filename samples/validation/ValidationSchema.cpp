@@ -125,10 +125,8 @@ Query::Query()
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } }
 	})
-	, _schema(std::make_shared<schema::Schema>())
+	, _schema(GetSchema())
 {
-	introspection::AddTypesToSchema(_schema);
-	validation::AddTypesToSchema(_schema);
 }
 
 service::FieldResult<std::shared_ptr<Dog>> Query::getDog(service::FieldParams&&) const
@@ -839,7 +837,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 		{ "query", query },
 		{ "mutation", mutation },
 		{ "subscription", subscription }
-	}, nullptr)
+	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
 	, _subscription(std::move(subscription))
@@ -1017,6 +1015,22 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddQueryType(typeQuery);
 	schema->AddMutationType(typeMutation);
 	schema->AddSubscriptionType(typeSubscription);
+}
+
+std::shared_ptr<schema::Schema> GetSchema()
+{
+	static std::weak_ptr<schema::Schema> s_wpSchema;
+	auto schema = s_wpSchema.lock();
+
+	if (!schema)
+	{
+		schema = std::make_shared<schema::Schema>();
+		introspection::AddTypesToSchema(schema);
+		AddTypesToSchema(schema);
+		s_wpSchema = schema;
+	}
+
+	return schema;
 }
 
 } /* namespace validation */

@@ -1897,10 +1897,15 @@ private:
 
 	if (_isIntrospection)
 	{
-		headerFile << R"cpp(GRAPHQLSERVICE_EXPORT )cpp";
+		headerFile
+			<< R"cpp(GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);)cpp";
+	}
+	else
+	{
+		headerFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema();)cpp";
 	}
 
-	headerFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+	headerFile << R"cpp(
 
 )cpp";
 
@@ -1961,17 +1966,12 @@ private:
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
 )cpp";
 
-		if (isQueryType)
+		if (!_options.noIntrospection && isQueryType)
 		{
-			if (!_options.noIntrospection)
-			{
-				headerFile
-					<< R"cpp(	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
+			headerFile
+				<< R"cpp(	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
 	std::future<response::Value> resolve_type(service::ResolverParams&& params);
-)cpp";
-			}
 
-			headerFile << R"cpp(
 	std::shared_ptr<schema::Schema> _schema;
 )cpp";
 		}
@@ -2301,7 +2301,7 @@ Operations::Operations()cpp";
 		}
 
 		sourceFile << R"cpp(
-	}, nullptr)
+	}, GetSchema())
 )cpp";
 
 		for (const auto& operation : _operationTypes)
@@ -2728,6 +2728,28 @@ Operations::Operations()cpp";
 
 )cpp";
 
+	if (!_isIntrospection)
+	{
+		sourceFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema()
+{
+	static std::weak_ptr<schema::Schema> s_wpSchema;
+	auto schema = s_wpSchema.lock();
+
+	if (!schema)
+	{
+		schema = std::make_shared<schema::Schema>();
+		)cpp" << s_introspectionNamespace
+				   << R"cpp(::AddTypesToSchema(schema);
+		AddTypesToSchema(schema);
+		s_wpSchema = schema;
+	}
+
+	return schema;
+}
+
+)cpp";
+	}
+
 	return true;
 }
 
@@ -2807,26 +2829,15 @@ void Generator::outputObjectImplementation(
 	sourceFile << R"cpp(
 	}))cpp";
 
-	if (isQueryType)
+	if (!_options.noIntrospection && isQueryType)
 	{
 		sourceFile << R"cpp(
-	, _schema(std::make_shared<schema::Schema>()))cpp";
+	, _schema(GetSchema()))cpp";
 	}
 
 	sourceFile << R"cpp(
 {
-)cpp";
-
-	if (isQueryType)
-	{
-		sourceFile << R"cpp(	)cpp" << s_introspectionNamespace
-				   << R"cpp(::AddTypesToSchema(_schema);
-	)cpp" << _schemaNamespace
-				   << R"cpp(::AddTypesToSchema(_schema);
-)cpp";
-	}
-
-	sourceFile << R"cpp(}
+}
 )cpp";
 
 	// Output each of the resolver implementations, which call the virtual property

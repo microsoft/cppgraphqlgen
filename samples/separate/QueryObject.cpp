@@ -34,10 +34,8 @@ Query::Query()
 		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
 		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
-	, _schema(std::make_shared<schema::Schema>())
+	, _schema(GetSchema())
 {
-	introspection::AddTypesToSchema(_schema);
-	today::AddTypesToSchema(_schema);
 }
 
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::FieldParams&&, response::IdType&&) const

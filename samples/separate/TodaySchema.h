@@ -86,7 +86,7 @@ void AddFolderDetails(std::shared_ptr<schema::ObjectType> typeFolder, const std:
 void AddNestedTypeDetails(std::shared_ptr<schema::ObjectType> typeNestedType, const std::shared_ptr<schema::Schema>& schema);
 void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, const std::shared_ptr<schema::Schema>& schema);
 
-void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+std::shared_ptr<schema::Schema> GetSchema();
 
 } /* namespace today */
 } /* namespace graphql */

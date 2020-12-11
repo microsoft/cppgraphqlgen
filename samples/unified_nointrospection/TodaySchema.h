@@ -90,8 +90,6 @@ private:
 	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
-
-	std::shared_ptr<schema::Schema> _schema;
 };
 
 class PageInfo
@@ -372,7 +370,7 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
-void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+std::shared_ptr<schema::Schema> GetSchema();
 
 } /* namespace today */
 } /* namespace graphql */
