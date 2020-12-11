@@ -2516,7 +2516,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
+						   << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -2737,7 +2738,8 @@ Operations::Operations()cpp";
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>();
+		schema = std::make_shared<schema::Schema>()cpp"
+				   << (_options.noIntrospection ? "true" : "false") << R"cpp();
 		)cpp" << s_introspectionNamespace
 				   << R"cpp(::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);

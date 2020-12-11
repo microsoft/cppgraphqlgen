@@ -243,10 +243,9 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	_argumentValue.position = { position.line, position.column };
 }
 
-ValidateField::ValidateField(std::string_view returnType,
-	std::optional<std::string_view> objectType, std::string_view fieldName,
-	ValidateFieldArguments&& arguments)
-	: returnType(returnType)
+ValidateField::ValidateField(std::string&& returnType, std::optional<std::string_view> objectType,
+	std::string_view fieldName, ValidateFieldArguments&& arguments)
+	: returnType(std::move(returnType))
 	, objectType(objectType)
 	, fieldName(fieldName)
 	, arguments(std::move(arguments))
@@ -261,7 +260,7 @@ bool ValidateField::operator==(const ValidateField& other) const
 }
 
 ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(
-	const schema::Schema& schema, const ValidateTypeKinds& typeKinds)
+	const std::shared_ptr<schema::Schema>& schema, const ValidateTypeKinds& typeKinds)
 	: _schema(schema)
 	, _typeKinds(typeKinds)
 {
@@ -299,7 +298,7 @@ void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 		case introspection::TypeKind::ENUM:
 		case introspection::TypeKind::INPUT_OBJECT:
 			_isInputType = true;
-			_variableType = _schema.LookupType(name);
+			_variableType = _schema->LookupType(name);
 			break;
 
 		default:
@@ -313,8 +312,7 @@ void ValidateVariableTypeVisitor::visitListType(const peg::ast_node& listType)
 
 	visitor.visit(*listType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType =
-		std::make_shared<schema::WrapperType>(introspection::TypeKind::LIST, visitor.getType());
+	_variableType = _schema->WrapType(introspection::TypeKind::LIST, visitor.getType());
 }
 
 void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
@@ -323,8 +321,7 @@ void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullT
 
 	visitor.visit(*nonNullType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType =
-		std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL, visitor.getType());
+	_variableType = _schema->WrapType(introspection::TypeKind::NON_NULL, visitor.getType());
 }
 
 bool ValidateVariableTypeVisitor::isInputType() const
@@ -653,7 +650,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(*_schema, _typeKinds);
+					ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
 
 					visitor.visit(*child);
 
@@ -1410,13 +1407,12 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 				validateFields[fieldName] = std::move(subField);
 			}
 
-			if (_scopedType == _operationTypes[strQuery])
+			if (_schema->supportsIntrospection() && _scopedType == _operationTypes[strQuery])
 			{
 				ValidateTypeField schemaField;
 
-				schemaField.returnType =
-					std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
-						_schema->LookupType(R"gql(__Schema)gql"sv));
+				schemaField.returnType = _schema->WrapType(introspection::TypeKind::NON_NULL,
+					_schema->LookupType(R"gql(__Schema)gql"sv));
 				validateFields[R"gql(__schema)gql"sv] = std::move(schemaField);
 
 				ValidateTypeField typeField;
@@ -1424,9 +1420,8 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 
 				typeField.returnType = _schema->LookupType(R"gql(__Type)gql"sv);
 
-				nameArgument.type =
-					std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
-						_schema->LookupType(R"gql(String)gql"sv));
+				nameArgument.type = _schema->WrapType(introspection::TypeKind::NON_NULL,
+					_schema->LookupType(R"gql(String)gql"sv));
 				typeField.arguments[R"gql(name)gql"sv] = std::move(nameArgument);
 
 				validateFields[R"gql(__type)gql"sv] = std::move(typeField);
@@ -1434,9 +1429,8 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 
 			ValidateTypeField typenameField;
 
-			typenameField.returnType =
-				std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
-					_schema->LookupType(R"gql(String)gql"sv));
+			typenameField.returnType = _schema->WrapType(introspection::TypeKind::NON_NULL,
+				_schema->LookupType(R"gql(String)gql"sv));
 			validateFields[R"gql(__typename)gql"sv] = std::move(typenameField);
 
 			itrType = _typeFields.insert({ _scopedType, std::move(validateFields) }).first;
@@ -1701,7 +1695,10 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	std::optional<std::string_view> objectType =
 		(*kind == introspection::TypeKind::OBJECT ? std::make_optional(_scopedType) : std::nullopt);
-	ValidateField validateField(wrappedType, objectType, name, std::move(validateArguments));
+	ValidateField validateField(std::move(wrappedType),
+		objectType,
+		name,
+		std::move(validateArguments));
 	auto itrValidateField = _selectionFields.find(alias);
 
 	if (itrValidateField != _selectionFields.end())

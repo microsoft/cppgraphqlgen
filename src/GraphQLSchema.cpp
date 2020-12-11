@@ -8,7 +8,8 @@ using namespace std::literals;
 
 namespace graphql::schema {
 
-Schema::Schema()
+Schema::Schema(bool noIntrospection)
+	: _noIntrospection(noIntrospection)
 {
 }
 
@@ -31,6 +32,11 @@ void Schema::AddType(std::string_view name, std::shared_ptr<BaseType> type)
 {
 	_typeMap[name] = _types.size();
 	_types.push_back({ name, std::move(type) });
+}
+
+bool Schema::supportsIntrospection() const noexcept
+{
+	return !_noIntrospection;
 }
 
 const std::shared_ptr<BaseType>& Schema::LookupType(std::string_view name) const

@@ -35,7 +35,7 @@ class EnumValue;
 class Schema : public std::enable_shared_from_this<Schema>
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Schema();
+	GRAPHQLSERVICE_EXPORT explicit Schema(bool noIntrospection = false);
 
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
 	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
@@ -47,6 +47,7 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddDirective(std::shared_ptr<Directive> directive);
 
 	// Accessors
+	bool supportsIntrospection() const noexcept;
 	const std::vector<std::pair<std::string_view, std::shared_ptr<BaseType>>>& types()
 		const noexcept;
 	const std::shared_ptr<ObjectType>& queryType() const noexcept;
@@ -55,6 +56,8 @@ public:
 	const std::vector<std::shared_ptr<Directive>>& directives() const noexcept;
 
 private:
+	const bool _noIntrospection = false;
+
 	std::shared_ptr<ObjectType> _query;
 	std::shared_ptr<ObjectType> _mutation;
 	std::shared_ptr<ObjectType> _subscription;

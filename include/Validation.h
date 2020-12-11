@@ -122,12 +122,12 @@ using ValidateFieldArguments = std::map<std::string_view, ValidateArgumentValueP
 
 struct ValidateField
 {
-	ValidateField(std::string_view returnType, std::optional<std::string_view> objectType,
+	ValidateField(std::string&& returnType, std::optional<std::string_view> objectType,
 		std::string_view fieldName, ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
-	std::string_view returnType;
+	std::string returnType;
 	std::optional<std::string_view> objectType;
 	std::string_view fieldName;
 	ValidateFieldArguments arguments;
@@ -140,7 +140,7 @@ using ValidateTypeKinds = std::map<std::string_view, introspection::TypeKind>;
 class ValidateVariableTypeVisitor
 {
 public:
-	ValidateVariableTypeVisitor(const schema::Schema& schema, const ValidateTypeKinds& typeKinds);
+	ValidateVariableTypeVisitor(const std::shared_ptr<schema::Schema>& schema, const ValidateTypeKinds& typeKinds);
 
 	void visit(const peg::ast_node& typeName);
 
@@ -152,7 +152,7 @@ private:
 	void visitListType(const peg::ast_node& listType);
 	void visitNonNullType(const peg::ast_node& nonNullType);
 
-	const schema::Schema& _schema;
+	const std::shared_ptr<schema::Schema>& _schema;
 	const ValidateTypeKinds& _typeKinds;
 
 	bool _isInputType = false;

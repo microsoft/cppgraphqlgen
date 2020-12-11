@@ -233,7 +233,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>();
+		schema = std::make_shared<schema::Schema>(true);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;
