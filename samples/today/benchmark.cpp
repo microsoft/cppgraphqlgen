@@ -93,6 +93,11 @@ int main(int argc, char** argv)
 				}
 			})gql"_graphql;
 
+#ifdef NO_INTROSPECTION
+			// TODO: cherry-pick validation support without Introspection
+			query.validated = true;
+#endif // NO_INTROSPECTION
+
 			std::cout << "Executing query..." << std::endl;
 
 			std::cout << response::toJSON(

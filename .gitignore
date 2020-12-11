@@ -28,6 +28,7 @@ Makefile
 schemagen
 settings.json
 /samples/benchmark
+/samples/benchmark_nointrospection
 /samples/sample
 /samples/sample_nointrospection
 /src/cmake/

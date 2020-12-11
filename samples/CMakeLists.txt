@@ -172,6 +172,7 @@ target_include_directories(sample PRIVATE
 
 # sample_nointrospection
 add_executable(sample_nointrospection today/sample.cpp)
+target_compile_definitions(sample_nointrospection PRIVATE NO_INTROSPECTION)
 target_link_libraries(sample_nointrospection PRIVATE
   separategraphql_nointrospection
   graphqljson)
@@ -201,8 +202,20 @@ target_include_directories(benchmark PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
+# benchmark_nointrospection
+add_executable(benchmark_nointrospection today/benchmark.cpp)
+target_compile_definitions(benchmark_nointrospection PRIVATE NO_INTROSPECTION)
+target_link_libraries(benchmark_nointrospection PRIVATE
+  separategraphql_nointrospection
+  graphqljson)
+target_include_directories(benchmark_nointrospection PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_dependencies(benchmark copy_sample_dlls)
+  add_dependencies(benchmark_nointrospection copy_sample_dlls)
 endif()
 
 if(GRAPHQL_BUILD_TESTS)
