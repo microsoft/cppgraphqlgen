@@ -2,12 +2,15 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/IntrospectionSchema.h"
 
 #include "Validation.h"
 
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+
+using namespace std::literals;
 
 namespace graphql::service {
 
@@ -130,7 +133,7 @@ void ValidateArgumentValueVisitor::visit(const peg::ast_node& value)
 
 void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 {
-	ValidateArgumentVariable value { std::string { variable.string_view().substr(1) } };
+	ValidateArgumentVariable value { variable.string_view().substr(1) };
 	auto position = variable.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -183,7 +186,7 @@ void ValidateArgumentValueVisitor::visitNullValue(const peg::ast_node& nullValue
 
 void ValidateArgumentValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
-	ValidateArgumentEnumValue value { enumValue.string() };
+	ValidateArgumentEnumValue value { enumValue.string_view() };
 	auto position = enumValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
@@ -216,7 +219,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 
 	for (const auto& field : objectValue.children)
 	{
-		auto name = field->children.front()->string();
+		auto name = field->children.front()->string_view();
 
 		if (value.values.find(name) != value.values.end())
 		{
@@ -240,10 +243,11 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	_argumentValue.position = { position.line, position.column };
 }
 
-ValidateField::ValidateField(std::string&& returnType, std::optional<std::string>&& objectType,
-	const std::string& fieldName, ValidateFieldArguments&& arguments)
-	: returnType(std::move(returnType))
-	, objectType(std::move(objectType))
+ValidateField::ValidateField(std::string_view returnType,
+	std::optional<std::string_view> objectType, std::string_view fieldName,
+	ValidateFieldArguments&& arguments)
+	: returnType(returnType)
+	, objectType(objectType)
 	, fieldName(fieldName)
 	, arguments(std::move(arguments))
 {
@@ -256,12 +260,11 @@ bool ValidateField::operator==(const ValidateField& other) const
 			|| (fieldName == other.fieldName && arguments == other.arguments));
 }
 
-ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds)
-	: _typeKinds(typeKinds)
-	, _variableType(response::Type::Map)
+ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(
+	const schema::Schema& schema, const ValidateTypeKinds& typeKinds)
+	: _schema(schema)
+	, _typeKinds(typeKinds)
 {
-	// kind and either name or ofType
-	_variableType.reserve(2);
 }
 
 void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
@@ -282,7 +285,7 @@ void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
 
 void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 {
-	auto name = namedType.string();
+	auto name = namedType.string_view();
 	auto itrKind = _typeKinds.find(name);
 
 	if (itrKind == _typeKinds.end())
@@ -290,53 +293,38 @@ void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 		return;
 	}
 
-	response::Value kind(response::Type::EnumValue);
-
 	switch (itrKind->second)
 	{
 		case introspection::TypeKind::SCALAR:
-			kind.set<response::StringType>(R"gql(SCALAR)gql");
-			break;
-
 		case introspection::TypeKind::ENUM:
-			kind.set<response::StringType>(R"gql(ENUM)gql");
-			break;
-
 		case introspection::TypeKind::INPUT_OBJECT:
-			kind.set<response::StringType>(R"gql(INPUT_OBJECT)gql");
+			_isInputType = true;
+			_variableType = _schema.LookupType(name);
 			break;
 
 		default:
-			return;
+			break;
 	}
-
-	_isInputType = true;
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(name)gql", response::Value(std::move(name)));
 }
 
 void ValidateVariableTypeVisitor::visitListType(const peg::ast_node& listType)
 {
-	response::Value kind(response::Type::EnumValue);
-	ValidateVariableTypeVisitor visitor(_typeKinds);
+	ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
 
-	kind.set<response::StringType>(R"gql(LIST)gql");
 	visitor.visit(*listType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+	_variableType =
+		std::make_shared<schema::WrapperType>(introspection::TypeKind::LIST, visitor.getType());
 }
 
 void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
 {
-	response::Value kind(response::Type::EnumValue);
-	ValidateVariableTypeVisitor visitor(_typeKinds);
+	ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
 
-	kind.set<response::StringType>(R"gql(NON_NULL)gql");
 	visitor.visit(*nonNullType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType.emplace_back(R"gql(kind)gql", std::move(kind));
-	_variableType.emplace_back(R"gql(ofType)gql", visitor.getType());
+	_variableType =
+		std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL, visitor.getType());
 }
 
 bool ValidateVariableTypeVisitor::isInputType() const
@@ -351,329 +339,105 @@ ValidateType ValidateVariableTypeVisitor::getType()
 	return result;
 }
 
-ValidateExecutableVisitor::ValidateExecutableVisitor(const Request& service)
-	: _service(service)
+ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema)
+	: _schema(schema)
 {
-	auto data = executeQuery(R"gql(query {
-			__schema {
-				queryType {
-					name
-				}
-				mutationType {
-					name
-				}
-				subscriptionType {
-					name
-				}
-				types {
-					name
-					kind
-					possibleTypes {
-						name
-					}
-					enumValues(includeDeprecated: true) {
-						name
-					}
-				}
-				directives {
-					name
-					locations
-					args {
-						name
-						defaultValue
-						type {
-							...nestedType
-						}
-					}
-				}
-			}
-		}
+	const auto& queryType = _schema->queryType();
+	const auto& mutationType = _schema->mutationType();
+	const auto& subscriptionType = _schema->subscriptionType();
 
-		fragment nestedType on __Type {
-			kind
-			name
-			ofType {
-				...nestedType
-			}
-		})gql");
-	auto members = data.release<response::MapType>();
-	auto itrData = std::find_if(members.begin(),
-		members.end(),
-		[](const std::pair<std::string, response::Value>& entry) noexcept {
-			return entry.first == R"gql(__schema)gql";
-		});
-
-	if (itrData != members.end() && itrData->second.type() == response::Type::Map)
+	if (queryType)
 	{
-		members = itrData->second.release<response::MapType>();
+		_operationTypes[strQuery] = queryType->name();
+	}
 
-		for (auto& member : members)
+	if (mutationType)
+	{
+		_operationTypes[strMutation] = mutationType->name();
+	}
+
+	if (subscriptionType)
+	{
+		_operationTypes[strSubscription] = subscriptionType->name();
+	}
+
+	const auto& types = _schema->types();
+
+	for (const auto& entry : types)
+	{
+		const auto name = entry.first;
+		const auto kind = entry.second->kind();
+
+		if (!isScalarType(kind))
 		{
-			if (member.second.type() == response::Type::Map)
+			if (kind == introspection::TypeKind::OBJECT)
 			{
-				auto typeMembers = member.second.release<response::MapType>();
-				auto itrType = std::find_if(typeMembers.begin(),
-					typeMembers.end(),
-					[](const std::pair<std::string, response::Value>& entry) noexcept {
-						return entry.first == R"gql(name)gql";
-					});
+				_matchingTypes[name].insert(name);
+			}
+			else
+			{
+				const auto& possibleTypes = entry.second->possibleTypes();
+				std::set<std::string_view> matchingTypes;
 
-				if (itrType != typeMembers.end()
-					&& itrType->second.type() == response::Type::String)
+				for (const auto& possibleType : possibleTypes)
 				{
-					if (member.first == R"gql(queryType)gql")
+					const auto spType = possibleType.lock();
+
+					if (spType)
 					{
-						_operationTypes[strQuery] = itrType->second.release<response::StringType>();
-					}
-					else if (member.first == R"gql(mutationType)gql")
-					{
-						_operationTypes[strMutation] =
-							itrType->second.release<response::StringType>();
-					}
-					else if (member.first == R"gql(subscriptionType)gql")
-					{
-						_operationTypes[strSubscription] =
-							itrType->second.release<response::StringType>();
+						matchingTypes.insert(spType->name());
 					}
 				}
-			}
-			else if (member.second.type() == response::Type::List
-				&& member.first == R"gql(types)gql")
-			{
-				auto entries = member.second.release<response::ListType>();
 
-				for (auto& entry : entries)
+				if (!matchingTypes.empty())
 				{
-					if (entry.type() != response::Type::Map)
-					{
-						continue;
-					}
-
-					auto typeMembers = entry.release<response::MapType>();
-					auto itrName = std::find_if(typeMembers.begin(),
-						typeMembers.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(name)gql";
-						});
-					auto itrKind = std::find_if(typeMembers.begin(),
-						typeMembers.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(kind)gql";
-						});
-
-					if (itrName != typeMembers.end()
-						&& itrName->second.type() == response::Type::String
-						&& itrKind != typeMembers.end()
-						&& itrKind->second.type() == response::Type::EnumValue)
-					{
-						auto name = itrName->second.release<response::StringType>();
-						auto kind =
-							ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
-
-						if (!isScalarType(kind))
-						{
-							if (kind == introspection::TypeKind::OBJECT)
-							{
-								_matchingTypes[name].insert(name);
-							}
-							else
-							{
-								auto itrPossibleTypes = std::find_if(typeMembers.begin(),
-									typeMembers.end(),
-									[](const std::pair<std::string, response::Value>&
-											entry) noexcept {
-										return entry.first == R"gql(possibleTypes)gql";
-									});
-
-								if (itrPossibleTypes != typeMembers.end()
-									&& itrPossibleTypes->second.type() == response::Type::List)
-								{
-									std::set<std::string> matchingTypes;
-									auto matchingTypeEntries =
-										itrPossibleTypes->second.release<response::ListType>();
-
-									for (auto& matchingTypeEntry : matchingTypeEntries)
-									{
-										if (matchingTypeEntry.type() != response::Type::Map)
-										{
-											continue;
-										}
-
-										auto matchingTypeMembers =
-											matchingTypeEntry.release<response::MapType>();
-										auto itrMatchingTypeName =
-											std::find_if(matchingTypeMembers.begin(),
-												matchingTypeMembers.end(),
-												[](const std::pair<std::string, response::Value>&
-														entry) noexcept {
-													return entry.first == R"gql(name)gql";
-												});
-
-										if (itrMatchingTypeName != matchingTypeMembers.end()
-											&& itrMatchingTypeName->second.type()
-												== response::Type::String)
-										{
-											matchingTypes.insert(
-												itrMatchingTypeName->second
-													.release<response::StringType>());
-										}
-									}
-
-									if (!matchingTypes.empty())
-									{
-										_matchingTypes[name] = std::move(matchingTypes);
-									}
-								}
-							}
-						}
-						else if (kind == introspection::TypeKind::ENUM)
-						{
-							auto itrEnumValues = std::find_if(typeMembers.begin(),
-								typeMembers.end(),
-								[](const std::pair<std::string, response::Value>& entry) noexcept {
-									return entry.first == R"gql(enumValues)gql";
-								});
-
-							if (itrEnumValues != typeMembers.end()
-								&& itrEnumValues->second.type() == response::Type::List)
-							{
-								std::set<std::string> enumValues;
-								auto enumValuesEntries =
-									itrEnumValues->second.release<response::ListType>();
-
-								for (auto& enumValuesEntry : enumValuesEntries)
-								{
-									if (enumValuesEntry.type() != response::Type::Map)
-									{
-										continue;
-									}
-
-									auto enumValuesMembers =
-										enumValuesEntry.release<response::MapType>();
-									auto itrEnumValuesName = std::find_if(enumValuesMembers.begin(),
-										enumValuesMembers.end(),
-										[](const std::pair<std::string, response::Value>&
-												entry) noexcept {
-											return entry.first == R"gql(name)gql";
-										});
-
-									if (itrEnumValuesName != enumValuesMembers.end()
-										&& itrEnumValuesName->second.type()
-											== response::Type::String)
-									{
-										enumValues.insert(itrEnumValuesName->second
-															  .release<response::StringType>());
-									}
-								}
-
-								if (!enumValues.empty())
-								{
-									_enumValues[name] = std::move(enumValues);
-								}
-							}
-						}
-						else if (kind == introspection::TypeKind::SCALAR)
-						{
-							_scalarTypes.insert(name);
-						}
-
-						_typeKinds[std::move(name)] = kind;
-					}
-				}
-			}
-			else if (member.second.type() == response::Type::List
-				&& member.first == R"gql(directives)gql")
-			{
-				auto entries = member.second.release<response::ListType>();
-
-				for (auto& entry : entries)
-				{
-					if (entry.type() != response::Type::Map)
-					{
-						continue;
-					}
-
-					auto directiveMembers = entry.release<response::MapType>();
-					auto itrName = std::find_if(directiveMembers.begin(),
-						directiveMembers.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(name)gql";
-						});
-					auto itrLocations = std::find_if(directiveMembers.begin(),
-						directiveMembers.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(locations)gql";
-						});
-
-					if (itrName != directiveMembers.end()
-						&& itrName->second.type() == response::Type::String
-						&& itrLocations != directiveMembers.end()
-						&& itrLocations->second.type() == response::Type::List)
-					{
-						ValidateDirective directive;
-						auto locations = itrLocations->second.release<response::ListType>();
-
-						for (const auto& location : locations)
-						{
-							if (location.type() != response::Type::EnumValue)
-							{
-								continue;
-							}
-
-							directive.locations.insert(
-								ModifiedArgument<introspection::DirectiveLocation>::convert(
-									location));
-						}
-
-						auto itrArgs = std::find_if(directiveMembers.begin(),
-							directiveMembers.end(),
-							[](const std::pair<std::string, response::Value>& entry) noexcept {
-								return entry.first == R"gql(args)gql";
-							});
-
-						if (itrArgs != directiveMembers.end()
-							&& itrArgs->second.type() == response::Type::List)
-						{
-							directive.arguments =
-								getArguments(itrArgs->second.release<response::ListType>());
-						}
-
-						_directives[itrName->second.release<response::StringType>()] =
-							std::move(directive);
-					}
+					_matchingTypes[name] = std::move(matchingTypes);
 				}
 			}
 		}
+		else if (kind == introspection::TypeKind::ENUM)
+		{
+			const auto& enumValues = entry.second->enumValues();
+			std::set<std::string_view> values;
+
+			for (const auto& value : enumValues)
+			{
+				if (value)
+				{
+					values.insert(value->name());
+				}
+			}
+
+			if (!enumValues.empty())
+			{
+				_enumValues[name] = std::move(values);
+			}
+		}
+		else if (kind == introspection::TypeKind::SCALAR)
+		{
+			_scalarTypes.insert(name);
+		}
+
+		_typeKinds[std::move(name)] = kind;
 	}
-}
 
-response::Value ValidateExecutableVisitor::executeQuery(std::string_view query) const
-{
-	auto ast = peg::parseString(query);
+	const auto& directives = _schema->directives();
 
-	// This is taking advantage of the fact that during validation we can choose to execute
-	// unvalidated queries against the Introspection schema. This way we can use fragment
-	// cycles to expand an arbitrary number of wrapper types.
-	ast.validated = true;
-
-	response::Value data(response::Type::Map);
-	std::shared_ptr<RequestState> state;
-	const std::string operationName;
-	response::Value variables(response::Type::Map);
-	auto result = _service.resolve(state, ast, operationName, std::move(variables)).get();
-	auto members = result.release<response::MapType>();
-	auto itrResponse = std::find_if(members.begin(),
-		members.end(),
-		[](const std::pair<std::string, response::Value>& entry) noexcept {
-			return entry.first == strData;
-		});
-
-	if (itrResponse != members.end())
+	for (const auto& directive : directives)
 	{
-		data = std::move(itrResponse->second);
-	}
+		const auto name = directive->name();
+		const auto& locations = directive->locations();
+		const auto& args = directive->args();
+		ValidateDirective validateDirective;
 
-	return data;
+		for (const auto location : locations)
+		{
+			validateDirective.locations.insert(location);
+		}
+
+		validateDirective.arguments = getArguments(args);
+		_directives[name] = std::move(validateDirective);
+	}
 }
 
 void ValidateExecutableVisitor::visit(const peg::ast_node& root)
@@ -683,7 +447,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		[this](const peg::ast_node& fragmentDefinition) {
 			const auto& fragmentName = fragmentDefinition.children.front();
 			const auto inserted =
-				_fragmentDefinitions.insert({ fragmentName->string(), fragmentDefinition });
+				_fragmentDefinitions.insert({ fragmentName->string_view(), fragmentDefinition });
 
 			if (!inserted.second)
 			{
@@ -698,36 +462,35 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		});
 
 	// Visit all of the operation definitions and check for duplicates.
-	peg::for_each_child<peg::operation_definition>(root,
-		[this](const peg::ast_node& operationDefinition) {
-			std::string operationName;
+	peg::for_each_child<
+		peg::operation_definition>(root, [this](const peg::ast_node& operationDefinition) {
+		std::string_view operationName;
 
-			peg::on_first_child<peg::operation_name>(operationDefinition,
-				[&operationName](const peg::ast_node& child) {
-					operationName = child.string_view();
-				});
+		peg::on_first_child<peg::operation_name>(operationDefinition,
+			[&operationName](const peg::ast_node& child) {
+				operationName = child.string_view();
+			});
 
-			const auto inserted =
-				_operationDefinitions.insert({ std::move(operationName), operationDefinition });
+		const auto inserted = _operationDefinitions.insert({ operationName, operationDefinition });
 
-			if (!inserted.second)
-			{
-				// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
-				auto position = operationDefinition.begin();
-				std::ostringstream error;
+		if (!inserted.second)
+		{
+			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
 
-				error << "Duplicate operation name: " << inserted.first->first;
+			error << "Duplicate operation name: " << inserted.first->first;
 
-				_errors.push_back({ error.str(), { position.line, position.column } });
-			}
-		});
+			_errors.push_back({ error.str(), { position.line, position.column } });
+		}
+	});
 
 	// Check for lone anonymous operations.
 	if (_operationDefinitions.size() > 1)
 	{
 		auto itr = std::find_if(_operationDefinitions.cbegin(),
 			_operationDefinitions.cend(),
-			[](const std::pair<const std::string, const peg::ast_node&>& entry) noexcept {
+			[](const auto& entry) noexcept {
 				return entry.first.empty();
 			});
 
@@ -776,8 +539,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		std::transform(unreferencedFragments.cbegin(),
 			unreferencedFragments.cend(),
 			_errors.begin() + originalSize,
-			[](const std::pair<const std::string, const peg::ast_node&>&
-					fragmentDefinition) noexcept {
+			[](const auto& fragmentDefinition) noexcept {
 				auto position = fragmentDefinition.second.begin();
 				std::ostringstream message;
 
@@ -807,10 +569,10 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_DEFINITION, child);
 	});
 
-	const auto name = fragmentDefinition.children.front()->string();
+	const auto name = fragmentDefinition.children.front()->string_view();
 	const auto& selection = *fragmentDefinition.children.back();
 	const auto& typeCondition = fragmentDefinition.children[1];
-	auto innerType = typeCondition->children.front()->string();
+	auto innerType = typeCondition->children.front()->string_view();
 
 	auto itrKind = _typeKinds.find(innerType);
 
@@ -834,7 +596,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 
 	visitSelection(selection);
 
-	_scopedType.clear();
+	_scopedType = {};
 	_fragmentStack.clear();
 	_selectionFields.clear();
 }
@@ -848,7 +610,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			operationType = child.string_view();
 		});
 
-	std::string operationName;
+	std::string_view operationName;
 
 	peg::on_first_child<peg::operation_name>(operationDefinition,
 		[&operationName](const peg::ast_node& child) {
@@ -858,8 +620,8 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	_operationVariables = std::make_optional<VariableTypes>();
 
 	peg::for_each_child<peg::variable>(operationDefinition,
-		[this, &operationName](const peg::ast_node& variable) {
-			std::string variableName;
+		[this, operationName](const peg::ast_node& variable) {
+			std::string_view variableName;
 			ValidateArgument variableArgument;
 
 			for (const auto& child : variable.children)
@@ -891,7 +653,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(_typeKinds);
+					ValidateVariableTypeVisitor visitor(*_schema, _typeKinds);
 
 					visitor.visit(*child);
 
@@ -949,7 +711,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 			}
 
 			_variableDefinitions.insert({ variableName, variable });
-			_operationVariables->insert({ std::move(variableName), std::move(variableArgument) });
+			_operationVariables->insert({ variableName, std::move(variableArgument) });
 		});
 
 	peg::on_first_child<peg::directives>(operationDefinition,
@@ -1004,7 +766,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		_errors.push_back({ error.str(), { position.line, position.column } });
 	}
 
-	_scopedType.clear();
+	_scopedType = {};
 	_fragmentStack.clear();
 	_selectionFields.clear();
 
@@ -1046,54 +808,33 @@ void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
 	}
 }
 
-ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(response::ListType&& args)
+ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(
+	const std::vector<std::shared_ptr<schema::InputValue>>& args)
 {
 	ValidateTypeFieldArguments result;
 
-	for (auto& arg : args)
+	for (const auto& arg : args)
 	{
-		if (arg.type() != response::Type::Map)
+		if (!arg)
 		{
 			continue;
 		}
 
-		auto members = arg.release<response::MapType>();
-		auto itrName = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& argEntry) noexcept {
-				return argEntry.first == R"gql(name)gql";
-			});
-		auto itrType = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& argEntry) noexcept {
-				return argEntry.first == R"gql(type)gql";
-			});
-		auto itrDefaultValue = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& argEntry) noexcept {
-				return argEntry.first == R"gql(defaultValue)gql";
-			});
+		ValidateArgument argument;
 
-		if (itrName != members.end() && itrName->second.type() == response::Type::String
-			&& itrType != members.end() && itrType->second.type() == response::Type::Map)
-		{
-			ValidateArgument argument;
+		argument.defaultValue = !arg->defaultValue().empty();
+		argument.nonNullDefaultValue =
+			argument.defaultValue && arg->defaultValue() != R"gql(null)gql"sv;
+		argument.type = arg->type().lock();
 
-			argument.defaultValue = (itrDefaultValue != members.end()
-				&& itrDefaultValue->second.type() == response::Type::String);
-			argument.nonNullDefaultValue = argument.defaultValue
-				&& itrDefaultValue->second.get<response::StringType>() != R"gql(null)gql";
-			argument.type = std::move(itrType->second);
-
-			result[itrName->second.release<response::StringType>()] = std::move(argument);
-		}
+		result[arg->name()] = std::move(argument);
 	}
 
 	return result;
 }
 
 std::optional<introspection::TypeKind> ValidateExecutableVisitor::getTypeKind(
-	const std::string& name) const
+	std::string_view name) const
 {
 	auto itrKind = _typeKinds.find(name);
 
@@ -1119,7 +860,7 @@ constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind k
 	}
 }
 
-bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
+bool ValidateExecutableVisitor::matchesScopedType(std::string_view name) const
 {
 	if (name == _scopedType)
 	{
@@ -1133,7 +874,7 @@ bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 	{
 		auto itrMatch = std::find_if(itrScoped->second.begin(),
 			itrScoped->second.end(),
-			[this, itrNamed](const std::string& matchingType) noexcept {
+			[this, itrNamed](std::string_view matchingType) noexcept {
 				return itrNamed->second.find(matchingType) != itrNamed->second.end();
 			});
 
@@ -1146,7 +887,7 @@ bool ValidateExecutableVisitor::matchesScopedType(const std::string& name) const
 bool ValidateExecutableVisitor::validateInputValue(
 	bool hasNonNullDefaultValue, const ValidateArgumentValuePtr& argument, const ValidateType& type)
 {
-	if (type.type() != response::Type::Map)
+	if (!type)
 	{
 		_errors.push_back({ "Unknown input type", argument.position });
 		return false;
@@ -1188,15 +929,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 		}
 	}
 
-	auto itrKind = type.find(R"gql(kind)gql");
-
-	if (itrKind == type.end() || itrKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown input type", argument.position });
-		return false;
-	}
-
-	auto kind = ModifiedArgument<introspection::TypeKind>::convert(itrKind->second);
+	const auto kind = type->kind();
 
 	if (!argument.value)
 	{
@@ -1215,15 +948,15 @@ bool ValidateExecutableVisitor::validateInputValue(
 		case introspection::TypeKind::NON_NULL:
 		{
 			// Unwrap and check the next one.
-			auto itrOfType = type.find(R"gql(ofType)gql");
+			const auto ofType = type->ofType().lock();
 
-			if (itrOfType == type.end() || itrOfType->second.type() != response::Type::Map)
+			if (!ofType)
 			{
 				_errors.push_back({ "Unknown Non-Null type", argument.position });
 				return false;
 			}
 
-			return validateInputValue(hasNonNullDefaultValue, argument, itrOfType->second);
+			return validateInputValue(hasNonNullDefaultValue, argument, ofType);
 		}
 
 		case introspection::TypeKind::LIST:
@@ -1234,9 +967,9 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			auto itrOfType = type.find(R"gql(ofType)gql");
+			const auto ofType = type->ofType().lock();
 
-			if (itrOfType == type.end() || itrOfType->second.type() != response::Type::Map)
+			if (!ofType)
 			{
 				_errors.push_back({ "Unknown List type", argument.position });
 				return false;
@@ -1245,7 +978,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			// Check every value against the target type.
 			for (const auto& value : std::get<ValidateArgumentList>(argument.value->data).values)
 			{
-				if (!validateInputValue(false, value, itrOfType->second))
+				if (!validateInputValue(false, value, ofType))
 				{
 					// Error messages are added in the recursive call, so just bubble up the result.
 					return false;
@@ -1257,15 +990,13 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::INPUT_OBJECT:
 		{
-			auto itrName = type.find(R"gql(name)gql");
+			const auto name = type->name();
 
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (name.empty())
 			{
 				_errors.push_back({ "Unknown Input Object type", argument.position });
 				return false;
 			}
-
-			const auto& name = itrName->second.get<response::StringType>();
 
 			if (!std::holds_alternative<ValidateArgumentMap>(argument.value->data))
 			{
@@ -1290,7 +1021,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
-			std::set<std::string> subFields;
+			std::set<std::string_view> subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
@@ -1332,10 +1063,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					continue;
 				}
 
-				auto itrFieldKind = entry.second.type.find(R"gql(kind)gql");
-
-				if (itrFieldKind == entry.second.type.end()
-					|| itrFieldKind->second.type() != response::Type::EnumValue)
+				if (!entry.second.type)
 				{
 					std::ostringstream message;
 
@@ -1346,8 +1074,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 
-				auto fieldKind =
-					ModifiedArgument<introspection::TypeKind>::convert(itrFieldKind->second);
+				const auto fieldKind = entry.second.type->kind();
 
 				if (fieldKind == introspection::TypeKind::NON_NULL)
 				{
@@ -1367,15 +1094,13 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::ENUM:
 		{
-			auto itrName = type.find(R"gql(name)gql");
+			const auto name = type->name();
 
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (name.empty())
 			{
 				_errors.push_back({ "Unknown Enum value", argument.position });
 				return false;
 			}
-
-			const auto& name = itrName->second.get<response::StringType>();
 
 			if (!std::holds_alternative<ValidateArgumentEnumValue>(argument.value->data))
 			{
@@ -1406,17 +1131,15 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::SCALAR:
 		{
-			auto itrName = type.find(R"gql(name)gql");
+			const auto name = type->name();
 
-			if (itrName == type.end() || itrName->second.type() != response::Type::String)
+			if (name.empty())
 			{
 				_errors.push_back({ "Unknown Scalar value", argument.position });
 				return false;
 			}
 
-			const auto& name = itrName->second.get<response::StringType>();
-
-			if (name == R"gql(Int)gql")
+			if (name == R"gql(Int)gql"sv)
 			{
 				if (!std::holds_alternative<response::IntType>(argument.value->data))
 				{
@@ -1424,7 +1147,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 			}
-			else if (name == R"gql(Float)gql")
+			else if (name == R"gql(Float)gql"sv)
 			{
 				if (!std::holds_alternative<response::FloatType>(argument.value->data)
 					&& !std::holds_alternative<response::IntType>(argument.value->data))
@@ -1433,7 +1156,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 			}
-			else if (name == R"gql(String)gql")
+			else if (name == R"gql(String)gql"sv)
 			{
 				if (!std::holds_alternative<response::StringType>(argument.value->data))
 				{
@@ -1441,7 +1164,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 			}
-			else if (name == R"gql(ID)gql")
+			else if (name == R"gql(ID)gql"sv)
 			{
 				if (std::holds_alternative<response::StringType>(argument.value->data))
 				{
@@ -1461,7 +1184,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 				_errors.push_back({ "Expected ID value", argument.position });
 				return false;
 			}
-			else if (name == R"gql(Boolean)gql")
+			else if (name == R"gql(Boolean)gql"sv)
 			{
 				if (!std::holds_alternative<response::BooleanType>(argument.value->data))
 				{
@@ -1495,52 +1218,34 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 	const ValidateType& variableType, const schema_location& position,
 	const ValidateType& inputType)
 {
-	if (variableType.type() != response::Type::Map)
+	if (!variableType)
 	{
 		_errors.push_back({ "Unknown variable type", position });
 		return false;
 	}
 
-	auto itrVariableKind = variableType.find(R"gql(kind)gql");
-
-	if (itrVariableKind == variableType.end()
-		|| itrVariableKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown variable type", position });
-		return false;
-	}
-
-	auto variableKind = ModifiedArgument<introspection::TypeKind>::convert(itrVariableKind->second);
+	const auto variableKind = variableType->kind();
 
 	if (variableKind == introspection::TypeKind::NON_NULL)
 	{
-		auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
+		const auto ofType = variableType->ofType().lock();
 
-		if (itrVariableOfType == variableType.end()
-			|| itrVariableOfType->second.type() != response::Type::Map)
+		if (!ofType)
 		{
 			_errors.push_back({ "Unknown Non-Null variable type", position });
 			return false;
 		}
 
-		return validateVariableType(true, itrVariableOfType->second, position, inputType);
+		return validateVariableType(true, ofType, position, inputType);
 	}
 
-	if (inputType.type() != response::Type::Map)
+	if (!inputType)
 	{
 		_errors.push_back({ "Unknown input type", position });
 		return false;
 	}
 
-	auto itrInputKind = inputType.find(R"gql(kind)gql");
-
-	if (itrInputKind == inputType.end() || itrInputKind->second.type() != response::Type::EnumValue)
-	{
-		_errors.push_back({ "Unknown input type", position });
-		return false;
-	}
-
-	auto inputKind = ModifiedArgument<introspection::TypeKind>::convert(itrInputKind->second);
+	const auto inputKind = inputType->kind();
 
 	switch (inputKind)
 	{
@@ -1554,16 +1259,15 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
+			const auto ofType = inputType->ofType().lock();
 
-			if (itrInputOfType == inputType.end()
-				|| itrInputOfType->second.type() != response::Type::Map)
+			if (!ofType)
 			{
 				_errors.push_back({ "Unknown Non-Null input type", position });
 				return false;
 			}
 
-			return validateVariableType(false, variableType, position, itrInputOfType->second);
+			return validateVariableType(false, variableType, position, ofType);
 		}
 
 		case introspection::TypeKind::LIST:
@@ -1576,28 +1280,23 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			auto itrVariableOfType = variableType.find(R"gql(ofType)gql");
+			const auto variableOfType = variableType->ofType().lock();
 
-			if (itrVariableOfType == variableType.end()
-				|| itrVariableOfType->second.type() != response::Type::Map)
+			if (!variableOfType)
 			{
 				_errors.push_back({ "Unknown List variable type", position });
 				return false;
 			}
 
-			auto itrInputOfType = inputType.find(R"gql(ofType)gql");
+			const auto inputOfType = inputType->ofType().lock();
 
-			if (itrInputOfType == inputType.end()
-				|| itrInputOfType->second.type() != response::Type::Map)
+			if (!inputOfType)
 			{
 				_errors.push_back({ "Unknown List input type", position });
 				return false;
 			}
 
-			return validateVariableType(false,
-				itrVariableOfType->second,
-				position,
-				itrInputOfType->second);
+			return validateVariableType(false, variableOfType, position, inputOfType);
 		}
 
 		case introspection::TypeKind::INPUT_OBJECT:
@@ -1644,26 +1343,21 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		}
 	}
 
-	auto itrVariableName = variableType.find(R"gql(name)gql");
+	const auto variableName = variableType->name();
 
-	if (itrVariableName == variableType.end()
-		|| itrVariableName->second.type() != response::Type::String)
+	if (variableName.empty())
 	{
 		_errors.push_back({ "Unknown variable type", position });
 		return false;
 	}
 
-	const auto& variableName = itrVariableName->second.get<response::StringType>();
+	const auto inputName = inputType->name();
 
-	auto itrInputName = inputType.find(R"gql(name)gql");
-
-	if (itrInputName == inputType.end() || itrInputName->second.type() != response::Type::String)
+	if (inputName.empty())
 	{
 		_errors.push_back({ "Unknown input type", position });
 		return false;
 	}
-
-	const auto& inputName = itrInputName->second.get<response::StringType>();
 
 	if (variableName != inputName)
 	{
@@ -1687,162 +1381,65 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 
 	if (itrType == _typeFields.cend() && typeKind && !isScalarType(*typeKind))
 	{
-		std::ostringstream oss;
+		const auto& type = _schema->LookupType(_scopedType);
 
-		oss << R"gql(query {
-					__type(name: ")gql"
-			<< _scopedType << R"gql(") {
-						fields(includeDeprecated: true) {
-							name
-							type {
-								...nestedType
-							}
-							args {
-								name
-								defaultValue
-								type {
-									...nestedType
-								}
-							}
-						}
-					}
-				}
-
-			fragment nestedType on __Type {
-				kind
-				name
-				ofType {
-					...nestedType
-				}
-			})gql";
-
-		auto data = executeQuery(oss.str());
-		auto members = data.release<response::MapType>();
-		auto itrResponse = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& entry) noexcept {
-				return entry.first == R"gql(__type)gql";
-			});
-
-		if (itrResponse != members.end() && itrResponse->second.type() == response::Type::Map)
+		if (type)
 		{
-			std::map<std::string, ValidateTypeField> fields;
-			response::Value scalarKind(response::Type::EnumValue);
-			response::Value nonNullKind(response::Type::EnumValue);
+			const auto& fields = type->fields();
+			std::map<std::string_view, ValidateTypeField> validateFields;
 
-			scalarKind.set<response::StringType>(R"gql(SCALAR)gql");
-			nonNullKind.set<response::StringType>(R"gql(NON_NULL)gql");
-
-			members = itrResponse->second.release<response::MapType>();
-			itrResponse = std::find_if(members.begin(),
-				members.end(),
-				[](const std::pair<std::string, response::Value>& entry) noexcept {
-					return entry.first == R"gql(fields)gql";
-				});
-
-			if (itrResponse != members.end() && itrResponse->second.type() == response::Type::List)
+			for (auto& entry : fields)
 			{
-				auto entries = itrResponse->second.release<response::ListType>();
-
-				for (auto& entry : entries)
+				if (!entry)
 				{
-					if (entry.type() != response::Type::Map)
-					{
-						continue;
-					}
-
-					members = entry.release<response::MapType>();
-
-					auto itrFieldName = std::find_if(members.begin(),
-						members.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(name)gql";
-						});
-					auto itrFieldType = std::find_if(members.begin(),
-						members.end(),
-						[](const std::pair<std::string, response::Value>& entry) noexcept {
-							return entry.first == R"gql(type)gql";
-						});
-
-					if (itrFieldName != members.end()
-						&& itrFieldName->second.type() == response::Type::String
-						&& itrFieldType != members.end()
-						&& itrFieldType->second.type() == response::Type::Map)
-					{
-						auto fieldName = itrFieldName->second.release<response::StringType>();
-						ValidateTypeField subField;
-
-						subField.returnType = std::move(itrFieldType->second);
-
-						auto itrArgs = std::find_if(members.begin(),
-							members.end(),
-							[](const std::pair<std::string, response::Value>& entry) noexcept {
-								return entry.first == R"gql(args)gql";
-							});
-
-						if (itrArgs != members.end()
-							&& itrArgs->second.type() == response::Type::List)
-						{
-							subField.arguments =
-								getArguments(itrArgs->second.release<response::ListType>());
-						}
-
-						fields[std::move(fieldName)] = std::move(subField);
-					}
+					continue;
 				}
 
-				if (_scopedType == _operationTypes[strQuery])
+				const auto fieldName = entry->name();
+				ValidateTypeField subField;
+
+				subField.returnType = entry->type().lock();
+
+				if (fieldName.empty() || !subField.returnType)
 				{
-					response::Value objectKind(response::Type::EnumValue);
-
-					objectKind.set<response::StringType>(R"gql(OBJECT)gql");
-
-					ValidateTypeField schemaField;
-					response::Value schemaType(response::Type::Map);
-					response::Value notNullSchemaType(response::Type::Map);
-
-					schemaType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-					schemaType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Schema)gql"));
-					notNullSchemaType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-					notNullSchemaType.emplace_back(R"gql(ofType)gql", std::move(schemaType));
-					schemaField.returnType = std::move(notNullSchemaType);
-					fields[R"gql(__schema)gql"] = std::move(schemaField);
-
-					ValidateTypeField typeField;
-					response::Value typeType(response::Type::Map);
-
-					typeType.emplace_back(R"gql(kind)gql", response::Value(objectKind));
-					typeType.emplace_back(R"gql(name)gql", response::Value(R"gql(__Type)gql"));
-					typeField.returnType = std::move(typeType);
-
-					ValidateArgument nameArgument;
-					response::Value typeNameArg(response::Type::Map);
-					response::Value nonNullTypeNameArg(response::Type::Map);
-
-					typeNameArg.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-					typeNameArg.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-					nonNullTypeNameArg.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-					nonNullTypeNameArg.emplace_back(R"gql(ofType)gql", std::move(typeNameArg));
-					nameArgument.type = std::move(nonNullTypeNameArg);
-
-					typeField.arguments[R"gql(name)gql"] = std::move(nameArgument);
-
-					fields[R"gql(__type)gql"] = std::move(typeField);
+					continue;
 				}
+
+				subField.arguments = getArguments(entry->args());
+
+				validateFields[fieldName] = std::move(subField);
+			}
+
+			if (_scopedType == _operationTypes[strQuery])
+			{
+				ValidateTypeField schemaField;
+
+				schemaField.returnType =
+					std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
+						_schema->LookupType(R"gql(__Schema)gql"sv));
+				validateFields[R"gql(__schema)gql"sv] = std::move(schemaField);
+
+				ValidateTypeField typeField;
+				ValidateArgument nameArgument;
+
+				typeField.returnType = _schema->LookupType(R"gql(__Type)gql"sv);
+
+				nameArgument.type =
+					std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
+						_schema->LookupType(R"gql(String)gql"sv));
+				typeField.arguments[R"gql(name)gql"sv] = std::move(nameArgument);
+
+				validateFields[R"gql(__type)gql"sv] = std::move(typeField);
 			}
 
 			ValidateTypeField typenameField;
-			response::Value typenameType(response::Type::Map);
-			response::Value notNullTypenameType(response::Type::Map);
 
-			typenameType.emplace_back(R"gql(kind)gql", response::Value(scalarKind));
-			typenameType.emplace_back(R"gql(name)gql", response::Value(R"gql(String)gql"));
-			notNullTypenameType.emplace_back(R"gql(kind)gql", response::Value(nonNullKind));
-			notNullTypenameType.emplace_back(R"gql(ofType)gql", std::move(typenameType));
-			typenameField.returnType = std::move(notNullTypenameType);
-			fields[R"gql(__typename)gql"] = std::move(typenameField);
+			typenameField.returnType =
+				std::make_shared<schema::WrapperType>(introspection::TypeKind::NON_NULL,
+					_schema->LookupType(R"gql(String)gql"sv));
+			validateFields[R"gql(__typename)gql"sv] = std::move(typenameField);
 
-			itrType = _typeFields.insert({ _scopedType, std::move(fields) }).first;
+			itrType = _typeFields.insert({ _scopedType, std::move(validateFields) }).first;
 		}
 	}
 
@@ -1850,7 +1447,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 }
 
 ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
-	getInputTypeFields(const std::string& name)
+	getInputTypeFields(std::string_view name)
 {
 	auto typeKind = getTypeKind(name);
 	auto itrType = _inputTypeFields.find(name);
@@ -1858,55 +1455,11 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 	if (itrType == _inputTypeFields.cend() && typeKind
 		&& *typeKind == introspection::TypeKind::INPUT_OBJECT)
 	{
-		std::ostringstream oss;
+		const auto& type = _schema->LookupType(name);
 
-		oss << R"gql(query {
-					__type(name: ")gql"
-			<< name << R"gql(") {
-						inputFields {
-							name
-							defaultValue
-							type {
-								...nestedType
-							}
-						}
-					}
-				}
-
-			fragment nestedType on __Type {
-				kind
-				name
-				ofType {
-					...nestedType
-				}
-			})gql";
-
-		auto data = executeQuery(oss.str());
-		auto members = data.release<response::MapType>();
-		auto itrResponse = std::find_if(members.begin(),
-			members.end(),
-			[](const std::pair<std::string, response::Value>& entry) noexcept {
-				return entry.first == R"gql(__type)gql";
-			});
-
-		if (itrResponse != members.end() && itrResponse->second.type() == response::Type::Map)
+		if (type)
 		{
-			std::map<std::string, ValidateTypeField> fields;
-
-			members = itrResponse->second.release<response::MapType>();
-			itrResponse = std::find_if(members.begin(),
-				members.end(),
-				[](const std::pair<std::string, response::Value>& entry) noexcept {
-					return entry.first == R"gql(inputFields)gql";
-				});
-
-			if (itrResponse != members.end() && itrResponse->second.type() == response::Type::List)
-			{
-				itrType = _inputTypeFields
-							  .insert({ name,
-								  getArguments(itrResponse->second.release<response::ListType>()) })
-							  .first;
-			}
+			itrType = _inputTypeFields.insert({ name, getArguments(type->inputFields()) }).first;
 		}
 	}
 
@@ -1914,10 +1467,10 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 }
 
 template <class _FieldTypes>
-std::string ValidateExecutableVisitor::getFieldType(
-	const _FieldTypes& fields, const std::string& name)
+std::string_view ValidateExecutableVisitor::getFieldType(
+	const _FieldTypes& fields, std::string_view name)
 {
-	std::string result;
+	std::string_view result;
 	auto itrType = fields.find(name);
 
 	if (itrType == fields.end())
@@ -1926,23 +1479,20 @@ std::string ValidateExecutableVisitor::getFieldType(
 	}
 
 	// Iteratively expand nested types till we get the underlying field type.
-	const std::string nameMember { R"gql(name)gql" };
-	const std::string ofTypeMember { R"gql(ofType)gql" };
-	auto itrName = getValidateFieldType(itrType->second).find(nameMember);
-	auto itrOfType = getValidateFieldType(itrType->second).find(ofTypeMember);
-	auto itrEnd = getValidateFieldType(itrType->second).end();
+	auto fieldType = getValidateFieldType(itrType->second);
 
 	do
 	{
-		if (itrName != itrEnd && itrName->second.type() == response::Type::String)
+		const auto name = fieldType->name();
+		const auto ofType = fieldType->ofType().lock();
+
+		if (!name.empty())
 		{
-			result = itrName->second.template get<response::StringType>();
+			result = name;
 		}
-		else if (itrOfType != itrEnd && itrOfType->second.type() == response::Type::Map)
+		else if (ofType)
 		{
-			itrEnd = itrOfType->second.end();
-			itrName = itrOfType->second.find(nameMember);
-			itrOfType = itrOfType->second.find(ofTypeMember);
+			fieldType = ofType;
 		}
 		else
 		{
@@ -1967,7 +1517,7 @@ const ValidateType& ValidateExecutableVisitor::getValidateFieldType(
 
 template <class _FieldTypes>
 std::string ValidateExecutableVisitor::getWrappedFieldType(
-	const _FieldTypes& fields, const std::string& name)
+	const _FieldTypes& fields, std::string_view name)
 {
 	std::string result;
 	auto itrType = fields.find(name);
@@ -1985,32 +1535,27 @@ std::string ValidateExecutableVisitor::getWrappedFieldType(
 std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& returnType)
 {
 	// Recursively expand nested types till we get the underlying field type.
-	const std::string nameMember { R"gql(name)gql" };
-	auto itrName = returnType.find(nameMember);
-	auto itrEnd = returnType.end();
+	const auto name = returnType->name();
 
-	if (itrName != itrEnd && itrName->second.type() == response::Type::String)
+	if (!name.empty())
 	{
-		return itrName->second.get<response::StringType>();
+		return std::string { name };
 	}
 
 	std::ostringstream oss;
-	const std::string kindMember { R"gql(kind)gql" };
-	const std::string ofTypeMember { R"gql(ofType)gql" };
-	auto itrKind = returnType.find(kindMember);
-	auto itrOfType = returnType.find(ofTypeMember);
+	const auto kind = returnType->kind();
+	const auto ofType = returnType->ofType().lock();
 
-	if (itrKind != itrEnd && itrKind->second.type() == response::Type::EnumValue
-		&& itrOfType != itrEnd && itrOfType->second.type() == response::Type::Map)
+	if (ofType)
 	{
-		switch (ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+		switch (kind)
 		{
 			case introspection::TypeKind::LIST:
-				oss << '[' << getWrappedFieldType(itrOfType->second) << ']';
+				oss << '[' << getWrappedFieldType(ofType) << ']';
 				break;
 
 			case introspection::TypeKind::NON_NULL:
-				oss << getWrappedFieldType(itrOfType->second) << '!';
+				oss << getWrappedFieldType(ofType) << '!';
 				break;
 
 			default:
@@ -2027,7 +1572,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		visitDirectives(introspection::DirectiveLocation::FIELD, child);
 	});
 
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -2047,7 +1592,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	std::string innerType;
+	std::string_view innerType;
 	std::string wrappedType;
 	auto itrType = getScopedTypeFields();
 
@@ -2110,7 +1655,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	std::string alias;
+	std::string_view alias;
 
 	peg::on_first_child<peg::alias_name>(field, [&alias](const peg::ast_node& child) {
 		alias = child.string_view();
@@ -2122,15 +1667,15 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	ValidateFieldArguments validateArguments;
-	std::map<std::string, schema_location> argumentLocations;
-	std::queue<std::string> argumentNames;
+	std::map<std::string_view, schema_location> argumentLocations;
+	std::queue<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
 			const peg::ast_node& child) {
 			for (auto& argument : child.children)
 			{
-				auto argumentName = argument->children.front()->string();
+				auto argumentName = argument->children.front()->string_view();
 				auto position = argument->begin();
 
 				if (validateArguments.find(argumentName) != validateArguments.end())
@@ -2154,12 +1699,9 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 		});
 
-	std::optional<std::string> objectType =
+	std::optional<std::string_view> objectType =
 		(*kind == introspection::TypeKind::OBJECT ? std::make_optional(_scopedType) : std::nullopt);
-	ValidateField validateField(std::move(wrappedType),
-		std::move(objectType),
-		name,
-		std::move(validateArguments));
+	ValidateField validateField(wrappedType, objectType, name, std::move(validateArguments));
 	auto itrValidateField = _selectionFields.find(alias);
 
 	if (itrValidateField != _selectionFields.end())
@@ -2235,12 +1777,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 
 			// See if the argument is wrapped in NON_NULL
-			auto itrKind = argument.second.type.find(R"gql(kind)gql");
-
-			if (itrKind != argument.second.type.end()
-				&& itrKind->second.type() == response::Type::EnumValue
-				&& introspection::TypeKind::NON_NULL
-					== ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+			if (argument.second.type
+				&& introspection::TypeKind::NON_NULL == argument.second.type->kind())
 			{
 				// http://spec.graphql.org/June2018/#sec-Required-Arguments
 				auto position = field.begin();
@@ -2255,7 +1793,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		}
 	}
 
-	_selectionFields.insert({ std::move(alias), std::move(validateField) });
+	_selectionFields.insert({ alias, std::move(validateField) });
 
 	const peg::ast_node* selection = nullptr;
 
@@ -2310,7 +1848,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		visitDirectives(introspection::DirectiveLocation::FRAGMENT_SPREAD, child);
 	});
 
-	const std::string name(fragmentSpread.children.front()->string_view());
+	const auto name = fragmentSpread.children.front()->string_view();
 	auto itr = _fragmentDefinitions.find(name);
 
 	if (itr == _fragmentDefinitions.cend())
@@ -2343,7 +1881,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	const auto& selection = *itr->second.children.back();
 	const auto& typeCondition = itr->second.children[1];
-	std::string innerType { typeCondition->children.front()->string_view() };
+	const auto innerType = typeCondition->children.front()->string_view();
 
 	if (!matchesScopedType(innerType))
 	{
@@ -2376,14 +1914,14 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 		visitDirectives(introspection::DirectiveLocation::INLINE_FRAGMENT, child);
 	});
 
-	std::string innerType;
+	std::string_view innerType;
 	schema_location typeConditionLocation;
 
 	peg::on_first_child<peg::type_condition>(inlineFragment,
 		[&innerType, &typeConditionLocation](const peg::ast_node& child) {
 			auto position = child.begin();
 
-			innerType = child.children.front()->string();
+			innerType = child.children.front()->string_view();
 			typeConditionLocation = { position.line, position.column };
 		});
 
@@ -2437,11 +1975,11 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 void ValidateExecutableVisitor::visitDirectives(
 	introspection::DirectiveLocation location, const peg::ast_node& directives)
 {
-	std::set<std::string> uniqueDirectives;
+	std::set<std::string_view> uniqueDirectives;
 
 	for (const auto& directive : directives.children)
 	{
-		std::string directiveName;
+		std::string_view directiveName;
 
 		peg::on_first_child<peg::directive_name>(*directive,
 			[&directiveName](const peg::ast_node& child) {
@@ -2523,13 +2061,13 @@ void ValidateExecutableVisitor::visitDirectives(
 		peg::on_first_child<peg::arguments>(*directive,
 			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
-				std::map<std::string, schema_location> argumentLocations;
-				std::queue<std::string> argumentNames;
+				std::map<std::string_view, schema_location> argumentLocations;
+				std::queue<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)
 				{
 					auto position = argument->begin();
-					auto argumentName = argument->children.front()->string();
+					auto argumentName = argument->children.front()->string_view();
 
 					if (validateArguments.find(argumentName) != validateArguments.end())
 					{
@@ -2601,12 +2139,8 @@ void ValidateExecutableVisitor::visitDirectives(
 					}
 
 					// See if the argument is wrapped in NON_NULL
-					auto itrKind = argument.second.type.find(R"gql(kind)gql");
-
-					if (itrKind != argument.second.type.end()
-						&& itrKind->second.type() == response::Type::EnumValue
-						&& introspection::TypeKind::NON_NULL
-							== ModifiedArgument<introspection::TypeKind>::convert(itrKind->second))
+					if (argument.second.type
+						&& introspection::TypeKind::NON_NULL == argument.second.type->kind())
 					{
 						// http://spec.graphql.org/June2018/#sec-Required-Arguments
 						auto position = directive->begin();

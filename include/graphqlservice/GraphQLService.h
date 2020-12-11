@@ -1035,7 +1035,7 @@ private:
 		const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
 		const std::string& operationName, response::Value&& variables) const;
 
-	TypeMap _operations;
+	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;

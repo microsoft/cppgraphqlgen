@@ -1759,7 +1759,7 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 
 Request::Request(TypeMap&& operationTypes, const std::shared_ptr<schema::Schema>& schema)
 	: _operations(std::move(operationTypes))
-	, _validation(std::make_unique<ValidateExecutableVisitor>(*this))
+	, _validation(std::make_unique<ValidateExecutableVisitor>(schema))
 {
 }
 

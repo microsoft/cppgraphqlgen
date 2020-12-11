@@ -132,8 +132,6 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 				}
 			}
 		})"_graphql;
-	// TODO: cherry-pick validation support without Introspection
-	query.validated = true;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result = _service->resolve(std::launch::async, state, query, "Everything", std::move(variables)).get();
@@ -201,8 +199,6 @@ TEST_F(NoIntrospectionServiceCase, NoSchema)
 				queryType { name }
 			}
 		})"_graphql;
-	// TODO: cherry-pick validation support without Introspection
-	query.validated = true;
 	response::Value variables(response::Type::Map);
 	auto future = _service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
 	auto result = future.get();
@@ -213,8 +209,7 @@ TEST_F(NoIntrospectionServiceCase, NoSchema)
 		auto errorsItr = result.find("errors");
 		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		// TODO: cherry-pick validation support without Introspection
-		EXPECT_EQ(R"js([{"message":"Unknown field name: __schema","locations":[{"line":2,"column":4}]}])js", errorsString) << "error should match";
+		EXPECT_EQ(R"js([{"message":"Undefined field type: Query name: __schema","locations":[{"line":2,"column":4}]}])js", errorsString) << "error should match";
 	}
 	catch (service::schema_exception & ex)
 	{
@@ -229,8 +224,6 @@ TEST_F(NoIntrospectionServiceCase, NoType)
 				description
 			}
 		})"_graphql;
-	// TODO: cherry-pick validation support without Introspection
-	query.validated = true;
 	response::Value variables(response::Type::Map);
 	auto future = _service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
 	auto result = future.get();
@@ -241,8 +234,7 @@ TEST_F(NoIntrospectionServiceCase, NoType)
 		auto errorsItr = result.find("errors");
 		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		// TODO: cherry-pick validation support without Introspection
-		EXPECT_EQ(R"js([{"message":"Unknown field name: __type","locations":[{"line":2,"column":4}]}])js", errorsString) << "error should match";
+		EXPECT_EQ(R"js([{"message":"Undefined field type: Query name: __type","locations":[{"line":2,"column":4}]}])js", errorsString) << "error should match";
 	}
 	catch (service::schema_exception & ex)
 	{
