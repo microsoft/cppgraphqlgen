@@ -1689,22 +1689,9 @@ bool Generator::outputHeader() const noexcept
 )cpp";
 
 	NamespaceScope graphqlNamespace { headerFile, "graphql" };
-	NamespaceScope introspectionNamespace { headerFile, s_introspectionNamespace };
-	NamespaceScope schemaNamespace { headerFile, _schemaNamespace, true };
+	NamespaceScope schemaNamespace { headerFile, _schemaNamespace };
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
-
-	headerFile << R"cpp(
-class Schema;
-)cpp";
-
-	if (_options.separateFiles)
-	{
-		headerFile << R"cpp(class ObjectType;
-)cpp";
-	}
-
-	headerFile << std::endl;
 
 	std::string queryType;
 
@@ -1718,11 +1705,6 @@ class Schema;
 				break;
 			}
 		}
-
-		introspectionNamespace.exit();
-		headerFile << std::endl;
-		schemaNamespace.enter();
-		pendingSeparator.add();
 	}
 
 	if (!_enumTypes.empty())

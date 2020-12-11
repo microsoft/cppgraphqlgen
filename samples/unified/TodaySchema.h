@@ -14,12 +14,6 @@
 #include <vector>
 
 namespace graphql {
-namespace introspection {
-
-class Schema;
-
-} /* namespace introspection */
-
 namespace today {
 
 enum class TaskState

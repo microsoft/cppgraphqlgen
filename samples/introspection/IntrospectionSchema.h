@@ -16,8 +16,6 @@
 namespace graphql {
 namespace introspection {
 
-class Schema;
-
 enum class TypeKind
 {
 	SCALAR,

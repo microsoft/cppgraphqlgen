@@ -14,12 +14,6 @@
 #include <vector>
 
 namespace graphql {
-namespace introspection {
-
-class Schema;
-
-} /* namespace introspection */
-
 namespace validation {
 
 enum class DogCommand

@@ -281,7 +281,7 @@ public:
 	bool reset() noexcept;
 
 private:
-	bool _pending = false;
+	bool _pending = true;
 	std::ostream& _outputFile;
 };
 
