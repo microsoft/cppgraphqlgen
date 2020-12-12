@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/GraphQLGrammar.h"
-#include "graphqlservice/IntrospectionSchema.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include "Validation.h"
 

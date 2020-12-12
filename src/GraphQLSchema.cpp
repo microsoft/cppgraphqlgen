@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/IntrospectionSchema.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 using namespace std::literals;
 

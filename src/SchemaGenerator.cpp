@@ -315,7 +315,7 @@ std::string Generator::getHeaderDir() const noexcept
 {
 	if (_isIntrospection)
 	{
-		return (fs::path { "include" } / "graphqlservice").string();
+		return (fs::path { "include" } / "graphqlservice" / "introspection").string();
 	}
 	else if (_options.paths)
 	{
@@ -1682,7 +1682,27 @@ bool Generator::outputHeader() const noexcept
 	headerFile << R"cpp(#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
-#include <memory>
+)cpp";
+	if (_isIntrospection)
+	{
+		headerFile <<
+			R"cpp(// clang-format off
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLINTROSPECTION_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
+
+)cpp";
+	}
+
+	headerFile <<
+		R"cpp(#include <memory>
 #include <string>
 #include <vector>
 
@@ -1898,7 +1918,7 @@ private:
 	if (_isIntrospection)
 	{
 		headerFile
-			<< R"cpp(GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);)cpp";
+			<< R"cpp(GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);)cpp";
 	}
 	else
 	{
@@ -2050,7 +2070,7 @@ bool Generator::outputSource() const noexcept
 )cpp";
 	}
 
-	sourceFile << R"cpp(#include "graphqlservice/Introspection.h"
+	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
 
 #include <algorithm>
 #include <array>
@@ -2516,8 +2536,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -3514,7 +3533,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 #include ")cpp" << fs::path(_objectHeaderPath).filename().string()
 				   << R"cpp("
 
-#include "graphqlservice/Introspection.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 #include <algorithm>
 #include <functional>

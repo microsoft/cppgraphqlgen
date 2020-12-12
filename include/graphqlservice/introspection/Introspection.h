@@ -7,7 +7,7 @@
 #define INTROSPECTION_H
 
 #include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/IntrospectionSchema.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 namespace graphql::introspection {
 
@@ -21,7 +21,7 @@ class EnumValue;
 class Schema : public object::Schema
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
+	GRAPHQLINTROSPECTION_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
 
 	// Accessors
 	service::FieldResult<std::vector<std::shared_ptr<object::Type>>> getTypes(
@@ -52,7 +52,7 @@ private:
 class Type : public object::Type
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Type(const std::shared_ptr<schema::BaseType>& type);
+	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<schema::BaseType>& type);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&&) const override;
@@ -82,7 +82,7 @@ private:
 class Field : public object::Field
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Field(const std::shared_ptr<schema::Field>& field);
+	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<schema::Field>& field);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -105,7 +105,7 @@ private:
 class InputValue : public object::InputValue
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit InputValue(
+	GRAPHQLINTROSPECTION_EXPORT explicit InputValue(
 		const std::shared_ptr<schema::InputValue>& inputValue);
 
 	// Accessors
@@ -125,7 +125,7 @@ private:
 class EnumValue : public object::EnumValue
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit EnumValue(const std::shared_ptr<schema::EnumValue>& enumValue);
+	GRAPHQLINTROSPECTION_EXPORT explicit EnumValue(const std::shared_ptr<schema::EnumValue>& enumValue);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -144,7 +144,7 @@ private:
 class Directive : public object::Directive
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Directive(const std::shared_ptr<schema::Directive>& directive);
+	GRAPHQLINTROSPECTION_EXPORT explicit Directive(const std::shared_ptr<schema::Directive>& directive);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(

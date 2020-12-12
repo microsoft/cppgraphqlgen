@@ -3,7 +3,7 @@
 
 #include "ValidationSchema.h"
 
-#include "graphqlservice/Introspection.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 #include <algorithm>
 #include <array>

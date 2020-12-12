@@ -9,6 +9,18 @@
 #include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
+// clang-format off
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLINTROSPECTION_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -203,7 +215,7 @@ private:
 
 } /* namespace object */
 
-GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */

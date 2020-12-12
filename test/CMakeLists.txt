@@ -62,7 +62,8 @@ target_include_directories(response_tests PUBLIC
 gtest_add_tests(TARGET response_tests)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
+  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice_nointrospection> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}

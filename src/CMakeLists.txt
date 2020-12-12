@@ -113,8 +113,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_command(
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
+    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice/introspection
     COMMAND schemagen --introspection
     DEPENDS schemagen
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
@@ -126,11 +126,11 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT updated_introspection
     COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_INTROSPECTION_FILES}
     COMMAND ${CMAKE_COMMAND} -E copy ../IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
-    COMMAND ${CMAKE_COMMAND} -E copy ../include/graphqlservice/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+    COMMAND ${CMAKE_COMMAND} -E copy ../include/graphqlservice/introspection/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
     COMMAND ${CMAKE_COMMAND} -E touch updated_introspection
     DEPENDS 
       ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
     COMMENT "Updating introspection files")
 
   add_custom_target(update_introspection ALL
@@ -139,33 +139,50 @@ else()
   add_custom_command(
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
-    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice
+      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
+    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice/introspection
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp .
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h include/graphqlservice
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h include/graphqlservice/introspection
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     COMMENT "Copying IntrospectionSchema files")
 endif()
 
-# graphqlservice
-add_library(graphqlservice
+add_custom_target(copy_introspection
+  DEPENDS
+    ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h)
+
+# graphqlservice_nointrospection
+add_library(graphqlservice_nointrospection
   GraphQLService.cpp
   GraphQLSchema.cpp
+  Validation.cpp)
+add_dependencies(graphqlservice_nointrospection copy_introspection)
+add_library(cppgraphqlgen::graphqlservice_nointrospection ALIAS graphqlservice_nointrospection)
+target_link_libraries(graphqlservice_nointrospection PUBLIC
+    graphqlpeg
+    graphqlresponse
+    Threads::Threads)
+target_include_directories(graphqlservice_nointrospection PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlservice_nointrospection
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLSERVICE_DLL)
+endif()
+
+# graphqlservice
+add_library(graphqlservice
   Introspection.cpp
-  Validation.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
-target_link_libraries(graphqlservice PUBLIC
-    graphqlpeg
-    Threads::Threads)
-target_link_libraries(graphqlservice PUBLIC graphqlresponse)
-target_include_directories(graphqlservice PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
+target_link_libraries(graphqlservice PUBLIC graphqlservice_nointrospection)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
     PUBLIC GRAPHQL_DLLEXPORTS
-    PRIVATE IMPL_GRAPHQLSERVICE_DLL)
+    PRIVATE IMPL_GRAPHQLINTROSPECTION_DLL)
 endif()
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
@@ -213,6 +230,7 @@ endif()
 install(TARGETS
     graphqlpeg
     graphqlresponse
+    graphqlservice_nointrospection
     graphqlservice
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
@@ -226,10 +244,14 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/Introspection.h
-    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/IntrospectionSchema.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
 
 install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::

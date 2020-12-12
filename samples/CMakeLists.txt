@@ -137,7 +137,7 @@ foreach(CPP_FILE IN LISTS SEPARATE_NOINTROSPECTION_SCHEMA_FILES)
 endforeach(CPP_FILE)
 
 add_library(separateschema_nointrospection STATIC ${SEPARATE_NOINTROSPECTION_SCHEMA_PATHS})
-target_link_libraries(separateschema_nointrospection PUBLIC graphqlservice)
+target_link_libraries(separateschema_nointrospection PUBLIC graphqlservice_nointrospection)
 target_compile_definitions(separateschema_nointrospection PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema_nointrospection PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/../include
@@ -182,7 +182,8 @@ target_include_directories(sample_nointrospection PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
+  add_custom_target(copy_sample_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice_nointrospection> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}
@@ -239,7 +240,7 @@ if(GRAPHQL_BUILD_TESTS)
   add_bigobj_flag(unifiedgraphql)
 
   add_library(unifiedschema_nointrospection STATIC unified_nointrospection/TodaySchema.cpp)
-  target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice)
+  target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice_nointrospection)
   target_include_directories(unifiedschema_nointrospection PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
