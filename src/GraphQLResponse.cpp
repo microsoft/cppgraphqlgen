@@ -37,6 +37,241 @@ bool Value::ScalarData::operator==(const ScalarData& rhs) const
 	return !scalar && !rhs.scalar;
 }
 
+template <>
+void Value::set<StringType>(StringType&& value)
+{
+	if (std::holds_alternative<EnumData>(_data))
+	{
+		std::get<EnumData>(_data) = std::move(value);
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		std::get<StringData>(_data).string = std::move(value);
+	}
+	else
+	{
+		throw std::logic_error("Invalid call to Value::set for StringType");
+	}
+}
+
+template <>
+void Value::set<BooleanType>(BooleanType value)
+{
+	if (!std::holds_alternative<BooleanType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for BooleanType");
+	}
+
+	_data = { value };
+}
+
+template <>
+void Value::set<IntType>(IntType value)
+{
+	if (std::holds_alternative<FloatType>(_data))
+	{
+		// Coerce IntType to FloatType
+		_data = { static_cast<FloatType>(value) };
+		return;
+	}
+
+	if (!std::holds_alternative<IntType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for IntType");
+	}
+
+	_data = { value };
+}
+
+template <>
+void Value::set<FloatType>(FloatType value)
+{
+	if (!std::holds_alternative<FloatType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for FloatType");
+	}
+
+	_data = { value };
+}
+
+template <>
+void Value::set<ScalarType>(ScalarType&& value)
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for ScalarType");
+	}
+
+	_data = { ScalarData { std::make_unique<ScalarType>(std::move(value)) } };
+}
+
+template <>
+const MapType& Value::get<MapType>() const
+{
+	if (!std::holds_alternative<MapData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for MapType");
+	}
+
+	return std::get<MapData>(_data).map;
+}
+
+template <>
+const ListType& Value::get<ListType>() const
+{
+	if (!std::holds_alternative<ListType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for ListType");
+	}
+
+	return std::get<ListType>(_data);
+}
+
+template <>
+const StringType& Value::get<StringType>() const
+{
+	if (std::holds_alternative<EnumData>(_data))
+	{
+		return std::get<EnumData>(_data);
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		return std::get<StringData>(_data).string;
+	}
+
+	throw std::logic_error("Invalid call to Value::get for StringType");
+}
+
+template <>
+BooleanType Value::get<BooleanType>() const
+{
+	if (!std::holds_alternative<BooleanType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for BooleanType");
+	}
+
+	return std::get<BooleanType>(_data);
+}
+
+template <>
+IntType Value::get<IntType>() const
+{
+	if (!std::holds_alternative<IntType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for IntType");
+	}
+
+	return std::get<IntType>(_data);
+}
+
+template <>
+FloatType Value::get<FloatType>() const
+{
+	if (std::holds_alternative<IntType>(_data))
+	{
+		// Coerce IntType to FloatType
+		return static_cast<FloatType>(std::get<IntType>(_data));
+	}
+
+	if (!std::holds_alternative<FloatType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for FloatType");
+	}
+
+	return std::get<FloatType>(_data);
+}
+
+template <>
+const ScalarType& Value::get<ScalarType>() const
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	const auto& scalar = std::get<ScalarData>(_data).scalar;
+
+	if (!scalar)
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	return *scalar;
+}
+
+template <>
+MapType Value::release<MapType>()
+{
+	if (!std::holds_alternative<MapData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for MapType");
+	}
+
+	auto& mapData = std::get<MapData>(_data);
+	MapType result = std::move(mapData.map);
+
+	mapData.members.clear();
+
+	return result;
+}
+
+template <>
+ListType Value::release<ListType>()
+{
+	if (!std::holds_alternative<ListType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for ListType");
+	}
+
+	ListType result = std::move(std::get<ListType>(_data));
+
+	return result;
+}
+
+template <>
+StringType Value::release<StringType>()
+{
+	StringType result;
+
+	if (std::holds_alternative<EnumData>(_data))
+	{
+		result = std::move(std::get<EnumData>(_data));
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		auto& stringData = std::get<StringData>(_data);
+
+		result = std::move(stringData.string);
+		stringData.from_json = false;
+	}
+	else
+	{
+		throw std::logic_error("Invalid call to Value::release for StringType");
+	}
+
+	return result;
+}
+
+template <>
+ScalarType Value::release<ScalarType>()
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	auto scalar = std::move(std::get<ScalarData>(_data).scalar);
+
+	if (!scalar)
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	ScalarType result = std::move(*scalar);
+
+	return result;
+}
+
 Value::Value(Type type /*= Type::Null*/)
 {
 	switch (type)
@@ -413,241 +648,6 @@ const Value& Value::operator[](size_t index) const
 	}
 
 	return std::get<ListType>(_data).at(index);
-}
-
-template <>
-void Value::set<StringType>(StringType&& value)
-{
-	if (std::holds_alternative<EnumData>(_data))
-	{
-		std::get<EnumData>(_data) = std::move(value);
-	}
-	else if (std::holds_alternative<StringData>(_data))
-	{
-		std::get<StringData>(_data).string = std::move(value);
-	}
-	else
-	{
-		throw std::logic_error("Invalid call to Value::set for StringType");
-	}
-}
-
-template <>
-void Value::set<BooleanType>(BooleanType value)
-{
-	if (!std::holds_alternative<BooleanType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::set for BooleanType");
-	}
-
-	_data = { value };
-}
-
-template <>
-void Value::set<IntType>(IntType value)
-{
-	if (std::holds_alternative<FloatType>(_data))
-	{
-		// Coerce IntType to FloatType
-		_data = { static_cast<FloatType>(value) };
-		return;
-	}
-
-	if (!std::holds_alternative<IntType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::set for IntType");
-	}
-
-	_data = { value };
-}
-
-template <>
-void Value::set<FloatType>(FloatType value)
-{
-	if (!std::holds_alternative<FloatType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::set for FloatType");
-	}
-
-	_data = { value };
-}
-
-template <>
-void Value::set<ScalarType>(ScalarType&& value)
-{
-	if (!std::holds_alternative<ScalarData>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::set for ScalarType");
-	}
-
-	_data = { ScalarData { std::make_unique<ScalarType>(std::move(value)) } };
-}
-
-template <>
-const MapType& Value::get<MapType>() const
-{
-	if (!std::holds_alternative<MapData>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for MapType");
-	}
-
-	return std::get<MapData>(_data).map;
-}
-
-template <>
-const ListType& Value::get<ListType>() const
-{
-	if (!std::holds_alternative<ListType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for ListType");
-	}
-
-	return std::get<ListType>(_data);
-}
-
-template <>
-const StringType& Value::get<StringType>() const
-{
-	if (std::holds_alternative<EnumData>(_data))
-	{
-		return std::get<EnumData>(_data);
-	}
-	else if (std::holds_alternative<StringData>(_data))
-	{
-		return std::get<StringData>(_data).string;
-	}
-
-	throw std::logic_error("Invalid call to Value::get for StringType");
-}
-
-template <>
-BooleanType Value::get<BooleanType>() const
-{
-	if (!std::holds_alternative<BooleanType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for BooleanType");
-	}
-
-	return std::get<BooleanType>(_data);
-}
-
-template <>
-IntType Value::get<IntType>() const
-{
-	if (!std::holds_alternative<IntType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for IntType");
-	}
-
-	return std::get<IntType>(_data);
-}
-
-template <>
-FloatType Value::get<FloatType>() const
-{
-	if (std::holds_alternative<IntType>(_data))
-	{
-		// Coerce IntType to FloatType
-		return static_cast<FloatType>(std::get<IntType>(_data));
-	}
-
-	if (!std::holds_alternative<FloatType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for FloatType");
-	}
-
-	return std::get<FloatType>(_data);
-}
-
-template <>
-const ScalarType& Value::get<ScalarType>() const
-{
-	if (!std::holds_alternative<ScalarData>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::get for ScalarType");
-	}
-
-	const auto& scalar = std::get<ScalarData>(_data).scalar;
-
-	if (!scalar)
-	{
-		throw std::logic_error("Invalid call to Value::get for ScalarType");
-	}
-
-	return *scalar;
-}
-
-template <>
-MapType Value::release<MapType>()
-{
-	if (!std::holds_alternative<MapData>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::release for MapType");
-	}
-
-	auto& mapData = std::get<MapData>(_data);
-	MapType result = std::move(mapData.map);
-
-	mapData.members.clear();
-
-	return result;
-}
-
-template <>
-ListType Value::release<ListType>()
-{
-	if (!std::holds_alternative<ListType>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::release for ListType");
-	}
-
-	ListType result = std::move(std::get<ListType>(_data));
-
-	return result;
-}
-
-template <>
-StringType Value::release<StringType>()
-{
-	StringType result;
-
-	if (std::holds_alternative<EnumData>(_data))
-	{
-		result = std::move(std::get<EnumData>(_data));
-	}
-	else if (std::holds_alternative<StringData>(_data))
-	{
-		auto& stringData = std::get<StringData>(_data);
-
-		result = std::move(stringData.string);
-		stringData.from_json = false;
-	}
-	else
-	{
-		throw std::logic_error("Invalid call to Value::release for StringType");
-	}
-
-	return result;
-}
-
-template <>
-ScalarType Value::release<ScalarType>()
-{
-	if (!std::holds_alternative<ScalarData>(_data))
-	{
-		throw std::logic_error("Invalid call to Value::release for ScalarType");
-	}
-
-	auto scalar = std::move(std::get<ScalarData>(_data).scalar);
-
-	if (!scalar)
-	{
-		throw std::logic_error("Invalid call to Value::release for ScalarType");
-	}
-
-	ScalarType result = std::move(*scalar);
-
-	return result;
 }
 
 } /* namespace graphql::response */
