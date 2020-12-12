@@ -20,7 +20,8 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <string_view>
+#include <variant>
 #include <vector>
 
 namespace graphql::response {
@@ -109,8 +110,6 @@ struct ValueTypeTraits<IdType>
 	// ID values are represented as a String, there's no separate handling of this type.
 };
 
-struct TypedData;
-
 // Represent a discriminated union of GraphQL response value types.
 struct Value
 {
@@ -147,10 +146,10 @@ struct Value
 
 	// Valid for Type::Map
 	GRAPHQLRESPONSE_EXPORT void emplace_back(std::string&& name, Value&& value);
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(const std::string& name) const;
+	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(std::string_view name) const;
 	GRAPHQLRESPONSE_EXPORT MapType::const_iterator begin() const;
 	GRAPHQLRESPONSE_EXPORT MapType::const_iterator end() const;
-	GRAPHQLRESPONSE_EXPORT const Value& operator[](const std::string& name) const;
+	GRAPHQLRESPONSE_EXPORT const Value& operator[](std::string_view name) const;
 
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
@@ -194,8 +193,45 @@ struct Value
 	}
 
 private:
-	const Type _type;
-	std::unique_ptr<TypedData> _data;
+	// Type::Map
+	struct MapData
+	{
+		bool operator==(const MapData& rhs) const;
+
+		MapType map;
+		std::vector<size_t> members;
+	};
+
+	// Type::String
+	struct StringData
+	{
+		bool operator==(const StringData& rhs) const;
+
+		StringType string;
+		bool from_json = false;
+	};
+
+	// Type::Null
+	struct NullData
+	{
+		bool operator==(const NullData& rhs) const;
+	};
+
+	// Type::EnumValue
+	using EnumData = StringType;
+
+	// Type::Scalar
+	struct ScalarData
+	{
+		bool operator==(const ScalarData& rhs) const;
+
+		std::unique_ptr<ScalarType> scalar;
+	};
+
+	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
+		FloatType, EnumData, ScalarData>;
+
+	TypeData _data;
 };
 
 #ifdef GRAPHQL_DLLEXPORTS
