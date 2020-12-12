@@ -47,13 +47,15 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddDirective(std::shared_ptr<Directive> directive);
 
 	// Accessors
-	bool supportsIntrospection() const noexcept;
-	const std::vector<std::pair<std::string_view, std::shared_ptr<BaseType>>>& types()
+	GRAPHQLSERVICE_EXPORT bool supportsIntrospection() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::pair<std::string_view, std::shared_ptr<BaseType>>>&
+	types()
 		const noexcept;
-	const std::shared_ptr<ObjectType>& queryType() const noexcept;
-	const std::shared_ptr<ObjectType>& mutationType() const noexcept;
-	const std::shared_ptr<ObjectType>& subscriptionType() const noexcept;
-	const std::vector<std::shared_ptr<Directive>>& directives() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::shared_ptr<ObjectType>& queryType() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::shared_ptr<ObjectType>& mutationType() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::shared_ptr<ObjectType>& subscriptionType() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<Directive>>& directives()
+		const noexcept;
 
 private:
 	const bool _noIntrospection = false;
@@ -72,15 +74,15 @@ class BaseType : public std::enable_shared_from_this<BaseType>
 {
 public:
 	// Accessors
-	introspection::TypeKind kind() const noexcept;
-	virtual std::string_view name() const noexcept;
-	std::string_view description() const noexcept;
-	virtual const std::vector<std::shared_ptr<Field>>& fields() const noexcept;
-	virtual const std::vector<std::shared_ptr<InterfaceType>>& interfaces() const noexcept;
-	virtual const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept;
-	virtual const std::vector<std::shared_ptr<EnumValue>>& enumValues() const noexcept;
-	virtual const std::vector<std::shared_ptr<InputValue>>& inputFields() const noexcept;
-	virtual const std::weak_ptr<BaseType>& ofType() const noexcept;
+	GRAPHQLSERVICE_EXPORT introspection::TypeKind kind() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual std::string_view name() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::shared_ptr<Field>>& fields() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::shared_ptr<InterfaceType>>& interfaces() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::shared_ptr<EnumValue>>& enumValues() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::shared_ptr<InputValue>>& inputFields() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual const std::weak_ptr<BaseType>& ofType() const noexcept;
 
 protected:
 	BaseType(introspection::TypeKind kind, std::string_view description);
@@ -96,7 +98,7 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit ScalarType(std::string_view name, std::string_view description);
 
 	// Accessors
-	std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -112,9 +114,9 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::string_view name() const noexcept final;
-	const std::vector<std::shared_ptr<Field>>& fields() const noexcept final;
-	const std::vector<std::shared_ptr<InterfaceType>>& interfaces() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<Field>>& fields() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<InterfaceType>>& interfaces() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -133,9 +135,9 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<Field>> fields);
 
 	// Accessors
-	std::string_view name() const noexcept final;
-	const std::vector<std::shared_ptr<Field>>& fields() const noexcept final;
-	const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<Field>>& fields() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -152,8 +154,8 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddPossibleTypes(std::vector<std::weak_ptr<BaseType>> possibleTypes);
 
 	// Accessors
-	std::string_view name() const noexcept final;
-	const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::weak_ptr<BaseType>>& possibleTypes() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -176,8 +178,8 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::vector<EnumValueType> enumValues);
 
 	// Accessors
-	std::string_view name() const noexcept final;
-	const std::vector<std::shared_ptr<EnumValue>>& enumValues() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<EnumValue>>& enumValues() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -194,8 +196,8 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues);
 
 	// Accessors
-	std::string_view name() const noexcept final;
-	const std::vector<std::shared_ptr<InputValue>>& inputFields() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<InputValue>>& inputFields() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -210,7 +212,7 @@ public:
 		introspection::TypeKind kind, const std::shared_ptr<BaseType>& ofType);
 
 	// Accessors
-	const std::weak_ptr<BaseType>& ofType() const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::weak_ptr<BaseType>& ofType() const noexcept final;
 
 private:
 	const std::weak_ptr<BaseType> _ofType;
@@ -224,11 +226,11 @@ public:
 		std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<BaseType>& type);
 
 	// Accessors
-	std::string_view name() const noexcept;
-	std::string_view description() const noexcept;
-	const std::vector<std::shared_ptr<InputValue>>& args() const noexcept;
-	const std::weak_ptr<BaseType>& type() const noexcept;
-	const std::optional<std::string_view>& deprecationReason() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<InputValue>>& args() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::weak_ptr<BaseType>& type() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::optional<std::string_view>& deprecationReason() const noexcept;
 
 private:
 	const std::string_view _name;
@@ -245,10 +247,10 @@ public:
 		const std::shared_ptr<BaseType>& type, std::string_view defaultValue);
 
 	// Accessors
-	std::string_view name() const noexcept;
-	std::string_view description() const noexcept;
-	const std::weak_ptr<BaseType>& type() const noexcept;
-	std::string_view defaultValue() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::weak_ptr<BaseType>& type() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view defaultValue() const noexcept;
 
 private:
 	const std::string_view _name;
@@ -264,9 +266,9 @@ public:
 		std::optional<std::string_view> deprecationReason);
 
 	// Accessors
-	std::string_view name() const noexcept;
-	std::string_view description() const noexcept;
-	const std::optional<std::string_view>& deprecationReason() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::optional<std::string_view>& deprecationReason() const noexcept;
 
 private:
 	const std::string_view _name;
@@ -282,10 +284,10 @@ public:
 		std::vector<std::shared_ptr<InputValue>>&& args);
 
 	// Accessors
-	std::string_view name() const noexcept;
-	std::string_view description() const noexcept;
-	const std::vector<introspection::DirectiveLocation>& locations() const noexcept;
-	const std::vector<std::shared_ptr<InputValue>>& args() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<introspection::DirectiveLocation>& locations() const noexcept;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<InputValue>>& args() const noexcept;
 
 private:
 	const std::string_view _name;
