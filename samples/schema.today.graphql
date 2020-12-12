@@ -115,6 +115,7 @@ type Appointment implements Node {
     when: DateTime
     subject: String
     isNow: Boolean!
+    forceError: String
 }
 
 type Task implements Node {
