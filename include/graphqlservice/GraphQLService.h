@@ -232,7 +232,7 @@ private:
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
 // the request document by name.
-using FragmentMap = std::unordered_map<std::string, Fragment>;
+using FragmentMap = std::unordered_map<std::string_view, Fragment>;
 
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
@@ -479,7 +479,7 @@ GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
-using TypeNames = std::unordered_set<std::string>;
+using TypeNames = std::unordered_set<std::string_view>;
 
 // Object parses argument values, performs variable lookups, expands fragments, evaluates @include
 // and @skip directives, and calls through to the resolver functor for each selected field with
@@ -895,7 +895,7 @@ GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<Object>::conve
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = std::unordered_map<std::string, std::shared_ptr<Object>>;
+using TypeMap = std::unordered_map<std::string_view, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
@@ -928,7 +928,7 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
-using SubscriptionArguments = std::unordered_map<std::string, response::Value>;
+using SubscriptionArguments = std::unordered_map<std::string_view, response::Value>;
 using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
 
 // Subscriptions are stored in maps using these keys.
@@ -970,8 +970,8 @@ protected:
 public:
 	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
 
-	GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*> findOperationDefinition(
-		const peg::ast_node& root, const std::string& operationName) const;
+	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
+		peg::ast& query, std::string_view operationName) const;
 
 	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
 		const std::shared_ptr<RequestState>& state, peg::ast& query,
@@ -1020,6 +1020,11 @@ public:
 		const SubscriptionFilterCallback& applyDirectives,
 		const std::shared_ptr<Object>& subscriptionObject) const;
 
+	[[deprecated(
+		"Use the Request::findOperationDefinition overload which takes a peg::ast reference and "
+		"string_view instead.")]] GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*>
+	findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
+
 	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference "
 				 "instead.")]] GRAPHQLSERVICE_EXPORT std::future<response::Value>
 	resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
@@ -1031,14 +1036,17 @@ public:
 		response::Value&& variables) const;
 
 private:
-	std::future<response::Value> resolveValidated(std::launch launch,
+	std::pair<std::string, const peg::ast_node*> findUnvalidatedOperationDefinition(
+		const peg::ast_node& root, const std::string& operationName) const;
+
+	std::future<response::Value> resolveUnvalidated(std::launch launch,
 		const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
 		const std::string& operationName, response::Value&& variables) const;
 
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
-	std::unordered_map<SubscriptionName, std::set<SubscriptionKey>> _listeners;
+	std::unordered_map<std::string_view, std::set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
 

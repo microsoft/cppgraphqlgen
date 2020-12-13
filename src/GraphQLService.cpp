@@ -904,7 +904,7 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::stack<FragmentDirectives> _fragmentDirectives;
-	std::unordered_set<std::string> _names;
+	std::unordered_set<std::string_view> _names;
 	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
 };
 
@@ -1398,7 +1398,7 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.children.front()->string(),
+	_fragments.insert({ fragmentDefinition.children.front()->string_view(),
 		Fragment(fragmentDefinition, _variables) });
 }
 
@@ -1413,7 +1413,7 @@ public:
 
 	std::future<response::Value> getValue();
 
-	void visit(const std::string& operationType, const peg::ast_node& operationDefinition);
+	void visit(std::string_view operationType, const peg::ast_node& operationDefinition);
 
 private:
 	const ResolverContext _resolverContext;
@@ -1442,7 +1442,7 @@ std::future<response::Value> OperationDefinitionVisitor::getValue()
 }
 
 void OperationDefinitionVisitor::visit(
-	const std::string& operationType, const peg::ast_node& operationDefinition)
+	std::string_view operationType, const peg::ast_node& operationDefinition)
 {
 	auto itr = _operations.find(operationType);
 
@@ -1685,7 +1685,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 
 void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
-	const std::string name(fragmentSpread.children.front()->string_view());
+	const auto name = fragmentSpread.children.front()->string_view();
 	auto itr = _fragments.find(name);
 
 	if (itr == _fragments.cend())
@@ -1784,113 +1784,45 @@ std::vector<schema_error> Request::validate(peg::ast& query) const
 	return errors;
 }
 
-std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(
-	const peg::ast_node& root, const std::string& operationName) const
+std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefinition(
+	peg::ast& query, std::string_view operationName) const
 {
-	bool hasAnonymous = false;
-	std::unordered_set<std::string> usedNames;
-	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
+	// Ensure the query has been validated.
+	auto errors = validate(query);
 
-	peg::for_each_child<peg::operation_definition>(root,
-		[this, &hasAnonymous, &usedNames, &operationName, &result](
-			const peg::ast_node& operationDefinition) {
-			std::string operationType(strQuery);
+	if (!errors.empty())
+	{
+		throw schema_exception { std::move(errors) };
+	}
+
+	std::pair<std::string_view, const peg::ast_node*> result = { {}, nullptr };
+
+	peg::on_first_child_if<peg::operation_definition>(*query.root,
+		[this, &operationName, &result](const peg::ast_node& operationDefinition) noexcept -> bool {
+			std::string_view operationType = strQuery;
 
 			peg::on_first_child<peg::operation_type>(operationDefinition,
 				[&operationType](const peg::ast_node& child) {
 					operationType = child.string_view();
 				});
 
-			std::string name;
+			std::string_view name;
 
 			peg::on_first_child<peg::operation_name>(operationDefinition,
 				[&name](const peg::ast_node& child) {
 					name = child.string_view();
 				});
 
-			std::vector<schema_error> errors;
-			auto position = operationDefinition.begin();
-
-			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
-			if (!usedNames.insert(name).second)
+			if (operationName.empty() || name == operationName)
 			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Multiple anonymous operations";
-				}
-				else
-				{
-					message << "Duplicate named operations name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
+				result = { operationType, &operationDefinition };
+				return true;
 			}
 
-			hasAnonymous = hasAnonymous || name.empty();
-
-			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
-			if (name.empty() ? usedNames.size() > 1 : hasAnonymous)
-			{
-				std::ostringstream message;
-
-				if (name.empty())
-				{
-					message << "Unexpected anonymous operation";
-				}
-				else
-				{
-					message << "Unexpected named operation name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
-			}
-
-			auto itr = _operations.find(operationType);
-
-			if (itr == _operations.cend())
-			{
-				std::ostringstream message;
-
-				message << "Unsupported operation type: " << operationType;
-
-				if (!name.empty())
-				{
-					message << " name: " << name;
-				}
-
-				errors.push_back({ message.str(), { position.line, position.column } });
-			}
-
-			if (!errors.empty())
-			{
-				throw schema_exception(std::move(errors));
-			}
-			else if (operationName.empty() || name == operationName)
-			{
-				result = { std::move(operationType), &operationDefinition };
-			}
+			return false;
 		});
 
 	return result;
-}
-
-std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state,
-	const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
-{
-	return resolveValidated(std::launch::deferred,
-		state,
-		root,
-		operationName,
-		std::move(variables));
-}
-
-std::future<response::Value> Request::resolve(std::launch launch,
-	const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
-	const std::string& operationName, response::Value&& variables) const
-{
-	return resolveValidated(launch, state, root, operationName, std::move(variables));
 }
 
 std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state,
@@ -1917,32 +1849,146 @@ std::future<response::Value> Request::resolve(std::launch launch,
 		return promise.get_future();
 	}
 
-	return resolveValidated(launch, state, *query.root, operationName, std::move(variables));
+	try
+	{
+		FragmentDefinitionVisitor fragmentVisitor(variables);
+
+		peg::for_each_child<peg::fragment_definition>(*query.root,
+			[&fragmentVisitor](const peg::ast_node& child) {
+				fragmentVisitor.visit(child);
+			});
+
+		auto fragments = fragmentVisitor.getFragments();
+		auto operationDefinition = findOperationDefinition(query, operationName);
+
+		if (!operationDefinition.second)
+		{
+			std::ostringstream message;
+
+			message << "Missing operation";
+
+			if (!operationName.empty())
+			{
+				message << " name: " << operationName;
+			}
+
+			throw schema_exception { { message.str() } };
+		}
+		else if (operationDefinition.first == strSubscription)
+		{
+			auto position = operationDefinition.second->begin();
+			std::ostringstream message;
+
+			message << "Unexpected subscription";
+
+			if (!operationName.empty())
+			{
+				message << " name: " << operationName;
+			}
+
+			throw schema_exception {
+				{ schema_error { message.str(), { position.line, position.column } } }
+			};
+		}
+
+		const bool isMutation = (operationDefinition.first == strMutation);
+
+		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
+		if (isMutation)
+		{
+			// Force mutations to perform serial execution
+			launch = std::launch::deferred;
+		}
+
+		const auto resolverContext =
+			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
+
+		OperationDefinitionVisitor operationVisitor(resolverContext,
+			launch,
+			state,
+			_operations,
+			std::move(variables),
+			std::move(fragments));
+
+		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
+
+		return operationVisitor.getValue();
+	}
+	catch (schema_exception& ex)
+	{
+		std::promise<response::Value> promise;
+		response::Value document(response::Type::Map);
+
+		document.emplace_back(std::string { strData }, response::Value());
+		document.emplace_back(std::string { strErrors }, ex.getErrors());
+		promise.set_value(std::move(document));
+
+		return promise.get_future();
+	}
 }
 
-std::future<response::Value> Request::resolveValidated(std::launch launch,
+std::pair<std::string, const peg::ast_node*> Request::findOperationDefinition(
+	const peg::ast_node& root, const std::string& operationName) const
+{
+	return findUnvalidatedOperationDefinition(root, operationName);
+}
+
+std::pair<std::string, const peg::ast_node*> Request::findUnvalidatedOperationDefinition(
+	const peg::ast_node& root, const std::string& operationName) const
+{
+	std::pair<std::string, const peg::ast_node*> result = { {}, nullptr };
+
+	peg::on_first_child_if<peg::operation_definition>(root,
+		[&operationName, &result](const peg::ast_node& operationDefinition) {
+			auto operationType = strQuery;
+
+			peg::on_first_child<peg::operation_type>(operationDefinition,
+				[&operationType](const peg::ast_node& child) {
+					operationType = child.string_view();
+				});
+
+			std::string_view name;
+
+			peg::on_first_child<peg::operation_name>(operationDefinition,
+				[&name](const peg::ast_node& child) {
+					name = child.string_view();
+				});
+
+			if (operationName.empty() || name == operationName)
+			{
+				result = { std::string { operationType }, &operationDefinition };
+				return true;
+			}
+
+			return false;
+		});
+
+	return result;
+}
+
+std::future<response::Value> Request::resolve(const std::shared_ptr<RequestState>& state,
+	const peg::ast_node& root, const std::string& operationName, response::Value&& variables) const
+{
+	return resolveUnvalidated(std::launch::deferred,
+		state,
+		root,
+		operationName,
+		std::move(variables));
+}
+
+std::future<response::Value> Request::resolve(std::launch launch,
+	const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
+	const std::string& operationName, response::Value&& variables) const
+{
+	return resolveUnvalidated(launch, state, root, operationName, std::move(variables));
+}
+
+std::future<response::Value> Request::resolveUnvalidated(std::launch launch,
 	const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
 	const std::string& operationName, response::Value&& variables) const
 {
 	try
 	{
-		// http://spec.graphql.org/June2018/#sec-Executable-Definitions
-		for (const auto& child : root.children)
-		{
-			if (!child->is_type<peg::fragment_definition>()
-				&& !child->is_type<peg::operation_definition>())
-			{
-				auto position = child->begin();
-				std::ostringstream message;
-
-				message << "Unexpected type definition";
-
-				throw schema_exception {
-					{ schema_error { message.str(), { position.line, position.column } } }
-				};
-			}
-		}
-
 		FragmentDefinitionVisitor fragmentVisitor(variables);
 
 		peg::for_each_child<peg::fragment_definition>(root,
@@ -1951,7 +1997,7 @@ std::future<response::Value> Request::resolveValidated(std::launch launch,
 			});
 
 		auto fragments = fragmentVisitor.getFragments();
-		auto operationDefinition = findOperationDefinition(root, operationName);
+		auto operationDefinition = findUnvalidatedOperationDefinition(root, operationName);
 
 		if (!operationDefinition.second)
 		{
@@ -2036,7 +2082,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
-	auto operationDefinition = findOperationDefinition(*params.query.root, params.operationName);
+	auto operationDefinition = findOperationDefinition(params.query, params.operationName);
 
 	if (!operationDefinition.second)
 	{
