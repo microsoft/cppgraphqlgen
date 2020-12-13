@@ -1835,20 +1835,6 @@ std::future<response::Value> Request::resolve(std::launch launch,
 	const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName,
 	response::Value&& variables) const
 {
-	auto errors = validate(query);
-
-	if (!errors.empty())
-	{
-		std::promise<response::Value> promise;
-		response::Value document(response::Type::Map);
-
-		document.emplace_back(std::string { strData }, response::Value());
-		document.emplace_back(std::string { strErrors }, buildErrorValues(errors));
-		promise.set_value(std::move(document));
-
-		return promise.get_future();
-	}
-
 	try
 	{
 		FragmentDefinitionVisitor fragmentVisitor(variables);
