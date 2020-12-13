@@ -112,9 +112,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CompleteTaskInput)gql"sv, typeCompleteTaskInput);
 	auto typeUnionType = std::make_shared<schema::UnionType>(R"gql(UnionType)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
-	auto typeNode = std::make_shared<schema::InterfaceType>(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
+	auto typeNode = std::make_shared<schema::InterfaceType>(R"gql(Node)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
-	auto typeQuery = std::make_shared<schema::ObjectType>(R"gql(Query)gql"sv, R"md(Root Query type)md");
+	auto typeQuery = std::make_shared<schema::ObjectType>(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typePageInfo = std::make_shared<schema::ObjectType>(R"gql(PageInfo)gql"sv, R"md()md");
 	schema->AddType(R"gql(PageInfo)gql"sv, typePageInfo);
@@ -142,7 +142,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Task)gql"sv, typeTask);
 	auto typeFolder = std::make_shared<schema::ObjectType>(R"gql(Folder)gql"sv, R"md()md");
 	schema->AddType(R"gql(Folder)gql"sv, typeFolder);
-	auto typeNestedType = std::make_shared<schema::ObjectType>(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	auto typeNestedType = std::make_shared<schema::ObjectType>(R"gql(NestedType)gql"sv, R"md()md");
 	schema->AddType(R"gql(NestedType)gql"sv, typeNestedType);
 	auto typeExpensive = std::make_shared<schema::ObjectType>(R"gql(Expensive)gql"sv, R"md()md");
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);

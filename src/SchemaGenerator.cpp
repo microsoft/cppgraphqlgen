@@ -2352,7 +2352,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	schema->AddType(R"gql()cpp" << builtinType.first
 					   << R"cpp()gql"sv, std::make_shared<schema::ScalarType>(R"gql()cpp"
-					   << builtinType.first << R"cpp()gql"sv, R"md(Built-in type)md"));
+					   << builtinType.first << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << R"cpp(Built-in type)cpp";
+			}
+
+			sourceFile << R"cpp()md"));
 )cpp";
 		}
 	}
@@ -2363,8 +2370,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	schema->AddType(R"gql()cpp" << scalarType.type
 					   << R"cpp()gql"sv, std::make_shared<schema::ScalarType>(R"gql()cpp"
-					   << scalarType.type << R"cpp()gql"sv, R"md()cpp" << scalarType.description
-					   << R"cpp()md"));
+					   << scalarType.type << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << scalarType.description;
+			}
+
+			sourceFile << R"cpp()md"));
 )cpp";
 		}
 	}
@@ -2375,7 +2388,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << enumType.cppType
 					   << R"cpp( = std::make_shared<schema::EnumType>(R"gql()cpp" << enumType.type
-					   << R"cpp()gql"sv, R"md()cpp" << enumType.description << R"cpp()md"sv);
+					   << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << enumType.description;
+			}
+
+			sourceFile << R"cpp()md"sv);
 	schema->AddType(R"gql()cpp"
 					   << enumType.type << R"cpp()gql"sv, type)cpp" << enumType.cppType << R"cpp();
 )cpp";
@@ -2388,8 +2408,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << inputType.cppType
 					   << R"cpp( = std::make_shared<schema::InputObjectType>(R"gql()cpp"
-					   << inputType.type << R"cpp()gql"sv, R"md()cpp" << inputType.description
-					   << R"cpp()md"sv);
+					   << inputType.type << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << inputType.description;
+			}
+
+			sourceFile << R"cpp()md"sv);
 	schema->AddType(R"gql()cpp"
 					   << inputType.type << R"cpp()gql"sv, type)cpp" << inputType.cppType
 					   << R"cpp();
@@ -2403,7 +2429,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << unionType.cppType
 					   << R"cpp( = std::make_shared<schema::UnionType>(R"gql()cpp" << unionType.type
-					   << R"cpp()gql"sv, R"md()cpp" << unionType.description << R"cpp()md"sv);
+					   << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << unionType.description;
+			}
+
+			sourceFile << R"cpp()md"sv);
 	schema->AddType(R"gql()cpp"
 					   << unionType.type << R"cpp()gql"sv, type)cpp" << unionType.cppType
 					   << R"cpp();
@@ -2417,8 +2450,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << interfaceType.cppType
 					   << R"cpp( = std::make_shared<schema::InterfaceType>(R"gql()cpp"
-					   << interfaceType.type << R"cpp()gql"sv, R"md()cpp"
-					   << interfaceType.description << R"cpp()md"sv);
+					   << interfaceType.type << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << interfaceType.description;
+			}
+
+			sourceFile << R"cpp()md"sv);
 	schema->AddType(R"gql()cpp"
 					   << interfaceType.type << R"cpp()gql"sv, type)cpp" << interfaceType.cppType
 					   << R"cpp();
@@ -2432,8 +2471,14 @@ Operations::Operations()cpp";
 		{
 			sourceFile << R"cpp(	auto type)cpp" << objectType.cppType
 					   << R"cpp( = std::make_shared<schema::ObjectType>(R"gql()cpp"
-					   << objectType.type << R"cpp()gql"sv, R"md()cpp" << objectType.description
-					   << R"cpp()md");
+					   << objectType.type << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << objectType.description;
+			}
+
+			sourceFile << R"cpp()md");
 	schema->AddType(R"gql()cpp"
 					   << objectType.type << R"cpp()gql"sv, type)cpp" << objectType.cppType
 					   << R"cpp();
@@ -2466,8 +2511,14 @@ Operations::Operations()cpp";
 					sourceFile << R"cpp(		{ service::s_names)cpp" << enumType.cppType
 							   << R"cpp([static_cast<size_t>()cpp" << _schemaNamespace
 							   << R"cpp(::)cpp" << enumType.cppType << R"cpp(::)cpp"
-							   << enumValue.cppValue << R"cpp()], R"md()cpp"
-							   << enumValue.description << R"cpp()md"sv, )cpp";
+							   << enumValue.cppValue << R"cpp()], R"md()cpp";
+
+					if (!_options.noIntrospection)
+					{
+						sourceFile << enumValue.description;
+					}
+
+					sourceFile << R"cpp()md"sv, )cpp";
 
 					if (enumValue.deprecationReason)
 					{
@@ -2512,8 +2563,14 @@ Operations::Operations()cpp";
 
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<schema::InputValue>(R"gql()cpp"
-							   << inputField.name << R"cpp()gql"sv, R"md()cpp"
-							   << inputField.description << R"cpp()md"sv, )cpp"
+							   << inputField.name << R"cpp()gql"sv, R"md()cpp";
+
+					if (!_options.noIntrospection)
+					{
+						sourceFile << inputField.description;
+					}
+
+					sourceFile << R"cpp()md"sv, )cpp"
 							   << getIntrospectionType(inputField.type, inputField.modifiers)
 							   << R"cpp(, R"gql()cpp" << inputField.defaultValueString
 							   << R"cpp()gql"sv))cpp";
@@ -2582,8 +2639,14 @@ Operations::Operations()cpp";
 
 					firstValue = false;
 					sourceFile << R"cpp(		std::make_shared<schema::Field>(R"gql()cpp"
-							   << interfaceField.name << R"cpp()gql"sv, R"md()cpp"
-							   << interfaceField.description << R"cpp()md"sv, )cpp";
+							   << interfaceField.name << R"cpp()gql"sv, R"md()cpp";
+
+					if (!_options.noIntrospection)
+					{
+						sourceFile << interfaceField.description;
+					}
+
+					sourceFile << R"cpp()md"sv, )cpp";
 
 					if (interfaceField.deprecationReason)
 					{
@@ -2615,11 +2678,17 @@ Operations::Operations()cpp";
 							firstArgument = false;
 							sourceFile
 								<< R"cpp(			std::make_shared<schema::InputValue>(R"gql()cpp"
-								<< argument.name << R"cpp()gql"sv, R"md()cpp"
-								<< argument.description << R"cpp()md"sv, )cpp"
-								<< getIntrospectionType(argument.type, argument.modifiers)
-								<< R"cpp(, R"gql()cpp" << argument.defaultValueString
-								<< R"cpp()gql"sv))cpp";
+								<< argument.name << R"cpp()gql"sv, R"md()cpp";
+
+							if (!_options.noIntrospection)
+							{
+								sourceFile << argument.description;
+							}
+
+							sourceFile << R"cpp()md"sv, )cpp"
+									   << getIntrospectionType(argument.type, argument.modifiers)
+									   << R"cpp(, R"gql()cpp" << argument.defaultValueString
+									   << R"cpp()gql"sv))cpp";
 						}
 
 						sourceFile << R"cpp(
@@ -2666,9 +2735,15 @@ Operations::Operations()cpp";
 		{
 			sourceFile
 				<< R"cpp(	schema->AddDirective(std::make_shared<schema::Directive>(R"gql()cpp"
-				<< directive.name << R"cpp()gql"sv, R"md()cpp" << directive.description
-				<< R"cpp()md"sv, std::vector<)cpp" << s_introspectionNamespace
-				<< R"cpp(::DirectiveLocation>()cpp";
+				<< directive.name << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << directive.description;
+			}
+
+			sourceFile << R"cpp()md"sv, std::vector<)cpp" << s_introspectionNamespace
+					   << R"cpp(::DirectiveLocation>()cpp";
 
 			if (!directive.locations.empty())
 			{
@@ -2713,8 +2788,14 @@ Operations::Operations()cpp";
 
 					firstArgument = false;
 					sourceFile << R"cpp(		std::make_shared<schema::InputValue>(R"gql()cpp"
-							   << argument.name << R"cpp()gql"sv, R"md()cpp" << argument.description
-							   << R"cpp()md"sv, )cpp"
+							   << argument.name << R"cpp()gql"sv, R"md()cpp";
+
+					if (!_options.noIntrospection)
+					{
+						sourceFile << argument.description;
+					}
+
+					sourceFile << R"cpp()md"sv, )cpp"
 							   << getIntrospectionType(argument.type, argument.modifiers)
 							   << R"cpp(, R"gql()cpp" << argument.defaultValueString
 							   << R"cpp()gql"sv))cpp";
@@ -3060,8 +3141,14 @@ void Generator::outputObjectIntrospection(
 
 			firstValue = false;
 			sourceFile << R"cpp(		std::make_shared<schema::Field>(R"gql()cpp"
-					   << objectField.name << R"cpp()gql"sv, R"md()cpp" << objectField.description
-					   << R"cpp()md"sv, )cpp";
+					   << objectField.name << R"cpp()gql"sv, R"md()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << objectField.description;
+			}
+
+			sourceFile << R"cpp()md"sv, )cpp";
 
 			if (objectField.deprecationReason)
 			{
@@ -3092,8 +3179,14 @@ void Generator::outputObjectIntrospection(
 
 					firstArgument = false;
 					sourceFile << R"cpp(			std::make_shared<schema::InputValue>(R"gql()cpp"
-							   << argument.name << R"cpp()gql"sv, R"md()cpp" << argument.description
-							   << R"cpp()md"sv, )cpp"
+							   << argument.name << R"cpp()gql"sv, R"md()cpp";
+
+					if (!_options.noIntrospection)
+					{
+						sourceFile << argument.description;
+					}
+
+					sourceFile << R"cpp()md"sv, )cpp"
 							   << getIntrospectionType(argument.type, argument.modifiers)
 							   << R"cpp(, R"gql()cpp" << argument.defaultValueString
 							   << R"cpp()gql"sv))cpp";
