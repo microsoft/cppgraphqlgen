@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
-#include <stack>
 
 namespace graphql::service {
 
@@ -41,7 +40,7 @@ void addErrorLocation(const schema_location& location, response::Value& error)
 	error.emplace_back(std::string { strLocations }, std::move(errorLocations));
 }
 
-void addErrorPath(field_path&& path, response::Value& error)
+void addErrorPath(const field_path& path, response::Value& error)
 {
 	if (path.empty())
 	{
@@ -51,21 +50,18 @@ void addErrorPath(field_path&& path, response::Value& error)
 	response::Value errorPath(response::Type::List);
 
 	errorPath.reserve(path.size());
-	while (!path.empty())
+	for (const auto& segment : path)
 	{
-		auto& segment = path.front();
-
-		if (std::holds_alternative<std::string>(segment))
+		if (std::holds_alternative<std::string_view>(segment))
 		{
-			errorPath.emplace_back(response::Value(std::move(std::get<std::string>(segment))));
+			errorPath.emplace_back(
+				response::Value { std::string { std::get<std::string_view>(segment) } });
 		}
 		else if (std::holds_alternative<size_t>(segment))
 		{
 			errorPath.emplace_back(
 				response::Value(static_cast<response::IntType>(std::get<size_t>(segment))));
 		}
-
-		path.pop();
 	}
 
 	error.emplace_back(std::string { strPath }, std::move(errorPath));
@@ -84,7 +80,7 @@ response::Value buildErrorValues(const std::vector<schema_error>& structuredErro
 		entry.reserve(3);
 		addErrorMessage(std::move(error.message), entry);
 		addErrorLocation(error.location, entry);
-		addErrorPath(std::move(error.path), entry);
+		addErrorPath(error.path, entry);
 
 		errors.emplace_back(std::move(entry));
 	}
@@ -94,7 +90,6 @@ response::Value buildErrorValues(const std::vector<schema_error>& structuredErro
 
 schema_exception::schema_exception(std::vector<schema_error>&& structuredErrors)
 	: _structuredErrors(std::move(structuredErrors))
-	, _errors(buildErrorValues(_structuredErrors))
 {
 }
 
@@ -122,22 +117,12 @@ const char* schema_exception::what() const noexcept
 {
 	const char* message = nullptr;
 
-	if (_errors.size() > 0)
+	if (!_structuredErrors.empty())
 	{
-		auto itr = _errors[0].find("message");
-
-		if (itr != _errors[0].end() && itr->second.type() == response::Type::String)
-		{
-			message = itr->second.get<response::StringType>().c_str();
-		}
+		message = _structuredErrors.front().message.c_str();
 	}
 
 	return (message == nullptr) ? "Unknown schema error" : message;
-}
-
-const std::vector<schema_error>& schema_exception::getStructuredErrors() const noexcept
-{
-	return _structuredErrors;
 }
 
 std::vector<schema_error> schema_exception::getStructuredErrors() noexcept
@@ -147,16 +132,9 @@ std::vector<schema_error> schema_exception::getStructuredErrors() noexcept
 	return structuredErrors;
 }
 
-const response::Value& schema_exception::getErrors() const noexcept
+response::Value schema_exception::getErrors() const
 {
-	return _errors;
-}
-
-response::Value schema_exception::getErrors() noexcept
-{
-	auto errors = std::move(_errors);
-
-	return errors;
+	return buildErrorValues(_structuredErrors);
 }
 
 FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
@@ -739,7 +717,7 @@ void blockSubFields(const ResolverParams& params)
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IntType>::convert(
+std::future<ResolverResult> ModifiedResult<response::IntType>::convert(
 	FieldResult<response::IntType>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -752,7 +730,7 @@ std::future<response::Value> ModifiedResult<response::IntType>::convert(
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::FloatType>::convert(
+std::future<ResolverResult> ModifiedResult<response::FloatType>::convert(
 	FieldResult<response::FloatType>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -765,7 +743,7 @@ std::future<response::Value> ModifiedResult<response::FloatType>::convert(
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::StringType>::convert(
+std::future<ResolverResult> ModifiedResult<response::StringType>::convert(
 	FieldResult<response::StringType>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -778,7 +756,7 @@ std::future<response::Value> ModifiedResult<response::StringType>::convert(
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::BooleanType>::convert(
+std::future<ResolverResult> ModifiedResult<response::BooleanType>::convert(
 	FieldResult<response::BooleanType>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -791,7 +769,7 @@ std::future<response::Value> ModifiedResult<response::BooleanType>::convert(
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::Value>::convert(
+std::future<ResolverResult> ModifiedResult<response::Value>::convert(
 	FieldResult<response::Value>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -804,7 +782,7 @@ std::future<response::Value> ModifiedResult<response::Value>::convert(
 }
 
 template <>
-std::future<response::Value> ModifiedResult<response::IdType>::convert(
+std::future<ResolverResult> ModifiedResult<response::IdType>::convert(
 	FieldResult<response::IdType>&& result, ResolverParams&& params)
 {
 	blockSubFields(params);
@@ -833,7 +811,7 @@ void requireSubFields(const ResolverParams& params)
 }
 
 template <>
-std::future<response::Value> ModifiedResult<Object>::convert(
+std::future<ResolverResult> ModifiedResult<Object>::convert(
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params)
 {
 	requireSubFields(params);
@@ -845,12 +823,7 @@ std::future<response::Value> ModifiedResult<Object>::convert(
 
 			if (!wrappedResult)
 			{
-				response::Value document(response::Type::Map);
-
-				document.emplace_back(std::string { strData },
-					response::Value(response::Type::Null));
-
-				return document;
+				return ResolverResult {};
 			}
 
 			return wrappedResult
@@ -886,7 +859,7 @@ public:
 
 	void visit(const peg::ast_node& selection);
 
-	std::queue<std::pair<std::string, std::future<response::Value>>> getValues();
+	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -903,9 +876,9 @@ private:
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
-	std::stack<FragmentDirectives> _fragmentDirectives;
+	std::vector<FragmentDirectives> _fragmentDirectives;
 	std::unordered_set<std::string_view> _names;
-	std::queue<std::pair<std::string, std::future<response::Value>>> _values;
+	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
@@ -921,12 +894,12 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
 {
-	_fragmentDirectives.push({ response::Value(response::Type::Map),
+	_fragmentDirectives.push_back({ response::Value(response::Type::Map),
 		response::Value(response::Type::Map),
 		response::Value(response::Type::Map) });
 }
 
-std::queue<std::pair<std::string, std::future<response::Value>>> SelectionVisitor::getValues()
+std::vector<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
 {
 	auto values = std::move(_values);
 
@@ -951,13 +924,13 @@ void SelectionVisitor::visit(const peg::ast_node& selection)
 
 void SelectionVisitor::visitField(const peg::ast_node& field)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
 		name = child.string_view();
 	});
 
-	std::string alias;
+	std::string_view alias;
 
 	peg::on_first_child<peg::alias_name>(field, [&alias](const peg::ast_node& child) {
 		alias = child.string_view();
@@ -985,7 +958,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	if (itr == itrEnd)
 	{
-		std::promise<response::Value> promise;
+		std::promise<ResolverResult> promise;
 		auto position = field.begin();
 		std::ostringstream error;
 
@@ -994,7 +967,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		promise.set_exception(std::make_exception_ptr(schema_exception {
 			{ schema_error { error.str(), { position.line, position.column }, { _path } } } }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ alias, promise.get_future() });
 		return;
 	}
 
@@ -1030,15 +1003,15 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	auto path = _path;
 
-	path.push({ alias });
+	path.push_back({ alias });
 
 	SelectionSetParams selectionSetParams {
 		_resolverContext,
 		_state,
 		_operationDirectives,
-		_fragmentDirectives.top().fragmentDefinitionDirectives,
-		_fragmentDirectives.top().fragmentSpreadDirectives,
-		_fragmentDirectives.top().inlineFragmentDirectives,
+		_fragmentDirectives.back().fragmentDefinitionDirectives,
+		_fragmentDirectives.back().fragmentSpreadDirectives,
+		_fragmentDirectives.back().inlineFragmentDirectives,
 		std::move(path),
 		_launch,
 	};
@@ -1054,11 +1027,11 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			_fragments,
 			_variables));
 
-		_values.push({ std::move(alias), std::move(result) });
+		_values.push_back({ alias, std::move(result) });
 	}
 	catch (schema_exception& scx)
 	{
-		std::promise<response::Value> promise;
+		std::promise<ResolverResult> promise;
 		auto position = field.begin();
 		auto messages = scx.getStructuredErrors();
 
@@ -1077,11 +1050,11 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		promise.set_exception(std::make_exception_ptr(schema_exception { std::move(messages) }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ alias, promise.get_future() });
 	}
 	catch (const std::exception& ex)
 	{
-		std::promise<response::Value> promise;
+		std::promise<ResolverResult> promise;
 		auto position = field.begin();
 		std::ostringstream message;
 
@@ -1092,7 +1065,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				std::move(selectionSetParams.errorPath) } } }));
 
-		_values.push({ std::move(alias), promise.get_future() });
+		_values.push_back({ alias, promise.get_future() });
 	}
 }
 
@@ -1134,7 +1107,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	auto fragmentSpreadDirectives = directiveVisitor.getDirectives();
 
 	// Merge outer fragment spread directives as long as they don't conflict.
-	for (const auto& entry : _fragmentDirectives.top().fragmentSpreadDirectives)
+	for (const auto& entry : _fragmentDirectives.back().fragmentSpreadDirectives)
 	{
 		if (fragmentSpreadDirectives.find(entry.first) == fragmentSpreadDirectives.end())
 		{
@@ -1146,7 +1119,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	response::Value fragmentDefinitionDirectives(itr->second.getDirectives());
 
 	// Merge outer fragment definition directives as long as they don't conflict.
-	for (const auto& entry : _fragmentDirectives.top().fragmentDefinitionDirectives)
+	for (const auto& entry : _fragmentDirectives.back().fragmentDefinitionDirectives)
 	{
 		if (fragmentDefinitionDirectives.find(entry.first) == fragmentDefinitionDirectives.end())
 		{
@@ -1155,16 +1128,16 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		}
 	}
 
-	_fragmentDirectives.push({ std::move(fragmentDefinitionDirectives),
+	_fragmentDirectives.push_back({ std::move(fragmentDefinitionDirectives),
 		std::move(fragmentSpreadDirectives),
-		response::Value(_fragmentDirectives.top().inlineFragmentDirectives) });
+		response::Value(_fragmentDirectives.back().inlineFragmentDirectives) });
 
 	for (const auto& selection : itr->second.getSelection().children)
 	{
 		visit(*selection);
 	}
 
-	_fragmentDirectives.pop();
+	_fragmentDirectives.pop_back();
 }
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
@@ -1195,7 +1168,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 				auto inlineFragmentDirectives = directiveVisitor.getDirectives();
 
 				// Merge outer inline fragment directives as long as they don't conflict.
-				for (const auto& entry : _fragmentDirectives.top().inlineFragmentDirectives)
+				for (const auto& entry : _fragmentDirectives.back().inlineFragmentDirectives)
 				{
 					if (inlineFragmentDirectives.find(entry.first)
 						== inlineFragmentDirectives.end())
@@ -1205,9 +1178,9 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 					}
 				}
 
-				_fragmentDirectives.push(
-					{ response::Value(_fragmentDirectives.top().fragmentDefinitionDirectives),
-						response::Value(_fragmentDirectives.top().fragmentSpreadDirectives),
+				_fragmentDirectives.push_back(
+					{ response::Value(_fragmentDirectives.back().fragmentDefinitionDirectives),
+						response::Value(_fragmentDirectives.back().fragmentSpreadDirectives),
 						std::move(inlineFragmentDirectives) });
 
 				for (const auto& selection : child.children)
@@ -1215,7 +1188,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 					visit(*selection);
 				}
 
-				_fragmentDirectives.pop();
+				_fragmentDirectives.pop_back();
 			});
 	}
 }
@@ -1226,14 +1199,15 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
 {
 }
 
-std::future<response::Value> Object::resolve(const SelectionSetParams& selectionSetParams,
+std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionSetParams,
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	std::queue<std::pair<std::string, std::future<response::Value>>> selections;
+	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> selections;
 
 	beginSelectionSet(selectionSetParams);
 
+	selections.reserve(selection.children.size());
 	for (const auto& child : selection.children)
 	{
 		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
@@ -1242,10 +1216,9 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 		auto values = visitor.getValues();
 
-		while (!values.empty())
+		for (auto& value : values)
 		{
-			selections.push(std::move(values.front()));
-			values.pop();
+			selections.push_back(std::move(value));
 		}
 	}
 
@@ -1253,63 +1226,56 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 	return std::async(
 		selectionSetParams.launch,
-		[](std::queue<std::pair<std::string, std::future<response::Value>>>&& children) {
-			response::Value data(response::Type::Map);
-			response::Value errors(response::Type::List);
+		[](std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
+			ResolverResult document { response::Value { response::Type::Map } };
 
-			while (!children.empty())
+			for (auto& child : children)
 			{
-				auto name = std::move(children.front().first);
+				auto name = child.first;
 
 				try
 				{
-					auto value = children.front().second.get();
-					auto members = value.release<response::MapType>();
+					auto value = child.second.get();
+					auto itrData = document.data.find(name);
 
-					for (auto& entry : members)
+					if (itrData == document.data.end())
 					{
-						if (entry.second.type() == response::Type::List && entry.first == strErrors)
+						document.data.emplace_back(std::string { name }, std::move(value.data));
+					}
+					else if (itrData->second != value.data)
+					{
+						std::ostringstream message;
+
+						message << "Ambiguous field error name: " << name;
+
+						document.errors.push_back({ message.str() });
+					}
+
+					if (!value.errors.empty())
+					{
+						document.errors.reserve(document.errors.size() + value.errors.size());
+						for (auto& error : value.errors)
 						{
-							auto errorEntries = entry.second.release<response::ListType>();
-
-							for (auto& errorEntry : errorEntries)
-							{
-								errors.emplace_back(std::move(errorEntry));
-							}
-						}
-						else if (entry.first == strData)
-						{
-							auto itrData = data.find(name);
-
-							if (itrData == data.end())
-							{
-								data.emplace_back(std::move(name), std::move(entry.second));
-							}
-							else if (itrData->second != entry.second)
-							{
-								std::ostringstream message;
-								response::Value error(response::Type::Map);
-
-								message << "Ambiguous field error name: " << name;
-								addErrorMessage(message.str(), error);
-								errors.emplace_back(std::move(error));
-							}
+							document.errors.push_back(std::move(error));
 						}
 					}
 				}
 				catch (schema_exception& scx)
 				{
-					auto messages = scx.getErrors().release<response::ListType>();
+					auto errors = scx.getStructuredErrors();
 
-					errors.reserve(errors.size() + messages.size());
-					for (auto& error : messages)
+					if (!errors.empty())
 					{
-						errors.emplace_back(std::move(error));
+						document.errors.reserve(document.errors.size() + errors.size());
+						for (auto& error : errors)
+						{
+							document.errors.push_back(std::move(error));
+						}
 					}
 
-					if (data.find(name) == data.end())
+					if (document.data.find(name) == document.data.end())
 					{
-						data.emplace_back(std::move(name), {});
+						document.data.emplace_back(std::string { name }, {});
 					}
 				}
 				catch (const std::exception& ex)
@@ -1318,30 +1284,16 @@ std::future<response::Value> Object::resolve(const SelectionSetParams& selection
 
 					message << "Field error name: " << name << " unknown error: " << ex.what();
 
-					response::Value error(response::Type::Map);
+					document.errors.push_back({ message.str() });
 
-					addErrorMessage(message.str(), error);
-					errors.emplace_back(std::move(error));
-
-					if (data.find(name) == data.end())
+					if (document.data.find(name) == document.data.end())
 					{
-						data.emplace_back(std::move(name), {});
+						document.data.emplace_back(std::string { name }, {});
 					}
 				}
-
-				children.pop();
 			}
 
-			response::Value result(response::Type::Map);
-
-			result.emplace_back(std::string { strData }, std::move(data));
-
-			if (errors.size() > 0)
-			{
-				result.emplace_back(std::string { strErrors }, std::move(errors));
-			}
-
-			return result;
+			return document;
 		},
 		std::move(selections));
 }
@@ -1411,7 +1363,7 @@ public:
 		std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables,
 		FragmentMap&& fragments);
 
-	std::future<response::Value> getValue();
+	std::future<ResolverResult> getValue();
 
 	void visit(std::string_view operationType, const peg::ast_node& operationDefinition);
 
@@ -1420,7 +1372,7 @@ private:
 	const std::launch _launch;
 	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
-	std::future<response::Value> _result;
+	std::future<ResolverResult> _result;
 };
 
 OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverContext,
@@ -1434,7 +1386,7 @@ OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverC
 {
 }
 
-std::future<response::Value> OperationDefinitionVisitor::getValue()
+std::future<ResolverResult> OperationDefinitionVisitor::getValue()
 {
 	auto result = std::move(_result);
 
@@ -1634,7 +1586,7 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 
 void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -1898,7 +1850,23 @@ std::future<response::Value> Request::resolve(std::launch launch,
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		return operationVisitor.getValue();
+		return std::async(
+			launch,
+			[](std::future<ResolverResult>&& operationFuture) {
+				auto result = operationFuture.get();
+				response::Value document { response::Type::Map };
+
+				document.emplace_back(std::string { strData }, std::move(result.data));
+
+				if (!result.errors.empty())
+				{
+					document.emplace_back(std::string { strErrors },
+						buildErrorValues(result.errors));
+				}
+
+				return document;
+			},
+			operationVisitor.getValue());
 	}
 	catch (schema_exception& ex)
 	{
@@ -2036,7 +2004,23 @@ std::future<response::Value> Request::resolveUnvalidated(std::launch launch,
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		return operationVisitor.getValue();
+		return std::async(
+			launch,
+			[](std::future<ResolverResult>&& operationFuture) {
+				auto result = operationFuture.get();
+				response::Value document { response::Type::Map };
+
+				document.emplace_back(std::string { strData }, std::move(result.data));
+
+				if (!result.errors.empty())
+				{
+					document.emplace_back(std::string { strErrors },
+						buildErrorValues(result.errors));
+				}
+
+				return document;
+			},
+			operationVisitor.getValue());
 	}
 	catch (schema_exception& ex)
 	{
@@ -2328,8 +2312,9 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 		return;
 	}
 
-	std::queue<std::future<void>> callbacks;
+	std::vector<std::future<void>> callbacks;
 
+	callbacks.reserve(itrListeners->second.size());
 	for (const auto& key : itrListeners->second)
 	{
 		auto itrSubscription = _subscriptions.find(key);
@@ -2389,8 +2374,19 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 		{
 			result = std::async(
 				launch,
-				[registration](std::future<response::Value> document) {
-					return document.get();
+				[](std::future<ResolverResult>&& operationFuture) {
+					auto result = operationFuture.get();
+					response::Value document { response::Type::Map };
+
+					document.emplace_back(std::string { strData }, std::move(result.data));
+
+					if (!result.errors.empty())
+					{
+						document.emplace_back(std::string { strErrors },
+							buildErrorValues(result.errors));
+					}
+
+					return document;
 				},
 				optionalOrDefaultSubscription->resolve(selectionSetParams,
 					registration->selection,
@@ -2409,7 +2405,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			result = promise.get_future();
 		}
 
-		callbacks.push(std::async(
+		callbacks.push_back(std::async(
 			launch,
 			[registration](std::future<response::Value> document) {
 				registration->callback(std::move(document));
@@ -2417,10 +2413,9 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			std::move(result)));
 	}
 
-	while (!callbacks.empty())
+	for (auto& callback : callbacks)
 	{
-		callbacks.front().get();
-		callbacks.pop();
+		callback.get();
 	}
 }
 

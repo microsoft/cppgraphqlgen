@@ -43,7 +43,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::F
 	throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveNode(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -58,7 +58,7 @@ service::FieldResult<std::shared_ptr<AppointmentConnection>> Query::getAppointme
 	throw std::runtime_error(R"ex(Query::getAppointments is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveAppointments(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveAppointments(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -76,7 +76,7 @@ service::FieldResult<std::shared_ptr<TaskConnection>> Query::getTasks(service::F
 	throw std::runtime_error(R"ex(Query::getTasks is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveTasks(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveTasks(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -94,7 +94,7 @@ service::FieldResult<std::shared_ptr<FolderConnection>> Query::getUnreadCounts(s
 	throw std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveUnreadCounts(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -112,7 +112,7 @@ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> Query::getAppoin
 	throw std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveAppointmentsById(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
@@ -149,7 +149,7 @@ service::FieldResult<std::vector<std::shared_ptr<Task>>> Query::getTasksById(ser
 	throw std::runtime_error(R"ex(Query::getTasksById is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveTasksById(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -164,7 +164,7 @@ service::FieldResult<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCount
 	throw std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveUnreadCountsById(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -179,7 +179,7 @@ service::FieldResult<std::shared_ptr<NestedType>> Query::getNested(service::Fiel
 	throw std::runtime_error(R"ex(Query::getNested is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveNested(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveNested(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -193,7 +193,7 @@ service::FieldResult<response::StringType> Query::getUnimplemented(service::Fiel
 	throw std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveUnimplemented(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveUnimplemented(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getUnimplemented(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -207,7 +207,7 @@ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> Query::getExpensiv
 	throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveExpensive(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveExpensive(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getExpensive(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -216,17 +216,17 @@ std::future<response::Value> Query::resolveExpensive(service::ResolverParams&& p
 	return service::ModifiedResult<Expensive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
-std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
 }
 
-std::future<response::Value> Query::resolve_type(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);

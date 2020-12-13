@@ -35,7 +35,7 @@ service::FieldResult<response::IdType> Task::getId(service::FieldParams&&) const
 	throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
 }
 
-std::future<response::Value> Task::resolveId(service::ResolverParams&& params)
+std::future<service::ResolverResult> Task::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -49,7 +49,7 @@ service::FieldResult<std::optional<response::StringType>> Task::getTitle(service
 	throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
 }
 
-std::future<response::Value> Task::resolveTitle(service::ResolverParams&& params)
+std::future<service::ResolverResult> Task::resolveTitle(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTitle(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -63,7 +63,7 @@ service::FieldResult<response::BooleanType> Task::getIsComplete(service::FieldPa
 	throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
 }
 
-std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& params)
+std::future<service::ResolverResult> Task::resolveIsComplete(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsComplete(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -72,7 +72,7 @@ std::future<response::Value> Task::resolveIsComplete(service::ResolverParams&& p
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Task::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Task::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Task)gql" }, std::move(params));
 }

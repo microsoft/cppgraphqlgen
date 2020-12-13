@@ -21,10 +21,10 @@ public:
 	virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const;
 
 private:
-	std::future<response::Value> resolveCompleteTask(service::ResolverParams&& params);
-	std::future<response::Value> resolveSetFloat(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveCompleteTask(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveSetFloat(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace graphql::today::object */

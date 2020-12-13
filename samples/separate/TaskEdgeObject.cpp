@@ -32,7 +32,7 @@ service::FieldResult<std::shared_ptr<Task>> TaskEdge::getNode(service::FieldPara
 	throw std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex");
 }
 
-std::future<response::Value> TaskEdge::resolveNode(service::ResolverParams&& params)
+std::future<service::ResolverResult> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -46,7 +46,7 @@ service::FieldResult<response::Value> TaskEdge::getCursor(service::FieldParams&&
 	throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
 }
 
-std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& params)
+std::future<service::ResolverResult> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -55,7 +55,7 @@ std::future<response::Value> TaskEdge::resolveCursor(service::ResolverParams&& p
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> TaskEdge::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> TaskEdge::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskEdge)gql" }, std::move(params));
 }

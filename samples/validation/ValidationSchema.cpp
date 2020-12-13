@@ -44,7 +44,7 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 }
 
 template <>
-std::future<response::Value> ModifiedResult<validation::DogCommand>::convert(service::FieldResult<validation::DogCommand>&& result, ResolverParams&& params)
+std::future<service::ResolverResult> ModifiedResult<validation::DogCommand>::convert(service::FieldResult<validation::DogCommand>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::DogCommand&& value, const ResolverParams&)
@@ -80,7 +80,7 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 }
 
 template <>
-std::future<response::Value> ModifiedResult<validation::CatCommand>::convert(service::FieldResult<validation::CatCommand>&& result, ResolverParams&& params)
+std::future<service::ResolverResult> ModifiedResult<validation::CatCommand>::convert(service::FieldResult<validation::CatCommand>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::CatCommand&& value, const ResolverParams&)
@@ -134,7 +134,7 @@ service::FieldResult<std::shared_ptr<Dog>> Query::getDog(service::FieldParams&&)
 	throw std::runtime_error(R"ex(Query::getDog is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveDog(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDog(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -148,7 +148,7 @@ service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParam
 	throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveHuman(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHuman(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -162,7 +162,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getPet(service::Fi
 	throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolvePet(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolvePet(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPet(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -176,7 +176,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getCatOrDog(servic
 	throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveCatOrDog(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveCatOrDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getCatOrDog(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -190,7 +190,7 @@ service::FieldResult<std::shared_ptr<Arguments>> Query::getArguments(service::Fi
 	throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveArguments(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveArguments(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getArguments(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -204,7 +204,7 @@ service::FieldResult<std::shared_ptr<Dog>> Query::getFindDog(service::FieldParam
 	throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveFindDog(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveFindDog(service::ResolverParams&& params)
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -219,7 +219,7 @@ service::FieldResult<std::optional<response::BooleanType>> Query::getBooleanList
 	throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
 }
 
-std::future<response::Value> Query::resolveBooleanList(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolveBooleanList(service::ResolverParams&& params)
 {
 	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -229,17 +229,17 @@ std::future<response::Value> Query::resolveBooleanList(service::ResolverParams&&
 	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Query::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
-std::future<response::Value> Query::resolve_schema(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
 }
 
-std::future<response::Value> Query::resolve_type(service::ResolverParams&& params)
+std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
@@ -271,7 +271,7 @@ service::FieldResult<response::StringType> Dog::getName(service::FieldParams&&) 
 	throw std::runtime_error(R"ex(Dog::getName is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -285,7 +285,7 @@ service::FieldResult<std::optional<response::StringType>> Dog::getNickname(servi
 	throw std::runtime_error(R"ex(Dog::getNickname is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveNickname(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveNickname(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNickname(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -299,7 +299,7 @@ service::FieldResult<std::optional<response::IntType>> Dog::getBarkVolume(servic
 	throw std::runtime_error(R"ex(Dog::getBarkVolume is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveBarkVolume(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveBarkVolume(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getBarkVolume(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -313,7 +313,7 @@ service::FieldResult<response::BooleanType> Dog::getDoesKnowCommand(service::Fie
 	throw std::runtime_error(R"ex(Dog::getDoesKnowCommand is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveDoesKnowCommand(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveDoesKnowCommand(service::ResolverParams&& params)
 {
 	auto argDogCommand = service::ModifiedArgument<DogCommand>::require("dogCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -328,7 +328,7 @@ service::FieldResult<response::BooleanType> Dog::getIsHousetrained(service::Fiel
 	throw std::runtime_error(R"ex(Dog::getIsHousetrained is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveIsHousetrained(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveIsHousetrained(service::ResolverParams&& params)
 {
 	auto argAtOtherHomes = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("atOtherHomes", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -343,7 +343,7 @@ service::FieldResult<std::shared_ptr<Human>> Dog::getOwner(service::FieldParams&
 	throw std::runtime_error(R"ex(Dog::getOwner is not implemented)ex");
 }
 
-std::future<response::Value> Dog::resolveOwner(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolveOwner(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getOwner(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -352,7 +352,7 @@ std::future<response::Value> Dog::resolveOwner(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Dog::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Dog::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Dog)gql" }, std::move(params));
 }
@@ -375,7 +375,7 @@ service::FieldResult<response::StringType> Alien::getName(service::FieldParams&&
 	throw std::runtime_error(R"ex(Alien::getName is not implemented)ex");
 }
 
-std::future<response::Value> Alien::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Alien::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -389,7 +389,7 @@ service::FieldResult<std::optional<response::StringType>> Alien::getHomePlanet(s
 	throw std::runtime_error(R"ex(Alien::getHomePlanet is not implemented)ex");
 }
 
-std::future<response::Value> Alien::resolveHomePlanet(service::ResolverParams&& params)
+std::future<service::ResolverResult> Alien::resolveHomePlanet(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getHomePlanet(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -398,7 +398,7 @@ std::future<response::Value> Alien::resolveHomePlanet(service::ResolverParams&& 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Alien::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Alien::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Alien)gql" }, std::move(params));
 }
@@ -422,7 +422,7 @@ service::FieldResult<response::StringType> Human::getName(service::FieldParams&&
 	throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
 }
 
-std::future<response::Value> Human::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Human::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -436,7 +436,7 @@ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Human::getPe
 	throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
 }
 
-std::future<response::Value> Human::resolvePets(service::ResolverParams&& params)
+std::future<service::ResolverResult> Human::resolvePets(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPets(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -445,7 +445,7 @@ std::future<response::Value> Human::resolvePets(service::ResolverParams&& params
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Human::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Human::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Human)gql" }, std::move(params));
 }
@@ -470,7 +470,7 @@ service::FieldResult<response::StringType> Cat::getName(service::FieldParams&&) 
 	throw std::runtime_error(R"ex(Cat::getName is not implemented)ex");
 }
 
-std::future<response::Value> Cat::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Cat::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -484,7 +484,7 @@ service::FieldResult<std::optional<response::StringType>> Cat::getNickname(servi
 	throw std::runtime_error(R"ex(Cat::getNickname is not implemented)ex");
 }
 
-std::future<response::Value> Cat::resolveNickname(service::ResolverParams&& params)
+std::future<service::ResolverResult> Cat::resolveNickname(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNickname(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -498,7 +498,7 @@ service::FieldResult<response::BooleanType> Cat::getDoesKnowCommand(service::Fie
 	throw std::runtime_error(R"ex(Cat::getDoesKnowCommand is not implemented)ex");
 }
 
-std::future<response::Value> Cat::resolveDoesKnowCommand(service::ResolverParams&& params)
+std::future<service::ResolverResult> Cat::resolveDoesKnowCommand(service::ResolverParams&& params)
 {
 	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -513,7 +513,7 @@ service::FieldResult<std::optional<response::IntType>> Cat::getMeowVolume(servic
 	throw std::runtime_error(R"ex(Cat::getMeowVolume is not implemented)ex");
 }
 
-std::future<response::Value> Cat::resolveMeowVolume(service::ResolverParams&& params)
+std::future<service::ResolverResult> Cat::resolveMeowVolume(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getMeowVolume(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -522,7 +522,7 @@ std::future<response::Value> Cat::resolveMeowVolume(service::ResolverParams&& pa
 	return service::ModifiedResult<response::IntType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Cat::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Cat::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Cat)gql" }, std::move(params));
 }
@@ -542,7 +542,7 @@ service::FieldResult<std::shared_ptr<MutateDogResult>> Mutation::applyMutateDog(
 	throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
 }
 
-std::future<response::Value> Mutation::resolveMutateDog(service::ResolverParams&& params)
+std::future<service::ResolverResult> Mutation::resolveMutateDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = applyMutateDog(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -551,7 +551,7 @@ std::future<response::Value> Mutation::resolveMutateDog(service::ResolverParams&
 	return service::ModifiedResult<MutateDogResult>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Mutation::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Mutation::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }
@@ -571,7 +571,7 @@ service::FieldResult<response::IdType> MutateDogResult::getId(service::FieldPara
 	throw std::runtime_error(R"ex(MutateDogResult::getId is not implemented)ex");
 }
 
-std::future<response::Value> MutateDogResult::resolveId(service::ResolverParams&& params)
+std::future<service::ResolverResult> MutateDogResult::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -580,7 +580,7 @@ std::future<response::Value> MutateDogResult::resolveId(service::ResolverParams&
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> MutateDogResult::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> MutateDogResult::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(MutateDogResult)gql" }, std::move(params));
 }
@@ -601,7 +601,7 @@ service::FieldResult<std::shared_ptr<Message>> Subscription::getNewMessage(servi
 	throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
 }
 
-std::future<response::Value> Subscription::resolveNewMessage(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolveNewMessage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNewMessage(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -615,7 +615,7 @@ service::FieldResult<response::BooleanType> Subscription::getDisallowedSecondRoo
 	throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
 }
 
-std::future<response::Value> Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDisallowedSecondRootField(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -624,7 +624,7 @@ std::future<response::Value> Subscription::resolveDisallowedSecondRootField(serv
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
 }
@@ -645,7 +645,7 @@ service::FieldResult<std::optional<response::StringType>> Message::getBody(servi
 	throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
 }
 
-std::future<response::Value> Message::resolveBody(service::ResolverParams&& params)
+std::future<service::ResolverResult> Message::resolveBody(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getBody(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -659,7 +659,7 @@ service::FieldResult<response::IdType> Message::getSender(service::FieldParams&&
 	throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
 }
 
-std::future<response::Value> Message::resolveSender(service::ResolverParams&& params)
+std::future<service::ResolverResult> Message::resolveSender(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSender(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -668,7 +668,7 @@ std::future<response::Value> Message::resolveSender(service::ResolverParams&& pa
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Message::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Message::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Message)gql" }, std::move(params));
 }
@@ -695,7 +695,7 @@ service::FieldResult<response::IntType> Arguments::getMultipleReqs(service::Fiel
 	throw std::runtime_error(R"ex(Arguments::getMultipleReqs is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveMultipleReqs(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveMultipleReqs(service::ResolverParams&& params)
 {
 	auto argX = service::ModifiedArgument<response::IntType>::require("x", params.arguments);
 	auto argY = service::ModifiedArgument<response::IntType>::require("y", params.arguments);
@@ -711,7 +711,7 @@ service::FieldResult<std::optional<response::BooleanType>> Arguments::getBoolean
 	throw std::runtime_error(R"ex(Arguments::getBooleanArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveBooleanArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveBooleanArgField(service::ResolverParams&& params)
 {
 	auto argBooleanArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -726,7 +726,7 @@ service::FieldResult<std::optional<response::FloatType>> Arguments::getFloatArgF
 	throw std::runtime_error(R"ex(Arguments::getFloatArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveFloatArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveFloatArgField(service::ResolverParams&& params)
 {
 	auto argFloatArg = service::ModifiedArgument<response::FloatType>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -741,7 +741,7 @@ service::FieldResult<std::optional<response::IntType>> Arguments::getIntArgField
 	throw std::runtime_error(R"ex(Arguments::getIntArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveIntArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveIntArgField(service::ResolverParams&& params)
 {
 	auto argIntArg = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -756,7 +756,7 @@ service::FieldResult<response::BooleanType> Arguments::getNonNullBooleanArgField
 	throw std::runtime_error(R"ex(Arguments::getNonNullBooleanArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params)
 {
 	auto argNonNullBooleanArg = service::ModifiedArgument<response::BooleanType>::require("nonNullBooleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -771,7 +771,7 @@ service::FieldResult<std::optional<std::vector<response::BooleanType>>> Argument
 	throw std::runtime_error(R"ex(Arguments::getNonNullBooleanListField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params)
 {
 	auto argNonNullBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -786,7 +786,7 @@ service::FieldResult<std::optional<std::vector<std::optional<response::BooleanTy
 	throw std::runtime_error(R"ex(Arguments::getBooleanListArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveBooleanListArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveBooleanListArgField(service::ResolverParams&& params)
 {
 	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -801,7 +801,7 @@ service::FieldResult<response::BooleanType> Arguments::getOptionalNonNullBoolean
 	throw std::runtime_error(R"ex(Arguments::getOptionalNonNullBooleanArgField is not implemented)ex");
 }
 
-std::future<response::Value> Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
@@ -825,7 +825,7 @@ std::future<response::Value> Arguments::resolveOptionalNonNullBooleanArgField(se
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Arguments::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Arguments::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Arguments)gql" }, std::move(params));
 }

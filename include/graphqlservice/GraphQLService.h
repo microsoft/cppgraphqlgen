@@ -27,7 +27,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <queue>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -50,21 +49,14 @@ class Schema;
 namespace service {
 
 // Errors should have a message string, and optional locations and a path.
-GRAPHQLSERVICE_EXPORT void addErrorMessage(std::string&& message, response::Value& error);
-
 struct schema_location
 {
 	size_t line = 0;
 	size_t column = 1;
 };
 
-GRAPHQLSERVICE_EXPORT void addErrorLocation(
-	const schema_location& location, response::Value& error);
-
-using path_segment = std::variant<std::string, size_t>;
-using field_path = std::queue<path_segment>;
-
-GRAPHQLSERVICE_EXPORT void addErrorPath(field_path&& path, response::Value& error);
+using path_segment = std::variant<std::string_view, size_t>;
+using field_path = std::vector<path_segment>;
 
 struct schema_error
 {
@@ -87,17 +79,13 @@ public:
 
 	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
 
-	GRAPHQLSERVICE_EXPORT const std::vector<schema_error>& getStructuredErrors() const noexcept;
 	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
-
-	GRAPHQLSERVICE_EXPORT const response::Value& getErrors() const noexcept;
-	GRAPHQLSERVICE_EXPORT response::Value getErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT response::Value getErrors() const;
 
 private:
 	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
 
 	std::vector<schema_error> _structuredErrors;
-	response::Value _errors;
 };
 
 // The RequestState is nullable, but if you have multiple threads processing requests and there's
@@ -259,7 +247,15 @@ struct ResolverParams : SelectionSetParams
 	const response::Value& variables;
 };
 
-using Resolver = std::function<std::future<response::Value>(ResolverParams&&)>;
+// Propagate data and errors together without bundling them into a response::Value struct until
+// we're ready to return from the top level Operation.
+struct ResolverResult
+{
+	response::Value data;
+	std::vector<schema_error> errors;
+};
+
+using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
 using ResolverMap = std::vector<std::pair<std::string_view, Resolver>>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
@@ -491,7 +487,7 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
-	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
+	GRAPHQLSERVICE_EXPORT std::future<ResolverResult> resolve(
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
 		const FragmentMap& fragments, const response::Value& variables) const;
 
@@ -546,14 +542,14 @@ struct ModifiedResult
 	};
 
 	// Convert a single value of the specified type to JSON.
-	static std::future<response::Value> convert(
+	static std::future<ResolverResult> convert(
 		typename ResultTraits<Type>::future_type result, ResolverParams&& params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
 			&& !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
-		std::future<response::Value>>
+		std::future<ResolverResult>>
 	convert(FieldResult<typename ResultTraits<Type>::type>&& result, ResolverParams&& params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
@@ -574,7 +570,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
 			&& (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
-		std::future<response::Value>>
+		std::future<ResolverResult>>
 	convert(typename ResultTraits<Type>::future_type result, ResolverParams&& params)
 	{
 		// Just call through to the partial specialization without the modifier.
@@ -585,7 +581,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>>
+		std::future<ResolverResult>>
 	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& params)
 	{
@@ -596,11 +592,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					response::Value document(response::Type::Map);
-
-					document.emplace_back(std::string { strData }, response::Value());
-
-					return document;
+					return ResolverResult {};
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -619,7 +611,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<response::Value>>
+		std::future<ResolverResult>>
 	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& params)
 	{
@@ -634,11 +626,7 @@ struct ModifiedResult
 
 				if (!wrappedResult)
 				{
-					response::Value document(response::Type::Map);
-
-					document.emplace_back(std::string { strData }, response::Value());
-
-					return document;
+					return ResolverResult {};
 				}
 
 				std::promise<typename ResultTraits<Type, Other...>::type> promise;
@@ -655,7 +643,7 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::List == Modifier, std::future<response::Value>>
+	static typename std::enable_if_t<TypeModifier::List == Modifier, std::future<ResolverResult>>
 	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& params)
 	{
@@ -663,9 +651,10 @@ struct ModifiedResult
 			params.launch,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
-				std::queue<std::future<response::Value>> children;
+				std::vector<std::future<ResolverResult>> children;
 
-				wrappedParams.errorPath.push(size_t { 0 });
+				children.reserve(wrappedResult.size());
+				wrappedParams.errorPath.push_back(size_t { 0 });
 
 				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
 
@@ -677,7 +666,7 @@ struct ModifiedResult
 					// Copy the values from the std::vector<> rather than moving them.
 					for (typename vector_type::value_type entry : wrappedResult)
 					{
-						children.push(ModifiedResult::convert<Other...>(std::move(entry),
+						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
 						++std::get<size_t>(wrappedParams.errorPath.back());
 					}
@@ -686,62 +675,44 @@ struct ModifiedResult
 				{
 					for (auto& entry : wrappedResult)
 					{
-						children.push(ModifiedResult::convert<Other...>(std::move(entry),
+						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
 						++std::get<size_t>(wrappedParams.errorPath.back());
 					}
 				}
 
-				response::Value data(response::Type::List);
-				response::Value errors(response::Type::List);
+				ResolverResult document { response::Value { response::Type::List } };
 
 				wrappedParams.errorPath.back() = size_t { 0 };
 
-				while (!children.empty())
+				for (auto& child : children)
 				{
 					try
 					{
-						auto value = children.front().get();
-						auto members = value.release<response::MapType>();
+						auto value = child.get();
 
-						for (auto& entry : members)
+						document.data.emplace_back(std::move(value.data));
+
+						if (!value.errors.empty())
 						{
-							if (entry.second.type() == response::Type::List
-								&& entry.first == strErrors)
+							document.errors.reserve(document.errors.size() + value.errors.size());
+							for (auto& error : value.errors)
 							{
-								auto errorEntries = entry.second.release<response::ListType>();
-
-								for (auto& errorEntry : errorEntries)
-								{
-									errors.emplace_back(std::move(errorEntry));
-								}
-							}
-							else if (entry.first == strData)
-							{
-								data.emplace_back(std::move(entry.second));
+								document.errors.push_back(std::move(error));
 							}
 						}
 					}
 					catch (schema_exception& scx)
 					{
-						auto messages = scx.getStructuredErrors();
+						auto errors = scx.getStructuredErrors();
 
-						errors.reserve(errors.size() + messages.size());
-						for (auto& message : messages)
+						if (!errors.empty())
 						{
-							response::Value error(response::Type::Map);
-
-							error.reserve(3);
-							addErrorMessage(std::move(message.message), error);
-							addErrorLocation(message.location.line > 0
-									? message.location
-									: wrappedParams.getLocation(),
-								error);
-							addErrorPath(field_path { message.path.empty() ? wrappedParams.errorPath
-																		   : message.path },
-								error);
-
-							errors.emplace_back(std::move(error));
+							document.errors.reserve(document.errors.size() + errors.size());
+							for (auto& error : errors)
+							{
+								document.errors.push_back(std::move(error));
+							}
 						}
 					}
 					catch (const std::exception& ex)
@@ -751,29 +722,12 @@ struct ModifiedResult
 						message << "Field error name: " << wrappedParams.fieldName
 								<< " unknown error: " << ex.what();
 
-						schema_location location = wrappedParams.getLocation();
-						response::Value error(response::Type::Map);
-
-						error.reserve(3);
-						addErrorMessage(message.str(), error);
-						addErrorLocation(location, error);
-						addErrorPath(field_path { wrappedParams.errorPath }, error);
-
-						errors.emplace_back(std::move(error));
+						document.errors.emplace_back(schema_error { message.str(),
+							wrappedParams.getLocation(),
+							wrappedParams.errorPath });
 					}
 
-					children.pop();
 					++std::get<size_t>(wrappedParams.errorPath.back());
-				}
-
-				response::Value document(response::Type::Map);
-
-				document.reserve(2);
-				document.emplace_back(std::string { strData }, std::move(data));
-
-				if (errors.size() > 0)
-				{
-					document.emplace_back(std::string { strErrors }, std::move(errors));
 				}
 
 				return document;
@@ -786,7 +740,7 @@ private:
 	using ResolverCallback =
 		std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
 
-	static std::future<response::Value> resolve(typename ResultTraits<Type>::future_type result,
+	static std::future<ResolverResult> resolve(typename ResultTraits<Type>::future_type result,
 		ResolverParams&& params, ResolverCallback&& resolver)
 	{
 		static_assert(!std::is_base_of_v<Object, Type>,
@@ -796,32 +750,23 @@ private:
 			[](auto&& resultFuture,
 				ResolverParams&& paramsFuture,
 				ResolverCallback&& resolverFuture) noexcept {
-				response::Value data;
-				response::Value errors(response::Type::List);
+				ResolverResult document;
 
 				try
 				{
-					data = resolverFuture(resultFuture.get(), paramsFuture);
+					document.data = resolverFuture(resultFuture.get(), paramsFuture);
 				}
 				catch (schema_exception& scx)
 				{
-					auto messages = scx.getStructuredErrors();
+					auto errors = scx.getStructuredErrors();
 
-					errors.reserve(errors.size() + messages.size());
-					for (auto& message : messages)
+					if (!errors.empty())
 					{
-						response::Value error(response::Type::Map);
-
-						error.reserve(3);
-						addErrorMessage(std::move(message.message), error);
-						addErrorLocation(message.location.line > 0 ? message.location
-																   : paramsFuture.getLocation(),
-							error);
-						addErrorPath(field_path { message.path.empty() ? paramsFuture.errorPath
-																	   : message.path },
-							error);
-
-						errors.emplace_back(std::move(error));
+						document.errors.reserve(document.errors.size() + errors.size());
+						for (auto& error : errors)
+						{
+							document.errors.push_back(std::move(error));
+						}
 					}
 				}
 				catch (const std::exception& ex)
@@ -831,24 +776,9 @@ private:
 					message << "Field name: " << paramsFuture.fieldName
 							<< " unknown error: " << ex.what();
 
-					response::Value error(response::Type::Map);
-
-					error.reserve(3);
-					addErrorMessage(message.str(), error);
-					addErrorLocation(paramsFuture.getLocation(), error);
-					addErrorPath(std::move(paramsFuture.errorPath), error);
-
-					errors.emplace_back(std::move(error));
-				}
-
-				response::Value document(response::Type::Map);
-
-				document.reserve(2);
-				document.emplace_back(std::string { strData }, std::move(data));
-
-				if (errors.size() > 0)
-				{
-					document.emplace_back(std::string { strErrors }, std::move(errors));
+					document.errors.emplace_back(schema_error { message.str(),
+						paramsFuture.getLocation(),
+						std::move(paramsFuture.errorPath) });
 				}
 
 				return document;
@@ -873,25 +803,25 @@ using ObjectResult = ModifiedResult<Object>;
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IntType>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::IntType>::convert(
 	FieldResult<response::IntType>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::FloatType>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::FloatType>::convert(
 	FieldResult<response::FloatType>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::StringType>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::StringType>::convert(
 	FieldResult<response::StringType>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::BooleanType>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::BooleanType>::convert(
 	FieldResult<response::BooleanType>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::IdType>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::IdType>::convert(
 	FieldResult<response::IdType>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<response::Value>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::Value>::convert(
 	FieldResult<response::Value>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<response::Value> ModifiedResult<Object>::convert(
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<Object>::convert(
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 

@@ -1662,7 +1662,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	ValidateFieldArguments validateArguments;
 	std::map<std::string_view, schema_location> argumentLocations;
-	std::queue<std::string_view> argumentNames;
+	std::vector<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
@@ -1689,7 +1689,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				visitor.visit(*argument->children.back());
 				validateArguments[argumentName] = visitor.getArgumentValue();
 				argumentLocations[argumentName] = { position.line, position.column };
-				argumentNames.push(std::move(argumentName));
+				argumentNames.push_back(argumentName);
 			}
 		});
 
@@ -1724,12 +1724,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	if (itrField != itrType->second.end())
 	{
-		while (!argumentNames.empty())
+		for (auto argumentName : argumentNames)
 		{
-			auto argumentName = std::move(argumentNames.front());
-
-			argumentNames.pop();
-
 			auto itrArgument = itrField->second.arguments.find(argumentName);
 
 			if (itrArgument == itrField->second.arguments.end())
@@ -2059,7 +2055,7 @@ void ValidateExecutableVisitor::visitDirectives(
 			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
 				std::map<std::string_view, schema_location> argumentLocations;
-				std::queue<std::string_view> argumentNames;
+				std::vector<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)
 				{
@@ -2083,15 +2079,11 @@ void ValidateExecutableVisitor::visitDirectives(
 					visitor.visit(*argument->children.back());
 					validateArguments[argumentName] = visitor.getArgumentValue();
 					argumentLocations[argumentName] = { position.line, position.column };
-					argumentNames.push(std::move(argumentName));
+					argumentNames.push_back(argumentName);
 				}
 
-				while (!argumentNames.empty())
+				for (auto argumentName : argumentNames)
 				{
-					auto argumentName = std::move(argumentNames.front());
-
-					argumentNames.pop();
-
 					auto itrArgument = itrDirective->second.arguments.find(argumentName);
 
 					if (itrArgument == itrDirective->second.arguments.end())

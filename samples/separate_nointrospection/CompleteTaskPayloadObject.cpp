@@ -32,7 +32,7 @@ service::FieldResult<std::shared_ptr<Task>> CompleteTaskPayload::getTask(service
 	throw std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex");
 }
 
-std::future<response::Value> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
+std::future<service::ResolverResult> CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTask(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -46,7 +46,7 @@ service::FieldResult<std::optional<response::StringType>> CompleteTaskPayload::g
 	throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
 }
 
-std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
+std::future<service::ResolverResult> CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getClientMutationId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -55,7 +55,7 @@ std::future<response::Value> CompleteTaskPayload::resolveClientMutationId(servic
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
 }

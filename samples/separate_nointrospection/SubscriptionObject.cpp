@@ -32,7 +32,7 @@ service::FieldResult<std::shared_ptr<Appointment>> Subscription::getNextAppointm
 	throw std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex");
 }
 
-std::future<response::Value> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNextAppointmentChange(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -46,7 +46,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Subscription::getNodeChan
 	throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
 }
 
-std::future<response::Value> Subscription::resolveNodeChange(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolveNodeChange(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -56,7 +56,7 @@ std::future<response::Value> Subscription::resolveNodeChange(service::ResolverPa
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Subscription::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Subscription::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
 }

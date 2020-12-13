@@ -32,7 +32,7 @@ service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParam
 	throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
 }
 
-std::future<response::Value> NestedType::resolveDepth(service::ResolverParams&& params)
+std::future<service::ResolverResult> NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDepth(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -46,7 +46,7 @@ service::FieldResult<std::shared_ptr<NestedType>> NestedType::getNested(service:
 	throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
 }
 
-std::future<response::Value> NestedType::resolveNested(service::ResolverParams&& params)
+std::future<service::ResolverResult> NestedType::resolveNested(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getNested(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -55,7 +55,7 @@ std::future<response::Value> NestedType::resolveNested(service::ResolverParams&&
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> NestedType::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> NestedType::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
 }

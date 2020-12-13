@@ -29,18 +29,18 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveNode(service::ResolverParams&& params);
-	std::future<response::Value> resolveAppointments(service::ResolverParams&& params);
-	std::future<response::Value> resolveTasks(service::ResolverParams&& params);
-	std::future<response::Value> resolveUnreadCounts(service::ResolverParams&& params);
-	std::future<response::Value> resolveAppointmentsById(service::ResolverParams&& params);
-	std::future<response::Value> resolveTasksById(service::ResolverParams&& params);
-	std::future<response::Value> resolveUnreadCountsById(service::ResolverParams&& params);
-	std::future<response::Value> resolveNested(service::ResolverParams&& params);
-	std::future<response::Value> resolveUnimplemented(service::ResolverParams&& params);
-	std::future<response::Value> resolveExpensive(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveAppointments(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveTasks(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveUnreadCounts(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveAppointmentsById(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveTasksById(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveUnreadCountsById(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveUnimplemented(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace graphql::today::object */

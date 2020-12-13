@@ -21,10 +21,10 @@ public:
 	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolvePageInfo(service::ResolverParams&& params);
-	std::future<response::Value> resolveEdges(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolvePageInfo(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveEdges(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace graphql::today::object */

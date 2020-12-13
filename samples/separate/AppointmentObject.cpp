@@ -37,7 +37,7 @@ service::FieldResult<response::IdType> Appointment::getId(service::FieldParams&&
 	throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
 }
 
-std::future<response::Value> Appointment::resolveId(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -51,7 +51,7 @@ service::FieldResult<std::optional<response::Value>> Appointment::getWhen(servic
 	throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
 }
 
-std::future<response::Value> Appointment::resolveWhen(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolveWhen(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getWhen(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -65,7 +65,7 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getSubjec
 	throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
 }
 
-std::future<response::Value> Appointment::resolveSubject(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSubject(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -79,7 +79,7 @@ service::FieldResult<response::BooleanType> Appointment::getIsNow(service::Field
 	throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
 }
 
-std::future<response::Value> Appointment::resolveIsNow(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsNow(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -93,7 +93,7 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getForceE
 	throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
 }
 
-std::future<response::Value> Appointment::resolveForceError(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolveForceError(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getForceError(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -102,7 +102,7 @@ std::future<response::Value> Appointment::resolveForceError(service::ResolverPar
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Appointment::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Appointment::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Appointment)gql" }, std::move(params));
 }

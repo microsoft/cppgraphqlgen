@@ -49,10 +49,14 @@ void on_first_child_if(const ast_node& n, std::function<bool(const ast_node&)>&&
 template <typename Rule>
 void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
-	on_first_child_if<Rule>(n, [funcVoid = std::move(func)](const ast_node& child) {
-		funcVoid(child);
-		return true;
-	});
+	for (const auto& child : n.children)
+	{
+		if (child->is_type<Rule>())
+		{
+			func(*child);
+			return;
+		}
+	}
 }
 
 // https://facebook.github.io/graphql/June2018/#sec-Source-Text
