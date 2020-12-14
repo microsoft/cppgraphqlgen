@@ -6,7 +6,7 @@ Debug/
 Release/
 Testing/
 Win32/
-/include/graphqlservice/IntrospectionSchema.h
+/include/graphqlservice/introspection/IntrospectionSchema.h
 /IntrospectionSchema.cpp
 *.filters
 *.vcxproj
@@ -27,12 +27,16 @@ Makefile
 .ninja_*
 schemagen
 settings.json
+/samples/benchmark
+/samples/benchmark_nointrospection
 /samples/sample
+/samples/sample_nointrospection
 /src/cmake/
 /test/argument_tests
 /test/pegtl_tests
 /test/response_tests
 /test/today_tests
+/test/nointrospection_tests
 build/
 install/
 isenseconfig/

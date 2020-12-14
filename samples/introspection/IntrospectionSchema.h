@@ -6,7 +6,20 @@
 #ifndef INTROSPECTIONSCHEMA_H
 #define INTROSPECTIONSCHEMA_H
 
+#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
+
+// clang-format off
+#ifdef GRAPHQL_DLLEXPORTS
+	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
+	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
+		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
+	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
+#else // !GRAPHQL_DLLEXPORTS
+	#define GRAPHQLINTROSPECTION_EXPORT
+#endif // !GRAPHQL_DLLEXPORTS
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -14,8 +27,6 @@
 
 namespace graphql {
 namespace introspection {
-
-class Schema;
 
 enum class TypeKind
 {
@@ -74,13 +85,13 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveTypes(service::ResolverParams&& params);
-	std::future<response::Value> resolveQueryType(service::ResolverParams&& params);
-	std::future<response::Value> resolveMutationType(service::ResolverParams&& params);
-	std::future<response::Value> resolveSubscriptionType(service::ResolverParams&& params);
-	std::future<response::Value> resolveDirectives(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveTypes(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveQueryType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveMutationType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveSubscriptionType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDirectives(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Type
@@ -101,17 +112,17 @@ public:
 	virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveKind(service::ResolverParams&& params);
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<response::Value> resolveFields(service::ResolverParams&& params);
-	std::future<response::Value> resolveInterfaces(service::ResolverParams&& params);
-	std::future<response::Value> resolvePossibleTypes(service::ResolverParams&& params);
-	std::future<response::Value> resolveEnumValues(service::ResolverParams&& params);
-	std::future<response::Value> resolveInputFields(service::ResolverParams&& params);
-	std::future<response::Value> resolveOfType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveKind(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveFields(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveInterfaces(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolvePossibleTypes(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveEnumValues(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveInputFields(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveOfType(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Field
@@ -129,14 +140,14 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<response::Value> resolveArgs(service::ResolverParams&& params);
-	std::future<response::Value> resolveType(service::ResolverParams&& params);
-	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveArgs(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveIsDeprecated(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class InputValue
@@ -152,12 +163,12 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<response::Value> resolveType(service::ResolverParams&& params);
-	std::future<response::Value> resolveDefaultValue(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveType(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDefaultValue(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class EnumValue
@@ -173,12 +184,12 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<response::Value> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<response::Value> resolveDeprecationReason(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveIsDeprecated(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDeprecationReason(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Directive
@@ -194,17 +205,17 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveDescription(service::ResolverParams&& params);
-	std::future<response::Value> resolveLocations(service::ResolverParams&& params);
-	std::future<response::Value> resolveArgs(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveLocations(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveArgs(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */
 
-GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } /* namespace introspection */
 } /* namespace graphql */

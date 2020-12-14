@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/Introspection.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 #include <algorithm>
 #include <array>
@@ -47,7 +47,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind>&& result, ResolverParams&& params)
+std::future<service::ResolverResult> ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind&& value, const ResolverParams&)
@@ -100,7 +100,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 }
 
 template <>
-std::future<response::Value> ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params)
+std::future<service::ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation&& value, const ResolverParams&)
@@ -132,7 +132,7 @@ Schema::Schema()
 {
 }
 
-std::future<response::Value> Schema::resolveTypes(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolveTypes(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -141,7 +141,7 @@ std::future<response::Value> Schema::resolveTypes(service::ResolverParams&& para
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Schema::resolveQueryType(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolveQueryType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getQueryType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -150,7 +150,7 @@ std::future<response::Value> Schema::resolveQueryType(service::ResolverParams&& 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Schema::resolveMutationType(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolveMutationType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getMutationType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -159,7 +159,7 @@ std::future<response::Value> Schema::resolveMutationType(service::ResolverParams
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Schema::resolveSubscriptionType(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolveSubscriptionType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getSubscriptionType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -168,7 +168,7 @@ std::future<response::Value> Schema::resolveSubscriptionType(service::ResolverPa
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Schema::resolveDirectives(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolveDirectives(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDirectives(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -177,7 +177,7 @@ std::future<response::Value> Schema::resolveDirectives(service::ResolverParams&&
 	return service::ModifiedResult<Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Schema::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Schema::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Schema)gql" }, std::move(params));
 }
@@ -200,7 +200,7 @@ Type::Type()
 {
 }
 
-std::future<response::Value> Type::resolveKind(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveKind(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getKind(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -209,7 +209,7 @@ std::future<response::Value> Type::resolveKind(service::ResolverParams&& params)
 	return service::ModifiedResult<TypeKind>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -218,7 +218,7 @@ std::future<response::Value> Type::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveDescription(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveDescription(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -227,7 +227,7 @@ std::future<response::Value> Type::resolveDescription(service::ResolverParams&& 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveFields(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveFields(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
@@ -251,7 +251,7 @@ std::future<response::Value> Type::resolveFields(service::ResolverParams&& param
 	return service::ModifiedResult<Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveInterfaces(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveInterfaces(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getInterfaces(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -260,7 +260,7 @@ std::future<response::Value> Type::resolveInterfaces(service::ResolverParams&& p
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolvePossibleTypes(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolvePossibleTypes(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getPossibleTypes(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -269,7 +269,7 @@ std::future<response::Value> Type::resolvePossibleTypes(service::ResolverParams&
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveEnumValues(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveEnumValues(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
@@ -293,7 +293,7 @@ std::future<response::Value> Type::resolveEnumValues(service::ResolverParams&& p
 	return service::ModifiedResult<EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveInputFields(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveInputFields(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getInputFields(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -302,7 +302,7 @@ std::future<response::Value> Type::resolveInputFields(service::ResolverParams&& 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolveOfType(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolveOfType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getOfType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -311,7 +311,7 @@ std::future<response::Value> Type::resolveOfType(service::ResolverParams&& param
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Type::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Type::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Type)gql" }, std::move(params));
 }
@@ -331,7 +331,7 @@ Field::Field()
 {
 }
 
-std::future<response::Value> Field::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -340,7 +340,7 @@ std::future<response::Value> Field::resolveName(service::ResolverParams&& params
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolveDescription(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveDescription(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -349,7 +349,7 @@ std::future<response::Value> Field::resolveDescription(service::ResolverParams&&
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolveArgs(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveArgs(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getArgs(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -358,7 +358,7 @@ std::future<response::Value> Field::resolveArgs(service::ResolverParams&& params
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolveType(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -367,7 +367,7 @@ std::future<response::Value> Field::resolveType(service::ResolverParams&& params
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolveIsDeprecated(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -376,7 +376,7 @@ std::future<response::Value> Field::resolveIsDeprecated(service::ResolverParams&
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolveDeprecationReason(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolveDeprecationReason(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDeprecationReason(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -385,7 +385,7 @@ std::future<response::Value> Field::resolveDeprecationReason(service::ResolverPa
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Field::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Field::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Field)gql" }, std::move(params));
 }
@@ -403,7 +403,7 @@ InputValue::InputValue()
 {
 }
 
-std::future<response::Value> InputValue::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> InputValue::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -412,7 +412,7 @@ std::future<response::Value> InputValue::resolveName(service::ResolverParams&& p
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> InputValue::resolveDescription(service::ResolverParams&& params)
+std::future<service::ResolverResult> InputValue::resolveDescription(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -421,7 +421,7 @@ std::future<response::Value> InputValue::resolveDescription(service::ResolverPar
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> InputValue::resolveType(service::ResolverParams&& params)
+std::future<service::ResolverResult> InputValue::resolveType(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getType(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -430,7 +430,7 @@ std::future<response::Value> InputValue::resolveType(service::ResolverParams&& p
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> InputValue::resolveDefaultValue(service::ResolverParams&& params)
+std::future<service::ResolverResult> InputValue::resolveDefaultValue(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDefaultValue(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -439,7 +439,7 @@ std::future<response::Value> InputValue::resolveDefaultValue(service::ResolverPa
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> InputValue::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> InputValue::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__InputValue)gql" }, std::move(params));
 }
@@ -457,7 +457,7 @@ EnumValue::EnumValue()
 {
 }
 
-std::future<response::Value> EnumValue::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> EnumValue::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -466,7 +466,7 @@ std::future<response::Value> EnumValue::resolveName(service::ResolverParams&& pa
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> EnumValue::resolveDescription(service::ResolverParams&& params)
+std::future<service::ResolverResult> EnumValue::resolveDescription(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -475,7 +475,7 @@ std::future<response::Value> EnumValue::resolveDescription(service::ResolverPara
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
+std::future<service::ResolverResult> EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getIsDeprecated(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -484,7 +484,7 @@ std::future<response::Value> EnumValue::resolveIsDeprecated(service::ResolverPar
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
+std::future<service::ResolverResult> EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDeprecationReason(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -493,7 +493,7 @@ std::future<response::Value> EnumValue::resolveDeprecationReason(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> EnumValue::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> EnumValue::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__EnumValue)gql" }, std::move(params));
 }
@@ -511,7 +511,7 @@ Directive::Directive()
 {
 }
 
-std::future<response::Value> Directive::resolveName(service::ResolverParams&& params)
+std::future<service::ResolverResult> Directive::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -520,7 +520,7 @@ std::future<response::Value> Directive::resolveName(service::ResolverParams&& pa
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Directive::resolveDescription(service::ResolverParams&& params)
+std::future<service::ResolverResult> Directive::resolveDescription(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getDescription(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -529,7 +529,7 @@ std::future<response::Value> Directive::resolveDescription(service::ResolverPara
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Directive::resolveLocations(service::ResolverParams&& params)
+std::future<service::ResolverResult> Directive::resolveLocations(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getLocations(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -538,7 +538,7 @@ std::future<response::Value> Directive::resolveLocations(service::ResolverParams
 	return service::ModifiedResult<DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Directive::resolveArgs(service::ResolverParams&& params)
+std::future<service::ResolverResult> Directive::resolveArgs(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto result = getArgs(service::FieldParams(params, std::move(params.fieldDirectives)));
@@ -547,137 +547,137 @@ std::future<response::Value> Directive::resolveArgs(service::ResolverParams&& pa
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-std::future<response::Value> Directive::resolve_typename(service::ResolverParams&& params)
+std::future<service::ResolverResult> Directive::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Directive)gql" }, std::move(params));
 }
 
 } /* namespace object */
 
-void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema)
+void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
-	schema->AddType("Boolean", std::make_shared<introspection::ScalarType>("Boolean", R"md(Built-in type)md"));
-	schema->AddType("Float", std::make_shared<introspection::ScalarType>("Float", R"md(Built-in type)md"));
-	schema->AddType("ID", std::make_shared<introspection::ScalarType>("ID", R"md(Built-in type)md"));
-	schema->AddType("Int", std::make_shared<introspection::ScalarType>("Int", R"md(Built-in type)md"));
-	schema->AddType("String", std::make_shared<introspection::ScalarType>("String", R"md(Built-in type)md"));
-	auto typeTypeKind = std::make_shared<introspection::EnumType>("__TypeKind", R"md()md");
-	schema->AddType("__TypeKind", typeTypeKind);
-	auto typeDirectiveLocation = std::make_shared<introspection::EnumType>("__DirectiveLocation", R"md()md");
-	schema->AddType("__DirectiveLocation", typeDirectiveLocation);
-	auto typeSchema = std::make_shared<introspection::ObjectType>("__Schema", R"md()md");
-	schema->AddType("__Schema", typeSchema);
-	auto typeType = std::make_shared<introspection::ObjectType>("__Type", R"md()md");
-	schema->AddType("__Type", typeType);
-	auto typeField = std::make_shared<introspection::ObjectType>("__Field", R"md()md");
-	schema->AddType("__Field", typeField);
-	auto typeInputValue = std::make_shared<introspection::ObjectType>("__InputValue", R"md()md");
-	schema->AddType("__InputValue", typeInputValue);
-	auto typeEnumValue = std::make_shared<introspection::ObjectType>("__EnumValue", R"md()md");
-	schema->AddType("__EnumValue", typeEnumValue);
-	auto typeDirective = std::make_shared<introspection::ObjectType>("__Directive", R"md()md");
-	schema->AddType("__Directive", typeDirective);
+	schema->AddType(R"gql(Boolean)gql"sv, schema::ScalarType::Make(R"gql(Boolean)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(Float)gql"sv, schema::ScalarType::Make(R"gql(Float)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(ID)gql"sv, schema::ScalarType::Make(R"gql(ID)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(Int)gql"sv, schema::ScalarType::Make(R"gql(Int)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(String)gql"sv, schema::ScalarType::Make(R"gql(String)gql"sv, R"md(Built-in type)md"));
+	auto typeTypeKind = schema::EnumType::Make(R"gql(__TypeKind)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(__TypeKind)gql"sv, typeTypeKind);
+	auto typeDirectiveLocation = schema::EnumType::Make(R"gql(__DirectiveLocation)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(__DirectiveLocation)gql"sv, typeDirectiveLocation);
+	auto typeSchema = schema::ObjectType::Make(R"gql(__Schema)gql"sv, R"md()md");
+	schema->AddType(R"gql(__Schema)gql"sv, typeSchema);
+	auto typeType = schema::ObjectType::Make(R"gql(__Type)gql"sv, R"md()md");
+	schema->AddType(R"gql(__Type)gql"sv, typeType);
+	auto typeField = schema::ObjectType::Make(R"gql(__Field)gql"sv, R"md()md");
+	schema->AddType(R"gql(__Field)gql"sv, typeField);
+	auto typeInputValue = schema::ObjectType::Make(R"gql(__InputValue)gql"sv, R"md()md");
+	schema->AddType(R"gql(__InputValue)gql"sv, typeInputValue);
+	auto typeEnumValue = schema::ObjectType::Make(R"gql(__EnumValue)gql"sv, R"md()md");
+	schema->AddType(R"gql(__EnumValue)gql"sv, typeEnumValue);
+	auto typeDirective = schema::ObjectType::Make(R"gql(__Directive)gql"sv, R"md()md");
+	schema->AddType(R"gql(__Directive)gql"sv, typeDirective);
 
 	typeTypeKind->AddEnumValues({
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::SCALAR)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::OBJECT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INTERFACE)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::UNION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::ENUM)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INPUT_OBJECT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::LIST)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::NON_NULL)] }, R"md()md", std::nullopt }
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::SCALAR)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INTERFACE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::UNION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::ENUM)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::LIST)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::NON_NULL)], R"md()md"sv, std::nullopt }
 	});
 	typeDirectiveLocation->AddEnumValues({
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::QUERY)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::MUTATION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SUBSCRIPTION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_DEFINITION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_SPREAD)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INLINE_FRAGMENT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCHEMA)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCALAR)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::OBJECT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD_DEFINITION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ARGUMENT_DEFINITION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INTERFACE)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::UNION)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM_VALUE)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_OBJECT)] }, R"md()md", std::nullopt },
-		{ std::string{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_FIELD_DEFINITION)] }, R"md()md", std::nullopt }
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::QUERY)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::MUTATION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SUBSCRIPTION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_SPREAD)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INLINE_FRAGMENT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCHEMA)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCALAR)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ARGUMENT_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INTERFACE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::UNION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM_VALUE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_FIELD_DEFINITION)], R"md()md"sv, std::nullopt }
 	});
 
 	typeSchema->AddFields({
-		std::make_shared<introspection::Field>("types", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))))),
-		std::make_shared<introspection::Field>("queryType", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("mutationType", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<introspection::Field>("subscriptionType", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<introspection::Field>("directives", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Directive")))))
+		schema::Field::Make(R"gql(types)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))))),
+		schema::Field::Make(R"gql(queryType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(mutationType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type")),
+		schema::Field::Make(R"gql(subscriptionType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type")),
+		schema::Field::Make(R"gql(directives)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Directive")))))
 	});
 	typeType->AddFields({
-		std::make_shared<introspection::Field>("kind", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("description", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("fields", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("includeDeprecated", R"md()md", schema->LookupType("Boolean"), R"gql(false)gql")
-		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Field")))),
-		std::make_shared<introspection::Field>("interfaces", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
-		std::make_shared<introspection::Field>("possibleTypes", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
-		std::make_shared<introspection::Field>("enumValues", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>({
-			std::make_shared<introspection::InputValue>("includeDeprecated", R"md()md", schema->LookupType("Boolean"), R"gql(false)gql")
-		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__EnumValue")))),
-		std::make_shared<introspection::Field>("inputFields", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))),
-		std::make_shared<introspection::Field>("ofType", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("__Type"))
+		schema::Field::Make(R"gql(kind)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(fields)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Field"))), {
+			schema::InputValue::Make(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
+		}),
+		schema::Field::Make(R"gql(interfaces)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
+		schema::Field::Make(R"gql(possibleTypes)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
+		schema::Field::Make(R"gql(enumValues)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__EnumValue"))), {
+			schema::InputValue::Make(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
+		}),
+		schema::Field::Make(R"gql(inputFields)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))),
+		schema::Field::Make(R"gql(ofType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type"))
 	});
 	typeField->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("args", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
-		std::make_shared<introspection::Field>("type", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
+		schema::Field::Make(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		schema::Field::Make(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeInputValue->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("type", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<introspection::Field>("defaultValue", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(defaultValue)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeEnumValue->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("isDeprecated", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<introspection::Field>("deprecationReason", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		schema::Field::Make(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeDirective->AddFields({
-		std::make_shared<introspection::Field>("name", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<introspection::Field>("description", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<introspection::Field>("locations", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
-		std::make_shared<introspection::Field>("args", R"md()md", std::nullopt, std::vector<std::shared_ptr<introspection::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(locations)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
+		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
 	});
 
-	schema->AddDirective(std::make_shared<introspection::Directive>("skip", R"md()md", std::vector<response::StringType>({
-		R"gql(FIELD)gql",
-		R"gql(FRAGMENT_SPREAD)gql",
-		R"gql(INLINE_FRAGMENT)gql"
-	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("if", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
-	})));
-	schema->AddDirective(std::make_shared<introspection::Directive>("include", R"md()md", std::vector<response::StringType>({
-		R"gql(FIELD)gql",
-		R"gql(FRAGMENT_SPREAD)gql",
-		R"gql(INLINE_FRAGMENT)gql"
-	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("if", R"md()md", schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql")
-	})));
-	schema->AddDirective(std::make_shared<introspection::Directive>("deprecated", R"md()md", std::vector<response::StringType>({
-		R"gql(FIELD_DEFINITION)gql",
-		R"gql(ENUM_VALUE)gql"
-	}), std::vector<std::shared_ptr<introspection::InputValue>>({
-		std::make_shared<introspection::InputValue>("reason", R"md()md", schema->LookupType("String"), R"gql("No longer supported")gql")
-	})));
+	schema->AddDirective(schema::Directive::Make(R"gql(skip)gql"sv, R"md()md"sv, {
+		introspection::DirectiveLocation::FIELD,
+		introspection::DirectiveLocation::FRAGMENT_SPREAD,
+		introspection::DirectiveLocation::INLINE_FRAGMENT
+	}, {
+		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
+	}));
+	schema->AddDirective(schema::Directive::Make(R"gql(include)gql"sv, R"md()md"sv, {
+		introspection::DirectiveLocation::FIELD,
+		introspection::DirectiveLocation::FRAGMENT_SPREAD,
+		introspection::DirectiveLocation::INLINE_FRAGMENT
+	}, {
+		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
+	}));
+	schema->AddDirective(schema::Directive::Make(R"gql(deprecated)gql"sv, R"md()md"sv, {
+		introspection::DirectiveLocation::FIELD_DEFINITION,
+		introspection::DirectiveLocation::ENUM_VALUE
+	}, {
+		schema::InputValue::Make(R"gql(reason)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql("No longer supported")gql"sv)
+	}));
 }
 
 } /* namespace introspection */

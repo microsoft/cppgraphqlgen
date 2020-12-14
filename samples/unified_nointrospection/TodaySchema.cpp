@@ -95,8 +95,6 @@ Query::Query()
 	: service::Object({
 		"Query"
 	}, {
-		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
-		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(appointments)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
 		{ R"gql(appointmentsById)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
@@ -109,7 +107,6 @@ Query::Query()
 		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
 		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
 	})
-	, _schema(GetSchema())
 {
 }
 
@@ -294,20 +291,6 @@ std::future<service::ResolverResult> Query::resolveExpensive(service::ResolverPa
 std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
-}
-
-std::future<service::ResolverResult> Query::resolve_schema(service::ResolverParams&& params)
-{
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
-}
-
-std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams&& params)
-{
-	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
-	const auto& baseType = _schema->LookupType(argName);
-	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::Type>(baseType) : nullptr };
-
-	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
 PageInfo::PageInfo()
@@ -1063,9 +1046,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CompleteTaskInput)gql"sv, typeCompleteTaskInput);
 	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
-	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
+	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md(Root Query type)md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md");
 	schema->AddType(R"gql(PageInfo)gql"sv, typePageInfo);
@@ -1093,7 +1076,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Task)gql"sv, typeTask);
 	auto typeFolder = schema::ObjectType::Make(R"gql(Folder)gql"sv, R"md()md");
 	schema->AddType(R"gql(Folder)gql"sv, typeFolder);
-	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md()md");
 	schema->AddType(R"gql(NestedType)gql"sv, typeNestedType);
 	auto typeExpensive = schema::ObjectType::Make(R"gql(Expensive)gql"sv, R"md()md");
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
@@ -1122,22 +1105,22 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeQuery->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md"sv, std::nullopt, schema->LookupType("Node"), {
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Node"), {
 			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(appointments)gql"sv, R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("AppointmentConnection")), {
+		schema::Field::Make(R"gql(appointments)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("AppointmentConnection")), {
 			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(tasks)gql"sv, R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskConnection")), {
+		schema::Field::Make(R"gql(tasks)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskConnection")), {
 			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(unreadCounts)gql"sv, R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("FolderConnection")), {
+		schema::Field::Make(R"gql(unreadCounts)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("FolderConnection")), {
 			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
@@ -1229,8 +1212,8 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::Field::Make(R"gql(unreadCount)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
 	});
 	typeNestedType->AddFields({
-		schema::Field::Make(R"gql(depth)gql"sv, R"md(Depth of the nested element)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
-		schema::Field::Make(R"gql(nested)gql"sv, R"md(Link to the next level)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		schema::Field::Make(R"gql(depth)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
+		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
 	});
 	typeExpensive->AddFields({
 		schema::Field::Make(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
@@ -1282,7 +1265,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false);
+		schema = std::make_shared<schema::Schema>(true);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

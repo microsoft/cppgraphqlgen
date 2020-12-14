@@ -6,12 +6,16 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 
+#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
-#include "graphqlservice/IntrospectionSchema.h"
 
 namespace graphql::service {
 
-using ValidateType = response::Value;
+using ValidateType = std::optional<std::reference_wrapper<const schema::BaseType>>;
+using SharedType = std::shared_ptr<const schema::BaseType>;
+
+SharedType getSharedType(const ValidateType& type) noexcept;
+ValidateType getValidateType(const SharedType& type) noexcept;
 
 struct ValidateArgument
 {
@@ -20,7 +24,7 @@ struct ValidateArgument
 	ValidateType type;
 };
 
-using ValidateTypeFieldArguments = std::map<std::string, ValidateArgument>;
+using ValidateTypeFieldArguments = std::map<std::string_view, ValidateArgument>;
 
 struct ValidateTypeField
 {
@@ -28,7 +32,7 @@ struct ValidateTypeField
 	ValidateTypeFieldArguments arguments;
 };
 
-using ValidateDirectiveArguments = std::map<std::string, ValidateArgument>;
+using ValidateDirectiveArguments = std::map<std::string_view, ValidateArgument>;
 
 struct ValidateDirective
 {
@@ -40,14 +44,14 @@ struct ValidateArgumentVariable
 {
 	bool operator==(const ValidateArgumentVariable& other) const;
 
-	std::string name;
+	std::string_view name;
 };
 
 struct ValidateArgumentEnumValue
 {
 	bool operator==(const ValidateArgumentEnumValue& other) const;
 
-	std::string value;
+	std::string_view value;
 };
 
 struct ValidateArgumentValue;
@@ -71,7 +75,7 @@ struct ValidateArgumentMap
 {
 	bool operator==(const ValidateArgumentMap& other) const;
 
-	std::map<std::string, ValidateArgumentValuePtr> values;
+	std::map<std::string_view, ValidateArgumentValuePtr> values;
 };
 
 using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
@@ -118,29 +122,30 @@ private:
 	std::vector<schema_error>& _errors;
 };
 
-using ValidateFieldArguments = std::map<std::string, ValidateArgumentValuePtr>;
+using ValidateFieldArguments = std::map<std::string_view, ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
-	ValidateField(std::string&& returnType, std::optional<std::string>&& objectType,
-		const std::string& fieldName, ValidateFieldArguments&& arguments);
+	ValidateField(ValidateType&& returnType, ValidateType&& objectType, std::string_view fieldName,
+		ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
-	std::string returnType;
-	std::optional<std::string> objectType;
-	std::string fieldName;
+	ValidateType returnType;
+	ValidateType objectType;
+	std::string_view fieldName;
 	ValidateFieldArguments arguments;
 };
 
-using ValidateTypeKinds = std::map<std::string, introspection::TypeKind>;
+using ValidateTypes = std::map<std::string_view, ValidateType>;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
 class ValidateVariableTypeVisitor
 {
 public:
-	ValidateVariableTypeVisitor(const ValidateTypeKinds& typeKinds);
+	ValidateVariableTypeVisitor(
+		const std::shared_ptr<schema::Schema>& schema, const ValidateTypes& types);
 
 	void visit(const peg::ast_node& typeName);
 
@@ -152,7 +157,8 @@ private:
 	void visitListType(const peg::ast_node& listType);
 	void visitNonNullType(const peg::ast_node& nonNullType);
 
-	const ValidateTypeKinds& _typeKinds;
+	const std::shared_ptr<schema::Schema>& _schema;
+	const ValidateTypes& _types;
 
 	bool _isInputType = false;
 	ValidateType _variableType;
@@ -163,38 +169,34 @@ private:
 class ValidateExecutableVisitor
 {
 public:
-	ValidateExecutableVisitor(const Request& service);
+	ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema);
 
 	void visit(const peg::ast_node& root);
 
 	std::vector<schema_error> getStructuredErrors();
 
 private:
-	response::Value executeQuery(std::string_view query) const;
+	static ValidateTypeFieldArguments getArguments(
+		const std::vector<std::shared_ptr<const schema::InputValue>>& args);
 
-	static ValidateTypeFieldArguments getArguments(response::ListType&& argumentsMember);
-
-	using FieldTypes = std::map<std::string, ValidateTypeField>;
-	using TypeFields = std::map<std::string, FieldTypes>;
+	using FieldTypes = std::map<std::string_view, ValidateTypeField>;
+	using TypeFields = std::map<std::string_view, FieldTypes>;
 	using InputFieldTypes = ValidateTypeFieldArguments;
-	using InputTypeFields = std::map<std::string, InputFieldTypes>;
-	using EnumValues = std::map<std::string, std::set<std::string>>;
+	using InputTypeFields = std::map<std::string_view, InputFieldTypes>;
+	using EnumValues = std::map<std::string_view, std::set<std::string_view>>;
 
-	std::optional<introspection::TypeKind> getTypeKind(const std::string& name) const;
-	std::optional<introspection::TypeKind> getScopedTypeKind() const;
 	constexpr bool isScalarType(introspection::TypeKind kind);
 
-	bool matchesScopedType(const std::string& name) const;
+	bool matchesScopedType(std::string_view name) const;
 
 	TypeFields::const_iterator getScopedTypeFields();
-	InputTypeFields::const_iterator getInputTypeFields(const std::string& name);
+	InputTypeFields::const_iterator getInputTypeFields(std::string_view name);
 	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
 	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
 	template <class _FieldTypes>
-	static std::string getFieldType(const _FieldTypes& fields, const std::string& name);
+	static ValidateType getFieldType(const _FieldTypes& fields, std::string_view name);
 	template <class _FieldTypes>
-	static std::string getWrappedFieldType(const _FieldTypes& fields, const std::string& name);
-	static std::string getWrappedFieldType(const ValidateType& returnType);
+	static ValidateType getWrappedFieldType(const _FieldTypes& fields, std::string_view name);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -213,23 +215,22 @@ private:
 	bool validateVariableType(bool isNonNull, const ValidateType& variableType,
 		const schema_location& position, const ValidateType& inputType);
 
-	const Request& _service;
+	const std::shared_ptr<schema::Schema> _schema;
 	std::vector<schema_error> _errors;
 
-	using OperationTypes = std::map<std::string_view, std::string>;
-	using Directives = std::map<std::string, ValidateDirective>;
-	using ExecutableNodes = std::map<std::string, const peg::ast_node&>;
-	using FragmentSet = std::unordered_set<std::string>;
-	using MatchingTypes = std::map<std::string, std::set<std::string>>;
-	using ScalarTypes = std::set<std::string>;
-	using VariableDefinitions = std::map<std::string, const peg::ast_node&>;
-	using VariableTypes = std::map<std::string, ValidateArgument>;
+	using Directives = std::map<std::string_view, ValidateDirective>;
+	using ExecutableNodes = std::map<std::string_view, const peg::ast_node&>;
+	using FragmentSet = std::unordered_set<std::string_view>;
+	using MatchingTypes = std::map<std::string_view, std::set<std::string_view>>;
+	using ScalarTypes = std::set<std::string_view>;
+	using VariableDefinitions = std::map<std::string_view, const peg::ast_node&>;
+	using VariableTypes = std::map<std::string_view, ValidateArgument>;
 	using OperationVariables = std::optional<VariableTypes>;
-	using VariableSet = std::set<std::string>;
+	using VariableSet = std::set<std::string_view>;
 
 	// These members store Introspection schema information which does not change between queries.
-	OperationTypes _operationTypes;
-	ValidateTypeKinds _typeKinds;
+	ValidateTypes _operationTypes;
+	ValidateTypes _types;
 	MatchingTypes _matchingTypes;
 	Directives _directives;
 	EnumValues _enumValues;
@@ -250,8 +251,8 @@ private:
 	size_t _fieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
-	std::string _scopedType;
-	std::map<std::string, ValidateField> _selectionFields;
+	ValidateType _scopedType;
+	std::map<std::string_view, ValidateField> _selectionFields;
 };
 
 } /* namespace graphql::service */

@@ -23,6 +23,15 @@ target_link_libraries(today_tests PRIVATE
 add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
+add_executable(nointrospection_tests NoIntrospectionTests.cpp)
+target_link_libraries(nointrospection_tests PRIVATE
+  unifiedgraphql_nointrospection
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+add_bigobj_flag(nointrospection_tests)
+gtest_add_tests(TARGET nointrospection_tests)
+
 add_executable(argument_tests ArgumentTests.cpp)
 target_link_libraries(argument_tests PRIVATE
   unifiedgraphql
@@ -53,7 +62,8 @@ target_include_directories(response_tests PUBLIC
 gtest_add_tests(TARGET response_tests)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
+  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice_nointrospection> ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}
@@ -62,6 +72,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 
   add_dependencies(validation_tests copy_test_dlls)
   add_dependencies(today_tests copy_test_dlls)
+  add_dependencies(nointrospection_tests copy_test_dlls)
   add_dependencies(argument_tests copy_test_dlls)
   add_dependencies(pegtl_tests copy_test_dlls)
   add_dependencies(response_tests copy_test_dlls)

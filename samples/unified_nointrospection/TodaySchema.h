@@ -90,10 +90,6 @@ private:
 	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
 
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_schema(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
-
-	std::shared_ptr<schema::Schema> _schema;
 };
 
 class PageInfo

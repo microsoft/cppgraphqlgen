@@ -6,6 +6,7 @@
 #ifndef VALIDATIONSCHEMA_H
 #define VALIDATIONSCHEMA_H
 
+#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
 #include <memory>
@@ -13,12 +14,6 @@
 #include <vector>
 
 namespace graphql {
-namespace introspection {
-
-class Schema;
-
-} /* namespace introspection */
-
 namespace validation {
 
 enum class DogCommand
@@ -85,19 +80,19 @@ public:
 	virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const;
 
 private:
-	std::future<response::Value> resolveDog(service::ResolverParams&& params);
-	std::future<response::Value> resolveHuman(service::ResolverParams&& params);
-	std::future<response::Value> resolvePet(service::ResolverParams&& params);
-	std::future<response::Value> resolveCatOrDog(service::ResolverParams&& params);
-	std::future<response::Value> resolveArguments(service::ResolverParams&& params);
-	std::future<response::Value> resolveFindDog(service::ResolverParams&& params);
-	std::future<response::Value> resolveBooleanList(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDog(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveHuman(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolvePet(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveCatOrDog(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveArguments(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveFindDog(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveBooleanList(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
-	std::future<response::Value> resolve_schema(service::ResolverParams&& params);
-	std::future<response::Value> resolve_type(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_schema(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
 
-	std::shared_ptr<introspection::Schema> _schema;
+	std::shared_ptr<schema::Schema> _schema;
 };
 
 class Dog
@@ -116,14 +111,14 @@ public:
 	virtual service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveNickname(service::ResolverParams&& params);
-	std::future<response::Value> resolveBarkVolume(service::ResolverParams&& params);
-	std::future<response::Value> resolveDoesKnowCommand(service::ResolverParams&& params);
-	std::future<response::Value> resolveIsHousetrained(service::ResolverParams&& params);
-	std::future<response::Value> resolveOwner(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNickname(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveBarkVolume(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDoesKnowCommand(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveIsHousetrained(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveOwner(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Alien
@@ -138,10 +133,10 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveHomePlanet(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveHomePlanet(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Human
@@ -156,10 +151,10 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolvePets(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolvePets(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Cat
@@ -176,12 +171,12 @@ public:
 	virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveName(service::ResolverParams&& params);
-	std::future<response::Value> resolveNickname(service::ResolverParams&& params);
-	std::future<response::Value> resolveDoesKnowCommand(service::ResolverParams&& params);
-	std::future<response::Value> resolveMeowVolume(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNickname(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDoesKnowCommand(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveMeowVolume(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Mutation
@@ -194,9 +189,9 @@ public:
 	virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveMutateDog(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveMutateDog(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class MutateDogResult
@@ -209,9 +204,9 @@ public:
 	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveId(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Subscription
@@ -225,10 +220,10 @@ public:
 	virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveNewMessage(service::ResolverParams&& params);
-	std::future<response::Value> resolveDisallowedSecondRootField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNewMessage(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveDisallowedSecondRootField(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Message
@@ -242,10 +237,10 @@ public:
 	virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const;
 
 private:
-	std::future<response::Value> resolveBody(service::ResolverParams&& params);
-	std::future<response::Value> resolveSender(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveBody(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveSender(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 class Arguments
@@ -265,16 +260,16 @@ public:
 	virtual service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const;
 
 private:
-	std::future<response::Value> resolveMultipleReqs(service::ResolverParams&& params);
-	std::future<response::Value> resolveBooleanArgField(service::ResolverParams&& params);
-	std::future<response::Value> resolveFloatArgField(service::ResolverParams&& params);
-	std::future<response::Value> resolveIntArgField(service::ResolverParams&& params);
-	std::future<response::Value> resolveNonNullBooleanArgField(service::ResolverParams&& params);
-	std::future<response::Value> resolveNonNullBooleanListField(service::ResolverParams&& params);
-	std::future<response::Value> resolveBooleanListArgField(service::ResolverParams&& params);
-	std::future<response::Value> resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveMultipleReqs(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveBooleanArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveFloatArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveIntArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNonNullBooleanArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveNonNullBooleanListField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveBooleanListArgField(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params);
 
-	std::future<response::Value> resolve_typename(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
 } /* namespace object */
@@ -291,7 +286,7 @@ private:
 	std::shared_ptr<object::Subscription> _subscription;
 };
 
-void AddTypesToSchema(const std::shared_ptr<introspection::Schema>& schema);
+std::shared_ptr<schema::Schema> GetSchema();
 
 } /* namespace validation */
 } /* namespace graphql */

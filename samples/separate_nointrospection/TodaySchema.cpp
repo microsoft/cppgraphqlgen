@@ -112,9 +112,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CompleteTaskInput)gql"sv, typeCompleteTaskInput);
 	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
-	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
+	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md(Root Query type)md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md");
 	schema->AddType(R"gql(PageInfo)gql"sv, typePageInfo);
@@ -142,7 +142,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Task)gql"sv, typeTask);
 	auto typeFolder = schema::ObjectType::Make(R"gql(Folder)gql"sv, R"md()md");
 	schema->AddType(R"gql(Folder)gql"sv, typeFolder);
-	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md()md");
 	schema->AddType(R"gql(NestedType)gql"sv, typeNestedType);
 	auto typeExpensive = schema::ObjectType::Make(R"gql(Expensive)gql"sv, R"md()md");
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
@@ -233,7 +233,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false);
+		schema = std::make_shared<schema::Schema>(true);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

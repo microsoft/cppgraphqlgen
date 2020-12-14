@@ -1,636 +1,397 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/Introspection.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 namespace graphql::introspection {
 
-Schema::Schema()
+Schema::Schema(const std::shared_ptr<schema::Schema>& schema)
+	: _schema(schema)
 {
-}
-
-void Schema::AddQueryType(std::shared_ptr<ObjectType> query)
-{
-	_query = std::move(query);
-}
-
-void Schema::AddMutationType(std::shared_ptr<ObjectType> mutation)
-{
-	_mutation = std::move(mutation);
-}
-
-void Schema::AddSubscriptionType(std::shared_ptr<ObjectType> subscription)
-{
-	_subscription = std::move(subscription);
-}
-
-void Schema::AddType(response::StringType&& name, std::shared_ptr<object::Type> type)
-{
-	_typeMap[name] = _types.size();
-	_types.push_back({ std::move(name), std::move(type) });
-}
-
-const std::shared_ptr<object::Type>& Schema::LookupType(const response::StringType& name) const
-{
-	auto itr = _typeMap.find(name);
-
-	if (itr == _typeMap.cend())
-	{
-		std::ostringstream message;
-
-		message << "Type not found";
-
-		if (!name.empty())
-		{
-			message << " name: " << name;
-		}
-
-		throw service::schema_exception { { message.str() } };
-	}
-
-	return _types[itr->second].second;
-}
-
-const std::shared_ptr<object::Type>& Schema::WrapType(
-	TypeKind kind, const std::shared_ptr<object::Type>& ofType)
-{
-	auto& wrappers = (kind == TypeKind::LIST) ? _listWrappers : _nonNullWrappers;
-	auto itr = wrappers.find(ofType);
-
-	if (itr == wrappers.cend())
-	{
-		std::tie(itr, std::ignore) =
-			wrappers.insert({ ofType, std::make_shared<WrapperType>(kind, ofType) });
-	}
-
-	return itr->second;
-}
-
-void Schema::AddDirective(std::shared_ptr<object::Directive> directive)
-{
-	_directives.emplace_back(std::move(directive));
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(
 	service::FieldParams&& params) const
 {
-	auto spThis = shared_from_this();
+	const auto& types = _schema->types();
+	std::vector<std::shared_ptr<object::Type>> result(types.size());
 
-	return std::async(params.launch, [this, spThis]() {
-		std::vector<std::shared_ptr<object::Type>> result(_types.size());
-
-		std::transform(_types.cbegin(),
-			_types.cend(),
-			result.begin(),
-			[](const std::pair<response::StringType, std::shared_ptr<object::Type>>& namedType) {
-				return namedType.second;
-			});
-
-		return result;
+	std::transform(types.begin(), types.end(), result.begin(), [](const auto& entry) {
+		return std::make_shared<Type>(entry.second);
 	});
+
+	return result;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Schema::getQueryType(
 	service::FieldParams&&) const
 {
-	return _query;
+	const auto& queryType = _schema->queryType();
+
+	return queryType ? std::make_shared<Type>(queryType) : nullptr;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Schema::getMutationType(
 	service::FieldParams&&) const
 {
-	return _mutation;
+	const auto& mutationType = _schema->mutationType();
+
+	return mutationType ? std::make_shared<Type>(mutationType) : nullptr;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Schema::getSubscriptionType(
 	service::FieldParams&&) const
 {
-	return _subscription;
+	const auto& subscriptionType = _schema->subscriptionType();
+
+	return subscriptionType ? std::make_shared<Type>(subscriptionType) : nullptr;
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> Schema::getDirectives(
 	service::FieldParams&&) const
 {
-	return _directives;
+	const auto& directives = _schema->directives();
+	std::vector<std::shared_ptr<object::Directive>> result(directives.size());
+
+	std::transform(directives.begin(), directives.end(), result.begin(), [](const auto& entry) {
+		return std::make_shared<Directive>(entry);
+	});
+
+	return result;
 }
 
-BaseType::BaseType(response::StringType&& description)
-	: _description(std::move(description))
+Type::Type(const std::shared_ptr<const schema::BaseType>& type)
+	: _type(type)
 {
 }
 
-service::FieldResult<std::optional<response::StringType>> BaseType::getName(
+service::FieldResult<TypeKind> Type::getKind(service::FieldParams&&) const
+{
+	return _type->kind();
+}
+
+service::FieldResult<std::optional<response::StringType>> Type::getName(
 	service::FieldParams&&) const
 {
-	return std::nullopt;
+	const auto name = _type->name();
+
+	return { name.empty() ? std::nullopt : std::make_optional<response::StringType>(name) };
 }
 
-service::FieldResult<std::optional<response::StringType>> BaseType::getDescription(
+service::FieldResult<std::optional<response::StringType>> Type::getDescription(
 	service::FieldParams&&) const
 {
-	return { _description.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(_description) };
+	const auto description = _type->description();
+
+	return { description.empty() ? std::nullopt
+								 : std::make_optional<response::StringType>(description) };
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
-BaseType::getFields(
-	service::FieldParams&&, std::optional<response::BooleanType>&& /*includeDeprecatedArg*/) const
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> Type::getFields(
+	service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const
 {
-	return std::nullopt;
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> BaseType::
-	getInterfaces(service::FieldParams&&) const
-{
-	return std::nullopt;
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> BaseType::
-	getPossibleTypes(service::FieldParams&&) const
-{
-	return std::nullopt;
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue>>>>
-BaseType::getEnumValues(
-	service::FieldParams&&, std::optional<response::BooleanType>&& /*includeDeprecatedArg*/) const
-{
-	return std::nullopt;
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValue>>>> BaseType::
-	getInputFields(service::FieldParams&&) const
-{
-	return std::nullopt;
-}
-
-service::FieldResult<std::shared_ptr<object::Type>> BaseType::getOfType(
-	service::FieldParams&&) const
-{
-	return std::shared_ptr<object::Type> {};
-}
-
-ScalarType::ScalarType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
-{
-}
-
-service::FieldResult<TypeKind> ScalarType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::SCALAR;
-}
-
-service::FieldResult<std::optional<response::StringType>> ScalarType::getName(
-	service::FieldParams&&) const
-{
-	std::promise<std::optional<response::StringType>> promise;
-
-	promise.set_value(std::make_optional<response::StringType>(_name));
-
-	return promise.get_future();
-}
-
-ObjectType::ObjectType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
-{
-}
-
-void ObjectType::AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces)
-{
-	_interfaces = std::move(interfaces);
-
-	for (const auto& interface : _interfaces)
+	switch (_type->kind())
 	{
-		interface->AddPossibleType(std::static_pointer_cast<ObjectType>(shared_from_this()));
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+			break;
+
+		default:
+			return std::nullopt;
 	}
-}
 
-void ObjectType::AddFields(std::vector<std::shared_ptr<Field>> fields)
-{
-	_fields = std::move(fields);
-}
-
-service::FieldResult<TypeKind> ObjectType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::OBJECT;
-}
-
-service::FieldResult<std::optional<response::StringType>> ObjectType::getName(
-	service::FieldParams&&) const
-{
-	return std::make_optional<response::StringType>(_name);
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> ObjectType::
-	getFields(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const
-{
+	const auto& fields = _type->fields();
 	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Field>>>();
 
-	result->reserve(_fields.size());
-	std::copy_if(_fields.cbegin(),
-		_fields.cend(),
-		std::back_inserter(*result),
-		[&params, deprecated](const std::shared_ptr<Field>& field) {
-			return deprecated
-				|| !field
-						->getIsDeprecated(
-							service::FieldParams(params, response::Value(response::Type::Map)))
-						.get();
-		});
-
-	return { std::move(result) };
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> ObjectType::
-	getInterfaces(service::FieldParams&&) const
-{
-	auto result =
-		std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_interfaces.size());
-
-	std::copy(_interfaces.cbegin(), _interfaces.cend(), result->begin());
-
-	return { std::move(result) };
-}
-
-InterfaceType::InterfaceType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
-{
-}
-
-void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
-{
-	_possibleTypes.push_back(possibleType);
-}
-
-void InterfaceType::AddFields(std::vector<std::shared_ptr<Field>> fields)
-{
-	_fields = std::move(fields);
-}
-
-service::FieldResult<TypeKind> InterfaceType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::INTERFACE;
-}
-
-service::FieldResult<std::optional<response::StringType>> InterfaceType::getName(
-	service::FieldParams&&) const
-{
-	return std::make_optional<response::StringType>(_name);
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> InterfaceType::
-	getFields(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const
-{
-	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
-	auto result = std::make_optional<std::vector<std::shared_ptr<object::Field>>>();
-
-	result->reserve(_fields.size());
-	std::copy_if(_fields.cbegin(),
-		_fields.cend(),
-		std::back_inserter(*result),
-		[&params, deprecated](const std::shared_ptr<Field>& field) {
-			return deprecated
-				|| !field
-						->getIsDeprecated(
-							service::FieldParams(params, response::Value(response::Type::Map)))
-						.get();
-		});
-
-	return { std::move(result) };
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> InterfaceType::
-	getPossibleTypes(service::FieldParams&&) const
-{
-	auto result =
-		std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_possibleTypes.size());
-
-	std::transform(_possibleTypes.cbegin(),
-		_possibleTypes.cend(),
-		result->begin(),
-		[](const std::weak_ptr<object::Type>& weak) {
-			return weak.lock();
-		});
-
-	return { std::move(result) };
-}
-
-UnionType::UnionType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
-{
-}
-
-void UnionType::AddPossibleTypes(std::vector<std::weak_ptr<object::Type>> possibleTypes)
-{
-	_possibleTypes = std::move(possibleTypes);
-}
-
-service::FieldResult<TypeKind> UnionType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::UNION;
-}
-
-service::FieldResult<std::optional<response::StringType>> UnionType::getName(
-	service::FieldParams&&) const
-{
-	return std::make_optional<response::StringType>(_name);
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> UnionType::
-	getPossibleTypes(service::FieldParams&&) const
-{
-	auto result =
-		std::make_optional<std::vector<std::shared_ptr<object::Type>>>(_possibleTypes.size());
-
-	std::transform(_possibleTypes.cbegin(),
-		_possibleTypes.cend(),
-		result->begin(),
-		[](const std::weak_ptr<object::Type>& weak) {
-			return weak.lock();
-		});
-
-	return { std::move(result) };
-}
-
-EnumType::EnumType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
-{
-}
-
-void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
-{
-	_enumValues.reserve(_enumValues.size() + enumValues.size());
-
-	for (auto& value : enumValues)
+	result->reserve(fields.size());
+	for (const auto& field : fields)
 	{
-		_enumValues.push_back(std::make_shared<EnumValue>(std::move(value.value),
-			std::move(value.description),
-			std::move(value.deprecationReason)));
+		if (deprecated || !field->deprecationReason())
+		{
+			result->push_back(std::make_shared<Field>(field));
+		}
 	}
+
+	return result;
 }
 
-service::FieldResult<TypeKind> EnumType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::ENUM;
-}
-
-service::FieldResult<std::optional<response::StringType>> EnumType::getName(
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> Type::getInterfaces(
 	service::FieldParams&&) const
 {
-	return std::make_optional<response::StringType>(_name);
+	switch (_type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+			break;
+
+		default:
+			return std::nullopt;
+	}
+
+	const auto& interfaces = _type->interfaces();
+	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(interfaces.size());
+
+	std::transform(interfaces.begin(), interfaces.end(), result->begin(), [](const auto& entry) {
+		return std::make_shared<Type>(entry);
+	});
+
+	return result;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue>>>> EnumType::
-	getEnumValues(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> Type::
+	getPossibleTypes(service::FieldParams&&) const
 {
+	switch (_type->kind())
+	{
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			break;
+
+		default:
+			return std::nullopt;
+	}
+
+	const auto& possibleTypes = _type->possibleTypes();
+	auto result =
+		std::make_optional<std::vector<std::shared_ptr<object::Type>>>(possibleTypes.size());
+
+	std::transform(possibleTypes.begin(),
+		possibleTypes.end(),
+		result->begin(),
+		[](const auto& entry) {
+			return std::make_shared<Type>(entry.lock());
+		});
+
+	return result;
+}
+
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue>>>> Type::
+	getEnumValues(
+		service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const
+{
+	switch (_type->kind())
+	{
+		case introspection::TypeKind::ENUM:
+			break;
+
+		default:
+			return std::nullopt;
+	}
+
+	const auto& enumValues = _type->enumValues();
 	const bool deprecated = includeDeprecatedArg && *includeDeprecatedArg;
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::EnumValue>>>();
 
-	result->reserve(_enumValues.size());
-	std::copy_if(_enumValues.cbegin(),
-		_enumValues.cend(),
-		std::back_inserter(*result),
-		[&params, deprecated](const std::shared_ptr<object::EnumValue>& value) {
-			return deprecated
-				|| !value
-						->getIsDeprecated(
-							service::FieldParams(params, response::Value(response::Type::Map)))
-						.get();
-		});
+	result->reserve(enumValues.size());
+	for (const auto& value : enumValues)
+	{
+		if (deprecated || !value->deprecationReason())
+		{
+			result->push_back(std::make_shared<EnumValue>(value));
+		}
+	}
 
-	return { std::move(result) };
+	return result;
 }
 
-InputObjectType::InputObjectType(response::StringType&& name, response::StringType&& description)
-	: BaseType(std::move(description))
-	, _name(std::move(name))
+service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValue>>>> Type::
+	getInputFields(service::FieldParams&&) const
 {
-}
+	switch (_type->kind())
+	{
+		case introspection::TypeKind::INPUT_OBJECT:
+			break;
 
-void InputObjectType::AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues)
-{
-	_inputValues = std::move(inputValues);
-}
+		default:
+			return std::nullopt;
+	}
 
-service::FieldResult<TypeKind> InputObjectType::getKind(service::FieldParams&&) const
-{
-	return TypeKind::INPUT_OBJECT;
-}
-
-service::FieldResult<std::optional<response::StringType>> InputObjectType::getName(
-	service::FieldParams&&) const
-{
-	return std::make_optional<response::StringType>(_name);
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValue>>>>
-InputObjectType::getInputFields(service::FieldParams&&) const
-{
+	const auto& inputFields = _type->inputFields();
 	auto result =
-		std::make_optional<std::vector<std::shared_ptr<object::InputValue>>>(_inputValues.size());
+		std::make_optional<std::vector<std::shared_ptr<object::InputValue>>>(inputFields.size());
 
-	std::copy(_inputValues.cbegin(), _inputValues.cend(), result->begin());
+	std::transform(inputFields.begin(), inputFields.end(), result->begin(), [](const auto& entry) {
+		return std::make_shared<InputValue>(entry);
+	});
 
-	return { std::move(result) };
+	return result;
 }
 
-WrapperType::WrapperType(TypeKind kind, const std::shared_ptr<object::Type>& ofType)
-	: BaseType(response::StringType())
-	, _kind(kind)
-	, _ofType(ofType)
+service::FieldResult<std::shared_ptr<object::Type>> Type::getOfType(service::FieldParams&&) const
 {
+	switch (_type->kind())
+	{
+		case introspection::TypeKind::LIST:
+		case introspection::TypeKind::NON_NULL:
+			break;
+
+		default:
+			return nullptr;
+	}
+
+	const auto ofType = _type->ofType().lock();
+
+	return ofType ? std::make_shared<Type>(ofType) : nullptr;
 }
 
-service::FieldResult<TypeKind> WrapperType::getKind(service::FieldParams&&) const
-{
-	return _kind;
-}
-
-service::FieldResult<std::shared_ptr<object::Type>> WrapperType::getOfType(
-	service::FieldParams&&) const
-{
-	return _ofType.lock();
-}
-
-Field::Field(response::StringType&& name, response::StringType&& description,
-	std::optional<response::StringType>&& deprecationReason,
-	std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<object::Type>& type)
-	: _name(std::move(name))
-	, _description(std::move(description))
-	, _deprecationReason(std::move(deprecationReason))
-	, _args(std::move(args))
-	, _type(type)
+Field::Field(const std::shared_ptr<const schema::Field>& field)
+	: _field(field)
 {
 }
 
 service::FieldResult<response::StringType> Field::getName(service::FieldParams&&) const
 {
-	return _name;
+	return response::StringType { _field->name() };
 }
 
 service::FieldResult<std::optional<response::StringType>> Field::getDescription(
 	service::FieldParams&&) const
 {
-	return { _description.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(_description) };
+	const auto description = _field->description();
+
+	return { description.empty() ? std::nullopt
+								 : std::make_optional<response::StringType>(description) };
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Field::getArgs(
 	service::FieldParams&&) const
 {
-	std::vector<std::shared_ptr<object::InputValue>> result(_args.size());
+	const auto& args = _field->args();
+	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
-	std::copy(_args.cbegin(), _args.cend(), result.begin());
+	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
+		return std::make_shared<InputValue>(entry);
+	});
 
-	return { std::move(result) };
+	return result;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Field::getType(service::FieldParams&&) const
 {
-	return _type.lock();
+	const auto type = _field->type().lock();
+
+	return type ? std::make_shared<Type>(type) : nullptr;
 }
 
 service::FieldResult<response::BooleanType> Field::getIsDeprecated(service::FieldParams&&) const
 {
-	return _deprecationReason.has_value();
+	return _field->deprecationReason().has_value();
 }
 
 service::FieldResult<std::optional<response::StringType>> Field::getDeprecationReason(
 	service::FieldParams&&) const
 {
-	return { _deprecationReason ? std::make_optional<response::StringType>(*_deprecationReason)
-								: std::nullopt };
+	const auto& deprecationReason = _field->deprecationReason();
+
+	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+							   : std::nullopt };
 }
 
-InputValue::InputValue(response::StringType&& name, response::StringType&& description,
-	const std::shared_ptr<object::Type>& type, response::StringType&& defaultValue)
-	: _name(std::move(name))
-	, _description(std::move(description))
-	, _type(type)
-	, _defaultValue(std::move(defaultValue))
+InputValue::InputValue(const std::shared_ptr<const schema::InputValue>& inputValue)
+	: _inputValue(inputValue)
 {
 }
 
 service::FieldResult<response::StringType> InputValue::getName(service::FieldParams&&) const
 {
-	return _name;
+	return response::StringType { _inputValue->name() };
 }
 
 service::FieldResult<std::optional<response::StringType>> InputValue::getDescription(
 	service::FieldParams&&) const
 {
-	return { _description.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(_description) };
+	const auto description = _inputValue->description();
+
+	return { description.empty() ? std::nullopt
+								 : std::make_optional<response::StringType>(description) };
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> InputValue::getType(
 	service::FieldParams&&) const
 {
-	return _type.lock();
+	const auto type = _inputValue->type().lock();
+
+	return type ? std::make_shared<Type>(type) : nullptr;
 }
 
 service::FieldResult<std::optional<response::StringType>> InputValue::getDefaultValue(
 	service::FieldParams&&) const
 {
-	return { _defaultValue.empty() ? std::nullopt
-								   : std::make_optional<response::StringType>(_defaultValue) };
+	const auto defaultValue = _inputValue->defaultValue();
+
+	return { defaultValue.empty() ? std::nullopt
+								  : std::make_optional<response::StringType>(defaultValue) };
 }
 
-EnumValue::EnumValue(response::StringType&& name, response::StringType&& description,
-	std::optional<response::StringType>&& deprecationReason)
-	: _name(std::move(name))
-	, _description(std::move(description))
-	, _deprecationReason(std::move(deprecationReason))
+EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
+	: _enumValue(enumValue)
 {
 }
 
 service::FieldResult<response::StringType> EnumValue::getName(service::FieldParams&&) const
 {
-	return _name;
+	return response::StringType { _enumValue->name() };
 }
 
 service::FieldResult<std::optional<response::StringType>> EnumValue::getDescription(
 	service::FieldParams&&) const
 {
-	return { _description.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(_description) };
+	const auto description = _enumValue->description();
+
+	return { description.empty() ? std::nullopt
+								 : std::make_optional<response::StringType>(description) };
 }
 
 service::FieldResult<response::BooleanType> EnumValue::getIsDeprecated(service::FieldParams&&) const
 {
-	return _deprecationReason.has_value();
+	return _enumValue->deprecationReason().has_value();
 }
 
 service::FieldResult<std::optional<response::StringType>> EnumValue::getDeprecationReason(
 	service::FieldParams&&) const
 {
-	return { _deprecationReason ? std::make_optional<response::StringType>(*_deprecationReason)
-								: std::nullopt };
+	const auto& deprecationReason = _enumValue->deprecationReason();
+
+	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+							   : std::nullopt };
 }
 
-Directive::Directive(response::StringType&& name, response::StringType&& description,
-	std::vector<response::StringType>&& locations, std::vector<std::shared_ptr<InputValue>>&& args)
-	: _name(std::move(name))
-	, _description(std::move(description))
-	, _locations(
-		  [](std::vector<response::StringType>&& locationsArg) -> std::vector<DirectiveLocation> {
-			  std::vector<DirectiveLocation> result(locationsArg.size());
-
-			  std::transform(locationsArg.begin(),
-				  locationsArg.end(),
-				  result.begin(),
-				  [](std::string& name) -> DirectiveLocation {
-					  response::Value location(response::Type::EnumValue);
-
-					  location.set<response::StringType>(std::move(name));
-					  return service::ModifiedArgument<DirectiveLocation>::convert(location);
-				  });
-
-			  return result;
-		  }(std::move(locations)))
-	, _args(std::move(args))
+Directive::Directive(const std::shared_ptr<const schema::Directive>& directive)
+	: _directive(directive)
 {
 }
 
 service::FieldResult<response::StringType> Directive::getName(service::FieldParams&&) const
 {
-	return _name;
+	return response::StringType { _directive->name() };
 }
 
 service::FieldResult<std::optional<response::StringType>> Directive::getDescription(
 	service::FieldParams&&) const
 {
-	return { _description.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(_description) };
+	const auto description = _directive->description();
+
+	return { description.empty() ? std::nullopt
+								 : std::make_optional<response::StringType>(description) };
 }
 
 service::FieldResult<std::vector<DirectiveLocation>> Directive::getLocations(
 	service::FieldParams&&) const
 {
-	std::vector<DirectiveLocation> result(_locations.size());
-
-	std::copy(_locations.cbegin(), _locations.cend(), result.begin());
-
-	return { std::move(result) };
+	return { _directive->locations() };
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Directive::getArgs(
 	service::FieldParams&&) const
 {
-	std::vector<std::shared_ptr<object::InputValue>> result(_args.size());
+	const auto& args = _directive->args();
+	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
-	std::copy(_args.cbegin(), _args.cend(), result.begin());
+	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
+		return std::make_shared<InputValue>(entry);
+	});
 
-	return { std::move(result) };
+	return result;
 }
 
 } /* namespace graphql::introspection */

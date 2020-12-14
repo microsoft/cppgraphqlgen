@@ -3,100 +3,313 @@
 
 #include "graphqlservice/GraphQLResponse.h"
 
+#include <algorithm>
+#include <iterator>
+#include <map>
 #include <optional>
 #include <stdexcept>
 #include <variant>
 
 namespace graphql::response {
 
-// Type::Map
-struct MapData
+bool Value::MapData::operator==(const MapData& rhs) const
 {
-	bool operator==(const MapData& rhs) const
+	return map == rhs.map;
+}
+
+bool Value::StringData::operator==(const StringData& rhs) const
+{
+	return from_json == rhs.from_json && string == rhs.string;
+}
+
+bool Value::NullData::operator==(const NullData&) const
+{
+	return true;
+}
+
+bool Value::ScalarData::operator==(const ScalarData& rhs) const
+{
+	if (scalar && rhs.scalar)
 	{
-		return map == rhs.map;
+		return *scalar == *rhs.scalar;
 	}
 
-	MapType map;
-	std::unordered_map<std::string, size_t> members;
-};
+	return !scalar && !rhs.scalar;
+}
 
-// Type::List
-struct ListData
+template <>
+void Value::set<StringType>(StringType&& value)
 {
-	bool operator==(const ListData& rhs) const
+	if (std::holds_alternative<EnumData>(_data))
 	{
-		return list == rhs.list;
+		std::get<EnumData>(_data) = std::move(value);
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		std::get<StringData>(_data).string = std::move(value);
+	}
+	else
+	{
+		throw std::logic_error("Invalid call to Value::set for StringType");
+	}
+}
+
+template <>
+void Value::set<BooleanType>(BooleanType value)
+{
+	if (!std::holds_alternative<BooleanType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for BooleanType");
 	}
 
-	ListType list;
-};
+	_data = { value };
+}
 
-// Type::String or Type::EnumValue
-struct StringOrEnumData
+template <>
+void Value::set<IntType>(IntType value)
 {
-	bool operator==(const StringOrEnumData& rhs) const
+	if (std::holds_alternative<FloatType>(_data))
 	{
-		return string == rhs.string && from_json == rhs.from_json;
+		// Coerce IntType to FloatType
+		_data = { static_cast<FloatType>(value) };
+		return;
 	}
 
-	StringType string;
-	bool from_json = false;
-};
-
-// Type::Scalar
-struct ScalarData
-{
-	bool operator==(const ScalarData& rhs) const
+	if (!std::holds_alternative<IntType>(_data))
 	{
-		return scalar == rhs.scalar;
+		throw std::logic_error("Invalid call to Value::set for IntType");
 	}
 
-	ScalarType scalar;
-};
+	_data = { value };
+}
 
-struct TypedData
-	: std::variant<std::optional<MapData>, std::optional<ListData>, std::optional<StringOrEnumData>,
-		  std::optional<ScalarData>, BooleanType, IntType, FloatType>
+template <>
+void Value::set<FloatType>(FloatType value)
 {
-};
+	if (!std::holds_alternative<FloatType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for FloatType");
+	}
+
+	_data = { value };
+}
+
+template <>
+void Value::set<ScalarType>(ScalarType&& value)
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for ScalarType");
+	}
+
+	_data = { ScalarData { std::make_unique<ScalarType>(std::move(value)) } };
+}
+
+template <>
+const MapType& Value::get<MapType>() const
+{
+	if (!std::holds_alternative<MapData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for MapType");
+	}
+
+	return std::get<MapData>(_data).map;
+}
+
+template <>
+const ListType& Value::get<ListType>() const
+{
+	if (!std::holds_alternative<ListType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for ListType");
+	}
+
+	return std::get<ListType>(_data);
+}
+
+template <>
+const StringType& Value::get<StringType>() const
+{
+	if (std::holds_alternative<EnumData>(_data))
+	{
+		return std::get<EnumData>(_data);
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		return std::get<StringData>(_data).string;
+	}
+
+	throw std::logic_error("Invalid call to Value::get for StringType");
+}
+
+template <>
+BooleanType Value::get<BooleanType>() const
+{
+	if (!std::holds_alternative<BooleanType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for BooleanType");
+	}
+
+	return std::get<BooleanType>(_data);
+}
+
+template <>
+IntType Value::get<IntType>() const
+{
+	if (!std::holds_alternative<IntType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for IntType");
+	}
+
+	return std::get<IntType>(_data);
+}
+
+template <>
+FloatType Value::get<FloatType>() const
+{
+	if (std::holds_alternative<IntType>(_data))
+	{
+		// Coerce IntType to FloatType
+		return static_cast<FloatType>(std::get<IntType>(_data));
+	}
+
+	if (!std::holds_alternative<FloatType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for FloatType");
+	}
+
+	return std::get<FloatType>(_data);
+}
+
+template <>
+const ScalarType& Value::get<ScalarType>() const
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	const auto& scalar = std::get<ScalarData>(_data).scalar;
+
+	if (!scalar)
+	{
+		throw std::logic_error("Invalid call to Value::get for ScalarType");
+	}
+
+	return *scalar;
+}
+
+template <>
+MapType Value::release<MapType>()
+{
+	if (!std::holds_alternative<MapData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for MapType");
+	}
+
+	auto& mapData = std::get<MapData>(_data);
+	MapType result = std::move(mapData.map);
+
+	mapData.members.clear();
+
+	return result;
+}
+
+template <>
+ListType Value::release<ListType>()
+{
+	if (!std::holds_alternative<ListType>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for ListType");
+	}
+
+	ListType result = std::move(std::get<ListType>(_data));
+
+	return result;
+}
+
+template <>
+StringType Value::release<StringType>()
+{
+	StringType result;
+
+	if (std::holds_alternative<EnumData>(_data))
+	{
+		result = std::move(std::get<EnumData>(_data));
+	}
+	else if (std::holds_alternative<StringData>(_data))
+	{
+		auto& stringData = std::get<StringData>(_data);
+
+		result = std::move(stringData.string);
+		stringData.from_json = false;
+	}
+	else
+	{
+		throw std::logic_error("Invalid call to Value::release for StringType");
+	}
+
+	return result;
+}
+
+template <>
+ScalarType Value::release<ScalarType>()
+{
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	auto scalar = std::move(std::get<ScalarData>(_data).scalar);
+
+	if (!scalar)
+	{
+		throw std::logic_error("Invalid call to Value::release for ScalarType");
+	}
+
+	ScalarType result = std::move(*scalar);
+
+	return result;
+}
 
 Value::Value(Type type /*= Type::Null*/)
-	: _type(type)
 {
 	switch (type)
 	{
 		case Type::Map:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<MapData>() });
+			_data = { MapData {} };
 			break;
 
 		case Type::List:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ListData>() });
+			_data = { ListType {} };
 			break;
 
 		case Type::String:
-		case Type::EnumValue:
-			_data =
-				std::make_unique<TypedData>(TypedData { std::make_optional<StringOrEnumData>() });
+			_data = { StringData {} };
 			break;
 
-		case Type::Scalar:
-			_data = std::make_unique<TypedData>(TypedData { std::make_optional<ScalarData>() });
+		case Type::Null:
+			_data = { NullData {} };
 			break;
 
 		case Type::Boolean:
-			_data = std::make_unique<TypedData>(TypedData { BooleanType { false } });
+			_data = { BooleanType { false } };
 			break;
 
 		case Type::Int:
-			_data = std::make_unique<TypedData>(TypedData { IntType { 0 } });
+			_data = { IntType { 0 } };
 			break;
 
 		case Type::Float:
-			_data = std::make_unique<TypedData>(TypedData { FloatType { 0.0 } });
+			_data = { FloatType { 0.0 } };
 			break;
 
-		default:
+		case Type::EnumValue:
+			_data = { EnumData {} };
+			break;
+
+		case Type::Scalar:
+			_data = { ScalarData {} };
 			break;
 	}
 }
@@ -104,58 +317,121 @@ Value::Value(Type type /*= Type::Null*/)
 Value::~Value()
 {
 	// The default destructor gets inlined and may use a different allocator to free Value's member
-	// variables than the graphqlservice module used to allocate them. So even though this could be
-	// omitted, declare it explicitly and define it in graphqlservice.
+	// variables than the graphqlresponse module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlresponse.
 }
 
 Value::Value(const char* value)
-	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(
-		  TypedData { StringOrEnumData { StringType { value }, false } }))
+	: _data(TypeData { StringData { StringType { value }, false } })
 {
 }
 
 Value::Value(StringType&& value)
-	: _type(Type::String)
-	, _data(std::make_unique<TypedData>(TypedData { StringOrEnumData { std::move(value), false } }))
+	: _data(TypeData { StringData { std::move(value), false } })
 {
 }
 
 Value::Value(BooleanType value)
-	: _type(Type::Boolean)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(TypeData { value })
 {
 }
 
 Value::Value(IntType value)
-	: _type(Type::Int)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(TypeData { value })
 {
 }
 
 Value::Value(FloatType value)
-	: _type(Type::Float)
-	, _data(std::make_unique<TypedData>(TypedData { value }))
+	: _data(TypeData { value })
 {
 }
 
 Value::Value(Value&& other) noexcept
-	: _type(other.type())
-	, _data(std::move(other._data))
+	: _data(std::move(other._data))
 {
 }
 
 Value::Value(const Value& other)
-	: _type(other.type())
-	, _data(std::make_unique<TypedData>(other._data ? *other._data : TypedData {}))
 {
+	switch (other.type())
+	{
+		case Type::Map:
+		{
+			MapData copy {};
+
+			copy.map.reserve(other.size());
+			for (const auto& entry : other)
+			{
+				copy.map.push_back({ entry.first, Value { entry.second } });
+			}
+
+			std::map<std::string_view, size_t> members;
+
+			for (const auto& entry : copy.map)
+			{
+				members[entry.first] = members.size();
+			}
+
+			copy.members.reserve(members.size());
+			std::transform(members.cbegin(),
+				members.cend(),
+				std::back_inserter(copy.members),
+				[&copy](const auto& entry) noexcept {
+					return entry.second;
+				});
+
+			_data = { std::move(copy) };
+			break;
+		}
+
+		case Type::List:
+		{
+			ListType copy {};
+
+			copy.reserve(other.size());
+			for (size_t i = 0; i < other.size(); ++i)
+			{
+				copy.push_back(Value { other[i] });
+			}
+
+			_data = { std::move(copy) };
+			break;
+		}
+
+		case Type::String:
+			_data = { StringData { other.get<StringType>(), other.maybe_enum() } };
+			break;
+
+		case Type::Null:
+			_data = { NullData {} };
+			break;
+
+		case Type::Boolean:
+			_data = { other.get<BooleanType>() };
+			break;
+
+		case Type::Int:
+			_data = { other.get<IntType>() };
+			break;
+
+		case Type::Float:
+			_data = { other.get<FloatType>() };
+			break;
+
+		case Type::EnumValue:
+			_data = { EnumData { other.get<StringType>() } };
+			break;
+
+		case Type::Scalar:
+			_data = { ScalarData { std::make_unique<ScalarType>(other.get<ScalarType>()) } };
+			break;
+	}
 }
 
 Value& Value::operator=(Value&& rhs) noexcept
 {
 	if (&rhs != this)
 	{
-		const_cast<Type&>(_type) = rhs._type;
 		_data = std::move(rhs._data);
 	}
 
@@ -164,12 +440,7 @@ Value& Value::operator=(Value&& rhs) noexcept
 
 bool Value::operator==(const Value& rhs) const noexcept
 {
-	if (rhs.type() != type())
-	{
-		return false;
-	}
-
-	return !_data || *_data == *rhs._data;
+	return _data == rhs._data;
 }
 
 bool Value::operator!=(const Value& rhs) const noexcept
@@ -179,20 +450,58 @@ bool Value::operator!=(const Value& rhs) const noexcept
 
 Type Value::type() const noexcept
 {
-	return _data ? _type : Type::Null;
+	// As long as the order of the variant alternatives matches the Type enum, we can cast the index
+	// to the Type in one step.
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Map), TypeData>,
+			MapData>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::List), TypeData>,
+			ListType>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::String), TypeData>,
+			StringData>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Boolean), TypeData>,
+			BooleanType>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Int), TypeData>,
+			IntType>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Float), TypeData>,
+			FloatType>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::EnumValue), TypeData>,
+			EnumData>,
+		"type mistmatch");
+	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Scalar), TypeData>,
+			ScalarData>,
+		"type mistmatch");
+
+	return static_cast<Type>(_data.index());
 }
 
 Value&& Value::from_json() noexcept
 {
-	std::get<std::optional<StringOrEnumData>>(*_data)->from_json = true;
+	if (std::holds_alternative<StringData>(_data))
+	{
+		std::get<StringData>(_data).from_json = true;
+	}
 
 	return std::move(*this);
 }
 
 bool Value::maybe_enum() const noexcept
 {
-	return type() == Type::EnumValue
-		|| (type() == Type::String && std::get<std::optional<StringOrEnumData>>(*_data)->from_json);
+	return std::holds_alternative<EnumData>(_data)
+		|| (std::holds_alternative<StringData>(_data) && std::get<StringData>(_data).from_json);
 }
 
 void Value::reserve(size_t count)
@@ -201,18 +510,16 @@ void Value::reserve(size_t count)
 	{
 		case Type::Map:
 		{
-			auto& mapData = std::get<std::optional<MapData>>(*_data);
+			auto& mapData = std::get<MapData>(_data);
 
-			mapData->members.reserve(count);
-			mapData->map.reserve(count);
+			mapData.members.reserve(count);
+			mapData.map.reserve(count);
 			break;
 		}
 
 		case Type::List:
 		{
-			auto& listData = std::get<std::optional<ListData>>(*_data);
-
-			listData->list.reserve(count);
+			std::get<ListType>(_data).reserve(count);
 			break;
 		}
 
@@ -227,16 +534,12 @@ size_t Value::size() const
 	{
 		case Type::Map:
 		{
-			const auto& mapData = std::get<std::optional<MapData>>(*_data);
-
-			return mapData->map.size();
+			return std::get<MapData>(_data).map.size();
 		}
 
 		case Type::List:
 		{
-			const auto& listData = std::get<std::optional<ListData>>(*_data);
-
-			return listData->list.size();
+			return std::get<ListType>(_data).size();
 		}
 
 		default:
@@ -246,61 +549,76 @@ size_t Value::size() const
 
 void Value::emplace_back(std::string&& name, Value&& value)
 {
-	if (type() != Type::Map)
+	if (!std::holds_alternative<MapData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::emplace_back for MapType");
 	}
 
-	auto& mapData = std::get<std::optional<MapData>>(*_data);
+	auto& mapData = std::get<MapData>(_data);
+	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
+		mapData.members.cend(),
+		std::nullopt,
+		[&mapData, &name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
+			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
+			return lhsName < rhsName;
+		});
 
-	if (mapData->members.find(name) != mapData->members.cend())
+	if (itr != itrEnd)
 	{
 		throw std::runtime_error("Duplicate Map member");
 	}
 
-	mapData->members.insert({ name, mapData->map.size() });
-	mapData->map.emplace_back(std::make_pair(std::move(name), std::move(value)));
+	mapData.map.emplace_back(std::make_pair(std::move(name), std::move(value)));
+	mapData.members.insert(itr, mapData.members.size());
 }
 
-MapType::const_iterator Value::find(const std::string& name) const
+MapType::const_iterator Value::find(std::string_view name) const
 {
-	if (type() != Type::Map)
+	if (!std::holds_alternative<MapData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::find for MapType");
 	}
 
-	const auto& mapData = std::get<std::optional<MapData>>(*_data);
-	const auto itr = mapData->members.find(name);
+	const auto& mapData = std::get<MapData>(_data);
+	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
+		mapData.members.cend(),
+		std::nullopt,
+		[&mapData, name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
+			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
+			return lhsName < rhsName;
+		});
 
-	if (itr == mapData->members.cend())
+	if (itr == itrEnd)
 	{
-		return mapData->map.cend();
+		return mapData.map.cend();
 	}
 
-	return mapData->map.cbegin() + itr->second;
+	return mapData.map.cbegin() + *itr;
 }
 
 MapType::const_iterator Value::begin() const
 {
-	if (type() != Type::Map)
+	if (!std::holds_alternative<MapData>(_data))
 	{
-		throw std::logic_error("Invalid call to Value::end for MapType");
+		throw std::logic_error("Invalid call to Value::begin for MapType");
 	}
 
-	return std::get<std::optional<MapData>>(*_data)->map.cbegin();
+	return std::get<MapData>(_data).map.cbegin();
 }
 
 MapType::const_iterator Value::end() const
 {
-	if (type() != Type::Map)
+	if (!std::holds_alternative<MapData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::end for MapType");
 	}
 
-	return std::get<std::optional<MapData>>(*_data)->map.cend();
+	return std::get<MapData>(_data).map.cend();
 }
 
-const Value& Value::operator[](const std::string& name) const
+const Value& Value::operator[](std::string_view name) const
 {
 	const auto itr = find(name);
 
@@ -314,226 +632,22 @@ const Value& Value::operator[](const std::string& name) const
 
 void Value::emplace_back(Value&& value)
 {
-	if (type() != Type::List)
+	if (!std::holds_alternative<ListType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
 	}
 
-	std::get<std::optional<ListData>>(*_data)->list.emplace_back(std::move(value));
+	std::get<ListType>(_data).emplace_back(std::move(value));
 }
 
 const Value& Value::operator[](size_t index) const
 {
-	if (type() != Type::List)
+	if (!std::holds_alternative<ListType>(_data))
 	{
-		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
+		throw std::logic_error("Invalid call to Value::operator[] for ListType");
 	}
 
-	return std::get<std::optional<ListData>>(*_data)->list.at(index);
-}
-
-template <>
-void Value::set<StringType>(StringType&& value)
-{
-	if (type() != Type::String && type() != Type::EnumValue)
-	{
-		throw std::logic_error("Invalid call to Value::set for StringType");
-	}
-
-	std::get<std::optional<StringOrEnumData>>(*_data)->string = std::move(value);
-}
-
-template <>
-void Value::set<BooleanType>(BooleanType value)
-{
-	if (type() != Type::Boolean)
-	{
-		throw std::logic_error("Invalid call to Value::set for BooleanType");
-	}
-
-	*_data = { value };
-}
-
-template <>
-void Value::set<IntType>(IntType value)
-{
-	if (type() == Type::Float)
-	{
-		// Coerce IntType to FloatType
-		*_data = { static_cast<FloatType>(value) };
-	}
-	else
-	{
-		if (type() != Type::Int)
-		{
-			throw std::logic_error("Invalid call to Value::set for IntType");
-		}
-
-		*_data = { value };
-	}
-}
-
-template <>
-void Value::set<FloatType>(FloatType value)
-{
-	if (type() != Type::Float)
-	{
-		throw std::logic_error("Invalid call to Value::set for FloatType");
-	}
-
-	*_data = { value };
-}
-
-template <>
-void Value::set<ScalarType>(ScalarType&& value)
-{
-	if (type() != Type::Scalar)
-	{
-		throw std::logic_error("Invalid call to Value::set for ScalarType");
-	}
-
-	*_data = { ScalarData { std::move(value) } };
-}
-
-template <>
-const MapType& Value::get<MapType>() const
-{
-	if (type() != Type::Map)
-	{
-		throw std::logic_error("Invalid call to Value::get for MapType");
-	}
-
-	return std::get<std::optional<MapData>>(*_data)->map;
-}
-
-template <>
-const ListType& Value::get<ListType>() const
-{
-	if (type() != Type::List)
-	{
-		throw std::logic_error("Invalid call to Value::get for ListType");
-	}
-
-	return std::get<std::optional<ListData>>(*_data)->list;
-}
-
-template <>
-const StringType& Value::get<StringType>() const
-{
-	if (type() != Type::String && type() != Type::EnumValue)
-	{
-		throw std::logic_error("Invalid call to Value::get for StringType");
-	}
-
-	return std::get<std::optional<StringOrEnumData>>(*_data)->string;
-}
-
-template <>
-BooleanType Value::get<BooleanType>() const
-{
-	if (type() != Type::Boolean)
-	{
-		throw std::logic_error("Invalid call to Value::get for BooleanType");
-	}
-
-	return std::get<BooleanType>(*_data);
-}
-
-template <>
-IntType Value::get<IntType>() const
-{
-	if (type() != Type::Int)
-	{
-		throw std::logic_error("Invalid call to Value::get for IntType");
-	}
-
-	return std::get<IntType>(*_data);
-}
-
-template <>
-FloatType Value::get<FloatType>() const
-{
-	if (type() == Type::Int)
-	{
-		// Coerce IntType to FloatType
-		return static_cast<FloatType>(std::get<IntType>(*_data));
-	}
-
-	if (type() != Type::Float)
-	{
-		throw std::logic_error("Invalid call to Value::get for FloatType");
-	}
-
-	return std::get<FloatType>(*_data);
-}
-
-template <>
-const ScalarType& Value::get<ScalarType>() const
-{
-	if (type() != Type::Scalar)
-	{
-		throw std::logic_error("Invalid call to Value::get for ScalarType");
-	}
-
-	return std::get<std::optional<ScalarData>>(*_data)->scalar;
-}
-
-template <>
-MapType Value::release<MapType>()
-{
-	if (type() != Type::Map)
-	{
-		throw std::logic_error("Invalid call to Value::release for MapType");
-	}
-
-	auto& mapData = std::get<std::optional<MapData>>(*_data);
-	MapType result = std::move(mapData->map);
-
-	mapData->members.clear();
-
-	return result;
-}
-
-template <>
-ListType Value::release<ListType>()
-{
-	if (type() != Type::List)
-	{
-		throw std::logic_error("Invalid call to Value::release for ListType");
-	}
-
-	ListType result = std::move(std::get<std::optional<ListData>>(*_data)->list);
-
-	return result;
-}
-
-template <>
-StringType Value::release<StringType>()
-{
-	if (type() != Type::String && type() != Type::EnumValue)
-	{
-		throw std::logic_error("Invalid call to Value::release for StringType");
-	}
-
-	auto& stringData = std::get<std::optional<StringOrEnumData>>(*_data);
-	StringType result = std::move(stringData->string);
-
-	stringData->from_json = false;
-
-	return result;
-}
-
-template <>
-ScalarType Value::release<ScalarType>()
-{
-	if (type() != Type::Scalar)
-	{
-		throw std::logic_error("Invalid call to Value::release for ScalarType");
-	}
-
-	ScalarType result = std::move(std::get<std::optional<ScalarData>>(*_data)->scalar);
-
-	return result;
+	return std::get<ListType>(_data).at(index);
 }
 
 } /* namespace graphql::response */

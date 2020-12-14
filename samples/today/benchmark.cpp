@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <iostream>
 #include <iterator>
+#include <sstream>
 #include <stdexcept>
 
 using namespace graphql;
@@ -59,48 +60,55 @@ int main(int argc, char** argv)
 
 	std::cout << "Created the service..." << std::endl;
 
-	try
+	const size_t iterations = [](const char* arg) noexcept -> size_t {
+		if (arg)
+		{
+			const int parsed = std::atoi(arg);
+
+			if (parsed > 0)
+			{
+				return static_cast<size_t>(parsed);
+			}
+		}
+
+		// Default to 100 iterations
+		return 100;
+	}((argc > 1) ? argv[1] : nullptr);
+
+	for (size_t i = 0; i < iterations; ++i)
 	{
-		peg::ast query;
-
-		if (argc > 1)
+		try
 		{
-			query = peg::parseFile(argv[1]);
-		}
-		else
-		{
-			std::istream_iterator<char> start { std::cin >> std::noskipws }, end {};
-			std::string input { start, end };
-
-			query = peg::parseString(std::move(input));
-		}
-
-		if (!query.root)
-		{
-			std::cerr << "Unknown error!" << std::endl;
-			std::cerr << std::endl;
-			return 1;
-		}
+			auto query = R"gql(query {
+				appointments {
+					pageInfo { hasNextPage }
+					edges {
+						node {
+							id
+							when
+							subject
+							isNow
+						}
+					}
+				}
+			})gql"_graphql;
 
 #ifdef NO_INTROSPECTION
-		// TODO: cherry-pick validation support without Introspection
-		query.validated = true;
+			// TODO: cherry-pick validation support without Introspection
+			query.validated = true;
 #endif // NO_INTROSPECTION
 
-		std::cout << "Executing query..." << std::endl;
+			std::cout << "Executing query..." << std::endl;
 
-		std::cout << response::toJSON(service
-										  ->resolve(nullptr,
-											  query,
-											  ((argc > 2) ? argv[2] : ""),
-											  response::Value(response::Type::Map))
-										  .get())
-				  << std::endl;
-	}
-	catch (const std::runtime_error& ex)
-	{
-		std::cerr << ex.what() << std::endl;
-		return 1;
+			std::cout << response::toJSON(
+				service->resolve(nullptr, query, "", response::Value(response::Type::Map)).get())
+					  << std::endl;
+		}
+		catch (const std::runtime_error& ex)
+		{
+			std::cerr << ex.what() << std::endl;
+			return 1;
+		}
 	}
 
 	return 0;

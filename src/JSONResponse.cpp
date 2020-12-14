@@ -11,8 +11,8 @@
 #include <rapidjson/writer.h>
 
 #include <limits>
-#include <stack>
 #include <stdexcept>
+#include <vector>
 
 namespace graphql::response {
 
@@ -112,14 +112,14 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 	ResponseHandler()
 	{
 		// Start with a single null value.
-		_responseStack.push({});
+		_responseStack.push_back({});
 	}
 
 	Value getResponse()
 	{
-		auto response = std::move(_responseStack.top());
+		auto response = std::move(_responseStack.back());
 
-		_responseStack.pop();
+		_responseStack.pop_back();
 
 		return response;
 	}
@@ -186,13 +186,13 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 
 	bool StartObject()
 	{
-		_responseStack.push(Value(Type::Map));
+		_responseStack.push_back(Value(Type::Map));
 		return true;
 	}
 
 	bool Key(const Ch* str, rapidjson::SizeType /*length*/, bool /*copy*/)
 	{
-		_keyStack.push(str);
+		_keyStack.push_back(str);
 		return true;
 	}
 
@@ -204,7 +204,7 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 
 	bool StartArray()
 	{
-		_responseStack.push(Value(Type::List));
+		_responseStack.push_back(Value(Type::List));
 		return true;
 	}
 
@@ -217,25 +217,25 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 private:
 	void setValue(Value&& value)
 	{
-		switch (_responseStack.top().type())
+		switch (_responseStack.back().type())
 		{
 			case Type::Map:
-				_responseStack.top().emplace_back(std::move(_keyStack.top()), std::move(value));
-				_keyStack.pop();
+				_responseStack.back().emplace_back(std::move(_keyStack.back()), std::move(value));
+				_keyStack.pop_back();
 				break;
 
 			case Type::List:
-				_responseStack.top().emplace_back(std::move(value));
+				_responseStack.back().emplace_back(std::move(value));
 				break;
 
 			default:
-				_responseStack.top() = std::move(value);
+				_responseStack.back() = std::move(value);
 				break;
 		}
 	}
 
-	std::stack<std::string> _keyStack;
-	std::stack<Value> _responseStack;
+	std::vector<std::string> _keyStack;
+	std::vector<Value> _responseStack;
 };
 
 Value parseJSON(const std::string& json)

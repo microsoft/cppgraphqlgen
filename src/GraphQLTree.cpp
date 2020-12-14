@@ -10,7 +10,6 @@
 #include <functional>
 #include <memory>
 #include <numeric>
-#include <stack>
 #include <tuple>
 
 namespace graphql {

@@ -83,8 +83,8 @@ tell which operation type it is without parsing the query and searching for
 a specific operation name, so it's hard to tell whether you should call
 `resolve` or `subscribe` when the request is received that way. To help with
 that, there's a public `Request::findOperationDefinition` method which returns
-the operation type as a `std::string` along with a pointer to the AST node for
+the operation type as a `std::string_view` along with a pointer to the AST node for
 the selected operation in the parsed query:
 ```cpp
-std::pair<std::string, const peg::ast_node*> findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
+std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(peg::ast& root, std::string_view operationName) const;
 ```
