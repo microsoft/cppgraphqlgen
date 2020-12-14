@@ -12,8 +12,19 @@
 #include <numeric>
 #include <tuple>
 
+using namespace std::literals;
+
 namespace graphql {
 namespace peg {
+
+std::string_view ast_node::unescaped_view() const
+{
+	return std::visit(
+		[](const auto& value) noexcept {
+			return std::string_view { value };
+		},
+		unescaped);
+}
 
 using namespace tao::graphqlpeg;
 
@@ -69,12 +80,18 @@ struct ast_selector<escaped_unicode> : std::true_type
 	{
 		if (n->has_content())
 		{
+			auto unescaped = std::visit(
+				[](auto&& unescaped) noexcept {
+					return std::string { std::move(unescaped) };
+				},
+				std::move(n->unescaped));
 			auto content = n->string_view();
 
-			if (unescape::utf8_append_utf32(n->unescaped,
+			if (unescape::utf8_append_utf32(unescaped,
 					unescape::unhex_string<uint32_t>(content.data() + 1,
 						content.data() + content.size())))
 			{
+				n->unescaped = std::move(unescaped);
 				return;
 			}
 		}
@@ -95,35 +112,35 @@ struct ast_selector<escaped_char> : std::true_type
 			switch (ch)
 			{
 				case '"':
-					n->unescaped = "\"";
+					n->unescaped = "\""sv;
 					return;
 
 				case '\\':
-					n->unescaped = "\\";
+					n->unescaped = "\\"sv;
 					return;
 
 				case '/':
-					n->unescaped = "/";
+					n->unescaped = "/"sv;
 					return;
 
 				case 'b':
-					n->unescaped = "\b";
+					n->unescaped = "\b"sv;
 					return;
 
 				case 'f':
-					n->unescaped = "\f";
+					n->unescaped = "\f"sv;
 					return;
 
 				case 'n':
-					n->unescaped = "\n";
+					n->unescaped = "\n"sv;
 					return;
 
 				case 'r':
-					n->unescaped = "\r";
+					n->unescaped = "\r"sv;
 					return;
 
 				case 't':
-					n->unescaped = "\t";
+					n->unescaped = "\t"sv;
 					return;
 
 				default:
@@ -149,7 +166,7 @@ struct ast_selector<block_escape_sequence> : std::true_type
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = R"bq(""")bq";
+		n->unescaped = R"bq(""")bq"sv;
 	}
 };
 
@@ -171,17 +188,21 @@ struct ast_selector<string_value> : std::true_type
 		{
 			if (n->children.size() > 1)
 			{
-				n->unescaped.reserve(std::accumulate(n->children.cbegin(),
+				std::string unescaped;
+
+				unescaped.reserve(std::accumulate(n->children.cbegin(),
 					n->children.cend(),
 					size_t(0),
 					[](size_t total, const std::unique_ptr<ast_node>& child) {
-						return total + child->unescaped.size();
+						return total + child->unescaped_view().size();
 					}));
 
 				for (const auto& child : n->children)
 				{
-					n->unescaped.append(child->unescaped);
+					unescaped.append(child->unescaped_view());
 				}
+
+				n->unescaped = std::move(unescaped);
 			}
 			else
 			{

@@ -71,7 +71,7 @@ ValidateArgumentValue::ValidateArgumentValue(response::FloatType value)
 {
 }
 
-ValidateArgumentValue::ValidateArgumentValue(response::StringType&& value)
+ValidateArgumentValue::ValidateArgumentValue(std::string_view value)
 	: data(std::move(value))
 {
 }
@@ -177,10 +177,10 @@ void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatVal
 
 void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	response::StringType value { stringValue.unescaped };
+	std::string_view value { stringValue.unescaped_view() };
 	auto position = stringValue.begin();
 
-	_argumentValue.value = std::make_unique<ValidateArgumentValue>(std::move(value));
+	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
 	_argumentValue.position = { position.line, position.column };
 }
 
@@ -1161,7 +1161,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 			else if (name == R"gql(String)gql"sv)
 			{
-				if (!std::holds_alternative<response::StringType>(argument.value->data))
+				if (!std::holds_alternative<std::string_view>(argument.value->data))
 				{
 					_errors.push_back({ "Expected String value", argument.position });
 					return false;
@@ -1169,11 +1169,11 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 			else if (name == R"gql(ID)gql"sv)
 			{
-				if (std::holds_alternative<response::StringType>(argument.value->data))
+				if (std::holds_alternative<std::string_view>(argument.value->data))
 				{
 					try
 					{
-						const auto& value = std::get<response::StringType>(argument.value->data);
+						const auto value = std::get<std::string_view>(argument.value->data);
 						auto decoded = Base64::fromBase64(value.data(), value.size());
 
 						return true;

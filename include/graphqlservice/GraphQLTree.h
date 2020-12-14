@@ -12,6 +12,7 @@
 #include <tao/pegtl/contrib/parse_tree.hpp>
 
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -21,7 +22,9 @@ using namespace tao::graphqlpeg;
 
 struct ast_node : parse_tree::basic_node<ast_node>
 {
-	std::string unescaped;
+	std::string_view unescaped_view() const;
+
+	std::variant<std::string_view, std::string> unescaped;
 };
 
 struct ast_input

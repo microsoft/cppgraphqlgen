@@ -812,7 +812,7 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -874,7 +874,7 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -931,7 +931,7 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -987,7 +987,7 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -1029,7 +1029,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 				[&value](const peg::ast_node& description) {
 					if (!description.children.empty())
 					{
-						value.description = description.children.front()->unescaped;
+						value.description = description.children.front()->unescaped_view();
 					}
 				});
 
@@ -1063,7 +1063,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 												peg::on_first_child<peg::string_value>(argument,
 													[&value](const peg::ast_node& argumentValue) {
 														value.deprecationReason =
-															argumentValue.unescaped;
+															argumentValue.unescaped_view();
 													});
 											}
 										});
@@ -1092,7 +1092,7 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -1115,7 +1115,7 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 		[&description](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				description = child.children.front()->unescaped;
+				description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -1164,7 +1164,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 		[&directive](const peg::ast_node& child) {
 			if (!child.children.empty())
 			{
-				directive.description = child.children.front()->unescaped;
+				directive.description = child.children.front()->unescaped_view();
 			}
 		});
 
@@ -1242,7 +1242,7 @@ OutputFieldList Generator::getOutputFields(
 			}
 			else if (child->is_type<peg::description>() && !child->children.empty())
 			{
-				field.description = child->children.front()->unescaped;
+				field.description = child->children.front()->unescaped_view();
 			}
 			else if (child->is_type<peg::directives>())
 			{
@@ -1275,7 +1275,7 @@ OutputFieldList Generator::getOutputFields(
 												peg::on_first_child<peg::string_value>(argument,
 													[&deprecationReason](
 														const peg::ast_node& reason) {
-														deprecationReason = reason.unescaped;
+														deprecationReason = reason.unescaped_view();
 													});
 											}
 										});
@@ -1330,7 +1330,7 @@ InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::
 			}
 			else if (child->is_type<peg::description>() && !child->children.empty())
 			{
-				field.description = child->children.front()->unescaped;
+				field.description = child->children.front()->unescaped_view();
 			}
 		}
 
@@ -1455,7 +1455,7 @@ void Generator::DefaultValueVisitor::visitFloatValue(const peg::ast_node& floatV
 
 void Generator::DefaultValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = response::Value(std::string(stringValue.unescaped));
+	_value = response::Value(std::string { stringValue.unescaped_view() });
 }
 
 void Generator::DefaultValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
@@ -2593,7 +2593,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
+						   << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
