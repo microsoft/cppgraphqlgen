@@ -65,8 +65,8 @@ std::future<service::ResolverResult> CompleteTaskPayload::resolve_typename(servi
 void AddCompleteTaskPayloadDetails(std::shared_ptr<schema::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeCompleteTaskPayload->AddFields({
-		std::make_shared<schema::Field>(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Task")),
-		std::make_shared<schema::Field>(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),
+		schema::Field::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 }
 

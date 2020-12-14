@@ -65,8 +65,8 @@ std::future<service::ResolverResult> AppointmentEdge::resolve_typename(service::
 void AddAppointmentEdgeDetails(std::shared_ptr<schema::ObjectType> typeAppointmentEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeAppointmentEdge->AddFields({
-		std::make_shared<schema::Field>(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("Appointment")),
-		std::make_shared<schema::Field>(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Appointment")),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
 	});
 }
 

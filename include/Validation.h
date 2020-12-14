@@ -11,7 +11,11 @@
 
 namespace graphql::service {
 
-using ValidateType = std::shared_ptr<schema::BaseType>;
+using ValidateType = std::optional<std::reference_wrapper<const schema::BaseType>>;
+using SharedType = std::shared_ptr<const schema::BaseType>;
+
+SharedType getSharedType(const ValidateType& type) noexcept;
+ValidateType getValidateType(const SharedType& type) noexcept;
 
 struct ValidateArgument
 {
@@ -122,25 +126,26 @@ using ValidateFieldArguments = std::map<std::string_view, ValidateArgumentValueP
 
 struct ValidateField
 {
-	ValidateField(std::string&& returnType, std::optional<std::string_view> objectType,
-		std::string_view fieldName, ValidateFieldArguments&& arguments);
+	ValidateField(ValidateType&& returnType, ValidateType&& objectType, std::string_view fieldName,
+		ValidateFieldArguments&& arguments);
 
 	bool operator==(const ValidateField& other) const;
 
-	std::string returnType;
-	std::optional<std::string_view> objectType;
+	ValidateType returnType;
+	ValidateType objectType;
 	std::string_view fieldName;
 	ValidateFieldArguments arguments;
 };
 
-using ValidateTypeKinds = std::map<std::string_view, introspection::TypeKind>;
+using ValidateTypes = std::map<std::string_view, ValidateType>;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
 class ValidateVariableTypeVisitor
 {
 public:
-	ValidateVariableTypeVisitor(const std::shared_ptr<schema::Schema>& schema, const ValidateTypeKinds& typeKinds);
+	ValidateVariableTypeVisitor(
+		const std::shared_ptr<schema::Schema>& schema, const ValidateTypes& types);
 
 	void visit(const peg::ast_node& typeName);
 
@@ -153,7 +158,7 @@ private:
 	void visitNonNullType(const peg::ast_node& nonNullType);
 
 	const std::shared_ptr<schema::Schema>& _schema;
-	const ValidateTypeKinds& _typeKinds;
+	const ValidateTypes& _types;
 
 	bool _isInputType = false;
 	ValidateType _variableType;
@@ -171,7 +176,8 @@ public:
 	std::vector<schema_error> getStructuredErrors();
 
 private:
-	static ValidateTypeFieldArguments getArguments(const std::vector<std::shared_ptr<schema::InputValue>>& args);
+	static ValidateTypeFieldArguments getArguments(
+		const std::vector<std::shared_ptr<const schema::InputValue>>& args);
 
 	using FieldTypes = std::map<std::string_view, ValidateTypeField>;
 	using TypeFields = std::map<std::string_view, FieldTypes>;
@@ -179,8 +185,6 @@ private:
 	using InputTypeFields = std::map<std::string_view, InputFieldTypes>;
 	using EnumValues = std::map<std::string_view, std::set<std::string_view>>;
 
-	std::optional<introspection::TypeKind> getTypeKind(std::string_view name) const;
-	std::optional<introspection::TypeKind> getScopedTypeKind() const;
 	constexpr bool isScalarType(introspection::TypeKind kind);
 
 	bool matchesScopedType(std::string_view name) const;
@@ -190,10 +194,9 @@ private:
 	static const ValidateType& getValidateFieldType(const FieldTypes::mapped_type& value);
 	static const ValidateType& getValidateFieldType(const InputFieldTypes::mapped_type& value);
 	template <class _FieldTypes>
-	static std::string_view getFieldType(const _FieldTypes& fields, std::string_view name);
+	static ValidateType getFieldType(const _FieldTypes& fields, std::string_view name);
 	template <class _FieldTypes>
-	static std::string getWrappedFieldType(const _FieldTypes& fields, std::string_view name);
-	static std::string getWrappedFieldType(const ValidateType& returnType);
+	static ValidateType getWrappedFieldType(const _FieldTypes& fields, std::string_view name);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -215,7 +218,6 @@ private:
 	const std::shared_ptr<schema::Schema> _schema;
 	std::vector<schema_error> _errors;
 
-	using OperationTypes = std::map<std::string_view, std::string_view>;
 	using Directives = std::map<std::string_view, ValidateDirective>;
 	using ExecutableNodes = std::map<std::string_view, const peg::ast_node&>;
 	using FragmentSet = std::unordered_set<std::string_view>;
@@ -227,8 +229,8 @@ private:
 	using VariableSet = std::set<std::string_view>;
 
 	// These members store Introspection schema information which does not change between queries.
-	OperationTypes _operationTypes;
-	ValidateTypeKinds _typeKinds;
+	ValidateTypes _operationTypes;
+	ValidateTypes _types;
 	MatchingTypes _matchingTypes;
 	Directives _directives;
 	EnumValues _enumValues;
@@ -249,7 +251,7 @@ private:
 	size_t _fieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
-	std::string_view _scopedType;
+	ValidateType _scopedType;
 	std::map<std::string_view, ValidateField> _selectionFields;
 };
 

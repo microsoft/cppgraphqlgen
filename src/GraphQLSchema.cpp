@@ -15,23 +15,23 @@ Schema::Schema(bool noIntrospection)
 
 void Schema::AddQueryType(std::shared_ptr<ObjectType> query)
 {
-	_query = std::move(query);
+	_query = query;
 }
 
 void Schema::AddMutationType(std::shared_ptr<ObjectType> mutation)
 {
-	_mutation = std::move(mutation);
+	_mutation = mutation;
 }
 
 void Schema::AddSubscriptionType(std::shared_ptr<ObjectType> subscription)
 {
-	_subscription = std::move(subscription);
+	_subscription = subscription;
 }
 
 void Schema::AddType(std::string_view name, std::shared_ptr<BaseType> type)
 {
 	_typeMap[name] = _types.size();
-	_types.push_back({ name, std::move(type) });
+	_types.push_back({ name, type });
 }
 
 bool Schema::supportsIntrospection() const noexcept
@@ -39,7 +39,7 @@ bool Schema::supportsIntrospection() const noexcept
 	return !_noIntrospection;
 }
 
-const std::shared_ptr<BaseType>& Schema::LookupType(std::string_view name) const
+const std::shared_ptr<const BaseType>& Schema::LookupType(std::string_view name) const
 {
 	auto itr = _typeMap.find(name);
 
@@ -60,16 +60,15 @@ const std::shared_ptr<BaseType>& Schema::LookupType(std::string_view name) const
 	return _types[itr->second].second;
 }
 
-const std::shared_ptr<BaseType>& Schema::WrapType(
-	introspection::TypeKind kind, const std::shared_ptr<BaseType>& ofType)
+const std::shared_ptr<const BaseType>& Schema::WrapType(
+	introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType)
 {
 	auto& wrappers = (kind == introspection::TypeKind::LIST) ? _listWrappers : _nonNullWrappers;
 	auto itr = wrappers.find(ofType);
 
 	if (itr == wrappers.cend())
 	{
-		std::tie(itr, std::ignore) =
-			wrappers.insert({ ofType, std::make_shared<WrapperType>(kind, ofType) });
+		std::tie(itr, std::ignore) = wrappers.insert({ ofType, WrapperType::Make(kind, ofType) });
 	}
 
 	return itr->second;
@@ -80,28 +79,28 @@ void Schema::AddDirective(std::shared_ptr<Directive> directive)
 	_directives.emplace_back(std::move(directive));
 }
 
-const std::vector<std::pair<std::string_view, std::shared_ptr<BaseType>>>& Schema::types()
+const std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>>& Schema::types()
 	const noexcept
 {
 	return _types;
 }
 
-const std::shared_ptr<ObjectType>& Schema::queryType() const noexcept
+const std::shared_ptr<const ObjectType>& Schema::queryType() const noexcept
 {
 	return _query;
 }
 
-const std::shared_ptr<ObjectType>& Schema::mutationType() const noexcept
+const std::shared_ptr<const ObjectType>& Schema::mutationType() const noexcept
 {
 	return _mutation;
 }
 
-const std::shared_ptr<ObjectType>& Schema::subscriptionType() const noexcept
+const std::shared_ptr<const ObjectType>& Schema::subscriptionType() const noexcept
 {
 	return _subscription;
 }
 
-const std::vector<std::shared_ptr<Directive>>& Schema::directives() const noexcept
+const std::vector<std::shared_ptr<const Directive>>& Schema::directives() const noexcept
 {
 	return _directives;
 }
@@ -127,45 +126,56 @@ std::string_view BaseType::description() const noexcept
 	return _description;
 }
 
-const std::vector<std::shared_ptr<Field>>& BaseType::fields() const noexcept
+const std::vector<std::shared_ptr<const Field>>& BaseType::fields() const noexcept
 {
-	static const std::vector<std::shared_ptr<Field>> defaultValue {};
+	static const std::vector<std::shared_ptr<const Field>> defaultValue {};
 	return defaultValue;
 }
 
-const std::vector<std::shared_ptr<InterfaceType>>& BaseType::interfaces() const noexcept
+const std::vector<std::shared_ptr<const InterfaceType>>& BaseType::interfaces() const noexcept
 {
-	static const std::vector<std::shared_ptr<InterfaceType>> defaultValue {};
+	static const std::vector<std::shared_ptr<const InterfaceType>> defaultValue {};
 	return defaultValue;
 }
 
-const std::vector<std::weak_ptr<BaseType>>& BaseType::possibleTypes() const noexcept
+const std::vector<std::weak_ptr<const BaseType>>& BaseType::possibleTypes() const noexcept
 {
-	static const std::vector<std::weak_ptr<BaseType>> defaultValue {};
+	static const std::vector<std::weak_ptr<const BaseType>> defaultValue {};
 	return defaultValue;
 }
 
-const std::vector<std::shared_ptr<EnumValue>>& BaseType::enumValues() const noexcept
+const std::vector<std::shared_ptr<const EnumValue>>& BaseType::enumValues() const noexcept
 {
-	static const std::vector<std::shared_ptr<EnumValue>> defaultValue {};
+	static const std::vector<std::shared_ptr<const EnumValue>> defaultValue {};
 	return defaultValue;
 }
 
-const std::vector<std::shared_ptr<InputValue>>& BaseType::inputFields() const noexcept
+const std::vector<std::shared_ptr<const InputValue>>& BaseType::inputFields() const noexcept
 {
-	static const std::vector<std::shared_ptr<InputValue>> defaultValue {};
+	static const std::vector<std::shared_ptr<const InputValue>> defaultValue {};
 	return defaultValue;
 }
 
-const std::weak_ptr<BaseType>& BaseType::ofType() const noexcept
+const std::weak_ptr<const BaseType>& BaseType::ofType() const noexcept
 {
-	static const std::weak_ptr<BaseType> defaultValue;
+	static const std::weak_ptr<const BaseType> defaultValue;
 	return defaultValue;
 }
 
-ScalarType::ScalarType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::SCALAR, description)
-	, _name(name)
+struct ScalarType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<ScalarType> ScalarType::Make(std::string_view name, std::string_view description)
+{
+	return std::make_shared<ScalarType>(init { name, description });
+}
+
+ScalarType::ScalarType(init&& params)
+	: BaseType(introspection::TypeKind::SCALAR, params.description)
+	, _name(params.name)
 {
 }
 
@@ -174,25 +184,40 @@ std::string_view ScalarType::name() const noexcept
 	return _name;
 }
 
-ObjectType::ObjectType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::OBJECT, description)
-	, _name(name)
+struct ObjectType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<ObjectType> ObjectType::Make(std::string_view name, std::string_view description)
+{
+	return std::make_shared<ObjectType>(init { name, description });
+}
+
+ObjectType::ObjectType(init&& params)
+	: BaseType(introspection::TypeKind::OBJECT, params.description)
+	, _name(params.name)
 {
 }
 
-void ObjectType::AddInterfaces(std::vector<std::shared_ptr<InterfaceType>> interfaces)
+void ObjectType::AddInterfaces(
+	std::initializer_list<std::shared_ptr<const InterfaceType>> interfaces)
 {
-	_interfaces = std::move(interfaces);
+	_interfaces.resize(interfaces.size());
+	std::copy(interfaces.begin(), interfaces.end(), _interfaces.begin());
 
-	for (const auto& interface : _interfaces)
+	for (const auto& interface : interfaces)
 	{
-		interface->AddPossibleType(std::static_pointer_cast<ObjectType>(shared_from_this()));
+		std::const_pointer_cast<InterfaceType>(interface)->AddPossibleType(
+			std::static_pointer_cast<ObjectType>(shared_from_this()));
 	}
 }
 
-void ObjectType::AddFields(std::vector<std::shared_ptr<Field>> fields)
+void ObjectType::AddFields(std::initializer_list<std::shared_ptr<Field>> fields)
 {
-	_fields = std::move(fields);
+	_fields.resize(fields.size());
+	std::copy(fields.begin(), fields.end(), _fields.begin());
 }
 
 std::string_view ObjectType::name() const noexcept
@@ -200,19 +225,31 @@ std::string_view ObjectType::name() const noexcept
 	return _name;
 }
 
-const std::vector<std::shared_ptr<Field>>& ObjectType::fields() const noexcept
+const std::vector<std::shared_ptr<const Field>>& ObjectType::fields() const noexcept
 {
 	return _fields;
 }
 
-const std::vector<std::shared_ptr<InterfaceType>>& ObjectType::interfaces() const noexcept
+const std::vector<std::shared_ptr<const InterfaceType>>& ObjectType::interfaces() const noexcept
 {
 	return _interfaces;
 }
 
-InterfaceType::InterfaceType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::INTERFACE, description)
-	, _name(name)
+struct InterfaceType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<InterfaceType> InterfaceType::Make(
+	std::string_view name, std::string_view description)
+{
+	return std::make_shared<InterfaceType>(init { name, description });
+}
+
+InterfaceType::InterfaceType(init&& params)
+	: BaseType(introspection::TypeKind::INTERFACE, params.description)
+	, _name(params.name)
 {
 }
 
@@ -221,9 +258,10 @@ void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
 	_possibleTypes.push_back(possibleType);
 }
 
-void InterfaceType::AddFields(std::vector<std::shared_ptr<Field>> fields)
+void InterfaceType::AddFields(std::initializer_list<std::shared_ptr<Field>> fields)
 {
-	_fields = std::move(fields);
+	_fields.resize(fields.size());
+	std::copy(fields.begin(), fields.end(), _fields.begin());
 }
 
 std::string_view InterfaceType::name() const noexcept
@@ -231,25 +269,37 @@ std::string_view InterfaceType::name() const noexcept
 	return _name;
 }
 
-const std::vector<std::shared_ptr<Field>>& InterfaceType::fields() const noexcept
+const std::vector<std::shared_ptr<const Field>>& InterfaceType::fields() const noexcept
 {
 	return _fields;
 }
 
-const std::vector<std::weak_ptr<BaseType>>& InterfaceType::possibleTypes() const noexcept
+const std::vector<std::weak_ptr<const BaseType>>& InterfaceType::possibleTypes() const noexcept
 {
 	return _possibleTypes;
 }
 
-UnionType::UnionType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::UNION, description)
-	, _name(name)
+struct UnionType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<UnionType> UnionType::Make(std::string_view name, std::string_view description)
+{
+	return std::make_shared<UnionType>(init { name, description });
+}
+
+UnionType::UnionType(init&& params)
+	: BaseType(introspection::TypeKind::UNION, params.description)
+	, _name(params.name)
 {
 }
 
-void UnionType::AddPossibleTypes(std::vector<std::weak_ptr<BaseType>> possibleTypes)
+void UnionType::AddPossibleTypes(std::initializer_list<std::weak_ptr<const BaseType>> possibleTypes)
 {
-	_possibleTypes = std::move(possibleTypes);
+	_possibleTypes.resize(possibleTypes.size());
+	std::copy(possibleTypes.begin(), possibleTypes.end(), _possibleTypes.begin());
 }
 
 std::string_view UnionType::name() const noexcept
@@ -257,26 +307,37 @@ std::string_view UnionType::name() const noexcept
 	return _name;
 }
 
-const std::vector<std::weak_ptr<BaseType>>& UnionType::possibleTypes() const noexcept
+const std::vector<std::weak_ptr<const BaseType>>& UnionType::possibleTypes() const noexcept
 {
 	return _possibleTypes;
 }
 
-EnumType::EnumType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::ENUM, description)
-	, _name(name)
+struct EnumType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<EnumType> EnumType::Make(std::string_view name, std::string_view description)
+{
+	return std::make_shared<EnumType>(init { name, description });
+}
+
+EnumType::EnumType(init&& params)
+	: BaseType(introspection::TypeKind::ENUM, params.description)
+	, _name(params.name)
 {
 }
 
-void EnumType::AddEnumValues(std::vector<EnumValueType> enumValues)
+void EnumType::AddEnumValues(std::initializer_list<EnumValueType> enumValues)
 {
-	_enumValues.reserve(_enumValues.size() + enumValues.size());
-
-	for (auto& value : enumValues)
-	{
-		_enumValues.push_back(
-			std::make_shared<EnumValue>(value.value, value.description, value.deprecationReason));
-	}
+	_enumValues.resize(enumValues.size());
+	std::transform(enumValues.begin(),
+		enumValues.end(),
+		_enumValues.begin(),
+		[](const auto& value) {
+			return EnumValue::Make(value.value, value.description, value.deprecationReason);
+		});
 }
 
 std::string_view EnumType::name() const noexcept
@@ -284,20 +345,33 @@ std::string_view EnumType::name() const noexcept
 	return _name;
 }
 
-const std::vector<std::shared_ptr<EnumValue>>& EnumType::enumValues() const noexcept
+const std::vector<std::shared_ptr<const EnumValue>>& EnumType::enumValues() const noexcept
 {
 	return _enumValues;
 }
 
-InputObjectType::InputObjectType(std::string_view name, std::string_view description)
-	: BaseType(introspection::TypeKind::INPUT_OBJECT, description)
-	, _name(name)
+struct InputObjectType::init
+{
+	std::string_view name;
+	std::string_view description;
+};
+
+std::shared_ptr<InputObjectType> InputObjectType::Make(
+	std::string_view name, std::string_view description)
+{
+	return std::make_shared<InputObjectType>(init { name, description });
+}
+
+InputObjectType::InputObjectType(init&& params)
+	: BaseType(introspection::TypeKind::INPUT_OBJECT, params.description)
+	, _name(params.name)
 {
 }
 
-void InputObjectType::AddInputValues(std::vector<std::shared_ptr<InputValue>> inputValues)
+void InputObjectType::AddInputValues(std::initializer_list<std::shared_ptr<InputValue>> inputValues)
 {
-	_inputValues = std::move(inputValues);
+	_inputValues.resize(inputValues.size());
+	std::copy(inputValues.begin(), inputValues.end(), _inputValues.begin());
 }
 
 std::string_view InputObjectType::name() const noexcept
@@ -305,30 +379,61 @@ std::string_view InputObjectType::name() const noexcept
 	return _name;
 }
 
-const std::vector<std::shared_ptr<InputValue>>& InputObjectType::inputFields() const noexcept
+const std::vector<std::shared_ptr<const InputValue>>& InputObjectType::inputFields() const noexcept
 {
 	return _inputValues;
 }
 
-WrapperType::WrapperType(introspection::TypeKind kind, const std::shared_ptr<BaseType>& ofType)
-	: BaseType(kind, std::string_view())
-	, _ofType(ofType)
+struct WrapperType::init
+{
+	introspection::TypeKind kind;
+	const std::shared_ptr<const BaseType>& ofType;
+};
+
+std::shared_ptr<WrapperType> WrapperType::Make(
+	introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType)
+{
+	return std::make_shared<WrapperType>(init { kind, ofType });
+}
+
+WrapperType::WrapperType(init&& params)
+	: BaseType(params.kind, std::string_view())
+	, _ofType(params.ofType)
 {
 }
 
-const std::weak_ptr<BaseType>& WrapperType::ofType() const noexcept
+const std::weak_ptr<const BaseType>& WrapperType::ofType() const noexcept
 {
 	return _ofType;
 }
 
-Field::Field(std::string_view name, std::string_view description,
-	std::optional<std::string_view> deprecationReason,
-	std::vector<std::shared_ptr<InputValue>>&& args, const std::shared_ptr<BaseType>& type)
-	: _name(name)
-	, _description(description)
-	, _deprecationReason(deprecationReason)
-	, _args(std::move(args))
-	, _type(type)
+struct Field::init
+{
+	std::string_view name;
+	std::string_view description;
+	std::optional<std::string_view> deprecationReason;
+	const std::shared_ptr<const BaseType>& type;
+	std::vector<std::shared_ptr<const InputValue>> args;
+};
+
+std::shared_ptr<Field> Field::Make(std::string_view name, std::string_view description,
+	std::optional<std::string_view> deprecationReason, const std::shared_ptr<const BaseType>& type,
+	std::initializer_list<std::shared_ptr<InputValue>> args)
+{
+	init params { name, description, deprecationReason, type };
+
+	params.args.resize(args.size());
+	std::copy(args.begin(), args.end(), params.args.begin());
+
+	return std::make_shared<Field>(std::move(params));
+}
+
+Field::Field(init&& params)
+	: _name(params.name)
+	, _description(params.description)
+	, _deprecationReason(params.deprecationReason)
+	, _type(params.type)
+	, _args(std::move(params.args))
 {
 }
 
@@ -342,12 +447,12 @@ std::string_view Field::description() const noexcept
 	return _description;
 }
 
-const std::vector<std::shared_ptr<InputValue>>& Field::args() const noexcept
+const std::vector<std::shared_ptr<const InputValue>>& Field::args() const noexcept
 {
 	return _args;
 }
 
-const std::weak_ptr<BaseType>& Field::type() const noexcept
+const std::weak_ptr<const BaseType>& Field::type() const noexcept
 {
 	return _type;
 }
@@ -357,12 +462,25 @@ const std::optional<std::string_view>& Field::deprecationReason() const noexcept
 	return _deprecationReason;
 }
 
-InputValue::InputValue(std::string_view name, std::string_view description,
-	const std::shared_ptr<BaseType>& type, std::string_view defaultValue)
-	: _name(name)
-	, _description(description)
-	, _type(type)
-	, _defaultValue(defaultValue)
+struct InputValue::init
+{
+	std::string_view name;
+	std::string_view description;
+	const std::shared_ptr<const BaseType>& type;
+	std::string_view defaultValue;
+};
+
+std::shared_ptr<InputValue> InputValue::Make(std::string_view name, std::string_view description,
+	const std::shared_ptr<const BaseType>& type, std::string_view defaultValue)
+{
+	return std::make_shared<InputValue>(init { name, description, type, defaultValue });
+}
+
+InputValue::InputValue(init&& params)
+	: _name(params.name)
+	, _description(params.description)
+	, _type(params.type)
+	, _defaultValue(params.defaultValue)
 {
 }
 
@@ -376,7 +494,7 @@ std::string_view InputValue::description() const noexcept
 	return _description;
 }
 
-const std::weak_ptr<BaseType>& InputValue::type() const noexcept
+const std::weak_ptr<const BaseType>& InputValue::type() const noexcept
 {
 	return _type;
 }
@@ -386,11 +504,23 @@ std::string_view InputValue::defaultValue() const noexcept
 	return _defaultValue;
 }
 
-EnumValue::EnumValue(std::string_view name, std::string_view description,
+struct EnumValue::init
+{
+	std::string_view name;
+	std::string_view description;
+	std::optional<std::string_view> deprecationReason;
+};
+
+std::shared_ptr<EnumValue> EnumValue::Make(std::string_view name, std::string_view description,
 	std::optional<std::string_view> deprecationReason)
-	: _name(name)
-	, _description(description)
-	, _deprecationReason(deprecationReason)
+{
+	return std::make_shared<EnumValue>(init { name, description, deprecationReason });
+}
+
+EnumValue::EnumValue(init&& params)
+	: _name(params.name)
+	, _description(params.description)
+	, _deprecationReason(params.deprecationReason)
 {
 }
 
@@ -409,13 +539,34 @@ const std::optional<std::string_view>& EnumValue::deprecationReason() const noex
 	return _deprecationReason;
 }
 
-Directive::Directive(std::string_view name, std::string_view description,
-	std::vector<introspection::DirectiveLocation>&& locations,
-	std::vector<std::shared_ptr<InputValue>>&& args)
-	: _name(name)
-	, _description(description)
-	, _locations(std::move(locations))
-	, _args(std::move(args))
+struct Directive::init
+{
+	std::string_view name;
+	std::string_view description;
+	std::vector<introspection::DirectiveLocation> locations;
+	std::vector<std::shared_ptr<const InputValue>> args;
+};
+
+std::shared_ptr<Directive> Directive::Make(std::string_view name, std::string_view description,
+	std::initializer_list<introspection::DirectiveLocation> locations,
+	std::initializer_list<std::shared_ptr<InputValue>> args)
+{
+	init params { name, description };
+
+	params.locations.resize(locations.size());
+	std::copy(locations.begin(), locations.end(), params.locations.begin());
+
+	params.args.resize(args.size());
+	std::copy(args.begin(), args.end(), params.args.begin());
+
+	return std::make_shared<Directive>(std::move(params));
+}
+
+Directive::Directive(init&& params)
+	: _name(params.name)
+	, _description(params.description)
+	, _locations(std::move(params.locations))
+	, _args(std::move(params.args))
 {
 }
 
@@ -434,7 +585,7 @@ const std::vector<introspection::DirectiveLocation>& Directive::locations() cons
 	return _locations;
 }
 
-const std::vector<std::shared_ptr<InputValue>>& Directive::args() const noexcept
+const std::vector<std::shared_ptr<const InputValue>>& Directive::args() const noexcept
 {
 	return _args;
 }

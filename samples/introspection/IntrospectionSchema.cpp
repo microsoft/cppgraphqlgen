@@ -556,26 +556,26 @@ std::future<service::ResolverResult> Directive::resolve_typename(service::Resolv
 
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
-	schema->AddType(R"gql(Boolean)gql"sv, std::make_shared<schema::ScalarType>(R"gql(Boolean)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(Float)gql"sv, std::make_shared<schema::ScalarType>(R"gql(Float)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(ID)gql"sv, std::make_shared<schema::ScalarType>(R"gql(ID)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(Int)gql"sv, std::make_shared<schema::ScalarType>(R"gql(Int)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(String)gql"sv, std::make_shared<schema::ScalarType>(R"gql(String)gql"sv, R"md(Built-in type)md"));
-	auto typeTypeKind = std::make_shared<schema::EnumType>(R"gql(__TypeKind)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Boolean)gql"sv, schema::ScalarType::Make(R"gql(Boolean)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(Float)gql"sv, schema::ScalarType::Make(R"gql(Float)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(ID)gql"sv, schema::ScalarType::Make(R"gql(ID)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(Int)gql"sv, schema::ScalarType::Make(R"gql(Int)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(String)gql"sv, schema::ScalarType::Make(R"gql(String)gql"sv, R"md(Built-in type)md"));
+	auto typeTypeKind = schema::EnumType::Make(R"gql(__TypeKind)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__TypeKind)gql"sv, typeTypeKind);
-	auto typeDirectiveLocation = std::make_shared<schema::EnumType>(R"gql(__DirectiveLocation)gql"sv, R"md()md"sv);
+	auto typeDirectiveLocation = schema::EnumType::Make(R"gql(__DirectiveLocation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__DirectiveLocation)gql"sv, typeDirectiveLocation);
-	auto typeSchema = std::make_shared<schema::ObjectType>(R"gql(__Schema)gql"sv, R"md()md");
+	auto typeSchema = schema::ObjectType::Make(R"gql(__Schema)gql"sv, R"md()md");
 	schema->AddType(R"gql(__Schema)gql"sv, typeSchema);
-	auto typeType = std::make_shared<schema::ObjectType>(R"gql(__Type)gql"sv, R"md()md");
+	auto typeType = schema::ObjectType::Make(R"gql(__Type)gql"sv, R"md()md");
 	schema->AddType(R"gql(__Type)gql"sv, typeType);
-	auto typeField = std::make_shared<schema::ObjectType>(R"gql(__Field)gql"sv, R"md()md");
+	auto typeField = schema::ObjectType::Make(R"gql(__Field)gql"sv, R"md()md");
 	schema->AddType(R"gql(__Field)gql"sv, typeField);
-	auto typeInputValue = std::make_shared<schema::ObjectType>(R"gql(__InputValue)gql"sv, R"md()md");
+	auto typeInputValue = schema::ObjectType::Make(R"gql(__InputValue)gql"sv, R"md()md");
 	schema->AddType(R"gql(__InputValue)gql"sv, typeInputValue);
-	auto typeEnumValue = std::make_shared<schema::ObjectType>(R"gql(__EnumValue)gql"sv, R"md()md");
+	auto typeEnumValue = schema::ObjectType::Make(R"gql(__EnumValue)gql"sv, R"md()md");
 	schema->AddType(R"gql(__EnumValue)gql"sv, typeEnumValue);
-	auto typeDirective = std::make_shared<schema::ObjectType>(R"gql(__Directive)gql"sv, R"md()md");
+	auto typeDirective = schema::ObjectType::Make(R"gql(__Directive)gql"sv, R"md()md");
 	schema->AddType(R"gql(__Directive)gql"sv, typeDirective);
 
 	typeTypeKind->AddEnumValues({
@@ -610,74 +610,74 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeSchema->AddFields({
-		std::make_shared<schema::Field>(R"gql(types)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))))),
-		std::make_shared<schema::Field>(R"gql(queryType)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<schema::Field>(R"gql(mutationType)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<schema::Field>(R"gql(subscriptionType)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("__Type")),
-		std::make_shared<schema::Field>(R"gql(directives)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Directive")))))
+		schema::Field::Make(R"gql(types)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))))),
+		schema::Field::Make(R"gql(queryType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(mutationType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type")),
+		schema::Field::Make(R"gql(subscriptionType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type")),
+		schema::Field::Make(R"gql(directives)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Directive")))))
 	});
 	typeType->AddFields({
-		std::make_shared<schema::Field>(R"gql(kind)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
-		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(fields)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
-			std::make_shared<schema::InputValue>(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
-		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Field")))),
-		std::make_shared<schema::Field>(R"gql(interfaces)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
-		std::make_shared<schema::Field>(R"gql(possibleTypes)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
-		std::make_shared<schema::Field>(R"gql(enumValues)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
-			std::make_shared<schema::InputValue>(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
-		}), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__EnumValue")))),
-		std::make_shared<schema::Field>(R"gql(inputFields)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))),
-		std::make_shared<schema::Field>(R"gql(ofType)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("__Type"))
+		schema::Field::Make(R"gql(kind)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__TypeKind"))),
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(fields)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Field"))), {
+			schema::InputValue::Make(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
+		}),
+		schema::Field::Make(R"gql(interfaces)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
+		schema::Field::Make(R"gql(possibleTypes)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type")))),
+		schema::Field::Make(R"gql(enumValues)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__EnumValue"))), {
+			schema::InputValue::Make(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(false)gql"sv)
+		}),
+		schema::Field::Make(R"gql(inputFields)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))),
+		schema::Field::Make(R"gql(ofType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("__Type"))
 	});
 	typeField->AddFields({
-		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<schema::Field>(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
-		std::make_shared<schema::Field>(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<schema::Field>(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<schema::Field>(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue"))))),
+		schema::Field::Make(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		schema::Field::Make(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeInputValue->AddFields({
-		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<schema::Field>(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
-		std::make_shared<schema::Field>(R"gql(defaultValue)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(type)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__Type"))),
+		schema::Field::Make(R"gql(defaultValue)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeEnumValue->AddFields({
-		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<schema::Field>(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		std::make_shared<schema::Field>(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(isDeprecated)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
+		schema::Field::Make(R"gql(deprecationReason)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
 	});
 	typeDirective->AddFields({
-		std::make_shared<schema::Field>(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		std::make_shared<schema::Field>(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->LookupType("String")),
-		std::make_shared<schema::Field>(R"gql(locations)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
-		std::make_shared<schema::Field>(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>(), schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
+		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
+		schema::Field::Make(R"gql(locations)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__DirectiveLocation"))))),
+		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("__InputValue")))))
 	});
 
-	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(skip)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+	schema->AddDirective(schema::Directive::Make(R"gql(skip)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD,
 		introspection::DirectiveLocation::FRAGMENT_SPREAD,
 		introspection::DirectiveLocation::INLINE_FRAGMENT
-	}), std::vector<std::shared_ptr<schema::InputValue>>({
-		std::make_shared<schema::InputValue>(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
-	})));
-	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(include)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+	}, {
+		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
+	}));
+	schema->AddDirective(schema::Directive::Make(R"gql(include)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD,
 		introspection::DirectiveLocation::FRAGMENT_SPREAD,
 		introspection::DirectiveLocation::INLINE_FRAGMENT
-	}), std::vector<std::shared_ptr<schema::InputValue>>({
-		std::make_shared<schema::InputValue>(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
-	})));
-	schema->AddDirective(std::make_shared<schema::Directive>(R"gql(deprecated)gql"sv, R"md()md"sv, std::vector<introspection::DirectiveLocation>({
+	}, {
+		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
+	}));
+	schema->AddDirective(schema::Directive::Make(R"gql(deprecated)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD_DEFINITION,
 		introspection::DirectiveLocation::ENUM_VALUE
-	}), std::vector<std::shared_ptr<schema::InputValue>>({
-		std::make_shared<schema::InputValue>(R"gql(reason)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql("No longer supported")gql"sv)
-	})));
+	}, {
+		schema::InputValue::Make(R"gql(reason)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql("No longer supported")gql"sv)
+	}));
 }
 
 } /* namespace introspection */

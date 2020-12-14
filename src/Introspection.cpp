@@ -60,7 +60,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> Schema::ge
 	return result;
 }
 
-Type::Type(const std::shared_ptr<schema::BaseType>& type)
+Type::Type(const std::shared_ptr<const schema::BaseType>& type)
 	: _type(type)
 {
 }
@@ -234,7 +234,7 @@ service::FieldResult<std::shared_ptr<object::Type>> Type::getOfType(service::Fie
 	return ofType ? std::make_shared<Type>(ofType) : nullptr;
 }
 
-Field::Field(const std::shared_ptr<schema::Field>& field)
+Field::Field(const std::shared_ptr<const schema::Field>& field)
 	: _field(field)
 {
 }
@@ -287,7 +287,7 @@ service::FieldResult<std::optional<response::StringType>> Field::getDeprecationR
 							   : std::nullopt };
 }
 
-InputValue::InputValue(const std::shared_ptr<schema::InputValue>& inputValue)
+InputValue::InputValue(const std::shared_ptr<const schema::InputValue>& inputValue)
 	: _inputValue(inputValue)
 {
 }
@@ -320,10 +320,10 @@ service::FieldResult<std::optional<response::StringType>> InputValue::getDefault
 	const auto defaultValue = _inputValue->defaultValue();
 
 	return { defaultValue.empty() ? std::nullopt
-								   : std::make_optional<response::StringType>(defaultValue) };
+								  : std::make_optional<response::StringType>(defaultValue) };
 }
 
-EnumValue::EnumValue(const std::shared_ptr<schema::EnumValue>& enumValue)
+EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
 	: _enumValue(enumValue)
 {
 }
@@ -356,7 +356,7 @@ service::FieldResult<std::optional<response::StringType>> EnumValue::getDeprecat
 							   : std::nullopt };
 }
 
-Directive::Directive(const std::shared_ptr<schema::Directive>& directive)
+Directive::Directive(const std::shared_ptr<const schema::Directive>& directive)
 	: _directive(directive)
 {
 }

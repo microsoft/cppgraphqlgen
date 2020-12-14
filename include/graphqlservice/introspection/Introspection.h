@@ -37,22 +37,12 @@ public:
 
 private:
 	const std::shared_ptr<schema::Schema> _schema;
-
-	std::shared_ptr<schema::ObjectType> _query;
-	std::shared_ptr<schema::ObjectType> _mutation;
-	std::shared_ptr<schema::ObjectType> _subscription;
-	std::unordered_map<response::StringType, size_t> _typeMap;
-	std::vector<std::pair<response::StringType, std::shared_ptr<object::Type>>> _types;
-	std::vector<std::shared_ptr<object::Directive>> _directives;
-	std::unordered_map<std::shared_ptr<object::Type>, std::shared_ptr<object::Type>>
-		_nonNullWrappers;
-	std::unordered_map<std::shared_ptr<object::Type>, std::shared_ptr<object::Type>> _listWrappers;
 };
 
 class Type : public object::Type
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<schema::BaseType>& type);
+	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<const schema::BaseType>& type);
 
 	// Accessors
 	service::FieldResult<TypeKind> getKind(service::FieldParams&&) const override;
@@ -76,13 +66,13 @@ public:
 		service::FieldParams&& params) const override;
 
 private:
-	const std::shared_ptr<schema::BaseType> _type;
+	const std::shared_ptr<const schema::BaseType> _type;
 };
 
 class Field : public object::Field
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<schema::Field>& field);
+	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<const schema::Field>& field);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -99,14 +89,14 @@ public:
 		service::FieldParams&& params) const override;
 
 private:
-	const std::shared_ptr<schema::Field> _field;
+	const std::shared_ptr<const schema::Field> _field;
 };
 
 class InputValue : public object::InputValue
 {
 public:
 	GRAPHQLINTROSPECTION_EXPORT explicit InputValue(
-		const std::shared_ptr<schema::InputValue>& inputValue);
+		const std::shared_ptr<const schema::InputValue>& inputValue);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -119,13 +109,14 @@ public:
 		service::FieldParams&& params) const override;
 
 private:
-	const std::shared_ptr<schema::InputValue> _inputValue;
+	const std::shared_ptr<const schema::InputValue> _inputValue;
 };
 
 class EnumValue : public object::EnumValue
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit EnumValue(const std::shared_ptr<schema::EnumValue>& enumValue);
+	GRAPHQLINTROSPECTION_EXPORT explicit EnumValue(
+		const std::shared_ptr<const schema::EnumValue>& enumValue);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -138,13 +129,14 @@ public:
 		service::FieldParams&& params) const override;
 
 private:
-	const std::shared_ptr<schema::EnumValue> _enumValue;
+	const std::shared_ptr<const schema::EnumValue> _enumValue;
 };
 
 class Directive : public object::Directive
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Directive(const std::shared_ptr<schema::Directive>& directive);
+	GRAPHQLINTROSPECTION_EXPORT explicit Directive(
+		const std::shared_ptr<const schema::Directive>& directive);
 
 	// Accessors
 	service::FieldResult<response::StringType> getName(
@@ -157,7 +149,7 @@ public:
 		service::FieldParams&& params) const override;
 
 private:
-	const std::shared_ptr<schema::Directive> _directive;
+	const std::shared_ptr<const schema::Directive> _directive;
 };
 
 } /* namespace graphql::introspection */

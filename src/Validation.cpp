@@ -14,6 +14,23 @@ using namespace std::literals;
 
 namespace graphql::service {
 
+SharedType getSharedType(const ValidateType& type) noexcept
+{
+	return type ? type->get().shared_from_this() : SharedType {};
+}
+
+ValidateType getValidateType(const SharedType& type) noexcept
+{
+	return type ? std::make_optional(std::cref(*type)) : std::nullopt;
+}
+
+bool operator==(const ValidateType& lhs, const ValidateType& rhs) noexcept
+{
+	// Equal if they're either both std::nullopt or they are both not empty and the addresses of the
+	// references match.
+	return (lhs ? (rhs && &lhs->get() == &rhs->get()) : !rhs);
+}
+
 bool ValidateArgumentVariable::operator==(const ValidateArgumentVariable& other) const
 {
 	return name == other.name;
@@ -243,10 +260,10 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 	_argumentValue.position = { position.line, position.column };
 }
 
-ValidateField::ValidateField(std::string&& returnType, std::optional<std::string_view> objectType,
+ValidateField::ValidateField(ValidateType&& returnType, ValidateType&& objectType,
 	std::string_view fieldName, ValidateFieldArguments&& arguments)
 	: returnType(std::move(returnType))
-	, objectType(objectType)
+	, objectType(std::move(objectType))
 	, fieldName(fieldName)
 	, arguments(std::move(arguments))
 {
@@ -254,15 +271,15 @@ ValidateField::ValidateField(std::string&& returnType, std::optional<std::string
 
 bool ValidateField::operator==(const ValidateField& other) const
 {
-	return returnType == other.returnType
-		&& ((objectType && other.objectType && *objectType != *other.objectType)
+	return (returnType == other.returnType)
+		&& ((objectType && other.objectType && &objectType->get() != &other.objectType->get())
 			|| (fieldName == other.fieldName && arguments == other.arguments));
 }
 
 ValidateVariableTypeVisitor::ValidateVariableTypeVisitor(
-	const std::shared_ptr<schema::Schema>& schema, const ValidateTypeKinds& typeKinds)
+	const std::shared_ptr<schema::Schema>& schema, const ValidateTypes& types)
 	: _schema(schema)
-	, _typeKinds(typeKinds)
+	, _types(types)
 {
 }
 
@@ -285,20 +302,20 @@ void ValidateVariableTypeVisitor::visit(const peg::ast_node& typeName)
 void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 {
 	auto name = namedType.string_view();
-	auto itrKind = _typeKinds.find(name);
+	auto itrType = _types.find(name);
 
-	if (itrKind == _typeKinds.end())
+	if (itrType == _types.end())
 	{
 		return;
 	}
 
-	switch (itrKind->second)
+	switch (itrType->second->get().kind())
 	{
 		case introspection::TypeKind::SCALAR:
 		case introspection::TypeKind::ENUM:
 		case introspection::TypeKind::INPUT_OBJECT:
 			_isInputType = true;
-			_variableType = _schema->LookupType(name);
+			_variableType = getValidateType(_schema->LookupType(name));
 			break;
 
 		default:
@@ -308,20 +325,22 @@ void ValidateVariableTypeVisitor::visitNamedType(const peg::ast_node& namedType)
 
 void ValidateVariableTypeVisitor::visitListType(const peg::ast_node& listType)
 {
-	ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
+	ValidateVariableTypeVisitor visitor(_schema, _types);
 
 	visitor.visit(*listType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType = _schema->WrapType(introspection::TypeKind::LIST, visitor.getType());
+	_variableType = getValidateType(
+		_schema->WrapType(introspection::TypeKind::LIST, getSharedType(visitor.getType())));
 }
 
 void ValidateVariableTypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
 {
-	ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
+	ValidateVariableTypeVisitor visitor(_schema, _types);
 
 	visitor.visit(*nonNullType.children.front());
 	_isInputType = visitor.isInputType();
-	_variableType = _schema->WrapType(introspection::TypeKind::NON_NULL, visitor.getType());
+	_variableType = getValidateType(
+		_schema->WrapType(introspection::TypeKind::NON_NULL, getSharedType(visitor.getType())));
 }
 
 bool ValidateVariableTypeVisitor::isInputType() const
@@ -345,17 +364,17 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 	if (queryType)
 	{
-		_operationTypes[strQuery] = queryType->name();
+		_operationTypes[strQuery] = getValidateType(queryType);
 	}
 
 	if (mutationType)
 	{
-		_operationTypes[strMutation] = mutationType->name();
+		_operationTypes[strMutation] = getValidateType(mutationType);
 	}
 
 	if (subscriptionType)
 	{
-		_operationTypes[strSubscription] = subscriptionType->name();
+		_operationTypes[strSubscription] = getValidateType(subscriptionType);
 	}
 
 	const auto& types = _schema->types();
@@ -415,7 +434,7 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 			_scalarTypes.insert(name);
 		}
 
-		_typeKinds[std::move(name)] = kind;
+		_types[name] = getValidateType(entry.second);
 	}
 
 	const auto& directives = _schema->directives();
@@ -571,17 +590,17 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	const auto& typeCondition = fragmentDefinition.children[1];
 	auto innerType = typeCondition->children.front()->string_view();
 
-	auto itrKind = _typeKinds.find(innerType);
+	auto itrType = _types.find(innerType);
 
-	if (itrKind == _typeKinds.end() || isScalarType(itrKind->second))
+	if (itrType == _types.end() || isScalarType(itrType->second->get().kind()))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
 		// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
-		message << (itrKind == _typeKinds.end() ? "Undefined target type on fragment definition: "
-												: "Scalar target type on fragment definition: ")
+		message << (itrType == _types.end() ? "Undefined target type on fragment definition: "
+											: "Scalar target type on fragment definition: ")
 				<< name << " name: " << innerType;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
@@ -589,11 +608,11 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 	}
 
 	_fragmentStack.insert(name);
-	_scopedType = std::move(innerType);
+	_scopedType = itrType->second;
 
 	visitSelection(selection);
 
-	_scopedType = {};
+	_scopedType.reset();
 	_fragmentStack.clear();
 	_selectionFields.clear();
 }
@@ -650,7 +669,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
 					|| child->is_type<peg::nonnull_type>())
 				{
-					ValidateVariableTypeVisitor visitor(_schema, _typeKinds);
+					ValidateVariableTypeVisitor visitor(_schema, _types);
 
 					visitor.visit(*child);
 
@@ -763,7 +782,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		_errors.push_back({ error.str(), { position.line, position.column } });
 	}
 
-	_scopedType = {};
+	_scopedType.reset();
 	_fragmentStack.clear();
 	_selectionFields.clear();
 
@@ -806,7 +825,7 @@ void ValidateExecutableVisitor::visitSelection(const peg::ast_node& selection)
 }
 
 ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(
-	const std::vector<std::shared_ptr<schema::InputValue>>& args)
+	const std::vector<std::shared_ptr<const schema::InputValue>>& args)
 {
 	ValidateTypeFieldArguments result;
 
@@ -822,25 +841,12 @@ ValidateTypeFieldArguments ValidateExecutableVisitor::getArguments(
 		argument.defaultValue = !arg->defaultValue().empty();
 		argument.nonNullDefaultValue =
 			argument.defaultValue && arg->defaultValue() != R"gql(null)gql"sv;
-		argument.type = arg->type().lock();
+		argument.type = getValidateType(arg->type().lock());
 
 		result[arg->name()] = std::move(argument);
 	}
 
 	return result;
-}
-
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getTypeKind(
-	std::string_view name) const
-{
-	auto itrKind = _typeKinds.find(name);
-
-	return (itrKind == _typeKinds.cend() ? std::nullopt : std::make_optional(itrKind->second));
-}
-
-std::optional<introspection::TypeKind> ValidateExecutableVisitor::getScopedTypeKind() const
-{
-	return getTypeKind(_scopedType);
 }
 
 constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind kind)
@@ -859,17 +865,17 @@ constexpr bool ValidateExecutableVisitor::isScalarType(introspection::TypeKind k
 
 bool ValidateExecutableVisitor::matchesScopedType(std::string_view name) const
 {
-	if (name == _scopedType)
+	if (name == _scopedType->get().name())
 	{
 		return true;
 	}
 
-	auto itrScoped = _matchingTypes.find(_scopedType);
-	auto itrNamed = _matchingTypes.find(name);
+	const auto itrScoped = _matchingTypes.find(_scopedType->get().name());
+	const auto itrNamed = _matchingTypes.find(name);
 
 	if (itrScoped != _matchingTypes.end() && itrNamed != _matchingTypes.end())
 	{
-		auto itrMatch = std::find_if(itrScoped->second.begin(),
+		const auto itrMatch = std::find_if(itrScoped->second.begin(),
 			itrScoped->second.end(),
 			[this, itrNamed](std::string_view matchingType) noexcept {
 				return itrNamed->second.find(matchingType) != itrNamed->second.end();
@@ -926,7 +932,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 		}
 	}
 
-	const auto kind = type->kind();
+	const auto kind = type->get().kind();
 
 	if (!argument.value)
 	{
@@ -945,7 +951,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 		case introspection::TypeKind::NON_NULL:
 		{
 			// Unwrap and check the next one.
-			const auto ofType = type->ofType().lock();
+			const auto ofType = getValidateType(type->get().ofType().lock());
 
 			if (!ofType)
 			{
@@ -964,7 +970,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			const auto ofType = type->ofType().lock();
+			const auto ofType = getValidateType(type->get().ofType().lock());
 
 			if (!ofType)
 			{
@@ -987,7 +993,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::INPUT_OBJECT:
 		{
-			const auto name = type->name();
+			const auto name = type->get().name();
 
 			if (name.empty())
 			{
@@ -1071,7 +1077,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 					return false;
 				}
 
-				const auto fieldKind = entry.second.type->kind();
+				const auto fieldKind = entry.second.type->get().kind();
 
 				if (fieldKind == introspection::TypeKind::NON_NULL)
 				{
@@ -1091,7 +1097,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::ENUM:
 		{
-			const auto name = type->name();
+			const auto name = type->get().name();
 
 			if (name.empty())
 			{
@@ -1128,7 +1134,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 		case introspection::TypeKind::SCALAR:
 		{
-			const auto name = type->name();
+			const auto name = type->get().name();
 
 			if (name.empty())
 			{
@@ -1221,11 +1227,11 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		return false;
 	}
 
-	const auto variableKind = variableType->kind();
+	const auto variableKind = variableType->get().kind();
 
 	if (variableKind == introspection::TypeKind::NON_NULL)
 	{
-		const auto ofType = variableType->ofType().lock();
+		const auto ofType = getValidateType(variableType->get().ofType().lock());
 
 		if (!ofType)
 		{
@@ -1242,7 +1248,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		return false;
 	}
 
-	const auto inputKind = inputType->kind();
+	const auto inputKind = inputType->get().kind();
 
 	switch (inputKind)
 	{
@@ -1256,7 +1262,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			const auto ofType = inputType->ofType().lock();
+			const auto ofType = getValidateType(inputType->get().ofType().lock());
 
 			if (!ofType)
 			{
@@ -1277,7 +1283,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 			}
 
 			// Unwrap and check the next one.
-			const auto variableOfType = variableType->ofType().lock();
+			const auto variableOfType = getValidateType(variableType->get().ofType().lock());
 
 			if (!variableOfType)
 			{
@@ -1285,7 +1291,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 				return false;
 			}
 
-			const auto inputOfType = inputType->ofType().lock();
+			const auto inputOfType = getValidateType(inputType->get().ofType().lock());
 
 			if (!inputOfType)
 			{
@@ -1340,7 +1346,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		}
 	}
 
-	const auto variableName = variableType->name();
+	const auto variableName = variableType->get().name();
 
 	if (variableName.empty())
 	{
@@ -1348,7 +1354,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		return false;
 	}
 
-	const auto inputName = inputType->name();
+	const auto inputName = inputType->get().name();
 
 	if (inputName.empty())
 	{
@@ -1373,68 +1379,66 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor::
 	getScopedTypeFields()
 {
-	auto typeKind = getScopedTypeKind();
-	auto itrType = _typeFields.find(_scopedType);
+	auto typeKind = _scopedType->get().kind();
+	auto itrType = _typeFields.find(_scopedType->get().name());
 
-	if (itrType == _typeFields.cend() && typeKind && !isScalarType(*typeKind))
+	if (itrType == _typeFields.cend() && !isScalarType(typeKind))
 	{
-		const auto& type = _schema->LookupType(_scopedType);
+		const auto& fields = _scopedType->get().fields();
+		std::map<std::string_view, ValidateTypeField> validateFields;
 
-		if (type)
+		for (auto& entry : fields)
 		{
-			const auto& fields = type->fields();
-			std::map<std::string_view, ValidateTypeField> validateFields;
-
-			for (auto& entry : fields)
+			if (!entry)
 			{
-				if (!entry)
-				{
-					continue;
-				}
-
-				const auto fieldName = entry->name();
-				ValidateTypeField subField;
-
-				subField.returnType = entry->type().lock();
-
-				if (fieldName.empty() || !subField.returnType)
-				{
-					continue;
-				}
-
-				subField.arguments = getArguments(entry->args());
-
-				validateFields[fieldName] = std::move(subField);
+				continue;
 			}
 
-			if (_schema->supportsIntrospection() && _scopedType == _operationTypes[strQuery])
+			const auto fieldName = entry->name();
+			ValidateTypeField subField;
+
+			subField.returnType = getValidateType(entry->type().lock());
+
+			if (fieldName.empty() || !subField.returnType)
 			{
-				ValidateTypeField schemaField;
-
-				schemaField.returnType = _schema->WrapType(introspection::TypeKind::NON_NULL,
-					_schema->LookupType(R"gql(__Schema)gql"sv));
-				validateFields[R"gql(__schema)gql"sv] = std::move(schemaField);
-
-				ValidateTypeField typeField;
-				ValidateArgument nameArgument;
-
-				typeField.returnType = _schema->LookupType(R"gql(__Type)gql"sv);
-
-				nameArgument.type = _schema->WrapType(introspection::TypeKind::NON_NULL,
-					_schema->LookupType(R"gql(String)gql"sv));
-				typeField.arguments[R"gql(name)gql"sv] = std::move(nameArgument);
-
-				validateFields[R"gql(__type)gql"sv] = std::move(typeField);
+				continue;
 			}
 
-			ValidateTypeField typenameField;
+			subField.arguments = getArguments(entry->args());
 
-			typenameField.returnType = _schema->WrapType(introspection::TypeKind::NON_NULL,
-				_schema->LookupType(R"gql(String)gql"sv));
-			validateFields[R"gql(__typename)gql"sv] = std::move(typenameField);
-
-			itrType = _typeFields.insert({ _scopedType, std::move(validateFields) }).first;
+			validateFields[fieldName] = std::move(subField);
 		}
+
+		if (_schema->supportsIntrospection() && _scopedType == _operationTypes[strQuery])
+		{
+			ValidateTypeField schemaField;
+
+			schemaField.returnType =
+				getValidateType(_schema->WrapType(introspection::TypeKind::NON_NULL,
+					_schema->LookupType(R"gql(__Schema)gql"sv)));
+			validateFields[R"gql(__schema)gql"sv] = std::move(schemaField);
+
+			ValidateTypeField typeField;
+			ValidateArgument nameArgument;
+
+			typeField.returnType = getValidateType(_schema->LookupType(R"gql(__Type)gql"sv));
+
+			nameArgument.type = getValidateType(_schema->WrapType(introspection::TypeKind::NON_NULL,
+				_schema->LookupType(R"gql(String)gql"sv)));
+			typeField.arguments[R"gql(name)gql"sv] = std::move(nameArgument);
+
+			validateFields[R"gql(__type)gql"sv] = std::move(typeField);
+		}
+
+		ValidateTypeField typenameField;
+
+		typenameField.returnType =
+			getValidateType(_schema->WrapType(introspection::TypeKind::NON_NULL,
+				_schema->LookupType(R"gql(String)gql"sv)));
+		validateFields[R"gql(__typename)gql"sv] = std::move(typenameField);
+
+		itrType =
+			_typeFields.insert({ _scopedType->get().name(), std::move(validateFields) }).first;
 	}
 
 	return itrType;
@@ -1443,58 +1447,44 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVisitor::
 	getInputTypeFields(std::string_view name)
 {
-	auto typeKind = getTypeKind(name);
-	auto itrType = _inputTypeFields.find(name);
+	auto itrFields = _inputTypeFields.find(name);
 
-	if (itrType == _inputTypeFields.cend() && typeKind
-		&& *typeKind == introspection::TypeKind::INPUT_OBJECT)
+	if (itrFields == _inputTypeFields.cend())
 	{
-		const auto& type = _schema->LookupType(name);
+		auto itrType = _types.find(name);
 
-		if (type)
+		if (itrType != _types.cend()
+			&& itrType->second->get().kind() == introspection::TypeKind::INPUT_OBJECT)
 		{
-			itrType = _inputTypeFields.insert({ name, getArguments(type->inputFields()) }).first;
+			itrFields = _inputTypeFields
+							.insert({ name, getArguments(itrType->second->get().inputFields()) })
+							.first;
 		}
 	}
 
-	return itrType;
+	return itrFields;
 }
 
 template <class _FieldTypes>
-std::string_view ValidateExecutableVisitor::getFieldType(
+ValidateType ValidateExecutableVisitor::getFieldType(
 	const _FieldTypes& fields, std::string_view name)
 {
-	std::string_view result;
 	auto itrType = fields.find(name);
 
 	if (itrType == fields.end())
 	{
-		return result;
+		return ValidateType {};
 	}
 
 	// Iteratively expand nested types till we get the underlying field type.
 	auto fieldType = getValidateFieldType(itrType->second);
 
-	do
+	while (fieldType && fieldType->get().name().empty())
 	{
-		const auto name = fieldType->name();
-		const auto ofType = fieldType->ofType().lock();
+		fieldType = getValidateType(fieldType->get().ofType().lock());
+	}
 
-		if (!name.empty())
-		{
-			result = name;
-		}
-		else if (ofType)
-		{
-			fieldType = ofType;
-		}
-		else
-		{
-			break;
-		}
-	} while (result.empty());
-
-	return result;
+	return fieldType;
 }
 
 const ValidateType& ValidateExecutableVisitor::getValidateFieldType(
@@ -1510,54 +1500,17 @@ const ValidateType& ValidateExecutableVisitor::getValidateFieldType(
 }
 
 template <class _FieldTypes>
-std::string ValidateExecutableVisitor::getWrappedFieldType(
+ValidateType ValidateExecutableVisitor::getWrappedFieldType(
 	const _FieldTypes& fields, std::string_view name)
 {
-	std::string result;
 	auto itrType = fields.find(name);
 
 	if (itrType == fields.end())
 	{
-		return result;
+		return std::nullopt;
 	}
 
-	result = getWrappedFieldType(getValidateFieldType(itrType->second));
-
-	return result;
-}
-
-std::string ValidateExecutableVisitor::getWrappedFieldType(const ValidateType& returnType)
-{
-	// Recursively expand nested types till we get the underlying field type.
-	const auto name = returnType->name();
-
-	if (!name.empty())
-	{
-		return std::string { name };
-	}
-
-	std::ostringstream oss;
-	const auto kind = returnType->kind();
-	const auto ofType = returnType->ofType().lock();
-
-	if (ofType)
-	{
-		switch (kind)
-		{
-			case introspection::TypeKind::LIST:
-				oss << '[' << getWrappedFieldType(ofType) << ']';
-				break;
-
-			case introspection::TypeKind::NON_NULL:
-				oss << getWrappedFieldType(ofType) << '!';
-				break;
-
-			default:
-				break;
-		}
-	}
-
-	return oss.str();
+	return getValidateFieldType(itrType->second);
 }
 
 void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
@@ -1572,22 +1525,6 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		name = child.string_view();
 	});
 
-	auto kind = getScopedTypeKind();
-
-	if (!kind)
-	{
-		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-		auto position = field.begin();
-		std::ostringstream message;
-
-		message << "Field on unknown type: " << _scopedType << " name: " << name;
-
-		_errors.push_back({ message.str(), { position.line, position.column } });
-		return;
-	}
-
-	std::string_view innerType;
-	std::string wrappedType;
 	auto itrType = getScopedTypeFields();
 
 	if (itrType == _typeFields.cend())
@@ -1596,13 +1533,16 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		auto position = field.begin();
 		std::ostringstream message;
 
-		message << "Field on scalar type: " << _scopedType << " name: " << name;
+		message << "Field on scalar type: " << _scopedType->get().name() << " name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
 	}
 
-	switch (*kind)
+	ValidateType innerType;
+	ValidateType wrappedType;
+
+	switch (_scopedType->get().kind())
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
@@ -1621,15 +1561,17 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				auto position = field.begin();
 				std::ostringstream message;
 
-				message << "Field on union type: " << _scopedType << " name: " << name;
+				message << "Field on union type: " << _scopedType->get().name()
+						<< " name: " << name;
 
 				_errors.push_back({ message.str(), { position.line, position.column } });
 				return;
 			}
 
 			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
-			innerType = "String";
-			wrappedType = "String!";
+			innerType = getValidateType(_schema->LookupType("String"sv));
+			wrappedType = getValidateType(
+				_schema->WrapType(introspection::TypeKind::NON_NULL, getSharedType(innerType)));
 			break;
 		}
 
@@ -1637,13 +1579,13 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			break;
 	}
 
-	if (innerType.empty())
+	if (!innerType)
 	{
 		// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
 		auto position = field.begin();
 		std::ostringstream message;
 
-		message << "Undefined field type: " << _scopedType << " name: " << name;
+		message << "Undefined field type: " << _scopedType->get().name() << " name: " << name;
 
 		_errors.push_back({ message.str(), { position.line, position.column } });
 		return;
@@ -1677,8 +1619,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 					// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
 					std::ostringstream message;
 
-					message << "Conflicting argument type: " << _scopedType << " field: " << name
-							<< " name: " << argumentName;
+					message << "Conflicting argument type: " << _scopedType->get().name()
+							<< " field: " << name << " name: " << argumentName;
 
 					_errors.push_back({ message.str(), { position.line, position.column } });
 					continue;
@@ -1693,10 +1635,11 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			}
 		});
 
-	std::optional<std::string_view> objectType =
-		(*kind == introspection::TypeKind::OBJECT ? std::make_optional(_scopedType) : std::nullopt);
+	ValidateType objectType =
+		(_scopedType->get().kind() == introspection::TypeKind::OBJECT ? _scopedType
+																	  : ValidateType {});
 	ValidateField validateField(std::move(wrappedType),
-		objectType,
+		std::move(objectType),
 		name,
 		std::move(validateArguments));
 	auto itrValidateField = _selectionFields.find(alias);
@@ -1714,7 +1657,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			auto position = field.begin();
 			std::ostringstream message;
 
-			message << "Conflicting field type: " << _scopedType << " name: " << name;
+			message << "Conflicting field type: " << _scopedType->get().name() << " name: " << name;
 
 			_errors.push_back({ message.str(), { position.line, position.column } });
 		}
@@ -1733,8 +1676,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				// http://spec.graphql.org/June2018/#sec-Argument-Names
 				std::ostringstream message;
 
-				message << "Undefined argument type: " << _scopedType << " field: " << name
-						<< " name: " << argumentName;
+				message << "Undefined argument type: " << _scopedType->get().name()
+						<< " field: " << name << " name: " << argumentName;
 
 				_errors.push_back({ message.str(), argumentLocations[argumentName] });
 			}
@@ -1755,8 +1698,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
 					std::ostringstream message;
 
-					message << "Incompatible argument type: " << _scopedType << " field: " << name
-							<< " name: " << argument.first;
+					message << "Incompatible argument type: " << _scopedType->get().name()
+							<< " field: " << name << " name: " << argument.first;
 
 					_errors.push_back({ message.str(), argumentLocations[argument.first] });
 				}
@@ -1771,7 +1714,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			// See if the argument is wrapped in NON_NULL
 			if (argument.second.type
-				&& introspection::TypeKind::NON_NULL == argument.second.type->kind())
+				&& introspection::TypeKind::NON_NULL == argument.second.type->get().kind())
 			{
 				// http://spec.graphql.org/June2018/#sec-Required-Arguments
 				auto position = field.begin();
@@ -1779,7 +1722,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 				message << (missing ? "Missing argument type: "
 									: "Required non-null argument type: ")
-						<< _scopedType << " field: " << name << " name: " << argument.first;
+						<< _scopedType->get().name() << " field: " << name
+						<< " name: " << argument.first;
 
 				_errors.push_back({ message.str(), { position.line, position.column } });
 			}
@@ -1815,21 +1759,16 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		_fieldCount = outerFieldCount;
 	}
 
-	if (subFieldCount == 0)
+	if (subFieldCount == 0 && !isScalarType(innerType->get().kind()))
 	{
-		auto itrInnerKind = _typeKinds.find(innerType);
+		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		auto position = field.begin();
+		std::ostringstream message;
 
-		if (itrInnerKind != _typeKinds.end() && !isScalarType(itrInnerKind->second))
-		{
-			// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
-			auto position = field.begin();
-			std::ostringstream message;
+		message << "Missing fields on non-scalar type: " << innerType->get().name();
 
-			message << "Missing fields on non-scalar type: " << innerType;
-
-			_errors.push_back({ message.str(), { position.line, position.column } });
-			return;
-		}
+		_errors.push_back({ message.str(), { position.line, position.column } });
+		return;
 	}
 
 	++_fieldCount;
@@ -1875,8 +1814,9 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	const auto& selection = *itr->second.children.back();
 	const auto& typeCondition = itr->second.children[1];
 	const auto innerType = typeCondition->children.front()->string_view();
+	const auto itrInner = _types.find(innerType);
 
-	if (!matchesScopedType(innerType))
+	if (itrInner == _types.cend() || !matchesScopedType(innerType))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
 		auto position = fragmentSpread.begin();
@@ -1891,7 +1831,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	auto outerType = std::move(_scopedType);
 
 	_fragmentStack.insert(name);
-	_scopedType = std::move(innerType);
+	_scopedType = itrInner->second;
 
 	visitSelection(selection);
 
@@ -1918,35 +1858,39 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 			typeConditionLocation = { position.line, position.column };
 		});
 
+	ValidateType fragmentType;
+
 	if (innerType.empty())
 	{
-		innerType = _scopedType;
+		fragmentType = _scopedType;
 	}
 	else
 	{
-		auto itrKind = _typeKinds.find(innerType);
+		auto itrInner = _types.find(innerType);
 
-		if (itrKind == _typeKinds.end() || isScalarType(itrKind->second))
+		if (itrInner == _types.end())
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
-			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 			std::ostringstream message;
 
-			message << (itrKind == _typeKinds.end()
-					? "Undefined target type on inline fragment name: "
-					: "Scalar target type on inline fragment name: ")
-					<< innerType;
+			message << "Undefined target type on inline fragment name: " << innerType;
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
 			return;
 		}
 
-		if (!matchesScopedType(innerType))
+		fragmentType = itrInner->second;
+
+		if (isScalarType(fragmentType->get().kind()) || !matchesScopedType(innerType))
 		{
+			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
 			// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
 			std::ostringstream message;
 
-			message << "Incompatible target type on inline fragment name: " << innerType;
+			message << (isScalarType(fragmentType->get().kind())
+					? "Scalar target type on inline fragment name: "
+					: "Incompatible target type on inline fragment name: ")
+					<< innerType;
 
 			_errors.push_back({ message.str(), std::move(typeConditionLocation) });
 			return;
@@ -1954,10 +1898,10 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 	}
 
 	peg::on_first_child<peg::selection_set>(inlineFragment,
-		[this, &innerType](const peg::ast_node& selection) {
+		[this, &fragmentType](const peg::ast_node& selection) {
 			auto outerType = std::move(_scopedType);
 
-			_scopedType = std::move(innerType);
+			_scopedType = std::move(fragmentType);
 
 			visitSelection(selection);
 
@@ -2129,7 +2073,7 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					// See if the argument is wrapped in NON_NULL
 					if (argument.second.type
-						&& introspection::TypeKind::NON_NULL == argument.second.type->kind())
+						&& introspection::TypeKind::NON_NULL == argument.second.type->get().kind())
 					{
 						// http://spec.graphql.org/June2018/#sec-Required-Arguments
 						auto position = directive->begin();

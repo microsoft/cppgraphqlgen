@@ -67,12 +67,12 @@ std::future<service::ResolverResult> Mutation::resolve_typename(service::Resolve
 void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeMutation->AddFields({
-		std::make_shared<schema::Field>(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
-			std::make_shared<schema::InputValue>(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
-		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload"))),
-		std::make_shared<schema::Field>(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, std::vector<std::shared_ptr<schema::InputValue>>({
-			std::make_shared<schema::InputValue>(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
-		}), schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")))
+		schema::Field::Make(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")), {
+			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
+		}),
+		schema::Field::Make(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), {
+			schema::InputValue::Make(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
+		})
 	});
 }
 
