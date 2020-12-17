@@ -1830,19 +1830,13 @@ std::future<response::Value> Request::resolve(std::launch launch,
 		}
 
 		const bool isMutation = (operationDefinition.first == strMutation);
-
-		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
-		if (isMutation)
-		{
-			// Force mutations to perform serial execution
-			launch = std::launch::deferred;
-		}
-
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
+		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
+		const auto operationLaunch = isMutation ? std::launch::deferred : launch;
 
 		OperationDefinitionVisitor operationVisitor(resolverContext,
-			launch,
+			operationLaunch,
 			state,
 			_operations,
 			std::move(variables),
