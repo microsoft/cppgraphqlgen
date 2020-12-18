@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 //
 // This grammar is based on the June 2018 Edition of the GraphQL spec:
-// https://facebook.github.io/graphql/June2018/
+// http://spec.graphql.org/June2018/
 
 #pragma once
 
@@ -59,22 +59,22 @@ void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 	}
 }
 
-// https://facebook.github.io/graphql/June2018/#sec-Source-Text
+// http://spec.graphql.org/June2018/#sec-Source-Text
 struct source_character : sor<one<0x0009, 0x000A, 0x000D>, utf8::range<0x0020, 0xFFFF>>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#sec-Comments
+// http://spec.graphql.org/June2018/#sec-Comments
 struct comment : seq<one<'#'>, until<eolf>>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#sec-Source-Text.Ignored-Tokens
+// http://spec.graphql.org/June2018/#sec-Source-Text.Ignored-Tokens
 struct ignored : sor<space, one<','>, comment>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#sec-Names
+// http://spec.graphql.org/June2018/#sec-Names
 struct name : identifier
 {
 };
@@ -83,12 +83,12 @@ struct variable_name_content : name
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Variable
+// http://spec.graphql.org/June2018/#Variable
 struct variable_name : if_must<one<'$'>, variable_name_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#sec-Null-Value
+// http://spec.graphql.org/June2018/#sec-Null-Value
 struct null_keyword : TAO_PEGTL_KEYWORD("null")
 {
 };
@@ -105,12 +105,12 @@ struct escaped_unicode_content : rep<4, xdigit>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EscapedUnicode
+// http://spec.graphql.org/June2018/#EscapedUnicode
 struct escaped_unicode : if_must<one<'u'>, escaped_unicode_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EscapedCharacter
+// http://spec.graphql.org/June2018/#EscapedCharacter
 struct escaped_char : one<'"', '\\', '/', 'b', 'f', 'n', 'r', 't'>
 {
 };
@@ -133,7 +133,7 @@ struct string_quote_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#StringCharacter
+// http://spec.graphql.org/June2018/#StringCharacter
 struct string_quote : if_must<quote_token, string_quote_content>
 {
 };
@@ -156,17 +156,17 @@ struct block_quote_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#BlockStringCharacter
+// http://spec.graphql.org/June2018/#BlockStringCharacter
 struct block_quote : if_must<block_quote_token, block_quote_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#StringValue
+// http://spec.graphql.org/June2018/#StringValue
 struct string_value : sor<block_quote, string_quote>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#NonZeroDigit
+// http://spec.graphql.org/June2018/#NonZeroDigit
 struct nonzero_digit : range<'1', '9'>
 {
 };
@@ -175,17 +175,17 @@ struct zero_digit : one<'0'>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#NegativeSign
+// http://spec.graphql.org/June2018/#NegativeSign
 struct negative_sign : one<'-'>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#IntegerPart
+// http://spec.graphql.org/June2018/#IntegerPart
 struct integer_part : seq<opt<negative_sign>, sor<zero_digit, seq<nonzero_digit, star<digit>>>>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#IntValue
+// http://spec.graphql.org/June2018/#IntValue
 struct integer_value : integer_part
 {
 };
@@ -194,17 +194,17 @@ struct fractional_part_content : plus<digit>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FractionalPart
+// http://spec.graphql.org/June2018/#FractionalPart
 struct fractional_part : if_must<one<'.'>, fractional_part_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ExponentIndicator
+// http://spec.graphql.org/June2018/#ExponentIndicator
 struct exponent_indicator : one<'e', 'E'>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Sign
+// http://spec.graphql.org/June2018/#Sign
 struct sign : one<'+', '-'>
 {
 };
@@ -213,12 +213,12 @@ struct exponent_part_content : seq<opt<sign>, plus<digit>>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ExponentPart
+// http://spec.graphql.org/June2018/#ExponentPart
 struct exponent_part : if_must<exponent_indicator, exponent_part_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FloatValue
+// http://spec.graphql.org/June2018/#FloatValue
 struct float_value
 	: seq<integer_part, sor<fractional_part, exponent_part, seq<fractional_part, exponent_part>>>
 {
@@ -232,17 +232,17 @@ struct false_keyword : TAO_PEGTL_KEYWORD("false")
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#BooleanValue
+// http://spec.graphql.org/June2018/#BooleanValue
 struct bool_value : sor<true_keyword, false_keyword>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EnumValue
+// http://spec.graphql.org/June2018/#EnumValue
 struct enum_value : seq<not_at<true_keyword, false_keyword, null_keyword>, name>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#OperationType
+// http://spec.graphql.org/June2018/#OperationType
 struct operation_type
 	: sor<TAO_PEGTL_KEYWORD("query"), TAO_PEGTL_KEYWORD("mutation"),
 		  TAO_PEGTL_KEYWORD("subscription")>
@@ -253,7 +253,7 @@ struct alias_name : name
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Alias
+// http://spec.graphql.org/June2018/#Alias
 struct alias : seq<alias_name, star<ignored>, one<':'>>
 {
 };
@@ -268,7 +268,7 @@ struct argument_content : seq<star<ignored>, one<':'>, star<ignored>, input_valu
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Argument
+// http://spec.graphql.org/June2018/#Argument
 struct argument : if_must<argument_name, argument_content>
 {
 };
@@ -278,7 +278,7 @@ struct arguments_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Arguments
+// http://spec.graphql.org/June2018/#Arguments
 struct arguments : if_must<one<'('>, arguments_content>
 {
 };
@@ -290,7 +290,7 @@ struct list_value_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ListValue
+// http://spec.graphql.org/June2018/#ListValue
 struct list_value : if_must<one<'['>, list_value_content>
 {
 };
@@ -303,7 +303,7 @@ struct object_field_content : seq<star<ignored>, one<':'>, star<ignored>, input_
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ObjectField
+// http://spec.graphql.org/June2018/#ObjectField
 struct object_field : if_must<object_field_name, object_field_content>
 {
 };
@@ -313,7 +313,7 @@ struct object_value_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ObjectValue
+// http://spec.graphql.org/June2018/#ObjectValue
 struct object_value : if_must<one<'{'>, object_value_content>
 {
 };
@@ -328,7 +328,7 @@ struct input_value_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Value
+// http://spec.graphql.org/June2018/#Value
 struct input_value : must<input_value_content>
 {
 };
@@ -341,12 +341,12 @@ struct default_value_content : seq<star<ignored>, input_value>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#DefaultValue
+// http://spec.graphql.org/June2018/#DefaultValue
 struct default_value : if_must<one<'='>, default_value_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#NamedType
+// http://spec.graphql.org/June2018/#NamedType
 struct named_type : name
 {
 };
@@ -359,12 +359,12 @@ struct list_type_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ListType
+// http://spec.graphql.org/June2018/#ListType
 struct list_type : if_must<one<'['>, list_type_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#NonNullType
+// http://spec.graphql.org/June2018/#NonNullType
 struct nonnull_type : seq<sor<list_type, named_type>, star<ignored>, one<'!'>>
 {
 };
@@ -373,7 +373,7 @@ struct type_name_content : sor<nonnull_type, list_type, named_type>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Type
+// http://spec.graphql.org/June2018/#Type
 struct type_name : must<type_name_content>
 {
 };
@@ -383,7 +383,7 @@ struct variable_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#VariableDefinition
+// http://spec.graphql.org/June2018/#VariableDefinition
 struct variable : if_must<variable_name, variable_content>
 {
 };
@@ -393,7 +393,7 @@ struct variable_definitions_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#VariableDefinitions
+// http://spec.graphql.org/June2018/#VariableDefinitions
 struct variable_definitions : if_must<one<'('>, variable_definitions_content>
 {
 };
@@ -406,12 +406,12 @@ struct directive_content : seq<directive_name, opt<star<ignored>, arguments>>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Directive
+// http://spec.graphql.org/June2018/#Directive
 struct directive : if_must<one<'@'>, directive_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Directives
+// http://spec.graphql.org/June2018/#Directives
 struct directives : list<directive, plus<ignored>>
 {
 };
@@ -444,7 +444,7 @@ struct field_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Field
+// http://spec.graphql.org/June2018/#Field
 struct field : if_must<field_start, field_content>
 {
 };
@@ -453,7 +453,7 @@ struct on_keyword : TAO_PEGTL_KEYWORD("on")
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FragmentName
+// http://spec.graphql.org/June2018/#FragmentName
 struct fragment_name : seq<not_at<on_keyword>, name>
 {
 };
@@ -462,7 +462,7 @@ struct fragment_token : ellipsis
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FragmentSpread
+// http://spec.graphql.org/June2018/#FragmentSpread
 struct fragment_spread : seq<star<ignored>, fragment_name, opt<star<ignored>, directives>>
 {
 };
@@ -471,12 +471,12 @@ struct type_condition_content : seq<plus<ignored>, named_type>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeCondition
+// http://spec.graphql.org/June2018/#TypeCondition
 struct type_condition : if_must<on_keyword, type_condition_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InlineFragment
+// http://spec.graphql.org/June2018/#InlineFragment
 struct inline_fragment
 	: seq<opt<star<ignored>, type_condition>, opt<star<ignored>, directives>, star<ignored>,
 		  selection_set>
@@ -492,7 +492,7 @@ struct fragement_spread_or_inline_fragment
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Selection
+// http://spec.graphql.org/June2018/#Selection
 struct selection : sor<field, fragement_spread_or_inline_fragment>
 {
 };
@@ -502,7 +502,7 @@ struct selection_set_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#SelectionSet
+// http://spec.graphql.org/June2018/#SelectionSet
 struct selection_set : if_must<one<'{'>, selection_set_content>
 {
 };
@@ -517,7 +517,7 @@ struct operation_definition_operation_type_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#OperationDefinition
+// http://spec.graphql.org/June2018/#OperationDefinition
 struct operation_definition
 	: sor<if_must<operation_type, operation_definition_operation_type_content>, selection_set>
 {
@@ -529,12 +529,12 @@ struct fragment_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FragmentDefinition
+// http://spec.graphql.org/June2018/#FragmentDefinition
 struct fragment_definition : if_must<TAO_PEGTL_KEYWORD("fragment"), fragment_definition_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ExecutableDefinition
+// http://spec.graphql.org/June2018/#ExecutableDefinition
 struct executable_definition : sor<fragment_definition, operation_definition>
 {
 };
@@ -547,7 +547,7 @@ struct root_operation_definition_content : seq<star<ignored>, one<':'>, star<ign
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#RootOperationTypeDefinition
+// http://spec.graphql.org/June2018/#RootOperationTypeDefinition
 struct root_operation_definition : if_must<operation_type, root_operation_definition_content>
 {
 };
@@ -558,7 +558,7 @@ struct schema_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#SchemaDefinition
+// http://spec.graphql.org/June2018/#SchemaDefinition
 struct schema_definition : if_must<schema_keyword, schema_definition_content>
 {
 };
@@ -567,7 +567,7 @@ struct scalar_keyword : TAO_PEGTL_KEYWORD("scalar")
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Description
+// http://spec.graphql.org/June2018/#Description
 struct description : string_value
 {
 };
@@ -585,7 +585,7 @@ struct scalar_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ScalarTypeDefinition
+// http://spec.graphql.org/June2018/#ScalarTypeDefinition
 struct scalar_type_definition
 	: if_must<scalar_type_definition_start, scalar_type_definition_content>
 {
@@ -606,7 +606,7 @@ struct arguments_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ArgumentsDefinition
+// http://spec.graphql.org/June2018/#ArgumentsDefinition
 struct arguments_definition : if_must<arguments_definition_start, arguments_definition_content>
 {
 };
@@ -621,7 +621,7 @@ struct field_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FieldDefinition
+// http://spec.graphql.org/June2018/#FieldDefinition
 struct field_definition : if_must<field_definition_start, field_definition_content>
 {
 };
@@ -631,7 +631,7 @@ struct fields_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#FieldsDefinition
+// http://spec.graphql.org/June2018/#FieldsDefinition
 struct fields_definition : if_must<one<'{'>, fields_definition_content>
 {
 };
@@ -646,7 +646,7 @@ struct implements_interfaces_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ImplementsInterfaces
+// http://spec.graphql.org/June2018/#ImplementsInterfaces
 struct implements_interfaces
 	: if_must<TAO_PEGTL_KEYWORD("implements"), implements_interfaces_content>
 {
@@ -685,7 +685,7 @@ struct object_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ObjectTypeDefinition
+// http://spec.graphql.org/June2018/#ObjectTypeDefinition
 struct object_type_definition
 	: if_must<object_type_definition_start, object_type_definition_content>
 {
@@ -723,7 +723,7 @@ struct interface_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InterfaceTypeDefinition
+// http://spec.graphql.org/June2018/#InterfaceTypeDefinition
 struct interface_type_definition
 	: if_must<interface_type_definition_start, interface_type_definition_content>
 {
@@ -751,7 +751,7 @@ struct union_member_types_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#UnionMemberTypes
+// http://spec.graphql.org/June2018/#UnionMemberTypes
 struct union_member_types : if_must<union_member_types_start, union_member_types_content>
 {
 };
@@ -771,7 +771,7 @@ struct union_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#UnionTypeDefinition
+// http://spec.graphql.org/June2018/#UnionTypeDefinition
 struct union_type_definition : if_must<union_type_definition_start, union_type_definition_content>
 {
 };
@@ -792,7 +792,7 @@ struct enum_value_definition_content : opt<star<ignored>, directives>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EnumValueDefinition
+// http://spec.graphql.org/June2018/#EnumValueDefinition
 struct enum_value_definition : if_must<enum_value_definition_start, enum_value_definition_content>
 {
 };
@@ -806,7 +806,7 @@ struct enum_values_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EnumValuesDefinition
+// http://spec.graphql.org/June2018/#EnumValuesDefinition
 struct enum_values_definition
 	: if_must<enum_values_definition_start, enum_values_definition_content>
 {
@@ -835,7 +835,7 @@ struct enum_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EnumTypeDefinition
+// http://spec.graphql.org/June2018/#EnumTypeDefinition
 struct enum_type_definition : if_must<enum_type_definition_start, enum_type_definition_content>
 {
 };
@@ -867,7 +867,7 @@ struct input_field_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InputValueDefinition
+// http://spec.graphql.org/June2018/#InputValueDefinition
 struct input_field_definition
 	: if_must<input_field_definition_start, input_field_definition_content>
 {
@@ -882,7 +882,7 @@ struct input_fields_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InputFieldsDefinition
+// http://spec.graphql.org/June2018/#InputFieldsDefinition
 struct input_fields_definition
 	: if_must<input_fields_definition_start, input_fields_definition_content>
 {
@@ -912,20 +912,20 @@ struct input_object_type_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InputObjectTypeDefinition
+// http://spec.graphql.org/June2018/#InputObjectTypeDefinition
 struct input_object_type_definition
 	: if_must<input_object_type_definition_start, input_object_type_definition_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeDefinition
+// http://spec.graphql.org/June2018/#TypeDefinition
 struct type_definition
 	: sor<scalar_type_definition, object_type_definition, interface_type_definition,
 		  union_type_definition, enum_type_definition, input_object_type_definition>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ExecutableDirectiveLocation
+// http://spec.graphql.org/June2018/#ExecutableDirectiveLocation
 struct executable_directive_location
 	: sor<TAO_PEGTL_KEYWORD("QUERY"), TAO_PEGTL_KEYWORD("MUTATION"),
 		  TAO_PEGTL_KEYWORD("SUBSCRIPTION"), TAO_PEGTL_KEYWORD("FIELD"),
@@ -934,7 +934,7 @@ struct executable_directive_location
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeSystemDirectiveLocation
+// http://spec.graphql.org/June2018/#TypeSystemDirectiveLocation
 struct type_system_directive_location
 	: sor<TAO_PEGTL_KEYWORD("SCHEMA"), TAO_PEGTL_KEYWORD("SCALAR"), TAO_PEGTL_KEYWORD("OBJECT"),
 		  TAO_PEGTL_KEYWORD("FIELD_DEFINITION"), TAO_PEGTL_KEYWORD("ARGUMENT_DEFINITION"),
@@ -944,12 +944,12 @@ struct type_system_directive_location
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#DirectiveLocation
+// http://spec.graphql.org/June2018/#DirectiveLocation
 struct directive_location : sor<executable_directive_location, type_system_directive_location>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#DirectiveLocations
+// http://spec.graphql.org/June2018/#DirectiveLocations
 struct directive_locations
 	: seq<opt<one<'|'>, star<ignored>>,
 		  list<directive_location, seq<star<ignored>, one<'|'>, star<ignored>>>>
@@ -967,12 +967,12 @@ struct directive_definition_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#DirectiveDefinition
+// http://spec.graphql.org/June2018/#DirectiveDefinition
 struct directive_definition : if_must<directive_definition_start, directive_definition_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeSystemDefinition
+// http://spec.graphql.org/June2018/#TypeSystemDefinition
 struct type_system_definition : sor<schema_definition, type_definition, directive_definition>
 {
 };
@@ -981,7 +981,7 @@ struct extend_keyword : TAO_PEGTL_KEYWORD("extend")
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#OperationTypeDefinition
+// http://spec.graphql.org/June2018/#OperationTypeDefinition
 struct operation_type_definition : root_operation_definition
 {
 };
@@ -1002,7 +1002,7 @@ struct schema_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#SchemaExtension
+// http://spec.graphql.org/June2018/#SchemaExtension
 struct schema_extension : if_must<schema_extension_start, schema_extension_content>
 {
 };
@@ -1015,7 +1015,7 @@ struct scalar_type_extension_content : seq<star<ignored>, scalar_name, star<igno
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ScalarTypeExtension
+// http://spec.graphql.org/June2018/#ScalarTypeExtension
 struct scalar_type_extension : if_must<scalar_type_extension_start, scalar_type_extension_content>
 {
 };
@@ -1046,7 +1046,7 @@ struct object_type_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#ObjectTypeExtension
+// http://spec.graphql.org/June2018/#ObjectTypeExtension
 struct object_type_extension : if_must<object_type_extension_start, object_type_extension_content>
 {
 };
@@ -1061,7 +1061,7 @@ struct interface_type_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InterfaceTypeExtension
+// http://spec.graphql.org/June2018/#InterfaceTypeExtension
 struct interface_type_extension
 	: if_must<interface_type_extension_start, interface_type_extension_content>
 {
@@ -1077,7 +1077,7 @@ struct union_type_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#UnionTypeExtension
+// http://spec.graphql.org/June2018/#UnionTypeExtension
 struct union_type_extension : if_must<union_type_extension_start, union_type_extension_content>
 {
 };
@@ -1092,7 +1092,7 @@ struct enum_type_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#EnumTypeExtension
+// http://spec.graphql.org/June2018/#EnumTypeExtension
 struct enum_type_extension : if_must<enum_type_extension_start, enum_type_extension_content>
 {
 };
@@ -1107,25 +1107,25 @@ struct input_object_type_extension_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#InputObjectTypeExtension
+// http://spec.graphql.org/June2018/#InputObjectTypeExtension
 struct input_object_type_extension
 	: if_must<input_object_type_extension_start, input_object_type_extension_content>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeExtension
+// http://spec.graphql.org/June2018/#TypeExtension
 struct type_extension
 	: sor<scalar_type_extension, object_type_extension, interface_type_extension,
 		  union_type_extension, enum_type_extension, input_object_type_extension>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#TypeSystemExtension
+// http://spec.graphql.org/June2018/#TypeSystemExtension
 struct type_system_extension : sor<schema_extension, type_extension>
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Definition
+// http://spec.graphql.org/June2018/#Definition
 struct definition : sor<executable_definition, type_system_definition, type_system_extension>
 {
 };
@@ -1136,7 +1136,7 @@ struct document_content
 {
 };
 
-// https://facebook.github.io/graphql/June2018/#Document
+// http://spec.graphql.org/June2018/#Document
 struct document : must<document_content>
 {
 };
