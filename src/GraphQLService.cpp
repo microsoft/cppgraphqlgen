@@ -1253,14 +1253,14 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 				try
 				{
 					auto value = child.second.get();
-					auto itrData = document.data.find(name);
 
-					if (itrData == document.data.end())
+					try
 					{
 						document.data.emplace_back(std::string { name }, std::move(value.data));
 					}
-					else if (itrData->second != value.data)
+					catch (std::runtime_error& e)
 					{
+						// Duplicate Map member
 						std::ostringstream message;
 
 						message << "Ambiguous field error name: " << name;
@@ -1301,9 +1301,13 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 						}
 					}
 
-					if (document.data.find(name) == document.data.end())
+					try
 					{
 						document.data.emplace_back(std::string { name }, {});
+					}
+					catch (std::runtime_error& e)
+					{
+						// Duplicate Map member
 					}
 				}
 				catch (const std::exception& ex)
@@ -1320,9 +1324,13 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 					document.errors.push_back(
 						{ message.str(), std::move(location), std::move(path) });
 
-					if (document.data.find(name) == document.data.end())
+					try
 					{
 						document.data.emplace_back(std::string { name }, {});
+					}
+					catch (std::runtime_error& e)
+					{
+						// Duplicate Map member
 					}
 				}
 
