@@ -1226,8 +1226,10 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 	return std::async(
 		selectionSetParams.launch,
-		[](std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
+		[&selectionSetParams, &selection](
+			std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
 			ResolverResult document { response::Value { response::Type::Map } };
+			size_t idx = 0;
 
 			for (auto& child : children)
 			{
@@ -1269,6 +1271,17 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 						document.errors.reserve(document.errors.size() + errors.size());
 						for (auto& error : errors)
 						{
+							if (error.location.line == 0 && error.location.column == 1)
+							{
+								const auto& field = selection.children[idx];
+								const auto position = field->begin();
+								error.location = { position.line, position.column };
+							}
+							if (error.path.empty())
+							{
+								error.path = selectionSetParams.errorPath;
+								error.path.emplace_back(name);
+							}
 							document.errors.push_back(std::move(error));
 						}
 					}
@@ -1281,16 +1294,24 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 				catch (const std::exception& ex)
 				{
 					std::ostringstream message;
+					const auto& field = selection.children[idx];
+					const auto position = field->begin();
+					schema_location location { position.line, position.column };
+					field_path path = selectionSetParams.errorPath;
+					path.emplace_back(name);
 
 					message << "Field error name: " << name << " unknown error: " << ex.what();
 
-					document.errors.push_back({ message.str() });
+					document.errors.push_back(
+						{ message.str(), std::move(location), std::move(path) });
 
 					if (document.data.find(name) == document.data.end())
 					{
 						document.data.emplace_back(std::string { name }, {});
 					}
 				}
+
+				idx++;
 			}
 
 			return document;

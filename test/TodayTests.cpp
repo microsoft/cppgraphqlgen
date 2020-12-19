@@ -296,6 +296,52 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 	}
 }
 
+TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorNoPath)
+{
+	auto query = R"({
+			appointments(first: -1) {
+				edges {
+					node {
+						appointmentId: id
+						subject
+						when
+						isNow
+						forceError
+					}
+				}
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(2);
+	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(2), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr == result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(result)) << "no errors returned";
+		}
+
+		auto errorsString = response::toJSON(response::Value(errorsItr->second));
+		EXPECT_EQ(R"js([{"message":"Invalid argument: first value: -1","locations":[{"line":2,"column":4}],"path":["appointments"]}])js", errorsString) << "error should match";
+	}
+	catch (service::schema_exception & ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
 TEST_F(TodayServiceCase, QueryTasks)
 {
 	auto query = R"gql({
