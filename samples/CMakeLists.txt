@@ -172,7 +172,6 @@ target_include_directories(sample PRIVATE
 
 # sample_nointrospection
 add_executable(sample_nointrospection today/sample.cpp)
-target_compile_definitions(sample_nointrospection PRIVATE NO_INTROSPECTION)
 target_link_libraries(sample_nointrospection PRIVATE
   separategraphql_nointrospection
   graphqljson)
@@ -205,7 +204,6 @@ target_include_directories(benchmark PRIVATE
 
 # benchmark_nointrospection
 add_executable(benchmark_nointrospection today/benchmark.cpp)
-target_compile_definitions(benchmark_nointrospection PRIVATE NO_INTROSPECTION)
 target_link_libraries(benchmark_nointrospection PRIVATE
   separategraphql_nointrospection
   graphqljson)
