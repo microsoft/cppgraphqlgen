@@ -3020,9 +3020,10 @@ std::future<service::ResolverResult> )cpp"
 		}
 
 		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
 	auto result = )cpp"
 				   << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams(params, std::move(params.fieldDirectives)))cpp";
+				   << R"cpp((service::FieldParams(std::move(params), std::move(directives)))cpp";
 
 		if (!outputField.arguments.empty())
 		{

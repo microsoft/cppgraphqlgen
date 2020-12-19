@@ -169,6 +169,12 @@ FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response:
 {
 }
 
+FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, response::Value&& directives)
+	: SelectionSetParams(std::move(selectionSetParams))
+	, fieldDirectives(std::move(directives))
+{
+}
+
 // ValueVisitor visits the AST and builds a response::Value representation of any value
 // hardcoded or referencing a variable in an operation.
 class ValueVisitor
