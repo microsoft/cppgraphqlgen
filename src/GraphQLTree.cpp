@@ -12,61 +12,8 @@
 #include <numeric>
 #include <tuple>
 
-using namespace std::literals;
-
 namespace graphql {
 namespace peg {
-
-std::string_view ast_node::unescaped_view() const
-{
-	auto result = std::visit(
-		[](const auto& value) noexcept {
-			return std::string_view { value };
-		},
-		unescaped);
-
-	if (result.empty())
-	{
-		if (children.size() > 1)
-		{
-			std::string joined;
-
-			joined.reserve(std::accumulate(children.cbegin(),
-				children.cend(),
-				size_t(0),
-				[](size_t total, const std::unique_ptr<ast_node>& child) {
-					return total + child->unescaped_view().size();
-				}));
-
-			for (const auto& child : children)
-			{
-				joined.append(child->unescaped_view());
-			}
-
-			const_cast<ast_node*>(this)->unescaped = std::move(joined);
-			result = std::get<std::string>(unescaped);
-		}
-		else if (!children.empty())
-		{
-			const_cast<ast_node*>(this)->unescaped = children.front()->unescaped_view();
-			result = std::get<std::string_view>(unescaped);
-		}
-		else if (has_content() && is_type<escaped_unicode>())
-		{
-			const auto content = string_view();
-			memory_input<> in(content.data(), content.size(), "escaped unicode");
-			std::string utf8;
-
-			utf8.reserve((content.size() + 1) / 2);
-			unescape::unescape_j::apply(in, utf8);
-
-			const_cast<ast_node*>(this)->unescaped = std::move(utf8);
-			result = std::get<std::string>(unescaped);
-		}
-	}
-
-	return result;
-}
 
 using namespace tao::graphqlpeg;
 
@@ -118,7 +65,36 @@ struct ast_selector<float_value> : std::true_type
 template <>
 struct ast_selector<escaped_unicode> : std::true_type
 {
+	static void transform(std::unique_ptr<ast_node>& n)
+	{
+		if (n->has_content())
+		{
+			auto content = n->string_view();
+
+			std::string unescaped;
+			if (unescape::utf8_append_utf32(unescaped,
+					unescape::unhex_string<uint32_t>(content.data() + 1,
+						content.data() + content.size())))
+			{
+				n = std::make_unique<ast_unescaped_string>(std::move(n), std::move(unescaped));
+				return;
+			}
+		}
+
+		throw parse_error("invalid escaped unicode code point", n->begin());
+	}
 };
+
+static const std::array<std::pair<char, std::string_view>, 8> escaped_char_map = { {
+	{ '"', "\"" },
+	{ '\\', "\\" },
+	{ '/', "/" },
+	{ 'b', "\b" },
+	{ 'f', "\f" },
+	{ 'n', "\n" },
+	{ 'r', "\r" },
+	{ 't', "\t" },
+} };
 
 template <>
 struct ast_selector<escaped_char> : std::true_type
@@ -129,42 +105,13 @@ struct ast_selector<escaped_char> : std::true_type
 		{
 			const char ch = n->string_view().front();
 
-			switch (ch)
+			for (const auto& it : escaped_char_map)
 			{
-				case '"':
-					n->unescaped = "\""sv;
+				if (it.first == ch)
+				{
+					n->unescaped = it.second;
 					return;
-
-				case '\\':
-					n->unescaped = "\\"sv;
-					return;
-
-				case '/':
-					n->unescaped = "/"sv;
-					return;
-
-				case 'b':
-					n->unescaped = "\b"sv;
-					return;
-
-				case 'f':
-					n->unescaped = "\f"sv;
-					return;
-
-				case 'n':
-					n->unescaped = "\n"sv;
-					return;
-
-				case 'r':
-					n->unescaped = "\r"sv;
-					return;
-
-				case 't':
-					n->unescaped = "\t"sv;
-					return;
-
-				default:
-					break;
+				}
 			}
 		}
 
@@ -175,10 +122,6 @@ struct ast_selector<escaped_char> : std::true_type
 template <>
 struct ast_selector<string_quote_character> : std::true_type
 {
-	static void transform(std::unique_ptr<ast_node>& n)
-	{
-		n->unescaped = n->string_view();
-	}
 };
 
 template <>
@@ -186,22 +129,48 @@ struct ast_selector<block_escape_sequence> : std::true_type
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = R"bq(""")bq"sv;
+		n->unescaped = n->m_string_view.substr(1);
 	}
 };
 
 template <>
 struct ast_selector<block_quote_character> : std::true_type
 {
-	static void transform(std::unique_ptr<ast_node>& n)
-	{
-		n->unescaped = n->string_view();
-	}
 };
 
 template <>
 struct ast_selector<string_value> : std::true_type
 {
+	static void transform(std::unique_ptr<ast_node>& n)
+	{
+		if (!n->children.empty())
+		{
+			if (n->children.size() > 1)
+			{
+				std::string unescaped;
+				unescaped.reserve(std::accumulate(n->children.cbegin(),
+					n->children.cend(),
+					size_t(0),
+					[](size_t total, const std::unique_ptr<ast_node>& child) {
+						return total + child->unescaped.size();
+					}));
+				for (const auto& child : n->children)
+				{
+					unescaped.append(child->unescaped);
+				}
+				n = std::make_unique<ast_unescaped_string>(std::move(n), std::move(unescaped));
+			}
+			else
+			{
+				auto begin = internal::iterator(n->m_begin);
+				auto string_view = n->m_string_view;
+				n = std::move(n->children.front());
+				n->set_type<string_value>();
+				n->m_string_view = string_view;
+				n->m_begin = begin;
+			}
+		}
+	}
 };
 
 template <>
@@ -681,6 +650,19 @@ const std::string ast_control<input_object_type_extension_content>::error_messag
 template <>
 const std::string ast_control<document_content>::error_message =
 	"Expected http://spec.graphql.org/June2018/#Document";
+
+ast_unescaped_string::ast_unescaped_string(
+	std::unique_ptr<ast_node>&& reference, std::string&& unescaped_)
+{
+	_unescaped = std::move(unescaped_);
+
+	set_type<string_value>();
+	m_string_view = reference->m_string_view;
+	m_begin = reference->m_begin;
+	source = reference->source;
+
+	reference.reset();
+}
 
 ast parseString(std::string_view input)
 {
