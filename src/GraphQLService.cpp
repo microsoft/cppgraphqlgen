@@ -885,7 +885,7 @@ class SelectionVisitor
 public:
 	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-		const ResolverMap& resolvers);
+		const ResolverMap& resolvers, size_t reservedValues);
 
 	void visit(const peg::ast_node& selection);
 
@@ -909,7 +909,7 @@ private:
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-	const ResolverMap& resolvers)
+	const ResolverMap& resolvers, size_t reservedValues)
 	: _selectionSetParams(selectionSetParams)
 	, _fragments(fragments)
 	, _variables(variables)
@@ -919,6 +919,8 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	_fragmentDirectives.push_back({ response::Value(response::Type::Map),
 		response::Value(response::Type::Map),
 		response::Value(response::Type::Map) });
+	_names.reserve(reservedValues);
+	_values.reserve(reservedValues);
 }
 
 std::vector<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
@@ -1222,23 +1224,17 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> selections;
-
 	beginSelectionSet(selectionSetParams);
 
-	selections.reserve(selection.children.size());
+	SelectionVisitor visitor(selectionSetParams,
+		fragments,
+		variables,
+		_typeNames,
+		_resolvers,
+		selection.children.size());
 	for (const auto& child : selection.children)
 	{
-		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
-
 		visitor.visit(*child);
-
-		auto values = visitor.getValues();
-
-		for (auto& value : values)
-		{
-			selections.push_back(std::move(value));
-		}
 	}
 
 	endSelectionSet(selectionSetParams);
@@ -1335,7 +1331,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 			return document;
 		},
-		std::move(selections));
+		visitor.getValues());
 }
 
 bool Object::matchesType(const std::string& typeName) const
