@@ -13,7 +13,6 @@
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 
-#include <list>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -27,10 +26,7 @@ struct ast_node : parse_tree::basic_node<ast_node>
 {
 	GRAPHQLPEG_EXPORT std::string_view unescaped_view() const;
 
-	using string_or_utf16 = std::variant<std::string_view, std::uint16_t>;
-
-	std::variant<std::string_view, std::uint16_t, std::list<string_or_utf16>, std::string>
-		unescaped;
+	std::variant<std::string_view, std::string> unescaped;
 };
 
 struct ast_input

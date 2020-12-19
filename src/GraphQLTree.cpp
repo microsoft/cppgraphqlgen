@@ -19,100 +19,53 @@ namespace peg {
 
 std::string_view ast_node::unescaped_view() const
 {
-	if (std::holds_alternative<std::uint16_t>(unescaped))
-	{
-		// The whole string_value was a single unicode character.
-		std::string utf8;
+	auto result = std::visit(
+		[](const auto& value) noexcept {
+			return std::string_view { value };
+		},
+		unescaped);
 
-		if (unescape::utf8_append_utf32(utf8, std::get<std::uint16_t>(unescaped)))
-		{
-			const_cast<ast_node*>(this)->unescaped = std::move(utf8);
-		}
-		else
-		{
-			throw parse_error("invalid escaped unicode code point", this->begin());
-		}
-	}
-	else if (std::holds_alternative<std::list<string_or_utf16>>(unescaped))
+	if (result.empty())
 	{
-		// First convert all of the consecutive unicode sequences to UTF-8 strings together.
-		auto& values = std::get<std::list<string_or_utf16>>(const_cast<ast_node*>(this)->unescaped);
-		const auto isUtf16 = [](const string_or_utf16& value) noexcept {
-			return std::holds_alternative<std::uint16_t>(value);
-		};
-		auto itrStart = std::find_if(values.begin(), values.end(), isUtf16);
-		auto itrEnd = std::find_if_not(itrStart, values.end(), isUtf16);
-		std::list<std::string> utf8;
-
-		if (itrStart != itrEnd)
+		if (children.size() > 1)
 		{
-			while (itrStart != itrEnd)
+			std::string joined;
+
+			joined.reserve(std::accumulate(children.cbegin(),
+				children.cend(),
+				size_t(0),
+				[](size_t total, const std::unique_ptr<ast_node>& child) {
+					return total + child->unescaped_view().size();
+				}));
+
+			for (const auto& child : children)
 			{
-				std::string unescaped;
-
-				// Translate surrogate pairs (based on unescape::unescape_j from PEGTL)
-				for (auto itr = itrStart; itr != itrEnd; ++itr)
-				{
-					const auto c = std::get<std::uint16_t>(*itr);
-
-					if ((0xd800 <= c) && (c <= 0xdbff) && ++itr != itrEnd)
-					{
-						const auto d = std::get<std::uint16_t>(*itr);
-
-						if ((0xdc00 <= d) && (d <= 0xdfff))
-						{
-							(void)unescape::utf8_append_utf32(unescaped,
-								(((c & 0x03ff) << 10) | (d & 0x03ff)) + 0x10000);
-							continue;
-						}
-					}
-
-					if (!unescape::utf8_append_utf32(unescaped, c))
-					{
-						throw parse_error("invalid escaped unicode code point", this->begin());
-					}
-				}
-
-				utf8.push_back(std::move(unescaped));
-
-				values.erase(itrStart, itrEnd);
-				values.insert(itrEnd, std::string_view { utf8.back() });
-
-				itrStart = std::find_if(itrEnd, values.end(), isUtf16);
-				itrEnd = std::find_if_not(itrStart, values.end(), isUtf16);
+				joined.append(child->unescaped_view());
 			}
+
+			const_cast<ast_node*>(this)->unescaped = std::move(joined);
+			result = std::get<std::string>(unescaped);
 		}
-
-		// If the string_value had multiple unescaped sub-strings, concatenate them on
-		// demand and store the result as a std::string.
-		std::string joined;
-
-		joined.reserve(std::accumulate(values.cbegin(),
-			values.cend(),
-			size_t(0),
-			[](size_t total, const auto& child) {
-				return total + std::get<std::string_view>(child).size();
-			}));
-
-		for (const auto& child : values)
+		else if (!children.empty())
 		{
-			joined.append(std::get<std::string_view>(child));
+			const_cast<ast_node*>(this)->unescaped = children.front()->unescaped_view();
+			result = std::get<std::string_view>(unescaped);
 		}
+		else if (has_content() && is_type<escaped_unicode>())
+		{
+			const auto content = string_view();
+			memory_input<> in(content.data(), content.size(), "escaped unicode");
+			std::string utf8;
 
-		const_cast<ast_node*>(this)->unescaped = std::move(joined);
+			utf8.reserve((content.size() + 1) / 2);
+			unescape::unescape_j::apply(in, utf8);
+
+			const_cast<ast_node*>(this)->unescaped = std::move(utf8);
+			result = std::get<std::string>(unescaped);
+		}
 	}
 
-	// By this point it should always be a std::string_view or a std::string.
-	if (std::holds_alternative<std::string_view>(unescaped))
-	{
-		return std::get<std::string_view>(unescaped);
-	}
-	else if (std::holds_alternative<std::string>(unescaped))
-	{
-		return std::get<std::string>(unescaped);
-	}
-
-	throw parse_error("unexpected sub-string", this->begin());
+	return result;
 }
 
 using namespace tao::graphqlpeg;
@@ -165,20 +118,6 @@ struct ast_selector<float_value> : std::true_type
 template <>
 struct ast_selector<escaped_unicode> : std::true_type
 {
-	static void transform(std::unique_ptr<ast_node>& n)
-	{
-		if (n->has_content())
-		{
-			auto content = n->string_view();
-
-			n->unescaped = unescape::unhex_string<uint16_t>(content.data() + 1,
-				content.data() + content.size());
-
-			return;
-		}
-
-		throw parse_error("invalid escaped unicode code point", n->begin());
-	}
 };
 
 template <>
@@ -263,34 +202,6 @@ struct ast_selector<block_quote_character> : std::true_type
 template <>
 struct ast_selector<string_value> : std::true_type
 {
-	static void transform(std::unique_ptr<ast_node>& n)
-	{
-		if (!n->children.empty())
-		{
-			if (n->children.size() > 1)
-			{
-				std::list<ast_node::string_or_utf16> unescaped;
-
-				std::transform(n->children.cbegin(),
-					n->children.cend(),
-					std::back_inserter(unescaped),
-					[](const auto& child) -> ast_node::string_or_utf16 {
-						if (std::holds_alternative<std::uint16_t>(child->unescaped))
-						{
-							return { std::get<std::uint16_t>(child->unescaped) };
-						}
-
-						return { child->unescaped_view() };
-					});
-
-				n->unescaped = std::move(unescaped);
-			}
-			else
-			{
-				n->unescaped = std::move(n->children.front()->unescaped);
-			}
-		}
-	}
 };
 
 template <>

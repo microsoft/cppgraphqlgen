@@ -101,7 +101,11 @@ struct backslash_token : one<'\\'>
 {
 };
 
-struct escaped_unicode_content : rep<4, xdigit>
+struct escaped_unicode_codepoint : rep<4, xdigit>
+{
+};
+
+struct escaped_unicode_content : list<escaped_unicode_codepoint, seq<backslash_token, one<'u'>>>
 {
 };
 
