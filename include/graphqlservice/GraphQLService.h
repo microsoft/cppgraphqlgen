@@ -230,6 +230,9 @@ struct FieldParams : SelectionSetParams
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
 		const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(
+		SelectionSetParams&& selectionSetParams, response::Value&& directives);
+
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive
 	// longer.

@@ -137,7 +137,8 @@ service::FieldResult<std::shared_ptr<Dog>> Query::getDog(service::FieldParams&&)
 std::future<service::ResolverResult> Query::resolveDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getDog(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getDog(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -151,7 +152,8 @@ service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParam
 std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getHuman(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getHuman(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -165,7 +167,8 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getPet(service::Fi
 std::future<service::ResolverResult> Query::resolvePet(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getPet(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getPet(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -179,7 +182,8 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getCatOrDog(servic
 std::future<service::ResolverResult> Query::resolveCatOrDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getCatOrDog(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getCatOrDog(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -193,7 +197,8 @@ service::FieldResult<std::shared_ptr<Arguments>> Query::getArguments(service::Fi
 std::future<service::ResolverResult> Query::resolveArguments(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getArguments(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getArguments(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -208,7 +213,8 @@ std::future<service::ResolverResult> Query::resolveFindDog(service::ResolverPara
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getFindDog(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argComplex));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getFindDog(service::FieldParams(std::move(params), std::move(directives)), std::move(argComplex));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -223,7 +229,8 @@ std::future<service::ResolverResult> Query::resolveBooleanList(service::Resolver
 {
 	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getBooleanList(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanListArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getBooleanList(service::FieldParams(std::move(params), std::move(directives)), std::move(argBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -274,7 +281,8 @@ service::FieldResult<response::StringType> Dog::getName(service::FieldParams&&) 
 std::future<service::ResolverResult> Dog::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
@@ -288,7 +296,8 @@ service::FieldResult<std::optional<response::StringType>> Dog::getNickname(servi
 std::future<service::ResolverResult> Dog::resolveNickname(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNickname(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNickname(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -302,7 +311,8 @@ service::FieldResult<std::optional<response::IntType>> Dog::getBarkVolume(servic
 std::future<service::ResolverResult> Dog::resolveBarkVolume(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getBarkVolume(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getBarkVolume(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -317,7 +327,8 @@ std::future<service::ResolverResult> Dog::resolveDoesKnowCommand(service::Resolv
 {
 	auto argDogCommand = service::ModifiedArgument<DogCommand>::require("dogCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getDoesKnowCommand(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argDogCommand));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getDoesKnowCommand(service::FieldParams(std::move(params), std::move(directives)), std::move(argDogCommand));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -332,7 +343,8 @@ std::future<service::ResolverResult> Dog::resolveIsHousetrained(service::Resolve
 {
 	auto argAtOtherHomes = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("atOtherHomes", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getIsHousetrained(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argAtOtherHomes));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getIsHousetrained(service::FieldParams(std::move(params), std::move(directives)), std::move(argAtOtherHomes));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -346,7 +358,8 @@ service::FieldResult<std::shared_ptr<Human>> Dog::getOwner(service::FieldParams&
 std::future<service::ResolverResult> Dog::resolveOwner(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getOwner(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getOwner(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -378,7 +391,8 @@ service::FieldResult<response::StringType> Alien::getName(service::FieldParams&&
 std::future<service::ResolverResult> Alien::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
@@ -392,7 +406,8 @@ service::FieldResult<std::optional<response::StringType>> Alien::getHomePlanet(s
 std::future<service::ResolverResult> Alien::resolveHomePlanet(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getHomePlanet(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getHomePlanet(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -425,7 +440,8 @@ service::FieldResult<response::StringType> Human::getName(service::FieldParams&&
 std::future<service::ResolverResult> Human::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
@@ -439,7 +455,8 @@ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Human::getPe
 std::future<service::ResolverResult> Human::resolvePets(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getPets(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getPets(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
@@ -473,7 +490,8 @@ service::FieldResult<response::StringType> Cat::getName(service::FieldParams&&) 
 std::future<service::ResolverResult> Cat::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getName(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
@@ -487,7 +505,8 @@ service::FieldResult<std::optional<response::StringType>> Cat::getNickname(servi
 std::future<service::ResolverResult> Cat::resolveNickname(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNickname(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNickname(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -502,7 +521,8 @@ std::future<service::ResolverResult> Cat::resolveDoesKnowCommand(service::Resolv
 {
 	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getDoesKnowCommand(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argCatCommand));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getDoesKnowCommand(service::FieldParams(std::move(params), std::move(directives)), std::move(argCatCommand));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -516,7 +536,8 @@ service::FieldResult<std::optional<response::IntType>> Cat::getMeowVolume(servic
 std::future<service::ResolverResult> Cat::resolveMeowVolume(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getMeowVolume(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getMeowVolume(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -545,7 +566,8 @@ service::FieldResult<std::shared_ptr<MutateDogResult>> Mutation::applyMutateDog(
 std::future<service::ResolverResult> Mutation::resolveMutateDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = applyMutateDog(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = applyMutateDog(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<MutateDogResult>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -574,7 +596,8 @@ service::FieldResult<response::IdType> MutateDogResult::getId(service::FieldPara
 std::future<service::ResolverResult> MutateDogResult::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getId(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
@@ -604,7 +627,8 @@ service::FieldResult<std::shared_ptr<Message>> Subscription::getNewMessage(servi
 std::future<service::ResolverResult> Subscription::resolveNewMessage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNewMessage(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNewMessage(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Message>::convert(std::move(result), std::move(params));
@@ -618,7 +642,8 @@ service::FieldResult<response::BooleanType> Subscription::getDisallowedSecondRoo
 std::future<service::ResolverResult> Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getDisallowedSecondRootField(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getDisallowedSecondRootField(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -648,7 +673,8 @@ service::FieldResult<std::optional<response::StringType>> Message::getBody(servi
 std::future<service::ResolverResult> Message::resolveBody(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getBody(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getBody(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -662,7 +688,8 @@ service::FieldResult<response::IdType> Message::getSender(service::FieldParams&&
 std::future<service::ResolverResult> Message::resolveSender(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getSender(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getSender(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
@@ -700,7 +727,8 @@ std::future<service::ResolverResult> Arguments::resolveMultipleReqs(service::Res
 	auto argX = service::ModifiedArgument<response::IntType>::require("x", params.arguments);
 	auto argY = service::ModifiedArgument<response::IntType>::require("y", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getMultipleReqs(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argX), std::move(argY));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getMultipleReqs(service::FieldParams(std::move(params), std::move(directives)), std::move(argX), std::move(argY));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
@@ -715,7 +743,8 @@ std::future<service::ResolverResult> Arguments::resolveBooleanArgField(service::
 {
 	auto argBooleanArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getBooleanArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -730,7 +759,8 @@ std::future<service::ResolverResult> Arguments::resolveFloatArgField(service::Re
 {
 	auto argFloatArg = service::ModifiedArgument<response::FloatType>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getFloatArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argFloatArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getFloatArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argFloatArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::FloatType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -745,7 +775,8 @@ std::future<service::ResolverResult> Arguments::resolveIntArgField(service::Reso
 {
 	auto argIntArg = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getIntArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argIntArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getIntArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argIntArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -760,7 +791,8 @@ std::future<service::ResolverResult> Arguments::resolveNonNullBooleanArgField(se
 {
 	auto argNonNullBooleanArg = service::ModifiedArgument<response::BooleanType>::require("nonNullBooleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNonNullBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argNonNullBooleanArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNonNullBooleanArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argNonNullBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -775,7 +807,8 @@ std::future<service::ResolverResult> Arguments::resolveNonNullBooleanListField(s
 {
 	auto argNonNullBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNonNullBooleanListField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argNonNullBooleanListArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNonNullBooleanListField(service::FieldParams(std::move(params), std::move(directives)), std::move(argNonNullBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -790,7 +823,8 @@ std::future<service::ResolverResult> Arguments::resolveBooleanListArgField(servi
 {
 	auto argBooleanListArg = service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getBooleanListArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argBooleanListArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getBooleanListArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -819,7 +853,8 @@ std::future<service::ResolverResult> Arguments::resolveOptionalNonNullBooleanArg
 		? std::move(pairOptionalBooleanArg.first)
 		: service::ModifiedArgument<response::BooleanType>::require("optionalBooleanArg", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getOptionalNonNullBooleanArgField(service::FieldParams(params, std::move(params.fieldDirectives)), std::move(argOptionalBooleanArg));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getOptionalNonNullBooleanArgField(service::FieldParams(std::move(params), std::move(directives)), std::move(argOptionalBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
