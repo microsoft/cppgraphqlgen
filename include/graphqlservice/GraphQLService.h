@@ -138,6 +138,42 @@ enum class ResolverContext
 // SelectionSet
 struct SelectionSetParams
 {
+	GRAPHQLSERVICE_EXPORT SelectionSetParams(const ResolverContext resolverContext_,
+		const std::shared_ptr<RequestState>& state_, const response::Value& operationDirectives_,
+		const response::Value& fragmentDefinitionDirectives_,
+		const response::Value& fragmentSpreadDirectives_,
+		const response::Value& inlineFragmentDirectives_,
+		std::optional<std::reference_wrapper<const SelectionSetParams>> parent_,
+		const path_segment&& ownErrorPath_, const std::launch launch_ = std::launch::deferred)
+		: resolverContext(resolverContext_)
+		, state(state_)
+		, operationDirectives(operationDirectives_)
+		, fragmentDefinitionDirectives(fragmentDefinitionDirectives_)
+		, fragmentSpreadDirectives(fragmentSpreadDirectives_)
+		, inlineFragmentDirectives(inlineFragmentDirectives_)
+		, parent(parent_)
+		, ownErrorPath(std::move(ownErrorPath_))
+		, launch(launch_)
+	{
+	}
+
+	GRAPHQLSERVICE_EXPORT SelectionSetParams(
+		const SelectionSetParams& parent, const path_segment&& ownErrorPath_)
+		: resolverContext(parent.resolverContext)
+		, state(parent.state)
+		, operationDirectives(parent.operationDirectives)
+		, fragmentDefinitionDirectives(parent.fragmentDefinitionDirectives)
+		, fragmentSpreadDirectives(parent.fragmentSpreadDirectives)
+		, inlineFragmentDirectives(parent.inlineFragmentDirectives)
+		, parent(std::optional(std::ref(parent)))
+		, ownErrorPath(std::move(ownErrorPath_))
+		, launch(parent.launch)
+	{
+	}
+
+	SelectionSetParams(const SelectionSetParams&) = delete;
+	SelectionSetParams(SelectionSetParams&&) = default;
+
 	// Context for this selection set.
 	const ResolverContext resolverContext;
 
@@ -154,7 +190,35 @@ struct SelectionSetParams
 	const response::Value& inlineFragmentDirectives;
 
 	// Field error path to this selection set.
-	field_path errorPath;
+	std::optional<std::reference_wrapper<const SelectionSetParams>> parent;
+	const path_segment ownErrorPath;
+
+	field_path errorPath() const
+	{
+		if (!parent)
+		{
+			if (std::holds_alternative<std::string_view>(ownErrorPath))
+			{
+				if (std::get<std::string_view>(ownErrorPath) == "")
+				{
+					return {};
+				}
+			}
+			else if (std::holds_alternative<size_t>(ownErrorPath))
+			{
+				if (std::get<std::size_t>(ownErrorPath) == 0)
+				{
+					return {};
+				}
+			}
+			return { { ownErrorPath } };
+		}
+
+		field_path result = parent.value().get().errorPath();
+		result.push_back(ownErrorPath);
+
+		return result;
+	}
 
 	// Async launch policy for sub-field resolvers.
 	const std::launch launch = std::launch::deferred;
@@ -227,16 +291,25 @@ using FragmentMap = std::unordered_map<std::string_view, Fragment>;
 // a single field.
 struct ResolverParams : SelectionSetParams
 {
-	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams,
-		const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments,
+	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const ResolverContext resolverContext_,
+		const std::shared_ptr<RequestState>& state_, const response::Value& operationDirectives_,
+		const response::Value& fragmentDefinitionDirectives_,
+		const response::Value& fragmentSpreadDirectives_,
+		const response::Value& inlineFragmentDirectives_,
+		std::optional<std::reference_wrapper<const SelectionSetParams>> parent_,
+		const path_segment&& ownErrorPath_, const std::launch launch_, const peg::ast_node& field,
+		const std::string_view fieldName, response::Value&& arguments,
 		response::Value&& fieldDirectives, const peg::ast_node* selection,
 		const FragmentMap& fragments, const response::Value& variables);
+
+	GRAPHQLSERVICE_EXPORT explicit ResolverParams(
+		const ResolverParams& parent, const path_segment&& ownErrorPath);
 
 	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
-	std::string fieldName;
+	const std::string_view fieldName;
 	response::Value arguments { response::Type::Map };
 	response::Value fieldDirectives { response::Type::Map };
 	const peg::ast_node* selection;
@@ -649,12 +722,12 @@ struct ModifiedResult
 	{
 		return std::async(
 			params.launch,
-			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
+			[](auto&& wrappedFuture, const ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 				std::vector<std::future<ResolverResult>> children;
+				size_t idx = 0;
 
 				children.reserve(wrappedResult.size());
-				wrappedParams.errorPath.push_back(size_t { 0 });
 
 				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
 
@@ -666,25 +739,24 @@ struct ModifiedResult
 					// Copy the values from the std::vector<> rather than moving them.
 					for (typename vector_type::value_type entry : wrappedResult)
 					{
+						auto itemParams = ResolverParams(wrappedParams, { idx++ });
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+							std::move(itemParams)));
 					}
 				}
 				else
 				{
 					for (auto& entry : wrappedResult)
 					{
+						auto itemParams = ResolverParams(wrappedParams, { idx++ });
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+							std::move(itemParams)));
 					}
 				}
 
 				ResolverResult document { response::Value { response::Type::List } };
 
-				wrappedParams.errorPath.back() = size_t { 0 };
-
+				idx = 0;
 				for (auto& child : children)
 				{
 					try
@@ -722,12 +794,13 @@ struct ModifiedResult
 						message << "Field error name: " << wrappedParams.fieldName
 								<< " unknown error: " << ex.what();
 
-						document.errors.emplace_back(schema_error { message.str(),
-							wrappedParams.getLocation(),
-							wrappedParams.errorPath });
+						field_path path = wrappedParams.errorPath();
+						path.emplace_back(idx);
+						document.errors.emplace_back(
+							schema_error { message.str(), wrappedParams.getLocation(), path });
 					}
 
-					++std::get<size_t>(wrappedParams.errorPath.back());
+					++idx;
 				}
 
 				return document;
@@ -778,7 +851,7 @@ private:
 
 					document.errors.emplace_back(schema_error { message.str(),
 						paramsFuture.getLocation(),
-						std::move(paramsFuture.errorPath) });
+						paramsFuture.errorPath() });
 				}
 
 				return document;

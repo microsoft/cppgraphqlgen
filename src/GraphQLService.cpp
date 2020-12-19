@@ -138,7 +138,11 @@ response::Value schema_exception::getErrors() const
 }
 
 FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
-	: SelectionSetParams(selectionSetParams)
+	: SelectionSetParams(selectionSetParams.resolverContext, selectionSetParams.state,
+		selectionSetParams.operationDirectives, selectionSetParams.fragmentDefinitionDirectives,
+		selectionSetParams.fragmentSpreadDirectives, selectionSetParams.inlineFragmentDirectives,
+		selectionSetParams.parent, path_segment { selectionSetParams.ownErrorPath },
+		selectionSetParams.launch)
 	, fieldDirectives(std::move(directives))
 {
 }
@@ -468,18 +472,38 @@ const response::Value& Fragment::getDirectives() const
 	return _directives;
 }
 
-ResolverParams::ResolverParams(const SelectionSetParams& selectionSetParams,
-	const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments,
+ResolverParams::ResolverParams(const ResolverContext resolverContext_,
+	const std::shared_ptr<RequestState>& state_, const response::Value& operationDirectives_,
+	const response::Value& fragmentDefinitionDirectives_,
+	const response::Value& fragmentSpreadDirectives_,
+	const response::Value& inlineFragmentDirectives_,
+	std::optional<std::reference_wrapper<const SelectionSetParams>> parent_,
+	const path_segment&& ownErrorPath_, const std::launch launch_, const peg::ast_node& field,
+	const std::string_view fieldName, response::Value&& arguments,
 	response::Value&& fieldDirectives, const peg::ast_node* selection, const FragmentMap& fragments,
 	const response::Value& variables)
-	: SelectionSetParams(selectionSetParams)
+	: SelectionSetParams(resolverContext_, state_, operationDirectives_,
+		fragmentDefinitionDirectives_, fragmentSpreadDirectives_, inlineFragmentDirectives_,
+		parent_, std::move(ownErrorPath_), launch_)
 	, field(field)
-	, fieldName(std::move(fieldName))
+	, fieldName(fieldName)
 	, arguments(std::move(arguments))
 	, fieldDirectives(std::move(fieldDirectives))
 	, selection(selection)
 	, fragments(fragments)
 	, variables(variables)
+{
+}
+
+ResolverParams::ResolverParams(const ResolverParams& parent, const path_segment&& ownErrorPath_)
+	: SelectionSetParams(parent, std::move(ownErrorPath_))
+	, field(parent.field)
+	, fieldName(parent.fieldName)
+	, arguments(parent.arguments)
+	, fieldDirectives(parent.fieldDirectives)
+	, selection(parent.selection)
+	, fragments(parent.fragments)
+	, variables(parent.variables)
 {
 }
 
@@ -712,7 +736,7 @@ void blockSubFields(const ResolverParams& params)
 
 		throw schema_exception { { schema_error { error.str(),
 			{ position.line, position.column },
-			{ params.errorPath } } } };
+			{ params.errorPath() } } } };
 	}
 }
 
@@ -806,7 +830,7 @@ void requireSubFields(const ResolverParams& params)
 
 		throw schema_exception { { schema_error { error.str(),
 			{ position.line, position.column },
-			{ params.errorPath } } } };
+			{ params.errorPath() } } } };
 	}
 }
 
@@ -866,11 +890,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	const ResolverContext _resolverContext;
-	const std::shared_ptr<RequestState>& _state;
-	const response::Value& _operationDirectives;
-	const field_path _path;
-	const std::launch _launch;
+	const SelectionSetParams& _selectionSetParams;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -884,11 +904,7 @@ private:
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
 	const ResolverMap& resolvers)
-	: _resolverContext(selectionSetParams.resolverContext)
-	, _state(selectionSetParams.state)
-	, _operationDirectives(selectionSetParams.operationDirectives)
-	, _path(selectionSetParams.errorPath)
-	, _launch(selectionSetParams.launch)
+	: _selectionSetParams(selectionSetParams)
 	, _fragments(fragments)
 	, _variables(variables)
 	, _typeNames(typeNames)
@@ -964,8 +980,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		error << "Unknown field name: " << name;
 
-		promise.set_exception(std::make_exception_ptr(schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _path } } } }));
+		promise.set_exception(
+			std::make_exception_ptr(schema_exception { { schema_error { error.str(),
+				{ position.line, position.column },
+				{ _selectionSetParams.errorPath() } } } }));
 
 		_values.push_back({ alias, promise.get_future() });
 		return;
@@ -1001,26 +1019,19 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		selection = &child;
 	});
 
-	auto path = _path;
-
-	path.push_back({ alias });
-
-	SelectionSetParams selectionSetParams {
-		_resolverContext,
-		_state,
-		_operationDirectives,
-		_fragmentDirectives.back().fragmentDefinitionDirectives,
-		_fragmentDirectives.back().fragmentSpreadDirectives,
-		_fragmentDirectives.back().inlineFragmentDirectives,
-		std::move(path),
-		_launch,
-	};
-
 	try
 	{
-		auto result = itr->second(ResolverParams(selectionSetParams,
+		auto result = itr->second(ResolverParams(_selectionSetParams.resolverContext,
+			_selectionSetParams.state,
+			_selectionSetParams.operationDirectives,
+			_fragmentDirectives.back().fragmentDefinitionDirectives,
+			_fragmentDirectives.back().fragmentSpreadDirectives,
+			_fragmentDirectives.back().inlineFragmentDirectives,
+			_selectionSetParams,
+			{ alias },
+			_selectionSetParams.launch,
 			field,
-			std::string(alias),
+			alias,
 			std::move(arguments),
 			directiveVisitor.getDirectives(),
 			selection,
@@ -1044,7 +1055,8 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 			if (message.path.empty())
 			{
-				message.path = { selectionSetParams.errorPath };
+				message.path = _selectionSetParams.errorPath();
+				message.path.emplace_back(alias);
 			}
 		}
 
@@ -1060,10 +1072,11 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		message << "Field error name: " << alias << " unknown error: " << ex.what();
 
-		promise.set_exception(
-			std::make_exception_ptr(schema_exception { { schema_error { message.str(),
-				{ position.line, position.column },
-				std::move(selectionSetParams.errorPath) } } }));
+		auto path = _selectionSetParams.errorPath();
+		path.emplace_back(alias);
+
+		promise.set_exception(std::make_exception_ptr(schema_exception {
+			{ schema_error { message.str(), { position.line, position.column }, path } } }));
 
 		_values.push_back({ alias, promise.get_future() });
 	}
@@ -1081,9 +1094,9 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 
 		error << "Unknown fragment name: " << name;
 
-		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column }, { _path } } }
-		};
+		throw schema_exception { { schema_error { error.str(),
+			{ position.line, position.column },
+			{ _selectionSetParams.errorPath() } } } };
 	}
 
 	bool skip = (_typeNames.count(itr->second.getType()) == 0);
@@ -1279,7 +1292,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 							}
 							if (error.path.empty())
 							{
-								error.path = selectionSetParams.errorPath;
+								error.path = selectionSetParams.errorPath();
 								error.path.emplace_back(name);
 							}
 							document.errors.push_back(std::move(error));
@@ -1297,7 +1310,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 					const auto& field = selection.children[idx];
 					const auto position = field->begin();
 					schema_location location { position.line, position.column };
-					field_path path = selectionSetParams.errorPath;
+					field_path path = selectionSetParams.errorPath();
 					path.emplace_back(name);
 
 					message << "Field error name: " << name << " unknown error: " << ex.what();
@@ -1484,6 +1497,7 @@ void OperationDefinitionVisitor::visit(
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
+				std::nullopt,
 				{},
 				selectionLaunch,
 			};
@@ -2141,6 +2155,7 @@ std::future<SubscriptionKey> Request::subscribe(
 					emptyFragmentDirectives,
 					emptyFragmentDirectives,
 					emptyFragmentDirectives,
+					std::nullopt,
 					{},
 					launch,
 				};
@@ -2214,6 +2229,7 @@ std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
 				emptyFragmentDirectives,
+				std::nullopt,
 				{},
 				launch,
 			};
@@ -2381,6 +2397,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
+			std::nullopt,
 			{},
 			launch,
 		};
