@@ -56,13 +56,22 @@ struct schema_location
 };
 
 using path_segment = std::variant<std::string_view, size_t>;
-using field_path = std::vector<path_segment>;
+
+struct field_path
+{
+	std::optional<std::reference_wrapper<const field_path>> parent;
+	std::variant<std::string_view, size_t> segment;
+};
+
+using error_path = std::vector<path_segment>;
+
+GRAPHQLSERVICE_EXPORT error_path buildErrorPath(const std::optional<field_path>& path);
 
 struct schema_error
 {
 	std::string message;
 	schema_location location;
-	field_path path;
+	error_path path;
 };
 
 GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
@@ -154,7 +163,7 @@ struct SelectionSetParams
 	const response::Value& inlineFragmentDirectives;
 
 	// Field error path to this selection set.
-	field_path errorPath;
+	std::optional<field_path> errorPath;
 
 	// Async launch policy for sub-field resolvers.
 	const std::launch launch = std::launch::deferred;
@@ -652,9 +661,12 @@ struct ModifiedResult
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 				std::vector<std::future<ResolverResult>> children;
+				const auto parentPath = wrappedParams.errorPath;
 
 				children.reserve(wrappedResult.size());
-				wrappedParams.errorPath.push_back(size_t { 0 });
+				wrappedParams.errorPath = std::make_optional(field_path {
+					parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
+					path_segment { size_t { 0 } } });
 
 				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
 
@@ -668,7 +680,7 @@ struct ModifiedResult
 					{
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.errorPath->segment);
 					}
 				}
 				else
@@ -677,13 +689,13 @@ struct ModifiedResult
 					{
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.errorPath->segment);
 					}
 				}
 
 				ResolverResult document { response::Value { response::Type::List } };
 
-				wrappedParams.errorPath.back() = size_t { 0 };
+				std::get<size_t>(wrappedParams.errorPath->segment) = 0;
 
 				for (auto& child : children)
 				{
@@ -724,10 +736,10 @@ struct ModifiedResult
 
 						document.errors.emplace_back(schema_error { message.str(),
 							wrappedParams.getLocation(),
-							wrappedParams.errorPath });
+							buildErrorPath(wrappedParams.errorPath) });
 					}
 
-					++std::get<size_t>(wrappedParams.errorPath.back());
+					++std::get<size_t>(wrappedParams.errorPath->segment);
 				}
 
 				return document;
@@ -778,7 +790,7 @@ private:
 
 					document.errors.emplace_back(schema_error { message.str(),
 						paramsFuture.getLocation(),
-						std::move(paramsFuture.errorPath) });
+						buildErrorPath(paramsFuture.errorPath) });
 				}
 
 				return document;

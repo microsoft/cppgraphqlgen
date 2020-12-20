@@ -186,10 +186,8 @@ struct EdgeConstraints
 	using vec_type = std::vector<std::shared_ptr<_Object>>;
 	using itr_type = typename vec_type::const_iterator;
 
-	EdgeConstraints(const std::shared_ptr<service::RequestState>& state, service::field_path&& path,
-		const vec_type& objects)
+	EdgeConstraints(const std::shared_ptr<service::RequestState>& state, const vec_type& objects)
 		: _state(state)
-		, _path(std::move(path))
 		, _objects(objects)
 	{
 	}
@@ -239,9 +237,7 @@ struct EdgeConstraints
 				std::ostringstream error;
 
 				error << "Invalid argument: first value: " << *first;
-				throw service::schema_exception {
-					{ service::schema_error { error.str(), {}, _path } }
-				};
+				throw service::schema_exception { { service::schema_error { error.str() } } };
 			}
 
 			if (itrLast - itrFirst > *first)
@@ -257,9 +253,7 @@ struct EdgeConstraints
 				std::ostringstream error;
 
 				error << "Invalid argument: last value: " << *last;
-				throw service::schema_exception {
-					{ service::schema_error { error.str(), {}, _path } }
-				};
+				throw service::schema_exception { { service::schema_error { error.str() } } };
 			}
 
 			if (itrLast - itrFirst > *last)
@@ -278,7 +272,6 @@ struct EdgeConstraints
 
 private:
 	const std::shared_ptr<service::RequestState>& _state;
-	const service::field_path _path;
 	const vec_type& _objects;
 };
 
@@ -294,13 +287,10 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 		[this, spThis, state](std::optional<int>&& firstWrapped,
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
-			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			std::optional<response::Value>&& beforeWrapped) {
 			loadAppointments(state);
 
-			EdgeConstraints<Appointment, AppointmentConnection> constraints(state,
-				std::move(path),
-				_appointments);
+			EdgeConstraints<Appointment, AppointmentConnection> constraints(state, _appointments);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 			return std::static_pointer_cast<object::AppointmentConnection>(connection);
@@ -308,8 +298,7 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 		std::move(first),
 		std::move(after),
 		std::move(last),
-		std::move(before),
-		std::move(params.errorPath));
+		std::move(before));
 }
 
 service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
@@ -324,11 +313,10 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 		[this, spThis, state](std::optional<int>&& firstWrapped,
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
-			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			std::optional<response::Value>&& beforeWrapped) {
 			loadTasks(state);
 
-			EdgeConstraints<Task, TaskConnection> constraints(state, std::move(path), _tasks);
+			EdgeConstraints<Task, TaskConnection> constraints(state, _tasks);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 			return std::static_pointer_cast<object::TaskConnection>(connection);
@@ -336,8 +324,7 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 		std::move(first),
 		std::move(after),
 		std::move(last),
-		std::move(before),
-		std::move(params.errorPath));
+		std::move(before));
 }
 
 service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
@@ -352,13 +339,10 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 		[this, spThis, state](std::optional<int>&& firstWrapped,
 			std::optional<response::Value>&& afterWrapped,
 			std::optional<int>&& lastWrapped,
-			std::optional<response::Value>&& beforeWrapped,
-			service::field_path&& path) {
+			std::optional<response::Value>&& beforeWrapped) {
 			loadUnreadCounts(state);
 
-			EdgeConstraints<Folder, FolderConnection> constraints(state,
-				std::move(path),
-				_unreadCounts);
+			EdgeConstraints<Folder, FolderConnection> constraints(state, _unreadCounts);
 			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
 
 			return std::static_pointer_cast<object::FolderConnection>(connection);
@@ -366,8 +350,7 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 		std::move(first),
 		std::move(after),
 		std::move(last),
-		std::move(before),
-		std::move(params.errorPath));
+		std::move(before));
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(
