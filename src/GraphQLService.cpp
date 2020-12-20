@@ -886,7 +886,7 @@ public:
 
 	void visit(const peg::ast_node& selection);
 
-	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> getValues();
+	std::list<std::pair<std::string_view, std::future<ResolverResult>>> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -905,7 +905,7 @@ private:
 
 	std::vector<FragmentDirectives> _fragmentDirectives;
 	std::unordered_set<std::string_view> _names;
-	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> _values;
+	std::list<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
@@ -928,7 +928,7 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		response::Value(response::Type::Map) });
 }
 
-std::vector<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
+std::list<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
 {
 	auto values = std::move(_values);
 
@@ -1032,16 +1032,14 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		selection = &child;
 	});
 
-	const auto path = std::make_optional(field_path { _path, path_segment { alias } });
-
-	SelectionSetParams selectionSetParams {
+	const SelectionSetParams selectionSetParams {
 		_resolverContext,
 		_state,
 		_operationDirectives,
 		_fragmentDirectives.back().fragmentDefinitionDirectives,
 		_fragmentDirectives.back().fragmentSpreadDirectives,
 		_fragmentDirectives.back().inlineFragmentDirectives,
-		path,
+		std::make_optional(field_path { _path, path_segment { alias } }),
 		_launch,
 	};
 
@@ -1073,7 +1071,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 			if (message.path.empty())
 			{
-				message.path = buildErrorPath(path);
+				message.path = buildErrorPath(selectionSetParams.errorPath);
 			}
 		}
 
@@ -1092,7 +1090,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		promise.set_exception(
 			std::make_exception_ptr(schema_exception { { schema_error { message.str(),
 				{ position.line, position.column },
-				buildErrorPath(path) } } }));
+				buildErrorPath(selectionSetParams.errorPath) } } }));
 
 		_values.push_back({ alias, promise.get_future() });
 	}
@@ -1232,30 +1230,23 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> selections;
+	std::list<std::pair<std::string_view, std::future<ResolverResult>>> selections;
 
 	beginSelectionSet(selectionSetParams);
 
-	selections.reserve(selection.children.size());
 	for (const auto& child : selection.children)
 	{
 		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
 
 		visitor.visit(*child);
-
-		auto values = visitor.getValues();
-
-		for (auto& value : values)
-		{
-			selections.push_back(std::move(value));
-		}
+		selections.splice(selections.end(), visitor.getValues());
 	}
 
 	endSelectionSet(selectionSetParams);
 
 	return std::async(
 		selectionSetParams.launch,
-		[](std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
+		[](std::list<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
 			ResolverResult document { response::Value { response::Type::Map } };
 
 			for (auto& child : children)
@@ -2389,7 +2380,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
 			emptyFragmentDirectives,
-			{},
+			std::nullopt,
 			launch,
 		};
 
