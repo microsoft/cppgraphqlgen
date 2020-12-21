@@ -38,6 +38,16 @@ public:
 		return _data == rhs._data;
 	}
 
+	void reserve(size_t size)
+	{
+		_data.reserve(size);
+	}
+
+	size_t capacity() const noexcept
+	{
+		return _data.capacity();
+	}
+
 	void clear() noexcept
 	{
 		_data.clear();
@@ -223,6 +233,16 @@ public:
 	bool operator==(const sorted_set& rhs) const noexcept
 	{
 		return _data == rhs._data;
+	}
+
+	void reserve(size_t size)
+	{
+		_data.reserve(size);
+	}
+
+	size_t capacity() const noexcept
+	{
+		return _data.capacity();
 	}
 
 	void clear() noexcept

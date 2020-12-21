@@ -892,11 +892,11 @@ class SelectionVisitor
 public:
 	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-		const ResolverMap& resolvers);
+		const ResolverMap& resolvers, size_t count);
 
 	void visit(const peg::ast_node& selection);
 
-	std::list<std::pair<std::string_view, std::future<ResolverResult>>> getValues();
+	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -913,14 +913,14 @@ private:
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
-	std::vector<FragmentDirectives> _fragmentDirectives;
+	std::list<FragmentDirectives> _fragmentDirectives;
 	internal::sorted_set<std::string_view> _names;
-	std::list<std::pair<std::string_view, std::future<ResolverResult>>> _values;
+	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-	const ResolverMap& resolvers)
+	const ResolverMap& resolvers, size_t count)
 	: _resolverContext(selectionSetParams.resolverContext)
 	, _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
@@ -936,9 +936,12 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	_fragmentDirectives.push_back({ response::Value(response::Type::Map),
 		response::Value(response::Type::Map),
 		response::Value(response::Type::Map) });
+
+	_names.reserve(count);
+	_values.reserve(count);
 }
 
-std::list<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
+std::vector<std::pair<std::string_view, std::future<ResolverResult>>> SelectionVisitor::getValues()
 {
 	auto values = std::move(_values);
 
@@ -1164,6 +1167,14 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		std::move(fragmentSpreadDirectives),
 		response::Value(_fragmentDirectives.back().inlineFragmentDirectives) });
 
+	const size_t count = itr->second.getSelection().children.size();
+
+	if (count > 1)
+	{
+		_names.reserve(_names.capacity() + count - 1);
+		_values.reserve(_values.capacity() + count - 1);
+	}
+
 	for (const auto& selection : itr->second.getSelection().children)
 	{
 		visit(*selection);
@@ -1216,6 +1227,14 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 						response::Value(_fragmentDirectives.back().fragmentSpreadDirectives),
 						std::move(inlineFragmentDirectives) });
 
+				const size_t count = child.children.size();
+
+				if (count > 1)
+				{
+					_names.reserve(_names.capacity() + count - 1);
+					_values.reserve(_values.capacity() + count - 1);
+				}
+
 				for (const auto& selection : child.children)
 				{
 					visit(*selection);
@@ -1236,7 +1255,12 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
+	SelectionVisitor visitor(selectionSetParams,
+		fragments,
+		variables,
+		_typeNames,
+		_resolvers,
+		selection.children.size());
 
 	beginSelectionSet(selectionSetParams);
 
@@ -1249,7 +1273,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 	return std::async(
 		selectionSetParams.launch,
-		[](std::list<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
+		[](std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
 			ResolverResult document { response::Value { response::Type::Map } };
 
 			for (auto& child : children)
