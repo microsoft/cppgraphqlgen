@@ -72,27 +72,26 @@ struct schema_error
 	error_path path;
 };
 
-GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
-	const std::vector<schema_error>& structuredErrors);
+GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(std::list<schema_error>&& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<schema_error>&& structuredErrors);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::list<schema_error>&& structuredErrors);
 	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
 
 	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
 
-	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
-	GRAPHQLSERVICE_EXPORT response::Value getErrors() const;
+	GRAPHQLSERVICE_EXPORT std::list<schema_error> getStructuredErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT response::Value getErrors();
 
 private:
-	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
+	static std::list<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
 
-	std::vector<schema_error> _structuredErrors;
+	std::list<schema_error> _structuredErrors;
 };
 
 // The RequestState is nullable, but if you have multiple threads processing requests and there's
@@ -264,7 +263,7 @@ struct ResolverParams : SelectionSetParams
 struct ResolverResult
 {
 	response::Value data;
-	std::vector<schema_error> errors;
+	std::list<schema_error> errors;
 };
 
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
@@ -710,11 +709,7 @@ struct ModifiedResult
 
 						if (!value.errors.empty())
 						{
-							document.errors.reserve(document.errors.size() + value.errors.size());
-							for (auto& error : value.errors)
-							{
-								document.errors.push_back(std::move(error));
-							}
+							document.errors.splice(document.errors.end(), value.errors);
 						}
 					}
 					catch (schema_exception& scx)
@@ -723,11 +718,7 @@ struct ModifiedResult
 
 						if (!errors.empty())
 						{
-							document.errors.reserve(document.errors.size() + errors.size());
-							for (auto& error : errors)
-							{
-								document.errors.push_back(std::move(error));
-							}
+							document.errors.splice(document.errors.end(), errors);
 						}
 					}
 					catch (const std::exception& ex)
@@ -776,11 +767,7 @@ private:
 
 				if (!errors.empty())
 				{
-					document.errors.reserve(document.errors.size() + errors.size());
-					for (auto& error : errors)
-					{
-						document.errors.push_back(std::move(error));
-					}
+					document.errors.splice(document.errors.end(), errors);
 				}
 			}
 			catch (const std::exception& ex)
@@ -924,7 +911,7 @@ protected:
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
-	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
+	GRAPHQLSERVICE_EXPORT std::list<schema_error> validate(peg::ast& query) const;
 
 	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
 		peg::ast& query, std::string_view operationName) const;

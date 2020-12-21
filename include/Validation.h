@@ -101,7 +101,7 @@ struct ValidateArgumentValue
 class ValidateArgumentValueVisitor
 {
 public:
-	ValidateArgumentValueVisitor(std::vector<schema_error>& errors);
+	ValidateArgumentValueVisitor(std::list<schema_error>& errors);
 
 	void visit(const peg::ast_node& value);
 
@@ -119,7 +119,7 @@ private:
 	void visitObjectValue(const peg::ast_node& objectValue);
 
 	ValidateArgumentValuePtr _argumentValue;
-	std::vector<schema_error>& _errors;
+	std::list<schema_error>& _errors;
 };
 
 using ValidateFieldArguments = internal::sorted_map<std::string_view, ValidateArgumentValuePtr>;
@@ -173,7 +173,7 @@ public:
 
 	void visit(const peg::ast_node& root);
 
-	std::vector<schema_error> getStructuredErrors();
+	std::list<schema_error> getStructuredErrors();
 
 private:
 	static ValidateTypeFieldArguments getArguments(
@@ -216,7 +216,7 @@ private:
 		const schema_location& position, const ValidateType& inputType);
 
 	const std::shared_ptr<schema::Schema> _schema;
-	std::vector<schema_error> _errors;
+	std::list<schema_error> _errors;
 
 	using Directives = internal::sorted_map<std::string_view, ValidateDirective>;
 	using ExecutableNodes = internal::sorted_map<std::string_view, std::reference_wrapper<const peg::ast_node>>;

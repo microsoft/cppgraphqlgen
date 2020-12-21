@@ -547,7 +547,7 @@ size_t Value::size() const
 	}
 }
 
-void Value::emplace_back(std::string&& name, Value&& value)
+bool Value::emplace_back(std::string&& name, Value&& value)
 {
 	if (!std::holds_alternative<MapData>(_data))
 	{
@@ -566,11 +566,13 @@ void Value::emplace_back(std::string&& name, Value&& value)
 
 	if (itr != itrEnd)
 	{
-		throw std::runtime_error("Duplicate Map member");
+		return false;
 	}
 
 	mapData.map.emplace_back(std::make_pair(std::move(name), std::move(value)));
 	mapData.members.insert(itr, mapData.members.size());
+
+	return true;
 }
 
 MapType::const_iterator Value::find(std::string_view name) const

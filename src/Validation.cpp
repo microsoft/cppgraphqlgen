@@ -97,7 +97,7 @@ ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentMap&& value)
 {
 }
 
-ValidateArgumentValueVisitor::ValidateArgumentValueVisitor(std::vector<schema_error>& errors)
+ValidateArgumentValueVisitor::ValidateArgumentValueVisitor(std::list<schema_error>& errors)
 	: _errors(errors)
 {
 }
@@ -552,10 +552,9 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			unreferencedFragments.erase(name);
 		}
 
-		_errors.resize(originalSize + unreferencedFragments.size());
 		std::transform(unreferencedFragments.begin(),
 			unreferencedFragments.end(),
-			_errors.begin() + originalSize,
+			std::back_inserter(_errors),
 			[](const auto& fragmentDefinition) noexcept {
 				auto position = fragmentDefinition.second.get().begin();
 				std::ostringstream message;
@@ -567,7 +566,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 	}
 }
 
-std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
+std::list<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 {
 	auto errors = std::move(_errors);
 

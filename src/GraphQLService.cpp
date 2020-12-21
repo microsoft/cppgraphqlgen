@@ -94,13 +94,13 @@ error_path buildErrorPath(const std::optional<field_path>& path)
 	return result;
 }
 
-response::Value buildErrorValues(const std::vector<schema_error>& structuredErrors)
+response::Value buildErrorValues(std::list<schema_error>&& structuredErrors)
 {
 	response::Value errors(response::Type::List);
 
 	errors.reserve(structuredErrors.size());
 
-	for (auto error : structuredErrors)
+	for (auto& error : structuredErrors)
 	{
 		response::Value entry(response::Type::Map);
 
@@ -115,7 +115,7 @@ response::Value buildErrorValues(const std::vector<schema_error>& structuredErro
 	return errors;
 }
 
-schema_exception::schema_exception(std::vector<schema_error>&& structuredErrors)
+schema_exception::schema_exception(std::list<schema_error>&& structuredErrors)
 	: _structuredErrors(std::move(structuredErrors))
 {
 }
@@ -125,14 +125,14 @@ schema_exception::schema_exception(std::vector<std::string>&& messages)
 {
 }
 
-std::vector<schema_error> schema_exception::convertMessages(
+std::list<schema_error> schema_exception::convertMessages(
 	std::vector<std::string>&& messages) noexcept
 {
-	std::vector<schema_error> errors(messages.size());
+	std::list<schema_error> errors;
 
 	std::transform(messages.begin(),
 		messages.end(),
-		errors.begin(),
+		std::back_inserter(errors),
 		[](std::string& message) noexcept {
 			return schema_error { std::move(message) };
 		});
@@ -152,16 +152,16 @@ const char* schema_exception::what() const noexcept
 	return (message == nullptr) ? "Unknown schema error" : message;
 }
 
-std::vector<schema_error> schema_exception::getStructuredErrors() noexcept
+std::list<schema_error> schema_exception::getStructuredErrors() noexcept
 {
 	auto structuredErrors = std::move(_structuredErrors);
 
 	return structuredErrors;
 }
 
-response::Value schema_exception::getErrors() const
+response::Value schema_exception::getErrors()
 {
-	return buildErrorValues(_structuredErrors);
+	return buildErrorValues(std::move(_structuredErrors));
 }
 
 FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
@@ -1263,13 +1263,8 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 				try
 				{
 					auto value = child.second.get();
-					auto itrData = document.data.find(name);
 
-					if (itrData == document.data.end())
-					{
-						document.data.emplace_back(std::string { name }, std::move(value.data));
-					}
-					else if (itrData->second != value.data)
+					if (!document.data.emplace_back(std::string { name }, std::move(value.data)))
 					{
 						std::ostringstream message;
 
@@ -1280,11 +1275,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 					if (!value.errors.empty())
 					{
-						document.errors.reserve(document.errors.size() + value.errors.size());
-						for (auto& error : value.errors)
-						{
-							document.errors.push_back(std::move(error));
-						}
+						document.errors.splice(document.errors.end(), value.errors);
 					}
 				}
 				catch (schema_exception& scx)
@@ -1293,11 +1284,9 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 					if (!errors.empty())
 					{
-						document.errors.reserve(document.errors.size() + errors.size());
-						for (auto& error : errors)
-						{
-							document.errors.push_back(std::move(error));
-						}
+						std::copy(errors.begin(),
+							errors.end(),
+							std::back_inserter(document.errors));
 					}
 
 					if (document.data.find(name) == document.data.end())
@@ -1749,9 +1738,9 @@ Request::~Request()
 	// declaration of the class.
 }
 
-std::vector<schema_error> Request::validate(peg::ast& query) const
+std::list<schema_error> Request::validate(peg::ast& query) const
 {
-	std::vector<schema_error> errors;
+	std::list<schema_error> errors;
 
 	if (!query.validated)
 	{
@@ -1882,7 +1871,7 @@ std::future<response::Value> Request::resolve(std::launch launch,
 				if (!result.errors.empty())
 				{
 					document.emplace_back(std::string { strErrors },
-						buildErrorValues(result.errors));
+						buildErrorValues(std::move(result.errors)));
 				}
 
 				return document;
@@ -2036,7 +2025,7 @@ std::future<response::Value> Request::resolveUnvalidated(std::launch launch,
 				if (!result.errors.empty())
 				{
 					document.emplace_back(std::string { strErrors },
-						buildErrorValues(result.errors));
+						buildErrorValues(std::move(result.errors)));
 				}
 
 				return document;
@@ -2404,7 +2393,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 					if (!result.errors.empty())
 					{
 						document.emplace_back(std::string { strErrors },
-							buildErrorValues(result.errors));
+							buildErrorValues(std::move(result.errors)));
 					}
 
 					return document;
