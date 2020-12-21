@@ -45,7 +45,7 @@ endfunction()
 
 find_package(Threads MODULE REQUIRED)
 
-find_package(pegtl 3.1.0 QUIET CONFIG)
+find_package(pegtl 3.1.1 QUIET CONFIG)
 if(NOT pegtl_FOUND)
   # If a compatible version of PEGTL is not already installed, build and install it from the submodule directory.
   set(PEGTL_BUILD_TESTS OFF CACHE BOOL "Disable PEGTL tests")
