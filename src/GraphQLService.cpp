@@ -1309,10 +1309,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 							std::back_inserter(document.errors));
 					}
 
-					if (document.data.find(name) == document.data.end())
-					{
-						document.data.emplace_back(std::string { name }, {});
-					}
+					document.data.emplace_back(std::string { name }, {});
 				}
 				catch (const std::exception& ex)
 				{
@@ -1321,11 +1318,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 					message << "Field error name: " << name << " unknown error: " << ex.what();
 
 					document.errors.push_back({ message.str() });
-
-					if (document.data.find(name) == document.data.end())
-					{
-						document.data.emplace_back(std::string { name }, {});
-					}
+					document.data.emplace_back(std::string { name }, {});
 				}
 			}
 
