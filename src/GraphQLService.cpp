@@ -1237,16 +1237,13 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const
 {
-	std::list<std::pair<std::string_view, std::future<ResolverResult>>> selections;
+	SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
 
 	beginSelectionSet(selectionSetParams);
 
 	for (const auto& child : selection.children)
 	{
-		SelectionVisitor visitor(selectionSetParams, fragments, variables, _typeNames, _resolvers);
-
 		visitor.visit(*child);
-		selections.splice(selections.end(), visitor.getValues());
 	}
 
 	endSelectionSet(selectionSetParams);
@@ -1311,7 +1308,7 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 
 			return document;
 		},
-		std::move(selections));
+		visitor.getValues());
 }
 
 bool Object::matchesType(std::string_view typeName) const
