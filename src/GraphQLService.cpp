@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <deque>
 #include <iostream>
 #include <list>
 
@@ -904,7 +905,7 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::vector<FragmentDirectives> _fragmentDirectives;
-	std::unordered_set<std::string_view> _names;
+	std::deque<std::string_view> _names;
 	std::list<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 
@@ -970,7 +971,9 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		alias = name;
 	}
 
-	if (!_names.insert(alias).second)
+	const auto [itrName, itrNameEnd] = std::equal_range(_names.begin(), _names.end(), alias);
+
+	if (itrName != itrNameEnd)
 	{
 		// Skip resolving fields which map to the same response name as a field we've already
 		// resolved. Validation should handle merging multiple references to the same field or
@@ -978,14 +981,16 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	const auto [itr, itrEnd] = std::equal_range(_resolvers.cbegin(),
+	_names.insert(itrNameEnd, alias);
+
+	const auto [itrResolver, itrResolverEnd] = std::equal_range(_resolvers.cbegin(),
 		_resolvers.cend(),
 		std::make_pair(std::string_view { name }, Resolver {}),
 		[](const auto& lhs, const auto& rhs) noexcept {
 			return lhs.first < rhs.first;
 		});
 
-	if (itr == itrEnd)
+	if (itrResolver == itrResolverEnd)
 	{
 		std::promise<ResolverResult> promise;
 		auto position = field.begin();
@@ -1045,7 +1050,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 	try
 	{
-		auto result = itr->second(ResolverParams(selectionSetParams,
+		auto result = itrResolver->second(ResolverParams(selectionSetParams,
 			field,
 			std::string(alias),
 			std::move(arguments),
