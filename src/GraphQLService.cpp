@@ -981,7 +981,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	_names.insert(itrNameEnd, alias);
+	_names.emplace(itrNameEnd, alias);
 
 	const auto [itrResolver, itrResolverEnd] = std::equal_range(_resolvers.cbegin(),
 		_resolvers.cend(),
