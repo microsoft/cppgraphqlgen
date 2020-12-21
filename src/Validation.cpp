@@ -7,9 +7,9 @@
 #include "Validation.h"
 
 #include <algorithm>
-#include <deque>
 #include <iostream>
 #include <iterator>
+#include <list>
 
 using namespace std::literals;
 

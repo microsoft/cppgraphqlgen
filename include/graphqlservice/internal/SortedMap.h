@@ -7,9 +7,9 @@
 #define SORTEDMAP_H
 
 #include <algorithm>
-#include <deque>
 #include <initializer_list>
 #include <tuple>
+#include <vector>
 
 namespace graphql::internal {
 
@@ -17,10 +17,10 @@ template <class K, class V>
 class sorted_map
 {
 public:
-	using deque_type = std::deque<std::pair<K, V>>;
-	using iterator = typename deque_type::iterator;
-	using const_iterator = typename deque_type::const_iterator;
-	using const_reverse_iterator = typename deque_type::const_reverse_iterator;
+	using vector_type = std::vector<std::pair<K, V>>;
+	using iterator = typename vector_type::iterator;
+	using const_iterator = typename vector_type::const_iterator;
+	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
 
 	sorted_map() = default;
@@ -135,7 +135,7 @@ public:
 		return _data.erase(itr);
 	}
 
-	iterator erase(typename deque_type::const_iterator itr) noexcept
+	iterator erase(typename vector_type::const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}
@@ -171,16 +171,16 @@ private:
 		const K& key;
 	};
 
-	deque_type _data;
+	vector_type _data;
 };
 
 template <class K>
 class sorted_set
 {
 public:
-	using deque_type = std::deque<K>;
-	using const_iterator = typename deque_type::const_iterator;
-	using const_reverse_iterator = typename deque_type::const_reverse_iterator;
+	using vector_type = std::vector<K>;
+	using const_iterator = typename vector_type::const_iterator;
+	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 
 	sorted_set() = default;
 
@@ -277,13 +277,13 @@ public:
 		return _data.erase(itr);
 	}
 
-	const_iterator erase(typename deque_type::const_iterator itr) noexcept
+	const_iterator erase(typename vector_type::const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}
 
 private:
-	deque_type _data;
+	vector_type _data;
 };
 
 } // namespace graphql::internal

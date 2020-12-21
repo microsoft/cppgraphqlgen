@@ -263,7 +263,7 @@ struct ResolverResult
 };
 
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
-using ResolverMap = std::vector<std::pair<std::string_view, Resolver>>;
+using ResolverMap = internal::sorted_map<std::string_view, Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
 class Base64
