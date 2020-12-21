@@ -843,25 +843,36 @@ std::future<ResolverResult> ModifiedResult<Object>::convert(
 {
 	requireSubFields(params);
 
-	return std::async(
-		params.launch,
-		[](FieldResult<std::shared_ptr<Object>>&& resultFuture, ResolverParams&& paramsFuture) {
-			auto wrappedResult = resultFuture.get();
+	auto buildResult = [](FieldResult<std::shared_ptr<Object>>&& resultFuture,
+						   ResolverParams&& paramsFuture) {
+		auto wrappedResult = resultFuture.get();
 
-			if (!wrappedResult)
-			{
-				return ResolverResult {};
-			}
+		if (!wrappedResult)
+		{
+			return ResolverResult {};
+		}
 
-			return wrappedResult
-				->resolve(paramsFuture,
-					*paramsFuture.selection,
-					paramsFuture.fragments,
-					paramsFuture.variables)
-				.get();
-		},
-		std::move(result),
-		std::move(params));
+		return wrappedResult
+			->resolve(paramsFuture,
+				*paramsFuture.selection,
+				paramsFuture.fragments,
+				paramsFuture.variables)
+			.get();
+	};
+
+	if (result.is_future())
+	{
+		return std::async(params.launch,
+			std::move(buildResult),
+			std::move(result),
+			std::move(params));
+	}
+
+	std::promise<ResolverResult> promise;
+
+	promise.set_value(buildResult(std::move(result), std::move(params)));
+
+	return promise.get_future();
 }
 
 // As we recursively expand fragment spreads and inline fragments, we want to accumulate the
@@ -904,7 +915,7 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::vector<FragmentDirectives> _fragmentDirectives;
-	internal::sorted_set<std::string_view>_names;
+	internal::sorted_set<std::string_view> _names;
 	std::list<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 

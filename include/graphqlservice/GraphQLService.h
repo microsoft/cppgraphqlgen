@@ -202,6 +202,11 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
+	bool is_future() const noexcept
+	{
+		return std::holds_alternative<std::future<T>>(_value);
+	}
+
 private:
 	std::variant<T, std::future<T>> _value;
 };
@@ -564,7 +569,7 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 		auto resultFuture = std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& objectType) {
 				return std::static_pointer_cast<Object>(objectType.get());
 			},
@@ -593,7 +598,7 @@ struct ModifiedResult
 		ResolverParams&& params)
 	{
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -627,7 +632,7 @@ struct ModifiedResult
 			"this is the optional version");
 
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -755,47 +760,58 @@ private:
 	{
 		static_assert(!std::is_base_of_v<Object, Type>,
 			"ModfiedResult<Object> needs special handling");
-		return std::async(
-			params.launch,
-			[](auto&& resultFuture,
-				ResolverParams&& paramsFuture,
-				ResolverCallback&& resolverFuture) noexcept {
-				ResolverResult document;
 
-				try
-				{
-					document.data = resolverFuture(resultFuture.get(), paramsFuture);
-				}
-				catch (schema_exception& scx)
-				{
-					auto errors = scx.getStructuredErrors();
+		auto buildResult = [](auto&& resultFuture,
+							   ResolverParams&& paramsFuture,
+							   ResolverCallback&& resolverFuture) noexcept {
+			ResolverResult document;
 
-					if (!errors.empty())
+			try
+			{
+				document.data = resolverFuture(resultFuture.get(), paramsFuture);
+			}
+			catch (schema_exception& scx)
+			{
+				auto errors = scx.getStructuredErrors();
+
+				if (!errors.empty())
+				{
+					document.errors.reserve(document.errors.size() + errors.size());
+					for (auto& error : errors)
 					{
-						document.errors.reserve(document.errors.size() + errors.size());
-						for (auto& error : errors)
-						{
-							document.errors.push_back(std::move(error));
-						}
+						document.errors.push_back(std::move(error));
 					}
 				}
-				catch (const std::exception& ex)
-				{
-					std::ostringstream message;
+			}
+			catch (const std::exception& ex)
+			{
+				std::ostringstream message;
 
-					message << "Field name: " << paramsFuture.fieldName
-							<< " unknown error: " << ex.what();
+				message << "Field name: " << paramsFuture.fieldName
+						<< " unknown error: " << ex.what();
 
-					document.errors.emplace_back(schema_error { message.str(),
-						paramsFuture.getLocation(),
-						buildErrorPath(paramsFuture.errorPath) });
-				}
+				document.errors.emplace_back(schema_error { message.str(),
+					paramsFuture.getLocation(),
+					buildErrorPath(paramsFuture.errorPath) });
+			}
 
-				return document;
-			},
-			std::move(result),
-			std::move(params),
-			std::move(resolver));
+			return document;
+		};
+
+		if (result.is_future())
+		{
+			return std::async(std::launch::deferred,
+				std::move(buildResult),
+				std::move(result),
+				std::move(params),
+				std::move(resolver));
+		}
+
+		std::promise<ResolverResult> promise;
+
+		promise.set_value(buildResult(std::move(result), std::move(params), std::move(resolver)));
+
+		return promise.get_future();
 	}
 };
 
