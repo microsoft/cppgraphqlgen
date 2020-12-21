@@ -244,6 +244,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 

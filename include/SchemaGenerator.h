@@ -11,6 +11,8 @@
 
 #include <array>
 #include <cstdio>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace graphql::schema {
 

@@ -20,6 +20,7 @@
 
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/internal/SortedMap.h"
 
 #include <functional>
 #include <future>
@@ -27,15 +28,12 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -216,20 +214,20 @@ class Fragment
 public:
 	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
 
-	const std::string& getType() const;
+	std::string_view getType() const;
 	const peg::ast_node& getSelection() const;
 	const response::Value& getDirectives() const;
 
 private:
-	std::string _type;
+	std::string_view _type;
 	response::Value _directives;
 
-	const peg::ast_node& _selection;
+	std::reference_wrapper<const peg::ast_node> _selection;
 };
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
 // the request document by name.
-using FragmentMap = std::unordered_map<std::string_view, Fragment>;
+using FragmentMap = internal::sorted_map<std::string_view, Fragment>;
 
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
@@ -484,7 +482,7 @@ GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
-using TypeNames = std::unordered_set<std::string_view>;
+using TypeNames = internal::sorted_set<std::string_view>;
 
 // Object parses argument values, performs variable lookups, expands fragments, evaluates @include
 // and @skip directives, and calls through to the resolver functor for each selected field with
@@ -500,7 +498,7 @@ public:
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
 		const FragmentMap& fragments, const response::Value& variables) const;
 
-	GRAPHQLSERVICE_EXPORT bool matchesType(const std::string& typeName) const;
+	GRAPHQLSERVICE_EXPORT bool matchesType(std::string_view typeName) const;
 
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The
@@ -837,7 +835,7 @@ GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<Object>::conver
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = std::unordered_map<std::string_view, std::shared_ptr<Object>>;
+using TypeMap = internal::sorted_map<std::string_view, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
@@ -870,7 +868,7 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
-using SubscriptionArguments = std::unordered_map<std::string_view, response::Value>;
+using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
 
 // Subscriptions are stored in maps using these keys.
@@ -987,8 +985,8 @@ private:
 
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
-	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
-	std::unordered_map<std::string_view, std::set<SubscriptionKey>> _listeners;
+	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
+	internal::sorted_map<std::string_view, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
 

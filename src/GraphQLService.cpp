@@ -481,14 +481,14 @@ Fragment::Fragment(const peg::ast_node& fragmentDefinition, const response::Valu
 		});
 }
 
-const std::string& Fragment::getType() const
+std::string_view Fragment::getType() const
 {
 	return _type;
 }
 
 const peg::ast_node& Fragment::getSelection() const
 {
-	return _selection;
+	return _selection.get();
 }
 
 const response::Value& Fragment::getDirectives() const
@@ -1103,10 +1103,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 {
-	const std::string name(fragmentSpread.children.front()->string_view());
+	const auto name = fragmentSpread.children.front()->string_view();
 	auto itr = _fragments.find(name);
 
-	if (itr == _fragments.cend())
+	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
 		std::ostringstream error;
@@ -1118,7 +1118,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 			buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } };
 	}
 
-	bool skip = (_typeNames.count(itr->second.getType()) == 0);
+	bool skip = (_typeNames.find(itr->second.getType()) == _typeNames.end());
 	DirectiveVisitor directiveVisitor(_variables);
 
 	if (!skip)
@@ -1193,7 +1193,8 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 			typeCondition = &child;
 		});
 
-	if (typeCondition == nullptr || _typeNames.count(typeCondition->children.front()->string()) > 0)
+	if (typeCondition == nullptr
+		|| _typeNames.find(typeCondition->children.front()->string_view()) != _typeNames.end())
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
 			[this, &directiveVisitor](const peg::ast_node& child) {
@@ -1323,9 +1324,9 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 		std::move(selections));
 }
 
-bool Object::matchesType(const std::string& typeName) const
+bool Object::matchesType(std::string_view typeName) const
 {
-	return _typeNames.find(typeName) != _typeNames.cend();
+	return _typeNames.find(typeName) != _typeNames.end();
 }
 
 void Object::beginSelectionSet(const SelectionSetParams&) const
@@ -1375,8 +1376,8 @@ FragmentMap FragmentDefinitionVisitor::getFragments()
 
 void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 {
-	_fragments.insert({ fragmentDefinition.children.front()->string_view(),
-		Fragment(fragmentDefinition, _variables) });
+	_fragments.emplace(fragmentDefinition.children.front()->string_view(),
+		Fragment(fragmentDefinition, _variables));
 }
 
 // OperationDefinitionVisitor visits the AST and executes the one with the specified
@@ -1665,7 +1666,7 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fra
 	const auto name = fragmentSpread.children.front()->string_view();
 	auto itr = _fragments.find(name);
 
-	if (itr == _fragments.cend())
+	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
 		std::ostringstream error;
@@ -2103,7 +2104,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 		};
 	}
 
-	auto itr = _operations.find(std::string { strSubscription });
+	auto itr = _operations.find(strSubscription);
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params),
 		std::move(callback),
 		std::move(fragments),
@@ -2117,7 +2118,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	auto registration = subscriptionVisitor.getRegistration();
 	auto key = _nextKey++;
 
-	_listeners[registration->field].insert(key);
+	_listeners[registration->field].emplace(key);
 	_subscriptions.emplace(key, std::move(registration));
 
 	return key;
@@ -2131,9 +2132,9 @@ std::future<SubscriptionKey> Request::subscribe(
 		[spThis = shared_from_this(), launch](SubscriptionParams&& paramsFuture,
 			SubscriptionCallback&& callbackFuture) {
 			const auto key = spThis->subscribe(std::move(paramsFuture), std::move(callbackFuture));
-			const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
+			const auto itrOperation = spThis->_operations.find(strSubscription);
 
-			if (itrOperation != spThis->_operations.cend())
+			if (itrOperation != spThis->_operations.end())
 			{
 				const auto& operation = itrOperation->second;
 				const auto& registration = spThis->_subscriptions.at(key);
@@ -2176,12 +2177,12 @@ void Request::unsubscribe(SubscriptionKey key)
 {
 	auto itrSubscription = _subscriptions.find(key);
 
-	if (itrSubscription == _subscriptions.cend())
+	if (itrSubscription == _subscriptions.end())
 	{
 		return;
 	}
 
-	auto itrListener = _listeners.find(itrSubscription->second->field);
+	auto itrListener = _listeners.find(std::string_view { itrSubscription->second->field });
 
 	itrListener->second.erase(key);
 	if (itrListener->second.empty())
@@ -2197,16 +2198,16 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 	else
 	{
-		_nextKey = _subscriptions.crbegin()->first + 1;
+		_nextKey = _subscriptions.rbegin()->first + 1;
 	}
 }
 
 std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 {
 	return std::async(launch, [spThis = shared_from_this(), launch, key]() {
-		const auto itrOperation = spThis->_operations.find(std::string { strSubscription });
+		const auto itrOperation = spThis->_operations.find(strSubscription);
 
-		if (itrOperation != spThis->_operations.cend())
+		if (itrOperation != spThis->_operations.end())
 		{
 			const auto& operation = itrOperation->second;
 			const auto& registration = spThis->_subscriptions.at(key);
@@ -2286,16 +2287,16 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 {
 	SubscriptionFilterCallback argumentsMatch =
 		[&arguments](response::MapType::const_reference required) noexcept -> bool {
-		auto itrArgument = arguments.find(required.first);
+		auto itrArgument = arguments.find(std::string_view { required.first });
 
-		return (itrArgument != arguments.cend() && itrArgument->second == required.second);
+		return (itrArgument != arguments.end() && itrArgument->second == required.second);
 	};
 
 	SubscriptionFilterCallback directivesMatch =
 		[&directives](response::MapType::const_reference required) noexcept -> bool {
-		auto itrDirective = directives.find(required.first);
+		auto itrDirective = directives.find(std::string_view { required.first });
 
-		return (itrDirective != directives.cend() && itrDirective->second == required.second);
+		return (itrDirective != directives.end() && itrDirective->second == required.second);
 	};
 
 	deliver(launch, name, argumentsMatch, directivesMatch, subscriptionObject);
@@ -2320,13 +2321,12 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyDirectives,
 	const std::shared_ptr<Object>& subscriptionObject) const
 {
-	const auto& optionalOrDefaultSubscription = subscriptionObject
-		? subscriptionObject
-		: _operations.find(std::string { strSubscription })->second;
+	const auto& optionalOrDefaultSubscription =
+		subscriptionObject ? subscriptionObject : _operations.find(strSubscription)->second;
 
-	auto itrListeners = _listeners.find(name);
+	auto itrListeners = _listeners.find(std::string_view { name });
 
-	if (itrListeners == _listeners.cend())
+	if (itrListeners == _listeners.end())
 	{
 		return;
 	}
