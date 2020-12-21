@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -18,7 +19,6 @@ class sorted_map
 {
 public:
 	using vector_type = std::vector<std::pair<K, V>>;
-	using iterator = typename vector_type::iterator;
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
@@ -85,21 +85,18 @@ public:
 		return itr == itrEnd ? _data.end() : itr;
 	}
 
-	iterator find(const K& key) noexcept
+	template <typename KeyArg>
+	const_iterator find(KeyArg&& keyArg) const noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
-			});
+		const K key { std::forward<KeyArg>(keyArg) };
 
-		return itr == itrEnd ? _data.end() : itr;
+		return find(key);
 	}
 
 	template <typename KeyArg, typename... ValueArgs>
-	std::pair<iterator, bool> emplace(KeyArg&& key, ValueArgs&&... args) noexcept
+	std::pair<const_iterator, bool> emplace(KeyArg&& keyArg, ValueArgs&&... args) noexcept
 	{
+		K key { std::forward<KeyArg>(keyArg) };
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
 			_data.end(),
 			key,
@@ -113,12 +110,12 @@ public:
 		}
 
 		return { _data.emplace(itrEnd,
-					 std::forward<KeyArg>(key),
+					 std::move(key),
 					 V { std::forward<ValueArgs>(args)... }),
 			true };
 	}
 
-	iterator erase(const K& key) noexcept
+	const_iterator erase(const K& key) noexcept
 	{
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
 			_data.end(),
@@ -135,24 +132,55 @@ public:
 		return _data.erase(itr);
 	}
 
-	iterator erase(typename vector_type::const_iterator itr) noexcept
+	template <typename KeyArg>
+	const_iterator erase(KeyArg&& keyArg) noexcept
+	{
+		const K key { std::forward<KeyArg>(keyArg) };
+
+		return erase(key);
+	}
+
+	const_iterator erase(const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}
 
-	V& operator[](const K& key) noexcept
+	template <typename KeyArg>
+	V& operator[](KeyArg&& keyArg) noexcept
 	{
-		return emplace(key).first->second;
+		K key { std::forward<KeyArg>(keyArg) };
+		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
+			_data.end(),
+			key,
+			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
+				return lhs.key < rhs.key;
+			});
+
+		if (itr != itrEnd)
+		{
+			return itr->second;
+		}
+
+		return _data.emplace(itrEnd, std::move(key), V {})->second;
 	}
 
-	V& operator[](K&& key) noexcept
+	template <typename KeyArg>
+	V& at(KeyArg&& keyArg)
 	{
-		return emplace(std::move(key)).first->second;
-	}
+		const K key { std::forward<KeyArg>(keyArg) };
+		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
+			_data.end(),
+			key,
+			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
+				return lhs.key < rhs.key;
+			});
 
-	V& at(const K& key)
-	{
-		return find(key)->second;
+		if (itr == itrEnd)
+		{
+			throw std::out_of_range("key not found");
+		}
+
+		return itr->second;
 	}
 
 private:
@@ -243,6 +271,14 @@ public:
 	}
 
 	template <typename Arg>
+	const_iterator find(Arg&& arg) const noexcept
+	{
+		const K key { std::forward<Arg>(arg) };
+
+		return find(key);
+	}
+
+	template <typename Arg>
 	std::pair<const_iterator, bool> emplace(Arg&& key) noexcept
 	{
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
@@ -277,7 +313,15 @@ public:
 		return _data.erase(itr);
 	}
 
-	const_iterator erase(typename vector_type::const_iterator itr) noexcept
+	template <typename Arg>
+	const_iterator erase(Arg&& arg) noexcept
+	{
+		const K key { std::forward<Arg>(arg) };
+
+		return erase(key);
+	}
+
+	const_iterator erase(const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}

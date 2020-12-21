@@ -978,7 +978,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		return;
 	}
 
-	const auto itrResolver = _resolvers.find(std::string_view { name });
+	const auto itrResolver = _resolvers.find(name);
 
 	if (itrResolver == _resolvers.end())
 	{
@@ -2172,12 +2172,13 @@ void Request::unsubscribe(SubscriptionKey key)
 		return;
 	}
 
-	auto itrListener = _listeners.find(std::string_view { itrSubscription->second->field });
+	const auto listenerKey = std::string_view { itrSubscription->second->field };
+	auto& listener = _listeners.at(listenerKey);
 
-	itrListener->second.erase(key);
-	if (itrListener->second.empty())
+	listener.erase(key);
+	if (listener.empty())
 	{
-		_listeners.erase(itrListener);
+		_listeners.erase(listenerKey);
 	}
 
 	_subscriptions.erase(itrSubscription);
@@ -2277,14 +2278,14 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 {
 	SubscriptionFilterCallback argumentsMatch =
 		[&arguments](response::MapType::const_reference required) noexcept -> bool {
-		auto itrArgument = arguments.find(std::string_view { required.first });
+		auto itrArgument = arguments.find(required.first);
 
 		return (itrArgument != arguments.end() && itrArgument->second == required.second);
 	};
 
 	SubscriptionFilterCallback directivesMatch =
 		[&directives](response::MapType::const_reference required) noexcept -> bool {
-		auto itrDirective = directives.find(std::string_view { required.first });
+		auto itrDirective = directives.find(required.first);
 
 		return (itrDirective != directives.end() && itrDirective->second == required.second);
 	};
@@ -2314,7 +2315,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 	const auto& optionalOrDefaultSubscription =
 		subscriptionObject ? subscriptionObject : _operations.find(strSubscription)->second;
 
-	auto itrListeners = _listeners.find(std::string_view { name });
+	auto itrListeners = _listeners.find(name);
 
 	if (itrListeners == _listeners.end())
 	{
