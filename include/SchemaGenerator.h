@@ -7,6 +7,7 @@
 #define SCHEMAGENERATOR_H
 
 #include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLService.h"
 
 #include <array>
@@ -26,10 +27,10 @@ enum class BuiltinType
 	ID,
 };
 
-using BuiltinTypeMap = std::map<std::string, BuiltinType>;
+using BuiltinTypeMap = std::map<std::string_view, BuiltinType>;
 
 // These are the C++ types we'll use for them.
-using CppTypeMap = std::array<std::string, static_cast<size_t>(BuiltinType::ID) + 1>;
+using CppTypeMap = std::array<std::string_view, static_cast<size_t>(BuiltinType::ID) + 1>;
 
 // Types that we understand and use to generate the skeleton of a service.
 enum class SchemaType
@@ -43,14 +44,14 @@ enum class SchemaType
 	Operation,
 };
 
-using SchemaTypeMap = std::map<std::string, SchemaType>;
+using SchemaTypeMap = std::map<std::string_view, SchemaType>;
 
 // Keep track of the positions of each type declaration in the file.
-using PositionMap = std::unordered_map<std::string, tao::graphqlpeg::position>;
+using PositionMap = std::unordered_map<std::string_view, tao::graphqlpeg::position>;
 
 // For all of the named types we track, we want to keep them in order in a vector but
 // be able to lookup their offset quickly by name.
-using TypeNameMap = std::unordered_map<std::string, size_t>;
+using TypeNameMap = std::unordered_map<std::string_view, size_t>;
 
 // Any type can also have a list and/or non-nullable wrapper, and those can be nested.
 // Since it's easier to express nullability than non-nullability in C++, we'll invert
@@ -62,8 +63,8 @@ using TypeModifierStack = std::vector<service::TypeModifier>;
 // scalar type names have been declared so we recognize the references.
 struct ScalarType
 {
-	std::string type;
-	std::string description;
+	std::string_view type;
+	std::string_view description;
 };
 
 using ScalarTypeList = std::vector<ScalarType>;
@@ -71,19 +72,19 @@ using ScalarTypeList = std::vector<ScalarType>;
 // Enum types map a type name to a collection of valid string values.
 struct EnumValueType
 {
-	std::string value;
-	std::string cppValue;
-	std::string description;
-	std::optional<std::string> deprecationReason;
+	std::string_view value;
+	std::string_view cppValue;
+	std::string_view description;
+	std::optional<std::string_view> deprecationReason;
 	std::optional<tao::graphqlpeg::position> position;
 };
 
 struct EnumType
 {
-	std::string type;
-	std::string cppType;
+	std::string_view type;
+	std::string_view cppType;
 	std::vector<EnumValueType> values;
-	std::string description;
+	std::string_view description;
 };
 
 using EnumTypeList = std::vector<EnumType>;
@@ -101,14 +102,14 @@ enum class InputFieldType
 
 struct InputField
 {
-	std::string type;
-	std::string name;
-	std::string cppName;
-	std::string defaultValueString;
+	std::string_view type;
+	std::string_view name;
+	std::string_view cppName;
+	std::string_view defaultValueString;
 	response::Value defaultValue;
 	InputFieldType fieldType = InputFieldType::Builtin;
 	TypeModifierStack modifiers;
-	std::string description;
+	std::string_view description;
 	std::optional<tao::graphqlpeg::position> position;
 };
 
@@ -116,10 +117,10 @@ using InputFieldList = std::vector<InputField>;
 
 struct InputType
 {
-	std::string type;
-	std::string cppType;
+	std::string_view type;
+	std::string_view cppType;
 	InputFieldList fields;
-	std::string description;
+	std::string_view description;
 };
 
 using InputTypeList = std::vector<InputType>;
@@ -127,10 +128,10 @@ using InputTypeList = std::vector<InputType>;
 // Directives are defined with arguments and a list of valid locations.
 struct Directive
 {
-	std::string name;
-	std::vector<std::string> locations;
+	std::string_view name;
+	std::vector<std::string_view> locations;
 	InputFieldList arguments;
-	std::string description;
+	std::string_view description;
 };
 
 using DirectiveList = std::vector<Directive>;
@@ -138,10 +139,10 @@ using DirectiveList = std::vector<Directive>;
 // Union types map a type name to a set of potential concrete type names.
 struct UnionType
 {
-	std::string type;
-	std::string cppType;
-	std::vector<std::string> options;
-	std::string description;
+	std::string_view type;
+	std::string_view cppType;
+	std::vector<std::string_view> options;
+	std::string_view description;
 };
 
 using UnionTypeList = std::vector<UnionType>;
@@ -165,14 +166,14 @@ constexpr std::string_view strApply = "apply";
 
 struct OutputField
 {
-	std::string type;
-	std::string name;
-	std::string cppName;
+	std::string_view type;
+	std::string_view name;
+	std::string_view cppName;
 	InputFieldList arguments;
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
-	std::string description;
-	std::optional<std::string> deprecationReason;
+	std::string_view description;
+	std::optional<std::string_view> deprecationReason;
 	std::optional<tao::graphqlpeg::position> position;
 	bool interfaceField = false;
 	bool inheritedField = false;
@@ -187,10 +188,10 @@ using OutputFieldList = std::vector<OutputField>;
 // conditions. The fields can include any output type.
 struct InterfaceType
 {
-	std::string type;
-	std::string cppType;
+	std::string_view type;
+	std::string_view cppType;
 	OutputFieldList fields;
-	std::string description;
+	std::string_view description;
 };
 
 using InterfaceTypeList = std::vector<InterfaceType>;
@@ -199,12 +200,12 @@ using InterfaceTypeList = std::vector<InterfaceType>;
 // may inherit multiple interfaces.
 struct ObjectType
 {
-	std::string type;
-	std::string cppType;
-	std::vector<std::string> interfaces;
-	std::vector<std::string> unions;
+	std::string_view type;
+	std::string_view cppType;
+	std::vector<std::string_view> interfaces;
+	std::vector<std::string_view> unions;
 	OutputFieldList fields;
-	std::string description;
+	std::string_view description;
 };
 
 using ObjectTypeList = std::vector<ObjectType>;
@@ -212,9 +213,9 @@ using ObjectTypeList = std::vector<ObjectType>;
 // The schema maps operation types to named types.
 struct OperationType
 {
-	std::string type;
-	std::string cppType;
-	std::string operation;
+	std::string_view type;
+	std::string_view cppType;
+	std::string_view operation;
 };
 
 using OperationTypeList = std::vector<OperationType>;
@@ -320,17 +321,16 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
-	static const std::string& getSafeCppName(const std::string& type) noexcept;
-	static OutputFieldList getOutputFields(
-		const std::vector<std::unique_ptr<peg::ast_node>>& fields);
-	static InputFieldList getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields);
+	static std::string_view getSafeCppName(std::string_view type) noexcept;
+	static OutputFieldList getOutputFields(const peg::ast_node::children_t& fields);
+	static InputFieldList getInputFields(const peg::ast_node::children_t& fields);
 
 	// Recursively visit a Type node until we reach a NamedType and we've
 	// taken stock of all of the modifier wrappers.
 	class TypeVisitor
 	{
 	public:
-		std::pair<std::string, TypeModifierStack> getType();
+		std::pair<std::string_view, TypeModifierStack> getType();
 
 		void visit(const peg::ast_node& typeName);
 
@@ -339,7 +339,7 @@ private:
 		void visitListType(const peg::ast_node& listType);
 		void visitNonNullType(const peg::ast_node& nonNullType);
 
-		std::string _type;
+		std::string_view _type;
 		TypeModifierStack _modifiers;
 		bool _nonNull = false;
 	};
@@ -368,11 +368,11 @@ private:
 
 	void validateSchema();
 	void fixupOutputFieldList(OutputFieldList& fields,
-		const std::optional<std::unordered_set<std::string>>& interfaceFields,
+		const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
 
-	const std::string& getCppType(const std::string& type) const noexcept;
+	std::string_view getCppType(std::string_view type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
 	std::string getOutputCppType(const OutputField& field) const noexcept;
 
@@ -395,14 +395,14 @@ private:
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 	std::string getIntrospectionType(
-		const std::string& type, const TypeModifierStack& modifiers) const noexcept;
+		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 
 	std::vector<std::string> outputSeparateFiles() const noexcept;
 
-	static const std::string s_introspectionNamespace;
+	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
 	static const CppTypeMap s_builtinCppTypes;
-	static const std::string s_scalarCppType;
+	static const std::string_view s_scalarCppType;
 	static const std::string s_currentDirectory;
 
 	const GeneratorOptions _options;
@@ -413,6 +413,7 @@ private:
 	const std::string _headerPath;
 	const std::string _objectHeaderPath;
 	const std::string _sourcePath;
+	peg::ast _ast;
 
 	SchemaTypeMap _schemaTypes;
 	PositionMap _typePositions;
