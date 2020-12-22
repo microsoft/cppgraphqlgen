@@ -24,7 +24,7 @@
 namespace graphql {
 namespace peg {
 
-struct ast_node;
+class ast_node;
 struct ast_input;
 
 struct ast
