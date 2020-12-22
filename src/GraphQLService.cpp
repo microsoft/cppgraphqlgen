@@ -163,14 +163,14 @@ response::Value schema_exception::getErrors()
 	return buildErrorValues(std::move(_structuredErrors));
 }
 
-FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
-	: SelectionSetParams(selectionSetParams)
+FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, response::Value&& directives)
+	: SelectionSetParams(std::move(selectionSetParams))
 	, fieldDirectives(std::move(directives))
 {
 }
 
-FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, response::Value&& directives)
-	: SelectionSetParams(std::move(selectionSetParams))
+FieldParams::FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives)
+	: SelectionSetParams(selectionSetParams)
 	, fieldDirectives(std::move(directives))
 {
 }
@@ -1281,6 +1281,8 @@ std::future<ResolverResult> Object::resolve(const SelectionSetParams& selectionS
 		selectionSetParams.launch,
 		[](std::vector<std::pair<std::string_view, std::future<ResolverResult>>>&& children) {
 			ResolverResult document { response::Value { response::Type::Map } };
+
+			document.data.reserve(children.size());
 
 			for (auto& child : children)
 			{

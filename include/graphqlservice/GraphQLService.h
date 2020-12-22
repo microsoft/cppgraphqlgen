@@ -171,10 +171,11 @@ struct SelectionSetParams
 struct FieldParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		const SelectionSetParams& selectionSetParams, response::Value&& directives);
-
-	GRAPHQLSERVICE_EXPORT explicit FieldParams(
 		SelectionSetParams&& selectionSetParams, response::Value&& directives);
+
+	[[deprecated("Use the FieldParams constructor overload which takes a SelectionSet r-value "
+				 "reference instead.")]] GRAPHQLSERVICE_EXPORT explicit FieldParams(
+		const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive
@@ -701,6 +702,7 @@ struct ModifiedResult
 
 				ResolverResult document { response::Value { response::Type::List } };
 
+				document.data.reserve(children.size());
 				std::get<size_t>(wrappedParams.errorPath->segment) = 0;
 
 				for (auto& child : children)

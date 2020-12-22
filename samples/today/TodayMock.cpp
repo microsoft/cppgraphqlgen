@@ -63,11 +63,7 @@ std::shared_ptr<Appointment> Query::findAppointment(
 
 	for (const auto& appointment : _appointments)
 	{
-		auto appointmentId =
-			appointment->getId(service::FieldParams(params, response::Value(response::Type::Map)))
-				.get();
-
-		if (appointmentId == id)
+		if (appointment->id() == id)
 		{
 			return appointment;
 		}
@@ -100,10 +96,7 @@ std::shared_ptr<Task> Query::findTask(
 
 	for (const auto& task : _tasks)
 	{
-		auto taskId =
-			task->getId(service::FieldParams(params, response::Value(response::Type::Map))).get();
-
-		if (taskId == id)
+		if (task->id() == id)
 		{
 			return task;
 		}
@@ -136,10 +129,7 @@ std::shared_ptr<Folder> Query::findUnreadCount(
 
 	for (const auto& folder : _unreadCounts)
 	{
-		auto folderId =
-			folder->getId(service::FieldParams(params, response::Value(response::Type::Map))).get();
-
-		if (folderId == id)
+		if (folder->id() == id)
 		{
 			return folder;
 		}
