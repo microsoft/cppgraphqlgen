@@ -17,15 +17,34 @@ using namespace std::literals;
 namespace graphql {
 namespace peg {
 
+bool ast_node::is_root() const noexcept
+{
+	return _type.empty();
+}
+
+position ast_node::begin() const noexcept
+{
+	return { _begin, _source };
+}
+
+std::string_view ast_node::string_view() const noexcept
+{
+	return _content;
+}
+
+std::string ast_node::string() const noexcept
+{
+	return std::string { string_view() };
+}
+
+void ast_node::unescaped_view(std::string_view unescaped) noexcept
+{
+	_unescaped = std::make_unique<unescaped_t>(unescaped);
+}
+
 std::string_view ast_node::unescaped_view() const
 {
-	auto result = std::visit(
-		[](const auto& value) noexcept {
-			return std::string_view { value };
-		},
-		unescaped);
-
-	if (result.empty())
+	if (!_unescaped)
 	{
 		if (children.size() > 1)
 		{
@@ -35,21 +54,19 @@ std::string_view ast_node::unescaped_view() const
 				children.cend(),
 				size_t(0),
 				[](size_t total, const std::unique_ptr<ast_node>& child) {
-					return total + child->unescaped_view().size();
+					return total + child->string_view().size();
 				}));
 
 			for (const auto& child : children)
 			{
-				joined.append(child->unescaped_view());
+				joined.append(child->string_view());
 			}
 
-			const_cast<ast_node*>(this)->unescaped = std::move(joined);
-			result = std::get<std::string>(unescaped);
+			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (!children.empty())
 		{
-			const_cast<ast_node*>(this)->unescaped = children.front()->unescaped_view();
-			result = std::get<std::string_view>(unescaped);
+			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(children.front()->string_view());
 		}
 		else if (has_content() && is_type<escaped_unicode>())
 		{
@@ -60,12 +77,24 @@ std::string_view ast_node::unescaped_view() const
 			utf8.reserve((content.size() + 1) / 2);
 			unescape::unescape_j::apply(in, utf8);
 
-			const_cast<ast_node*>(this)->unescaped = std::move(utf8);
-			result = std::get<std::string>(unescaped);
+			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::move(utf8));
+		}
+		else
+		{
+			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::string_view {});
 		}
 	}
 
-	return result;
+	return std::visit(
+		[](const auto& value) noexcept {
+			return std::string_view { value };
+		},
+		*_unescaped);
+}
+
+bool ast_node::has_content() const noexcept
+{
+	return !string_view().empty();
 }
 
 using namespace tao::graphqlpeg;
@@ -132,35 +161,35 @@ struct ast_selector<escaped_char> : std::true_type
 			switch (ch)
 			{
 				case '"':
-					n->unescaped = "\""sv;
+					n->unescaped_view("\""sv);
 					return;
 
 				case '\\':
-					n->unescaped = "\\"sv;
+					n->unescaped_view("\\"sv);
 					return;
 
 				case '/':
-					n->unescaped = "/"sv;
+					n->unescaped_view("/"sv);
 					return;
 
 				case 'b':
-					n->unescaped = "\b"sv;
+					n->unescaped_view("\b"sv);
 					return;
 
 				case 'f':
-					n->unescaped = "\f"sv;
+					n->unescaped_view("\f"sv);
 					return;
 
 				case 'n':
-					n->unescaped = "\n"sv;
+					n->unescaped_view("\n"sv);
 					return;
 
 				case 'r':
-					n->unescaped = "\r"sv;
+					n->unescaped_view("\r"sv);
 					return;
 
 				case 't':
-					n->unescaped = "\t"sv;
+					n->unescaped_view("\t"sv);
 					return;
 
 				default:
@@ -177,7 +206,7 @@ struct ast_selector<string_quote_character> : std::true_type
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->string_view();
+		n->unescaped_view(n->string_view());
 	}
 };
 
@@ -186,7 +215,7 @@ struct ast_selector<block_escape_sequence> : std::true_type
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = R"bq(""")bq"sv;
+		n->unescaped_view(R"bq(""")bq"sv);
 	}
 };
 
@@ -195,7 +224,7 @@ struct ast_selector<block_quote_character> : std::true_type
 {
 	static void transform(std::unique_ptr<ast_node>& n)
 	{
-		n->unescaped = n->string_view();
+		n->unescaped_view(n->string_view());
 	}
 };
 
