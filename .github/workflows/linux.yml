@@ -19,12 +19,15 @@ jobs:
     - name: Install Dependencies
       run: sudo apt-get update && sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev
 
+    - name: Build GTest
+      run: cmake -E make_directory gtest && cd gtest && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} /usr/src/gtest && cmake --build . -j -v && sudo cmake --install .
+
     - name: Create Build Environment
       run: cmake -E make_directory build
 
     - name: Configure CMake
       working-directory: build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -G Ninja $GITHUB_WORKSPACE
 
     - name: Build the Project
       working-directory: build
