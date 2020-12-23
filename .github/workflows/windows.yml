@@ -1,0 +1,49 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  vs2019:
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+        vcpkg_triplet: [x86-windows, x64-windows]
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache vcpkg and dependencies
+      uses: actions/cache@v2
+      id: cache-vcpkg
+      with:
+        path: vcpkg/
+        key: vcpkg-${{ matrix.vcpkg_triplet }}
+
+    - name: Install Dependencies
+      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
+      shell: pwsh
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        cd vcpkg
+        ./bootstrap-vcpkg.bat
+        ./vcpkg integrate install
+        ./vcpkg install boost-program-options rapidjson gtest --triplet ${{ matrix.vcpkg_triplet }}
+
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+
+    - name: Configure
+      shell: bash
+      working-directory: build/
+      run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} -G "Visual Studio 16 2019" $GITHUB_WORKSPACE
+
+    - name: Build
+      working-directory: build/
+      run: cmake --build . --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: build/
+      run: ctest -C ${{ matrix.build_type }} --output-on-failure
