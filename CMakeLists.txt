@@ -36,6 +36,11 @@ set(GRAPHQL_INSTALL_CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES} CACHE STRING "Co
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
 
+# Match the MSVC runtime if we're using VCPKG with static libraries.
+if(MSVC AND VCPKG_TARGET_TRIPLET MATCHES ".*-static$")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 function(add_bigobj_flag target)
   if(MSVC)
     # MSVC requires the /bigobj flag if the number of sections gets too big.
