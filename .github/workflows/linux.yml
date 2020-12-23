@@ -17,10 +17,10 @@ jobs:
         submodules: true
 
     - name: Install Dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev
+      run: sudo apt-get update && sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev ninja-build
 
     - name: Build GTest
-      run: cmake -E make_directory gtest && cd gtest && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} /usr/src/gtest && cmake --build . -j -v && sudo cmake --install .
+      run: cmake -E make_directory gtest && cd gtest && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -G Ninja /usr/src/gtest && cmake --build . -j -v && sudo cmake --install .
 
     - name: Create Build Environment
       run: cmake -E make_directory build
