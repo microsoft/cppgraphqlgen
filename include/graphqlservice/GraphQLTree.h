@@ -115,7 +115,7 @@ private:
 	template <typename U>
 	[[nodiscard]] static std::string_view type_name() noexcept
 	{
-		static const std::string_view name { tao::demangle<U>() };
+		static const std::string_view name { tao::graphqlpeg::demangle<U>() };
 
 		return name;
 	}
