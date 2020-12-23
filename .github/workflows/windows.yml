@@ -3,13 +3,13 @@ name: Windows
 on: [push, pull_request]
 
 jobs:
-  vs2019:
+  Windows:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ['Debug', 'Release']
         arch: ['x86', 'x64']
-        build_dlls: ['$true', '$false']
+        libs: ['shared', 'static']
+        config: ['Debug', 'Release']
 
     runs-on: windows-latest
 
@@ -22,8 +22,8 @@ jobs:
       id: set-variables
       shell: pwsh
       run: |
-        echo "::set-output name=vcpkg_triplet::${{ matrix.arch }}-windows$(if (${{ matrix.build_dlls }}) { '' } else { '-static' })"
-        echo "::set-output name=build_shared::$(if (${{ matrix.build_dlls }}) { 'ON' } else { 'OFF' })"
+        echo "::set-output name=vcpkg_triplet::${{ matrix.arch }}-windows$(if ('${{ matrix.libs }}' -eq 'static') { '-static' })"
+        echo "::set-output name=build_shared::$(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })"
         echo "::set-output name=build_arch::$(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })"
 
     - name: Cache vcpkg and dependencies
@@ -47,14 +47,13 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure
-      if: ${{ matrix.vcpkg_triplet == 'x86-windows' }}
       working-directory: build/
       run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=${{ steps.set-variables.outputs.vcpkg_triplet }} -DBUILD_SHARED_LIBS=${{ steps.set-variables.outputs.build_shared }} -G "Visual Studio 16 2019" -A ${{ steps.set-variables.outputs.build_arch }} ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
-      run: cmake --build . --config ${{ matrix.build_type }}
+      run: cmake --build . --config ${{ matrix.config }}
 
     - name: Test
       working-directory: build/
-      run: ctest -C ${{ matrix.build_type }} --output-on-failure
+      run: ctest -C ${{ matrix.config }} --output-on-failure
