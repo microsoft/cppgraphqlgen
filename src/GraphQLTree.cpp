@@ -254,17 +254,37 @@ struct ast_selector<enum_value> : std::true_type
 };
 
 template <>
+struct ast_selector<field_name> : std::true_type
+{
+};
+
+template <>
 struct ast_selector<argument_name> : std::true_type
 {
 };
 
 template <>
-struct ast_selector<named_type> : std::true_type
+struct ast_selector<argument> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<arguments> : std::true_type
 {
 };
 
 template <>
 struct ast_selector<directive_name> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<directive> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<directives> : std::true_type
 {
 };
 
@@ -275,6 +295,11 @@ struct ast_selector<variable> : std::true_type
 
 template <>
 struct ast_selector<scalar_name> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<named_type> : std::true_type
 {
 };
 
@@ -474,37 +499,12 @@ struct executable_selector<alias> : parse_tree::fold_one
 };
 
 template <>
-struct executable_selector<field_name> : std::true_type
-{
-};
-
-template <>
 struct executable_selector<operation_name> : std::true_type
 {
 };
 
 template <>
 struct executable_selector<fragment_name> : std::true_type
-{
-};
-
-template <>
-struct executable_selector<argument> : std::true_type
-{
-};
-
-template <>
-struct executable_selector<arguments> : std::true_type
-{
-};
-
-template <>
-struct executable_selector<directive> : std::true_type
-{
-};
-
-template <>
-struct executable_selector<directives> : std::true_type
 {
 };
 
