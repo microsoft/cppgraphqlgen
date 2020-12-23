@@ -25,6 +25,20 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   endif()
 endif()
 
+if(VCPKG_TARGET_TRIPLET)
+  message(STATUS "Using ${VCPKG_TARGET_TRIPLET} triplet with vcpkg")
+  if(MSVC)
+    # Match the MSVC runtime if we're using VCPKG with static libraries.
+    cmake_policy(SET CMP0091 NEW)
+    if(VCPKG_TARGET_TRIPLET MATCHES [[^.+-static$]])
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    else()
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    endif()
+    message(STATUS "Using ${CMAKE_MSVC_RUNTIME_LIBRARY} to match ${VCPKG_TARGET_TRIPLET}")
+  endif()
+endif()
+
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
@@ -35,11 +49,6 @@ set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install d
 set(GRAPHQL_INSTALL_CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES} CACHE STRING "Configurations which perform a full install")
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
-
-# Match the MSVC runtime if we're using VCPKG with static libraries.
-if(MSVC AND VCPKG_TARGET_TRIPLET MATCHES ".*-static$")
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
 
 function(add_bigobj_flag target)
   if(MSVC)
