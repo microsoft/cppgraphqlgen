@@ -62,11 +62,13 @@ std::string_view ast_node::unescaped_view() const
 				joined.append(child->string_view());
 			}
 
-			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::move(joined));
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (!children.empty())
 		{
-			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(children.front()->string_view());
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(children.front()->string_view());
 		}
 		else if (has_content() && is_type<escaped_unicode>())
 		{
@@ -77,11 +79,13 @@ std::string_view ast_node::unescaped_view() const
 			utf8.reserve((content.size() + 1) / 2);
 			unescape::unescape_j::apply(in, utf8);
 
-			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::move(utf8));
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(std::move(utf8));
 		}
 		else
 		{
-			const_cast<ast_node*>(this)->_unescaped = std::make_unique<unescaped_t>(std::string_view {});
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(std::string_view {});
 		}
 	}
 
@@ -720,6 +724,9 @@ const std::string ast_control<input_object_type_extension_content>::error_messag
 template <>
 const std::string ast_control<document_content>::error_message =
 	"Expected http://spec.graphql.org/June2018/#Document";
+template <>
+const std::string ast_control<executable_document_content>::error_message =
+	"Expected http://spec.graphql.org/June2018/#Document";
 
 ast parseSchemaString(std::string_view input)
 {
@@ -756,8 +763,21 @@ ast parseString(std::string_view input)
 	const auto& data = std::get<std::vector<char>>(result.input->data);
 	memory_input<> in(data.data(), data.size(), "GraphQL");
 
-	result.root =
-		parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(std::move(in));
+	try
+	{
+		// Try a smaller grammar with only executable definitions first.
+		result.root = parse_tree::
+			parse<executable_document, ast_node, executable_selector, nothing, ast_control>(
+				std::move(in));
+	}
+	catch (const peg::parse_error&)
+	{
+		// Try again with the full document grammar so validation can handle the unexepected type
+		// definitions if this is a mixed document.
+		result.root =
+			parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(
+				std::move(in));
+	}
 
 	return result;
 }
@@ -769,8 +789,21 @@ ast parseFile(std::string_view filename)
 		{} };
 	auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
 
-	result.root =
-		parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(std::move(in));
+	try
+	{
+		// Try a smaller grammar with only executable definitions first.
+		result.root = parse_tree::
+			parse<executable_document, ast_node, executable_selector, nothing, ast_control>(
+				std::move(in));
+	}
+	catch (const peg::parse_error&)
+	{
+		// Try again with the full document grammar so validation can handle the unexepected type
+		// definitions if this is a mixed document.
+		result.root =
+			parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(
+				std::move(in));
+	}
 
 	return result;
 }
@@ -783,9 +816,11 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 
 	return { std::make_shared<peg::ast_input>(
 				 peg::ast_input { { std::string_view { text, size } } }),
-		peg::parse_tree::
-			parse<peg::document, peg::ast_node, peg::executable_selector, peg::nothing, peg::ast_control>(
-				std::move(in)) };
+		peg::parse_tree::parse<peg::document,
+			peg::ast_node,
+			peg::executable_selector,
+			peg::nothing,
+			peg::ast_control>(std::move(in)) };
 }
 
 } /* namespace graphql */

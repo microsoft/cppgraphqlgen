@@ -12,7 +12,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today"
-    DEPENDS schemagen schema.today.graphql
+    DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY unified
     COMMENT "Generating mock TodaySchema files")
 
@@ -24,7 +24,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection
-    DEPENDS schemagen schema.today.graphql
+    DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY unified_nointrospection
     COMMENT "Generating mock TodaySchema files without Introspection (--no-introspection)")
 
@@ -41,7 +41,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
-    DEPENDS schemagen schema.today.graphql
+    DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY separate
     COMMENT "Generating mock TodaySchema (--separate-files)")
 
@@ -51,7 +51,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection --separate-files > today_schema_files
-    DEPENDS schemagen schema.today.graphql
+    DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY separate_nointrospection
     COMMENT "Generating mock TodaySchema without Introspection (--no-introspection --separate-files)")
 
@@ -68,7 +68,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation"
-    DEPENDS schemagen schema.validation.graphql
+    DEPENDS schemagen graphqlpeg schema.validation.graphql
     WORKING_DIRECTORY validation
     COMMENT "Generating ValidationSchema files")
 
