@@ -1,0 +1,33 @@
+name: Linux
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install -yq googletest libboost-program-options-dev rapidjson-dev
+
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+
+    - name: Configure CMake
+      working-directory: build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build the Project
+      working-directory: build
+      run: cmake --build . -j -v
+
+    - name: Run the Tests
+      working-directory: build
+      run: ctest --output-on-failure
