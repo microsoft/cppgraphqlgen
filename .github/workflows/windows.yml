@@ -7,14 +7,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [Debug, Release]
-        vcpkg_triplet: [x86-windows, x64-windows]
-      include:
-        - vcpkg_triplet: x86-windows
-          build_arch: Win32
-        - vcpkg_triplet: x64-windows
-          build_arch: X64
-
+        build_type: ['Debug', 'Release']
+        arch: ['x86', 'x64']
+        build_dlls: ['$true', '$false']
 
     runs-on: windows-latest
 
@@ -23,12 +18,20 @@ jobs:
       with:
         submodules: true
 
+    - name: Set config variables
+      id: set-variables
+      shell: pwsh
+      run: |
+        echo "::set-output name=vcpkg_triplet::${{ matrix.arch }}-windows$(if (${{ matrix.build_dlls }}) { '' } else { '-static' })"
+        echo "::set-output name=build_shared::$(if (${{ matrix.build_dlls }}) { 'ON' } else { 'OFF' })"
+        echo "::set-output name=build_arch::$(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })"
+
     - name: Cache vcpkg and dependencies
       uses: actions/cache@v2
       id: cache-vcpkg
       with:
         path: vcpkg/
-        key: vcpkg-${{ matrix.vcpkg_triplet }}
+        key: vcpkg-${{ steps.set-variables.outputs.vcpkg_triplet }}
 
     - name: Install Dependencies
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
@@ -38,14 +41,15 @@ jobs:
         cd vcpkg
         ./bootstrap-vcpkg.bat
         ./vcpkg integrate install
-        ./vcpkg install boost-program-options rapidjson gtest --triplet ${{ matrix.vcpkg_triplet }}
+        ./vcpkg install boost-program-options rapidjson gtest --triplet ${{ steps.set-variables.outputs.vcpkg_triplet }}
 
     - name: Create Build Environment
       run: cmake -E make_directory build
 
     - name: Configure
+      if: ${{ matrix.vcpkg_triplet == 'x86-windows' }}
       working-directory: build/
-      run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} -G "Visual Studio 16 2019" -A ${{ matrix.build_arch }} ${{ github.workspace }}
+      run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=${{ steps.set-variables.outputs.vcpkg_triplet }} -DBUILD_SHARED_LIBS=${{ steps.set-variables.outputs.build_shared }} -G "Visual Studio 16 2019" -A ${{ steps.set-variables.outputs.build_arch }} ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
