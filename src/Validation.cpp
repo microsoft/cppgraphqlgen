@@ -362,14 +362,16 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 	const auto& mutationType = _schema->mutationType();
 	const auto& subscriptionType = _schema->subscriptionType();
 
-	if (queryType)
-	{
-		_operationTypes[strQuery] = getValidateType(queryType);
-	}
+	_operationTypes.reserve(3);
 
 	if (mutationType)
 	{
 		_operationTypes[strMutation] = getValidateType(mutationType);
+	}
+
+	if (queryType)
+	{
+		_operationTypes[strQuery] = getValidateType(queryType);
 	}
 
 	if (subscriptionType)
@@ -379,6 +381,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 	const auto& types = _schema->types();
 
+	_types.reserve(types.size());
+
 	for (const auto& entry : types)
 	{
 		const auto name = entry.first;
@@ -386,14 +390,17 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 		if (!isScalarType(kind))
 		{
+			auto matchingTypes = std::move(_matchingTypes[name]);
+
 			if (kind == introspection::TypeKind::OBJECT)
 			{
-				_matchingTypes[name].emplace(name);
+				matchingTypes.emplace(name);
 			}
 			else
 			{
 				const auto& possibleTypes = entry.second->possibleTypes();
-				internal::sorted_set<std::string_view> matchingTypes;
+
+				matchingTypes.reserve(possibleTypes.size());
 
 				for (const auto& possibleType : possibleTypes)
 				{
@@ -404,17 +411,19 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 						matchingTypes.emplace(spType->name());
 					}
 				}
+			}
 
-				if (!matchingTypes.empty())
-				{
-					_matchingTypes[name] = std::move(matchingTypes);
-				}
+			if (!matchingTypes.empty())
+			{
+				_matchingTypes[name] = std::move(matchingTypes);
 			}
 		}
 		else if (kind == introspection::TypeKind::ENUM)
 		{
 			const auto& enumValues = entry.second->enumValues();
 			internal::sorted_set<std::string_view> values;
+
+			values.reserve(enumValues.size());
 
 			for (const auto& value : enumValues)
 			{
@@ -438,6 +447,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 	}
 
 	const auto& directives = _schema->directives();
+
+	_directives.reserve(directives.size());
 
 	for (const auto& directive : directives)
 	{
@@ -1052,6 +1063,9 @@ bool ValidateExecutableVisitor::validateInputValue(
 						// result.
 						return false;
 					}
+
+					// The recursive call may invalidate the iterator, so reacquire it.
+					itrFields = getInputTypeFields(name);
 				}
 
 				subFields.emplace(entry.first);
