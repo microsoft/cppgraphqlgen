@@ -9,6 +9,12 @@ jobs:
       matrix:
         build_type: [Debug, Release]
         vcpkg_triplet: [x86-windows, x64-windows]
+      include:
+        - vcpkg_triplet: x86-windows
+          build_arch: Win32
+        - vcpkg_triplet: x64-windows
+          build_arch: X64
+
 
     runs-on: windows-latest
 
@@ -38,9 +44,8 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure
-      shell: bash
       working-directory: build/
-      run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} -G "Visual Studio 16 2019" $GITHUB_WORKSPACE
+      run: cmake -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} -G "Visual Studio 16 2019" -A ${{ matrix.build_arch }} ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
