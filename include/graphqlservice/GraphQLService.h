@@ -20,22 +20,21 @@
 
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/internal/SortedMap.h"
 
 #include <functional>
 #include <future>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -56,36 +55,44 @@ struct schema_location
 };
 
 using path_segment = std::variant<std::string_view, size_t>;
-using field_path = std::vector<path_segment>;
+
+struct field_path
+{
+	std::optional<std::reference_wrapper<const field_path>> parent;
+	std::variant<std::string_view, size_t> segment;
+};
+
+using error_path = std::vector<path_segment>;
+
+GRAPHQLSERVICE_EXPORT error_path buildErrorPath(const std::optional<field_path>& path);
 
 struct schema_error
 {
 	std::string message;
 	schema_location location;
-	field_path path;
+	error_path path;
 };
 
-GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
-	const std::vector<schema_error>& structuredErrors);
+GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(std::list<schema_error>&& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class schema_exception : public std::exception
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<schema_error>&& structuredErrors);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::list<schema_error>&& structuredErrors);
 	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
 
 	schema_exception() = delete;
 
 	GRAPHQLSERVICE_EXPORT const char* what() const noexcept override;
 
-	GRAPHQLSERVICE_EXPORT std::vector<schema_error> getStructuredErrors() noexcept;
-	GRAPHQLSERVICE_EXPORT response::Value getErrors() const;
+	GRAPHQLSERVICE_EXPORT std::list<schema_error> getStructuredErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT response::Value getErrors();
 
 private:
-	static std::vector<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
+	static std::list<schema_error> convertMessages(std::vector<std::string>&& messages) noexcept;
 
-	std::vector<schema_error> _structuredErrors;
+	std::list<schema_error> _structuredErrors;
 };
 
 // The RequestState is nullable, but if you have multiple threads processing requests and there's
@@ -154,7 +161,7 @@ struct SelectionSetParams
 	const response::Value& inlineFragmentDirectives;
 
 	// Field error path to this selection set.
-	field_path errorPath;
+	std::optional<field_path> errorPath;
 
 	// Async launch policy for sub-field resolvers.
 	const std::launch launch = std::launch::deferred;
@@ -164,6 +171,10 @@ struct SelectionSetParams
 struct FieldParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
+		SelectionSetParams&& selectionSetParams, response::Value&& directives);
+
+	[[deprecated("Use the FieldParams constructor overload which takes a SelectionSet r-value "
+				 "reference instead.")]] GRAPHQLSERVICE_EXPORT explicit FieldParams(
 		const SelectionSetParams& selectionSetParams, response::Value&& directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
@@ -195,6 +206,11 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
+	bool is_future() const noexcept
+	{
+		return std::holds_alternative<std::future<T>>(_value);
+	}
+
 private:
 	std::variant<T, std::future<T>> _value;
 };
@@ -207,20 +223,20 @@ class Fragment
 public:
 	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
 
-	const std::string& getType() const;
+	std::string_view getType() const;
 	const peg::ast_node& getSelection() const;
 	const response::Value& getDirectives() const;
 
 private:
-	std::string _type;
+	std::string_view _type;
 	response::Value _directives;
 
-	const peg::ast_node& _selection;
+	std::reference_wrapper<const peg::ast_node> _selection;
 };
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
 // the request document by name.
-using FragmentMap = std::unordered_map<std::string_view, Fragment>;
+using FragmentMap = internal::sorted_map<std::string_view, Fragment>;
 
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
@@ -252,11 +268,11 @@ struct ResolverParams : SelectionSetParams
 struct ResolverResult
 {
 	response::Value data;
-	std::vector<schema_error> errors;
+	std::list<schema_error> errors;
 };
 
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
-using ResolverMap = std::vector<std::pair<std::string_view, Resolver>>;
+using ResolverMap = internal::sorted_map<std::string_view, Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
 class Base64
@@ -475,7 +491,7 @@ GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
-using TypeNames = std::unordered_set<std::string_view>;
+using TypeNames = internal::sorted_set<std::string_view>;
 
 // Object parses argument values, performs variable lookups, expands fragments, evaluates @include
 // and @skip directives, and calls through to the resolver functor for each selected field with
@@ -491,7 +507,7 @@ public:
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
 		const FragmentMap& fragments, const response::Value& variables) const;
 
-	GRAPHQLSERVICE_EXPORT bool matchesType(const std::string& typeName) const;
+	GRAPHQLSERVICE_EXPORT bool matchesType(std::string_view typeName) const;
 
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The
@@ -557,7 +573,7 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 		auto resultFuture = std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& objectType) {
 				return std::static_pointer_cast<Object>(objectType.get());
 			},
@@ -586,7 +602,7 @@ struct ModifiedResult
 		ResolverParams&& params)
 	{
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -620,7 +636,7 @@ struct ModifiedResult
 			"this is the optional version");
 
 		return std::async(
-			params.launch,
+			std::launch::deferred,
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 
@@ -652,9 +668,12 @@ struct ModifiedResult
 			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
 				auto wrappedResult = wrappedFuture.get();
 				std::vector<std::future<ResolverResult>> children;
+				const auto parentPath = wrappedParams.errorPath;
 
 				children.reserve(wrappedResult.size());
-				wrappedParams.errorPath.push_back(size_t { 0 });
+				wrappedParams.errorPath = std::make_optional(field_path {
+					parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
+					path_segment { size_t { 0 } } });
 
 				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
 
@@ -668,7 +687,7 @@ struct ModifiedResult
 					{
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.errorPath->segment);
 					}
 				}
 				else
@@ -677,13 +696,14 @@ struct ModifiedResult
 					{
 						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
 							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath.back());
+						++std::get<size_t>(wrappedParams.errorPath->segment);
 					}
 				}
 
 				ResolverResult document { response::Value { response::Type::List } };
 
-				wrappedParams.errorPath.back() = size_t { 0 };
+				document.data.reserve(children.size());
+				std::get<size_t>(wrappedParams.errorPath->segment) = 0;
 
 				for (auto& child : children)
 				{
@@ -695,11 +715,7 @@ struct ModifiedResult
 
 						if (!value.errors.empty())
 						{
-							document.errors.reserve(document.errors.size() + value.errors.size());
-							for (auto& error : value.errors)
-							{
-								document.errors.push_back(std::move(error));
-							}
+							document.errors.splice(document.errors.end(), value.errors);
 						}
 					}
 					catch (schema_exception& scx)
@@ -708,11 +724,7 @@ struct ModifiedResult
 
 						if (!errors.empty())
 						{
-							document.errors.reserve(document.errors.size() + errors.size());
-							for (auto& error : errors)
-							{
-								document.errors.push_back(std::move(error));
-							}
+							document.errors.splice(document.errors.end(), errors);
 						}
 					}
 					catch (const std::exception& ex)
@@ -724,10 +736,10 @@ struct ModifiedResult
 
 						document.errors.emplace_back(schema_error { message.str(),
 							wrappedParams.getLocation(),
-							wrappedParams.errorPath });
+							buildErrorPath(wrappedParams.errorPath) });
 					}
 
-					++std::get<size_t>(wrappedParams.errorPath.back());
+					++std::get<size_t>(wrappedParams.errorPath->segment);
 				}
 
 				return document;
@@ -745,47 +757,54 @@ private:
 	{
 		static_assert(!std::is_base_of_v<Object, Type>,
 			"ModfiedResult<Object> needs special handling");
-		return std::async(
-			params.launch,
-			[](auto&& resultFuture,
-				ResolverParams&& paramsFuture,
-				ResolverCallback&& resolverFuture) noexcept {
-				ResolverResult document;
 
-				try
+		auto buildResult = [](auto&& resultFuture,
+							   ResolverParams&& paramsFuture,
+							   ResolverCallback&& resolverFuture) noexcept {
+			ResolverResult document;
+
+			try
+			{
+				document.data = resolverFuture(resultFuture.get(), paramsFuture);
+			}
+			catch (schema_exception& scx)
+			{
+				auto errors = scx.getStructuredErrors();
+
+				if (!errors.empty())
 				{
-					document.data = resolverFuture(resultFuture.get(), paramsFuture);
+					document.errors.splice(document.errors.end(), errors);
 				}
-				catch (schema_exception& scx)
-				{
-					auto errors = scx.getStructuredErrors();
+			}
+			catch (const std::exception& ex)
+			{
+				std::ostringstream message;
 
-					if (!errors.empty())
-					{
-						document.errors.reserve(document.errors.size() + errors.size());
-						for (auto& error : errors)
-						{
-							document.errors.push_back(std::move(error));
-						}
-					}
-				}
-				catch (const std::exception& ex)
-				{
-					std::ostringstream message;
+				message << "Field name: " << paramsFuture.fieldName
+						<< " unknown error: " << ex.what();
 
-					message << "Field name: " << paramsFuture.fieldName
-							<< " unknown error: " << ex.what();
+				document.errors.emplace_back(schema_error { message.str(),
+					paramsFuture.getLocation(),
+					buildErrorPath(paramsFuture.errorPath) });
+			}
 
-					document.errors.emplace_back(schema_error { message.str(),
-						paramsFuture.getLocation(),
-						std::move(paramsFuture.errorPath) });
-				}
+			return document;
+		};
 
-				return document;
-			},
-			std::move(result),
-			std::move(params),
-			std::move(resolver));
+		if (result.is_future())
+		{
+			return std::async(std::launch::deferred,
+				std::move(buildResult),
+				std::move(result),
+				std::move(params),
+				std::move(resolver));
+		}
+
+		std::promise<ResolverResult> promise;
+
+		promise.set_value(buildResult(std::move(result), std::move(params), std::move(resolver)));
+
+		return promise.get_future();
 	}
 };
 
@@ -825,7 +844,7 @@ GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<Object>::conver
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = std::unordered_map<std::string_view, std::shared_ptr<Object>>;
+using TypeMap = internal::sorted_map<std::string_view, std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
@@ -858,7 +877,7 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
-using SubscriptionArguments = std::unordered_map<std::string_view, response::Value>;
+using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
 
 // Subscriptions are stored in maps using these keys.
@@ -898,7 +917,7 @@ protected:
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
-	GRAPHQLSERVICE_EXPORT std::vector<schema_error> validate(peg::ast& query) const;
+	GRAPHQLSERVICE_EXPORT std::list<schema_error> validate(peg::ast& query) const;
 
 	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
 		peg::ast& query, std::string_view operationName) const;
@@ -975,8 +994,8 @@ private:
 
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
-	std::map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
-	std::unordered_map<std::string_view, std::set<SubscriptionKey>> _listeners;
+	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
+	internal::sorted_map<std::string_view, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
 

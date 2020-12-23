@@ -35,7 +35,8 @@ service::FieldResult<std::shared_ptr<Task>> TaskEdge::getNode(service::FieldPara
 std::future<service::ResolverResult> TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getNode(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getNode(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -49,7 +50,8 @@ service::FieldResult<response::Value> TaskEdge::getCursor(service::FieldParams&&
 std::future<service::ResolverResult> TaskEdge::resolveCursor(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getCursor(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getCursor(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));

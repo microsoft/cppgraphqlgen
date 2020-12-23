@@ -413,3 +413,9 @@ TEST(PegtlCase, AnalyzeGrammar)
 	ASSERT_EQ(0, analyze<document>(true))
 		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
 }
+
+TEST(PegtlCase, AnalyzeExecutableGrammar)
+{
+	ASSERT_EQ(0, analyze<executable_document>(true))
+		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+}

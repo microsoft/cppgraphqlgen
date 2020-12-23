@@ -31,32 +31,41 @@ public:
 		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
 
 		auto query = std::make_shared<today::Query>(
-			[]() -> std::vector<std::shared_ptr<today::Appointment>>
-		{
-			++_getAppointmentsCount;
-			return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "tomorrow", "Lunch?", false) };
-		}, []() -> std::vector<std::shared_ptr<today::Task>>
-		{
-			++_getTasksCount;
-			return { std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true) };
-		}, []() -> std::vector<std::shared_ptr<today::Folder>>
-		{
-			++_getUnreadCountsCount;
-			return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId), "\"Fake\" Inbox", 3) };
-		});
+			[]() -> std::vector<std::shared_ptr<today::Appointment>> {
+				++_getAppointmentsCount;
+				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
+					"tomorrow",
+					"Lunch?",
+					false) };
+			},
+			[]() -> std::vector<std::shared_ptr<today::Task>> {
+				++_getTasksCount;
+				return { std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true) };
+			},
+			[]() -> std::vector<std::shared_ptr<today::Folder>> {
+				++_getUnreadCountsCount;
+				return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId),
+					"\"Fake\" Inbox",
+					3) };
+			});
 		auto mutation = std::make_shared<today::Mutation>(
-			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload>
-		{
-			return std::make_shared<today::CompleteTaskPayload>(
-				std::make_shared<today::Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
-				std::move(input.clientMutationId)
-				);
-		});
+			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload> {
+				return std::make_shared<today::CompleteTaskPayload>(
+					std::make_shared<today::Task>(std::move(input.id),
+						"Mutated Task!",
+						*(input.isComplete)),
+					std::move(input.clientMutationId));
+			});
 		auto subscription = std::make_shared<today::NextAppointmentChange>(
-			[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<today::Appointment>
-		{
-			return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "tomorrow", "Lunch?", true) };
-		});
+			[](const std::shared_ptr<service::RequestState>&)
+				-> std::shared_ptr<today::Appointment> {
+				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
+					"tomorrow",
+					"Lunch?",
+					true) };
+			});
 
 		_service = std::make_shared<today::Operations>(query, mutation, subscription);
 	}
@@ -127,13 +136,20 @@ TEST_F(TodayServiceCase, QueryEverything)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	auto result = _service->resolve(std::launch::async, state, query, "Everything", std::move(variables)).get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(1), state->appointmentsRequestId) << "today service passed the same RequestState";
+	auto result =
+		_service->resolve(std::launch::async, state, query, "Everything", std::move(variables))
+			.get();
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(1), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(1), state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t(1), state->unreadCountsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
 	EXPECT_EQ(size_t(1), state->loadTasksCount) << "today service called the loader once";
 	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
@@ -149,37 +165,55 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointments = service::ScalarArgument::require("appointments", data);
-		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
+		const auto appointmentEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map) << "appointment should be an object";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
+			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
-		EXPECT_EQ("Appointment", service::StringArgument::require("__typename", appointmentNode)) << "__typename should match";
+		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
+		EXPECT_EQ("Appointment", service::StringArgument::require("__typename", appointmentNode))
+			<< "__typename should match";
 
 		const auto tasks = service::ScalarArgument::require("tasks", data);
-		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
+		const auto taskEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
-		EXPECT_EQ("Task", service::StringArgument::require("__typename", taskNode)) << "__typename should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode))
+			<< "isComplete should match";
+		EXPECT_EQ("Task", service::StringArgument::require("__typename", taskNode))
+			<< "__typename should match";
 
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
-		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
+		const auto unreadCountEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map) << "unreadCount should be an object";
+		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
+			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
-		EXPECT_EQ("Folder", service::StringArgument::require("__typename", unreadCountNode)) << "__typename should match";
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode))
+			<< "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode))
+			<< "unreadCount should match";
+		EXPECT_EQ("Folder", service::StringArgument::require("__typename", unreadCountNode))
+			<< "__typename should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -202,10 +236,14 @@ TEST_F(TodayServiceCase, QueryAppointments)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
 	auto result = _service->resolve(state, query, "", std::move(variables)).get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(2), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(2), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
@@ -223,16 +261,23 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointments = service::ScalarArgument::require("appointments", data);
-		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
+		const auto appointmentEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map) << "appointment should be an object";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
+			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -256,10 +301,14 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
 	auto result = _service->resolve(state, query, "", std::move(variables)).get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(2), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(2), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
@@ -276,21 +325,104 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 		}
 
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		EXPECT_EQ(R"js([{"message":"Field error name: forceError unknown error: this error was forced","locations":[{"line":9,"column":7}],"path":["appointments","edges",0,"node","forceError"]}])js", errorsString) << "error should match";
+		EXPECT_EQ(
+			R"js([{"message":"Field error name: forceError unknown error: this error was forced","locations":[{"line":9,"column":7}],"path":["appointments","edges",0,"node","forceError"]}])js",
+			errorsString)
+			<< "error should match";
 
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointments = service::ScalarArgument::require("appointments", data);
-		const auto appointmentEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
+		const auto appointmentEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
 		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
-		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map) << "appointment should be an object";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
+			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
+	{
+		FAIL() << response::toJSON(ex.getErrors());
+	}
+}
+
+TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
+{
+	auto query = R"({
+			appointments {
+				edges {
+					node {
+						appointmentId: id
+						subject
+						when
+						isNow
+						forceError
+					}
+				}
+			}
+		})"_graphql;
+	response::Value variables(response::Type::Map);
+	auto state = std::make_shared<today::RequestState>(2);
+	auto result =
+		_service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(2), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
+	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(size_t(0), state->loadUnreadCountsCount) << "today service did not call the loader";
+
+	try
+	{
+		ASSERT_TRUE(result.type() == response::Type::Map);
+		auto errorsItr = result.find("errors");
+		if (errorsItr == result.get<response::MapType>().cend())
+		{
+			FAIL() << response::toJSON(response::Value(result)) << "no errors returned";
+		}
+
+		auto errorsString = response::toJSON(response::Value(errorsItr->second));
+		EXPECT_EQ(
+			R"js([{"message":"Field error name: forceError unknown error: this error was forced","locations":[{"line":9,"column":7}],"path":["appointments","edges",0,"node","forceError"]}])js",
+			errorsString)
+			<< "error should match";
+
+		const auto data = service::ScalarArgument::require("data", result);
+
+		const auto appointments = service::ScalarArgument::require("appointments", data);
+		const auto appointmentEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
+		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
+			<< "appointment should be an object";
+		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
+	}
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -312,9 +444,12 @@ TEST_F(TodayServiceCase, QueryTasks)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(3);
 	auto result = _service->resolve(state, query, "", std::move(variables)).get();
-	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_EQ(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t(0), state->appointmentsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(3), state->tasksRequestId) << "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
@@ -333,15 +468,19 @@ TEST_F(TodayServiceCase, QueryTasks)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto tasks = service::ScalarArgument::require("tasks", data);
-		const auto taskEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
+		const auto taskEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
 		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode))
+			<< "isComplete should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -363,12 +502,16 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(4);
 	auto result = _service->resolve(state, query, "", std::move(variables)).get();
-	EXPECT_GE(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_GE(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_EQ(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t(0), state->appointmentsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t(4), state->unreadCountsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(4), state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->loadTasksCount) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
@@ -384,15 +527,20 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
-		const auto unreadCountEdges = service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
+		const auto unreadCountEdges =
+			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
 		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
-		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map) << "unreadCount should be an object";
+		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
+			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", unreadCountNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode)) << "name should match";
-		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode)) << "unreadCount should match";
+		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", unreadCountNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode))
+			<< "name should match";
+		EXPECT_EQ(3, service::IntArgument::require("unreadCount", unreadCountNode))
+			<< "unreadCount should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -429,14 +577,18 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 		const auto task = service::ScalarArgument::require("completedTask", completedTask);
 		EXPECT_TRUE(task.type() == response::Type::Map) << "should get back a task";
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task)) << "id should match in base64 encoding";
-		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", task))
+			<< "isComplete should match";
 
-		const auto clientMutationId = service::StringArgument::require("clientMutationId", completedTask);
+		const auto clientMutationId =
+			service::StringArgument::require("clientMutationId", completedTask);
 		EXPECT_EQ("Hi There!", clientMutationId) << "clientMutationId should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -455,11 +607,13 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
 	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
 
@@ -474,12 +628,17 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("nextAppointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -498,18 +657,25 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(7);
 	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
-		[this](const std::shared_ptr<service::RequestState>& state) -> std::shared_ptr<today::Appointment>
-	{
-		EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-		return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId), "today", "Dinner Time!", true);
-	});
+		[this](const std::shared_ptr<service::RequestState>& state)
+			-> std::shared_ptr<today::Appointment> {
+			EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
+				"today",
+				"Dinner Time!",
+				true);
+		});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
-	_service->deliver("nextAppointmentChange", std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
+	_service->deliver("nextAppointmentChange",
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -523,12 +689,17 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Dinner Time!", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("today", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("nextAppointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Dinner Time!", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("today", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -572,7 +743,8 @@ TEST_F(TodayServiceCase, Introspection)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result = _service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
+	auto result =
+		_service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -584,7 +756,8 @@ TEST_F(TodayServiceCase, Introspection)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 		const auto schema = service::ScalarArgument::require("__schema", data);
-		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
+		const auto types =
+			service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
 		const auto queryType = service::ScalarArgument::require("queryType", schema);
 		const auto mutationType = service::ScalarArgument::require("mutationType", schema);
 
@@ -592,7 +765,7 @@ TEST_F(TodayServiceCase, Introspection)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -648,7 +821,8 @@ TEST_F(TodayServiceCase, SkipDirective)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 		const auto schema = service::ScalarArgument::require("__schema", data);
-		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
+		const auto types =
+			service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
 		const auto queryType = service::ScalarArgument::require("queryType", schema);
 		const auto mutationType = service::ScalarArgument::find("mutationType", schema);
 
@@ -656,7 +830,7 @@ TEST_F(TodayServiceCase, SkipDirective)
 		ASSERT_TRUE(queryType.type() == response::Type::Map);
 		ASSERT_FALSE(mutationType.second);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -712,7 +886,8 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 		const auto schema = service::ScalarArgument::require("__schema", data);
-		const auto types = service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
+		const auto types =
+			service::ScalarArgument::require<service::TypeModifier::List>("types", schema);
 		const auto queryType = service::ScalarArgument::find("queryType", schema);
 		const auto mutationType = service::ScalarArgument::require("mutationType", schema);
 
@@ -720,7 +895,7 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		ASSERT_FALSE(queryType.second);
 		ASSERT_TRUE(mutationType.type() == response::Type::Map);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -785,39 +960,61 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		capturedParams.pop();
 		const auto params1 = std::move(capturedParams.top());
 		capturedParams.pop();
-		const auto queryTag1 = service::ScalarArgument::require("queryTag", params1.operationDirectives);
+		const auto queryTag1 =
+			service::ScalarArgument::require("queryTag", params1.operationDirectives);
 		const auto query1 = service::StringArgument::require("query", queryTag1);
 		const auto fragmentDefinitionCount1 = params1.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount1 = params1.fragmentSpreadDirectives.size();
 		const auto inlineFragmentCount1 = params1.inlineFragmentDirectives.size();
-		const auto fieldTag1 = service::ScalarArgument::require("fieldTag", params1.fieldDirectives);
+		const auto fieldTag1 =
+			service::ScalarArgument::require("fieldTag", params1.fieldDirectives);
 		const auto field1 = service::StringArgument::require("field", fieldTag1);
-		const auto queryTag2 = service::ScalarArgument::require("queryTag", params2.operationDirectives);
+		const auto queryTag2 =
+			service::ScalarArgument::require("queryTag", params2.operationDirectives);
 		const auto query2 = service::StringArgument::require("query", queryTag2);
-		const auto fragmentDefinitionTag2 = service::ScalarArgument::require("fragmentDefinitionTag", params2.fragmentDefinitionDirectives);
-		const auto fragmentDefinition2 = service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag2);
-		const auto fragmentSpreadTag2 = service::ScalarArgument::require("fragmentSpreadTag", params2.fragmentSpreadDirectives);
-		const auto fragmentSpread2 = service::StringArgument::require("fragmentSpread", fragmentSpreadTag2);
+		const auto fragmentDefinitionTag2 =
+			service::ScalarArgument::require("fragmentDefinitionTag",
+				params2.fragmentDefinitionDirectives);
+		const auto fragmentDefinition2 =
+			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag2);
+		const auto fragmentSpreadTag2 =
+			service::ScalarArgument::require("fragmentSpreadTag", params2.fragmentSpreadDirectives);
+		const auto fragmentSpread2 =
+			service::StringArgument::require("fragmentSpread", fragmentSpreadTag2);
 		const auto inlineFragmentCount2 = params2.inlineFragmentDirectives.size();
-		const auto fieldTag2 = service::ScalarArgument::require("fieldTag", params2.fieldDirectives);
+		const auto fieldTag2 =
+			service::ScalarArgument::require("fieldTag", params2.fieldDirectives);
 		const auto field2 = service::StringArgument::require("field", fieldTag2);
-		const auto queryTag3 = service::ScalarArgument::require("queryTag", params3.operationDirectives);
+		const auto queryTag3 =
+			service::ScalarArgument::require("queryTag", params3.operationDirectives);
 		const auto query3 = service::StringArgument::require("query", queryTag3);
-		const auto fragmentDefinitionTag3 = service::ScalarArgument::require("fragmentDefinitionTag", params3.fragmentDefinitionDirectives);
-		const auto fragmentDefinition3 = service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag3);
-		const auto fragmentSpreadTag3 = service::ScalarArgument::require("fragmentSpreadTag", params3.fragmentSpreadDirectives);
-		const auto fragmentSpread3 = service::StringArgument::require("fragmentSpread", fragmentSpreadTag3);
-		const auto inlineFragmentTag3 = service::ScalarArgument::require("inlineFragmentTag", params3.inlineFragmentDirectives);
-		const auto inlineFragment3 = service::StringArgument::require("inlineFragment", inlineFragmentTag3);
-		const auto fieldTag3 = service::ScalarArgument::require("fieldTag", params3.fieldDirectives);
+		const auto fragmentDefinitionTag3 =
+			service::ScalarArgument::require("fragmentDefinitionTag",
+				params3.fragmentDefinitionDirectives);
+		const auto fragmentDefinition3 =
+			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag3);
+		const auto fragmentSpreadTag3 =
+			service::ScalarArgument::require("fragmentSpreadTag", params3.fragmentSpreadDirectives);
+		const auto fragmentSpread3 =
+			service::StringArgument::require("fragmentSpread", fragmentSpreadTag3);
+		const auto inlineFragmentTag3 =
+			service::ScalarArgument::require("inlineFragmentTag", params3.inlineFragmentDirectives);
+		const auto inlineFragment3 =
+			service::StringArgument::require("inlineFragment", inlineFragmentTag3);
+		const auto fieldTag3 =
+			service::ScalarArgument::require("fieldTag", params3.fieldDirectives);
 		const auto field3 = service::StringArgument::require("field", fieldTag3);
-		const auto queryTag4 = service::ScalarArgument::require("queryTag", params4.operationDirectives);
+		const auto queryTag4 =
+			service::ScalarArgument::require("queryTag", params4.operationDirectives);
 		const auto query4 = service::StringArgument::require("query", queryTag4);
 		const auto fragmentDefinitionCount4 = params4.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount4 = params4.fragmentSpreadDirectives.size();
-		const auto inlineFragmentTag4 = service::ScalarArgument::require("inlineFragmentTag", params4.inlineFragmentDirectives);
-		const auto inlineFragment4 = service::StringArgument::require("inlineFragment", inlineFragmentTag4);
-		const auto fieldTag4 = service::ScalarArgument::require("fieldTag", params4.fieldDirectives);
+		const auto inlineFragmentTag4 =
+			service::ScalarArgument::require("inlineFragmentTag", params4.inlineFragmentDirectives);
+		const auto inlineFragment4 =
+			service::StringArgument::require("inlineFragment", inlineFragmentTag4);
+		const auto fieldTag4 =
+			service::ScalarArgument::require("fieldTag", params4.fieldDirectives);
 		const auto field4 = service::StringArgument::require("field", fieldTag4);
 
 		ASSERT_EQ(1, depth1);
@@ -831,22 +1028,30 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_EQ(size_t(0), inlineFragmentCount1);
 		ASSERT_EQ("nested1", field1) << "remember the field directives";
 		ASSERT_EQ("nested", query2) << "remember the operation directives";
-		ASSERT_EQ("fragmentDefinition1", fragmentDefinition2) << "remember the directives from the fragment definition";
-		ASSERT_EQ("fragmentSpread1", fragmentSpread2) << "remember the directives from the fragment spread";
+		ASSERT_EQ("fragmentDefinition1", fragmentDefinition2)
+			<< "remember the directives from the fragment definition";
+		ASSERT_EQ("fragmentSpread1", fragmentSpread2)
+			<< "remember the directives from the fragment spread";
 		ASSERT_EQ(size_t(0), inlineFragmentCount2);
 		ASSERT_EQ("nested2", field2) << "remember the field directives";
 		ASSERT_EQ("nested", query3) << "remember the operation directives";
-		ASSERT_EQ("fragmentDefinition2", fragmentDefinition3) << "outer fragement definition directives are preserved with inline fragments";
-		ASSERT_EQ("fragmentSpread2", fragmentSpread3) << "outer fragement spread directives are preserved with inline fragments";
-		ASSERT_EQ("inlineFragment3", inlineFragment3) << "remember the directives from the inline fragment";
+		ASSERT_EQ("fragmentDefinition2", fragmentDefinition3)
+			<< "outer fragement definition directives are preserved with inline fragments";
+		ASSERT_EQ("fragmentSpread2", fragmentSpread3)
+			<< "outer fragement spread directives are preserved with inline fragments";
+		ASSERT_EQ("inlineFragment3", inlineFragment3)
+			<< "remember the directives from the inline fragment";
 		ASSERT_EQ("nested3", field3) << "remember the field directives";
 		ASSERT_EQ("nested", query4) << "remember the operation directives";
-		ASSERT_EQ(size_t(0), fragmentDefinitionCount4) << "traversing a field to a nested object SelectionSet resets the fragment directives";
-		ASSERT_EQ(size_t(0), fragmentSpreadCount4) << "traversing a field to a nested object SelectionSet resets the fragment directives";
-		ASSERT_EQ("inlineFragment5", inlineFragment4) << "nested inline fragments don't reset, but do overwrite on collision";
+		ASSERT_EQ(size_t(0), fragmentDefinitionCount4)
+			<< "traversing a field to a nested object SelectionSet resets the fragment directives";
+		ASSERT_EQ(size_t(0), fragmentSpreadCount4)
+			<< "traversing a field to a nested object SelectionSet resets the fragment directives";
+		ASSERT_EQ("inlineFragment5", inlineFragment4)
+			<< "nested inline fragments don't reset, but do overwrite on collision";
 		ASSERT_EQ("nested4", field4) << "remember the field directives";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -863,13 +1068,18 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
+	variables.emplace_back("appointmentId",
+		response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(12);
 	auto result = _service->resolve(state, query, "", std::move(variables)).get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(12), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(12), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
@@ -886,15 +1096,21 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
-		const auto appointmentsById = service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
+		const auto appointmentsById =
+			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t(1), appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentEntry)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentEntry))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -916,9 +1132,11 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		ASSERT_EQ(size_t(1), errors.size());
 		response::Value error { errors[0] };
 		ASSERT_TRUE(error.type() == response::Type::Map);
-		ASSERT_EQ(R"e({"message":"Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented","locations":[{"line":2,"column":4}],"path":["unimplemented"]})e", response::toJSON(std::move(error)));
+		ASSERT_EQ(
+			R"e({"message":"Field error name: unimplemented unknown error: Query::getUnimplemented is not implemented","locations":[{"line":2,"column":4}],"path":["unimplemented"]})e",
+			response::toJSON(std::move(error)));
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -938,19 +1156,25 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(13);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-	{
-		EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
-	});
+		[this](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<service::Object> {
+			EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(_fakeTaskId, idArg);
+			return std::static_pointer_cast<service::Object>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+		});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
-	_service->deliver("nodeChange", { {"id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } }, std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
+	_service->deliver("nodeChange",
+		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -964,11 +1188,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode))
+			<< "isComplete should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -988,18 +1215,22 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	response::Value variables(response::Type::Map);
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-	{
-		calledResolver = true;
-		return nullptr;
-	});
+		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<service::Object> {
+			calledResolver = true;
+			return nullptr;
+		});
 	bool calledGet = false;
-	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&calledGet](std::future<response::Value>)
-	{
-		calledGet = true;
-	});
-	_service->deliver("nodeChange", { {"id", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")) } }, std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&calledGet](std::future<response::Value>) {
+			calledGet = true;
+		});
+	_service->deliver("nodeChange",
+		{ { "id", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")) } },
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -1007,7 +1238,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1027,8 +1258,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(14);
 	bool filterCalled = false;
-	auto filterCallback = [&filterCalled](response::MapType::const_reference fuzzy) noexcept -> bool
-	{
+	auto filterCallback = [&filterCalled](
+							  response::MapType::const_reference fuzzy) noexcept -> bool {
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
 		EXPECT_EQ("ZmFr", fuzzy.second.get<response::StringType>());
@@ -1036,21 +1267,27 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		return true;
 	};
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-	{
-		const response::IdType fuzzyId { 'f', 'a', 'k' };
+		[this](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<service::Object> {
+			const response::IdType fuzzyId { 'f', 'a', 'k' };
 
-		EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(fuzzyId, idArg);
-		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
-	});
+			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(fuzzyId, idArg);
+			return std::static_pointer_cast<service::Object>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+		});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
-	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
+	_service->deliver("nodeChange",
+		filterCallback,
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -1065,11 +1302,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode))
+			<< "isComplete should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1088,8 +1328,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		})");
 	response::Value variables(response::Type::Map);
 	bool filterCalled = false;
-	auto filterCallback = [&filterCalled](response::MapType::const_reference fuzzy) noexcept -> bool
-	{
+	auto filterCallback = [&filterCalled](
+							  response::MapType::const_reference fuzzy) noexcept -> bool {
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
 		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<response::StringType>());
@@ -1098,18 +1338,22 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	};
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-	{
-		calledResolver = true;
-		return nullptr;
-	});
+		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<service::Object> {
+			calledResolver = true;
+			return nullptr;
+		});
 	bool calledGet = false;
-	auto key = _service->subscribe(service::SubscriptionParams { nullptr, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&calledGet](std::future<response::Value>)
-	{
-		calledGet = true;
-	});
-	_service->deliver("nodeChange", filterCallback, std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&calledGet](std::future<response::Value>) {
+			calledGet = true;
+		});
+	_service->deliver("nodeChange",
+		filterCallback,
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -1118,7 +1362,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		ASSERT_FALSE(calledResolver);
 		ASSERT_FALSE(calledGet);
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1139,19 +1383,25 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	variables.emplace_back("taskId", response::Value(std::string("ZmFrZVRhc2tJZA==")));
 	auto state = std::make_shared<today::RequestState>(14);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state, response::IdType&& idArg) -> std::shared_ptr<service::Object>
-	{
-		EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId) << "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::static_pointer_cast<service::Object>(std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
-	});
+		[this](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<service::Object> {
+			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(_fakeTaskId, idArg);
+			return std::static_pointer_cast<service::Object>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+		});
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
-	_service->deliver("nodeChange", { {"id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } }, std::static_pointer_cast<service::Object>(subscriptionObject));
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
+	_service->deliver("nodeChange",
+		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
+		std::static_pointer_cast<service::Object>(subscriptionObject));
 	_service->unsubscribe(key);
 
 	try
@@ -1165,11 +1415,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode)) << "title should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode)) << "isComplete should match";
+		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
+			<< "title should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isComplete", taskNode))
+			<< "isComplete should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1186,18 +1439,26 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
+	variables.emplace_back("appointmentId",
+		response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(15);
 	auto future = _service->resolve(std::launch::deferred, state, query, "", std::move(variables));
 	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s)) << "should be deferred";
-	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service should not call the loader until we block";
-	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s)) << "should stay deferred until we block";
-	EXPECT_EQ(size_t(0), state->loadAppointmentsCount) << "today service should not call the loader until we block";
+	EXPECT_EQ(size_t(0), state->loadAppointmentsCount)
+		<< "today service should not call the loader until we block";
+	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s))
+		<< "should stay deferred until we block";
+	EXPECT_EQ(size_t(0), state->loadAppointmentsCount)
+		<< "today service should not call the loader until we block";
 	auto result = future.get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(15), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(15), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
@@ -1214,15 +1475,21 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
-		const auto appointmentsById = service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
+		const auto appointmentsById =
+			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t(1), appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentEntry)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentEntry))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1239,15 +1506,20 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
+	variables.emplace_back("appointmentId",
+		response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(16);
 	auto future = _service->resolve(std::launch::async, state, query, "", std::move(variables));
 	ASSERT_NE(std::future_status::deferred, future.wait_for(0s)) << "should not start out deferred";
 	auto result = future.get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount) << "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t(1), _getTasksCount) << "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t(1), _getUnreadCountsCount) << "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(16), state->appointmentsRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+		<< "today service lazy loads the appointments and caches the result";
+	EXPECT_GE(size_t(1), _getTasksCount)
+		<< "today service lazy loads the tasks and caches the result";
+	EXPECT_GE(size_t(1), _getUnreadCountsCount)
+		<< "today service lazy loads the unreadCounts and caches the result";
+	EXPECT_EQ(size_t(16), state->appointmentsRequestId)
+		<< "today service passed the same RequestState";
 	EXPECT_EQ(size_t(0), state->tasksRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(0), state->unreadCountsRequestId) << "today service did not call the loader";
 	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
@@ -1264,15 +1536,21 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 		}
 		const auto data = service::ScalarArgument::require("data", result);
 
-		const auto appointmentsById = service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
+		const auto appointmentsById =
+			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t(1), appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("appointmentId", appointmentEntry)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry)) << "when should match";
-		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("appointmentId", appointmentEntry))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentEntry))
+			<< "when should match";
+		EXPECT_FALSE(service::BooleanArgument::require("isNow", appointmentEntry))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1286,7 +1564,8 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto future = _service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
+	auto future =
+		_service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
 	auto result = future.get();
 
 	try
@@ -1295,9 +1574,12 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 		auto errorsItr = result.find("errors");
 		ASSERT_FALSE(errorsItr == result.get<response::MapType>().cend());
 		auto errorsString = response::toJSON(response::Value(errorsItr->second));
-		EXPECT_EQ(R"js([{"message":"Type not found name: NonExistentType","locations":[{"line":2,"column":4}],"path":["__type"]}])js", errorsString) << "error should match";
+		EXPECT_EQ(
+			R"js([{"message":"Type not found name: NonExistentType","locations":[{"line":2,"column":4}],"path":["__type"]}])js",
+			errorsString)
+			<< "error should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1316,11 +1598,13 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(17);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response)
-	{
-		result = response.get();
-	});
+	auto key = _service->subscribe(service::SubscriptionParams { state,
+									   std::move(query),
+									   "TestSubscription",
+									   std::move(std::move(variables)) },
+		[&result](std::future<response::Value> response) {
+			result = response.get();
+		});
 	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
 
@@ -1335,12 +1619,17 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("nextAppointmentId", appointmentNode)) << "id should match in base64 encoding";
-		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode)) << "subject should match";
-		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode)) << "when should match";
-		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode)) << "isNow should match";
+		EXPECT_EQ(_fakeAppointmentId,
+			service::IdArgument::require("nextAppointmentId", appointmentNode))
+			<< "id should match in base64 encoding";
+		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
+			<< "subject should match";
+		EXPECT_EQ("tomorrow", service::StringArgument::require("when", appointmentNode))
+			<< "when should match";
+		EXPECT_TRUE(service::BooleanArgument::require("isNow", appointmentNode))
+			<< "isNow should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1356,7 +1645,11 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(18);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::deferred, state, query, "NonblockingDeferredExpensive", std::move(variables));
+	auto future = _service->resolve(std::launch::deferred,
+		state,
+		query,
+		"NonblockingDeferredExpensive",
+		std::move(variables));
 	auto result = future.get();
 
 	try
@@ -1366,9 +1659,12 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 		auto errorsItr = result.find("errors");
 		ASSERT_TRUE(errorsItr == result.get<response::MapType>().cend());
 		auto response = response::toJSON(response::Value(result));
-		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
+		EXPECT_EQ(
+			R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js",
+			response)
+			<< "output should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1384,7 +1680,11 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(19);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::async, state, query, "BlockingAsyncExpensive", std::move(variables));
+	auto future = _service->resolve(std::launch::async,
+		state,
+		query,
+		"BlockingAsyncExpensive",
+		std::move(variables));
 	auto result = future.get();
 
 	try
@@ -1394,9 +1694,12 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 		auto errorsItr = result.find("errors");
 		ASSERT_TRUE(errorsItr == result.get<response::MapType>().cend());
 		auto response = response::toJSON(response::Value(result));
-		EXPECT_EQ(R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js", response) << "output should match";
+		EXPECT_EQ(
+			R"js({"data":{"expensive":[{"order":1},{"order":2},{"order":3},{"order":4},{"order":5}]}})js",
+			response)
+			<< "output should match";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1489,27 +1792,38 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(21);
 	bool calledCallback = false;
-	const auto notifySubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
-	const auto subscriptionBegin = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
-	const auto notifyUnsubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service->subscribe(std::launch::async, service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&calledCallback](std::future<response::Value> response)
-	{
-		calledCallback = true;
-	});
+	const auto notifySubscribeBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	auto key = _service->subscribe(std::launch::async,
+		service::SubscriptionParams { state,
+			std::move(query),
+			"TestSubscription",
+			std::move(std::move(variables)) },
+		[&calledCallback](std::future<response::Value> response) {
+			calledCallback = true;
+		});
 	_service->unsubscribe(std::launch::async, key.get()).get();
-	const auto notifySubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
-	const auto subscriptionEnd = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
-	const auto notifyUnsubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	const auto notifySubscribeEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 
 	try
 	{
 		EXPECT_FALSE(calledCallback);
-		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd) << "should pass NotifySubscribe once";
+		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd)
+			<< "should pass NotifySubscribe once";
 		EXPECT_EQ(subscriptionBegin, subscriptionEnd) << "should not pass Subscription";
-		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd) << "should pass NotifyUnsubscribe once";
+		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd)
+			<< "should pass NotifyUnsubscribe once";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1528,27 +1842,38 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(21);
 	bool calledCallback = false;
-	const auto notifySubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
-	const auto subscriptionBegin = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
-	const auto notifyUnsubscribeBegin = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service->subscribe(std::launch::deferred, service::SubscriptionParams { state, std::move(query), "TestSubscription", std::move(std::move(variables)) },
-		[&calledCallback](std::future<response::Value> response)
-	{
-		calledCallback = true;
-	});
+	const auto notifySubscribeBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeBegin =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	auto key = _service->subscribe(std::launch::deferred,
+		service::SubscriptionParams { state,
+			std::move(query),
+			"TestSubscription",
+			std::move(std::move(variables)) },
+		[&calledCallback](std::future<response::Value> response) {
+			calledCallback = true;
+		});
 	_service->unsubscribe(std::launch::deferred, key.get()).get();
-	const auto notifySubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
-	const auto subscriptionEnd = today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
-	const auto notifyUnsubscribeEnd = today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
+	const auto notifySubscribeEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
+	const auto subscriptionEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
+	const auto notifyUnsubscribeEnd =
+		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 
 	try
 	{
 		EXPECT_FALSE(calledCallback);
-		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd) << "should pass NotifySubscribe once";
+		EXPECT_EQ(notifySubscribeBegin + 1, notifySubscribeEnd)
+			<< "should pass NotifySubscribe once";
 		EXPECT_EQ(subscriptionBegin, subscriptionEnd) << "should not pass Subscription";
-		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd) << "should pass NotifyUnsubscribe once";
+		EXPECT_EQ(notifyUnsubscribeBegin + 1, notifyUnsubscribeEnd)
+			<< "should pass NotifyUnsubscribe once";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1575,9 +1900,10 @@ TEST_F(TodayServiceCase, MutateSetFloat)
 		ASSERT_TRUE(data.type() == response::Type::Map);
 		const auto setFloat = service::FloatArgument::require("setFloat", data);
 		ASSERT_EQ(0.1, setFloat) << "should return the value that was set";
-		ASSERT_EQ(0.1, today::Mutation::getFloat()) << "should save the value in the Mutation static member";
+		ASSERT_EQ(0.1, today::Mutation::getFloat())
+			<< "should save the value in the Mutation static member";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}
@@ -1604,9 +1930,10 @@ TEST_F(TodayServiceCase, MutateCoerceSetFloat)
 		ASSERT_TRUE(data.type() == response::Type::Map);
 		const auto coerceFloat = service::FloatArgument::require("coerceFloat", data);
 		ASSERT_EQ(1.0, coerceFloat) << "should return the value that was coerced from an int";
-		ASSERT_EQ(1.0, today::Mutation::getFloat()) << "should save the value in the Mutation static member";
+		ASSERT_EQ(1.0, today::Mutation::getFloat())
+			<< "should save the value in the Mutation static member";
 	}
-	catch (service::schema_exception & ex)
+	catch (service::schema_exception& ex)
 	{
 		FAIL() << response::toJSON(ex.getErrors());
 	}

@@ -248,6 +248,11 @@ install(FILES
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
+
+install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
     ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}

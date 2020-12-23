@@ -24,7 +24,7 @@ struct ValidateArgument
 	ValidateType type;
 };
 
-using ValidateTypeFieldArguments = std::map<std::string_view, ValidateArgument>;
+using ValidateTypeFieldArguments = internal::sorted_map<std::string_view, ValidateArgument>;
 
 struct ValidateTypeField
 {
@@ -32,11 +32,11 @@ struct ValidateTypeField
 	ValidateTypeFieldArguments arguments;
 };
 
-using ValidateDirectiveArguments = std::map<std::string_view, ValidateArgument>;
+using ValidateDirectiveArguments = internal::sorted_map<std::string_view, ValidateArgument>;
 
 struct ValidateDirective
 {
-	std::set<introspection::DirectiveLocation> locations;
+	internal::sorted_set<introspection::DirectiveLocation> locations;
 	ValidateDirectiveArguments arguments;
 };
 
@@ -75,7 +75,7 @@ struct ValidateArgumentMap
 {
 	bool operator==(const ValidateArgumentMap& other) const;
 
-	std::map<std::string_view, ValidateArgumentValuePtr> values;
+	internal::sorted_map<std::string_view, ValidateArgumentValuePtr> values;
 };
 
 using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
@@ -101,7 +101,7 @@ struct ValidateArgumentValue
 class ValidateArgumentValueVisitor
 {
 public:
-	ValidateArgumentValueVisitor(std::vector<schema_error>& errors);
+	ValidateArgumentValueVisitor(std::list<schema_error>& errors);
 
 	void visit(const peg::ast_node& value);
 
@@ -119,10 +119,10 @@ private:
 	void visitObjectValue(const peg::ast_node& objectValue);
 
 	ValidateArgumentValuePtr _argumentValue;
-	std::vector<schema_error>& _errors;
+	std::list<schema_error>& _errors;
 };
 
-using ValidateFieldArguments = std::map<std::string_view, ValidateArgumentValuePtr>;
+using ValidateFieldArguments = internal::sorted_map<std::string_view, ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
@@ -137,7 +137,7 @@ struct ValidateField
 	ValidateFieldArguments arguments;
 };
 
-using ValidateTypes = std::map<std::string_view, ValidateType>;
+using ValidateTypes = internal::sorted_map<std::string_view, ValidateType>;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
@@ -173,17 +173,17 @@ public:
 
 	void visit(const peg::ast_node& root);
 
-	std::vector<schema_error> getStructuredErrors();
+	std::list<schema_error> getStructuredErrors();
 
 private:
 	static ValidateTypeFieldArguments getArguments(
 		const std::vector<std::shared_ptr<const schema::InputValue>>& args);
 
-	using FieldTypes = std::map<std::string_view, ValidateTypeField>;
-	using TypeFields = std::map<std::string_view, FieldTypes>;
+	using FieldTypes = internal::sorted_map<std::string_view, ValidateTypeField>;
+	using TypeFields = internal::sorted_map<std::string_view, FieldTypes>;
 	using InputFieldTypes = ValidateTypeFieldArguments;
-	using InputTypeFields = std::map<std::string_view, InputFieldTypes>;
-	using EnumValues = std::map<std::string_view, std::set<std::string_view>>;
+	using InputTypeFields = internal::sorted_map<std::string_view, InputFieldTypes>;
+	using EnumValues = internal::sorted_map<std::string_view, internal::sorted_set<std::string_view>>;
 
 	constexpr bool isScalarType(introspection::TypeKind kind);
 
@@ -216,17 +216,17 @@ private:
 		const schema_location& position, const ValidateType& inputType);
 
 	const std::shared_ptr<schema::Schema> _schema;
-	std::vector<schema_error> _errors;
+	std::list<schema_error> _errors;
 
-	using Directives = std::map<std::string_view, ValidateDirective>;
-	using ExecutableNodes = std::map<std::string_view, const peg::ast_node&>;
-	using FragmentSet = std::unordered_set<std::string_view>;
-	using MatchingTypes = std::map<std::string_view, std::set<std::string_view>>;
-	using ScalarTypes = std::set<std::string_view>;
-	using VariableDefinitions = std::map<std::string_view, const peg::ast_node&>;
-	using VariableTypes = std::map<std::string_view, ValidateArgument>;
+	using Directives = internal::sorted_map<std::string_view, ValidateDirective>;
+	using ExecutableNodes = internal::sorted_map<std::string_view, std::reference_wrapper<const peg::ast_node>>;
+	using FragmentSet = internal::sorted_set<std::string_view>;
+	using MatchingTypes = internal::sorted_map<std::string_view, internal::sorted_set<std::string_view>>;
+	using ScalarTypes = internal::sorted_set<std::string_view>;
+	using VariableDefinitions = internal::sorted_map<std::string_view, std::reference_wrapper<const peg::ast_node>>;
+	using VariableTypes = internal::sorted_map<std::string_view, ValidateArgument>;
 	using OperationVariables = std::optional<VariableTypes>;
-	using VariableSet = std::set<std::string_view>;
+	using VariableSet = internal::sorted_set<std::string_view>;
 
 	// These members store Introspection schema information which does not change between queries.
 	ValidateTypes _operationTypes;
@@ -252,7 +252,7 @@ private:
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
 	ValidateType _scopedType;
-	std::map<std::string_view, ValidateField> _selectionFields;
+	internal::sorted_map<std::string_view, ValidateField> _selectionFields;
 };
 
 } /* namespace graphql::service */

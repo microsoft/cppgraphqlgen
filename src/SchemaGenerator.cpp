@@ -31,6 +31,8 @@
 #include <sstream>
 #include <stdexcept>
 
+using namespace std::literals;
+
 namespace graphql::schema {
 
 IncludeGuardScope::IncludeGuardScope(
@@ -143,25 +145,25 @@ bool PendingBlankLine::reset() noexcept
 	return false;
 }
 
-const std::string Generator::s_introspectionNamespace = "introspection";
+const std::string_view Generator::s_introspectionNamespace = "introspection"sv;
 
 const BuiltinTypeMap Generator::s_builtinTypes = {
-	{ "Int", BuiltinType::Int },
-	{ "Float", BuiltinType::Float },
-	{ "String", BuiltinType::String },
-	{ "Boolean", BuiltinType::Boolean },
-	{ "ID", BuiltinType::ID },
+	{ "Int"sv, BuiltinType::Int },
+	{ "Float"sv, BuiltinType::Float },
+	{ "String"sv, BuiltinType::String },
+	{ "Boolean"sv, BuiltinType::Boolean },
+	{ "ID"sv, BuiltinType::ID },
 };
 
 const CppTypeMap Generator::s_builtinCppTypes = {
-	"response::IntType",
-	"response::FloatType",
-	"response::StringType",
-	"response::BooleanType",
-	"response::IdType",
+	"response::IntType"sv,
+	"response::FloatType"sv,
+	"response::StringType"sv,
+	"response::BooleanType"sv,
+	"response::IdType"sv,
 };
 
-const std::string Generator::s_scalarCppType = R"cpp(response::Value)cpp";
+const std::string_view Generator::s_scalarCppType = R"cpp(response::Value)cpp"sv;
 
 Generator::Generator(GeneratorOptions&& options)
 	: _options(std::move(options))
@@ -177,8 +179,8 @@ Generator::Generator(GeneratorOptions&& options)
 	if (_isIntrospection)
 	{
 		// Introspection Schema:
-		// https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
-		auto ast = R"gql(
+		// http://spec.graphql.org/June2018/#sec-Schema-Introspection
+		_ast = peg::parseSchemaString(R"gql(
 			type __Schema {
 				types: [__Type!]!
 				queryType: __Type!
@@ -279,33 +281,28 @@ Generator::Generator(GeneratorOptions&& options)
 			directive @deprecated(
 				reason: String = "No longer supported"
 			) on FIELD_DEFINITION | ENUM_VALUE
-		)gql"_graphql;
+		)gql"sv);
 
-		if (!ast.root)
+		if (!_ast.root)
 		{
 			throw std::logic_error("Unable to parse the introspection schema, but there was no "
 								   "error message from the parser!");
 		}
-
-		for (const auto& child : ast.root->children)
-		{
-			visitDefinition(*child);
-		}
 	}
 	else
 	{
-		auto ast = peg::parseFile(_options.customSchema->schemaFilename);
+		_ast = peg::parseSchemaFile(_options.customSchema->schemaFilename);
 
-		if (!ast.root)
+		if (!_ast.root)
 		{
 			throw std::logic_error("Unable to parse the service schema, but there was no error "
 								   "message from the parser!");
 		}
+	}
 
-		for (const auto& child : ast.root->children)
-		{
-			visitDefinition(*child);
-		}
+	for (const auto& child : _ast.root->children)
+	{
+		visitDefinition(*child);
 	}
 
 	validateSchema();
@@ -424,36 +421,29 @@ void Generator::validateSchema()
 		if (_operationTypes.empty())
 		{
 			// Fill in the operations with default type names if present.
-			std::string strDefaultQuery { "Query" };
-			std::string strDefaultMutation { "Mutation" };
-			std::string strDefaultSubscription { "Subscription" };
+			constexpr auto strDefaultQuery = "Query"sv;
+			constexpr auto strDefaultMutation = "Mutation"sv;
+			constexpr auto strDefaultSubscription = "Subscription"sv;
 
 			if (_objectNames.find(strDefaultQuery) != _objectNames.cend())
 			{
-				auto cppName = getSafeCppName(strDefaultQuery);
-
-				_operationTypes.push_back({ std::move(strDefaultQuery),
-					std::move(cppName),
-					std::string { service::strQuery } });
+				_operationTypes.push_back(
+					{ strDefaultQuery, getSafeCppName(strDefaultQuery), service::strQuery });
 				queryDefined = true;
 			}
 
 			if (_objectNames.find(strDefaultMutation) != _objectNames.cend())
 			{
-				auto cppName = getSafeCppName(strDefaultMutation);
-
-				_operationTypes.push_back({ std::move(strDefaultMutation),
-					std::move(cppName),
-					std::string { service::strMutation } });
+				_operationTypes.push_back({ strDefaultMutation,
+					getSafeCppName(strDefaultMutation),
+					service::strMutation });
 			}
 
 			if (_objectNames.find(strDefaultSubscription) != _objectNames.cend())
 			{
-				auto cppName = getSafeCppName(strDefaultSubscription);
-
-				_operationTypes.push_back({ std::move(strDefaultSubscription),
-					std::move(cppName),
-					std::string { service::strSubscription } });
+				_operationTypes.push_back({ strDefaultSubscription,
+					getSafeCppName(strDefaultSubscription),
+					service::strSubscription });
 			}
 		}
 		else
@@ -485,7 +475,7 @@ void Generator::validateSchema()
 		throw std::runtime_error("Introspection should not define any operation types");
 	}
 
-	std::string mutationType;
+	std::string_view mutationType;
 
 	for (const auto& operation : _operationTypes)
 	{
@@ -498,7 +488,7 @@ void Generator::validateSchema()
 
 	for (auto& entry : _objectTypes)
 	{
-		auto interfaceFields = std::make_optional<std::unordered_set<std::string>>();
+		auto interfaceFields = std::make_optional<std::unordered_set<std::string_view>>();
 		auto accessor = (mutationType == entry.type)
 			? std::make_optional<std::string_view>(strApply)
 			: std::nullopt;
@@ -573,7 +563,7 @@ void Generator::validateSchema()
 }
 
 void Generator::fixupOutputFieldList(OutputFieldList& fields,
-	const std::optional<std::unordered_set<std::string>>& interfaceFields,
+	const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 	const std::optional<std::string_view>& accessor)
 {
 	for (auto& entry : fields)
@@ -776,32 +766,32 @@ void Generator::visitDefinition(const peg::ast_node& definition)
 
 void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 {
-	peg::for_each_child<
-		peg::root_operation_definition>(schemaDefinition, [this](const peg::ast_node& child) {
-		std::string operation(child.children.front()->string_view());
-		std::string name(child.children.back()->string_view());
-		std::string cppName(getSafeCppName(name));
+	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
+		[this](const peg::ast_node& child) {
+			const auto operation(child.children.front()->string_view());
+			const auto name(child.children.back()->string_view());
+			const auto cppName(getSafeCppName(name));
 
-		_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
-	});
+			_operationTypes.push_back({ name, cppName, operation });
+		});
 }
 
 void Generator::visitSchemaExtension(const peg::ast_node& schemaExtension)
 {
-	peg::for_each_child<
-		peg::operation_type_definition>(schemaExtension, [this](const peg::ast_node& child) {
-		std::string operation(child.children.front()->string_view());
-		std::string name(child.children.back()->string_view());
-		std::string cppName(getSafeCppName(name));
+	peg::for_each_child<peg::operation_type_definition>(schemaExtension,
+		[this](const peg::ast_node& child) {
+			const auto operation(child.children.front()->string_view());
+			const auto name(child.children.back()->string_view());
+			const auto cppName(getSafeCppName(name));
 
-		_operationTypes.push_back({ std::move(name), std::move(cppName), std::move(operation) });
-	});
+			_operationTypes.push_back({ name, cppName, operation });
+		});
 }
 
 void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
 		[&name](const peg::ast_node& child) {
@@ -822,15 +812,14 @@ void Generator::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefinit
 
 	auto cppName = getSafeCppName(name);
 
-	_objectTypes.push_back(
-		{ std::move(name), std::move(cppName), {}, {}, {}, std::move(description) });
+	_objectTypes.push_back({ name, cppName, {}, {}, {}, description });
 
 	visitObjectTypeExtension(objectTypeDefinition);
 }
 
 void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtension)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::object_name>(objectTypeExtension, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -844,7 +833,7 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 
 		peg::for_each_child<peg::interface_type>(objectTypeExtension,
 			[&objectType](const peg::ast_node& child) {
-				objectType.interfaces.push_back(child.string());
+				objectType.interfaces.push_back(child.string_view());
 			});
 
 		peg::on_first_child<peg::fields_definition>(objectTypeExtension,
@@ -862,8 +851,8 @@ void Generator::visitObjectTypeExtension(const peg::ast_node& objectTypeExtensio
 
 void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
 		[&name](const peg::ast_node& child) {
@@ -884,14 +873,14 @@ void Generator::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTypeD
 
 	auto cppName = getSafeCppName(name);
 
-	_interfaceTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
+	_interfaceTypes.push_back({ name, cppName, {}, description });
 
 	visitInterfaceTypeExtension(interfaceTypeDefinition);
 }
 
 void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeExtension)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
 		[&name](const peg::ast_node& child) {
@@ -919,8 +908,8 @@ void Generator::visitInterfaceTypeExtension(const peg::ast_node& interfaceTypeEx
 
 void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
 		[&name](const peg::ast_node& child) {
@@ -941,14 +930,14 @@ void Generator::visitInputObjectTypeDefinition(const peg::ast_node& inputObjectT
 
 	auto cppName = getSafeCppName(name);
 
-	_inputTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
+	_inputTypes.push_back({ name, cppName, {}, description });
 
 	visitInputObjectTypeExtension(inputObjectTypeDefinition);
 }
 
 void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTypeExtension)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
 		[&name](const peg::ast_node& child) {
@@ -976,8 +965,8 @@ void Generator::visitInputObjectTypeExtension(const peg::ast_node& inputObjectTy
 
 void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::enum_name>(enumTypeDefinition, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -997,14 +986,14 @@ void Generator::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition)
 
 	auto cppName = getSafeCppName(name);
 
-	_enumTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
+	_enumTypes.push_back({ name, cppName, {}, description });
 
 	visitEnumTypeExtension(enumTypeDefinition);
 }
 
 void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::enum_name>(enumTypeExtension, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -1036,7 +1025,7 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 			peg::on_first_child<peg::directives>(child, [&value](const peg::ast_node& directives) {
 				peg::for_each_child<peg::directive>(directives,
 					[&value](const peg::ast_node& directive) {
-						std::string directiveName;
+						std::string_view directiveName;
 
 						peg::on_first_child<peg::directive_name>(directive,
 							[&directiveName](const peg::ast_node& name) {
@@ -1045,13 +1034,13 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 
 						if (directiveName == "deprecated")
 						{
-							std::string reason;
+							std::string_view reason;
 
 							peg::on_first_child<peg::arguments>(directive,
 								[&value](const peg::ast_node& arguments) {
 									peg::on_first_child<peg::argument>(arguments,
 										[&value](const peg::ast_node& argument) {
-											std::string argumentName;
+											std::string_view argumentName;
 
 											peg::on_first_child<peg::argument_name>(argument,
 												[&argumentName](const peg::ast_node& name) {
@@ -1080,8 +1069,8 @@ void Generator::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension)
 
 void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
 		[&name](const peg::ast_node& child) {
@@ -1099,13 +1088,13 @@ void Generator::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinit
 	_schemaTypes[name] = SchemaType::Scalar;
 	_typePositions.emplace(name, scalarTypeDefinition.begin());
 	_scalarNames[name] = _scalarTypes.size();
-	_scalarTypes.push_back({ std::move(name), std::move(description) });
+	_scalarTypes.push_back({ name, description });
 }
 
 void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
 {
-	std::string name;
-	std::string description;
+	std::string_view name;
+	std::string_view description;
 
 	peg::on_first_child<peg::union_name>(unionTypeDefinition, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -1125,14 +1114,14 @@ void Generator::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinitio
 
 	auto cppName = getSafeCppName(name);
 
-	_unionTypes.push_back({ std::move(name), std::move(cppName), {}, std::move(description) });
+	_unionTypes.push_back({ name, cppName, {}, description });
 
 	visitUnionTypeExtension(unionTypeDefinition);
 }
 
 void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 {
-	std::string name;
+	std::string_view name;
 
 	peg::on_first_child<peg::union_name>(unionTypeExtension, [&name](const peg::ast_node& child) {
 		name = child.string_view();
@@ -1146,7 +1135,7 @@ void Generator::visitUnionTypeExtension(const peg::ast_node& unionTypeExtension)
 
 		peg::for_each_child<peg::union_type>(unionTypeExtension,
 			[&unionType](const peg::ast_node& child) {
-				unionType.options.push_back(child.string());
+				unionType.options.push_back(child.string_view());
 			});
 	}
 }
@@ -1157,7 +1146,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
 		[&directive](const peg::ast_node& child) {
-			directive.name = child.string();
+			directive.name = child.string_view();
 		});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
@@ -1170,7 +1159,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
 		[&directive](const peg::ast_node& child) {
-			directive.locations.push_back(child.string());
+			directive.locations.push_back(child.string_view());
 		});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
@@ -1188,7 +1177,7 @@ void Generator::visitDirectiveDefinition(const peg::ast_node& directiveDefinitio
 	_directives.push_back(std::move(directive));
 }
 
-const std::string& Generator::getSafeCppName(const std::string& type) noexcept
+std::string_view Generator::getSafeCppName(std::string_view type) noexcept
 {
 	// The C++ standard reserves all names starting with '_' followed by a capital letter,
 	// and all names that contain a double '_'. So we need to strip those from the types used
@@ -1199,14 +1188,15 @@ const std::string& Generator::getSafeCppName(const std::string& type) noexcept
 		std::regex::optimize | std::regex::ECMAScript);
 
 	// Cache the substitutions so we don't need to repeat a replacement.
-	static std::unordered_map<std::string, std::string> safeNames;
+	static std::unordered_map<std::string_view, std::string> safeNames;
 	auto itr = safeNames.find(type);
+	std::string cppName { type };
 
 	if (safeNames.cend() == itr
-		&& (std::regex_search(type, leading_Capital) || std::regex_search(type, multiple_)))
+		&& (std::regex_search(cppName, leading_Capital) || std::regex_search(cppName, multiple_)))
 	{
 		std::tie(itr, std::ignore) = safeNames.emplace(type,
-			std::regex_replace(std::regex_replace(type, multiple_, R"re(_)re"),
+			std::regex_replace(std::regex_replace(cppName, multiple_, R"re(_)re"),
 				leading_Capital,
 				R"re($1)re"));
 	}
@@ -1214,8 +1204,7 @@ const std::string& Generator::getSafeCppName(const std::string& type) noexcept
 	return (safeNames.cend() == itr) ? type : itr->second;
 }
 
-OutputFieldList Generator::getOutputFields(
-	const std::vector<std::unique_ptr<peg::ast_node>>& fields)
+OutputFieldList Generator::getOutputFields(const peg::ast_node::children_t& fields)
 {
 	OutputFieldList outputFields;
 
@@ -1248,7 +1237,7 @@ OutputFieldList Generator::getOutputFields(
 			{
 				peg::for_each_child<peg::directive>(*child,
 					[&field](const peg::ast_node& directive) {
-						std::string directiveName;
+						std::string_view directiveName;
 
 						peg::on_first_child<peg::directive_name>(directive,
 							[&directiveName](const peg::ast_node& name) {
@@ -1257,13 +1246,13 @@ OutputFieldList Generator::getOutputFields(
 
 						if (directiveName == "deprecated")
 						{
-							std::string deprecationReason;
+							std::string_view deprecationReason;
 
 							peg::on_first_child<peg::arguments>(directive,
 								[&deprecationReason](const peg::ast_node& arguments) {
 									peg::on_first_child<peg::argument>(arguments,
 										[&deprecationReason](const peg::ast_node& argument) {
-											std::string argumentName;
+											std::string_view argumentName;
 
 											peg::on_first_child<peg::argument_name>(argument,
 												[&argumentName](const peg::ast_node& name) {
@@ -1295,7 +1284,7 @@ OutputFieldList Generator::getOutputFields(
 	return outputFields;
 }
 
-InputFieldList Generator::getInputFields(const std::vector<std::unique_ptr<peg::ast_node>>& fields)
+InputFieldList Generator::getInputFields(const peg::ast_node::children_t& fields)
 {
 	InputFieldList inputFields;
 
@@ -1402,7 +1391,7 @@ void Generator::TypeVisitor::visitNonNullType(const peg::ast_node& nonNullType)
 	visit(*nonNullType.children.front());
 }
 
-std::pair<std::string, TypeModifierStack> Generator::TypeVisitor::getType()
+std::pair<std::string_view, TypeModifierStack> Generator::TypeVisitor::getType()
 {
 	return { std::move(_type), std::move(_modifiers) };
 }
@@ -1440,6 +1429,16 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 	else if (value.is_type<peg::object_value>())
 	{
 		visitObjectValue(value);
+	}
+	else if (value.is_type<peg::variable>())
+	{
+		std::ostringstream error;
+		auto position = value.begin();
+
+		error << "Unexpected variable in default value line: " << position.line
+			  << " column: " << position.column;
+
+		throw std::runtime_error(error.str());
 	}
 }
 
@@ -1534,7 +1533,7 @@ std::vector<std::string> Generator::Build() const noexcept
 	return builtFiles;
 }
 
-const std::string& Generator::getCppType(const std::string& type) const noexcept
+std::string_view Generator::getCppType(std::string_view type) const noexcept
 {
 	auto itrBuiltin = s_builtinTypes.find(type);
 
@@ -1713,7 +1712,7 @@ bool Generator::outputHeader() const noexcept
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
 
-	std::string queryType;
+	std::string_view queryType;
 
 	if (!_isIntrospection)
 	{
@@ -2255,7 +2254,7 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 	}
 
 	NamespaceScope schemaNamespace { sourceFile, _schemaNamespace };
-	std::string queryType;
+	std::string_view queryType;
 
 	if (!_isIntrospection)
 	{
@@ -2593,8 +2592,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -3020,9 +3018,10 @@ std::future<service::ResolverResult> )cpp"
 		}
 
 		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
 	auto result = )cpp"
 				   << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams(params, std::move(params.fieldDirectives)))cpp";
+				   << R"cpp((service::FieldParams(std::move(params), std::move(directives)))cpp";
 
 		if (!outputField.arguments.empty())
 		{
@@ -3471,7 +3470,7 @@ std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) cons
 }
 
 std::string Generator::getIntrospectionType(
-	const std::string& type, const TypeModifierStack& modifiers) const noexcept
+	std::string_view type, const TypeModifierStack& modifiers) const noexcept
 {
 	size_t wrapperCount = 0;
 	bool nonNull = true;
@@ -3545,7 +3544,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	std::vector<std::string> files;
 	const fs::path headerDir(_headerDir);
 	const fs::path sourceDir(_sourceDir);
-	std::string queryType;
+	std::string_view queryType;
 
 	for (const auto& operation : _operationTypes)
 	{

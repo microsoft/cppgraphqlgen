@@ -13,6 +13,8 @@
 
 using namespace graphql;
 
+using namespace std::literals;
+
 int main(int argc, char** argv)
 {
 	response::IdType binAppointmentId;
@@ -79,7 +81,7 @@ int main(int argc, char** argv)
 	{
 		try
 		{
-			auto query = R"gql(query {
+			auto query = peg::parseString(R"gql(query {
 				appointments {
 					pageInfo { hasNextPage }
 					edges {
@@ -91,7 +93,7 @@ int main(int argc, char** argv)
 						}
 					}
 				}
-			})gql"_graphql;
+			})gql"sv);
 
 			std::cout << "Executing query..." << std::endl;
 

@@ -96,7 +96,7 @@ ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentMap&& value)
 {
 }
 
-ValidateArgumentValueVisitor::ValidateArgumentValueVisitor(std::vector<schema_error>& errors)
+ValidateArgumentValueVisitor::ValidateArgumentValueVisitor(std::list<schema_error>& errors)
 	: _errors(errors)
 {
 }
@@ -362,14 +362,16 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 	const auto& mutationType = _schema->mutationType();
 	const auto& subscriptionType = _schema->subscriptionType();
 
-	if (queryType)
-	{
-		_operationTypes[strQuery] = getValidateType(queryType);
-	}
+	_operationTypes.reserve(3);
 
 	if (mutationType)
 	{
 		_operationTypes[strMutation] = getValidateType(mutationType);
+	}
+
+	if (queryType)
+	{
+		_operationTypes[strQuery] = getValidateType(queryType);
 	}
 
 	if (subscriptionType)
@@ -379,6 +381,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 	const auto& types = _schema->types();
 
+	_types.reserve(types.size());
+
 	for (const auto& entry : types)
 	{
 		const auto name = entry.first;
@@ -386,14 +390,17 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 		if (!isScalarType(kind))
 		{
+			auto matchingTypes = std::move(_matchingTypes[name]);
+
 			if (kind == introspection::TypeKind::OBJECT)
 			{
-				_matchingTypes[name].insert(name);
+				matchingTypes.emplace(name);
 			}
 			else
 			{
 				const auto& possibleTypes = entry.second->possibleTypes();
-				std::set<std::string_view> matchingTypes;
+
+				matchingTypes.reserve(possibleTypes.size());
 
 				for (const auto& possibleType : possibleTypes)
 				{
@@ -401,26 +408,28 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 					if (spType)
 					{
-						matchingTypes.insert(spType->name());
+						matchingTypes.emplace(spType->name());
 					}
 				}
+			}
 
-				if (!matchingTypes.empty())
-				{
-					_matchingTypes[name] = std::move(matchingTypes);
-				}
+			if (!matchingTypes.empty())
+			{
+				_matchingTypes[name] = std::move(matchingTypes);
 			}
 		}
 		else if (kind == introspection::TypeKind::ENUM)
 		{
 			const auto& enumValues = entry.second->enumValues();
-			std::set<std::string_view> values;
+			internal::sorted_set<std::string_view> values;
+
+			values.reserve(enumValues.size());
 
 			for (const auto& value : enumValues)
 			{
 				if (value)
 				{
-					values.insert(value->name());
+					values.emplace(value->name());
 				}
 			}
 
@@ -431,13 +440,15 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 		}
 		else if (kind == introspection::TypeKind::SCALAR)
 		{
-			_scalarTypes.insert(name);
+			_scalarTypes.emplace(name);
 		}
 
 		_types[name] = getValidateType(entry.second);
 	}
 
 	const auto& directives = _schema->directives();
+
+	_directives.reserve(directives.size());
 
 	for (const auto& directive : directives)
 	{
@@ -448,7 +459,7 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 
 		for (const auto location : locations)
 		{
-			validateDirective.locations.insert(location);
+			validateDirective.locations.emplace(location);
 		}
 
 		validateDirective.arguments = getArguments(args);
@@ -463,7 +474,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		[this](const peg::ast_node& fragmentDefinition) {
 			const auto& fragmentName = fragmentDefinition.children.front();
 			const auto inserted =
-				_fragmentDefinitions.insert({ fragmentName->string_view(), fragmentDefinition });
+				_fragmentDefinitions.emplace(fragmentName->string_view(), fragmentDefinition);
 
 			if (!inserted.second)
 			{
@@ -478,42 +489,42 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		});
 
 	// Visit all of the operation definitions and check for duplicates.
-	peg::for_each_child<
-		peg::operation_definition>(root, [this](const peg::ast_node& operationDefinition) {
-		std::string_view operationName;
+	peg::for_each_child<peg::operation_definition>(root,
+		[this](const peg::ast_node& operationDefinition) {
+			std::string_view operationName;
 
-		peg::on_first_child<peg::operation_name>(operationDefinition,
-			[&operationName](const peg::ast_node& child) {
-				operationName = child.string_view();
-			});
+			peg::on_first_child<peg::operation_name>(operationDefinition,
+				[&operationName](const peg::ast_node& child) {
+					operationName = child.string_view();
+				});
 
-		const auto inserted = _operationDefinitions.insert({ operationName, operationDefinition });
+			const auto inserted = _operationDefinitions.emplace(operationName, operationDefinition);
 
-		if (!inserted.second)
-		{
-			// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
-			auto position = operationDefinition.begin();
-			std::ostringstream error;
+			if (!inserted.second)
+			{
+				// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+				auto position = operationDefinition.begin();
+				std::ostringstream error;
 
-			error << "Duplicate operation name: " << inserted.first->first;
+				error << "Duplicate operation name: " << inserted.first->first;
 
-			_errors.push_back({ error.str(), { position.line, position.column } });
-		}
-	});
+				_errors.push_back({ error.str(), { position.line, position.column } });
+			}
+		});
 
 	// Check for lone anonymous operations.
 	if (_operationDefinitions.size() > 1)
 	{
-		auto itr = std::find_if(_operationDefinitions.cbegin(),
-			_operationDefinitions.cend(),
+		auto itr = std::find_if(_operationDefinitions.begin(),
+			_operationDefinitions.end(),
 			[](const auto& entry) noexcept {
 				return entry.first.empty();
 			});
 
-		if (itr != _operationDefinitions.cend())
+		if (itr != _operationDefinitions.end())
 		{
 			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
-			auto position = itr->second.begin();
+			auto position = itr->second.get().begin();
 
 			_errors.push_back(
 				{ "Anonymous operation not alone", { position.line, position.column } });
@@ -551,12 +562,11 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			unreferencedFragments.erase(name);
 		}
 
-		_errors.resize(originalSize + unreferencedFragments.size());
-		std::transform(unreferencedFragments.cbegin(),
-			unreferencedFragments.cend(),
-			_errors.begin() + originalSize,
+		std::transform(unreferencedFragments.begin(),
+			unreferencedFragments.end(),
+			std::back_inserter(_errors),
 			[](const auto& fragmentDefinition) noexcept {
-				auto position = fragmentDefinition.second.begin();
+				auto position = fragmentDefinition.second.get().begin();
 				std::ostringstream message;
 
 				message << "Unused fragment definition name: " << fragmentDefinition.first;
@@ -566,7 +576,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 	}
 }
 
-std::vector<schema_error> ValidateExecutableVisitor::getStructuredErrors()
+std::list<schema_error> ValidateExecutableVisitor::getStructuredErrors()
 {
 	auto errors = std::move(_errors);
 
@@ -607,7 +617,7 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 		return;
 	}
 
-	_fragmentStack.insert(name);
+	_fragmentStack.emplace(name);
 	_scopedType = itrType->second;
 
 	visitSelection(selection);
@@ -726,8 +736,8 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 				}
 			}
 
-			_variableDefinitions.insert({ variableName, variable });
-			_operationVariables->insert({ variableName, std::move(variableArgument) });
+			_variableDefinitions.emplace(variableName, variable);
+			_operationVariables->emplace(variableName, std::move(variableArgument));
 		});
 
 	peg::on_first_child<peg::directives>(operationDefinition,
@@ -748,7 +758,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 	auto itrType = _operationTypes.find(operationType);
 
-	if (itrType == _operationTypes.cend())
+	if (itrType == _operationTypes.end())
 	{
 		auto position = operationDefinition.begin();
 		std::ostringstream error;
@@ -791,7 +801,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 		if (_referencedVariables.find(variable.first) == _referencedVariables.end())
 		{
 			// http://spec.graphql.org/June2018/#sec-All-Variables-Used
-			auto position = variable.second.begin();
+			auto position = variable.second.get().begin();
 			std::ostringstream error;
 
 			error << "Unused variable name: " << variable.first;
@@ -914,7 +924,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 				return false;
 			}
 
-			_referencedVariables.insert(variable.name);
+			_referencedVariables.emplace(variable.name);
 
 			return validateVariableType(
 				hasNonNullDefaultValue || itrVariable->second.nonNullDefaultValue,
@@ -1024,7 +1034,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
-			std::set<std::string_view> subFields;
+			internal::sorted_set<std::string_view> subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
@@ -1053,9 +1063,12 @@ bool ValidateExecutableVisitor::validateInputValue(
 						// result.
 						return false;
 					}
+
+					// The recursive call may invalidate the iterator, so reacquire it.
+					itrFields = getInputTypeFields(name);
 				}
 
-				subFields.insert(entry.first);
+				subFields.emplace(entry.first);
 			}
 
 			// See if all required fields were specified.
@@ -1382,10 +1395,10 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	auto typeKind = _scopedType->get().kind();
 	auto itrType = _typeFields.find(_scopedType->get().name());
 
-	if (itrType == _typeFields.cend() && !isScalarType(typeKind))
+	if (itrType == _typeFields.end() && !isScalarType(typeKind))
 	{
 		const auto& fields = _scopedType->get().fields();
-		std::map<std::string_view, ValidateTypeField> validateFields;
+		internal::sorted_map<std::string_view, ValidateTypeField> validateFields;
 
 		for (auto& entry : fields)
 		{
@@ -1437,8 +1450,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 				_schema->LookupType(R"gql(String)gql"sv)));
 		validateFields[R"gql(__typename)gql"sv] = std::move(typenameField);
 
-		itrType =
-			_typeFields.insert({ _scopedType->get().name(), std::move(validateFields) }).first;
+		itrType = _typeFields.emplace(_scopedType->get().name(), std::move(validateFields)).first;
 	}
 
 	return itrType;
@@ -1449,16 +1461,16 @@ ValidateExecutableVisitor::InputTypeFields::const_iterator ValidateExecutableVis
 {
 	auto itrFields = _inputTypeFields.find(name);
 
-	if (itrFields == _inputTypeFields.cend())
+	if (itrFields == _inputTypeFields.end())
 	{
 		auto itrType = _types.find(name);
 
-		if (itrType != _types.cend()
+		if (itrType != _types.end()
 			&& itrType->second->get().kind() == introspection::TypeKind::INPUT_OBJECT)
 		{
-			itrFields = _inputTypeFields
-							.insert({ name, getArguments(itrType->second->get().inputFields()) })
-							.first;
+			itrFields =
+				_inputTypeFields.emplace(name, getArguments(itrType->second->get().inputFields()))
+					.first;
 		}
 	}
 
@@ -1527,7 +1539,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	auto itrType = getScopedTypeFields();
 
-	if (itrType == _typeFields.cend())
+	if (itrType == _typeFields.end())
 	{
 		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 		auto position = field.begin();
@@ -1603,8 +1615,8 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	ValidateFieldArguments validateArguments;
-	std::map<std::string_view, schema_location> argumentLocations;
-	std::vector<std::string_view> argumentNames;
+	internal::sorted_map<std::string_view, schema_location> argumentLocations;
+	std::list<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
 		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
@@ -1730,7 +1742,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		}
 	}
 
-	_selectionFields.insert({ alias, std::move(validateField) });
+	_selectionFields.emplace(alias, std::move(validateField));
 
 	const peg::ast_node* selection = nullptr;
 
@@ -1783,7 +1795,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	const auto name = fragmentSpread.children.front()->string_view();
 	auto itr = _fragmentDefinitions.find(name);
 
-	if (itr == _fragmentDefinitions.cend())
+	if (itr == _fragmentDefinitions.end())
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-spread-target-defined
 		auto position = fragmentSpread.begin();
@@ -1795,9 +1807,9 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		return;
 	}
 
-	if (_fragmentStack.find(name) != _fragmentStack.cend())
+	if (_fragmentStack.find(name) != _fragmentStack.end())
 	{
-		if (_fragmentCycles.insert(name).second)
+		if (_fragmentCycles.emplace(name).second)
 		{
 			// http://spec.graphql.org/June2018/#sec-Fragment-spreads-must-not-form-cycles
 			auto position = fragmentSpread.begin();
@@ -1811,12 +1823,12 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 		return;
 	}
 
-	const auto& selection = *itr->second.children.back();
-	const auto& typeCondition = itr->second.children[1];
+	const auto& selection = *itr->second.get().children.back();
+	const auto& typeCondition = itr->second.get().children[1];
 	const auto innerType = typeCondition->children.front()->string_view();
 	const auto itrInner = _types.find(innerType);
 
-	if (itrInner == _types.cend() || !matchesScopedType(innerType))
+	if (itrInner == _types.end() || !matchesScopedType(innerType))
 	{
 		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
 		auto position = fragmentSpread.begin();
@@ -1830,7 +1842,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	auto outerType = std::move(_scopedType);
 
-	_fragmentStack.insert(name);
+	_fragmentStack.emplace(name);
 	_scopedType = itrInner->second;
 
 	visitSelection(selection);
@@ -1838,7 +1850,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	_scopedType = std::move(outerType);
 	_fragmentStack.erase(name);
 
-	_referencedFragments.insert(name);
+	_referencedFragments.emplace(name);
 }
 
 void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
@@ -1912,7 +1924,7 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 void ValidateExecutableVisitor::visitDirectives(
 	introspection::DirectiveLocation location, const peg::ast_node& directives)
 {
-	std::set<std::string_view> uniqueDirectives;
+	internal::sorted_set<std::string_view> uniqueDirectives;
 
 	for (const auto& directive : directives.children)
 	{
@@ -1923,7 +1935,7 @@ void ValidateExecutableVisitor::visitDirectives(
 				directiveName = child.string_view();
 			});
 
-		if (!uniqueDirectives.insert(directiveName).second)
+		if (!uniqueDirectives.emplace(directiveName).second)
 		{
 			// http://spec.graphql.org/June2018/#sec-Directives-Are-Unique-Per-Location
 			auto position = directive->begin();
@@ -1998,8 +2010,8 @@ void ValidateExecutableVisitor::visitDirectives(
 		peg::on_first_child<peg::arguments>(*directive,
 			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
-				std::map<std::string_view, schema_location> argumentLocations;
-				std::vector<std::string_view> argumentNames;
+				internal::sorted_map<std::string_view, schema_location> argumentLocations;
+				std::list<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)
 				{

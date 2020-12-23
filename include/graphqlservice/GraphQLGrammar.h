@@ -1145,6 +1145,17 @@ struct document : must<document_content>
 {
 };
 
+struct executable_document_content
+	: seq<bof, opt<utf8::bom>, star<ignored>, list<executable_definition, star<ignored>>,
+		  star<ignored>, tao::graphqlpeg::eof>
+{
+};
+
+// http://spec.graphql.org/June2018/#Document
+struct executable_document : must<executable_document_content>
+{
+};
+
 } /* namespace graphql::peg */
 
 #endif // GRAPHQLGRAMMAR_H

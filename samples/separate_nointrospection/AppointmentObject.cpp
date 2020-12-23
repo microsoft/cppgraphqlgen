@@ -40,7 +40,8 @@ service::FieldResult<response::IdType> Appointment::getId(service::FieldParams&&
 std::future<service::ResolverResult> Appointment::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getId(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getId(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
@@ -54,7 +55,8 @@ service::FieldResult<std::optional<response::Value>> Appointment::getWhen(servic
 std::future<service::ResolverResult> Appointment::resolveWhen(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getWhen(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getWhen(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -68,7 +70,8 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getSubjec
 std::future<service::ResolverResult> Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getSubject(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getSubject(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -82,7 +85,8 @@ service::FieldResult<response::BooleanType> Appointment::getIsNow(service::Field
 std::future<service::ResolverResult> Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getIsNow(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getIsNow(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -96,7 +100,8 @@ service::FieldResult<std::optional<response::StringType>> Appointment::getForceE
 std::future<service::ResolverResult> Appointment::resolveForceError(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto result = getForceError(service::FieldParams(params, std::move(params.fieldDirectives)));
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getForceError(service::FieldParams(std::move(params), std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

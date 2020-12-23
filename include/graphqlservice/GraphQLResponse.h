@@ -145,7 +145,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT size_t size() const;
 
 	// Valid for Type::Map
-	GRAPHQLRESPONSE_EXPORT void emplace_back(std::string&& name, Value&& value);
+	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
 	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(std::string_view name) const;
 	GRAPHQLRESPONSE_EXPORT MapType::const_iterator begin() const;
 	GRAPHQLRESPONSE_EXPORT MapType::const_iterator end() const;

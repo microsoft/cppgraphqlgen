@@ -24,7 +24,7 @@
 namespace graphql {
 namespace peg {
 
-struct ast_node;
+class ast_node;
 struct ast_input;
 
 struct ast
@@ -33,6 +33,9 @@ struct ast
 	std::shared_ptr<ast_node> root;
 	bool validated = false;
 };
+
+GRAPHQLPEG_EXPORT ast parseSchemaString(std::string_view input);
+GRAPHQLPEG_EXPORT ast parseSchemaFile(std::string_view filename);
 
 GRAPHQLPEG_EXPORT ast parseString(std::string_view input);
 GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
