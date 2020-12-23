@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Install Dependencies
       run: sudo apt-get update && sudo apt-get install -yq googletest libboost-program-options-dev rapidjson-dev
