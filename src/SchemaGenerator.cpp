@@ -179,8 +179,8 @@ Generator::Generator(GeneratorOptions&& options)
 	if (_isIntrospection)
 	{
 		// Introspection Schema:
-		// https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
-		_ast = R"gql(
+		// http://spec.graphql.org/June2018/#sec-Schema-Introspection
+		_ast = peg::parseSchemaString(R"gql(
 			type __Schema {
 				types: [__Type!]!
 				queryType: __Type!
@@ -281,33 +281,28 @@ Generator::Generator(GeneratorOptions&& options)
 			directive @deprecated(
 				reason: String = "No longer supported"
 			) on FIELD_DEFINITION | ENUM_VALUE
-		)gql"_graphql;
+		)gql"sv);
 
 		if (!_ast.root)
 		{
 			throw std::logic_error("Unable to parse the introspection schema, but there was no "
 								   "error message from the parser!");
 		}
-
-		for (const auto& child : _ast.root->children)
-		{
-			visitDefinition(*child);
-		}
 	}
 	else
 	{
-		_ast = peg::parseFile(_options.customSchema->schemaFilename);
+		_ast = peg::parseSchemaFile(_options.customSchema->schemaFilename);
 
 		if (!_ast.root)
 		{
 			throw std::logic_error("Unable to parse the service schema, but there was no error "
 								   "message from the parser!");
 		}
+	}
 
-		for (const auto& child : _ast.root->children)
-		{
-			visitDefinition(*child);
-		}
+	for (const auto& child : _ast.root->children)
+	{
+		visitDefinition(*child);
 	}
 
 	validateSchema();
@@ -1434,6 +1429,16 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 	else if (value.is_type<peg::object_value>())
 	{
 		visitObjectValue(value);
+	}
+	else if (value.is_type<peg::variable>())
+	{
+		std::ostringstream error;
+		auto position = value.begin();
+
+		error << "Unexpected variable in default value line: " << position.line
+			  << " column: " << position.column;
+
+		throw std::runtime_error(error.str());
 	}
 }
 

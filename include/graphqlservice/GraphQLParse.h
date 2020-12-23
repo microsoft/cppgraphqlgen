@@ -34,6 +34,9 @@ struct ast
 	bool validated = false;
 };
 
+GRAPHQLPEG_EXPORT ast parseSchemaString(std::string_view input);
+GRAPHQLPEG_EXPORT ast parseSchemaFile(std::string_view filename);
+
 GRAPHQLPEG_EXPORT ast parseString(std::string_view input);
 GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
 

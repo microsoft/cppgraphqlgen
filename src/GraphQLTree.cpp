@@ -234,11 +234,6 @@ struct ast_selector<string_value> : std::true_type
 };
 
 template <>
-struct ast_selector<description> : std::true_type
-{
-};
-
-template <>
 struct ast_selector<true_keyword> : std::true_type
 {
 };
@@ -259,21 +254,6 @@ struct ast_selector<enum_value> : std::true_type
 };
 
 template <>
-struct ast_selector<variable_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<alias_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<alias> : parse_tree::fold_one
-{
-};
-
-template <>
 struct ast_selector<argument_name> : std::true_type
 {
 };
@@ -289,17 +269,7 @@ struct ast_selector<directive_name> : std::true_type
 };
 
 template <>
-struct ast_selector<field_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<operation_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<fragment_name> : std::true_type
+struct ast_selector<variable> : std::true_type
 {
 };
 
@@ -324,127 +294,12 @@ struct ast_selector<default_value> : std::true_type
 };
 
 template <>
-struct ast_selector<variable> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<object_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<interface_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<union_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<enum_name> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<argument> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<arguments> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<directive> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<directives> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<field> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<fragment_spread> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<inline_fragment> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<selection_set> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<operation_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<type_condition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<fragment_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<root_operation_definition> : std::true_type
-{
-};
-
-template <>
 struct ast_selector<schema_definition> : std::true_type
 {
 };
 
 template <>
 struct ast_selector<scalar_type_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<interface_type> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<input_field_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<input_fields_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<arguments_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<field_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<fields_definition> : std::true_type
 {
 };
 
@@ -459,17 +314,7 @@ struct ast_selector<interface_type_definition> : std::true_type
 };
 
 template <>
-struct ast_selector<union_type> : std::true_type
-{
-};
-
-template <>
 struct ast_selector<union_type_definition> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<enum_value_definition> : std::true_type
 {
 };
 
@@ -484,22 +329,12 @@ struct ast_selector<input_object_type_definition> : std::true_type
 };
 
 template <>
-struct ast_selector<directive_location> : std::true_type
-{
-};
-
-template <>
 struct ast_selector<directive_definition> : std::true_type
 {
 };
 
 template <>
 struct ast_selector<schema_extension> : std::true_type
-{
-};
-
-template <>
-struct ast_selector<operation_type_definition> : std::true_type
 {
 };
 
@@ -530,6 +365,181 @@ struct ast_selector<enum_type_extension> : std::true_type
 
 template <>
 struct ast_selector<input_object_type_extension> : std::true_type
+{
+};
+
+template <typename Rule>
+struct schema_selector : ast_selector<Rule>
+{
+};
+
+template <>
+struct schema_selector<description> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<object_name> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<interface_name> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<union_name> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<enum_name> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<root_operation_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<interface_type> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<input_field_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<input_fields_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<arguments_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<field_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<fields_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<union_type> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<enum_value_definition> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<directive_location> : std::true_type
+{
+};
+
+template <>
+struct schema_selector<operation_type_definition> : std::true_type
+{
+};
+
+template <typename Rule>
+struct executable_selector : ast_selector<Rule>
+{
+};
+
+template <>
+struct executable_selector<variable_name> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<alias_name> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<alias> : parse_tree::fold_one
+{
+};
+
+template <>
+struct executable_selector<field_name> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<operation_name> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<fragment_name> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<argument> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<arguments> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<directive> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<directives> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<field> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<fragment_spread> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<inline_fragment> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<selection_set> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<operation_definition> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<type_condition> : std::true_type
+{
+};
+
+template <>
+struct executable_selector<fragment_definition> : std::true_type
 {
 };
 
@@ -711,6 +721,33 @@ template <>
 const std::string ast_control<document_content>::error_message =
 	"Expected http://spec.graphql.org/June2018/#Document";
 
+ast parseSchemaString(std::string_view input)
+{
+	ast result { std::make_shared<ast_input>(
+					 ast_input { std::vector<char> { input.cbegin(), input.cend() } }),
+		{} };
+	const auto& data = std::get<std::vector<char>>(result.input->data);
+	memory_input<> in(data.data(), data.size(), "GraphQL");
+
+	result.root =
+		parse_tree::parse<document, ast_node, schema_selector, nothing, ast_control>(std::move(in));
+
+	return result;
+}
+
+ast parseSchemaFile(std::string_view filename)
+{
+	ast result { std::make_shared<ast_input>(
+					 ast_input { std::make_unique<file_input<>>(filename) }),
+		{} };
+	auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
+
+	result.root =
+		parse_tree::parse<document, ast_node, schema_selector, nothing, ast_control>(std::move(in));
+
+	return result;
+}
+
 ast parseString(std::string_view input)
 {
 	ast result { std::make_shared<ast_input>(
@@ -720,7 +757,7 @@ ast parseString(std::string_view input)
 	memory_input<> in(data.data(), data.size(), "GraphQL");
 
 	result.root =
-		parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
+		parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(std::move(in));
 
 	return result;
 }
@@ -733,7 +770,7 @@ ast parseFile(std::string_view filename)
 	auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
 
 	result.root =
-		parse_tree::parse<document, ast_node, ast_selector, nothing, ast_control>(std::move(in));
+		parse_tree::parse<document, ast_node, executable_selector, nothing, ast_control>(std::move(in));
 
 	return result;
 }
@@ -747,7 +784,7 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 	return { std::make_shared<peg::ast_input>(
 				 peg::ast_input { { std::string_view { text, size } } }),
 		peg::parse_tree::
-			parse<peg::document, peg::ast_node, peg::ast_selector, peg::nothing, peg::ast_control>(
+			parse<peg::document, peg::ast_node, peg::executable_selector, peg::nothing, peg::ast_control>(
 				std::move(in)) };
 }
 
