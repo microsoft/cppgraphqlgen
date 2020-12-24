@@ -1,0 +1,63 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  vs2019:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ['x86', 'x64']
+        libs: ['shared', 'static']
+        config: ['Debug', 'Release']
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Set target triplet
+      id: set-variables
+      shell: pwsh
+      run: echo "::set-output name=vcpkg_triplet::${{ matrix.arch }}-windows$(if ('${{ matrix.libs }}' -eq 'static') { '-static' })"
+
+    - name: Cache vcpkg
+      uses: actions/cache@v2
+      id: cache-vcpkg
+      with:
+        path: vcpkg/
+        key: vcpkg-${{ steps.set-variables.outputs.vcpkg_triplet }}
+
+    - name: Install Dependencies
+      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
+      shell: pwsh
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+        .\vcpkg integrate install
+        .\vcpkg install boost-program-options rapidjson gtest --triplet ${{ steps.set-variables.outputs.vcpkg_triplet }}
+
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+
+    - name: Configure
+      shell: pwsh
+      working-directory: build/
+      run: |
+        $vcpkgToolchain = Join-Path '..\vcpkg' '.\scripts\buildsystems\vcpkg.cmake' -Resolve
+        $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
+        $cmakeSharedLibs = $(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })
+        $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })
+
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 16 2019" -A "$msbuildArch" ${{ github.workspace }}
+
+    - name: Build
+      working-directory: build/
+      run: cmake --build . --config ${{ matrix.config }} -j -v
+
+    - name: Test
+      working-directory: build/
+      run: ctest -C ${{ matrix.config }} --output-on-failure

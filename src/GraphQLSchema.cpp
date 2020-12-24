@@ -43,7 +43,7 @@ const std::shared_ptr<const BaseType>& Schema::LookupType(std::string_view name)
 {
 	auto itr = _typeMap.find(name);
 
-	if (itr == _typeMap.cend())
+	if (itr == _typeMap.end())
 	{
 		std::ostringstream message;
 
@@ -60,15 +60,15 @@ const std::shared_ptr<const BaseType>& Schema::LookupType(std::string_view name)
 	return _types[itr->second].second;
 }
 
-const std::shared_ptr<const BaseType>& Schema::WrapType(
-	introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType)
+std::shared_ptr<const BaseType> Schema::WrapType(
+	introspection::TypeKind kind, std::shared_ptr<const BaseType> ofType)
 {
 	auto& wrappers = (kind == introspection::TypeKind::LIST) ? _listWrappers : _nonNullWrappers;
 	auto itr = wrappers.find(ofType);
 
-	if (itr == wrappers.cend())
+	if (itr == wrappers.end())
 	{
-		std::tie(itr, std::ignore) = wrappers.insert({ ofType, WrapperType::Make(kind, ofType) });
+		std::tie(itr, std::ignore) = wrappers.emplace(ofType, WrapperType::Make(kind, ofType));
 	}
 
 	return itr->second;
@@ -387,18 +387,18 @@ const std::vector<std::shared_ptr<const InputValue>>& InputObjectType::inputFiel
 struct WrapperType::init
 {
 	introspection::TypeKind kind;
-	const std::shared_ptr<const BaseType>& ofType;
+	std::weak_ptr<const BaseType> ofType;
 };
 
 std::shared_ptr<WrapperType> WrapperType::Make(
-	introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType)
+	introspection::TypeKind kind, std::weak_ptr<const BaseType> ofType)
 {
-	return std::make_shared<WrapperType>(init { kind, ofType });
+	return std::make_shared<WrapperType>(init { kind, std::move(ofType) });
 }
 
 WrapperType::WrapperType(init&& params)
 	: BaseType(params.kind, std::string_view())
-	, _ofType(params.ofType)
+	, _ofType(std::move(params.ofType))
 {
 }
 
@@ -412,15 +412,15 @@ struct Field::init
 	std::string_view name;
 	std::string_view description;
 	std::optional<std::string_view> deprecationReason;
-	const std::shared_ptr<const BaseType>& type;
+	std::weak_ptr<const BaseType> type;
 	std::vector<std::shared_ptr<const InputValue>> args;
 };
 
 std::shared_ptr<Field> Field::Make(std::string_view name, std::string_view description,
-	std::optional<std::string_view> deprecationReason, const std::shared_ptr<const BaseType>& type,
+	std::optional<std::string_view> deprecationReason, std::weak_ptr<const BaseType> type,
 	std::initializer_list<std::shared_ptr<InputValue>> args)
 {
-	init params { name, description, deprecationReason, type };
+	init params { name, description, deprecationReason, std::move(type) };
 
 	params.args.resize(args.size());
 	std::copy(args.begin(), args.end(), params.args.begin());
@@ -432,7 +432,7 @@ Field::Field(init&& params)
 	: _name(params.name)
 	, _description(params.description)
 	, _deprecationReason(params.deprecationReason)
-	, _type(params.type)
+	, _type(std::move(params.type))
 	, _args(std::move(params.args))
 {
 }
@@ -466,20 +466,20 @@ struct InputValue::init
 {
 	std::string_view name;
 	std::string_view description;
-	const std::shared_ptr<const BaseType>& type;
+	std::weak_ptr<const BaseType> type;
 	std::string_view defaultValue;
 };
 
 std::shared_ptr<InputValue> InputValue::Make(std::string_view name, std::string_view description,
-	const std::shared_ptr<const BaseType>& type, std::string_view defaultValue)
+	std::weak_ptr<const BaseType> type, std::string_view defaultValue)
 {
-	return std::make_shared<InputValue>(init { name, description, type, defaultValue });
+	return std::make_shared<InputValue>(init { name, description, std::move(type), defaultValue });
 }
 
 InputValue::InputValue(init&& params)
 	: _name(params.name)
 	, _description(params.description)
-	, _type(params.type)
+	, _type(std::move(params.type))
 	, _defaultValue(params.defaultValue)
 {
 }

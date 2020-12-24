@@ -99,7 +99,10 @@ if(GRAPHQL_UPDATE_SAMPLES)
     DEPENDS 
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
       ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
     COMMENT "Updating sample files")

@@ -43,6 +43,7 @@ gtest_add_tests(TARGET argument_tests)
 
 add_executable(pegtl_tests PegtlTests.cpp)
 target_link_libraries(pegtl_tests PRIVATE
+  taocpp::pegtl
   GTest::GTest
   GTest::Main)
 target_include_directories(pegtl_tests PUBLIC

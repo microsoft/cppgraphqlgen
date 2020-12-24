@@ -45,8 +45,8 @@ public:
 	GRAPHQLSERVICE_EXPORT void AddType(std::string_view name, std::shared_ptr<BaseType> type);
 	GRAPHQLSERVICE_EXPORT const std::shared_ptr<const BaseType>& LookupType(
 		std::string_view name) const;
-	GRAPHQLSERVICE_EXPORT const std::shared_ptr<const BaseType>& WrapType(
-		introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType);
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<const BaseType> WrapType(
+		introspection::TypeKind kind, std::shared_ptr<const BaseType> ofType);
 	GRAPHQLSERVICE_EXPORT void AddDirective(std::shared_ptr<Directive> directive);
 
 	// Accessors
@@ -67,12 +67,12 @@ private:
 	std::shared_ptr<const ObjectType> _query;
 	std::shared_ptr<const ObjectType> _mutation;
 	std::shared_ptr<const ObjectType> _subscription;
-	std::unordered_map<std::string_view, size_t> _typeMap;
+	internal::sorted_map<std::string_view, size_t> _typeMap;
 	std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>> _types;
 	std::vector<std::shared_ptr<const Directive>> _directives;
-	std::unordered_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
+	internal::sorted_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
 		_nonNullWrappers;
-	std::unordered_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
+	internal::sorted_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
 		_listWrappers;
 };
 
@@ -282,7 +282,7 @@ public:
 	explicit WrapperType(init&& params);
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<WrapperType> Make(
-		introspection::TypeKind kind, const std::shared_ptr<const BaseType>& ofType);
+		introspection::TypeKind kind, std::weak_ptr<const BaseType> ofType);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT const std::weak_ptr<const BaseType>& ofType() const noexcept final;
@@ -303,7 +303,7 @@ public:
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<Field> Make(std::string_view name,
 		std::string_view description, std::optional<std::string_view> deprecationReason,
-		const std::shared_ptr<const BaseType>& type,
+		std::weak_ptr<const BaseType> type,
 		std::initializer_list<std::shared_ptr<InputValue>> args = {});
 
 	// Accessors
@@ -333,7 +333,7 @@ public:
 	explicit InputValue(init&& params);
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<InputValue> Make(std::string_view name,
-		std::string_view description, const std::shared_ptr<const BaseType>& type,
+		std::string_view description, std::weak_ptr<const BaseType> type,
 		std::string_view defaultValue);
 
 	// Accessors

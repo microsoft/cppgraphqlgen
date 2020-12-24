@@ -52,10 +52,13 @@ public:
 	[[nodiscard]] bool is_type() const noexcept
 	{
 		const auto u = type_name<U>();
-		const auto u_hash = type_hash<U>();
 
-		return _type_hash == u_hash
-			&& ((_type.data() == u.data() && _type.size() == u.size()) || _type == u);
+		// The pointer comparison doesn't work with shared libraries where the parse tree is
+		// constructed in one module and consumed in another. So to optimize this comparison, check
+		// the size first, then the hash (cached in a static local variable per specialization of
+		// type_hash<U>()), then the pointer comparison with a full string compare as fallback.
+		return _type.size() == u.size() && _type_hash == type_hash<U>()
+			&& (_type.data() == u.data() || _type == u);
 	}
 
 	template <typename... States>
@@ -115,6 +118,8 @@ private:
 	template <typename U>
 	[[nodiscard]] static std::string_view type_name() noexcept
 	{
+		// This is cached in a static local variable per-specialization, but each module may have
+		// its own instance of the specialization and the local variable.
 		static const std::string_view name { tao::graphqlpeg::demangle<U>() };
 
 		return name;
@@ -123,6 +128,8 @@ private:
 	template <typename U>
 	[[nodiscard]] static size_t type_hash() noexcept
 	{
+		// This is cached in a static local variable per-specialization, but each module may have
+		// its own instance of the specialization and the local variable.
 		static const size_t hash = std::hash<std::string_view>()(type_name<U>());
 
 		return hash;

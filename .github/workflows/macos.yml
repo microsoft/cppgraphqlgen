@@ -1,0 +1,54 @@
+name: macOS
+
+on: [push, pull_request]
+
+jobs:
+  xcode:
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Cache vcpkg
+      uses: actions/cache@v2
+      id: cache-vcpkg
+      with:
+        path: vcpkg/
+        key: vcpkg-x64-osx
+
+    - name: Install Dependencies
+      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
+      shell: pwsh
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        cd vcpkg
+        ./bootstrap-vcpkg.sh -allowAppleClang
+        ./vcpkg integrate install
+        ./vcpkg install boost-program-options rapidjson gtest
+
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+
+    - name: Configure
+      shell: pwsh
+      working-directory: build/
+      run: |
+        $vcpkgToolchain = Join-Path '../vcpkg' './scripts/buildsystems/vcpkg.cmake' -Resolve
+        $cmakeBuildType = '${{ matrix.config }}'
+
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" ${{ github.workspace }}
+
+    - name: Build
+      working-directory: build/
+      run: cmake --build . -j -v
+
+    - name: Test
+      working-directory: build/
+      run: ctest --output-on-failure
