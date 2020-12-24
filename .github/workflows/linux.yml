@@ -3,7 +3,7 @@ name: Linux
 on: [push, pull_request]
 
 jobs:
-  Linux:
+  gcc7:
     strategy:
       fail-fast: false
       matrix:
