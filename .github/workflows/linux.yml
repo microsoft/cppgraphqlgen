@@ -33,13 +33,17 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure CMake
-      working-directory: build
-      run: cmake -G Ninja ${{ github.workspace }}
+      shell: pwsh
+      working-directory: build/
+      run: |
+        $cmakeBuildType = '${{ matrix.config }}'
+
+        cmake "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
 
     - name: Build
-      working-directory: build
-      run: cmake --build . --config ${{ matrix.config }} -j -v
+      working-directory: build/
+      run: cmake --build . -j -v
 
     - name: Test
-      working-directory: build
-      run: ctest -C ${{ matrix.config }} --output-on-failure
+      working-directory: build/
+      run: ctest --output-on-failure
