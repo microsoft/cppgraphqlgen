@@ -1,6 +1,8 @@
 # Introduction 
 
-[![Build Status](https://dev.azure.com/wravery/Build%20Pipelines/_apis/build/status/CppGraphQLGen-CI%20(Microsoft)?branchName=master)](https://dev.azure.com/wravery/Build%20Pipelines/_build/latest?definitionId=7&branchName=master)
+![Windows](https://github.com/microsoft/cppgraphqlgen/workflows/Windows/badge.svg)
+![macOS](https://github.com/microsoft/cppgraphqlgen/workflows/macOS/badge.svg)
+![Linux](https://github.com/microsoft/cppgraphqlgen/workflows/Linux/badge.svg)
 
 [GraphQL](https://graphql.org/) and [React](https://reactjs.org/) go together like peanut butter
 and jelly, especially if you use a GraphQL client/compiler like [Relay](http://facebook.github.io/relay/en/)
