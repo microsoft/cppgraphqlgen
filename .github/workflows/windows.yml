@@ -56,7 +56,7 @@ jobs:
 
     - name: Build
       working-directory: build/
-      run: cmake --build . --config ${{ matrix.config }} -j -v
+      run: cmake --build . --config ${{ matrix.config }} -v
 
     - name: Test
       working-directory: build/

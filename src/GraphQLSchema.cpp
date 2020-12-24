@@ -43,7 +43,7 @@ const std::shared_ptr<const BaseType>& Schema::LookupType(std::string_view name)
 {
 	auto itr = _typeMap.find(name);
 
-	if (itr == _typeMap.cend())
+	if (itr == _typeMap.end())
 	{
 		std::ostringstream message;
 
@@ -66,9 +66,9 @@ const std::shared_ptr<const BaseType>& Schema::WrapType(
 	auto& wrappers = (kind == introspection::TypeKind::LIST) ? _listWrappers : _nonNullWrappers;
 	auto itr = wrappers.find(ofType);
 
-	if (itr == wrappers.cend())
+	if (itr == wrappers.end())
 	{
-		std::tie(itr, std::ignore) = wrappers.insert({ ofType, WrapperType::Make(kind, ofType) });
+		std::tie(itr, std::ignore) = wrappers.emplace(ofType, WrapperType::Make(kind, ofType));
 	}
 
 	return itr->second;
