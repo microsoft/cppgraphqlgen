@@ -49,19 +49,25 @@ If you use the async version of `subscribe` and `unsubscribe` which take a
 `Subscription` object to the `Request`/`Operations` constructor, you will get
 additional callbacks with the `ResolverContext::NotifySubscribe` and
 `ResolverContext::NotifyUnsubscribe` values for the
-`FieldParams::resolverContext` member. These are passed as part of the
-`subscribe` and `unsubscribe` calls on the default subscription object, and
+`FieldParams::resolverContext` member. These are passed by the async
+`subscribe` and `unsubscribe` calls to the default subscription object, and
 they provide an opportunity to acquire or release resources that are required
-to implement the subscription. You can provide separate implementations of the
-`Subscription` object as the default in the `Operations` constructor and as the
-payload of a specific `deliver` call, which will be resolved with
-`ResolverContext::Subscription`. If you do not provide a separate
-`Subscription` object in the `deliver` call, it will fall back to delivering a
-new event resolved against the default 
+to implement the subscription.
+
+You can provide separate implementations of the `Subscription` object as the
+default in the `Operations` constructor and as the payload of a specific
+`deliver` call. Whether you override the `Subscription` object or not, the
+event payload for a `deliver` call will be resolved with
+`ResolverContext::Subscription`.
 
 ## Delivering Subscription Updates
 
-There are currently three `Request::deliver` overrides you can choose from when
+If you pass an empty `std::shared_ptr<Object>` for the `subscriptionObject`
+parameter, `deliver` will fall back to resolving the query against the default
+`Subscription` object passed to the `Request`/`Operations` constructor. If both
+`Subscription` object parameters are empty, `deliver` will throw an exception.
+
+There are currently five `Request::deliver` overrides you can choose from when
 sending updates to any subscribed listeners. The first one is the simplest,
 it will evaluate each subscribed query against the `subscriptionObject`
 parameter (which should match the `Subscription` type in the `schema`). It will
