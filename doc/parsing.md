@@ -33,7 +33,7 @@ for hardcoded documents.
 
 The UDL is used throughout the sample unit tests and in `schemagen` for the
 hard-coded introspection schema. It will be useful for additional unit tests
-against your own custom schema. The UDL 
+against your own custom schema.
 
 At runtime, you will probably call `parseString` most often to handle dynamic
 queries. If you have persisted queries saved to the file system or you are
