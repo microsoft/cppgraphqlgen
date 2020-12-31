@@ -342,17 +342,17 @@ TEST(PegtlCase, ParseVariableDefaultEmptyList)
 TEST(PegtlCase, AnalyzeMixedGrammar)
 {
 	ASSERT_EQ(0, analyze<mixed_document>(true))
-		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
 
 TEST(PegtlCase, AnalyzeExecutableGrammar)
 {
 	ASSERT_EQ(0, analyze<executable_document>(true))
-		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
 
 TEST(PegtlCase, AnalyzeSchemaGrammar)
 {
 	ASSERT_EQ(0, analyze<schema_document>(true))
-		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
