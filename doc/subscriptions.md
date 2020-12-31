@@ -13,8 +13,13 @@ the subscriptions to those listeners.
 Subscriptions are created or removed by calling the `Request::subscribe`
 and `Request::unsubscribe` methods in [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-SubscriptionKey subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback);
-void unsubscribe(SubscriptionKey key);
+GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
+	SubscriptionParams&& params, SubscriptionCallback&& callback);
+GRAPHQLSERVICE_EXPORT std::future<SubscriptionKey> subscribe(
+	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
+
+GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
+GRAPHQLSERVICE_EXPORT std::future<void> unsubscribe(std::launch launch, SubscriptionKey key);
 ```
 You need to fill in a `SubscriptionParams` struct with the [parsed](./parsing.md)
 query and any other relevant operation parameters:
@@ -37,6 +42,23 @@ The `SubscriptionCallback` signature is:
 using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
 ```
 
+## `ResolverContext::NotifySubscribe` and `ResolverContext::NotifyUnsubscribe`
+
+If you use the async version of `subscribe` and `unsubscribe` which take a
+`std::launch` parameter, and you provide a default instance of the
+`Subscription` object to the `Request`/`Operations` constructor, you will get
+additional callbacks with the `ResolverContext::NotifySubscribe` and
+`ResolverContext::NotifyUnsubscribe` values for the
+`FieldParams::resolverContext` member. These are passed as part of the
+`subscribe` and `unsubscribe` calls on the default subscription object, and
+they provide an opportunity to acquire or release resources that are required
+to implement the subscription. You can provide separate implementations of the
+`Subscription` object as the default in the `Operations` constructor and as the
+payload of a specific `deliver` call, which will be resolved with
+`ResolverContext::Subscription`. If you do not provide a separate
+`Subscription` object in the `deliver` call, it will fall back to delivering a
+new event resolved against the default 
+
 ## Delivering Subscription Updates
 
 There are currently three `Request::deliver` overrides you can choose from when
@@ -46,33 +68,67 @@ parameter (which should match the `Subscription` type in the `schema`). It will
 unconditionally invoke every subscribed `SubscriptionCallback` callback with
 the response to its query:
 ```cpp
-void deliver(const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(
+	const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 ```
 
 The second override adds argument filtering. It will look at the field 
 arguments in the subscription `query`, and if all of the required parameters
-in the `arguments` parameter are present and are an exact match it will dispatch the callback to that subscription:
+in the `arguments` parameter are present and are an exact match it will
+dispatch the callback to that subscription:
 ```cpp
-void deliver(const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
+	const SubscriptionArguments& arguments,
+	const std::shared_ptr<Object>& subscriptionObject) const;
 ```
 
-The last override lets you customize the the way that the required arguments
-are matched. Instead of an exact match or making all of the arguments required,
-it will dispatch the callback if the `apply` function parameter returns true
-for every required field in the subscription `query`.
+The third override adds directive filtering. It will look at both the field
+arguments and the directives with their own arguments in the subscription
+`query`, and if all of them match it will dispatch the callback to that
+subscription:
 ```cpp
-void deliver(const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
+	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+	const std::shared_ptr<Object>& subscriptionObject) const;
 ```
 
-By default, `deliver` invokes all of the `SubscriptionCallback` listeners with `std::future`
-payloads which are resolved on-demand but synchronously, using `std::launch::deferred` with the
-`std::async` function. There's also a version of each overload which  lets you substitute the
-`std::launch::async` option to begin executing the queries and invoke the callbacks on multiple
-threads in parallel:
+The last two overrides let you customize the the way that the required
+arguments and directives are matched. Instead of an exact match or making all
+of the arguments required, it will dispatch the callback if the `apply`
+function parameters return true for every required field and directive in the
+subscription `query`.
 ```cpp
-void deliver(std::launch launch, const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const;
-void deliver(std::launch launch, const SubscriptionName& name, const SubscriptionFilterCallback& apply, const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
+	const SubscriptionFilterCallback& applyDirectives,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+```
+
+By default, `deliver` invokes all of the `SubscriptionCallback` listeners with
+`std::future` payloads which are resolved on-demand but synchronously, using
+`std::launch::deferred` with the `std::async` function. There's also a version
+of each overload which  lets you substitute the `std::launch::async` option to
+begin executing the queries and invoke the callbacks on multiple threads in
+parallel:
+```cpp
+GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionArguments& arguments,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
+	const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
+	const SubscriptionFilterCallback& applyDirectives,
+	const std::shared_ptr<Object>& subscriptionObject) const;
 ```
 
 ## Handling Multiple Operation Types
@@ -83,8 +139,9 @@ tell which operation type it is without parsing the query and searching for
 a specific operation name, so it's hard to tell whether you should call
 `resolve` or `subscribe` when the request is received that way. To help with
 that, there's a public `Request::findOperationDefinition` method which returns
-the operation type as a `std::string_view` along with a pointer to the AST node for
-the selected operation in the parsed query:
+the operation type as a `std::string_view` along with a pointer to the AST node
+for the selected operation in the parsed query:
 ```cpp
-std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(peg::ast& root, std::string_view operationName) const;
+GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
+	peg::ast& query, std::string_view operationName) const;
 ```

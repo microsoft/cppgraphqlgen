@@ -138,7 +138,7 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 
 	bool Int(int i)
 	{
-		// https://facebook.github.io/graphql/June2018/#sec-Int
+		// http://spec.graphql.org/June2018/#sec-Int
 		static_assert(sizeof(i) == 4, "GraphQL only supports 32-bit signed integers");
 		auto value = Value(Type::Int);
 
@@ -151,7 +151,7 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 	{
 		if (i > static_cast<unsigned int>(std::numeric_limits<int>::max()))
 		{
-			// https://facebook.github.io/graphql/June2018/#sec-Int
+			// http://spec.graphql.org/June2018/#sec-Int
 			throw std::overflow_error("GraphQL only supports 32-bit signed integers");
 		}
 		return Int(static_cast<int>(i));
@@ -159,13 +159,13 @@ struct ResponseHandler : rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Respons
 
 	bool Int64(int64_t /*i*/)
 	{
-		// https://facebook.github.io/graphql/June2018/#sec-Int
+		// http://spec.graphql.org/June2018/#sec-Int
 		throw std::overflow_error("GraphQL only supports 32-bit signed integers");
 	}
 
 	bool Uint64(uint64_t /*i*/)
 	{
-		// https://facebook.github.io/graphql/June2018/#sec-Int
+		// http://spec.graphql.org/June2018/#sec-Int
 		throw std::overflow_error("GraphQL only supports 32-bit signed integers");
 	}
 

@@ -19,9 +19,9 @@ the functions in [JSONResponse.h](../include/JSONResponse.h):
 ```cpp
 namespace graphql::response {
 
-std::string toJSON(Value&& response);
+JSONRESPONSE_EXPORT std::string toJSON(Value&& response);
 
-Value parseJSON(const std::string& json);
+JSONRESPONSE_EXPORT Value parseJSON(const std::string& json);
 
 } /* namespace graphql::response */
 ```

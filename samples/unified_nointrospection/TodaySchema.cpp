@@ -1129,7 +1129,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)], R"md()md"sv, std::nullopt },
 		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Started)], R"md()md"sv, std::nullopt },
 		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Complete)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"sv) }
+		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](http://spec.graphql.org/June2018/#sec-Deprecation))md"sv) }
 	});
 
 	typeCompleteTaskInput->AddInputValues({
@@ -1224,7 +1224,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		})
 	});
 	typeSubscription->AddFields({
-		schema::Field::Make(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](https://facebook.github.io/graphql/June2018/#sec-Deprecation))md"sv), schema->LookupType("Appointment")),
+		schema::Field::Make(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation))md"sv), schema->LookupType("Appointment")),
 		schema::Field::Make(R"gql(nodeChange)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Node")), {
 			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
 		})
