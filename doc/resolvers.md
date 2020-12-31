@@ -34,7 +34,9 @@ schema {
 
 Executing a query or mutation starts by calling `Request::resolve` from [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-std::future<response::Value> resolve(const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
+	const std::shared_ptr<RequestState>& state, peg::ast& query,
+	const std::string& operationName, response::Value&& variables) const;
 ```
 By default, the `std::future` results are resolved on-demand but synchronously,
 using `std::launch::deferred` with the `std::async` function. You can also use
@@ -42,7 +44,9 @@ an override of `Request::resolve` which lets you substitute the
 `std::launch::async` option to begin executing the query on multiple threads
 in parallel:
 ```cpp
-std::future<response::Value> resolve(std::launch launch, const std::shared_ptr<RequestState>& state, peg::ast& query, const std::string& operationName, response::Value&& variables) const;
+GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch,
+	const std::shared_ptr<RequestState>& state, peg::ast& query,
+	const std::string& operationName, response::Value&& variables) const;
 ```
 
 ### `graphql::service::Request` and `graphql::<schema>::Operations`
@@ -66,7 +70,7 @@ recursively call the `resolvers` for each of the `fields` in the nested
 `graphql::today::object::Appointment` object from the `today` sample in
 [AppointmentObject.h](../samples/separate/AppointmentObject.h).
 ```cpp
-std::future<response::Value> resolveId(service::ResolverParams&& params);
+std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
 ```
 In this example, the `resolveId` method invokes `getId`:
 ```cpp

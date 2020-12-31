@@ -47,7 +47,7 @@ The easiest way to get all of these and to build `cppgraphqlgen` in one step is 
 [microsoft/vcpkg](https://github.com/microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
 and then run `vcpkg install cppgraphqlgen` (or `cppgraphqlgen:x64-windows`, `cppgraphqlgen:x86-windows-static`, etc.
 depending on your platform). To install just the dependencies and work in a clone of this repo, you'll need some subset
-of `vcpkg install pegtl boost-program-options boost-filesystem rapidjson gtest`. It works for Windows, Linux, and Mac,
+of `vcpkg install pegtl boost-program-options rapidjson gtest`. It works for Windows, Linux, and Mac,
 but if you want to try building for another platform (e.g. Android or iOS), you'll need to do more of this manually.
 
 Manual installation will work best if you clone the GitHub repos for each of the dependencies and follow the installation
@@ -67,9 +67,9 @@ means you need to include an acknowledgement along with the license text.
 
 ### graphqlpeg
 
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.0.0,
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.1.1,
 which is part of [The Art of C++](https://taocpp.github.io/) library collection. I've added this as a sub-module, so you
-do not need to install this separately. If you already have 3.0.0 installed where CMake can find it, it will use that
+do not need to install this separately. If you already have 3.1.1 installed where CMake can find it, it will use that
 instead of the sub-module and avoid installing another copy of PEGTL.
 
 ### graphqlservice
@@ -87,11 +87,6 @@ do that.
 
 I'm using [Boost](https://www.boost.org/doc/libs/1_69_0/more/getting_started/index.html) for `schemagen`:
 
-- C++17 std::filesystem support on Unix:
-[Boost.Filesystem](https://www.boost.org/doc/libs/1_69_0/libs/filesystem/doc/index.htm). Most of the default C++
-compilers on Linux still have `std::filesystem` from C++17 in an experimental directory and require an extra
-library. The standard just adopted the Boost library, so on Unix systems I have an `#ifdef` which redirects back to
-it for the time being.
 - Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
 Run `schemagen -?` to get a list of options. Many of the files in the [samples](samples/) directory were generated
 with `schemagen`, you can look at [samples/CMakeLists.txt](samples/CMakeLists.txt) for a few examples of how to call it:
@@ -108,6 +103,7 @@ Command line options:
   --header-dir arg       Target path for the <prefix>Schema.h header file
   --no-stubs             Generate abstract classes without stub implementations
   --separate-files       Generate separate files for each of the types
+  --no-introspection     Do not generate support for Introspection
 ```
 
 I've tested this with several versions of Boost going back to 1.65.0. I expect it will work fine with most versions of

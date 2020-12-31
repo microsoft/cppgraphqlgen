@@ -76,7 +76,7 @@ TEST(PegtlCase, ParseKitchenSinkQuery)
 		})gql",
 		"ParseKitchenSinkQuery");
 
-	const bool result = parse<document>(input);
+	const bool result = parse<executable_document>(input);
 
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
@@ -164,76 +164,7 @@ TEST(PegtlCase, ParseKitchenSinkSchema)
 		   | INLINE_FRAGMENT)gql",
 		"ParseKitchenSinkSchema");
 
-	const bool result = parse<document>(input);
-
-	ASSERT_TRUE(result) << "we should be able to parse the doc";
-}
-
-TEST(PegtlCase, ParseKitchenSink)
-{
-	memory_input<> input(R"gql(
-		# Copyright (c) 2015-present, Facebook, Inc.
-		#
-		# This source code is licensed under the MIT license found in the
-		# LICENSE file in the root directory of this source tree.
-
-		query queryName($foo: ComplexType, $site: Site = MOBILE) {
-		  whoever123is: node(id: [123, 456]) {
-			id ,
-			... on User @defer {
-			  field2 {
-				id ,
-				alias: field1(first:10, after:$foo,) @include(if: $foo) {
-				  id,
-				  ...frag
-				}
-			  }
-			}
-			... @skip(unless: $foo) {
-			  id
-			}
-			... {
-			  id
-			}
-		  }
-		}
-
-		mutation likeStory {
-		  like(story: 123) @defer {
-			story {
-			  id
-			}
-		  }
-		}
-
-		subscription StoryLikeSubscription($input: StoryLikeSubscribeInput) {
-		  storyLikeSubscribe(input: $input) {
-			story {
-			  likers {
-				count
-			  }
-			  likeSentence {
-				text
-			  }
-			}
-		  }
-		}
-
-		fragment frag on Friend {
-		  foo(size: $size, bar: $b, obj: {key: "value", block: """
-
-			  block string uses \"""
-
-		  """})
-		}
-
-		{
-		  unnamed(truthy: true, falsey: false, nullish: null),
-		  query
-		})gql",
-		"ParseKitchenSinkSchema");
-
-	const bool result = parse<document>(input);
+	const bool result = parse<schema_document>(input);
 
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
@@ -273,7 +204,7 @@ TEST(PegtlCase, ParseTodayQuery)
 		})gql",
 		"ParseTodayQuery");
 
-	const bool result = parse<document>(input);
+	const bool result = parse<executable_document>(input);
 
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
@@ -390,7 +321,7 @@ TEST(PegtlCase, ParseTodaySchema)
 		})gql",
 		"ParseTodaySchema");
 
-	const bool result = parse<document>(input);
+	const bool result = parse<schema_document>(input);
 
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
@@ -403,19 +334,25 @@ TEST(PegtlCase, ParseVariableDefaultEmptyList)
 		})gql",
 		"ParseVariableDefaultEmptyList");
 
-	const bool result = parse<document>(input);
+	const bool result = parse<executable_document>(input);
 
 	ASSERT_TRUE(result) << "we should be able to parse the doc";
 }
 
-TEST(PegtlCase, AnalyzeGrammar)
+TEST(PegtlCase, AnalyzeMixedGrammar)
 {
-	ASSERT_EQ(0, analyze<document>(true))
-		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+	ASSERT_EQ(0, analyze<mixed_document>(true))
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
 
 TEST(PegtlCase, AnalyzeExecutableGrammar)
 {
 	ASSERT_EQ(0, analyze<executable_document>(true))
-		<< "there shuldn't be any infinite loops in the PEG version of the grammar";
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
+}
+
+TEST(PegtlCase, AnalyzeSchemaGrammar)
+{
+	ASSERT_EQ(0, analyze<schema_document>(true))
+		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }

@@ -54,6 +54,9 @@ struct schema_location
 	size_t column = 1;
 };
 
+// The implementation details of the error path should be opaque to client code. It is carried along
+// with the SelectionSetParams and automatically added to any schema errors or exceptions thrown
+// from an accessor as part of error reporting.
 using path_segment = std::variant<std::string_view, size_t>;
 
 struct field_path
@@ -173,9 +176,11 @@ struct FieldParams : SelectionSetParams
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
 		SelectionSetParams&& selectionSetParams, response::Value&& directives);
 
-	[[deprecated("Use the FieldParams constructor overload which takes a SelectionSet r-value "
-				 "reference instead.")]] GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		const SelectionSetParams& selectionSetParams, response::Value&& directives);
+	[[deprecated(
+		"Use the FieldParams constructor overload which takes a SelectionSet r-value "
+		"reference instead.")]] GRAPHQLSERVICE_EXPORT explicit FieldParams(const SelectionSetParams&
+																			   selectionSetParams,
+		response::Value&& directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive

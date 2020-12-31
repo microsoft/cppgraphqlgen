@@ -1130,29 +1130,48 @@ struct type_system_extension : sor<schema_extension, type_extension>
 };
 
 // http://spec.graphql.org/June2018/#Definition
-struct definition : sor<executable_definition, type_system_definition, type_system_extension>
+struct mixed_definition : sor<executable_definition, type_system_definition, type_system_extension>
 {
 };
 
-struct document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>, list<definition, star<ignored>>, star<ignored>,
-		  tao::graphqlpeg::eof>
+struct mixed_document_content
+	: seq<bof, opt<utf8::bom>, star<ignored>,	 // leading whitespace/ignored
+		  list<mixed_definition, star<ignored>>, // mixed definitions
+		  star<ignored>, tao::graphqlpeg::eof>	 // trailing whitespace/ignored
 {
 };
 
 // http://spec.graphql.org/June2018/#Document
-struct document : must<document_content>
+struct mixed_document : must<mixed_document_content>
 {
 };
 
 struct executable_document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>, list<executable_definition, star<ignored>>,
-		  star<ignored>, tao::graphqlpeg::eof>
+	: seq<bof, opt<utf8::bom>, star<ignored>,		  // leading whitespace/ignored
+		  list<executable_definition, star<ignored>>, // executable definitions
+		  star<ignored>, tao::graphqlpeg::eof>		  // trailing whitespace/ignored
 {
 };
 
 // http://spec.graphql.org/June2018/#Document
 struct executable_document : must<executable_document_content>
+{
+};
+
+// http://spec.graphql.org/June2018/#Definition
+struct schema_type_definition : sor<type_system_definition, type_system_extension>
+{
+};
+
+struct schema_document_content
+	: seq<bof, opt<utf8::bom>, star<ignored>,		   // leading whitespace/ignored
+		  list<schema_type_definition, star<ignored>>, // schema type definitions
+		  star<ignored>, tao::graphqlpeg::eof>		   // trailing whitespace/ignored
+{
+};
+
+// http://spec.graphql.org/June2018/#Document
+struct schema_document : must<schema_document_content>
 {
 };
 

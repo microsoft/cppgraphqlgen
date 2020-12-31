@@ -11,11 +11,36 @@ passes it to every `getField` method as the first parameter.
 
 The `graphql::service::FieldParams` struct is declared in [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-// Pass a common bundle of parameters to all of the generated Object::getField accessors in a SelectionSet
+// Resolvers may be called in multiple different Operation contexts.
+enum class ResolverContext
+{
+	// Resolving a Query operation.
+	Query,
+
+	// Resolving a Mutation operation.
+	Mutation,
+
+	// Adding a Subscription. If you need to prepare to send events for this Subsciption
+	// (e.g. registering an event sink of your own), this is a chance to do that.
+	NotifySubscribe,
+
+	// Resolving a Subscription event.
+	Subscription,
+
+	// Removing a Subscription. If there are no more Subscriptions registered this is an
+	// opportunity to release resources which are no longer needed.
+	NotifyUnsubscribe,
+};
+
+// Pass a common bundle of parameters to all of the generated Object::getField accessors in a
+// SelectionSet
 struct SelectionSetParams
 {
+	// Context for this selection set.
+	const ResolverContext resolverContext;
+
 	// The lifetime of each of these borrowed references is guaranteed until the future returned
-	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer. 
+	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer.
 	const std::shared_ptr<RequestState>& state;
 	const response::Value& operationDirectives;
 	const response::Value& fragmentDefinitionDirectives;
@@ -25,18 +50,31 @@ struct SelectionSetParams
 	// you'll need to explicitly copy them into other instances of response::Value.
 	const response::Value& fragmentSpreadDirectives;
 	const response::Value& inlineFragmentDirectives;
+
+	// Field error path to this selection set.
+	std::optional<field_path> errorPath;
+
+	// Async launch policy for sub-field resolvers.
+	const std::launch launch = std::launch::deferred;
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
 struct FieldParams : SelectionSetParams
 {
-	explicit FieldParams(const SelectionSetParams& selectionSetParams, response::Value&& directives);
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(
+		SelectionSetParams&& selectionSetParams, response::Value&& directives);
 
-	// Each field owns its own field-specific directives. Once the accessor returns it will be destroyed,
-	// but you can move it into another instance of response::Value to keep it alive longer.
+	// Each field owns its own field-specific directives. Once the accessor returns it will be
+	// destroyed, but you can move it into another instance of response::Value to keep it alive
+	// longer.
 	response::Value fieldDirectives;
 };
 ```
+
+### Resolver Context
+
+The `SelectionSetParams::resolverContext` enum member informs the `getField`
+accessors about what type of operation is being resolved.
 
 ### Request State
 
@@ -75,7 +113,29 @@ or `fragmentDefinitionDirectives` because those are kept alive until the
 passed by `const` reference, the reference should always be valid as long as
 there's a pending result from the `getField` call.
 
+### Error Path
+
+The `SelectionSetParams::errorPath` member should be considered an opaque
+implementation detail by client code. It automatically propagates through the
+field resolvers, and if there is a schema exception or one of the `getField`
+accessors throws another exception derived from `std::exception`, the
+`graphqlservice` library will automatically add the resulting path to the error
+report, accoring to the [spec](http://spec.graphql.org/June2018/#sec-Errors).
+
+### Launch Policy
+
+The `graphqlservice` library uses the `SelectionSetParams::launch` parameter to
+determine how it should handle async resolvers in the same selection set or
+elements in the same list. It is passed from the top-most `resolve`, `deliver`,
+or async `subscribe`/`unsubscribe` call. The `getField` accessors get a copy of
+this member in their `FieldParams` argument, and they may change their own
+behavior based on that, but they cannot alter the launch policy which
+`graphqlservice` uses for the resolvers themselves.
+
 ## Related Documents
 
 1. The `getField` methods are discussed in more detail in [resolvers.md](./resolvers.md).
 2. Built-in and custom `directives` are discussed in [directives.md](./directives.md).
+3. Subscription resolvers get called up to 3 times depending on which
+`subscribe`/`unsubscribe` overrides you call. See [subscriptions.md](./subscriptions.md)
+for more details.

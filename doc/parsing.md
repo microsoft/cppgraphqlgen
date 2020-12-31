@@ -4,11 +4,11 @@
 
 As mentioned in the [README](../README.md), `cppgraphqlgen` uses the
 [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL)
-release 3.0.0, which is part of [The Art of C++](https://taocpp.github.io/)
+release 3.1.1, which is part of [The Art of C++](https://taocpp.github.io/)
 library collection. I've added this as a sub-module, so you do not need to
-install this separately. If you already have 3.0.0 installed where CMake can
+install this separately. If you already have 3.1.1 installed where CMake can
 find it, it will use that instead of the sub-module and avoid installing
-another copy of PEGTL. _Note: PEGTL 3.0.0 is currently at pre-release._
+another copy of PEGTL.
 
 It uses the [contrib/parse_tree.hpp](../PEGTL/include/tao/pegtl/contrib/parse_tree.hpp)
 module to build an AST automatically while parsing the document. The AST and
@@ -39,6 +39,17 @@ At runtime, you will probably call `parseString` most often to handle dynamic
 queries. If you have persisted queries saved to the file system or you are
 using a snapshot/[Approval Testing](https://approvaltests.com/) strategy you
 might also use `parseFile` to parse queries saved to text files.
+
+When parsing an executable document with `parseString`, `parseFile`, or the
+UDL, the parser will try a subset of the grammar first which does not accept
+schema definitions, and if that fails it will try the full grammar as a
+fallback so that the validation step can check for documents with an invalid
+mix of executable and schema definitions.
+
+There are `parseSchemaString` and `parseSchemaFile` functions which do the
+opposite, but unless you are building additional tooling on top of the
+`graphqlpeg` library, you will probably not need them. They have only been used
+by `schemagen` in this project.
 
 ## Encoding
 

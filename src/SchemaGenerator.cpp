@@ -762,6 +762,16 @@ void Generator::visitDefinition(const peg::ast_node& definition)
 	{
 		visitDirectiveDefinition(definition);
 	}
+	else
+	{
+		const auto position = definition.begin();
+		std::ostringstream error;
+
+		error << "Unexpected executable definition line: " << position.line
+			  << " column: " << position.column;
+
+		throw std::runtime_error(error.str());
+	}
 }
 
 void Generator::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
@@ -1308,7 +1318,7 @@ InputFieldList Generator::getInputFields(const peg::ast_node::children_t& fields
 			}
 			else if (child->is_type<peg::default_value>())
 			{
-				auto position = child->begin();
+				const auto position = child->begin();
 				DefaultValueVisitor defaultValue;
 
 				defaultValue.visit(*child->children.back());
@@ -1433,7 +1443,7 @@ void Generator::DefaultValueVisitor::visit(const peg::ast_node& value)
 	else if (value.is_type<peg::variable>())
 	{
 		std::ostringstream error;
-		auto position = value.begin();
+		const auto position = value.begin();
 
 		error << "Unexpected variable in default value line: " << position.line
 			  << " column: " << position.column;
@@ -3790,7 +3800,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	catch (const tao::graphqlpeg::parse_error& pe)
+	catch (const graphql::peg::parse_error& pe)
 	{
 		std::cerr << "Invalid GraphQL: " << pe.what() << std::endl;
 

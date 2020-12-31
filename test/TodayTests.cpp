@@ -705,6 +705,41 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	}
 }
 
+TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionObject)
+{
+	auto service = std::make_shared<today::Operations>(nullptr, nullptr, nullptr);
+	bool exception = false;
+
+	try
+	{
+		service->deliver("nextAppointmentChange", nullptr);
+	}
+	catch (const std::invalid_argument& ex)
+	{
+		EXPECT_TRUE(ex.what() == "Missing subscriptionObject"sv) << "exception should match";
+		exception = true;
+	}
+
+	ASSERT_TRUE(exception) << "expected an exception";
+}
+
+TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionSupport)
+{
+	auto service = std::make_shared<today::EmptyOperations>();
+	bool exception = false;
+
+	try
+	{
+		service->deliver("nextAppointmentChange", nullptr);
+	}
+	catch (const std::logic_error& ex)
+	{
+		EXPECT_TRUE(ex.what() == "Subscriptions not supported"sv) << "exception should match";
+		exception = true;
+	}
+
+	ASSERT_TRUE(exception) << "expected an exception";
+}
 TEST_F(TodayServiceCase, Introspection)
 {
 	auto query = R"({
