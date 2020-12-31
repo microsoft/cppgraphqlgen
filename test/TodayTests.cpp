@@ -714,7 +714,7 @@ TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionObject)
 	{
 		service->deliver("nextAppointmentChange", nullptr);
 	}
-	catch (std::invalid_argument& ex)
+	catch (const std::invalid_argument& ex)
 	{
 		EXPECT_TRUE(ex.what() == "Missing subscriptionObject"sv) << "exception should match";
 		exception = true;
@@ -732,7 +732,7 @@ TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionSupport)
 	{
 		service->deliver("nextAppointmentChange", nullptr);
 	}
-	catch (std::logic_error& ex)
+	catch (const std::logic_error& ex)
 	{
 		EXPECT_TRUE(ex.what() == "Subscriptions not supported"sv) << "exception should match";
 		exception = true;
