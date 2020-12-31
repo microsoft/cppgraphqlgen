@@ -636,6 +636,13 @@ private:
 	const size_t order;
 };
 
+class EmptyOperations : public service::Request
+{
+public:
+	explicit EmptyOperations();
+};
+
+
 } /* namespace graphql::today */
 
 #endif // TODAYMOCK_H

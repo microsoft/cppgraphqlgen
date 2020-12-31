@@ -539,4 +539,9 @@ service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams
 		static_cast<response::IntType>(order));
 }
 
+EmptyOperations::EmptyOperations()
+	: service::Request({}, GetSchema())
+{
+}
+
 } /* namespace graphql::today */
