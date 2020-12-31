@@ -2333,8 +2333,24 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyDirectives,
 	const std::shared_ptr<Object>& subscriptionObject) const
 {
+	const auto itrOperation = _operations.find(strSubscription);
+
+	if (itrOperation == _operations.end())
+	{
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
 	const auto& optionalOrDefaultSubscription =
-		subscriptionObject ? subscriptionObject : _operations.find(strSubscription)->second;
+		subscriptionObject ? subscriptionObject : itrOperation->second;
+
+	if (!optionalOrDefaultSubscription)
+	{
+		// If there is no default in the operations map, you must pass a non-empty
+		// subscriptionObject parameter to deliver.
+		throw std::invalid_argument("Missing subscriptionObject");
+	}
 
 	auto itrListeners = _listeners.find(name);
 
