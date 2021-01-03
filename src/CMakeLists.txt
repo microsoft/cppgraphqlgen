@@ -3,6 +3,26 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
+# internal/Version.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/internal/Version.h
+  @ONLY)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  # Version.rc
+  set(GRAPHQL_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+  set(GRAPHQL_RC_VERSION_STR "${PROJECT_VERSION}")
+
+  function(add_version_rc target)
+    set(GRAPHQL_RC_FILENAME "${target}")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.rc.in 
+      ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
+      @ONLY)
+    add_library(${target}_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc)
+    target_link_libraries(${target} PRIVATE ${target}_version)
+  endfunction()
+endif()
+
 function(add_bigobj_flag target)
   if(MSVC)
     # MSVC requires the /bigobj flag if the number of sections gets too big.
@@ -24,6 +44,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlpeg
     PUBLIC GRAPHQL_DLLEXPORTS
     PRIVATE IMPL_GRAPHQLPEG_DLL)
+
+  add_version_rc(graphqlpeg)
 endif()
 
 # graphqlresponse
@@ -37,12 +59,16 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlresponse
     PUBLIC GRAPHQL_DLLEXPORTS
     PRIVATE IMPL_GRAPHQLRESPONSE_DLL)
+
+  add_version_rc(graphqlresponse)
 endif()
 
 # schemagen
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
+  target_include_directories(schemagen PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/../include)
   target_link_libraries(schemagen PRIVATE
     graphqlpeg
     graphqlresponse)
@@ -101,6 +127,18 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
 
   find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
   target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
+
+  if(WIN32)
+    # SchemaGen.rc
+    set(SCHEMAGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+    set(SCHEMAGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/SchemaGen.rc.in 
+      ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
+      @ONLY)
+
+    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
+    target_link_libraries(schemagen PRIVATE schemagen_version)
+  endif()
   
   install(TARGETS schemagen
     EXPORT cppgraphqlgen-targets
@@ -170,6 +208,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice_nointrospection
     PUBLIC GRAPHQL_DLLEXPORTS
     PRIVATE IMPL_GRAPHQLSERVICE_DLL)
+
+  add_version_rc(graphqlservice_nointrospection)
 endif()
 
 # graphqlservice
@@ -183,6 +223,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
     PUBLIC GRAPHQL_DLLEXPORTS
     PRIVATE IMPL_GRAPHQLINTROSPECTION_DLL)
+
+  add_version_rc(graphqlservice)
 endif()
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
@@ -206,6 +248,8 @@ if(GRAPHQL_USE_RAPIDJSON)
     target_compile_definitions(graphqljson
       PUBLIC GRAPHQL_DLLEXPORTS
       PRIVATE IMPL_JSONRESPONSE_DLL)
+
+    add_version_rc(graphqljson)
   endif()
 endif()
 
@@ -249,6 +293,7 @@ install(FILES
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/internal/Version.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
 

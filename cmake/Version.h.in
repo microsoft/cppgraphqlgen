@@ -1,0 +1,21 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#pragma once
+
+#ifndef VERSION_H
+#define VERSION_H
+
+#include <string_view>
+
+namespace graphql::internal {
+
+constexpr std::string_view FullVersion { "@PROJECT_VERSION@" };
+
+constexpr size_t MajorVersion = @PROJECT_VERSION_MAJOR@;
+constexpr size_t MinorVersion = @PROJECT_VERSION_MINOR@;
+constexpr size_t PatchVersion = @PROJECT_VERSION_PATCH@;
+
+} // namespace graphql::internal
+
+#endif // VERSION_H
