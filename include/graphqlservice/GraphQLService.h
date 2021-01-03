@@ -20,7 +20,9 @@
 
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
+
 #include "graphqlservice/internal/SortedMap.h"
+#include "graphqlservice/internal/Version.h"
 
 #include <functional>
 #include <future>

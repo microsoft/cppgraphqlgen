@@ -1691,6 +1691,13 @@ bool Generator::outputHeader() const noexcept
 	headerFile << R"cpp(#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
+// Check if the library version is compatible with schemagen )cpp"
+			   << graphql::internal::FullVersion << R"cpp(
+static_assert(graphql::internal::MajorVersion == )cpp"
+			   << graphql::internal::MajorVersion << R"cpp(, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == )cpp"
+		<< graphql::internal::MinorVersion << R"cpp(, "regenerate with schemagen: minor version mismatch");
+
 )cpp";
 	if (_isIntrospection)
 	{
@@ -2602,7 +2609,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
+						   << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -3673,12 +3681,16 @@ using namespace std::literals;
 
 namespace po = boost::program_options;
 
+void outputVersion(std::ostream& ostm)
+{
+	ostm << graphql::internal::FullVersion << std::endl;
+}
+
 void outputUsage(std::ostream& ostm, const po::options_description& options)
 {
-	std::cerr
-		<< "Usage:\tschemagen [options] <schema file> <output filename prefix> <output namespace>"
-		<< std::endl;
-	std::cerr << options;
+	ostm << "Usage:\tschemagen [options] <schema file> <output filename prefix> <output namespace>"
+		 << std::endl;
+	ostm << options;
 }
 
 int main(int argc, char** argv)
@@ -3688,6 +3700,7 @@ int main(int argc, char** argv)
 	po::options_description internalOptions("Internal options");
 	po::variables_map variables;
 	bool showUsage = false;
+	bool showVersion = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
 	bool noStubs = false;
@@ -3700,8 +3713,10 @@ int main(int argc, char** argv)
 	std::string sourceDir;
 	std::string headerDir;
 
-	options.add_options()("help,?", po::bool_switch(&showUsage), "Print the command line options")(
-		"verbose,v",
+	options.add_options()("version", po::bool_switch(&showVersion), "Print the version number")(
+		"help,?",
+		po::bool_switch(&showUsage),
+		"Print the command line options")("verbose,v",
 		po::bool_switch(&verbose),
 		"Verbose output including generated header names as well as sources")("schema,s",
 		po::value(&schemaFileName),
@@ -3762,7 +3777,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	if (showUsage || (!buildIntrospection && !buildCustom))
+	if (showVersion)
+	{
+		outputVersion(std::cout);
+		return 0;
+	}
+	else if (showUsage || (!buildIntrospection && !buildCustom))
 	{
 		outputUsage(std::cout, options);
 		return 0;

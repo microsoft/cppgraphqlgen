@@ -93,6 +93,7 @@ with `schemagen`, you can look at [samples/CMakeLists.txt](samples/CMakeLists.tx
 ```
 Usage:  schemagen [options] <schema file> <output filename prefix> <output namespace>
 Command line options:
+  --version              Print the version number
   -? [ --help ]          Print the command line options
   -v [ --verbose ]       Verbose output including generated header names as
                          well as sources
