@@ -1,0 +1,43 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#include <winver.h>
+
+#define GRAPHQL_RC_VERSION     3,4,1,0
+#define GRAPHQL_RC_VERSION_STR "3.4.1"
+
+#ifndef DEBUG
+#define VER_DEBUG   0
+#else
+#define VER_DEBUG   VS_FF_DEBUG
+#endif
+
+VS_VERSION_INFO	VERSIONINFO
+FILEVERSION     GRAPHQL_RC_VERSION
+PRODUCTVERSION  GRAPHQL_RC_VERSION
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       VER_DEBUG
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_DLL
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",        "Microsoft Corporation"
+            VALUE "FileDescription",    "Shared library for https://github.com/microsoft/cppgraphqlgen"
+            VALUE "FileVersion",        GRAPHQL_RC_VERSION_STR
+            VALUE "InternalName",       "graphqlservice_nointrospection"
+            VALUE "LegalCopyright",     "Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License."
+            VALUE "OriginalFilename",   "graphqlservice_nointrospection.dll"
+            VALUE "ProductName",        "CppGraphQLGen"
+            VALUE "ProductVersion",     GRAPHQL_RC_VERSION_STR
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
