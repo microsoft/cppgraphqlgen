@@ -47,29 +47,33 @@ target_link_libraries(pegtl_tests PRIVATE
   GTest::GTest
   GTest::Main)
 target_include_directories(pegtl_tests PUBLIC
-  ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 gtest_add_tests(TARGET pegtl_tests)
 
 add_executable(response_tests ResponseTests.cpp)
 target_link_libraries(response_tests PRIVATE
-  graphqlservice
+  graphqlservice_nointrospection
   GTest::GTest
   GTest::Main)
 target_include_directories(response_tests PUBLIC
-  ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET response_tests)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_target(copy_test_dlls ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice_nointrospection> ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlservice> ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqljson> ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlpeg> ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:graphqlresponse> ${CMAKE_CURRENT_BINARY_DIR}
+  add_custom_command(OUTPUT copied_test_dlls
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:graphqlservice_nointrospection>
+      $<TARGET_FILE:graphqlservice>
+      $<TARGET_FILE:graphqljson>
+      $<TARGET_FILE:graphqlpeg>
+      $<TARGET_FILE:graphqlresponse>
+      ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/copied_test_dlls
     DEPENDS graphqlservice graphqljson graphqlpeg graphqlresponse
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+
+  add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
 
   add_dependencies(validation_tests copy_test_dlls)
   add_dependencies(today_tests copy_test_dlls)

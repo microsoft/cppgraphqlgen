@@ -3,8 +3,11 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
-# Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows.
-cmake_policy(SET CMP0091 NEW)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.15")
+  # Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows.
+  set(MSVC_MATCH_VCPKG_TRIPLET ON)
+  cmake_policy(SET CMP0091 NEW)
+endif()
 
 # Default to the last updated version from version.txt.
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.txt" VERSION_FILE)
@@ -42,7 +45,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
 if(VCPKG_TARGET_TRIPLET)
   message(STATUS "Using ${VCPKG_TARGET_TRIPLET} triplet with vcpkg")
 
-  if(MSVC)
+  if(MSVC AND MSVC_MATCH_VCPKG_TRIPLET)
     # Match the MSVC runtime if we're using VCPKG with static libraries.
     if(VCPKG_TARGET_TRIPLET MATCHES [[^.+-static$]])
       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -51,9 +54,6 @@ if(VCPKG_TARGET_TRIPLET)
       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
       message(STATUS "Using MSVC runtime DLL")
     endif()
-
-    add_custom_target(output_msvc_runtime ALL
-      ${CMAKE_COMMAND} -E echo "Using ${CMAKE_MSVC_RUNTIME_LIBRARY} MSVC runtime to match ${VCPKG_TARGET_TRIPLET}")
   endif()
 endif()
 
@@ -83,6 +83,8 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
 else()
   set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
 endif()
+
+option(GRAPHQL_UPDATE_VERSION "Regenerate graphqlservice/internal/Version.h and all of the version info rc files for Windows." ON)
 
 add_subdirectory(cmake)
 add_subdirectory(src)

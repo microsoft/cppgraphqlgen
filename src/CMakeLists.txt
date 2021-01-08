@@ -3,22 +3,46 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
-# internal/Version.h
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.h.in 
-  ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/internal/Version.h
-  @ONLY)
+if(GRAPHQL_UPDATE_VERSION)
+  # internal/Version.h
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.h.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/Version.h
+    @ONLY)
 
-if(WIN32 AND BUILD_SHARED_LIBS)
-  # Version.rc
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different Version.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
+
+  add_custom_target(update_version_h ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h)
+
+  # res/target_version.rc
+  set(CMAKE_RC_FLAGS "/nologo")
+  set(CMAKE_RC_FLAGS_DEBUG "/dDEBUG")
   set(GRAPHQL_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
   set(GRAPHQL_RC_VERSION_STR "${PROJECT_VERSION}")
 
-  function(add_version_rc target)
+  function(update_version_rc target)
+    add_dependencies(${target} update_version_h)
+
     set(GRAPHQL_RC_FILENAME "${target}")
+
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.rc.in 
       ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
       @ONLY)
-    add_library(${target}_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc)
+
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${target}_version.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc)
+
+    add_custom_target(update_${target}_version_rc ALL
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
+  endfunction()
+endif()
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  function(add_version_rc target)
+    add_library(${target}_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
     target_link_libraries(${target} PRIVATE ${target}_version)
   endfunction()
 endif()
@@ -40,6 +64,10 @@ target_include_directories(graphqlpeg PUBLIC
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 add_bigobj_flag(graphqlpeg)
 
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlpeg)
+endif()
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlpeg
     PUBLIC GRAPHQL_DLLEXPORTS
@@ -55,6 +83,10 @@ target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlresponse)
+endif()
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlresponse
     PUBLIC GRAPHQL_DLLEXPORTS
@@ -67,8 +99,6 @@ endif()
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
-  target_include_directories(schemagen PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}/../include)
   target_link_libraries(schemagen PRIVATE
     graphqlpeg
     graphqlresponse)
@@ -128,15 +158,27 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
   target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
-  if(WIN32)
-    # SchemaGen.rc
+  # SchemaGen.rc
+  if(GRAPHQL_UPDATE_VERSION)
+    add_dependencies(schemagen update_version_h)
+
     set(SCHEMAGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
     set(SCHEMAGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/SchemaGen.rc.in 
       ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
       @ONLY)
 
-    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different SchemaGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
+
+    add_custom_target(update_schemagen_rc ALL
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
+  endif()
+
+  if(WIN32)
+    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
     target_link_libraries(schemagen PRIVATE schemagen_version)
   endif()
   
@@ -149,60 +191,38 @@ endif()
 # introspection
 if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_command(
-    OUTPUT
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice/introspection
-    COMMAND schemagen --introspection
-    DEPENDS schemagen
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-    COMMENT "Generating IntrospectionSchema files")
-
-  file(GLOB OLD_INTROSPECTION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/*)
-
-  add_custom_command(
     OUTPUT updated_introspection
-    COMMAND ${CMAKE_COMMAND} -E remove -f ${OLD_INTROSPECTION_FILES}
-    COMMAND ${CMAKE_COMMAND} -E copy ../IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
-    COMMAND ${CMAKE_COMMAND} -E copy ../include/graphqlservice/introspection/IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/
+    COMMAND schemagen --introspection
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection
     COMMAND ${CMAKE_COMMAND} -E touch updated_introspection
-    DEPENDS 
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-    COMMENT "Updating introspection files")
+    DEPENDS schemagen
+    COMMENT "Updating IntrospectionSchema files")
 
   add_custom_target(update_introspection ALL
     DEPENDS updated_introspection)
-else()
-  add_custom_command(
-    OUTPUT
-      ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-      ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-    COMMAND ${CMAKE_COMMAND} -E make_directory include/graphqlservice/introspection
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.cpp .
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../samples/introspection/IntrospectionSchema.h include/graphqlservice/introspection
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-    COMMENT "Copying IntrospectionSchema files")
 endif()
-
-add_custom_target(copy_introspection
-  DEPENDS
-    ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h)
 
 # graphqlservice_nointrospection
 add_library(graphqlservice_nointrospection
   GraphQLService.cpp
   GraphQLSchema.cpp
   Validation.cpp)
-add_dependencies(graphqlservice_nointrospection copy_introspection)
 add_library(cppgraphqlgen::graphqlservice_nointrospection ALIAS graphqlservice_nointrospection)
 target_link_libraries(graphqlservice_nointrospection PUBLIC
     graphqlpeg
     graphqlresponse
     Threads::Threads)
-target_include_directories(graphqlservice_nointrospection PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>)
+
+if(GRAPHQL_UPDATE_SAMPLES)
+  # Even though this target doesn't build IntrospectionSchema.cpp, it still
+  # depends on IntrospectionSchema.h for some enum definitions.
+  add_dependencies(graphqlservice_nointrospection update_introspection)
+endif()
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlservice_nointrospection)
+endif()
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice_nointrospection
@@ -215,9 +235,13 @@ endif()
 # graphqlservice
 add_library(graphqlservice
   Introspection.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/../IntrospectionSchema.cpp)
+  IntrospectionSchema.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC graphqlservice_nointrospection)
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlservice)
+endif()
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
@@ -243,6 +267,10 @@ if(GRAPHQL_USE_RAPIDJSON)
   add_library(cppgraphqlgen::graphqljson ALIAS graphqljson)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+
+  if(GRAPHQL_UPDATE_VERSION)
+    update_version_rc(graphqljson)
+  endif()
 
   if(WIN32 AND BUILD_SHARED_LIBS)
     target_compile_definitions(graphqljson
@@ -293,13 +321,13 @@ install(FILES
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
-    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/internal/Version.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
-    ${CMAKE_CURRENT_BINARY_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
 

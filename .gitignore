@@ -6,7 +6,7 @@ Debug/
 Release/
 Testing/
 Win32/
-/include/graphqlservice/introspection/IntrospectionSchema.h
+/IntrospectionSchema.h
 /IntrospectionSchema.cpp
 *.filters
 *.vcxproj
