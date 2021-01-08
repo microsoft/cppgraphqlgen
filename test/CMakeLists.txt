@@ -75,7 +75,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlservice
       graphqljson
       graphqlpeg
-      graphqlresponse)
+      graphqlresponse
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
 
   add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
