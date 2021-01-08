@@ -180,7 +180,12 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       $<TARGET_FILE:graphqlresponse>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch copied_sample_dlls
-    DEPENDS graphqlservice graphqljson graphqlpeg graphqlresponse)
+    DEPENDS
+      graphqlservice_nointrospection
+      graphqlservice
+      graphqljson
+      graphqlpeg
+      graphqlresponse)
 
   add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
 

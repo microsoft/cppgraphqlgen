@@ -70,7 +70,12 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       $<TARGET_FILE:graphqlresponse>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/copied_test_dlls
-    DEPENDS graphqlservice graphqljson graphqlpeg graphqlresponse
+    DEPENDS
+      graphqlservice_nointrospection
+      graphqlservice
+      graphqljson
+      graphqlpeg
+      graphqlresponse)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
 
   add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
