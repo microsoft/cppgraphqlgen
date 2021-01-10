@@ -10,7 +10,9 @@ The following import targets are created
 ::
 
   cppgraphqlgen::graphqlpeg
+  cppgraphqlgen::graphqlresponse
   cppgraphqlgen::graphqlservice
+  cppgraphqlgen::graphqlintrospection
   cppgraphqlgen::graphqljson
   cppgraphqlgen::schemagen
 #]=======================================================================]
