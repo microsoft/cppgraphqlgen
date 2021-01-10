@@ -17,8 +17,6 @@ if(GRAPHQL_UPDATE_VERSION)
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h)
 
   # res/target_version.rc
-  set(CMAKE_RC_FLAGS "/nologo")
-  set(CMAKE_RC_FLAGS_DEBUG "/dDEBUG")
   set(GRAPHQL_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
   set(GRAPHQL_RC_VERSION_STR "${PROJECT_VERSION}")
 
@@ -40,11 +38,17 @@ if(GRAPHQL_UPDATE_VERSION)
   endfunction()
 endif()
 
-if(WIN32 AND BUILD_SHARED_LIBS)
-  function(add_version_rc target)
-    add_library(${target}_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
-    target_link_libraries(${target} PRIVATE ${target}_version)
-  endfunction()
+if(WIN32)
+  # Always build the version.rc files with these flags, even if we aren't regnerating them.
+  set(CMAKE_RC_FLAGS "/nologo")
+  set(CMAKE_RC_FLAGS_DEBUG "/dDEBUG")
+
+  if(BUILD_SHARED_LIBS)
+    function(add_version_rc target)
+      add_library(${target}_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
+      target_link_libraries(${target} PRIVATE ${target}_version)
+    endfunction()
+  endif()
 endif()
 
 function(add_bigobj_flag target)
