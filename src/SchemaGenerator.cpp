@@ -2910,7 +2910,7 @@ void Generator::outputObjectImplementation(
 	}, {
 )cpp";
 
-	std::map<std::string_view, std::string> resolvers;
+	std::map<std::string_view, std::string, internal::shorter_or_less> resolvers;
 
 	std::transform(objectType.fields.cbegin(),
 		objectType.fields.cend(),

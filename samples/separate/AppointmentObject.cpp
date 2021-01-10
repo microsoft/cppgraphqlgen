@@ -24,12 +24,12 @@ Appointment::Appointment()
 		"UnionType",
 		"Appointment"
 	}, {
-		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ R"gql(forceError)gql"sv, [this](service::ResolverParams&& params) { return resolveForceError(std::move(params)); } },
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
+		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
 		{ R"gql(isNow)gql"sv, [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
 		{ R"gql(subject)gql"sv, [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
-		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } }
+		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
+		{ R"gql(forceError)gql"sv, [this](service::ResolverParams&& params) { return resolveForceError(std::move(params)); } }
 	})
 {
 }

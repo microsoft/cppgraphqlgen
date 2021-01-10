@@ -24,7 +24,7 @@ struct ValidateArgument
 	ValidateType type;
 };
 
-using ValidateTypeFieldArguments = internal::sorted_map<std::string_view, ValidateArgument>;
+using ValidateTypeFieldArguments = internal::string_view_map<ValidateArgument>;
 
 struct ValidateTypeField
 {
@@ -32,7 +32,7 @@ struct ValidateTypeField
 	ValidateTypeFieldArguments arguments;
 };
 
-using ValidateDirectiveArguments = internal::sorted_map<std::string_view, ValidateArgument>;
+using ValidateDirectiveArguments = internal::string_view_map<ValidateArgument>;
 
 struct ValidateDirective
 {
@@ -75,7 +75,7 @@ struct ValidateArgumentMap
 {
 	bool operator==(const ValidateArgumentMap& other) const;
 
-	internal::sorted_map<std::string_view, ValidateArgumentValuePtr> values;
+	internal::string_view_map<ValidateArgumentValuePtr> values;
 };
 
 using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
@@ -122,7 +122,7 @@ private:
 	std::list<schema_error>& _errors;
 };
 
-using ValidateFieldArguments = internal::sorted_map<std::string_view, ValidateArgumentValuePtr>;
+using ValidateFieldArguments = internal::string_view_map<ValidateArgumentValuePtr>;
 
 struct ValidateField
 {
@@ -137,7 +137,7 @@ struct ValidateField
 	ValidateFieldArguments arguments;
 };
 
-using ValidateTypes = internal::sorted_map<std::string_view, ValidateType>;
+using ValidateTypes = internal::string_view_map<ValidateType>;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
@@ -179,11 +179,11 @@ private:
 	static ValidateTypeFieldArguments getArguments(
 		const std::vector<std::shared_ptr<const schema::InputValue>>& args);
 
-	using FieldTypes = internal::sorted_map<std::string_view, ValidateTypeField>;
-	using TypeFields = internal::sorted_map<std::string_view, FieldTypes>;
+	using FieldTypes = internal::string_view_map<ValidateTypeField>;
+	using TypeFields = internal::string_view_map<FieldTypes>;
 	using InputFieldTypes = ValidateTypeFieldArguments;
-	using InputTypeFields = internal::sorted_map<std::string_view, InputFieldTypes>;
-	using EnumValues = internal::sorted_map<std::string_view, internal::sorted_set<std::string_view>>;
+	using InputTypeFields = internal::string_view_map<InputFieldTypes>;
+	using EnumValues = internal::string_view_map<internal::string_view_set>;
 
 	constexpr bool isScalarType(introspection::TypeKind kind);
 
@@ -218,15 +218,16 @@ private:
 	const std::shared_ptr<schema::Schema> _schema;
 	std::list<schema_error> _errors;
 
-	using Directives = internal::sorted_map<std::string_view, ValidateDirective>;
-	using ExecutableNodes = internal::sorted_map<std::string_view, std::reference_wrapper<const peg::ast_node>>;
-	using FragmentSet = internal::sorted_set<std::string_view>;
-	using MatchingTypes = internal::sorted_map<std::string_view, internal::sorted_set<std::string_view>>;
-	using ScalarTypes = internal::sorted_set<std::string_view>;
-	using VariableDefinitions = internal::sorted_map<std::string_view, std::reference_wrapper<const peg::ast_node>>;
-	using VariableTypes = internal::sorted_map<std::string_view, ValidateArgument>;
+	using Directives = internal::string_view_map<ValidateDirective>;
+	using AstNodeRef = std::reference_wrapper<const peg::ast_node>;
+	using ExecutableNodes = internal::string_view_map<AstNodeRef>;
+	using FragmentSet = internal::string_view_set;
+	using MatchingTypes = internal::string_view_map<internal::string_view_set>;
+	using ScalarTypes = internal::string_view_set;
+	using VariableDefinitions = internal::string_view_map<AstNodeRef>;
+	using VariableTypes = internal::string_view_map<ValidateArgument>;
 	using OperationVariables = std::optional<VariableTypes>;
-	using VariableSet = internal::sorted_set<std::string_view>;
+	using VariableSet = internal::string_view_set;
 
 	// These members store Introspection schema information which does not change between queries.
 	ValidateTypes _operationTypes;
@@ -252,7 +253,7 @@ private:
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
 	ValidateType _scopedType;
-	internal::sorted_map<std::string_view, ValidateField> _selectionFields;
+	internal::string_view_map<ValidateField> _selectionFields;
 };
 
 } /* namespace graphql::service */
