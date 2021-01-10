@@ -28,9 +28,9 @@ BEGIN
             VALUE "CompanyName",        "Microsoft Corporation"
             VALUE "FileDescription",    "Shared library for https://github.com/microsoft/cppgraphqlgen"
             VALUE "FileVersion",        GRAPHQL_RC_VERSION_STR
-            VALUE "InternalName",       "graphqlservice_nointrospection"
+            VALUE "InternalName",       "graphqlintrospection"
             VALUE "LegalCopyright",     "Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License."
-            VALUE "OriginalFilename",   "graphqlservice_nointrospection.dll"
+            VALUE "OriginalFilename",   "graphqlintrospection.dll"
             VALUE "ProductName",        "CppGraphQLGen"
             VALUE "ProductVersion",     GRAPHQL_RC_VERSION_STR
         END

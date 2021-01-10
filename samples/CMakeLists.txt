@@ -110,7 +110,7 @@ foreach(CPP_FILE IN LISTS SEPARATE_SCHEMA_FILES)
 endforeach(CPP_FILE)
 
 add_library(separateschema STATIC ${SEPARATE_SCHEMA_PATHS})
-target_link_libraries(separateschema PUBLIC graphqlservice)
+target_link_libraries(separateschema PUBLIC graphqlintrospection)
 target_compile_definitions(separateschema PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -130,7 +130,7 @@ foreach(CPP_FILE IN LISTS SEPARATE_NOINTROSPECTION_SCHEMA_FILES)
 endforeach(CPP_FILE)
 
 add_library(separateschema_nointrospection STATIC ${SEPARATE_NOINTROSPECTION_SCHEMA_PATHS})
-target_link_libraries(separateschema_nointrospection PUBLIC graphqlservice_nointrospection)
+target_link_libraries(separateschema_nointrospection PUBLIC graphqlservice)
 target_compile_definitions(separateschema_nointrospection PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema_nointrospection PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -173,16 +173,16 @@ target_include_directories(sample_nointrospection PRIVATE
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_sample_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:graphqlservice_nointrospection>
       $<TARGET_FILE:graphqlservice>
+      $<TARGET_FILE:graphqlintrospection>
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch copied_sample_dlls
     DEPENDS
-      graphqlservice_nointrospection
       graphqlservice
+      graphqlintrospection
       graphqljson
       graphqlpeg
       graphqlresponse)
@@ -219,7 +219,7 @@ endif()
 if(GRAPHQL_BUILD_TESTS)
   # tests
   add_library(unifiedschema STATIC unified/TodaySchema.cpp)
-  target_link_libraries(unifiedschema PUBLIC graphqlservice)
+  target_link_libraries(unifiedschema PUBLIC graphqlintrospection)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
@@ -236,7 +236,7 @@ if(GRAPHQL_BUILD_TESTS)
   add_bigobj_flag(unifiedgraphql)
 
   add_library(unifiedschema_nointrospection STATIC unified_nointrospection/TodaySchema.cpp)
-  target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice_nointrospection)
+  target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice)
   target_include_directories(unifiedschema_nointrospection PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
@@ -255,7 +255,7 @@ if(GRAPHQL_BUILD_TESTS)
   add_library(validationgraphql STATIC
     validation/ValidationMock.cpp
     validation/ValidationSchema.cpp)
-  target_link_libraries(validationgraphql PUBLIC graphqlservice)
+  target_link_libraries(validationgraphql PUBLIC graphqlintrospection)
   target_include_directories(validationgraphql PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include

@@ -207,13 +207,13 @@ if(GRAPHQL_UPDATE_SAMPLES)
     DEPENDS updated_introspection)
 endif()
 
-# graphqlservice_nointrospection
-add_library(graphqlservice_nointrospection
+# graphqlservice
+add_library(graphqlservice
   GraphQLService.cpp
   GraphQLSchema.cpp
   Validation.cpp)
-add_library(cppgraphqlgen::graphqlservice_nointrospection ALIAS graphqlservice_nointrospection)
-target_link_libraries(graphqlservice_nointrospection PUBLIC
+add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
+target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     graphqlresponse
     Threads::Threads)
@@ -221,27 +221,8 @@ target_link_libraries(graphqlservice_nointrospection PUBLIC
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still
   # depends on IntrospectionSchema.h for some enum definitions.
-  add_dependencies(graphqlservice_nointrospection update_introspection)
+  add_dependencies(graphqlservice update_introspection)
 endif()
-
-if(GRAPHQL_UPDATE_VERSION)
-  update_version_rc(graphqlservice_nointrospection)
-endif()
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  target_compile_definitions(graphqlservice_nointrospection
-    PUBLIC GRAPHQL_DLLEXPORTS
-    PRIVATE IMPL_GRAPHQLSERVICE_DLL)
-
-  add_version_rc(graphqlservice_nointrospection)
-endif()
-
-# graphqlservice
-add_library(graphqlservice
-  Introspection.cpp
-  IntrospectionSchema.cpp)
-add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
-target_link_libraries(graphqlservice PUBLIC graphqlservice_nointrospection)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlservice)
@@ -250,9 +231,28 @@ endif()
 if(WIN32 AND BUILD_SHARED_LIBS)
   target_compile_definitions(graphqlservice
     PUBLIC GRAPHQL_DLLEXPORTS
-    PRIVATE IMPL_GRAPHQLINTROSPECTION_DLL)
+    PRIVATE IMPL_GRAPHQLSERVICE_DLL)
 
   add_version_rc(graphqlservice)
+endif()
+
+# graphqlintrospection
+add_library(graphqlintrospection
+  Introspection.cpp
+  IntrospectionSchema.cpp)
+add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
+target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlintrospection)
+endif()
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlintrospection
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLINTROSPECTION_DLL)
+
+  add_version_rc(graphqlintrospection)
 endif()
 
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
@@ -289,7 +289,7 @@ endif()
 if(BUILD_GRAPHQLJSON)
   option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
 
-  target_link_libraries(graphqljson PUBLIC graphqlservice)
+  target_link_libraries(graphqljson PUBLIC graphqlintrospection)
 
   install(TARGETS graphqljson
     EXPORT cppgraphqlgen-targets
@@ -298,7 +298,7 @@ if(BUILD_GRAPHQLJSON)
     LIBRARY DESTINATION lib)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/JSONResponse.h
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
+    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlintrospection)
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
 endif()
@@ -306,8 +306,8 @@ endif()
 install(TARGETS
     graphqlpeg
     graphqlresponse
-    graphqlservice_nointrospection
     graphqlservice
+    graphqlintrospection
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
@@ -321,7 +321,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlintrospection)
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
@@ -333,7 +333,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlintrospection/introspection)
 
 install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::
