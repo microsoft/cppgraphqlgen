@@ -1700,7 +1700,8 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLService.h"
 
 // Check if the library version is compatible with schemagen )cpp"
-			   << graphql::internal::FullVersion << R"cpp(
+			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion
+			   << R"cpp(.0
 static_assert(graphql::internal::MajorVersion == )cpp"
 			   << graphql::internal::MajorVersion
 			   << R"cpp(, "regenerate with schemagen: major version mismatch");
