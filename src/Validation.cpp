@@ -421,7 +421,7 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schem
 		else if (kind == introspection::TypeKind::ENUM)
 		{
 			const auto& enumValues = entry.second->enumValues();
-			internal::sorted_set<std::string_view> values;
+			internal::string_view_set values;
 
 			values.reserve(enumValues.size());
 
@@ -1034,7 +1034,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 
 			const auto& values = std::get<ValidateArgumentMap>(argument.value->data).values;
-			internal::sorted_set<std::string_view> subFields;
+			internal::string_view_set subFields;
 
 			// Check every value against the target type.
 			for (const auto& entry : values)
@@ -1398,7 +1398,7 @@ ValidateExecutableVisitor::TypeFields::const_iterator ValidateExecutableVisitor:
 	if (itrType == _typeFields.end() && !isScalarType(typeKind))
 	{
 		const auto& fields = _scopedType->get().fields();
-		internal::sorted_map<std::string_view, ValidateTypeField> validateFields;
+		internal::string_view_map<ValidateTypeField> validateFields;
 
 		for (auto& entry : fields)
 		{
@@ -1615,7 +1615,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	ValidateFieldArguments validateArguments;
-	internal::sorted_map<std::string_view, schema_location> argumentLocations;
+	internal::string_view_map<schema_location> argumentLocations;
 	std::list<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
@@ -1924,7 +1924,7 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 void ValidateExecutableVisitor::visitDirectives(
 	introspection::DirectiveLocation location, const peg::ast_node& directives)
 {
-	internal::sorted_set<std::string_view> uniqueDirectives;
+	internal::string_view_set uniqueDirectives;
 
 	for (const auto& directive : directives.children)
 	{
@@ -2010,7 +2010,7 @@ void ValidateExecutableVisitor::visitDirectives(
 		peg::on_first_child<peg::arguments>(*directive,
 			[this, &directive, &directiveName, itrDirective](const peg::ast_node& child) {
 				ValidateFieldArguments validateArguments;
-				internal::sorted_map<std::string_view, schema_location> argumentLocations;
+				internal::string_view_map<schema_location> argumentLocations;
 				std::list<std::string_view> argumentNames;
 
 				for (auto& argument : child.children)

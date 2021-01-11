@@ -53,7 +53,7 @@ gtest_add_tests(TARGET pegtl_tests)
 
 add_executable(response_tests ResponseTests.cpp)
 target_link_libraries(response_tests PRIVATE
-  graphqlservice_nointrospection
+  graphqlservice
   GTest::GTest
   GTest::Main)
 target_include_directories(response_tests PUBLIC
@@ -63,16 +63,16 @@ gtest_add_tests(TARGET response_tests)
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_test_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:graphqlservice_nointrospection>
       $<TARGET_FILE:graphqlservice>
+      $<TARGET_FILE:graphqlintrospection>
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/copied_test_dlls
     DEPENDS
-      graphqlservice_nointrospection
       graphqlservice
+      graphqlintrospection
       graphqljson
       graphqlpeg
       graphqlresponse

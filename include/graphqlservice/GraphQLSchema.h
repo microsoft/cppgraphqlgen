@@ -67,7 +67,7 @@ private:
 	std::shared_ptr<const ObjectType> _query;
 	std::shared_ptr<const ObjectType> _mutation;
 	std::shared_ptr<const ObjectType> _subscription;
-	internal::sorted_map<std::string_view, size_t> _typeMap;
+	internal::string_view_map<size_t> _typeMap;
 	std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>> _types;
 	std::vector<std::shared_ptr<const Directive>> _directives;
 	internal::sorted_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>

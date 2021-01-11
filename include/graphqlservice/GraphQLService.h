@@ -243,7 +243,7 @@ private:
 
 // Resolvers for complex types need to be able to find fragment definitions anywhere in
 // the request document by name.
-using FragmentMap = internal::sorted_map<std::string_view, Fragment>;
+using FragmentMap = internal::string_view_map<Fragment>;
 
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
@@ -279,7 +279,7 @@ struct ResolverResult
 };
 
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
-using ResolverMap = internal::sorted_map<std::string_view, Resolver>;
+using ResolverMap = internal::string_view_map<Resolver>;
 
 // Binary data and opaque strings like IDs are encoded in Base64.
 class Base64
@@ -498,7 +498,7 @@ GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
-using TypeNames = internal::sorted_set<std::string_view>;
+using TypeNames = internal::string_view_set;
 
 // Object parses argument values, performs variable lookups, expands fragments, evaluates @include
 // and @skip directives, and calls through to the resolver functor for each selected field with
@@ -851,7 +851,7 @@ GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<Object>::conver
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = internal::sorted_map<std::string_view, std::shared_ptr<Object>>;
+using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
 
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
@@ -1002,7 +1002,7 @@ private:
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
-	internal::sorted_map<std::string_view, internal::sorted_set<SubscriptionKey>> _listeners;
+	internal::string_view_map<internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
 

@@ -7,6 +7,7 @@
 #define SORTEDMAP_H
 
 #include <algorithm>
+#include <functional>
 #include <initializer_list>
 #include <stdexcept>
 #include <tuple>
@@ -14,7 +15,7 @@
 
 namespace graphql::internal {
 
-template <class K, class V>
+template <class K, class V, class Compare = std::less<K>>
 class sorted_map
 {
 public:
@@ -29,7 +30,7 @@ public:
 		: _data { init }
 	{
 		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
-			return lhs.first < rhs.first;
+			return Compare {}(lhs.first, rhs.first);
 		});
 	}
 
@@ -89,7 +90,7 @@ public:
 			end(),
 			key,
 			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
+				return Compare {}(lhs.key, rhs.key);
 			});
 
 		return itr == itrEnd ? _data.end() : itr;
@@ -111,7 +112,7 @@ public:
 			_data.end(),
 			key,
 			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
+				return Compare {}(lhs.key, rhs.key);
 			});
 
 		if (itr != itrEnd)
@@ -119,9 +120,7 @@ public:
 			return { itr, false };
 		}
 
-		return { _data.emplace(itrEnd,
-					 std::move(key),
-					 V { std::forward<ValueArgs>(args)... }),
+		return { _data.emplace(itrEnd, std::move(key), V { std::forward<ValueArgs>(args)... }),
 			true };
 	}
 
@@ -131,7 +130,7 @@ public:
 			_data.end(),
 			key,
 			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
+				return Compare {}(lhs.key, rhs.key);
 			});
 
 		if (itr == itrEnd)
@@ -163,7 +162,7 @@ public:
 			_data.end(),
 			key,
 			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
+				return Compare {}(lhs.key, rhs.key);
 			});
 
 		if (itr != itrEnd)
@@ -182,7 +181,7 @@ public:
 			_data.end(),
 			key,
 			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return lhs.key < rhs.key;
+				return Compare {}(lhs.key, rhs.key);
 			});
 
 		if (itr == itrEnd)
@@ -212,7 +211,7 @@ private:
 	vector_type _data;
 };
 
-template <class K>
+template <class K, class Compare = std::less<K>>
 class sorted_set
 {
 public:
@@ -225,8 +224,8 @@ public:
 	sorted_set(std::initializer_list<K> init)
 		: _data { init }
 	{
-		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
-			return lhs < rhs;
+		std::sort(_data.begin(), _data.end(), [](const K& lhs, const K& rhs) noexcept {
+			return Compare {}(lhs, rhs);
 		});
 	}
 
@@ -283,8 +282,8 @@ public:
 	const_iterator find(const K& key) const noexcept
 	{
 		const auto [itr, itrEnd] =
-			std::equal_range(begin(), end(), key, [](const auto& lhs, const auto& rhs) noexcept {
-				return lhs < rhs;
+			std::equal_range(begin(), end(), key, [](const K& lhs, const K& rhs) noexcept {
+				return Compare {}(lhs, rhs);
 			});
 
 		return itr == itrEnd ? _data.end() : itr;
@@ -305,7 +304,7 @@ public:
 			_data.end(),
 			key,
 			[](const auto& lhs, const auto& rhs) noexcept {
-				return lhs < rhs;
+				return Compare {}(lhs, rhs);
 			});
 
 		if (itr != itrEnd)
@@ -321,8 +320,8 @@ public:
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
 			_data.end(),
 			key,
-			[](const auto& lhs, const auto& rhs) noexcept {
-				return lhs < rhs;
+			[](const K& lhs, const K& rhs) noexcept {
+				return Compare {}(lhs, rhs);
 			});
 
 		if (itr == itrEnd)
@@ -349,6 +348,18 @@ public:
 private:
 	vector_type _data;
 };
+
+struct shorter_or_less
+{
+	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const
+	{
+		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
+	}
+};
+
+template <class V>
+using string_view_map = sorted_map<std::string_view, V, shorter_or_less>;
+using string_view_set = sorted_set<std::string_view, shorter_or_less>;
 
 } // namespace graphql::internal
 

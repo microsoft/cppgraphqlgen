@@ -920,7 +920,7 @@ private:
 	const ResolverMap& _resolvers;
 
 	std::list<FragmentDirectives> _fragmentDirectives;
-	internal::sorted_set<std::string_view> _names;
+	internal::string_view_set _names;
 	std::vector<std::pair<std::string_view, std::future<ResolverResult>>> _values;
 };
 
