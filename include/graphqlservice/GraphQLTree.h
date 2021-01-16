@@ -13,19 +13,6 @@
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 
-// Temporarily workaround the tao::demangle namespace in 3.1.0. This was fixed in PEGTL commit
-// https://github.com/taocpp/PEGTL/commit/0cc3128e07734fb72e23e2eeee70b9f1fc13ca5f, which put this
-// in the correct namespace defined by TAO_PEGTL_NAMESPACE (tao::graphqlpeg) and should be included
-// in 3.1.1 or later. Once that version of PEGTL is released, this can be removed.
-#include <tao/pegtl/version.hpp>
-
-#if (TAO_PEGTL_VERSION_MAJOR == 3) && (TAO_PEGTL_VERSION_MINOR == 1)                               \
-	&& (TAO_PEGTL_VERSION_PATCH < 1)
-namespace tao::graphqlpeg {
-using ::tao::demangle;
-}
-#endif
-
 #include <string>
 #include <string_view>
 #include <variant>
