@@ -11,7 +11,7 @@ Schema::Schema(const std::shared_ptr<schema::Schema>& schema)
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(
-	service::FieldParams&& params) const
+	service::FieldParams&&) const
 {
 	const auto& types = _schema->types();
 	std::vector<std::shared_ptr<object::Type>> result(types.size());
