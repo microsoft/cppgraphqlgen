@@ -9,6 +9,7 @@
 #include "graphqlservice/GraphQLService.h"
 
 #include <initializer_list>
+#include <shared_mutex>
 
 namespace graphql {
 namespace introspection {
@@ -70,8 +71,10 @@ private:
 	internal::string_view_map<size_t> _typeMap;
 	std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>> _types;
 	std::vector<std::shared_ptr<const Directive>> _directives;
+	std::shared_mutex _nonNullWrappersMutex;
 	internal::sorted_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
 		_nonNullWrappers;
+	std::shared_mutex _listWrappersMutex;
 	internal::sorted_map<std::shared_ptr<const BaseType>, std::shared_ptr<const BaseType>>
 		_listWrappers;
 };
