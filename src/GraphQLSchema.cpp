@@ -64,10 +64,18 @@ std::shared_ptr<const BaseType> Schema::WrapType(
 	introspection::TypeKind kind, std::shared_ptr<const BaseType> ofType)
 {
 	auto& wrappers = (kind == introspection::TypeKind::LIST) ? _listWrappers : _nonNullWrappers;
+	auto& mutex =
+		(kind == introspection::TypeKind::LIST) ? _listWrappersMutex : _nonNullWrappersMutex;
+	std::shared_lock shared_lock { mutex };
+	std::unique_lock unique_lock { mutex, std::defer_lock };
 	auto itr = wrappers.find(ofType);
 
 	if (itr == wrappers.end())
 	{
+		// Trade the shared_lock for a unique_lock.
+		shared_lock.unlock();
+		unique_lock.lock();
+
 		std::tie(itr, std::ignore) = wrappers.emplace(ofType, WrapperType::Make(kind, ofType));
 	}
 
