@@ -82,6 +82,8 @@ private:
 class BaseType : public std::enable_shared_from_this<BaseType>
 {
 public:
+	GRAPHQLSERVICE_EXPORT virtual ~BaseType() = default;
+
 	// Accessors
 	GRAPHQLSERVICE_EXPORT introspection::TypeKind kind() const noexcept;
 	GRAPHQLSERVICE_EXPORT virtual std::string_view name() const noexcept;
