@@ -1002,7 +1002,7 @@ private:
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
-	internal::string_view_map<internal::sorted_set<SubscriptionKey>> _listeners;
+	internal::sorted_map<SubscriptionName, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };
 
