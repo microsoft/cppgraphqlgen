@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef SCHEMAGENERATOR_H
-#define SCHEMAGENERATOR_H
+#ifndef CLIENTGENERATOR_H
+#define CLIENTGENERATOR_H
 
 #include "graphqlservice/GraphQLGrammar.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace graphql::schema {
+namespace graphql::client {
 
 // These are the set of built-in types in GraphQL.
 enum class BuiltinType
@@ -210,7 +210,7 @@ struct ObjectType
 
 using ObjectTypeList = std::vector<ObjectType>;
 
-// The schema maps operation types to named types.
+// The client maps operation types to named types.
 struct OperationType
 {
 	std::string_view type;
@@ -220,11 +220,11 @@ struct OperationType
 
 using OperationTypeList = std::vector<OperationType>;
 
-struct GeneratorSchema
+struct GeneratorClient
 {
-	const std::string schemaFilename;
+	const std::string clientFilename;
 	const std::string filenamePrefix;
-	const std::string schemaNamespace;
+	const std::string clientNamespace;
 };
 
 struct GeneratorPaths
@@ -235,7 +235,7 @@ struct GeneratorPaths
 
 struct GeneratorOptions
 {
-	const std::optional<GeneratorSchema> customSchema;
+	const std::optional<GeneratorClient> customClient;
 	const std::optional<GeneratorPaths> paths;
 	const bool verbose = false;
 	const bool separateFiles = false;
@@ -243,55 +243,10 @@ struct GeneratorOptions
 	const bool noIntrospection = false;
 };
 
-// RAII object to help with emitting matching include guard begin and end statements
-class IncludeGuardScope
-{
-public:
-	explicit IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept;
-	~IncludeGuardScope() noexcept;
-
-private:
-	std::ostream& _outputFile;
-	std::string _includeGuardName;
-};
-
-// RAII object to help with emitting matching namespace begin and end statements
-class NamespaceScope
-{
-public:
-	explicit NamespaceScope(
-		std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
-	NamespaceScope(NamespaceScope&& other) noexcept;
-	~NamespaceScope() noexcept;
-
-	bool enter() noexcept;
-	bool exit() noexcept;
-
-private:
-	bool _inside = false;
-	std::ostream& _outputFile;
-	std::string_view _cppNamespace;
-};
-
-// Keep track of whether we want to add a blank separator line once some additional content is about
-// to be output.
-class PendingBlankLine
-{
-public:
-	explicit PendingBlankLine(std::ostream& outputFile) noexcept;
-
-	void add() noexcept;
-	bool reset() noexcept;
-
-private:
-	bool _pending = true;
-	std::ostream& _outputFile;
-};
-
 class Generator
 {
 public:
-	// Initialize the generator with the introspection schema or a custom GraphQL schema.
+	// Initialize the generator with the introspection client or a custom GraphQL client.
 	explicit Generator(GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
@@ -306,8 +261,8 @@ private:
 
 	void visitDefinition(const peg::ast_node& definition);
 
-	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
-	void visitSchemaExtension(const peg::ast_node& schemaExtension);
+	void visitClientDefinition(const peg::ast_node& clientDefinition);
+	void visitClientExtension(const peg::ast_node& clientExtension);
 	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
 	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
 	void visitEnumTypeExtension(const peg::ast_node& enumTypeExtension);
@@ -366,7 +321,7 @@ private:
 		response::Value _value;
 	};
 
-	void validateSchema();
+	void validateClient();
 	void fixupOutputFieldList(OutputFieldList& fields,
 		const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 		const std::optional<std::string_view>& accessor);
@@ -407,7 +362,7 @@ private:
 
 	const GeneratorOptions _options;
 	const bool _isIntrospection;
-	std::string_view _schemaNamespace;
+	std::string_view _clientNamespace;
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
@@ -415,7 +370,7 @@ private:
 	const std::string _sourcePath;
 	peg::ast _ast;
 
-	SchemaTypeMap _schemaTypes;
+	SchemaTypeMap _clientTypes;
 	PositionMap _typePositions;
 	TypeNameMap _scalarNames;
 	ScalarTypeList _scalarTypes;
@@ -434,6 +389,6 @@ private:
 	OperationTypeList _operationTypes;
 };
 
-} /* namespace graphql::schema */
+} /* namespace graphql::client */
 
-#endif // SCHEMAGENERATOR_H
+#endif // CLIENTGENERATOR_H

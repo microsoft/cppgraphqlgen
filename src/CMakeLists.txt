@@ -99,13 +99,20 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlresponse)
 endif()
 
+
+# Common schemagen and clientgen dependencies
+if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
+  add_library(generator_util STATIC GeneratorUtil.cpp)
+  target_link_libraries(generator_util PUBLIC
+    graphqlpeg
+    graphqlresponse)
+endif()
+
 # schemagen
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
-  target_link_libraries(schemagen PRIVATE
-    graphqlpeg
-    graphqlresponse)
+  target_link_libraries(schemagen PRIVATE generator_util)
   add_bigobj_flag(schemagen)
 
   # SchemaGen.rc
@@ -142,9 +149,7 @@ endif()
 if(GRAPHQL_BUILD_CLIENTGEN)
   add_executable(clientgen ClientGenerator.cpp)
   add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
-  target_link_libraries(clientgen PRIVATE
-    graphqlpeg
-    graphqlresponse)
+  target_link_libraries(clientgen PRIVATE generator_util)
   add_bigobj_flag(clientgen)
 
   # ClientGen.rc
