@@ -107,60 +107,6 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
     graphqlpeg
     graphqlresponse)
   add_bigobj_flag(schemagen)
-  
-  set(BOOST_COMPONENTS program_options)
-  set(BOOST_LIBRARIES Boost::program_options)
-
-  # Try compiling a test program with std::filesystem or one of its alternatives.
-  function(check_filesystem_impl FILESYSTEM_HEADER FILESYSTEM_NAMESPACE OPTIONAL_LIBS OUT_RESULT)
-    set(TEST_FILE "test_${OUT_RESULT}.cpp")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp.in ${TEST_FILE} @ONLY)
-
-    try_compile(TEST_RESULT
-      ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-      CXX_STANDARD 17)
-
-    if(NOT TEST_RESULT)
-      # Retry with each of the optional libraries.
-      foreach(OPTIONAL_LIB IN LISTS OPTIONAL_LIBS)
-        try_compile(TEST_RESULT
-          ${CMAKE_CURRENT_BINARY_DIR}
-          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-          LINK_LIBRARIES ${OPTIONAL_LIB}
-          CXX_STANDARD 17)
-
-        if(TEST_RESULT)
-          # Looks like the optional library was required, go ahead and add it to the link options.
-          target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
-          break()
-        endif()
-      endforeach(OPTIONAL_LIB)
-    endif()
-
-    set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
-  endfunction(check_filesystem_impl)
-
-  # Try compiling a minimal program with each header/namespace, in order of preference:
-  #   C++17: #include <filesystem> // std::filesystem
-  #   Experimental C++17: #include <experimental/filesystem> // std::experimental::filesystem
-  #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
-  check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
-  if(STD_FILESYTEM)
-    target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
-  else()
-    check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
-    if(STD_EXPERIMENTAL_FILESYTEM)
-      target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
-    else()
-      set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-      set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-      target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
-    endif()
-  endif()
-
-  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-  target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
 
   # SchemaGen.rc
   if(GRAPHQL_UPDATE_VERSION)
@@ -190,6 +136,127 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
     EXPORT cppgraphqlgen-targets
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
     RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
+endif()
+
+# clientgen
+if(GRAPHQL_BUILD_CLIENTGEN)
+  add_executable(clientgen ClientGenerator.cpp)
+  add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
+  target_link_libraries(clientgen PRIVATE
+    graphqlpeg
+    graphqlresponse)
+  add_bigobj_flag(clientgen)
+
+  # ClientGen.rc
+  if(GRAPHQL_UPDATE_VERSION)
+    add_dependencies(clientgen update_version_h)
+  
+    set(CLIENTGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+    set(CLIENTGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+  
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ClientGen.rc.in 
+      ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc
+      @ONLY)
+  
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ClientGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc)
+  
+    add_custom_target(update_clientgen_rc ALL
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
+  endif()
+
+  if(WIN32)
+    add_library(clientgen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
+    target_link_libraries(clientgen PRIVATE clientgen_version)
+  endif()
+  
+  install(TARGETS clientgen
+    EXPORT cppgraphqlgen-targets
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
+endif()
+
+# Common schemagen and clientgen filesystem and Boost dependencies
+if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
+  set(BOOST_COMPONENTS program_options)
+  set(BOOST_LIBRARIES Boost::program_options)
+
+  # Try compiling a test program with std::filesystem or one of its alternatives.
+  function(check_filesystem_impl FILESYSTEM_HEADER FILESYSTEM_NAMESPACE OPTIONAL_LIBS OUT_RESULT)
+    set(TEST_FILE "test_${OUT_RESULT}.cpp")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp.in ${TEST_FILE} @ONLY)
+
+    try_compile(TEST_RESULT
+      ${CMAKE_CURRENT_BINARY_DIR}
+      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+      CXX_STANDARD 17)
+
+    if(NOT TEST_RESULT)
+      # Retry with each of the optional libraries.
+      foreach(OPTIONAL_LIB IN LISTS OPTIONAL_LIBS)
+        try_compile(TEST_RESULT
+          ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+          LINK_LIBRARIES ${OPTIONAL_LIB}
+          CXX_STANDARD 17)
+
+        if(TEST_RESULT)
+          # Looks like the optional library was required, go ahead and add it to the link options.
+          if(GRAPHQL_BUILD_SCHEMAGEN)
+            target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
+          endif()
+          if(GRAPHQL_BUILD_CLIENTGEN)
+            target_link_libraries(clientgen PRIVATE ${OPTIONAL_LIB})
+          endif()
+          break()
+        endif()
+      endforeach(OPTIONAL_LIB)
+    endif()
+
+    set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
+  endfunction(check_filesystem_impl)
+
+  # Try compiling a minimal program with each header/namespace, in order of preference:
+  #   C++17: #include <filesystem> // std::filesystem
+  #   Experimental C++17: #include <experimental/filesystem> // std::experimental::filesystem
+  #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
+  check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
+  if(STD_FILESYTEM)
+    if(GRAPHQL_BUILD_SCHEMAGEN)
+      target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
+    endif()
+    if(GRAPHQL_BUILD_CLIENTGEN)
+      target_compile_definitions(clientgen PRIVATE USE_STD_FILESYSTEM)
+    endif()
+  else()
+    check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
+    if(STD_EXPERIMENTAL_FILESYTEM)
+      if(GRAPHQL_BUILD_SCHEMAGEN)
+        target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+      endif()
+      if(GRAPHQL_BUILD_CLIENTGEN)
+        target_compile_definitions(clientgen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+      endif()
+    else()
+      set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
+      set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
+      if(GRAPHQL_BUILD_SCHEMAGEN)
+        target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
+      endif()
+      if(GRAPHQL_BUILD_CLIENTGEN)
+        target_compile_definitions(clientgen PRIVATE USE_BOOST_FILESYSTEM)
+      endif()
+    endif()
+  endif()
+
+  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  if(GRAPHQL_BUILD_SCHEMAGEN)
+    target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
+  endif()
+  if(GRAPHQL_BUILD_CLIENTGEN)
+    target_link_libraries(clientgen PRIVATE ${BOOST_LIBRARIES})
+  endif()
 endif()
 
 # introspection

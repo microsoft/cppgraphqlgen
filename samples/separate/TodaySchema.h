@@ -11,9 +11,9 @@
 #include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
 
-// Check if the library version is compatible with schemagen 3.5.0
+// Check if the library version is compatible with schemagen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
 
 #include <memory>
 #include <string>
