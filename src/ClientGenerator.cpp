@@ -65,6 +65,8 @@ Generator::Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options)
 		throw std::logic_error("Unable to parse the request document, but there was no error "
 							   "message from the parser!");
 	}
+
+	validateRequest();
 }
 
 std::string Generator::getHeaderDir() const noexcept
@@ -109,7 +111,7 @@ std::string Generator::getSourcePath() const noexcept
 	return fullPath.string();
 }
 
-void Generator::validateQuery() const
+void Generator::validateRequest() const
 {
 	auto schema = buildSchema();
 	service::ValidateExecutableVisitor validation { schema };
@@ -1279,7 +1281,7 @@ std::future<service::ResolverResult> )cpp"
 			<< R"cpp(::resolve_client(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
-			// << s_introspectionNamespace
+			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::Client>(_client)), std::move(params));
 }
 
@@ -1290,13 +1292,13 @@ std::future<service::ResolverResult> )cpp"
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _client->LookupType(argName);
 	std::shared_ptr<)cpp"
-			// << s_introspectionNamespace
+			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::object::Type> result { baseType ? std::make_shared<)cpp"
-			// << s_introspectionNamespace
+			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::Type>(baseType) : nullptr };
 
 	return service::ModifiedResult<)cpp"
-			// << s_introspectionNamespace
+			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 )cpp";
@@ -1660,7 +1662,7 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Client.h header file")("no-introspection",
 		po::bool_switch(&noIntrospection),
-		"Do not generate support for Introspection");
+		"Do not expect support for Introspection");
 	positional.add("schema", 1).add("request", 1).add("prefix", 1).add("namespace", 1);
 
 	try

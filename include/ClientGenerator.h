@@ -41,7 +41,7 @@ private:
 	std::string getHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
 
-	void validateQuery() const;
+	void validateRequest() const;
 	std::shared_ptr<schema::Schema> buildSchema() const;
 	void addTypesToSchema(const std::shared_ptr<schema::Schema>& schema) const;
 
