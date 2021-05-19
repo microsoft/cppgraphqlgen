@@ -1277,8 +1277,7 @@ std::future<service::ResolverResult> )cpp"
 		sourceFile
 			<< R"cpp(
 std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType
-			<< R"cpp(::resolve_client(service::ResolverParams&& params)
+			<< objectType.cppType << R"cpp(::resolve_client(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
@@ -1286,16 +1285,14 @@ std::future<service::ResolverResult> )cpp"
 }
 
 std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType
-			<< R"cpp(::resolve_type(service::ResolverParams&& params)
+			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _client->LookupType(argName);
 	std::shared_ptr<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::object::Type> result { baseType ? std::make_shared<)cpp"
-			<< SchemaLoader::getIntrospectionNamespace()
-			<< R"cpp(::Type>(baseType) : nullptr };
+			<< SchemaLoader::getIntrospectionNamespace() << R"cpp(::Type>(baseType) : nullptr };
 
 	return service::ModifiedResult<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
@@ -1575,35 +1572,59 @@ std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) cons
 
 std::shared_ptr<const schema::BaseType> Generator::getIntrospectionType(
 	const std::shared_ptr<schema::Schema>& schema, std::string_view type,
-	TypeModifierStack modifiers, bool nonNull /* = true */) noexcept
+	const TypeModifierStack& modifiers) noexcept
 {
-	std::shared_ptr<const schema::BaseType> introspectionType;
+	std::shared_ptr<const schema::BaseType> introspectionType = schema->LookupType(type);
 
-	if (modifiers.empty())
+	if (introspectionType)
 	{
-		introspectionType = schema->LookupType(type);
-	}
-	else
-	{
-		const auto modifier = modifiers.front();
+		bool nonNull = true;
 
-		modifiers.erase(modifiers.cbegin());
-		introspectionType = getIntrospectionType(schema,
-			type,
-			std::move(modifiers),
-			modifier != service::TypeModifier::Nullable);
+		for (auto itr = modifiers.crbegin(); itr != modifiers.crend(); ++itr)
+		{
+			if (nonNull)
+			{
+				switch (*itr)
+				{
+					case service::TypeModifier::None:
+					case service::TypeModifier::List:
+						introspectionType = schema->WrapType(introspection::TypeKind::NON_NULL,
+							std::move(introspectionType));
+						break;
 
-		if (modifier == service::TypeModifier::List && introspectionType)
+					case service::TypeModifier::Nullable:
+						// If the next modifier is Nullable that cancels the non-nullable state.
+						nonNull = false;
+						break;
+				}
+			}
+
+			switch (*itr)
+			{
+				case service::TypeModifier::None:
+				{
+					nonNull = true;
+					break;
+				}
+
+				case service::TypeModifier::List:
+				{
+					nonNull = true;
+					introspectionType = schema->WrapType(introspection::TypeKind::LIST,
+						std::move(introspectionType));
+					break;
+				}
+
+				case service::TypeModifier::Nullable:
+					break;
+			}
+		}
+
+		if (nonNull)
 		{
 			introspectionType =
-				schema->WrapType(introspection::TypeKind::LIST, std::move(introspectionType));
+				schema->WrapType(introspection::TypeKind::NON_NULL, std::move(introspectionType));
 		}
-	}
-
-	if (nonNull && introspectionType)
-	{
-		introspectionType =
-			schema->WrapType(introspection::TypeKind::NON_NULL, std::move(introspectionType));
 	}
 
 	return introspectionType;

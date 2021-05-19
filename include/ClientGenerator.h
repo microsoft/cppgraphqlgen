@@ -65,7 +65,7 @@ private:
 
 	static std::shared_ptr<const schema::BaseType> getIntrospectionType(
 		const std::shared_ptr<schema::Schema>& schema, std::string_view type,
-		TypeModifierStack modifiers, bool nonNull = true) noexcept;
+		const TypeModifierStack& modifiers) noexcept;
 
 	SchemaLoader _loader;
 	const GeneratorOptions _options;
