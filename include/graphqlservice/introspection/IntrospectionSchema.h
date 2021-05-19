@@ -230,16 +230,16 @@ namespace service {
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
+GRAPHQLINTROSPECTION_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<introspection::TypeKind>::convert(
+GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::TypeKind>::convert(
 	FieldResult<introspection::TypeKind>&& result, ResolverParams&& params);
 template <>
-GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
+GRAPHQLINTROSPECTION_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(
+GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(
 	FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 

@@ -1857,13 +1857,13 @@ private:
 			for (const auto& enumType : _enumTypes)
 			{
 				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _schemaNamespace
+GRAPHQLINTROSPECTION_EXPORT )cpp" << _schemaNamespace
 						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
 						   << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<)cpp"
+GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<)cpp"
 						   << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	FieldResult<)cpp" << _schemaNamespace
@@ -1875,7 +1875,7 @@ GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<)cpp"
 			for (const auto& inputType : _inputTypes)
 			{
 				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _schemaNamespace
+GRAPHQLINTROSPECTION_EXPORT )cpp" << _schemaNamespace
 						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
 						   << inputType.cppType << R"cpp(>::convert(
 	const response::Value& value);
