@@ -210,22 +210,20 @@ ObjectType::ObjectType(init&& params)
 }
 
 void ObjectType::AddInterfaces(
-	std::initializer_list<std::shared_ptr<const InterfaceType>> interfaces)
+	std::vector<std::shared_ptr<const InterfaceType>>&& interfaces)
 {
-	_interfaces.resize(interfaces.size());
-	std::copy(interfaces.begin(), interfaces.end(), _interfaces.begin());
+	_interfaces = std::move(interfaces);
 
-	for (const auto& interface : interfaces)
+	for (const auto& interface : _interfaces)
 	{
 		std::const_pointer_cast<InterfaceType>(interface)->AddPossibleType(
 			std::static_pointer_cast<ObjectType>(shared_from_this()));
 	}
 }
 
-void ObjectType::AddFields(std::initializer_list<std::shared_ptr<Field>> fields)
+void ObjectType::AddFields(std::vector<std::shared_ptr<const Field>>&& fields)
 {
-	_fields.resize(fields.size());
-	std::copy(fields.begin(), fields.end(), _fields.begin());
+	_fields = std::move(fields);
 }
 
 std::string_view ObjectType::name() const noexcept
@@ -266,10 +264,9 @@ void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
 	_possibleTypes.push_back(possibleType);
 }
 
-void InterfaceType::AddFields(std::initializer_list<std::shared_ptr<Field>> fields)
+void InterfaceType::AddFields(std::vector<std::shared_ptr<const Field>>&& fields)
 {
-	_fields.resize(fields.size());
-	std::copy(fields.begin(), fields.end(), _fields.begin());
+	_fields = std::move(fields);
 }
 
 std::string_view InterfaceType::name() const noexcept
@@ -304,10 +301,9 @@ UnionType::UnionType(init&& params)
 {
 }
 
-void UnionType::AddPossibleTypes(std::initializer_list<std::weak_ptr<const BaseType>> possibleTypes)
+void UnionType::AddPossibleTypes(std::vector<std::weak_ptr<const BaseType>>&& possibleTypes)
 {
-	_possibleTypes.resize(possibleTypes.size());
-	std::copy(possibleTypes.begin(), possibleTypes.end(), _possibleTypes.begin());
+	_possibleTypes = std::move(possibleTypes);
 }
 
 std::string_view UnionType::name() const noexcept
@@ -337,7 +333,7 @@ EnumType::EnumType(init&& params)
 {
 }
 
-void EnumType::AddEnumValues(std::initializer_list<EnumValueType> enumValues)
+void EnumType::AddEnumValues(std::vector<EnumValueType>&& enumValues)
 {
 	_enumValues.resize(enumValues.size());
 	std::transform(enumValues.begin(),
@@ -376,10 +372,9 @@ InputObjectType::InputObjectType(init&& params)
 {
 }
 
-void InputObjectType::AddInputValues(std::initializer_list<std::shared_ptr<InputValue>> inputValues)
+void InputObjectType::AddInputValues(std::vector<std::shared_ptr<const InputValue>>&& inputValues)
 {
-	_inputValues.resize(inputValues.size());
-	std::copy(inputValues.begin(), inputValues.end(), _inputValues.begin());
+	_inputValues = std::move(inputValues);
 }
 
 std::string_view InputObjectType::name() const noexcept
@@ -426,12 +421,9 @@ struct Field::init
 
 std::shared_ptr<Field> Field::Make(std::string_view name, std::string_view description,
 	std::optional<std::string_view> deprecationReason, std::weak_ptr<const BaseType> type,
-	std::initializer_list<std::shared_ptr<InputValue>> args)
+	std::vector<std::shared_ptr<const InputValue>>&& args)
 {
-	init params { name, description, deprecationReason, std::move(type) };
-
-	params.args.resize(args.size());
-	std::copy(args.begin(), args.end(), params.args.begin());
+	init params { name, description, deprecationReason, std::move(type), std::move(args) };
 
 	return std::make_shared<Field>(std::move(params));
 }
@@ -556,16 +548,10 @@ struct Directive::init
 };
 
 std::shared_ptr<Directive> Directive::Make(std::string_view name, std::string_view description,
-	std::initializer_list<introspection::DirectiveLocation> locations,
-	std::initializer_list<std::shared_ptr<InputValue>> args)
+	std::vector<introspection::DirectiveLocation>&& locations,
+	std::vector<std::shared_ptr<const InputValue>>&& args)
 {
-	init params { name, description };
-
-	params.locations.resize(locations.size());
-	std::copy(locations.begin(), locations.end(), params.locations.begin());
-
-	params.args.resize(args.size());
-	std::copy(args.begin(), args.end(), params.args.begin());
+	init params { name, description, std::move(locations), std::move(args) };
 
 	return std::make_shared<Directive>(std::move(params));
 }

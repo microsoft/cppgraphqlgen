@@ -3711,14 +3711,16 @@ int main(int argc, char** argv)
 		if (buildCustom)
 		{
 			const auto files = graphql::schema::Generator(
-				{ graphql::schema::GeneratorSchema { std::move(schemaFileName),
-					  std::move(filenamePrefix),
-					  std::move(schemaNamespace) },
+				{
+					graphql::schema::GeneratorSchema { std::move(schemaFileName),
+						std::move(filenamePrefix),
+						std::move(schemaNamespace) },
 					graphql::schema::GeneratorPaths { std::move(headerDir), std::move(sourceDir) },
 					verbose,
 					separateFiles,
 					noStubs,
-					noIntrospection })
+					noIntrospection,
+				})
 								   .Build();
 
 			for (const auto& file : files)

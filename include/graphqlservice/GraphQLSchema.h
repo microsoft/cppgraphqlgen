@@ -8,7 +8,6 @@
 
 #include "graphqlservice/GraphQLService.h"
 
-#include <initializer_list>
 #include <shared_mutex>
 
 namespace graphql {
@@ -142,8 +141,8 @@ public:
 		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddInterfaces(
-		std::initializer_list<std::shared_ptr<const InterfaceType>> interfaces);
-	GRAPHQLSERVICE_EXPORT void AddFields(std::initializer_list<std::shared_ptr<Field>> fields);
+		std::vector<std::shared_ptr<const InterfaceType>>&& interfaces);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
@@ -173,7 +172,7 @@ public:
 		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
-	GRAPHQLSERVICE_EXPORT void AddFields(std::initializer_list<std::shared_ptr<Field>> fields);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
@@ -203,7 +202,7 @@ public:
 		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddPossibleTypes(
-		std::initializer_list<std::weak_ptr<const BaseType>> possibleTypes);
+		std::vector<std::weak_ptr<const BaseType>>&& possibleTypes);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
@@ -236,7 +235,7 @@ public:
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<EnumType> Make(
 		std::string_view name, std::string_view description);
 
-	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::initializer_list<EnumValueType> enumValues);
+	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::vector<EnumValueType>&& enumValues);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
@@ -263,7 +262,7 @@ public:
 		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddInputValues(
-		std::initializer_list<std::shared_ptr<InputValue>> inputValues);
+		std::vector<std::shared_ptr<const InputValue>>&& inputValues);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
@@ -308,8 +307,7 @@ public:
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<Field> Make(std::string_view name,
 		std::string_view description, std::optional<std::string_view> deprecationReason,
-		std::weak_ptr<const BaseType> type,
-		std::initializer_list<std::shared_ptr<InputValue>> args = {});
+		std::weak_ptr<const BaseType> type, std::vector<std::shared_ptr<const InputValue>>&& args = {});
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
@@ -389,9 +387,8 @@ public:
 	explicit Directive(init&& params);
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<Directive> Make(std::string_view name,
-		std::string_view description,
-		std::initializer_list<introspection::DirectiveLocation> locations,
-		std::initializer_list<std::shared_ptr<InputValue>> args = {});
+		std::string_view description, std::vector<introspection::DirectiveLocation>&& locations,
+		std::vector<std::shared_ptr<const InputValue>>&& args = {});
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;

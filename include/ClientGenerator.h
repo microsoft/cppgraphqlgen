@@ -8,7 +8,8 @@
 
 #include "graphqlservice/GraphQLGrammar.h"
 #include "graphqlservice/GraphQLParse.h"
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/GraphQLSchema.h"
 
 #include <array>
 #include <cstdio>
@@ -222,7 +223,8 @@ using OperationTypeList = std::vector<OperationType>;
 
 struct GeneratorClient
 {
-	const std::string clientFilename;
+	const std::string schemaFilename;
+	const std::string requestFilename;
 	const std::string filenamePrefix;
 	const std::string clientNamespace;
 };
@@ -235,11 +237,9 @@ struct GeneratorPaths
 
 struct GeneratorOptions
 {
-	const std::optional<GeneratorClient> customClient;
+	const GeneratorClient client;
 	const std::optional<GeneratorPaths> paths;
 	const bool verbose = false;
-	const bool separateFiles = false;
-	const bool noStubs = false;
 	const bool noIntrospection = false;
 };
 
@@ -256,7 +256,6 @@ private:
 	std::string getHeaderDir() const noexcept;
 	std::string getSourceDir() const noexcept;
 	std::string getHeaderPath() const noexcept;
-	std::string getObjectHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
 
 	void visitDefinition(const peg::ast_node& definition);
@@ -321,11 +320,15 @@ private:
 		response::Value _value;
 	};
 
-	void validateClient();
+	void validateSchema();
 	void fixupOutputFieldList(OutputFieldList& fields,
 		const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
+
+	void validateQuery() const;
+	std::shared_ptr<schema::Schema> buildSchema() const;
+	void addTypesToSchema(const std::shared_ptr<schema::Schema>& schema) const;
 
 	std::string_view getCppType(std::string_view type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
@@ -341,7 +344,6 @@ private:
 	bool outputSource() const noexcept;
 	void outputObjectImplementation(
 		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
-	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
 	std::string getArgumentDefaultValue(
 		size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken,
@@ -349,26 +351,24 @@ private:
 	std::string getArgumentAccessType(const InputField& argument) const noexcept;
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
-	std::string getIntrospectionType(
-		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 
-	std::vector<std::string> outputSeparateFiles() const noexcept;
+	static std::shared_ptr<const schema::BaseType> getIntrospectionType(
+		const std::shared_ptr<schema::Schema>& schema, std::string_view type,
+		TypeModifierStack modifiers, bool nonNull = true) noexcept;
 
-	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
 	static const CppTypeMap s_builtinCppTypes;
 	static const std::string_view s_scalarCppType;
 	static const std::string s_currentDirectory;
 
 	const GeneratorOptions _options;
-	const bool _isIntrospection;
 	std::string_view _clientNamespace;
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
-	const std::string _objectHeaderPath;
 	const std::string _sourcePath;
-	peg::ast _ast;
+	peg::ast _schema;
+	peg::ast _request;
 
 	SchemaTypeMap _clientTypes;
 	PositionMap _typePositions;

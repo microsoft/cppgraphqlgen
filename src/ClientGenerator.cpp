@@ -3,6 +3,10 @@
 
 #include "ClientGenerator.h"
 #include "GeneratorUtil.h"
+#include "Validation.h"
+
+#include "graphqlservice/internal/Version.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -48,8 +52,6 @@ namespace graphql::client {
 
 using namespace generator;
 
-const std::string_view Generator::s_introspectionNamespace = "introspection"sv;
-
 const BuiltinTypeMap Generator::s_builtinTypes = {
 	{ "Int"sv, BuiltinType::Int },
 	{ "Float"sv, BuiltinType::Float },
@@ -70,145 +72,35 @@ const std::string_view Generator::s_scalarCppType = R"cpp(response::Value)cpp"sv
 
 Generator::Generator(GeneratorOptions&& options)
 	: _options(std::move(options))
-	, _isIntrospection(!_options.customClient)
-	, _clientNamespace(
-		  _isIntrospection ? s_introspectionNamespace : _options.customClient->clientNamespace)
+	, _clientNamespace(_options.client.clientNamespace)
 	, _headerDir(getHeaderDir())
 	, _sourceDir(getSourceDir())
 	, _headerPath(getHeaderPath())
-	, _objectHeaderPath(getObjectHeaderPath())
 	, _sourcePath(getSourcePath())
 {
-	if (_isIntrospection)
+
+	_schema = peg::parseSchemaFile(_options.client.schemaFilename);
+
+	if (!_schema.root)
 	{
-		// Introspection Client:
-		// http://spec.graphql.org/June2018/#sec-Client-Introspection
-		_ast = peg::parseSchemaString(R"gql(
-			type __Client {
-				types: [__Type!]!
-				queryType: __Type!
-				mutationType: __Type
-				subscriptionType: __Type
-				directives: [__Directive!]!
-			}
-
-			type __Type {
-				kind: __TypeKind!
-				name: String
-				description: String
-
-				# OBJECT and INTERFACE only
-				fields(includeDeprecated: Boolean = false): [__Field!]
-
-				# OBJECT only
-				interfaces: [__Type!]
-
-				# INTERFACE and UNION only
-				possibleTypes: [__Type!]
-
-				# ENUM only
-				enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-
-				# INPUT_OBJECT only
-				inputFields: [__InputValue!]
-
-				# NON_NULL and LIST only
-				ofType: __Type
-			}
-
-			type __Field {
-				name: String!
-				description: String
-				args: [__InputValue!]!
-				type: __Type!
-				isDeprecated: Boolean!
-				deprecationReason: String
-			}
-
-			type __InputValue {
-				name: String!
-				description: String
-				type: __Type!
-				defaultValue: String
-			}
-
-			type __EnumValue {
-				name: String!
-				description: String
-				isDeprecated: Boolean!
-				deprecationReason: String
-			}
-
-			enum __TypeKind {
-				SCALAR
-				OBJECT
-				INTERFACE
-				UNION
-				ENUM
-				INPUT_OBJECT
-				LIST
-				NON_NULL
-			}
-
-			type __Directive {
-				name: String!
-				description: String
-				locations: [__DirectiveLocation!]!
-				args: [__InputValue!]!
-			}
-
-			enum __DirectiveLocation {
-				QUERY
-				MUTATION
-				SUBSCRIPTION
-				FIELD
-				FRAGMENT_DEFINITION
-				FRAGMENT_SPREAD
-				INLINE_FRAGMENT
-				CLIENT
-				SCALAR
-				OBJECT
-				FIELD_DEFINITION
-				ARGUMENT_DEFINITION
-				INTERFACE
-				UNION
-				ENUM
-				ENUM_VALUE
-				INPUT_OBJECT
-				INPUT_FIELD_DEFINITION
-			}
-
-			# These directives are always defined and should be included in the Introspection client.
-			directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
-			directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
-			directive @deprecated(
-				reason: String = "No longer supported"
-			) on FIELD_DEFINITION | ENUM_VALUE
-		)gql"sv);
-
-		if (!_ast.root)
-		{
-			throw std::logic_error("Unable to parse the introspection client, but there was no "
-								   "error message from the parser!");
-		}
-	}
-	else
-	{
-		_ast = peg::parseSchemaFile(_options.customClient->clientFilename);
-
-		if (!_ast.root)
-		{
-			throw std::logic_error("Unable to parse the service client, but there was no error "
-								   "message from the parser!");
-		}
+		throw std::logic_error("Unable to parse the service schema, but there was no error "
+							   "message from the parser!");
 	}
 
-	for (const auto& child : _ast.root->children)
+	for (const auto& child : _schema.root->children)
 	{
 		visitDefinition(*child);
 	}
 
-	validateClient();
+	validateSchema();
+
+	_request = peg::parseFile(_options.client.requestFilename);
+
+	if (!_request.root)
+	{
+		throw std::logic_error("Unable to parse the request document, but there was no error "
+							   "message from the parser!");
+	}
 }
 
 std::string Generator::getHeaderDir() const noexcept
@@ -239,48 +131,21 @@ std::string Generator::getHeaderPath() const noexcept
 {
 	fs::path fullPath { _headerDir };
 
-	if (_isIntrospection)
-	{
-		fullPath /= "IntrospectionClient.h";
-	}
-	else
-	{
-		fullPath /= (_options.customClient->filenamePrefix + "Client.h");
-	}
+	fullPath /= (_options.client.filenamePrefix + "Client.h");
 
 	return fullPath.string();
-}
-
-std::string Generator::getObjectHeaderPath() const noexcept
-{
-	if (_options.separateFiles)
-	{
-		fs::path fullPath { _headerDir };
-
-		fullPath /= (_options.customClient->filenamePrefix + "Objects.h");
-		return fullPath.string();
-	}
-
-	return _headerPath;
 }
 
 std::string Generator::getSourcePath() const noexcept
 {
 	fs::path fullPath { _sourceDir };
 
-	if (_isIntrospection)
-	{
-		fullPath /= "IntrospectionClient.cpp";
-	}
-	else
-	{
-		fullPath /= (_options.customClient->filenamePrefix + "Client.cpp");
-	}
+	fullPath /= (_options.client.filenamePrefix + "Client.cpp");
 
 	return fullPath.string();
 }
 
-void Generator::validateClient()
+void Generator::validateSchema()
 {
 	// Verify that none of the custom types conflict with a built-in type.
 	for (const auto& entry : _clientTypes)
@@ -313,65 +178,57 @@ void Generator::validateClient()
 		fixupOutputFieldList(entry.fields, std::nullopt, std::nullopt);
 	}
 
-	if (!_isIntrospection)
+	bool queryDefined = false;
+
+	if (_operationTypes.empty())
 	{
-		bool queryDefined = false;
+		// Fill in the operations with default type names if present.
+		constexpr auto strDefaultQuery = "Query"sv;
+		constexpr auto strDefaultMutation = "Mutation"sv;
+		constexpr auto strDefaultSubscription = "Subscription"sv;
 
-		if (_operationTypes.empty())
+		if (_objectNames.find(strDefaultQuery) != _objectNames.cend())
 		{
-			// Fill in the operations with default type names if present.
-			constexpr auto strDefaultQuery = "Query"sv;
-			constexpr auto strDefaultMutation = "Mutation"sv;
-			constexpr auto strDefaultSubscription = "Subscription"sv;
-
-			if (_objectNames.find(strDefaultQuery) != _objectNames.cend())
-			{
-				_operationTypes.push_back(
-					{ strDefaultQuery, getSafeCppName(strDefaultQuery), service::strQuery });
-				queryDefined = true;
-			}
-
-			if (_objectNames.find(strDefaultMutation) != _objectNames.cend())
-			{
-				_operationTypes.push_back({ strDefaultMutation,
-					getSafeCppName(strDefaultMutation),
-					service::strMutation });
-			}
-
-			if (_objectNames.find(strDefaultSubscription) != _objectNames.cend())
-			{
-				_operationTypes.push_back({ strDefaultSubscription,
-					getSafeCppName(strDefaultSubscription),
-					service::strSubscription });
-			}
-		}
-		else
-		{
-			// Validate that all of the operation types exist and that query is defined.
-			for (const auto& operation : _operationTypes)
-			{
-				if (_objectNames.find(operation.type) == _objectNames.cend())
-				{
-					std::ostringstream error;
-
-					error << "Unknown operation type: " << operation.type
-						  << " operation: " << operation.operation;
-
-					throw std::runtime_error(error.str());
-				}
-
-				queryDefined = queryDefined || (operation.operation == service::strQuery);
-			}
+			_operationTypes.push_back(
+				{ strDefaultQuery, getSafeCppName(strDefaultQuery), service::strQuery });
+			queryDefined = true;
 		}
 
-		if (!queryDefined)
+		if (_objectNames.find(strDefaultMutation) != _objectNames.cend())
 		{
-			throw std::runtime_error("Query operation type undefined");
+			_operationTypes.push_back(
+				{ strDefaultMutation, getSafeCppName(strDefaultMutation), service::strMutation });
+		}
+
+		if (_objectNames.find(strDefaultSubscription) != _objectNames.cend())
+		{
+			_operationTypes.push_back({ strDefaultSubscription,
+				getSafeCppName(strDefaultSubscription),
+				service::strSubscription });
 		}
 	}
-	else if (!_operationTypes.empty())
+	else
 	{
-		throw std::runtime_error("Introspection should not define any operation types");
+		// Validate that all of the operation types exist and that query is defined.
+		for (const auto& operation : _operationTypes)
+		{
+			if (_objectNames.find(operation.type) == _objectNames.cend())
+			{
+				std::ostringstream error;
+
+				error << "Unknown operation type: " << operation.type
+					  << " operation: " << operation.operation;
+
+				throw std::runtime_error(error.str());
+			}
+
+			queryDefined = queryDefined || (operation.operation == service::strQuery);
+		}
+	}
+
+	if (!queryDefined)
+	{
+		throw std::runtime_error("Query operation type undefined");
 	}
 
 	std::string_view mutationType;
@@ -599,6 +456,329 @@ void Generator::fixupInputFieldList(InputFieldList& fields)
 
 				throw std::runtime_error(error.str());
 			}
+		}
+	}
+}
+
+void Generator::validateQuery() const
+{
+	auto schema = buildSchema();
+	service::ValidateExecutableVisitor validation { schema };
+
+	validation.visit(*_request.root);
+
+	auto errors = validation.getStructuredErrors();
+
+	if (!errors.empty())
+	{
+		throw service::schema_exception { std::move(errors) };
+	}
+}
+
+std::shared_ptr<schema::Schema> Generator::buildSchema() const
+{
+	auto schema = std::make_shared<schema::Schema>(_options.noIntrospection);
+
+	introspection::AddTypesToSchema(schema);
+	addTypesToSchema(schema);
+
+	return schema;
+}
+
+void Generator::addTypesToSchema(const std::shared_ptr<schema::Schema>& schema) const
+{
+	if (!_scalarTypes.empty())
+	{
+		for (const auto& scalarType : _scalarTypes)
+		{
+			schema->AddType(scalarType.type,
+				schema::ScalarType::Make(scalarType.type, scalarType.description));
+		}
+	}
+
+	std::map<std::string_view, std::shared_ptr<schema::EnumType>> enumTypes;
+
+	if (!_enumTypes.empty())
+	{
+		for (const auto& enumType : _enumTypes)
+		{
+			const auto itr = enumTypes
+								 .emplace(std::make_pair(enumType.type,
+									 schema::EnumType::Make(enumType.type, enumType.description)))
+								 .first;
+
+			schema->AddType(enumType.type, itr->second);
+		}
+	}
+
+	std::map<std::string_view, std::shared_ptr<schema::InputObjectType>> inputTypes;
+
+	if (!_inputTypes.empty())
+	{
+		for (const auto& inputType : _inputTypes)
+		{
+			const auto itr =
+				inputTypes
+					.emplace(std::make_pair(inputType.type,
+						schema::InputObjectType::Make(inputType.type, inputType.description)))
+					.first;
+
+			schema->AddType(inputType.type, itr->second);
+		}
+	}
+
+	std::map<std::string_view, std::shared_ptr<schema::UnionType>> unionTypes;
+
+	if (!_unionTypes.empty())
+	{
+		for (const auto& unionType : _unionTypes)
+		{
+			const auto itr =
+				unionTypes
+					.emplace(std::make_pair(unionType.type,
+						schema::UnionType::Make(unionType.type, unionType.description)))
+					.first;
+
+			schema->AddType(unionType.type, itr->second);
+		}
+	}
+
+	std::map<std::string_view, std::shared_ptr<schema::InterfaceType>> interfaceTypes;
+
+	if (!_interfaceTypes.empty())
+	{
+		for (const auto& interfaceType : _interfaceTypes)
+		{
+			const auto itr =
+				interfaceTypes
+					.emplace(std::make_pair(interfaceType.type,
+						schema::InterfaceType::Make(interfaceType.type, interfaceType.description)))
+					.first;
+
+			schema->AddType(interfaceType.type, itr->second);
+		}
+	}
+
+	std::map<std::string_view, std::shared_ptr<schema::ObjectType>> objectTypes;
+
+	if (!_objectTypes.empty())
+	{
+		for (const auto& objectType : _objectTypes)
+		{
+			const auto itr =
+				objectTypes
+					.emplace(std::make_pair(objectType.type,
+						schema::ObjectType::Make(objectType.type, objectType.description)))
+					.first;
+
+			schema->AddType(objectType.type, itr->second);
+		}
+	}
+
+	for (const auto& enumType : _enumTypes)
+	{
+		const auto itr = enumTypes.find(enumType.type);
+
+		if (itr != enumTypes.cend() && !enumType.values.empty())
+		{
+			std::vector<schema::EnumValueType> values(enumType.values.size());
+
+			std::transform(enumType.values.cbegin(),
+				enumType.values.cend(),
+				values.begin(),
+				[](const EnumValueType& value) noexcept {
+					return schema::EnumValueType {
+						value.value,
+						value.description,
+						value.deprecationReason,
+					};
+				});
+
+			itr->second->AddEnumValues(std::move(values));
+		}
+	}
+
+	for (const auto& inputType : _inputTypes)
+	{
+		const auto itr = inputTypes.find(inputType.type);
+
+		if (itr != inputTypes.cend() && !inputType.fields.empty())
+		{
+			std::vector<std::shared_ptr<const schema::InputValue>> fields(inputType.fields.size());
+
+			std::transform(inputType.fields.cbegin(),
+				inputType.fields.cend(),
+				fields.begin(),
+				[schema](const InputField& field) noexcept {
+					return schema::InputValue::Make(field.name,
+						field.description,
+						getIntrospectionType(schema, field.type, field.modifiers),
+						field.defaultValueString);
+				});
+
+			itr->second->AddInputValues(std::move(fields));
+		}
+	}
+
+	for (const auto& unionType : _unionTypes)
+	{
+		const auto itr = unionTypes.find(unionType.type);
+
+		if (!unionType.options.empty())
+		{
+			std::vector<std::weak_ptr<const schema::BaseType>> options(unionType.options.size());
+
+			std::transform(unionType.options.cbegin(),
+				unionType.options.cend(),
+				options.begin(),
+				[schema](std::string_view option) noexcept {
+					return schema->LookupType(option);
+				});
+
+			itr->second->AddPossibleTypes(std::move(options));
+		}
+	}
+
+	for (const auto& interfaceType : _interfaceTypes)
+	{
+		const auto itr = interfaceTypes.find(interfaceType.type);
+
+		if (!interfaceType.fields.empty())
+		{
+			std::vector<std::shared_ptr<const schema::Field>> fields(interfaceType.fields.size());
+
+			std::transform(interfaceType.fields.cbegin(),
+				interfaceType.fields.cend(),
+				fields.begin(),
+				[schema](const OutputField& field) noexcept {
+					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
+						field.arguments.size());
+
+					std::transform(field.arguments.cbegin(),
+						field.arguments.cend(),
+						arguments.begin(),
+						[schema](const InputField& argument) noexcept {
+							return schema::InputValue::Make(argument.name,
+								argument.description,
+								getIntrospectionType(schema, argument.type, argument.modifiers),
+								argument.defaultValueString);
+						});
+
+					return schema::Field::Make(field.name,
+						field.description,
+						field.deprecationReason,
+						getIntrospectionType(schema, field.type, field.modifiers),
+						std::move(arguments));
+				});
+
+			itr->second->AddFields(std::move(fields));
+		}
+	}
+
+	for (const auto& objectType : _objectTypes)
+	{
+		const auto itr = objectTypes.find(objectType.type);
+
+		if (!objectType.interfaces.empty())
+		{
+			std::vector<std::shared_ptr<const schema::InterfaceType>> interfaces(
+				objectType.interfaces.size());
+
+			std::transform(objectType.interfaces.cbegin(),
+				objectType.interfaces.cend(),
+				interfaces.begin(),
+				[schema, &interfaceTypes](std::string_view interfaceName) noexcept {
+					return interfaceTypes[interfaceName];
+				});
+
+			itr->second->AddInterfaces(
+				std::initializer_list<std::shared_ptr<const schema::InterfaceType>>(
+					interfaces.data(),
+					interfaces.data() + interfaces.size()));
+		}
+
+		if (!objectType.fields.empty())
+		{
+			std::vector<std::shared_ptr<const schema::Field>> fields(objectType.fields.size());
+
+			std::transform(objectType.fields.cbegin(),
+				objectType.fields.cend(),
+				fields.begin(),
+				[schema](const OutputField& field) noexcept {
+					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
+						field.arguments.size());
+
+					std::transform(field.arguments.cbegin(),
+						field.arguments.cend(),
+						arguments.begin(),
+						[schema](const InputField& argument) noexcept {
+							return schema::InputValue::Make(argument.name,
+								argument.description,
+								getIntrospectionType(schema, argument.type, argument.modifiers),
+								argument.defaultValueString);
+						});
+
+					return schema::Field::Make(field.name,
+						field.description,
+						field.deprecationReason,
+						getIntrospectionType(schema, field.type, field.modifiers),
+						std::move(arguments));
+				});
+
+			itr->second->AddFields(std::move(fields));
+		}
+	}
+
+	for (const auto& directive : _directives)
+	{
+		std::vector<introspection::DirectiveLocation> locations(directive.locations.size());
+
+		std::transform(directive.locations.cbegin(),
+			directive.locations.cend(),
+			locations.begin(),
+			[](std::string_view locationName) noexcept {
+				response::Value locationValue(response::Type::EnumValue);
+
+				locationValue.set<response::StringType>(response::StringType { locationName });
+
+				return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
+					locationValue);
+			});
+
+		std::vector<std::shared_ptr<const schema::InputValue>> arguments(
+			directive.arguments.size());
+
+		std::transform(directive.arguments.cbegin(),
+			directive.arguments.cend(),
+			arguments.begin(),
+			[schema](const InputField& argument) noexcept {
+				return schema::InputValue::Make(argument.name,
+					argument.description,
+					getIntrospectionType(schema, argument.type, argument.modifiers),
+					argument.defaultValueString);
+			});
+
+		schema->AddDirective(schema::Directive::Make(directive.name,
+			directive.description,
+			std::move(locations),
+			std::move(arguments)));
+	}
+
+	for (const auto& operationType : _operationTypes)
+	{
+		const auto itr = objectTypes.find(operationType.type);
+
+		if (operationType.operation == service::strQuery)
+		{
+			schema->AddQueryType(itr->second);
+		}
+		else if (operationType.operation == service::strMutation)
+		{
+			schema->AddMutationType(itr->second);
+		}
+		else if (operationType.operation == service::strSubscription)
+		{
+			schema->AddSubscriptionType(itr->second);
 		}
 	}
 }
@@ -1429,16 +1609,6 @@ std::vector<std::string> Generator::Build() const noexcept
 		builtFiles.push_back(_sourcePath);
 	}
 
-	if (_options.separateFiles)
-	{
-		auto separateFiles = outputSeparateFiles();
-
-		for (auto& file : separateFiles)
-		{
-			builtFiles.push_back(std::move(file));
-		}
-	}
-
 	return builtFiles;
 }
 
@@ -1600,27 +1770,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with clientgen: minor version mismatch");
 
-)cpp";
-	if (_isIntrospection)
-	{
-		headerFile <<
-			R"cpp(// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLINTROSPECTION_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
-
-)cpp";
-	}
-
-	headerFile <<
-		R"cpp(#include <memory>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -1633,15 +1783,12 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	std::string_view queryType;
 
-	if (!_isIntrospection)
+	for (const auto& operation : _operationTypes)
 	{
-		for (const auto& operation : _operationTypes)
+		if (operation.operation == service::strQuery)
 		{
-			if (operation.operation == service::strQuery)
-			{
-				queryType = operation.type;
-				break;
-			}
+			queryType = operation.type;
+			break;
 		}
 	}
 
@@ -1760,7 +1907,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 	}
 
-	if (!_objectTypes.empty() && !_options.separateFiles)
+	if (!_objectTypes.empty())
 	{
 		if (objectNamespace.enter())
 		{
@@ -1780,70 +1927,41 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		headerFile << std::endl;
 	}
 
-	if (!_isIntrospection)
-	{
-		bool firstOperation = true;
+	bool firstOperation = true;
 
-		headerFile << R"cpp(class Operations
+	headerFile << R"cpp(class Operations
 	: public service::Request
 {
 public:
 	explicit Operations()cpp";
 
-		for (const auto& operation : _operationTypes)
+	for (const auto& operation : _operationTypes)
+	{
+		if (!firstOperation)
 		{
-			if (!firstOperation)
-			{
-				headerFile << R"cpp(, )cpp";
-			}
-
-			firstOperation = false;
-			headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
-					   << operation.operation;
+			headerFile << R"cpp(, )cpp";
 		}
 
-		headerFile << R"cpp();
+		firstOperation = false;
+		headerFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
+				   << operation.operation;
+	}
+
+	headerFile << R"cpp();
 
 private:
 )cpp";
 
-		for (const auto& operation : _operationTypes)
-		{
-			headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.cppType
-					   << R"cpp(> _)cpp" << operation.operation << R"cpp(;
-)cpp";
-		}
-
-		headerFile << R"cpp(};
-
+	for (const auto& operation : _operationTypes)
+	{
+		headerFile << R"cpp(	std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> _)cpp"
+				   << operation.operation << R"cpp(;
 )cpp";
 	}
 
-	if (!_objectTypes.empty() && _options.separateFiles)
-	{
-		for (const auto& objectType : _objectTypes)
-		{
-			headerFile << R"cpp(void Add)cpp" << objectType.cppType
-					   << R"cpp(Details(std::shared_ptr<client::ObjectType> type)cpp"
-					   << objectType.cppType
-					   << R"cpp(, const std::shared_ptr<client::Client>& client);
-)cpp";
-		}
+	headerFile << R"cpp(};
 
-		headerFile << std::endl;
-	}
-
-	if (_isIntrospection)
-	{
-		headerFile
-			<< R"cpp(GRAPHQLINTROSPECTION_EXPORT void AddTypesToClient(const std::shared_ptr<client::Client>& client);)cpp";
-	}
-	else
-	{
-		headerFile << R"cpp(std::shared_ptr<client::Client> GetClient();)cpp";
-	}
-
-	headerFile << R"cpp(
+std::shared_ptr<client::Client> GetClient();
 
 )cpp";
 
@@ -1875,11 +1993,6 @@ protected:
 
 		for (const auto& outputField : objectType.fields)
 		{
-			if (outputField.inheritedField && (_isIntrospection || _options.noStubs))
-			{
-				continue;
-			}
-
 			if (firstField)
 			{
 				headerFile << R"cpp(
@@ -1904,7 +2017,7 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 )cpp";
 
-		if (!_options.noIntrospection && isQueryType)
+		if (isQueryType)
 		{
 			headerFile
 				<< R"cpp(	std::future<service::ResolverResult> resolve_client(service::ResolverParams&& params);
@@ -1945,7 +2058,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	}
 
 	output << R"cpp() const)cpp";
-	if (outputField.interfaceField || _isIntrospection || _options.noStubs)
+	if (outputField.interfaceField)
 	{
 		output << R"cpp( = 0)cpp";
 	}
@@ -1982,14 +2095,6 @@ bool Generator::outputSource() const noexcept
 // WARNING! Do not edit this file manually, your changes will be overwritten.
 
 )cpp";
-
-	if (!_isIntrospection)
-	{
-		sourceFile << R"cpp(#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
-				   << R"cpp("
-
-)cpp";
-	}
 
 	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
 
@@ -2178,19 +2283,16 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 	NamespaceScope clientNamespace { sourceFile, _clientNamespace };
 	std::string_view queryType;
 
-	if (!_isIntrospection)
+	for (const auto& operation : _operationTypes)
 	{
-		for (const auto& operation : _operationTypes)
+		if (operation.operation == service::strQuery)
 		{
-			if (operation.operation == service::strQuery)
-			{
-				queryType = operation.type;
-				break;
-			}
+			queryType = operation.type;
+			break;
 		}
 	}
 
-	if (!_objectTypes.empty() && !_options.separateFiles)
+	if (!_objectTypes.empty())
 	{
 		NamespaceScope objectNamespace { sourceFile, "object" };
 
@@ -2203,563 +2305,66 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 		}
 	}
 
-	if (!_isIntrospection)
-	{
-		bool firstOperation = true;
+	bool firstOperation = true;
 
-		sourceFile << R"cpp(
+	sourceFile << R"cpp(
 Operations::Operations()cpp";
 
-		for (const auto& operation : _operationTypes)
+	for (const auto& operation : _operationTypes)
+	{
+		if (!firstOperation)
 		{
-			if (!firstOperation)
-			{
-				sourceFile << R"cpp(, )cpp";
-			}
-
-			firstOperation = false;
-			sourceFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
-					   << operation.operation;
+			sourceFile << R"cpp(, )cpp";
 		}
 
-		sourceFile << R"cpp()
+		firstOperation = false;
+		sourceFile << R"cpp(std::shared_ptr<object::)cpp" << operation.cppType << R"cpp(> )cpp"
+				   << operation.operation;
+	}
+
+	sourceFile << R"cpp()
 	: service::Request({
 )cpp";
 
-		firstOperation = true;
+	firstOperation = true;
 
-		for (const auto& operation : _operationTypes)
+	for (const auto& operation : _operationTypes)
+	{
+		if (!firstOperation)
 		{
-			if (!firstOperation)
-			{
-				sourceFile << R"cpp(,
+			sourceFile << R"cpp(,
 )cpp";
-			}
-
-			firstOperation = false;
-			sourceFile << R"cpp(		{ ")cpp" << operation.operation << R"cpp(", )cpp"
-					   << operation.operation << R"cpp( })cpp";
 		}
 
-		sourceFile << R"cpp(
+		firstOperation = false;
+		sourceFile << R"cpp(		{ ")cpp" << operation.operation << R"cpp(", )cpp"
+				   << operation.operation << R"cpp( })cpp";
+	}
+
+	sourceFile << R"cpp(
 	}, GetClient())
 )cpp";
 
-		for (const auto& operation : _operationTypes)
-		{
-			sourceFile << R"cpp(	, _)cpp" << operation.operation << R"cpp((std::move()cpp"
-					   << operation.operation << R"cpp())
+	for (const auto& operation : _operationTypes)
+	{
+		sourceFile << R"cpp(	, _)cpp" << operation.operation << R"cpp((std::move()cpp"
+				   << operation.operation << R"cpp())
 )cpp";
-		}
+	}
 
-		sourceFile << R"cpp({
+	sourceFile << R"cpp({
 }
 
 )cpp";
-	}
-	else
-	{
-		sourceFile << std::endl;
-	}
 
-	sourceFile << R"cpp(void AddTypesToClient(const std::shared_ptr<client::Client>& client)
-{
-)cpp";
-
-	if (_isIntrospection)
-	{
-		// Add SCALAR types for each of the built-in types
-		for (const auto& builtinType : s_builtinTypes)
-		{
-			sourceFile << R"cpp(	client->AddType(R"gql()cpp" << builtinType.first
-					   << R"cpp()gql"sv, client::ScalarType::Make(R"gql()cpp" << builtinType.first
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << R"cpp(Built-in type)cpp";
-			}
-
-			sourceFile << R"cpp()md"));
-)cpp";
-		}
-	}
-
-	if (!_scalarTypes.empty())
-	{
-		for (const auto& scalarType : _scalarTypes)
-		{
-			sourceFile << R"cpp(	client->AddType(R"gql()cpp" << scalarType.type
-					   << R"cpp()gql"sv, client::ScalarType::Make(R"gql()cpp" << scalarType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << scalarType.description;
-			}
-
-			sourceFile << R"cpp()md"));
-)cpp";
-		}
-	}
-
-	if (!_enumTypes.empty())
-	{
-		for (const auto& enumType : _enumTypes)
-		{
-			sourceFile << R"cpp(	auto type)cpp" << enumType.cppType
-					   << R"cpp( = client::EnumType::Make(R"gql()cpp" << enumType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << enumType.description;
-			}
-
-			sourceFile << R"cpp()md"sv);
-	client->AddType(R"gql()cpp"
-					   << enumType.type << R"cpp()gql"sv, type)cpp" << enumType.cppType << R"cpp();
-)cpp";
-		}
-	}
-
-	if (!_inputTypes.empty())
-	{
-		for (const auto& inputType : _inputTypes)
-		{
-			sourceFile << R"cpp(	auto type)cpp" << inputType.cppType
-					   << R"cpp( = client::InputObjectType::Make(R"gql()cpp" << inputType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << inputType.description;
-			}
-
-			sourceFile << R"cpp()md"sv);
-	client->AddType(R"gql()cpp"
-					   << inputType.type << R"cpp()gql"sv, type)cpp" << inputType.cppType
-					   << R"cpp();
-)cpp";
-		}
-	}
-
-	if (!_unionTypes.empty())
-	{
-		for (const auto& unionType : _unionTypes)
-		{
-			sourceFile << R"cpp(	auto type)cpp" << unionType.cppType
-					   << R"cpp( = client::UnionType::Make(R"gql()cpp" << unionType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << unionType.description;
-			}
-
-			sourceFile << R"cpp()md"sv);
-	client->AddType(R"gql()cpp"
-					   << unionType.type << R"cpp()gql"sv, type)cpp" << unionType.cppType
-					   << R"cpp();
-)cpp";
-		}
-	}
-
-	if (!_interfaceTypes.empty())
-	{
-		for (const auto& interfaceType : _interfaceTypes)
-		{
-			sourceFile << R"cpp(	auto type)cpp" << interfaceType.cppType
-					   << R"cpp( = client::InterfaceType::Make(R"gql()cpp" << interfaceType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << interfaceType.description;
-			}
-
-			sourceFile << R"cpp()md"sv);
-	client->AddType(R"gql()cpp"
-					   << interfaceType.type << R"cpp()gql"sv, type)cpp" << interfaceType.cppType
-					   << R"cpp();
-)cpp";
-		}
-	}
-
-	if (!_objectTypes.empty())
-	{
-		for (const auto& objectType : _objectTypes)
-		{
-			sourceFile << R"cpp(	auto type)cpp" << objectType.cppType
-					   << R"cpp( = client::ObjectType::Make(R"gql()cpp" << objectType.type
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << objectType.description;
-			}
-
-			sourceFile << R"cpp()md");
-	client->AddType(R"gql()cpp"
-					   << objectType.type << R"cpp()gql"sv, type)cpp" << objectType.cppType
-					   << R"cpp();
-)cpp";
-		}
-	}
-
-	if (!_enumTypes.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& enumType : _enumTypes)
-		{
-			if (!enumType.values.empty())
-			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << enumType.cppType << R"cpp(->AddEnumValues({
-)cpp";
-
-				for (const auto& enumValue : enumType.values)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		{ service::s_names)cpp" << enumType.cppType
-							   << R"cpp([static_cast<size_t>()cpp" << _clientNamespace
-							   << R"cpp(::)cpp" << enumType.cppType << R"cpp(::)cpp"
-							   << enumValue.cppValue << R"cpp()], R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << enumValue.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp";
-
-					if (enumValue.deprecationReason)
-					{
-						sourceFile << R"cpp(std::make_optional(R"md()cpp"
-								   << *enumValue.deprecationReason << R"cpp()md"sv))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(std::nullopt)cpp";
-					}
-
-					sourceFile << R"cpp( })cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
-			}
-		}
-	}
-
-	if (!_inputTypes.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& inputType : _inputTypes)
-		{
-			if (!inputType.fields.empty())
-			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << inputType.cppType << R"cpp(->AddInputValues({
-)cpp";
-
-				for (const auto& inputField : inputType.fields)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		client::InputValue::Make(R"gql()cpp"
-							   << inputField.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << inputField.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp"
-							   << getIntrospectionType(inputField.type, inputField.modifiers)
-							   << R"cpp(, R"gql()cpp" << inputField.defaultValueString
-							   << R"cpp()gql"sv))cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
-			}
-		}
-	}
-
-	if (!_unionTypes.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& unionType : _unionTypes)
-		{
-			if (!unionType.options.empty())
-			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
-)cpp";
-
-				for (const auto& unionOption : unionType.options)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		client->LookupType(R"gql()cpp" << unionOption
-							   << R"cpp()gql"sv))cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
-			}
-		}
-	}
-
-	if (!_interfaceTypes.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& interfaceType : _interfaceTypes)
-		{
-			if (!interfaceType.fields.empty())
-			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << interfaceType.cppType << R"cpp(->AddFields({
-)cpp";
-
-				for (const auto& interfaceField : interfaceType.fields)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		client::Field::Make(R"gql()cpp"
-							   << interfaceField.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << interfaceField.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp";
-
-					if (interfaceField.deprecationReason)
-					{
-						sourceFile << R"cpp(std::make_optional(R"md()cpp"
-								   << *interfaceField.deprecationReason << R"cpp()md"sv))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(std::nullopt)cpp";
-					}
-
-					sourceFile << R"cpp(, )cpp"
-							   << getIntrospectionType(interfaceField.type,
-									  interfaceField.modifiers);
-
-					if (!interfaceField.arguments.empty())
-					{
-						bool firstArgument = true;
-
-						sourceFile << R"cpp(, {
-)cpp";
-
-						for (const auto& argument : interfaceField.arguments)
-						{
-							if (!firstArgument)
-							{
-								sourceFile << R"cpp(,
-)cpp";
-							}
-
-							firstArgument = false;
-							sourceFile << R"cpp(			client::InputValue::Make(R"gql()cpp"
-									   << argument.name << R"cpp()gql"sv, R"md()cpp";
-
-							if (!_options.noIntrospection)
-							{
-								sourceFile << argument.description;
-							}
-
-							sourceFile << R"cpp()md"sv, )cpp"
-									   << getIntrospectionType(argument.type, argument.modifiers)
-									   << R"cpp(, R"gql()cpp" << argument.defaultValueString
-									   << R"cpp()gql"sv))cpp";
-						}
-
-						sourceFile << R"cpp(
-		})cpp";
-					}
-
-					sourceFile << R"cpp())cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
-			}
-		}
-	}
-
-	if (!_objectTypes.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& objectType : _objectTypes)
-		{
-			if (_options.separateFiles)
-			{
-				sourceFile << R"cpp(	Add)cpp" << objectType.cppType << R"cpp(Details(type)cpp"
-						   << objectType.cppType << R"cpp(, client);
-)cpp";
-			}
-			else
-			{
-				outputObjectIntrospection(sourceFile, objectType);
-			}
-		}
-	}
-
-	if (!_directives.empty())
-	{
-		sourceFile << std::endl;
-
-		for (const auto& directive : _directives)
-		{
-			sourceFile << R"cpp(	client->AddDirective(client::Directive::Make(R"gql()cpp"
-					   << directive.name << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << directive.description;
-			}
-
-			sourceFile << R"cpp()md"sv, {)cpp";
-
-			if (!directive.locations.empty())
-			{
-				bool firstLocation = true;
-
-				sourceFile << R"cpp(
-)cpp";
-
-				for (const auto& location : directive.locations)
-				{
-					if (!firstLocation)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstLocation = false;
-					sourceFile << R"cpp(		)cpp" << s_introspectionNamespace
-							   << R"cpp(::DirectiveLocation::)cpp" << location;
-				}
-
-				sourceFile << R"cpp(
-	)cpp";
-			}
-
-			sourceFile << R"cpp(})cpp";
-
-			if (!directive.arguments.empty())
-			{
-				bool firstArgument = true;
-
-				sourceFile << R"cpp(, {
-)cpp";
-
-				for (const auto& argument : directive.arguments)
-				{
-					if (!firstArgument)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstArgument = false;
-					sourceFile << R"cpp(		client::InputValue::Make(R"gql()cpp"
-							   << argument.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << argument.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp"
-							   << getIntrospectionType(argument.type, argument.modifiers)
-							   << R"cpp(, R"gql()cpp" << argument.defaultValueString
-							   << R"cpp()gql"sv))cpp";
-				}
-
-				sourceFile << R"cpp(
-	})cpp";
-			}
-			sourceFile << R"cpp());
-)cpp";
-		}
-	}
-
-	if (!_isIntrospection)
-	{
-		sourceFile << std::endl;
-
-		for (const auto& operationType : _operationTypes)
-		{
-			std::string operation(operationType.operation);
-
-			operation[0] =
-				static_cast<char>(std::toupper(static_cast<unsigned char>(operation[0])));
-			sourceFile << R"cpp(	client->Add)cpp" << operation << R"cpp(Type(type)cpp"
-					   << operationType.cppType << R"cpp();
-)cpp";
-		}
-	}
-
-	sourceFile << R"cpp(}
-
-)cpp";
-
-	if (!_isIntrospection)
-	{
-		sourceFile << R"cpp(std::shared_ptr<client::Client> GetClient()
+	sourceFile << R"cpp(std::shared_ptr<client::Client> GetClient()
 {
 	static std::weak_ptr<client::Client> s_wpClient;
 	auto client = s_wpClient.lock();
 
 	if (!client)
 	{
-		client = std::make_shared<client::Client>()cpp"
-				   << (_options.noIntrospection ? "true" : "false") << R"cpp();
-		)cpp" << s_introspectionNamespace
-				   << R"cpp(::AddTypesToClient(client);
+		client = std::make_shared<client::Client>(false);
 		AddTypesToClient(client);
 		s_wpClient = client;
 	}
@@ -2768,7 +2373,6 @@ Operations::Operations()cpp";
 }
 
 )cpp";
-	}
 
 	return true;
 }
@@ -2824,7 +2428,7 @@ void Generator::outputObjectImplementation(
 	resolvers["__typename"sv] =
 		R"cpp(		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp"s;
 
-	if (!_options.noIntrospection && isQueryType)
+	if (isQueryType)
 	{
 		resolvers["__client"sv] =
 			R"cpp(		{ R"gql(__client)gql"sv, [this](service::ResolverParams&& params) { return resolve_client(std::move(params)); } })cpp"s;
@@ -2849,7 +2453,7 @@ void Generator::outputObjectImplementation(
 	sourceFile << R"cpp(
 	}))cpp";
 
-	if (!_options.noIntrospection && isQueryType)
+	if (isQueryType)
 	{
 		sourceFile << R"cpp(
 	, _client(GetClient()))cpp";
@@ -2867,28 +2471,23 @@ void Generator::outputObjectImplementation(
 		std::string fieldName(outputField.cppName);
 
 		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-		if (!_isIntrospection && !_options.noStubs)
-		{
-			sourceFile << R"cpp(
+		sourceFile << R"cpp(
 service::FieldResult<)cpp"
-					   << getOutputCppType(outputField) << R"cpp(> )cpp" << objectType.cppType
-					   << R"cpp(::)cpp" << outputField.accessor << fieldName
-					   << R"cpp((service::FieldParams&&)cpp";
-			for (const auto& argument : outputField.arguments)
-			{
-				sourceFile << R"cpp(, )cpp" << getInputCppType(argument) << R"cpp(&&)cpp";
-			}
-
-			sourceFile << R"cpp() const
-{
-	throw std::runtime_error(R"ex()cpp"
-					   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
-					   << R"cpp( is not implemented)ex");
-}
-)cpp";
+				   << getOutputCppType(outputField) << R"cpp(> )cpp" << objectType.cppType
+				   << R"cpp(::)cpp" << outputField.accessor << fieldName
+				   << R"cpp((service::FieldParams&&)cpp";
+		for (const auto& argument : outputField.arguments)
+		{
+			sourceFile << R"cpp(, )cpp" << getInputCppType(argument) << R"cpp(&&)cpp";
 		}
 
-		sourceFile << R"cpp(
+		sourceFile << R"cpp() const
+{
+	throw std::runtime_error(R"ex()cpp"
+				   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
+				   << R"cpp( is not implemented)ex");
+}
+
 std::future<service::ResolverResult> )cpp"
 				   << objectType.cppType << R"cpp(::resolve)cpp" << fieldName
 				   << R"cpp((service::ResolverParams&& params)
@@ -2977,150 +2576,35 @@ std::future<service::ResolverResult> )cpp"
 }
 )cpp";
 
-	if (!_options.noIntrospection && isQueryType)
+	if (isQueryType)
 	{
 		sourceFile
 			<< R"cpp(
 std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType << R"cpp(::resolve_client(service::ResolverParams&& params)
+			<< objectType.cppType
+			<< R"cpp(::resolve_client(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
-			<< s_introspectionNamespace << R"cpp(::Client>(_client)), std::move(params));
+			// << s_introspectionNamespace
+			<< R"cpp(::Client>(_client)), std::move(params));
 }
 
 std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
+			<< objectType.cppType
+			<< R"cpp(::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _client->LookupType(argName);
 	std::shared_ptr<)cpp"
-			<< s_introspectionNamespace
+			// << s_introspectionNamespace
 			<< R"cpp(::object::Type> result { baseType ? std::make_shared<)cpp"
-			<< s_introspectionNamespace << R"cpp(::Type>(baseType) : nullptr };
+			// << s_introspectionNamespace
+			<< R"cpp(::Type>(baseType) : nullptr };
 
 	return service::ModifiedResult<)cpp"
-			<< s_introspectionNamespace
+			// << s_introspectionNamespace
 			<< R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
-)cpp";
-	}
-}
-
-void Generator::outputObjectIntrospection(
-	std::ostream& sourceFile, const ObjectType& objectType) const
-{
-	if (!objectType.interfaces.empty())
-	{
-		bool firstInterface = true;
-
-		sourceFile << R"cpp(	type)cpp" << objectType.cppType << R"cpp(->AddInterfaces({
-)cpp";
-
-		for (const auto& interfaceName : objectType.interfaces)
-		{
-			if (!firstInterface)
-			{
-				sourceFile << R"cpp(,
-)cpp";
-			}
-
-			firstInterface = false;
-
-			if (_options.separateFiles)
-			{
-				sourceFile
-					<< R"cpp(		std::static_pointer_cast<const client::InterfaceType>(client->LookupType(R"gql()cpp"
-					<< interfaceName << R"cpp()gql"sv)))cpp";
-			}
-			else
-			{
-				sourceFile << R"cpp(		type)cpp" << getSafeCppName(interfaceName);
-			}
-		}
-
-		sourceFile << R"cpp(
-	});
-)cpp";
-	}
-
-	if (!objectType.fields.empty())
-	{
-		bool firstValue = true;
-
-		sourceFile << R"cpp(	type)cpp" << objectType.cppType << R"cpp(->AddFields({
-)cpp";
-
-		for (const auto& objectField : objectType.fields)
-		{
-			if (!firstValue)
-			{
-				sourceFile << R"cpp(,
-)cpp";
-			}
-
-			firstValue = false;
-			sourceFile << R"cpp(		client::Field::Make(R"gql()cpp" << objectField.name
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << objectField.description;
-			}
-
-			sourceFile << R"cpp()md"sv, )cpp";
-
-			if (objectField.deprecationReason)
-			{
-				sourceFile << R"cpp(std::make_optional(R"md()cpp" << *objectField.deprecationReason
-						   << R"cpp()md"sv))cpp";
-			}
-			else
-			{
-				sourceFile << R"cpp(std::nullopt)cpp";
-			}
-
-			sourceFile << R"cpp(, )cpp"
-					   << getIntrospectionType(objectField.type, objectField.modifiers);
-
-			if (!objectField.arguments.empty())
-			{
-				bool firstArgument = true;
-
-				sourceFile << R"cpp(, {
-)cpp";
-
-				for (const auto& argument : objectField.arguments)
-				{
-					if (!firstArgument)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstArgument = false;
-					sourceFile << R"cpp(			client::InputValue::Make(R"gql()cpp"
-							   << argument.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << argument.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp"
-							   << getIntrospectionType(argument.type, argument.modifiers)
-							   << R"cpp(, R"gql()cpp" << argument.defaultValueString
-							   << R"cpp()gql"sv))cpp";
-				}
-
-				sourceFile << R"cpp(
-		})cpp";
-			}
-
-			sourceFile << R"cpp())cpp";
-		}
-
-		sourceFile << R"cpp(
-	});
 )cpp";
 	}
 }
@@ -3392,196 +2876,40 @@ std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) cons
 	return typeModifiers.str();
 }
 
-std::string Generator::getIntrospectionType(
-	std::string_view type, const TypeModifierStack& modifiers) const noexcept
+std::shared_ptr<const schema::BaseType> Generator::getIntrospectionType(
+	const std::shared_ptr<schema::Schema>& schema, std::string_view type,
+	TypeModifierStack modifiers, bool nonNull /* = true */) noexcept
 {
-	size_t wrapperCount = 0;
-	bool nonNull = true;
-	std::ostringstream introspectionType;
+	std::shared_ptr<const schema::BaseType> introspectionType;
 
-	for (auto modifier : modifiers)
+	if (modifiers.empty())
 	{
-		if (nonNull)
+		introspectionType = schema->LookupType(type);
+	}
+	else
+	{
+		const auto modifier = modifiers.front();
+
+		modifiers.erase(modifiers.cbegin());
+		introspectionType = getIntrospectionType(schema,
+			type,
+			std::move(modifiers),
+			modifier != service::TypeModifier::Nullable);
+
+		if (modifier == service::TypeModifier::List && introspectionType)
 		{
-			switch (modifier)
-			{
-				case service::TypeModifier::None:
-				case service::TypeModifier::List:
-				{
-					introspectionType << R"cpp(client->WrapType()cpp" << s_introspectionNamespace
-									  << R"cpp(::TypeKind::NON_NULL, )cpp";
-					++wrapperCount;
-					break;
-				}
-
-				case service::TypeModifier::Nullable:
-				{
-					// If the next modifier is Nullable that cancels the non-nullable state.
-					nonNull = false;
-					break;
-				}
-			}
-		}
-
-		switch (modifier)
-		{
-			case service::TypeModifier::None:
-			{
-				nonNull = true;
-				break;
-			}
-
-			case service::TypeModifier::List:
-			{
-				nonNull = true;
-				introspectionType << R"cpp(client->WrapType()cpp" << s_introspectionNamespace
-								  << R"cpp(::TypeKind::LIST, )cpp";
-				++wrapperCount;
-				break;
-			}
-
-			case service::TypeModifier::Nullable:
-				break;
+			introspectionType =
+				schema->WrapType(introspection::TypeKind::LIST, std::move(introspectionType));
 		}
 	}
 
-	if (nonNull)
+	if (nonNull && introspectionType)
 	{
-		introspectionType << R"cpp(client->WrapType()cpp" << s_introspectionNamespace
-						  << R"cpp(::TypeKind::NON_NULL, )cpp";
-		++wrapperCount;
+		introspectionType =
+			schema->WrapType(introspection::TypeKind::NON_NULL, std::move(introspectionType));
 	}
 
-	introspectionType << R"cpp(client->LookupType(")cpp" << type << R"cpp("))cpp";
-
-	for (size_t i = 0; i < wrapperCount; ++i)
-	{
-		introspectionType << R"cpp())cpp";
-	}
-
-	return introspectionType.str();
-}
-
-std::vector<std::string> Generator::outputSeparateFiles() const noexcept
-{
-	std::vector<std::string> files;
-	const fs::path headerDir(_headerDir);
-	const fs::path sourceDir(_sourceDir);
-	std::string_view queryType;
-
-	for (const auto& operation : _operationTypes)
-	{
-		if (operation.operation == service::strQuery)
-		{
-			queryType = operation.type;
-			break;
-		}
-	}
-
-	// Output a convenience header
-	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { objectHeaderFile,
-		fs::path(_objectHeaderPath).filename().string() };
-
-	objectHeaderFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string()
-					 << R"cpp("
-
-)cpp";
-
-	for (const auto& objectType : _objectTypes)
-	{
-		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
-
-		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
-)cpp";
-	}
-
-	if (_options.verbose)
-	{
-		files.push_back({ _objectHeaderPath });
-	}
-
-	for (const auto& objectType : _objectTypes)
-	{
-		std::ostringstream ossNamespace;
-
-		ossNamespace << R"cpp(graphql::)cpp" << _clientNamespace;
-
-		const auto clientNamespace = ossNamespace.str();
-
-		ossNamespace << R"cpp(::object)cpp";
-
-		const auto objectNamespace = ossNamespace.str();
-		const bool isQueryType = objectType.type == queryType;
-		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
-		auto headerPath = (headerDir / headerFilename).string();
-		std::ofstream headerFile(headerPath, std::ios_base::trunc);
-		IncludeGuardScope includeGuard { headerFile, headerFilename };
-
-		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
-
-)cpp";
-
-		NamespaceScope headerNamespace { headerFile, objectNamespace };
-
-		// Output the full declaration
-		headerFile << std::endl;
-		outputObjectDeclaration(headerFile, objectType, isQueryType);
-		headerFile << std::endl;
-
-		if (_options.verbose)
-		{
-			files.push_back(std::move(headerPath));
-		}
-
-		const auto sourceFilename = std::string(objectType.cppType) + "Object.cpp";
-		auto sourcePath = (sourceDir / sourceFilename).string();
-		std::ofstream sourceFile(sourcePath, std::ios_base::trunc);
-
-		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-// WARNING! Do not edit this file manually, your changes will be overwritten.
-
-#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
-				   << R"cpp("
-
-#include "graphqlservice/introspection/Introspection.h"
-
-#include <algorithm>
-#include <functional>
-#include <sstream>
-#include <stdexcept>
-#include <unordered_map>
-
-using namespace std::literals;
-
-)cpp";
-
-		NamespaceScope sourceClientNamespace { sourceFile, clientNamespace };
-		NamespaceScope sourceObjectNamespace { sourceFile, "object" };
-
-		sourceFile << std::endl;
-		outputObjectImplementation(sourceFile, objectType, isQueryType);
-		sourceFile << std::endl;
-
-		sourceObjectNamespace.exit();
-		sourceFile << std::endl;
-
-		sourceFile << R"cpp(void Add)cpp" << objectType.cppType
-				   << R"cpp(Details(std::shared_ptr<client::ObjectType> type)cpp"
-				   << objectType.cppType << R"cpp(, const std::shared_ptr<client::Client>& client)
-{
-)cpp";
-		outputObjectIntrospection(sourceFile, objectType);
-		sourceFile << R"cpp(}
-
-)cpp";
-
-		files.push_back(std::move(sourcePath));
-	}
-
-	return files;
+	return introspectionType;
 }
 
 } /* namespace graphql::client */
@@ -3595,7 +2923,8 @@ void outputVersion(std::ostream& ostm)
 
 void outputUsage(std::ostream& ostm, const po::options_description& options)
 {
-	ostm << "Usage:\tclientgen [options] <client file> <output filename prefix> <output namespace>"
+	ostm << "Usage:\tclientgen [options] <schema file> <request file> <output filename prefix> "
+			"<output namespace>"
 		 << std::endl;
 	ostm << options;
 }
@@ -3604,17 +2933,14 @@ int main(int argc, char** argv)
 {
 	po::options_description options("Command line options");
 	po::positional_options_description positional;
-	po::options_description internalOptions("Internal options");
 	po::variables_map variables;
 	bool showUsage = false;
 	bool showVersion = false;
-	bool buildIntrospection = false;
 	bool buildCustom = false;
-	bool noStubs = false;
 	bool verbose = false;
-	bool separateFiles = false;
 	bool noIntrospection = false;
-	std::string clientFileName;
+	std::string schemaFileName;
+	std::string requestFileName;
 	std::string filenamePrefix;
 	std::string clientNamespace;
 	std::string sourceDir;
@@ -3625,9 +2951,11 @@ int main(int argc, char** argv)
 		po::bool_switch(&showUsage),
 		"Print the command line options")("verbose,v",
 		po::bool_switch(&verbose),
-		"Verbose output including generated header names as well as sources")("client,s",
-		po::value(&clientFileName),
-		"Client definition file path")("prefix,p",
+		"Verbose output including generated header names as well as sources")("schema,s",
+		po::value(&schemaFileName),
+		"Schema definition file path")("request,r",
+		po::value(&requestFileName),
+		"Request document file path")("prefix,p",
 		po::value(&filenamePrefix),
 		"Prefix to use for the generated C++ filenames")("namespace,n",
 		po::value(&clientNamespace),
@@ -3635,37 +2963,30 @@ int main(int argc, char** argv)
 		po::value(&sourceDir),
 		"Target path for the <prefix>Client.cpp source file")("header-dir",
 		po::value(&headerDir),
-		"Target path for the <prefix>Client.h header file")("no-stubs",
-		po::bool_switch(&noStubs),
-		"Generate abstract classes without stub implementations")("separate-files",
-		po::bool_switch(&separateFiles),
-		"Generate separate files for each of the types")("no-introspection",
+		"Target path for the <prefix>Client.h header file")("no-introspection",
 		po::bool_switch(&noIntrospection),
 		"Do not generate support for Introspection");
-	positional.add("client", 1).add("prefix", 1).add("namespace", 1);
-	internalOptions.add_options()("introspection",
-		po::bool_switch(&buildIntrospection),
-		"Generate IntrospectionClient.*");
-	internalOptions.add(options);
+	positional.add("schema", 1).add("request", 1).add("prefix", 1).add("namespace", 1);
 
 	try
 	{
-		po::store(po::command_line_parser(argc, argv)
-					  .options(internalOptions)
-					  .positional(positional)
-					  .run(),
+		po::store(po::command_line_parser(argc, argv).options(options).positional(positional).run(),
 			variables);
 		po::notify(variables);
 
 		// If you specify any of these parameters, you must specify all three.
-		buildCustom =
-			!clientFileName.empty() || !filenamePrefix.empty() || !clientNamespace.empty();
+		buildCustom = !schemaFileName.empty() || !requestFileName.empty() || !filenamePrefix.empty()
+			|| !clientNamespace.empty();
 
 		if (buildCustom)
 		{
-			if (clientFileName.empty())
+			if (schemaFileName.empty())
 			{
-				throw po::required_option("client");
+				throw po::required_option("schema");
+			}
+			else if (requestFileName.empty())
+			{
+				throw po::required_option("request");
 			}
 			else if (filenamePrefix.empty())
 			{
@@ -3689,7 +3010,7 @@ int main(int argc, char** argv)
 		outputVersion(std::cout);
 		return 0;
 	}
-	else if (showUsage || (!buildIntrospection && !buildCustom))
+	else if (showUsage || !buildCustom)
 	{
 		outputUsage(std::cout, options);
 		return 0;
@@ -3697,34 +3018,21 @@ int main(int argc, char** argv)
 
 	try
 	{
-		if (buildIntrospection)
-		{
-			const auto files =
-				graphql::client::Generator({ std::nullopt, std::nullopt, verbose }).Build();
-
-			for (const auto& file : files)
+		const auto files = graphql::client::Generator(
 			{
-				std::cout << file << std::endl;
-			}
-		}
+				graphql::client::GeneratorClient { std::move(schemaFileName),
+					std::move(requestFileName),
+					std::move(filenamePrefix),
+					std::move(clientNamespace) },
+				graphql::client::GeneratorPaths { std::move(headerDir), std::move(sourceDir) },
+				verbose,
+				noIntrospection,
+			})
+							   .Build();
 
-		if (buildCustom)
+		for (const auto& file : files)
 		{
-			const auto files = graphql::client::Generator(
-				{ graphql::client::GeneratorClient { std::move(clientFileName),
-					  std::move(filenamePrefix),
-					  std::move(clientNamespace) },
-					graphql::client::GeneratorPaths { std::move(headerDir), std::move(sourceDir) },
-					verbose,
-					separateFiles,
-					noStubs,
-					noIntrospection })
-								   .Build();
-
-			for (const auto& file : files)
-			{
-				std::cout << file << std::endl;
-			}
+			std::cout << file << std::endl;
 		}
 	}
 	catch (const graphql::peg::parse_error& pe)
@@ -3734,6 +3042,48 @@ int main(int argc, char** argv)
 		for (const auto& position : pe.positions())
 		{
 			std::cerr << "\tline: " << position.line << " column: " << position.column << std::endl;
+		}
+
+		return 1;
+	}
+	catch (graphql::service::schema_exception& scx)
+	{
+		auto errors = scx.getStructuredErrors();
+
+		std::cerr << "Invalid Request:" << std::endl;
+
+		for (const auto& error : errors)
+		{
+			std::cerr << "\tmessage: " << error.message << ", line: " << error.location.line
+					  << ", column: " << error.location.column << std::endl;
+
+			if (!error.path.empty())
+			{
+				bool addSeparator = false;
+
+				std::cerr << "\tpath: ";
+
+				for (const auto& segment : error.path)
+				{
+					if (std::holds_alternative<size_t>(segment))
+					{
+						std::cerr << '[' << std::get<size_t>(segment) << ']';
+					}
+					else
+					{
+						if (addSeparator)
+						{
+							std::cerr << '.';
+						}
+
+						std::cerr << std::get<std::string_view>(segment);
+					}
+
+					addSeparator = true;
+				}
+
+				std::cerr << std::endl;
+			}
 		}
 
 		return 1;

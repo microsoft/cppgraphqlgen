@@ -327,6 +327,10 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlintrospection)
 endif()
 
+if(GRAPHQL_BUILD_CLIENTGEN)
+  target_link_libraries(clientgen PRIVATE graphqlintrospection)
+endif()
+
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
 # JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
