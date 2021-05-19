@@ -691,10 +691,7 @@ void Generator::addTypesToSchema(const std::shared_ptr<schema::Schema>& schema) 
 					return interfaceTypes[interfaceName];
 				});
 
-			itr->second->AddInterfaces(
-				std::initializer_list<std::shared_ptr<const schema::InterfaceType>>(
-					interfaces.data(),
-					interfaces.data() + interfaces.size()));
+			itr->second->AddInterfaces(std::move(interfaces));
 		}
 
 		if (!objectType.fields.empty())
