@@ -102,7 +102,9 @@ endif()
 
 # Common schemagen and clientgen dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
-  add_library(generator_util STATIC GeneratorUtil.cpp)
+  add_library(generator_util STATIC
+    SchemaLoader.cpp
+    GeneratorUtil.cpp)
   target_link_libraries(generator_util PUBLIC
     graphqlpeg
     graphqlresponse)
