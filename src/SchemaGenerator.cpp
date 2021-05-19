@@ -1673,28 +1673,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 		}
-
-		if (_isIntrospection)
-		{
-			headerFile << R"cpp(#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-)cpp";
-
-			for (const auto& enumType : _enumTypes)
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << enumType.cppType << R"cpp( service::ModifiedArgument<)cpp" << enumType.cppType << R"cpp(>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT std::future<service::ResolverResult> service::ModifiedResult<)cpp" << enumType.cppType << R"cpp(>::convert(
-	service::FieldResult<)cpp" << enumType.cppType << R"cpp(>&& result, service::ResolverParams&& params);
-)cpp";
-			}
-
-			headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
-
-)cpp";
-		}
 	}
 
 	if (!_inputTypes.empty())
@@ -1725,25 +1703,6 @@ GRAPHQLSERVICE_EXPORT std::future<service::ResolverResult> service::ModifiedResu
 )cpp";
 			}
 			headerFile << R"cpp(};
-
-)cpp";
-		}
-
-		if (_isIntrospection)
-		{
-			headerFile << R"cpp(#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-)cpp";
-
-			for (const auto& inputType : _inputTypes)
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << inputType.cppType << R"cpp( service::ModifiedArgument<)cpp" << inputType.cppType << R"cpp(>::convert(
-	const response::Value& value);
-)cpp";
-			}
-
-			headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
 
 )cpp";
 		}
@@ -1877,16 +1836,63 @@ private:
 	if (_isIntrospection)
 	{
 		headerFile
-			<< R"cpp(GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);)cpp";
+			<< R"cpp(GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+
+)cpp";
+
+		if (!_enumTypes.empty() || !_inputTypes.empty())
+		{
+			if (schemaNamespace.exit())
+			{
+				headerFile << std::endl;
+			}
+
+			NamespaceScope serviceNamespace { headerFile, "service" };
+
+			headerFile << R"cpp(
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+)cpp";
+
+			for (const auto& enumType : _enumTypes)
+			{
+				headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp" << _schemaNamespace
+						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+						   << R"cpp(>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<)cpp"
+						   << _schemaNamespace << R"cpp(::)cpp" << enumType.cppType
+						   << R"cpp(>::convert(
+	FieldResult<)cpp" << _schemaNamespace
+						   << R"cpp(::)cpp" << enumType.cppType
+						   << R"cpp(>&& result, ResolverParams&& params);
+)cpp";
+			}
+
+			for (const auto& inputType : _inputTypes)
+			{
+				headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp" << _schemaNamespace
+						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << inputType.cppType << R"cpp(>::convert(
+	const response::Value& value);
+)cpp";
+			}
+
+			headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
+
+)cpp";
+		}
 	}
 	else
 	{
-		headerFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema();)cpp";
-	}
-
-	headerFile << R"cpp(
+		headerFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema();
 
 )cpp";
+	}
 
 	return true;
 }

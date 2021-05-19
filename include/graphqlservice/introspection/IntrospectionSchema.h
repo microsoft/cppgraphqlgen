@@ -68,22 +68,6 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-template <>
-GRAPHQLSERVICE_EXPORT TypeKind service::ModifiedArgument<TypeKind>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT std::future<service::ResolverResult> service::ModifiedResult<TypeKind>::convert(
-	service::FieldResult<TypeKind>&& result, service::ResolverParams&& params);
-template <>
-GRAPHQLSERVICE_EXPORT DirectiveLocation service::ModifiedArgument<DirectiveLocation>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT std::future<service::ResolverResult> service::ModifiedResult<DirectiveLocation>::convert(
-	service::FieldResult<DirectiveLocation>&& result, service::ResolverParams&& params);
-#endif // GRAPHQL_DLLEXPORTS
-
 namespace object {
 
 class Schema;
@@ -240,6 +224,26 @@ private:
 GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } /* namespace introspection */
+
+namespace service {
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<introspection::TypeKind>::convert(
+	FieldResult<introspection::TypeKind>&& result, ResolverParams&& params);
+template <>
+GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(
+	FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params);
+#endif // GRAPHQL_DLLEXPORTS
+
+} /* namespace service */
 } /* namespace graphql */
 
 #endif // INTROSPECTIONSCHEMA_H
