@@ -101,6 +101,61 @@ if(GRAPHQL_UPDATE_SAMPLES)
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
       updated_samples)
+
+  if(GRAPHQL_BUILD_CLIENTGEN)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/client)
+
+    # query.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/query.today.graphql" --prefix="Query" --namespace="query"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        QueryClient.cpp
+        QueryClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql query.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating QueryClient samples")
+
+    # mutate.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/mutate.today.graphql" --prefix="Mutate" --namespace="mutate"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        MutateClient.cpp
+        MutateClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql mutate.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating MutateClient samples")
+
+    # subscribe.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/subscribe.today.graphql" --prefix="Subscribe" --namespace="subscribe"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        SubscribeClient.cpp
+        SubscribeClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql subscribe.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating SubscribeClient samples")
+
+    add_custom_target(update_client_samples ALL
+      DEPENDS
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h)
+  endif()
 endif()
 
 # separateschema
