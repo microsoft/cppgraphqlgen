@@ -9,8 +9,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
@@ -25,8 +25,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
@@ -41,8 +41,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ValidationSchema.cpp
@@ -56,7 +56,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate
     DEPENDS schemagen graphqlpeg schema.today.graphql
@@ -67,7 +67,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection)
 
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection/today_schema_files
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection --separate-files > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection
     DEPENDS schemagen graphqlpeg schema.today.graphql
@@ -88,18 +88,19 @@ if(GRAPHQL_UPDATE_SAMPLES)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/update_samples.cmake"
     COMMAND ${CMAKE_COMMAND} -E touch updated_samples
     DEPENDS 
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
-      ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
     COMMENT "Updating sample files")
 
   add_custom_target(update_samples ALL
-    DEPENDS updated_samples)
+    DEPENDS
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
+      updated_samples)
 endif()
 
 # separateschema
