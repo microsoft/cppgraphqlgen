@@ -1659,6 +1659,7 @@ int main(int argc, char** argv)
 	bool noIntrospection = false;
 	std::string schemaFileName;
 	std::string requestFileName;
+	std::string operationName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
 	std::string sourceDir;
@@ -1673,7 +1674,9 @@ int main(int argc, char** argv)
 		po::value(&schemaFileName),
 		"Schema definition file path")("request,r",
 		po::value(&requestFileName),
-		"Request document file path")("prefix,p",
+		"Request document file path")("operation,o",
+		po::value(&operationName),
+		"Operation name if the request document contains more than one")("prefix,p",
 		po::value(&filenamePrefix),
 		"Prefix to use for the generated C++ filenames")("namespace,n",
 		po::value(&schemaNamespace),
@@ -1742,6 +1745,7 @@ int main(int argc, char** argv)
 				std::move(schemaNamespace) },
 			graphql::generator::client::GeneratorOptions {
 				std::move(requestFileName),
+				std::move(operationName),
 				graphql::generator::client::GeneratorPaths { std::move(headerDir),
 					std::move(sourceDir) },
 				verbose,

@@ -21,6 +21,7 @@ struct GeneratorPaths
 struct GeneratorOptions
 {
 	const std::string requestFilename;
+	const std::string operationName;
 	const std::optional<GeneratorPaths> paths;
 	const bool verbose = false;
 	const bool noIntrospection = false;
