@@ -9,69 +9,19 @@
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLService.h"
 
-namespace graphql::runtime {
+namespace graphql::generator {
 
-// ValueVisitor visits the AST and builds a response::Value representation of any value
-// hardcoded or referencing a variable in an operation.
-class ValueVisitor
+class RequestLoader
 {
 public:
-	GRAPHQLSERVICE_EXPORT ValueVisitor(const response::Value& variables);
+	explicit RequestLoader();
 
-	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& value);
-
-	GRAPHQLSERVICE_EXPORT response::Value getValue();
+	void visit(const peg::ast& request, std::string_view operationName);
 
 private:
-	void visitVariable(const peg::ast_node& variable);
-	void visitIntValue(const peg::ast_node& intValue);
-	void visitFloatValue(const peg::ast_node& floatValue);
-	void visitStringValue(const peg::ast_node& stringValue);
-	void visitBooleanValue(const peg::ast_node& booleanValue);
-	void visitNullValue(const peg::ast_node& nullValue);
-	void visitEnumValue(const peg::ast_node& enumValue);
-	void visitListValue(const peg::ast_node& listValue);
-	void visitObjectValue(const peg::ast_node& objectValue);
 
-	const response::Value& _variables;
-	response::Value _value;
 };
 
-// DirectiveVisitor visits the AST and builds a 2-level map of directive names to argument
-// name/value pairs.
-class DirectiveVisitor
-{
-public:
-	GRAPHQLSERVICE_EXPORT explicit DirectiveVisitor(const response::Value& variables);
-
-	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& directives);
-
-	GRAPHQLSERVICE_EXPORT bool shouldSkip() const;
-	GRAPHQLSERVICE_EXPORT response::Value getDirectives();
-
-private:
-	const response::Value& _variables;
-
-	response::Value _directives;
-};
-
-// FragmentDefinitionVisitor visits the AST and collects all of the fragment
-// definitions in the document.
-class FragmentDefinitionVisitor
-{
-public:
-	GRAPHQLSERVICE_EXPORT FragmentDefinitionVisitor(const response::Value& variables);
-
-	GRAPHQLSERVICE_EXPORT service::FragmentMap getFragments();
-
-	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& fragmentDefinition);
-
-private:
-	const response::Value& _variables;
-
-	service::FragmentMap _fragments;
-};
-
-} /* namespace graphql::runtime */
+} /* namespace graphql::generator */
 
 #endif // REQUESTLOADER_H

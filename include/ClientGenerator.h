@@ -7,6 +7,7 @@
 #define CLIENTGENERATOR_H
 
 #include "SchemaLoader.h"
+#include "RequestLoader.h"
 
 #include "graphqlservice/GraphQLSchema.h"
 

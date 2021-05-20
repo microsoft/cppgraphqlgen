@@ -230,7 +230,7 @@ struct SchemaOptions
 class SchemaLoader
 {
 public:
-	// Initialize the generator with the introspection schema or a custom GraphQL schema.
+	// Initialize the loader with the introspection schema or a custom GraphQL schema.
 	explicit SchemaLoader(std::optional<SchemaOptions>&& customSchema);
 
 	bool isIntrospection() const noexcept;

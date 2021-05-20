@@ -154,7 +154,9 @@ endif()
 
 # clientgen
 if(GRAPHQL_BUILD_CLIENTGEN)
-  add_executable(clientgen ClientGenerator.cpp)
+  add_executable(clientgen
+    ClientGenerator.cpp
+    RequestLoader.cpp)
   add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
   target_link_libraries(clientgen PRIVATE generator_util)
   add_bigobj_flag(clientgen)
@@ -292,7 +294,6 @@ endif()
 add_library(graphqlservice
   GraphQLService.cpp
   GraphQLSchema.cpp
-  RequestLoader.cpp
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
