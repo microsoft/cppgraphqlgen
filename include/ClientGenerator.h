@@ -6,10 +6,7 @@
 #ifndef CLIENTGENERATOR_H
 #define CLIENTGENERATOR_H
 
-#include "SchemaLoader.h"
 #include "RequestLoader.h"
-
-#include "graphqlservice/GraphQLSchema.h"
 
 namespace graphql::generator::client {
 
@@ -21,18 +18,15 @@ struct GeneratorPaths
 
 struct GeneratorOptions
 {
-	const std::string requestFilename;
-	const std::string operationName;
 	const std::optional<GeneratorPaths> paths;
 	const bool verbose = false;
-	const bool noIntrospection = false;
 };
 
 class Generator
 {
 public:
 	// Initialize the generator with the introspection client or a custom GraphQL client.
-	explicit Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options);
+	explicit Generator(SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
@@ -42,10 +36,6 @@ private:
 	std::string getSourceDir() const noexcept;
 	std::string getHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
-
-	void validateRequest() const;
-	std::shared_ptr<schema::Schema> buildSchema() const;
-	void addTypesToSchema(const std::shared_ptr<schema::Schema>& schema) const;
 
 	bool outputHeader() const noexcept;
 	void outputObjectDeclaration(
@@ -65,17 +55,13 @@ private:
 	std::string getResultAccessType(const OutputField& result) const noexcept;
 	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
 
-	static std::shared_ptr<const schema::BaseType> getIntrospectionType(
-		const std::shared_ptr<schema::Schema>& schema, std::string_view type,
-		const TypeModifierStack& modifiers) noexcept;
-
-	SchemaLoader _loader;
+	const SchemaLoader _schemaLoader;
+	const RequestLoader _requestLoader;
 	const GeneratorOptions _options;
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
 	const std::string _sourcePath;
-	peg::ast _request;
 };
 
 } /* namespace graphql::generator::client */

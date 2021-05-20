@@ -11,7 +11,6 @@
 #include "graphqlservice/GraphQLService.h"
 
 #include <array>
-#include <cstdio>
 #include <unordered_map>
 #include <unordered_set>
 
