@@ -9,12 +9,13 @@ if(GRAPHQL_UPDATE_VERSION)
     ${CMAKE_CURRENT_BINARY_DIR}/Version.h
     @ONLY)
 
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
+  add_custom_command(OUTPUT updated_version_h
     COMMAND ${CMAKE_COMMAND} -E copy_if_different Version.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal
+    COMMAND ${CMAKE_COMMAND} -E touch updated_version_h
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 
   add_custom_target(update_version_h ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h)
+    DEPENDS updated_version_h)
 
   # res/target_version.rc
   set(GRAPHQL_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
@@ -29,12 +30,14 @@ if(GRAPHQL_UPDATE_VERSION)
       ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
       @ONLY)
 
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc
+    add_custom_command(OUTPUT updated_${target}_version_rc
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${target}_version.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_${target}_version_rc
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc)
 
     add_custom_target(update_${target}_version_rc ALL
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
+      DEPENDS updated_${target}_version_rc)
+    add_dependencies(${target} update_${target}_version_rc)
   endfunction()
 endif()
 
@@ -128,12 +131,14 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
       ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
       @ONLY)
 
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc
+    add_custom_command(OUTPUT updated_schemagen_rc
       COMMAND ${CMAKE_COMMAND} -E copy_if_different SchemaGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_schemagen_rc
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
 
     add_custom_target(update_schemagen_rc ALL
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
+      DEPENDS updated_schemagen_rc)
+    add_dependencies(schemagen update_schemagen_rc)
   endif()
 
   if(WIN32)
@@ -165,12 +170,14 @@ if(GRAPHQL_BUILD_CLIENTGEN)
       ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc
       @ONLY)
   
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc
+    add_custom_command(OUTPUT updated_clientgen_rc
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ClientGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_clientgen_rc
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc)
   
     add_custom_target(update_clientgen_rc ALL
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
+      DEPENDS updated_clientgen_rc)
+    add_dependencies(clientgen update_clientgen_rc)
   endif()
 
   if(WIN32)
