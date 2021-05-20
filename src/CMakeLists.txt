@@ -285,6 +285,7 @@ endif()
 add_library(graphqlservice
   GraphQLService.cpp
   GraphQLSchema.cpp
+  RequestLoader.cpp
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
