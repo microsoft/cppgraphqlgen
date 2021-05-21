@@ -16,49 +16,33 @@ namespace graphql::generator {
 RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader)
 	: _requestOptions(std::move(requestOptions))
 {
+	buildSchema(schemaLoader);
+
 	_ast = peg::parseFile(_requestOptions.requestFilename);
 
 	if (!_ast.root)
 	{
 		throw std::logic_error("Unable to parse the request document, but there was no error "
-			"message from the parser!");
+							   "message from the parser!");
 	}
 
-	_schema = buildSchema(schemaLoader);
 	validateRequest();
 }
 
-void RequestLoader::validateRequest() const
+void RequestLoader::buildSchema(const SchemaLoader& schemaLoader)
 {
-	service::ValidateExecutableVisitor validation { _schema };
-
-	validation.visit(*_ast.root);
-
-	auto errors = validation.getStructuredErrors();
-
-	if (!errors.empty())
-	{
-		throw service::schema_exception { std::move(errors) };
-	}
+	_schema = std::make_shared<schema::Schema>(_requestOptions.noIntrospection);
+	introspection::AddTypesToSchema(_schema);
+	addTypesToSchema(schemaLoader);
 }
 
-std::shared_ptr<schema::Schema> RequestLoader::buildSchema(const SchemaLoader& schemaLoader) const
-{
-	auto schema = std::make_shared<schema::Schema>(_requestOptions.noIntrospection);
-
-	introspection::AddTypesToSchema(schema);
-	addTypesToSchema(schemaLoader, schema);
-
-	return schema;
-}
-
-void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std::shared_ptr<schema::Schema>& schema) const
+void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 {
 	if (!schemaLoader.getScalarTypes().empty())
 	{
 		for (const auto& scalarType : schemaLoader.getScalarTypes())
 		{
-			schema->AddType(scalarType.type,
+			_schema->AddType(scalarType.type,
 				schema::ScalarType::Make(scalarType.type, scalarType.description));
 		}
 	}
@@ -70,11 +54,11 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		for (const auto& enumType : schemaLoader.getEnumTypes())
 		{
 			const auto itr = enumTypes
-				.emplace(std::make_pair(enumType.type,
-					schema::EnumType::Make(enumType.type, enumType.description)))
-				.first;
+								 .emplace(std::make_pair(enumType.type,
+									 schema::EnumType::Make(enumType.type, enumType.description)))
+								 .first;
 
-			schema->AddType(enumType.type, itr->second);
+			_schema->AddType(enumType.type, itr->second);
 		}
 	}
 
@@ -86,11 +70,11 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		{
 			const auto itr =
 				inputTypes
-				.emplace(std::make_pair(inputType.type,
-					schema::InputObjectType::Make(inputType.type, inputType.description)))
-				.first;
+					.emplace(std::make_pair(inputType.type,
+						schema::InputObjectType::Make(inputType.type, inputType.description)))
+					.first;
 
-			schema->AddType(inputType.type, itr->second);
+			_schema->AddType(inputType.type, itr->second);
 		}
 	}
 
@@ -102,11 +86,11 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		{
 			const auto itr =
 				unionTypes
-				.emplace(std::make_pair(unionType.type,
-					schema::UnionType::Make(unionType.type, unionType.description)))
-				.first;
+					.emplace(std::make_pair(unionType.type,
+						schema::UnionType::Make(unionType.type, unionType.description)))
+					.first;
 
-			schema->AddType(unionType.type, itr->second);
+			_schema->AddType(unionType.type, itr->second);
 		}
 	}
 
@@ -118,11 +102,11 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		{
 			const auto itr =
 				interfaceTypes
-				.emplace(std::make_pair(interfaceType.type,
-					schema::InterfaceType::Make(interfaceType.type, interfaceType.description)))
-				.first;
+					.emplace(std::make_pair(interfaceType.type,
+						schema::InterfaceType::Make(interfaceType.type, interfaceType.description)))
+					.first;
 
-			schema->AddType(interfaceType.type, itr->second);
+			_schema->AddType(interfaceType.type, itr->second);
 		}
 	}
 
@@ -134,11 +118,11 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		{
 			const auto itr =
 				objectTypes
-				.emplace(std::make_pair(objectType.type,
-					schema::ObjectType::Make(objectType.type, objectType.description)))
-				.first;
+					.emplace(std::make_pair(objectType.type,
+						schema::ObjectType::Make(objectType.type, objectType.description)))
+					.first;
 
-			schema->AddType(objectType.type, itr->second);
+			_schema->AddType(objectType.type, itr->second);
 		}
 	}
 
@@ -153,14 +137,13 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(enumType.values.cbegin(),
 				enumType.values.cend(),
 				values.begin(),
-				[](const EnumValueType& value) noexcept
-			{
-				return schema::EnumValueType {
-					value.value,
-					value.description,
-					value.deprecationReason,
-				};
-			});
+				[](const EnumValueType& value) noexcept {
+					return schema::EnumValueType {
+						value.value,
+						value.description,
+						value.deprecationReason,
+					};
+				});
 
 			itr->second->AddEnumValues(std::move(values));
 		}
@@ -177,13 +160,12 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(inputType.fields.cbegin(),
 				inputType.fields.cend(),
 				fields.begin(),
-				[schema](const InputField& field) noexcept
-			{
-				return schema::InputValue::Make(field.name,
-					field.description,
-					getIntrospectionType(schema, field.type, field.modifiers),
-					field.defaultValueString);
-			});
+				[this](const InputField& field) noexcept {
+					return schema::InputValue::Make(field.name,
+						field.description,
+						getSchemaType(field.type, field.modifiers),
+						field.defaultValueString);
+				});
 
 			itr->second->AddInputValues(std::move(fields));
 		}
@@ -200,10 +182,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(unionType.options.cbegin(),
 				unionType.options.cend(),
 				options.begin(),
-				[schema](std::string_view option) noexcept
-			{
-				return schema->LookupType(option);
-			});
+				[this](std::string_view option) noexcept {
+					return _schema->LookupType(option);
+				});
 
 			itr->second->AddPossibleTypes(std::move(options));
 		}
@@ -220,28 +201,26 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(interfaceType.fields.cbegin(),
 				interfaceType.fields.cend(),
 				fields.begin(),
-				[schema](const OutputField& field) noexcept
-			{
-				std::vector<std::shared_ptr<const schema::InputValue>> arguments(
-					field.arguments.size());
+				[this](const OutputField& field) noexcept {
+					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
+						field.arguments.size());
 
-				std::transform(field.arguments.cbegin(),
-					field.arguments.cend(),
-					arguments.begin(),
-					[schema](const InputField& argument) noexcept
-				{
-					return schema::InputValue::Make(argument.name,
-						argument.description,
-						getIntrospectionType(schema, argument.type, argument.modifiers),
-						argument.defaultValueString);
+					std::transform(field.arguments.cbegin(),
+						field.arguments.cend(),
+						arguments.begin(),
+						[this](const InputField& argument) noexcept {
+							return schema::InputValue::Make(argument.name,
+								argument.description,
+								getSchemaType(argument.type, argument.modifiers),
+								argument.defaultValueString);
+						});
+
+					return schema::Field::Make(field.name,
+						field.description,
+						field.deprecationReason,
+						getSchemaType(field.type, field.modifiers),
+						std::move(arguments));
 				});
-
-				return schema::Field::Make(field.name,
-					field.description,
-					field.deprecationReason,
-					getIntrospectionType(schema, field.type, field.modifiers),
-					std::move(arguments));
-			});
 
 			itr->second->AddFields(std::move(fields));
 		}
@@ -259,10 +238,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(objectType.interfaces.cbegin(),
 				objectType.interfaces.cend(),
 				interfaces.begin(),
-				[schema, &interfaceTypes](std::string_view interfaceName) noexcept
-			{
-				return interfaceTypes[interfaceName];
-			});
+				[this, &interfaceTypes](std::string_view interfaceName) noexcept {
+					return interfaceTypes[interfaceName];
+				});
 
 			itr->second->AddInterfaces(std::move(interfaces));
 		}
@@ -274,28 +252,26 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 			std::transform(objectType.fields.cbegin(),
 				objectType.fields.cend(),
 				fields.begin(),
-				[schema](const OutputField& field) noexcept
-			{
-				std::vector<std::shared_ptr<const schema::InputValue>> arguments(
-					field.arguments.size());
+				[this](const OutputField& field) noexcept {
+					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
+						field.arguments.size());
 
-				std::transform(field.arguments.cbegin(),
-					field.arguments.cend(),
-					arguments.begin(),
-					[schema](const InputField& argument) noexcept
-				{
-					return schema::InputValue::Make(argument.name,
-						argument.description,
-						getIntrospectionType(schema, argument.type, argument.modifiers),
-						argument.defaultValueString);
+					std::transform(field.arguments.cbegin(),
+						field.arguments.cend(),
+						arguments.begin(),
+						[this](const InputField& argument) noexcept {
+							return schema::InputValue::Make(argument.name,
+								argument.description,
+								getSchemaType(argument.type, argument.modifiers),
+								argument.defaultValueString);
+						});
+
+					return schema::Field::Make(field.name,
+						field.description,
+						field.deprecationReason,
+						getSchemaType(field.type, field.modifiers),
+						std::move(arguments));
 				});
-
-				return schema::Field::Make(field.name,
-					field.description,
-					field.deprecationReason,
-					getIntrospectionType(schema, field.type, field.modifiers),
-					std::move(arguments));
-			});
 
 			itr->second->AddFields(std::move(fields));
 		}
@@ -308,15 +284,14 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		std::transform(directive.locations.cbegin(),
 			directive.locations.cend(),
 			locations.begin(),
-			[](std::string_view locationName) noexcept
-		{
-			response::Value locationValue(response::Type::EnumValue);
+			[](std::string_view locationName) noexcept {
+				response::Value locationValue(response::Type::EnumValue);
 
-			locationValue.set<response::StringType>(response::StringType { locationName });
+				locationValue.set<response::StringType>(response::StringType { locationName });
 
-			return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
-				locationValue);
-		});
+				return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
+					locationValue);
+			});
 
 		std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 			directive.arguments.size());
@@ -324,15 +299,14 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 		std::transform(directive.arguments.cbegin(),
 			directive.arguments.cend(),
 			arguments.begin(),
-			[schema](const InputField& argument) noexcept
-		{
-			return schema::InputValue::Make(argument.name,
-				argument.description,
-				getIntrospectionType(schema, argument.type, argument.modifiers),
-				argument.defaultValueString);
-		});
+			[this](const InputField& argument) noexcept {
+				return schema::InputValue::Make(argument.name,
+					argument.description,
+					getSchemaType(argument.type, argument.modifiers),
+					argument.defaultValueString);
+			});
 
-		schema->AddDirective(schema::Directive::Make(directive.name,
+		_schema->AddDirective(schema::Directive::Make(directive.name,
 			directive.description,
 			std::move(locations),
 			std::move(arguments)));
@@ -344,24 +318,23 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader, const std
 
 		if (operationType.operation == service::strQuery)
 		{
-			schema->AddQueryType(itr->second);
+			_schema->AddQueryType(itr->second);
 		}
 		else if (operationType.operation == service::strMutation)
 		{
-			schema->AddMutationType(itr->second);
+			_schema->AddMutationType(itr->second);
 		}
 		else if (operationType.operation == service::strSubscription)
 		{
-			schema->AddSubscriptionType(itr->second);
+			_schema->AddSubscriptionType(itr->second);
 		}
 	}
 }
 
-std::shared_ptr<const schema::BaseType> RequestLoader::getIntrospectionType(
-	const std::shared_ptr<schema::Schema>& schema, std::string_view type,
-	const TypeModifierStack& modifiers) noexcept
+std::shared_ptr<const schema::BaseType> RequestLoader::getSchemaType(
+	std::string_view type, const TypeModifierStack& modifiers) const noexcept
 {
-	std::shared_ptr<const schema::BaseType> introspectionType = schema->LookupType(type);
+	std::shared_ptr<const schema::BaseType> introspectionType = _schema->LookupType(type);
 
 	if (introspectionType)
 	{
@@ -375,7 +348,7 @@ std::shared_ptr<const schema::BaseType> RequestLoader::getIntrospectionType(
 				{
 					case service::TypeModifier::None:
 					case service::TypeModifier::List:
-						introspectionType = schema->WrapType(introspection::TypeKind::NON_NULL,
+						introspectionType = _schema->WrapType(introspection::TypeKind::NON_NULL,
 							std::move(introspectionType));
 						break;
 
@@ -397,7 +370,7 @@ std::shared_ptr<const schema::BaseType> RequestLoader::getIntrospectionType(
 				case service::TypeModifier::List:
 				{
 					nonNull = true;
-					introspectionType = schema->WrapType(introspection::TypeKind::LIST,
+					introspectionType = _schema->WrapType(introspection::TypeKind::LIST,
 						std::move(introspectionType));
 					break;
 				}
@@ -410,11 +383,25 @@ std::shared_ptr<const schema::BaseType> RequestLoader::getIntrospectionType(
 		if (nonNull)
 		{
 			introspectionType =
-				schema->WrapType(introspection::TypeKind::NON_NULL, std::move(introspectionType));
+				_schema->WrapType(introspection::TypeKind::NON_NULL, std::move(introspectionType));
 		}
 	}
 
 	return introspectionType;
+}
+
+void RequestLoader::validateRequest() const
+{
+	service::ValidateExecutableVisitor validation { _schema };
+
+	validation.visit(*_ast.root);
+
+	auto errors = validation.getStructuredErrors();
+
+	if (!errors.empty())
+	{
+		throw service::schema_exception { std::move(errors) };
+	}
 }
 
 } /* namespace graphql::generator */

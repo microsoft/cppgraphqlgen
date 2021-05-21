@@ -25,17 +25,15 @@ public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
 private:
-	std::shared_ptr<schema::Schema> buildSchema(const SchemaLoader& schemaLoader) const;
-	void addTypesToSchema(const SchemaLoader& schemaLoader, const std::shared_ptr<schema::Schema>& schema) const;
+	void buildSchema(const SchemaLoader& schemaLoader);
+	void addTypesToSchema(const SchemaLoader& schemaLoader);
+	std::shared_ptr<const schema::BaseType> getSchemaType(
+		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
-	static std::shared_ptr<const schema::BaseType> getIntrospectionType(
-		const std::shared_ptr<schema::Schema>& schema, std::string_view type,
-		const TypeModifierStack& modifiers) noexcept;
-
 	const RequestOptions _requestOptions;
-	peg::ast _ast;
 	std::shared_ptr<schema::Schema> _schema;
+	peg::ast _ast;
 };
 
 } /* namespace graphql::generator */
