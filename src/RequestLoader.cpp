@@ -13,6 +13,7 @@
 #include <cctype>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 using namespace std::literals;
 
@@ -37,6 +38,8 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	}
 
 	validateRequest();
+
+	findOperation();
 }
 
 std::string_view RequestLoader::getRequestFilename() const noexcept
@@ -46,7 +49,12 @@ std::string_view RequestLoader::getRequestFilename() const noexcept
 
 std::string_view RequestLoader::getOperationName() const noexcept
 {
-	return _requestOptions.operationName.empty() ? "(default)"sv : _requestOptions.operationName;
+	return _operationName.empty() ? "(default)"sv : _operationName;
+}
+
+std::string_view RequestLoader::getOperationType() const noexcept
+{
+	return _operationType;
 }
 
 std::string_view RequestLoader::getRequestText() const noexcept
@@ -456,6 +464,53 @@ std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcep
 	}
 
 	return content;
+}
+
+void RequestLoader::findOperation()
+{
+	peg::on_first_child_if<peg::operation_definition>(*_ast.root,
+		[this](const peg::ast_node& operationDefinition) noexcept -> bool
+	{
+		std::string_view operationType = service::strQuery;
+
+		peg::on_first_child<peg::operation_type>(operationDefinition,
+			[&operationType](const peg::ast_node& child)
+		{
+			operationType = child.string_view();
+		});
+
+		std::string_view name;
+
+		peg::on_first_child<peg::operation_name>(operationDefinition,
+			[&name](const peg::ast_node& child)
+		{
+			name = child.string_view();
+		});
+
+		if (_requestOptions.operationName.empty() || name == _requestOptions.operationName)
+		{
+			_operationName = name;
+			_operationType = operationType;
+			_operation = &operationDefinition;
+			return true;
+		}
+
+		return false;
+	});
+
+	if (!_operation)
+	{
+		std::ostringstream message;
+
+		message << "Missing operation";
+
+		if (!_operationName.empty())
+		{
+			message << " name: " << _operationName;
+		}
+
+		throw service::schema_exception { { message.str() } };
+	}
 }
 
 } /* namespace graphql::generator */

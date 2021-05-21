@@ -36,6 +36,7 @@ public:
 
 	std::string_view getRequestFilename() const noexcept;
 	std::string_view getOperationName() const noexcept;
+	std::string_view getOperationType() const noexcept;
 	std::string_view getRequestText() const noexcept;
 
 	const ResponseType& getVariablesType() const noexcept;
@@ -50,12 +51,17 @@ private:
 
 	static std::string_view trimWhitespace(std::string_view content) noexcept;
 
+	void findOperation();
+
 	const RequestOptions _requestOptions;
 	const SchemaLoader& _schemaLoader;
 	std::shared_ptr<schema::Schema> _schema;
 	peg::ast _ast;
 
 	std::string _requestText;
+	const peg::ast_node* _operation = nullptr;
+	std::string_view _operationName;
+	std::string_view _operationType;
 	ResponseType _variablesType;
 	ResponseType _responseType;
 };

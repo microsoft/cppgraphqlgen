@@ -342,7 +342,8 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 {
 	headerFile << R"cpp(
 /** Operation: )cpp"
-			   << _requestLoader.getOperationName() << R"cpp(
+			   << _requestLoader.getOperationType() << ' ' << _requestLoader.getOperationName()
+			   << R"cpp(
 
 )cpp" << _requestLoader.getRequestText()
 			   << R"cpp(
