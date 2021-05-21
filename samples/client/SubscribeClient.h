@@ -19,6 +19,22 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+/** Operation: (default)
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+subscription TestSubscription {
+  nextAppointment: nextAppointmentChange {
+    nextAppointmentId: id
+    when
+    subject
+    isNow
+  }
+}
+
+**/
+
 namespace graphql {
 namespace subscribe {
 

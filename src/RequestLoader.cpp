@@ -8,15 +8,25 @@
 
 #include "graphqlservice/GraphQLGrammar.h"
 
+#include <algorithm>
 #include <array>
-#include <sstream>
+#include <cctype>
+#include <fstream>
+#include <iterator>
+
+using namespace std::literals;
 
 namespace graphql::generator {
 
 RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader)
 	: _requestOptions(std::move(requestOptions))
+	, _schemaLoader(schemaLoader)
 {
-	buildSchema(schemaLoader);
+	std::ifstream document { _requestOptions.requestFilename };
+	std::istreambuf_iterator<char> itr { document }, itrEnd;
+	_requestText = std::string { itr, itrEnd };
+
+	buildSchema();
 
 	_ast = peg::parseFile(_requestOptions.requestFilename);
 
@@ -29,18 +39,43 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	validateRequest();
 }
 
-void RequestLoader::buildSchema(const SchemaLoader& schemaLoader)
+std::string_view RequestLoader::getRequestFilename() const noexcept
+{
+	return _requestOptions.requestFilename;
+}
+
+std::string_view RequestLoader::getOperationName() const noexcept
+{
+	return _requestOptions.operationName.empty() ? "(default)"sv : _requestOptions.operationName;
+}
+
+std::string_view RequestLoader::getRequestText() const noexcept
+{
+	return trimWhitespace(_requestText);
+}
+
+const ResponseType& RequestLoader::getVariablesType() const noexcept
+{
+	return _variablesType;
+}
+
+const ResponseType& RequestLoader::getResponseType() const noexcept
+{
+	return _responseType;
+}
+
+void RequestLoader::buildSchema()
 {
 	_schema = std::make_shared<schema::Schema>(_requestOptions.noIntrospection);
 	introspection::AddTypesToSchema(_schema);
-	addTypesToSchema(schemaLoader);
+	addTypesToSchema();
 }
 
-void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
+void RequestLoader::addTypesToSchema()
 {
-	if (!schemaLoader.getScalarTypes().empty())
+	if (!_schemaLoader.getScalarTypes().empty())
 	{
-		for (const auto& scalarType : schemaLoader.getScalarTypes())
+		for (const auto& scalarType : _schemaLoader.getScalarTypes())
 		{
 			_schema->AddType(scalarType.type,
 				schema::ScalarType::Make(scalarType.type, scalarType.description));
@@ -49,9 +84,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 
 	std::map<std::string_view, std::shared_ptr<schema::EnumType>> enumTypes;
 
-	if (!schemaLoader.getEnumTypes().empty())
+	if (!_schemaLoader.getEnumTypes().empty())
 	{
-		for (const auto& enumType : schemaLoader.getEnumTypes())
+		for (const auto& enumType : _schemaLoader.getEnumTypes())
 		{
 			const auto itr = enumTypes
 								 .emplace(std::make_pair(enumType.type,
@@ -64,9 +99,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 
 	std::map<std::string_view, std::shared_ptr<schema::InputObjectType>> inputTypes;
 
-	if (!schemaLoader.getInputTypes().empty())
+	if (!_schemaLoader.getInputTypes().empty())
 	{
-		for (const auto& inputType : schemaLoader.getInputTypes())
+		for (const auto& inputType : _schemaLoader.getInputTypes())
 		{
 			const auto itr =
 				inputTypes
@@ -80,9 +115,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 
 	std::map<std::string_view, std::shared_ptr<schema::UnionType>> unionTypes;
 
-	if (!schemaLoader.getUnionTypes().empty())
+	if (!_schemaLoader.getUnionTypes().empty())
 	{
-		for (const auto& unionType : schemaLoader.getUnionTypes())
+		for (const auto& unionType : _schemaLoader.getUnionTypes())
 		{
 			const auto itr =
 				unionTypes
@@ -96,9 +131,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 
 	std::map<std::string_view, std::shared_ptr<schema::InterfaceType>> interfaceTypes;
 
-	if (!schemaLoader.getInterfaceTypes().empty())
+	if (!_schemaLoader.getInterfaceTypes().empty())
 	{
-		for (const auto& interfaceType : schemaLoader.getInterfaceTypes())
+		for (const auto& interfaceType : _schemaLoader.getInterfaceTypes())
 		{
 			const auto itr =
 				interfaceTypes
@@ -112,9 +147,9 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 
 	std::map<std::string_view, std::shared_ptr<schema::ObjectType>> objectTypes;
 
-	if (!schemaLoader.getObjectTypes().empty())
+	if (!_schemaLoader.getObjectTypes().empty())
 	{
-		for (const auto& objectType : schemaLoader.getObjectTypes())
+		for (const auto& objectType : _schemaLoader.getObjectTypes())
 		{
 			const auto itr =
 				objectTypes
@@ -126,7 +161,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& enumType : schemaLoader.getEnumTypes())
+	for (const auto& enumType : _schemaLoader.getEnumTypes())
 	{
 		const auto itr = enumTypes.find(enumType.type);
 
@@ -149,7 +184,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& inputType : schemaLoader.getInputTypes())
+	for (const auto& inputType : _schemaLoader.getInputTypes())
 	{
 		const auto itr = inputTypes.find(inputType.type);
 
@@ -171,7 +206,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& unionType : schemaLoader.getUnionTypes())
+	for (const auto& unionType : _schemaLoader.getUnionTypes())
 	{
 		const auto itr = unionTypes.find(unionType.type);
 
@@ -190,7 +225,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& interfaceType : schemaLoader.getInterfaceTypes())
+	for (const auto& interfaceType : _schemaLoader.getInterfaceTypes())
 	{
 		const auto itr = interfaceTypes.find(interfaceType.type);
 
@@ -226,7 +261,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& objectType : schemaLoader.getObjectTypes())
+	for (const auto& objectType : _schemaLoader.getObjectTypes())
 	{
 		const auto itr = objectTypes.find(objectType.type);
 
@@ -277,7 +312,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 		}
 	}
 
-	for (const auto& directive : schemaLoader.getDirectives())
+	for (const auto& directive : _schemaLoader.getDirectives())
 	{
 		std::vector<introspection::DirectiveLocation> locations(directive.locations.size());
 
@@ -312,7 +347,7 @@ void RequestLoader::addTypesToSchema(const SchemaLoader& schemaLoader)
 			std::move(arguments)));
 	}
 
-	for (const auto& operationType : schemaLoader.getOperationTypes())
+	for (const auto& operationType : _schemaLoader.getOperationTypes())
 	{
 		const auto itr = objectTypes.find(operationType.type);
 
@@ -402,6 +437,25 @@ void RequestLoader::validateRequest() const
 	{
 		throw service::schema_exception { std::move(errors) };
 	}
+}
+
+std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcept
+{
+	const auto isSpacePredicate = [](char ch) noexcept {
+		return std::isspace(static_cast<int>(ch)) != 0;
+	};
+	const auto skip = std::distance(content.begin(),
+		std::find_if_not(content.begin(), content.end(), isSpacePredicate));
+	const auto length =
+		std::distance(std::find_if_not(content.rbegin(), content.rend(), isSpacePredicate),
+			content.rend());
+
+	if (skip >= 0 && length >= skip)
+	{
+		content = content.substr(static_cast<size_t>(skip), static_cast<size_t>(length - skip));
+	}
+
+	return content;
 }
 
 } /* namespace graphql::generator */

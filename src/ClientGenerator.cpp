@@ -48,7 +48,8 @@ using namespace std::literals;
 
 namespace graphql::generator::client {
 
-Generator::Generator(SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options)
+Generator::Generator(
+	SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options)
 	: _schemaLoader(std::make_optional(std::move(schemaOptions)))
 	, _requestLoader(std::move(requestOptions), _schemaLoader)
 	, _options(std::move(options))
@@ -139,8 +140,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 #include <memory>
 #include <string>
 #include <vector>
-
 )cpp";
+
+	outputRequestComment(headerFile);
+
+	headerFile << std::endl;
 
 	NamespaceScope graphqlNamespace { headerFile, "graphql" };
 	NamespaceScope schemaNamespace { headerFile, _schemaLoader.getSchemaNamespace() };
@@ -334,6 +338,19 @@ std::shared_ptr<client::Client> GetClient();
 	return true;
 }
 
+void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
+{
+	headerFile << R"cpp(
+/** Operation: )cpp"
+			   << _requestLoader.getOperationName() << R"cpp(
+
+)cpp" << _requestLoader.getRequestText()
+			   << R"cpp(
+
+**/
+)cpp";
+}
+
 void Generator::outputObjectDeclaration(
 	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
@@ -413,9 +430,9 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual service::FieldResult<)cpp" << _schemaLoader.getOutputCppType(outputField)
-		   << R"cpp(> )cpp" << outputField.accessor << fieldName
-		   << R"cpp((service::FieldParams&& params)cpp";
+	output << R"cpp(	virtual service::FieldResult<)cpp"
+		   << _schemaLoader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
+		   << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
 	for (const auto& argument : outputField.arguments)
 	{
@@ -839,8 +856,8 @@ void Generator::outputObjectImplementation(
 		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 		sourceFile << R"cpp(
 service::FieldResult<)cpp"
-				   << _schemaLoader.getOutputCppType(outputField) << R"cpp(> )cpp" << objectType.cppType
-				   << R"cpp(::)cpp" << outputField.accessor << fieldName
+				   << _schemaLoader.getOutputCppType(outputField) << R"cpp(> )cpp"
+				   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
 				   << R"cpp((service::FieldParams&&)cpp";
 		for (const auto& argument : outputField.arguments)
 		{

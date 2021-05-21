@@ -12,6 +12,16 @@
 
 namespace graphql::generator {
 
+using ResponseField = InputField;
+using ResponseFieldList = InputFieldList;
+
+struct ResponseType
+{
+	std::string_view type;
+	std::string_view cppType;
+	ResponseFieldList fields;
+};
+
 struct RequestOptions
 {
 	const std::string requestFilename;
@@ -24,16 +34,30 @@ class RequestLoader
 public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
+	std::string_view getRequestFilename() const noexcept;
+	std::string_view getOperationName() const noexcept;
+	std::string_view getRequestText() const noexcept;
+
+	const ResponseType& getVariablesType() const noexcept;
+	const ResponseType& getResponseType() const noexcept;
+
 private:
-	void buildSchema(const SchemaLoader& schemaLoader);
-	void addTypesToSchema(const SchemaLoader& schemaLoader);
+	void buildSchema();
+	void addTypesToSchema();
 	std::shared_ptr<const schema::BaseType> getSchemaType(
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
+	static std::string_view trimWhitespace(std::string_view content) noexcept;
+
 	const RequestOptions _requestOptions;
+	const SchemaLoader& _schemaLoader;
 	std::shared_ptr<schema::Schema> _schema;
 	peg::ast _ast;
+
+	std::string _requestText;
+	ResponseType _variablesType;
+	ResponseType _responseType;
 };
 
 } /* namespace graphql::generator */

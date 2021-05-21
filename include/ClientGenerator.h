@@ -26,7 +26,8 @@ class Generator
 {
 public:
 	// Initialize the generator with the introspection client or a custom GraphQL client.
-	explicit Generator(SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
+	explicit Generator(
+		SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
@@ -38,6 +39,7 @@ private:
 	std::string getSourcePath() const noexcept;
 
 	bool outputHeader() const noexcept;
+	void outputRequestComment(std::ostream& headerFile) const noexcept;
 	void outputObjectDeclaration(
 		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;

@@ -19,6 +19,24 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+/** Operation: (default)
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+mutation {
+  completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+    completedTask: task {
+      completedTaskId: id
+      title
+      isComplete
+    }
+    clientMutationId
+  }
+}
+
+**/
+
 namespace graphql {
 namespace mutate {
 
