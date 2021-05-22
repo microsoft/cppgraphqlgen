@@ -55,7 +55,8 @@ public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
 	std::string_view getRequestFilename() const noexcept;
-	std::string_view getOperationName() const noexcept;
+	std::string_view getOperationDisplayName() const noexcept;
+	std::string getOperationNamespace() const noexcept;
 	std::string_view getOperationType() const noexcept;
 	std::string_view getRequestText() const noexcept;
 

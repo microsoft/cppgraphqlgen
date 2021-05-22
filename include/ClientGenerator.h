@@ -6,8 +6,8 @@
 #ifndef CLIENTGENERATOR_H
 #define CLIENTGENERATOR_H
 
-#include "SchemaLoader.h"
 #include "RequestLoader.h"
+#include "SchemaLoader.h"
 
 namespace graphql::generator::client {
 
@@ -38,12 +38,13 @@ private:
 	std::string getSourceDir() const noexcept;
 	std::string getHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
+	const std::string& getClientNamespace() const noexcept;
 
 	bool outputHeader() const noexcept;
-	void outputRequestComment(std::ostream& headerFile) const noexcept;
+	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
 
 	bool outputSource() const noexcept;
-	void outputGetRequest(std::ostream& sourceFile) const noexcept;
+	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
 
 	const SchemaLoader _schemaLoader;
 	const RequestLoader _requestLoader;

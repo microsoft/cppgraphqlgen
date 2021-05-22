@@ -67,9 +67,26 @@ std::string_view RequestLoader::getRequestFilename() const noexcept
 	return _requestOptions.requestFilename;
 }
 
-std::string_view RequestLoader::getOperationName() const noexcept
+std::string_view RequestLoader::getOperationDisplayName() const noexcept
 {
 	return _operationName.empty() ? "(default)"sv : _operationName;
+}
+
+std::string RequestLoader::getOperationNamespace() const noexcept
+{
+	std::string result;
+
+	if (_operationName.empty())
+	{
+		result = _operationType;
+		result.front() = static_cast<char>(std::toupper(result.front()));
+	}
+	else
+	{
+		result = _operationName;
+	}
+
+	return result;
 }
 
 std::string_view RequestLoader::getOperationType() const noexcept
@@ -717,10 +734,9 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 		const auto& typeFields = _type->fields();
 		const auto itr = std::find_if(typeFields.begin(),
 			typeFields.end(),
-			[name](const std::shared_ptr<const schema::Field>& typeField) noexcept
-		{
-			return typeField->name() == name;
-		});
+			[name](const std::shared_ptr<const schema::Field>& typeField) noexcept {
+				return typeField->name() == name;
+			});
 
 		responseField.type = (*itr)->type().lock();
 	}
@@ -735,7 +751,8 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 	{
 		auto ofType = responseField.type;
 
-		while (ofType->kind() == introspection::TypeKind::NON_NULL || ofType->kind() == introspection::TypeKind::LIST)
+		while (ofType->kind() == introspection::TypeKind::NON_NULL
+			|| ofType->kind() == introspection::TypeKind::LIST)
 		{
 			ofType = ofType->ofType().lock();
 		}
@@ -753,7 +770,8 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 				if (!selectionFields.empty())
 				{
-					responseField.children = std::make_optional<ResponseFieldChildren>(std::move(selectionFields));
+					responseField.children =
+						std::make_optional<ResponseFieldChildren>(std::move(selectionFields));
 				}
 
 				break;
