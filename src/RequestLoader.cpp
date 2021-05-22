@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "RequestLoader.h"
+#include "SchemaLoader.h"
 #include "Validation.h"
 
 #include "graphqlservice/introspection/Introspection.h"
@@ -40,6 +41,25 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	validateRequest();
 
 	findOperation();
+	collectVariables();
+	collectFragments();
+
+	const peg::ast_node* selection = nullptr;
+
+	peg::on_first_child<peg::selection_set>(*_operation, [&selection](const peg::ast_node& child) {
+		selection = &child;
+	});
+
+	if (!selection)
+	{
+		throw std::logic_error("Request successfully validated, but there was no selection set on "
+							   "the operation object!");
+	}
+
+	SelectionVisitor visitor { _fragments, _schema, _responseType.type };
+
+	visitor.visit(*selection);
+	_responseType.fields = visitor.getFields();
 }
 
 std::string_view RequestLoader::getRequestFilename() const noexcept
@@ -62,9 +82,9 @@ std::string_view RequestLoader::getRequestText() const noexcept
 	return trimWhitespace(_requestText);
 }
 
-const ResponseType& RequestLoader::getVariablesType() const noexcept
+const ResponseFieldList& RequestLoader::getVariables() const noexcept
 {
-	return _variablesType;
+	return _variables;
 }
 
 const ResponseType& RequestLoader::getResponseType() const noexcept
@@ -469,34 +489,31 @@ std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcep
 void RequestLoader::findOperation()
 {
 	peg::on_first_child_if<peg::operation_definition>(*_ast.root,
-		[this](const peg::ast_node& operationDefinition) noexcept -> bool
-	{
-		std::string_view operationType = service::strQuery;
+		[this](const peg::ast_node& operationDefinition) noexcept -> bool {
+			std::string_view operationType = service::strQuery;
 
-		peg::on_first_child<peg::operation_type>(operationDefinition,
-			[&operationType](const peg::ast_node& child)
-		{
-			operationType = child.string_view();
+			peg::on_first_child<peg::operation_type>(operationDefinition,
+				[&operationType](const peg::ast_node& child) {
+					operationType = child.string_view();
+				});
+
+			std::string_view name;
+
+			peg::on_first_child<peg::operation_name>(operationDefinition,
+				[&name](const peg::ast_node& child) {
+					name = child.string_view();
+				});
+
+			if (_requestOptions.operationName.empty() || name == _requestOptions.operationName)
+			{
+				_operationName = name;
+				_operationType = operationType;
+				_operation = &operationDefinition;
+				return true;
+			}
+
+			return false;
 		});
-
-		std::string_view name;
-
-		peg::on_first_child<peg::operation_name>(operationDefinition,
-			[&name](const peg::ast_node& child)
-		{
-			name = child.string_view();
-		});
-
-		if (_requestOptions.operationName.empty() || name == _requestOptions.operationName)
-		{
-			_operationName = name;
-			_operationType = operationType;
-			_operation = &operationDefinition;
-			return true;
-		}
-
-		return false;
-	});
 
 	if (!_operation)
 	{
@@ -511,6 +528,308 @@ void RequestLoader::findOperation()
 
 		throw service::schema_exception { { message.str() } };
 	}
+
+	if (_operationType == service::strQuery)
+	{
+		_responseType.type = _schema->queryType();
+	}
+	else if (_operationType == service::strMutation)
+	{
+		_responseType.type = _schema->mutationType();
+	}
+	else if (_operationType == service::strSubscription)
+	{
+		_responseType.type = _schema->subscriptionType();
+	}
+
+	if (!_responseType.type)
+	{
+		std::ostringstream message;
+
+		message << "Unsupported operation type: " << _operationType;
+
+		if (!_operationName.empty())
+		{
+			message << " name: " << _operationName;
+		}
+
+		throw service::schema_exception { { message.str() } };
+	}
+
+	_responseType.cppType = SchemaLoader::getSafeCppName(
+		_operationName.empty() ? _responseType.type->name() : _operationName);
+}
+
+void RequestLoader::collectVariables() noexcept
+{
+	peg::for_each_child<peg::variable>(*_operation,
+		[this](const peg::ast_node& variableDefinition) {
+			ResponseField variable;
+			TypeVisitor variableType;
+			service::schema_location defaultValueLocation;
+
+			for (const auto& child : variableDefinition.children)
+			{
+				if (child->is_type<peg::variable_name>())
+				{
+					// Skip the $ prefix
+					variable.name = child->string_view().substr(1);
+					variable.cppName = _schemaLoader.getSafeCppName(variable.name);
+				}
+				else if (child->is_type<peg::named_type>() || child->is_type<peg::list_type>()
+					|| child->is_type<peg::nonnull_type>())
+				{
+					variableType.visit(*child);
+				}
+				else if (child->is_type<peg::default_value>())
+				{
+					const auto position = child->begin();
+					DefaultValueVisitor defaultValue;
+
+					defaultValue.visit(*child->children.back());
+					variable.defaultValue = defaultValue.getValue();
+					variable.defaultValueString = child->children.back()->string_view();
+
+					defaultValueLocation = { position.line, position.column };
+				}
+			}
+
+			const auto [type, modifiers] = variableType.getType();
+
+			variable.type = getSchemaType(type, modifiers);
+			variable.position = variableDefinition.begin();
+
+			if (!variable.defaultValueString.empty()
+				&& variable.defaultValue.type() == response::Type::Null
+				&& (modifiers.empty() || modifiers.front() != service::TypeModifier::Nullable))
+			{
+				std::ostringstream error;
+
+				error << "Expected Non-Null default value for variable name: " << variable.name
+					  << " line: " << defaultValueLocation.line
+					  << " column: " << defaultValueLocation.column;
+
+				throw std::runtime_error(error.str());
+			}
+
+			_variables.push_back(std::move(variable));
+		});
+}
+
+void RequestLoader::collectFragments() noexcept
+{
+	peg::for_each_child<peg::fragment_definition>(*_ast.root, [this](const peg::ast_node& child) {
+		_fragments.emplace(child.children.front()->string_view(), &child);
+	});
+}
+
+RequestLoader::SelectionVisitor::SelectionVisitor(const FragmentDefinitionMap& fragments,
+	const std::shared_ptr<schema::Schema>& schema,
+	const std::shared_ptr<const schema::BaseType>& type)
+	: _fragments(fragments)
+	, _schema(schema)
+	, _type(type)
+{
+}
+
+ResponseFieldList RequestLoader::SelectionVisitor::getFields()
+{
+	auto fields = std::move(_fields);
+
+	return fields;
+}
+
+void RequestLoader::SelectionVisitor::visit(const peg::ast_node& selection)
+{
+	for (const auto& child : selection.children)
+	{
+		if (child->is_type<peg::field>())
+		{
+			visitField(*child);
+		}
+		else if (child->is_type<peg::fragment_spread>())
+		{
+			visitFragmentSpread(*child);
+		}
+		else if (child->is_type<peg::inline_fragment>())
+		{
+			visitInlineFragment(*child);
+		}
+	}
+}
+
+void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
+{
+	std::string_view name;
+
+	peg::on_first_child<peg::field_name>(field, [&name](const peg::ast_node& child) {
+		name = child.string_view();
+	});
+
+	std::string_view alias;
+
+	peg::on_first_child<peg::alias_name>(field, [&alias](const peg::ast_node& child) {
+		alias = child.string_view();
+	});
+
+	if (alias.empty())
+	{
+		alias = name;
+	}
+
+	if (!_names.emplace(alias).second)
+	{
+		// Skip fields which map to the same response name as a field we've already visited.
+		// Validation should handle merging multiple references to the same field or to
+		// compatible fields.
+		return;
+	}
+
+	ResponseField responseField;
+
+	responseField.name = alias;
+	responseField.cppName = SchemaLoader::getSafeCppName(alias);
+
+	// Special case to handle __typename on any ResponseType
+	if (name == R"gql(__typename)gql"sv)
+	{
+		responseField.type =
+			_schema->WrapType(introspection::TypeKind::NON_NULL, _schema->LookupType("String"sv));
+		_fields.push_back(std::move(responseField));
+		return;
+	}
+
+	if (_schema->supportsIntrospection() && _type == _schema->queryType())
+	{
+		if (name == R"gql(__schema)gql"sv)
+		{
+			responseField.type = _schema->WrapType(introspection::TypeKind::NON_NULL,
+				_schema->LookupType("__Schema"sv));
+		}
+		else if (name == R"gql(__type)gql"sv)
+		{
+			responseField.type = _schema->LookupType("__Type"sv);
+		}
+	}
+
+	if (!responseField.type)
+	{
+		const auto& typeFields = _type->fields();
+		const auto itr = std::find_if(typeFields.begin(),
+			typeFields.end(),
+			[name](const std::shared_ptr<const schema::Field>& typeField) noexcept
+		{
+			return typeField->name() == name;
+		});
+
+		responseField.type = (*itr)->type().lock();
+	}
+
+	const peg::ast_node* selection = nullptr;
+
+	peg::on_first_child<peg::selection_set>(field, [&selection](const peg::ast_node& child) {
+		selection = &child;
+	});
+
+	if (selection)
+	{
+		auto ofType = responseField.type;
+
+		while (ofType->kind() == introspection::TypeKind::NON_NULL || ofType->kind() == introspection::TypeKind::LIST)
+		{
+			ofType = ofType->ofType().lock();
+		}
+
+		switch (ofType->kind())
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			{
+				SelectionVisitor selectionVisitor { _fragments, _schema, ofType };
+
+				selectionVisitor.visit(*selection);
+
+				auto selectionFields = selectionVisitor.getFields();
+
+				if (!selectionFields.empty())
+				{
+					responseField.children = std::make_optional<ResponseFieldChildren>(std::move(selectionFields));
+				}
+
+				break;
+			}
+
+			case introspection::TypeKind::UNION:
+			{
+				ResponseUnionOptions options;
+				const auto& possibleTypes = ofType->possibleTypes();
+
+				for (const auto& weakType : possibleTypes)
+				{
+					const auto possibleType = weakType.lock();
+					SelectionVisitor possibleTypeVisitor { _fragments, _schema, possibleType };
+
+					possibleTypeVisitor.visit(*selection);
+
+					auto possibleTypeFields = possibleTypeVisitor.getFields();
+
+					if (!possibleTypeFields.empty())
+					{
+						ResponseType option;
+
+						option.type = possibleType;
+						option.cppType = SchemaLoader::getSafeCppName(possibleType->name());
+						option.fields = std::move(possibleTypeFields);
+
+						options.push_back(std::move(option));
+					}
+				}
+
+				if (!options.empty())
+				{
+					responseField.children =
+						std::make_optional<ResponseFieldChildren>(std::move(options));
+				}
+
+				break;
+			}
+		}
+	}
+
+	_fields.push_back(std::move(responseField));
+}
+
+void RequestLoader::SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
+{
+	const auto name = fragmentSpread.children.front()->string_view();
+	auto itr = _fragments.find(name);
+
+	if (itr == _fragments.end())
+	{
+		auto position = fragmentSpread.begin();
+		std::ostringstream error;
+
+		error << "Unknown fragment name: " << name;
+
+		throw service::schema_exception { { service::schema_error { error.str(),
+			{ position.line, position.column },
+			service::buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } };
+	}
+
+	for (const auto& selection : itr->second->children)
+	{
+		visit(*selection);
+	}
+}
+
+void RequestLoader::SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
+{
+	peg::on_first_child<peg::selection_set>(inlineFragment, [this](const peg::ast_node& child) {
+		for (const auto& selection : child.children)
+		{
+			visit(*selection);
+		}
+	});
 }
 
 } /* namespace graphql::generator */

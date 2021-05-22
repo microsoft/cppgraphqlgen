@@ -1,8 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-mutation {
-  completedTask: completeTask(input: {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+  completedTask: completeTask(input: $input) {
     completedTask: task {
       completedTaskId: id
       title

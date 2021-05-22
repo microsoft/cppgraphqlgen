@@ -19,12 +19,12 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
-/** Operation: query Everything
+/** Operation: query (default)
 
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-query Everything {
+query {
   appointments {
     edges {
       node {

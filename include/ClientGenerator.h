@@ -6,6 +6,7 @@
 #ifndef CLIENTGENERATOR_H
 #define CLIENTGENERATOR_H
 
+#include "SchemaLoader.h"
 #include "RequestLoader.h"
 
 namespace graphql::generator::client {

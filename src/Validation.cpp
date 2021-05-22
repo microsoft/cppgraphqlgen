@@ -1567,7 +1567,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 		case introspection::TypeKind::UNION:
 		{
-			if (name != R"gql(__typename)gql")
+			if (name != R"gql(__typename)gql"sv)
 			{
 				// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 				auto position = field.begin();

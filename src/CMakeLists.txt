@@ -107,6 +107,7 @@ endif()
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
   add_library(generator_util STATIC
     SchemaLoader.cpp
+    GeneratorLoader.cpp
     GeneratorUtil.cpp)
   target_link_libraries(generator_util PUBLIC
     graphqlpeg
