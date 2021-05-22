@@ -139,17 +139,19 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
+
 )cpp";
-
-	outputRequestComment(headerFile);
-
-	headerFile << std::endl;
 
 	NamespaceScope graphqlNamespace { headerFile, "graphql" };
 	NamespaceScope schemaNamespace { headerFile, _schemaLoader.getSchemaNamespace() };
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
+
+	outputRequestComment(headerFile);
+
+	headerFile << std::endl;
 
 	std::string_view queryType;
 
@@ -214,11 +216,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(
 {
 )cpp";
-			for (const auto& inputField : inputType.fields)
-			{
-				headerFile << R"cpp(	)cpp" << getFieldDeclaration(inputField) << R"cpp(;
-)cpp";
-			}
+			//			for (const auto& inputField : inputType.fields)
+			//			{
+			//				headerFile << R"cpp(	)cpp" << getFieldDeclaration(inputField) <<
+			//R"cpp(; )cpp";
+			//			}
 			headerFile << R"cpp(};
 
 )cpp";
@@ -266,10 +268,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 {
 )cpp";
 
-			for (const auto& outputField : interfaceType.fields)
-			{
-				headerFile << getFieldDeclaration(outputField);
-			}
+			// for (const auto& outputField : interfaceType.fields)
+			//{
+			//	headerFile << getFieldDeclaration(outputField);
+			//}
 
 			headerFile << R"cpp(};
 
@@ -285,11 +287,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 
 		// Output the full declarations
-		for (const auto& objectType : _schemaLoader.getObjectTypes())
-		{
-			outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
-			headerFile << std::endl;
-		}
+		// for (const auto& objectType : _schemaLoader.getObjectTypes())
+		//{
+		//	outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
+		//	headerFile << std::endl;
+		//}
 	}
 
 	if (objectNamespace.exit())
@@ -349,124 +351,10 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 			   << R"cpp(
 
 **/
+
+// Return the original text of the request document.
+std::string_view GetRequestText() noexcept;
 )cpp";
-}
-
-void Generator::outputObjectDeclaration(
-	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
-{
-	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
-	: public service::Object)cpp";
-
-	for (const auto& interfaceName : objectType.interfaces)
-	{
-		headerFile << R"cpp(
-	, public )cpp" << _schemaLoader.getSafeCppName(interfaceName);
-	}
-
-	headerFile << R"cpp(
-{
-protected:
-	explicit )cpp"
-			   << objectType.cppType << R"cpp(();
-)cpp";
-
-	if (!objectType.fields.empty())
-	{
-		bool firstField = true;
-
-		for (const auto& outputField : objectType.fields)
-		{
-			if (firstField)
-			{
-				headerFile << R"cpp(
-public:
-)cpp";
-				firstField = false;
-			}
-
-			headerFile << getFieldDeclaration(outputField);
-		}
-
-		headerFile << R"cpp(
-private:
-)cpp";
-
-		for (const auto& outputField : objectType.fields)
-		{
-			headerFile << getResolverDeclaration(outputField);
-		}
-
-		headerFile << R"cpp(
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
-)cpp";
-
-		if (isQueryType)
-		{
-			headerFile
-				<< R"cpp(	std::future<service::ResolverResult> resolve_client(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
-
-	std::shared_ptr<client::Client> _client;
-)cpp";
-		}
-	}
-
-	headerFile << R"cpp(};
-)cpp";
-}
-
-std::string Generator::getFieldDeclaration(const InputField& inputField) const noexcept
-{
-	std::ostringstream output;
-
-	output << _schemaLoader.getInputCppType(inputField) << R"cpp( )cpp" << inputField.cppName;
-
-	return output.str();
-}
-
-std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
-{
-	std::ostringstream output;
-	std::string fieldName { outputField.cppName };
-
-	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual service::FieldResult<)cpp"
-		   << _schemaLoader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
-		   << fieldName << R"cpp((service::FieldParams&& params)cpp";
-
-	for (const auto& argument : outputField.arguments)
-	{
-		output << R"cpp(, )cpp" << _schemaLoader.getInputCppType(argument) << R"cpp(&& )cpp"
-			   << argument.cppName << "Arg";
-	}
-
-	output << R"cpp() const)cpp";
-	if (outputField.interfaceField)
-	{
-		output << R"cpp( = 0)cpp";
-	}
-	else if (outputField.inheritedField)
-	{
-		output << R"cpp( override)cpp";
-	}
-	output << R"cpp(;
-)cpp";
-
-	return output.str();
-}
-
-std::string Generator::getResolverDeclaration(const OutputField& outputField) const noexcept
-{
-	std::ostringstream output;
-	std::string fieldName(outputField.cppName);
-
-	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	std::future<service::ResolverResult> resolve)cpp" << fieldName
-		   << R"cpp((service::ResolverParams&& params);
-)cpp";
-
-	return output.str();
 }
 
 bool Generator::outputSource() const noexcept
@@ -478,9 +366,9 @@ bool Generator::outputSource() const noexcept
 
 // WARNING! Do not edit this file manually, your changes will be overwritten.
 
-)cpp";
+#include "graphqlservice/introspection/Introspection.h"
 
-	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/GraphQLParse.h"
 
 #include <algorithm>
 #include <array>
@@ -606,10 +494,12 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 )cpp";
 					}
 
-					sourceFile << getArgumentDefaultValue(0, inputField.defaultValue)
-							   << R"cpp(		values.emplace_back(")cpp" << inputField.name
-							   << R"cpp(", std::move(entry));
-)cpp";
+					//					sourceFile << getArgumentDefaultValue(0,
+					//inputField.defaultValue)
+					//							   << R"cpp(		values.emplace_back(")cpp" <<
+					//inputField.name
+					//							   << R"cpp(", std::move(entry));
+					//)cpp";
 				}
 			}
 
@@ -622,10 +512,10 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 )cpp";
 			}
 
-			for (const auto& inputField : inputType.fields)
-			{
-				sourceFile << getArgumentDeclaration(inputField, "value", "value", "defaultValue");
-			}
+			// for (const auto& inputField : inputType.fields)
+			//{
+			//	sourceFile << getArgumentDeclaration(inputField, "value", "value", "defaultValue");
+			//}
 
 			if (!inputType.fields.empty())
 			{
@@ -667,6 +557,8 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 	NamespaceScope schemaNamespace { sourceFile, _schemaLoader.getSchemaNamespace() };
 	std::string_view queryType;
 
+	outputGetRequest(sourceFile);
+
 	for (const auto& operation : _schemaLoader.getOperationTypes())
 	{
 		if (operation.operation == service::strQuery)
@@ -682,11 +574,11 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 
 		sourceFile << std::endl;
 
-		for (const auto& objectType : _schemaLoader.getObjectTypes())
-		{
-			outputObjectImplementation(sourceFile, objectType, objectType.type == queryType);
-			sourceFile << std::endl;
-		}
+		// for (const auto& objectType : _schemaLoader.getObjectTypes())
+		//{
+		//	outputObjectImplementation(sourceFile, objectType, objectType.type == queryType);
+		//	sourceFile << std::endl;
+		//}
 	}
 
 	bool firstOperation = true;
@@ -761,501 +653,14 @@ Operations::Operations()cpp";
 	return true;
 }
 
-void Generator::outputObjectImplementation(
-	std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const
+void Generator::outputGetRequest(std::ostream& sourceFile) const noexcept
 {
-	using namespace std::literals;
-
-	// Output the protected constructor which calls through to the service::Object constructor
-	// with arguments that declare the set of types it implements and bind the fields to the
-	// resolver methods.
-	sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType << R"cpp(()
-	: service::Object({
-)cpp";
-
-	for (const auto& interfaceName : objectType.interfaces)
-	{
-		sourceFile << R"cpp(		")cpp" << interfaceName << R"cpp(",
-)cpp";
-	}
-
-	for (const auto& unionName : objectType.unions)
-	{
-		sourceFile << R"cpp(		")cpp" << unionName << R"cpp(",
-)cpp";
-	}
-
-	sourceFile << R"cpp(		")cpp" << objectType.type << R"cpp("
-	}, {
-)cpp";
-
-	std::map<std::string_view, std::string, internal::shorter_or_less> resolvers;
-
-	std::transform(objectType.fields.cbegin(),
-		objectType.fields.cend(),
-		std::inserter(resolvers, resolvers.begin()),
-		[](const OutputField& outputField) noexcept {
-			std::string fieldName(outputField.cppName);
-
-			fieldName[0] =
-				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-
-			std::ostringstream output;
-
-			output << R"cpp(		{ R"gql()cpp" << outputField.name
-				   << R"cpp()gql"sv, [this](service::ResolverParams&& params) { return resolve)cpp"
-				   << fieldName << R"cpp((std::move(params)); } })cpp";
-
-			return std::make_pair(std::string_view { outputField.name }, output.str());
-		});
-
-	resolvers["__typename"sv] =
-		R"cpp(		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } })cpp"s;
-
-	if (isQueryType)
-	{
-		resolvers["__client"sv] =
-			R"cpp(		{ R"gql(__client)gql"sv, [this](service::ResolverParams&& params) { return resolve_client(std::move(params)); } })cpp"s;
-		resolvers["__type"sv] =
-			R"cpp(		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } })cpp"s;
-	}
-
-	bool firstField = true;
-
-	for (const auto& resolver : resolvers)
-	{
-		if (!firstField)
-		{
-			sourceFile << R"cpp(,
-)cpp";
-		}
-
-		firstField = false;
-		sourceFile << resolver.second;
-	}
-
 	sourceFile << R"cpp(
-	}))cpp";
-
-	if (isQueryType)
-	{
-		sourceFile << R"cpp(
-	, _client(GetClient()))cpp";
-	}
-
-	sourceFile << R"cpp(
+std::string_view GetRequestText() noexcept
 {
+	return R"gql()cpp" << _requestLoader.getRequestText() << R"cpp()gql"sv;
 }
 )cpp";
-
-	// Output each of the resolver implementations, which call the virtual property
-	// getters that the implementer must define.
-	for (const auto& outputField : objectType.fields)
-	{
-		std::string fieldName(outputField.cppName);
-
-		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-		sourceFile << R"cpp(
-service::FieldResult<)cpp"
-				   << _schemaLoader.getOutputCppType(outputField) << R"cpp(> )cpp"
-				   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams&&)cpp";
-		for (const auto& argument : outputField.arguments)
-		{
-			sourceFile << R"cpp(, )cpp" << _schemaLoader.getInputCppType(argument) << R"cpp(&&)cpp";
-		}
-
-		sourceFile << R"cpp() const
-{
-	throw std::runtime_error(R"ex()cpp"
-				   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
-				   << R"cpp( is not implemented)ex");
-}
-
-std::future<service::ResolverResult> )cpp"
-				   << objectType.cppType << R"cpp(::resolve)cpp" << fieldName
-				   << R"cpp((service::ResolverParams&& params)
-{
-)cpp";
-
-		// Output a preamble to retrieve all of the arguments from the resolver parameters.
-		if (!outputField.arguments.empty())
-		{
-			bool firstArgument = true;
-
-			for (const auto& argument : outputField.arguments)
-			{
-				if (argument.defaultValue.type() != response::Type::Null)
-				{
-					if (firstArgument)
-					{
-						firstArgument = false;
-						sourceFile << R"cpp(	const auto defaultArguments = []()
-	{
-		response::Value values(response::Type::Map);
-		response::Value entry;
-
-)cpp";
-					}
-
-					sourceFile << getArgumentDefaultValue(0, argument.defaultValue)
-							   << R"cpp(		values.emplace_back(")cpp" << argument.name
-							   << R"cpp(", std::move(entry));
-)cpp";
-				}
-			}
-
-			if (!firstArgument)
-			{
-				sourceFile << R"cpp(
-		return values;
-	}();
-
-)cpp";
-			}
-
-			for (const auto& argument : outputField.arguments)
-			{
-				sourceFile << getArgumentDeclaration(argument,
-					"arg",
-					"params.arguments",
-					"defaultArguments");
-			}
-		}
-
-		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = )cpp"
-				   << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams(std::move(params), std::move(directives)))cpp";
-
-		if (!outputField.arguments.empty())
-		{
-			for (const auto& argument : outputField.arguments)
-			{
-				std::string argumentName(argument.cppName);
-
-				argumentName[0] =
-					static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
-				sourceFile << R"cpp(, std::move(arg)cpp" << argumentName << R"cpp())cpp";
-			}
-		}
-
-		sourceFile << R"cpp();
-	resolverLock.unlock();
-
-	return )cpp" << getResultAccessType(outputField)
-				   << R"cpp(::convert)cpp" << getTypeModifiers(outputField.modifiers)
-				   << R"cpp((std::move(result), std::move(params));
-}
-)cpp";
-	}
-
-	sourceFile << R"cpp(
-std::future<service::ResolverResult> )cpp"
-			   << objectType.cppType << R"cpp(::resolve_typename(service::ResolverParams&& params)
-{
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql()cpp"
-			   << objectType.type << R"cpp()gql" }, std::move(params));
-}
-)cpp";
-
-	if (isQueryType)
-	{
-		sourceFile
-			<< R"cpp(
-std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType << R"cpp(::resolve_client(service::ResolverParams&& params)
-{
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
-			<< SchemaLoader::getIntrospectionNamespace()
-			<< R"cpp(::Client>(_client)), std::move(params));
-}
-
-std::future<service::ResolverResult> )cpp"
-			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
-{
-	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
-	const auto& baseType = _client->LookupType(argName);
-	std::shared_ptr<)cpp"
-			<< SchemaLoader::getIntrospectionNamespace()
-			<< R"cpp(::object::Type> result { baseType ? std::make_shared<)cpp"
-			<< SchemaLoader::getIntrospectionNamespace() << R"cpp(::Type>(baseType) : nullptr };
-
-	return service::ModifiedResult<)cpp"
-			<< SchemaLoader::getIntrospectionNamespace()
-			<< R"cpp(::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
-}
-)cpp";
-	}
-}
-
-std::string Generator::getArgumentDefaultValue(
-	size_t level, const response::Value& defaultValue) const noexcept
-{
-	const std::string padding(level, '\t');
-	std::ostringstream argumentDefaultValue;
-
-	switch (defaultValue.type())
-	{
-		case response::Type::Map:
-		{
-			const auto& members = defaultValue.get<response::MapType>();
-
-			argumentDefaultValue << padding << R"cpp(		entry = []()
-)cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value members(response::Type::Map);
-)cpp" << padding << R"cpp(			response::Value entry;
-
-)cpp";
-
-			for (const auto& entry : members)
-			{
-				argumentDefaultValue << getArgumentDefaultValue(level + 1, entry.second) << padding
-									 << R"cpp(			members.emplace_back(")cpp" << entry.first
-									 << R"cpp(", std::move(entry));
-)cpp";
-			}
-
-			argumentDefaultValue << padding << R"cpp(			return members;
-)cpp" << padding << R"cpp(		}();
-)cpp";
-			break;
-		}
-
-		case response::Type::List:
-		{
-			const auto& elements = defaultValue.get<response::ListType>();
-
-			argumentDefaultValue << padding << R"cpp(		entry = []()
-)cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value elements(response::Type::List);
-)cpp" << padding << R"cpp(			response::Value entry;
-
-)cpp";
-
-			for (const auto& entry : elements)
-			{
-				argumentDefaultValue << getArgumentDefaultValue(level + 1, entry) << padding
-									 << R"cpp(			elements.emplace_back(std::move(entry));
-)cpp";
-			}
-
-			argumentDefaultValue << padding << R"cpp(			return elements;
-)cpp" << padding << R"cpp(		}();
-)cpp";
-			break;
-		}
-
-		case response::Type::String:
-		{
-			argumentDefaultValue << padding
-								 << R"cpp(		entry = response::Value(std::string(R"gql()cpp"
-								 << defaultValue.get<response::StringType>() << R"cpp()gql"));
-)cpp";
-			break;
-		}
-
-		case response::Type::Null:
-		{
-			argumentDefaultValue << padding << R"cpp(		entry = {};
-)cpp";
-			break;
-		}
-
-		case response::Type::Boolean:
-		{
-			argumentDefaultValue << padding << R"cpp(		entry = response::Value()cpp"
-								 << (defaultValue.get<response::BooleanType>() ? R"cpp(true)cpp"
-																			   : R"cpp(false)cpp")
-								 << R"cpp();
-)cpp";
-			break;
-		}
-
-		case response::Type::Int:
-		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::IntType>()cpp"
-				<< defaultValue.get<response::IntType>() << R"cpp());
-)cpp";
-			break;
-		}
-
-		case response::Type::Float:
-		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::FloatType>()cpp"
-				<< defaultValue.get<response::FloatType>() << R"cpp());
-)cpp";
-			break;
-		}
-
-		case response::Type::EnumValue:
-		{
-			argumentDefaultValue
-				<< padding << R"cpp(		entry = response::Value(response::Type::EnumValue);
-		entry.set<response::StringType>(R"gql()cpp"
-				<< defaultValue.get<response::StringType>() << R"cpp()gql");
-)cpp";
-			break;
-		}
-
-		case response::Type::Scalar:
-		{
-			argumentDefaultValue << padding << R"cpp(		entry = []()
-)cpp" << padding << R"cpp(		{
-)cpp" << padding << R"cpp(			response::Value scalar(response::Type::Scalar);
-)cpp" << padding << R"cpp(			response::Value entry;
-
-)cpp";
-			argumentDefaultValue
-				<< padding << R"cpp(	)cpp"
-				<< getArgumentDefaultValue(level + 1, defaultValue.get<response::ScalarType>())
-				<< padding << R"cpp(			scalar.set<response::ScalarType>(std::move(entry));
-
-)cpp" << padding << R"cpp(			return scalar;
-)cpp" << padding << R"cpp(		}();
-)cpp";
-			break;
-		}
-	}
-
-	return argumentDefaultValue.str();
-}
-
-std::string Generator::getArgumentDeclaration(const InputField& argument, const char* prefixToken,
-	const char* argumentsToken, const char* defaultToken) const noexcept
-{
-	std::ostringstream argumentDeclaration;
-	std::string argumentName(argument.cppName);
-
-	argumentName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
-	if (argument.defaultValue.type() == response::Type::Null)
-	{
-		argumentDeclaration << R"cpp(	auto )cpp" << prefixToken << argumentName << R"cpp( = )cpp"
-							<< getArgumentAccessType(argument) << R"cpp(::require)cpp"
-							<< getTypeModifiers(argument.modifiers) << R"cpp((")cpp"
-							<< argument.name << R"cpp(", )cpp" << argumentsToken << R"cpp();
-)cpp";
-	}
-	else
-	{
-		argumentDeclaration << R"cpp(	auto pair)cpp" << argumentName << R"cpp( = )cpp"
-							<< getArgumentAccessType(argument) << R"cpp(::find)cpp"
-							<< getTypeModifiers(argument.modifiers) << R"cpp((")cpp"
-							<< argument.name << R"cpp(", )cpp" << argumentsToken << R"cpp();
-	auto )cpp" << prefixToken
-							<< argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
-		? std::move(pair)cpp"
-							<< argumentName << R"cpp(.first)
-		: )cpp" << getArgumentAccessType(argument)
-							<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
-							<< R"cpp((")cpp" << argument.name << R"cpp(", )cpp" << defaultToken
-							<< R"cpp());
-)cpp";
-	}
-
-	return argumentDeclaration.str();
-}
-
-std::string Generator::getArgumentAccessType(const InputField& argument) const noexcept
-{
-	std::ostringstream argumentType;
-
-	argumentType << R"cpp(service::ModifiedArgument<)cpp";
-
-	switch (argument.fieldType)
-	{
-		case InputFieldType::Builtin:
-			argumentType << _schemaLoader.getCppType(argument.type);
-			break;
-
-		case InputFieldType::Enum:
-		case InputFieldType::Input:
-			argumentType << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-						 << _schemaLoader.getCppType(argument.type);
-			break;
-
-		case InputFieldType::Scalar:
-			argumentType << R"cpp(response::Value)cpp";
-			break;
-	}
-
-	argumentType << R"cpp(>)cpp";
-
-	return argumentType.str();
-}
-
-std::string Generator::getResultAccessType(const OutputField& result) const noexcept
-{
-	std::ostringstream resultType;
-
-	resultType << R"cpp(service::ModifiedResult<)cpp";
-
-	switch (result.fieldType)
-	{
-		case OutputFieldType::Builtin:
-		case OutputFieldType::Enum:
-		case OutputFieldType::Object:
-			resultType << _schemaLoader.getCppType(result.type);
-			break;
-
-		case OutputFieldType::Scalar:
-			resultType << R"cpp(response::Value)cpp";
-			break;
-
-		case OutputFieldType::Union:
-		case OutputFieldType::Interface:
-			resultType << R"cpp(service::Object)cpp";
-			break;
-	}
-
-	resultType << R"cpp(>)cpp";
-
-	return resultType.str();
-}
-
-std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) const noexcept
-{
-	bool firstValue = true;
-	std::ostringstream typeModifiers;
-
-	for (auto modifier : modifiers)
-	{
-		if (firstValue)
-		{
-			typeModifiers << R"cpp(<)cpp";
-			firstValue = false;
-		}
-		else
-		{
-			typeModifiers << R"cpp(, )cpp";
-		}
-
-		switch (modifier)
-		{
-			case service::TypeModifier::Nullable:
-				typeModifiers << R"cpp(service::TypeModifier::Nullable)cpp";
-				break;
-
-			case service::TypeModifier::List:
-				typeModifiers << R"cpp(service::TypeModifier::List)cpp";
-				break;
-
-			case service::TypeModifier::None:
-				break;
-		}
-	}
-
-	if (!firstValue)
-	{
-		typeModifiers << R"cpp(>)cpp";
-	}
-
-	return typeModifiers.str();
 }
 
 } /* namespace graphql::generator::client */

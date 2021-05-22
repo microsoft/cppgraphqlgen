@@ -41,22 +41,9 @@ private:
 
 	bool outputHeader() const noexcept;
 	void outputRequestComment(std::ostream& headerFile) const noexcept;
-	void outputObjectDeclaration(
-		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
-	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
-	std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
-	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
-	void outputObjectImplementation(
-		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
-	std::string getArgumentDefaultValue(
-		size_t level, const response::Value& defaultValue) const noexcept;
-	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken,
-		const char* argumentsToken, const char* defaultToken) const noexcept;
-	std::string getArgumentAccessType(const InputField& argument) const noexcept;
-	std::string getResultAccessType(const OutputField& result) const noexcept;
-	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
+	void outputGetRequest(std::ostream& sourceFile) const noexcept;
 
 	const SchemaLoader _schemaLoader;
 	const RequestLoader _requestLoader;
