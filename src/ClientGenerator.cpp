@@ -146,6 +146,8 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/Version.h"
+
 // Check if the library version is compatible with clientgen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion
 			   << R"cpp(.0

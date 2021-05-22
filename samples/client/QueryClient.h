@@ -16,6 +16,8 @@
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/Version.h"
+
 // Check if the library version is compatible with clientgen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: minor version mismatch");
