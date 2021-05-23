@@ -99,7 +99,7 @@ std::string_view RequestLoader::getRequestText() const noexcept
 	return trimWhitespace(_requestText);
 }
 
-const ResponseFieldList& RequestLoader::getVariables() const noexcept
+const RequestVariableList& RequestLoader::getVariables() const noexcept
 {
 	return _variables;
 }
@@ -581,7 +581,7 @@ void RequestLoader::collectVariables() noexcept
 {
 	peg::for_each_child<peg::variable>(*_operation,
 		[this](const peg::ast_node& variableDefinition) {
-			ResponseField variable;
+			RequestVariable variable;
 			TypeVisitor variableType;
 			service::schema_location defaultValueLocation;
 
@@ -613,8 +613,8 @@ void RequestLoader::collectVariables() noexcept
 
 			const auto [type, modifiers] = variableType.getType();
 
-			variable.type = getSchemaType(type, modifiers);
-			variable.position = variableDefinition.begin();
+			variable.type = _schema->LookupType(type);
+			variable.modifiers = modifiers;
 
 			if (!variable.defaultValueString.empty()
 				&& variable.defaultValue.type() == response::Type::Null
@@ -622,12 +622,14 @@ void RequestLoader::collectVariables() noexcept
 			{
 				std::ostringstream error;
 
-				error << "Expected Non-Null default value for variable name: " << variable.name
-					  << " line: " << defaultValueLocation.line
-					  << " column: " << defaultValueLocation.column;
+				error << "Expected Non-Null default value for variable name: " << variable.name;
 
-				throw std::runtime_error(error.str());
+				throw service::schema_exception {
+					{ service::schema_error { error.str(), std::move(defaultValueLocation) } }
+				};
 			}
+
+			variable.position = variableDefinition.begin();
 
 			_variables.push_back(std::move(variable));
 		});
@@ -742,6 +744,41 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 		responseField.type = (*itr)->type().lock();
 	}
 
+	bool wrapped = true;
+	bool nonNull = false;
+
+	while (wrapped)
+	{
+		switch (responseField.type->kind())
+		{
+			case introspection::TypeKind::NON_NULL:
+				nonNull = true;
+				responseField.type = responseField.type->ofType().lock();
+				break;
+
+			case introspection::TypeKind::LIST:
+				if (!nonNull)
+				{
+					responseField.modifiers.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				responseField.modifiers.push_back(service::TypeModifier::List);
+				responseField.type = responseField.type->ofType().lock();
+				break;
+
+			default:
+				if (!nonNull)
+				{
+					responseField.modifiers.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				wrapped = false;
+				break;
+		}
+	}
+
 	const peg::ast_node* selection = nullptr;
 
 	peg::on_first_child<peg::selection_set>(field, [&selection](const peg::ast_node& child) {
@@ -750,20 +787,12 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 	if (selection)
 	{
-		auto ofType = responseField.type;
-
-		while (ofType->kind() == introspection::TypeKind::NON_NULL
-			|| ofType->kind() == introspection::TypeKind::LIST)
-		{
-			ofType = ofType->ofType().lock();
-		}
-
-		switch (ofType->kind())
+		switch (responseField.type->kind())
 		{
 			case introspection::TypeKind::OBJECT:
 			case introspection::TypeKind::INTERFACE:
 			{
-				SelectionVisitor selectionVisitor { _fragments, _schema, ofType };
+				SelectionVisitor selectionVisitor { _fragments, _schema, responseField.type };
 
 				selectionVisitor.visit(*selection);
 
@@ -780,7 +809,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 			case introspection::TypeKind::UNION:
 			{
 				ResponseUnionOptions options;
-				const auto& possibleTypes = ofType->possibleTypes();
+				const auto& possibleTypes = responseField.type->possibleTypes();
 
 				for (const auto& weakType : possibleTypes)
 				{

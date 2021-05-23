@@ -32,13 +32,25 @@ using ResponseFieldChildren = std::variant<ResponseFieldList, ResponseUnionOptio
 struct ResponseField
 {
 	std::shared_ptr<const schema::BaseType> type;
+	TypeModifierStack modifiers;
+	std::string_view name;
+	std::string_view cppName;
+	std::optional<tao::graphqlpeg::position> position;
+	std::optional<ResponseFieldChildren> children;
+};
+
+struct RequestVariable
+{
+	std::shared_ptr<const schema::BaseType> type;
+	TypeModifierStack modifiers;
 	std::string_view name;
 	std::string_view cppName;
 	std::string_view defaultValueString;
 	response::Value defaultValue;
 	std::optional<tao::graphqlpeg::position> position;
-	std::optional<ResponseFieldChildren> children;
 };
+
+using RequestVariableList = std::vector<RequestVariable>;
 
 struct RequestOptions
 {
@@ -60,7 +72,7 @@ public:
 	std::string_view getOperationType() const noexcept;
 	std::string_view getRequestText() const noexcept;
 
-	const ResponseFieldList& getVariables() const noexcept;
+	const RequestVariableList& getVariables() const noexcept;
 	const ResponseType& getResponseType() const noexcept;
 
 private:
@@ -113,7 +125,7 @@ private:
 	const peg::ast_node* _operation = nullptr;
 	std::string_view _operationName;
 	std::string_view _operationType;
-	ResponseFieldList _variables;
+	RequestVariableList _variables;
 	ResponseType _responseType;
 
 	FragmentDefinitionMap _fragments;
