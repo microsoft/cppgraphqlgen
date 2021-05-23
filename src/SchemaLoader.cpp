@@ -988,20 +988,26 @@ std::string_view SchemaLoader::getSafeCppName(std::string_view type) noexcept
 		std::regex::optimize | std::regex::ECMAScript);
 
 	// Cache the substitutions so we don't need to repeat a replacement.
-	static std::unordered_map<std::string_view, std::string> safeNames;
-	auto itr = safeNames.find(type);
-	std::string cppName { type };
+	static std::unordered_map<std::string, std::unique_ptr<std::string>> safeNames;
+	auto itr = std::find_if(safeNames.begin(), safeNames.end(), [type](const auto& entry) noexcept {
+		return entry.first == type;
+	});
 
-	if (safeNames.cend() == itr
-		&& (std::regex_search(cppName, leading_Capital) || std::regex_search(cppName, multiple_)))
+	if (safeNames.cend() == itr)
 	{
-		std::tie(itr, std::ignore) = safeNames.emplace(type,
-			std::regex_replace(std::regex_replace(cppName, multiple_, R"re(_)re"),
-				leading_Capital,
-				R"re($1)re"));
+		std::string cppName { type };
+
+		if (std::regex_search(cppName, leading_Capital) || std::regex_search(cppName, multiple_))
+		{
+			std::tie(itr, std::ignore) = safeNames.emplace(std::string { type },
+				std::make_unique<std::string>(
+					std::regex_replace(std::regex_replace(cppName, multiple_, R"re(_)re"),
+						leading_Capital,
+						R"re($1)re")));
+		}
 	}
 
-	return (safeNames.cend() == itr) ? type : itr->second;
+	return (safeNames.cend() == itr) ? type : *(itr->second);
 }
 
 OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& fields)
