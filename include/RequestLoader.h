@@ -94,7 +94,8 @@ private:
 	class SelectionVisitor
 	{
 	public:
-		explicit SelectionVisitor(const FragmentDefinitionMap& fragments,
+		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
+			const FragmentDefinitionMap& fragments,
 			const std::shared_ptr<schema::Schema>& schema,
 			const std::shared_ptr<const schema::BaseType>& type);
 
@@ -107,7 +108,7 @@ private:
 		void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 		void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-		const std::optional<std::reference_wrapper<const service::field_path>> _path;
+		const SchemaLoader& _schemaLoader;
 		const FragmentDefinitionMap& _fragments;
 		const std::shared_ptr<schema::Schema>& _schema;
 		const std::shared_ptr<const schema::BaseType>& _type;

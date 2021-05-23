@@ -56,7 +56,7 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 							   "the operation object!");
 	}
 
-	SelectionVisitor visitor { _fragments, _schema, _responseType.type };
+	SelectionVisitor visitor { _schemaLoader, _fragments, _schema, _responseType.type };
 
 	visitor.visit(*selection);
 	_responseType.fields = visitor.getFields();
@@ -642,10 +642,11 @@ void RequestLoader::collectFragments() noexcept
 	});
 }
 
-RequestLoader::SelectionVisitor::SelectionVisitor(const FragmentDefinitionMap& fragments,
-	const std::shared_ptr<schema::Schema>& schema,
+RequestLoader::SelectionVisitor::SelectionVisitor(const SchemaLoader& schemaLoader,
+	const FragmentDefinitionMap& fragments, const std::shared_ptr<schema::Schema>& schema,
 	const std::shared_ptr<const schema::BaseType>& type)
-	: _fragments(fragments)
+	: _schemaLoader(schemaLoader)
+	, _fragments(fragments)
 	, _schema(schema)
 	, _type(type)
 {
@@ -792,7 +793,10 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 			case introspection::TypeKind::OBJECT:
 			case introspection::TypeKind::INTERFACE:
 			{
-				SelectionVisitor selectionVisitor { _fragments, _schema, responseField.type };
+				SelectionVisitor selectionVisitor { _schemaLoader,
+					_fragments,
+					_schema,
+					responseField.type };
 
 				selectionVisitor.visit(*selection);
 
@@ -814,7 +818,10 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 				for (const auto& weakType : possibleTypes)
 				{
 					const auto possibleType = weakType.lock();
-					SelectionVisitor possibleTypeVisitor { _fragments, _schema, possibleType };
+					SelectionVisitor possibleTypeVisitor { _schemaLoader,
+						_fragments,
+						_schema,
+						possibleType };
 
 					possibleTypeVisitor.visit(*selection);
 
@@ -825,7 +832,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 						ResponseType option;
 
 						option.type = possibleType;
-						option.cppType = SchemaLoader::getSafeCppName(possibleType->name());
+						option.cppType = _schemaLoader.getCppType(possibleType->name());
 						option.fields = std::move(possibleTypeFields);
 
 						options.push_back(std::move(option));
@@ -857,9 +864,9 @@ void RequestLoader::SelectionVisitor::visitFragmentSpread(const peg::ast_node& f
 
 		error << "Unknown fragment name: " << name;
 
-		throw service::schema_exception { { service::schema_error { error.str(),
-			{ position.line, position.column },
-			service::buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } };
+		throw service::schema_exception {
+			{ service::schema_error { error.str(), { position.line, position.column } } }
+		};
 	}
 
 	for (const auto& selection : itr->second->children)
