@@ -5,6 +5,7 @@
 #include "GeneratorUtil.h"
 
 #include "graphqlservice/internal/Version.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -169,6 +170,66 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	PendingBlankLine pendingSeparator { headerFile };
 
 	outputGetRequestDeclaration(headerFile);
+
+	const auto& variables = _requestLoader.getVariables();
+
+	if (!variables.empty())
+	{
+		// TODO: Recurse through the variable types and define all of the enums referenced in the variables.
+		// std::map<std::string_view, std::shared_ptr<const schema::BaseType>> enumTypes;
+
+		// TODO: Recurse through the variable types and build a list of referenced input types to forward declare,
+		// TODO: and output them in alphabetical order. Don't define them yet, since they might have interdependencies.
+		// std::map<std::string_view, std::shared_ptr<const schema::BaseType>> inputTypes;
+
+		// TODO: After forward declaring all of the input type structs, emit the definitions in alphabetical order.
+
+		pendingSeparator.reset();
+
+		// Forward declare all of the input object structs.
+		for (const auto& variable : variables)
+		{
+			if (variable.type->kind() == introspection::TypeKind::INPUT_OBJECT)
+			{
+				headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(variable.type->name())
+						   << R"cpp(;
+)cpp";
+				pendingSeparator.add();
+			}
+		}
+
+		pendingSeparator.reset();
+
+		// Define all of the input object structs.
+		for (const auto& variable : variables)
+		{
+			if (variable.type->kind() == introspection::TypeKind::INPUT_OBJECT)
+			{
+				headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(variable.type->name())
+					<< R"cpp( {};
+)cpp";
+				pendingSeparator.add();
+			}
+		}
+
+		pendingSeparator.reset();
+
+		headerFile << R"cpp(struct Variables
+{
+)cpp";
+
+		for (const auto& variable : variables)
+		{
+			headerFile << R"cpp(	)cpp" << _schemaLoader.getCppType(variable.type->name())
+					   << R"cpp( )cpp" << variable.cppName << R"cpp(;
+)cpp";
+		}
+
+		headerFile << R"cpp(};
+
+)cpp";
+	}
+
 	pendingSeparator.reset();
 
 	return true;

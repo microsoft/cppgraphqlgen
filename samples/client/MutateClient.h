@@ -53,6 +53,15 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+struct CompleteTaskInput;
+
+struct CompleteTaskInput {};
+
+struct Variables
+{
+	CompleteTaskInput input;
+};
+
 } /* namespace graphql::mutation::CompleteTaskMutation */
 
 #endif // MUTATECLIENT_H
