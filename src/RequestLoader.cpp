@@ -706,6 +706,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 	responseField.name = alias;
 	responseField.cppName = SchemaLoader::getSafeCppName(alias);
+	responseField.position = field.begin();
 
 	// Special case to handle __typename on any ResponseType
 	if (name == R"gql(__typename)gql"sv)
@@ -770,8 +771,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 				if (!selectionFields.empty())
 				{
-					responseField.children =
-						std::make_optional<ResponseFieldChildren>(std::move(selectionFields));
+					responseField.children = std::move(selectionFields);
 				}
 
 				break;
@@ -805,8 +805,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 				if (!options.empty())
 				{
-					responseField.children =
-						std::make_optional<ResponseFieldChildren>(std::move(options));
+					responseField.children = std::move(options);
 				}
 
 				break;
