@@ -97,6 +97,7 @@ private:
 	void collectFragments() noexcept;
 	void collectVariables() noexcept;
 	void collectInputTypes(const RequestSchemaType& variableType) noexcept;
+	void reorderInputTypeDependencies() noexcept;
 	void collectEnums(const RequestSchemaType& variableType) noexcept;
 	void collectEnums(const ResponseField& responseField) noexcept;
 

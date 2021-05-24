@@ -68,6 +68,9 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 		collectEnums(variable.type);
 	}
 
+	// Handle nested input types by fully declaring the dependencies first.
+	reorderInputTypeDependencies();
+
 	for (const auto& responseField : _responseType.fields)
 	{
 		collectEnums(responseField);
@@ -774,6 +777,86 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 	}
 }
 
+void RequestLoader::reorderInputTypeDependencies() noexcept
+{
+	if (_referencedInputTypes.empty())
+	{
+		return;
+	}
+
+	// Build the dependency list for each input type.
+	struct InputTypeDependencies
+	{
+		RequestSchemaType type;
+		std::string_view name;
+		std::unordered_set<std::string_view> dependencies;
+	};
+
+	std::vector<InputTypeDependencies> inputTypes(_referencedInputTypes.size());
+
+	std::transform(_referencedInputTypes.cbegin(),
+		_referencedInputTypes.cend(),
+		inputTypes.begin(),
+		[](const RequestSchemaType& type) noexcept {
+			InputTypeDependencies result { type, type->name() };
+			const auto& fields = type->inputFields();
+
+			std::for_each(fields.begin(),
+				fields.end(),
+				[&result](const std::shared_ptr<const schema::InputValue>& field) noexcept {
+					const auto fieldType = field->type().lock();
+
+					if (fieldType->kind() == introspection::TypeKind::INPUT_OBJECT)
+					{
+						result.dependencies.insert(fieldType->name());
+					}
+				});
+
+			return result;
+		});
+
+	std::unordered_set<std::string_view> handled;
+	auto itr = inputTypes.begin();
+
+	while (itr != inputTypes.end())
+	{
+		// Put all of the input types without unhandled dependencies at the front.
+		const auto itrDependent = std::stable_partition(itr,
+			inputTypes.end(),
+			[&handled](const InputTypeDependencies& entry) noexcept {
+				return std::find_if(entry.dependencies.cbegin(),
+						   entry.dependencies.cend(),
+						   [&handled](std::string_view dependency) noexcept {
+							   return handled.find(dependency) == handled.cend();
+						   })
+					== entry.dependencies.cend();
+			});
+
+		if (itrDependent != inputTypes.end())
+		{
+			std::for_each(itr,
+				itrDependent,
+				[&handled](const InputTypeDependencies& entry) noexcept {
+					handled.insert(entry.name);
+				});
+		}
+
+		itr = itrDependent;
+	}
+
+	if (!handled.empty())
+	{
+		std::transform(inputTypes.begin(),
+			inputTypes.end(),
+			_referencedInputTypes.begin(),
+			[](InputTypeDependencies& entry) noexcept {
+				auto result = std::move(entry.type);
+
+				return result;
+			});
+	}
+}
+
 void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
 {
 	// Enums may be referenced in any variable input type or in the response itself.
@@ -816,7 +899,8 @@ void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
 		{
 			if (responseField.children)
 			{
-				for (const auto& responseType : std::get<ResponseUnionOptions>(*responseField.children))
+				for (const auto& responseType :
+					std::get<ResponseUnionOptions>(*responseField.children))
 				{
 					for (const auto& field : responseType.fields)
 					{
