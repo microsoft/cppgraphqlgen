@@ -155,7 +155,7 @@ std::string RequestLoader::getInputCppType(const RequestVariable& variable) cons
 		}
 	}
 
-	inputType << getCppType(field.type);
+	inputType << _schemaLoader.getCppType(variable.type->name());
 
 	for (size_t i = 0; i < templateCount; ++i)
 	{
@@ -167,7 +167,63 @@ std::string RequestLoader::getInputCppType(const RequestVariable& variable) cons
 
 std::string RequestLoader::getOutputCppType(const ResponseField& field) const noexcept
 {
+	bool nonNull = true;
+	size_t templateCount = 0;
+	std::ostringstream outputType;
 
+	for (auto modifier : field.modifiers)
+	{
+		if (!nonNull)
+		{
+			outputType << R"cpp(std::optional<)cpp";
+			++templateCount;
+		}
+
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				nonNull = true;
+				break;
+
+			case service::TypeModifier::Nullable:
+				nonNull = false;
+				break;
+
+			case service::TypeModifier::List:
+				nonNull = true;
+				outputType << R"cpp(std::vector<)cpp";
+				++templateCount;
+				break;
+		}
+	}
+
+	switch (field.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::UNION:
+		case introspection::TypeKind::INTERFACE:
+			// Even if it's non-nullable, we still want to return a shared_ptr for complex types
+			outputType << R"cpp(std::shared_ptr<)cpp";
+			++templateCount;
+			break;
+
+		default:
+			if (!nonNull)
+			{
+				outputType << R"cpp(std::optional<)cpp";
+				++templateCount;
+			}
+			break;
+	}
+
+	outputType << _schemaLoader.getCppType(field.type->name());
+
+	for (size_t i = 0; i < templateCount; ++i)
+	{
+		outputType << R"cpp(>)cpp";
+	}
+
+	return outputType.str();
 }
 
 void RequestLoader::buildSchema()
