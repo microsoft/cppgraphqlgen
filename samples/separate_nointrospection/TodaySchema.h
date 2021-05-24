@@ -37,6 +37,29 @@ struct CompleteTaskInput
 	std::optional<response::StringType> clientMutationId;
 };
 
+struct ThirdNestedInput
+{
+	response::IdType id;
+};
+
+struct FourthNestedInput
+{
+	response::IdType id;
+};
+
+struct SecondNestedInput
+{
+	response::IdType id;
+	ThirdNestedInput third;
+};
+
+struct FirstNestedInput
+{
+	response::IdType id;
+	SecondNestedInput second;
+	ThirdNestedInput third;
+};
+
 namespace object {
 
 class Query;

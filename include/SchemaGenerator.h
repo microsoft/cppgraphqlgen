@@ -121,6 +121,7 @@ struct InputType
 	std::string_view cppType;
 	InputFieldList fields;
 	std::string_view description;
+	std::unordered_set<std::string_view> dependencies;
 };
 
 using InputTypeList = std::vector<InputType>;
@@ -371,6 +372,7 @@ private:
 		const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
+	void reorderInputTypeDependencies();
 
 	std::string_view getCppType(std::string_view type) const noexcept;
 	std::string getInputCppType(const InputField& field) const noexcept;
