@@ -41,7 +41,6 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	validateRequest();
 
 	findOperation();
-	collectVariables();
 	collectFragments();
 
 	const peg::ast_node* selection = nullptr;
@@ -60,6 +59,19 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 
 	visitor.visit(*selection);
 	_responseType.fields = visitor.getFields();
+
+	collectVariables();
+
+	for (const auto& variable : _variables)
+	{
+		collectInputTypes(variable.type);
+		collectEnums(variable.type);
+	}
+
+	for (const auto& responseField : _responseType.fields)
+	{
+		collectEnums(responseField);
+	}
 }
 
 std::string_view RequestLoader::getRequestFilename() const noexcept
@@ -99,14 +111,63 @@ std::string_view RequestLoader::getRequestText() const noexcept
 	return trimWhitespace(_requestText);
 }
 
+const ResponseType& RequestLoader::getResponseType() const noexcept
+{
+	return _responseType;
+}
+
 const RequestVariableList& RequestLoader::getVariables() const noexcept
 {
 	return _variables;
 }
 
-const ResponseType& RequestLoader::getResponseType() const noexcept
+const RequestSchemaTypeList& RequestLoader::getReferencedInputTypes() const noexcept
 {
-	return _responseType;
+	return _referencedInputTypes;
+}
+
+const RequestSchemaTypeList& RequestLoader::getReferencedEnums() const noexcept
+{
+	return _referencedEnums;
+}
+
+std::string RequestLoader::getInputCppType(const RequestVariable& variable) const noexcept
+{
+	size_t templateCount = 0;
+	std::ostringstream inputType;
+
+	for (auto modifier : variable.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::Nullable:
+				inputType << R"cpp(std::optional<)cpp";
+				++templateCount;
+				break;
+
+			case service::TypeModifier::List:
+				inputType << R"cpp(std::vector<)cpp";
+				++templateCount;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	inputType << getCppType(field.type);
+
+	for (size_t i = 0; i < templateCount; ++i)
+	{
+		inputType << R"cpp(>)cpp";
+	}
+
+	return inputType.str();
+}
+
+std::string RequestLoader::getOutputCppType(const ResponseField& field) const noexcept
+{
+
 }
 
 void RequestLoader::buildSchema()
@@ -411,10 +472,10 @@ void RequestLoader::addTypesToSchema()
 	}
 }
 
-std::shared_ptr<const schema::BaseType> RequestLoader::getSchemaType(
+RequestSchemaType RequestLoader::getSchemaType(
 	std::string_view type, const TypeModifierStack& modifiers) const noexcept
 {
-	std::shared_ptr<const schema::BaseType> introspectionType = _schema->LookupType(type);
+	RequestSchemaType introspectionType = _schema->LookupType(type);
 
 	if (introspectionType)
 	{
@@ -577,6 +638,13 @@ void RequestLoader::findOperation()
 		_operationName.empty() ? _responseType.type->name() : _operationName);
 }
 
+void RequestLoader::collectFragments() noexcept
+{
+	peg::for_each_child<peg::fragment_definition>(*_ast.root, [this](const peg::ast_node& child) {
+		_fragments.emplace(child.children.front()->string_view(), &child);
+	});
+}
+
 void RequestLoader::collectVariables() noexcept
 {
 	peg::for_each_child<peg::variable>(*_operation,
@@ -635,16 +703,80 @@ void RequestLoader::collectVariables() noexcept
 		});
 }
 
-void RequestLoader::collectFragments() noexcept
+void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noexcept
 {
-	peg::for_each_child<peg::fragment_definition>(*_ast.root, [this](const peg::ast_node& child) {
-		_fragments.emplace(child.children.front()->string_view(), &child);
-	});
+	// Input types may be referenced in any variable or field of a variable input type.
+	if (variableType->kind() == introspection::TypeKind::INPUT_OBJECT
+		&& _inputTypeNames.emplace(variableType->name()).second)
+	{
+		_referencedInputTypes.push_back(variableType);
+
+		for (const auto& inputField : variableType->inputFields())
+		{
+			collectInputTypes(inputField->type().lock());
+		}
+	}
+}
+
+void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
+{
+	// Enums may be referenced in any variable input type or in the response itself.
+	if (variableType->kind() == introspection::TypeKind::ENUM
+		&& _enumNames.emplace(variableType->name()).second)
+	{
+		_referencedEnums.push_back(variableType);
+	}
+}
+
+void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
+{
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::ENUM:
+		{
+			if (_enumNames.emplace(responseField.type->name()).second)
+			{
+				_referencedEnums.push_back(responseField.type);
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		{
+			if (responseField.children)
+			{
+				for (const auto& field : std::get<ResponseFieldList>(*responseField.children))
+				{
+					collectEnums(field);
+				}
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::UNION:
+		{
+			if (responseField.children)
+			{
+				for (const auto& responseType : std::get<ResponseUnionOptions>(*responseField.children))
+				{
+					for (const auto& field : responseType.fields)
+					{
+						collectEnums(field);
+					}
+				}
+			}
+
+			break;
+		}
+	}
 }
 
 RequestLoader::SelectionVisitor::SelectionVisitor(const SchemaLoader& schemaLoader,
 	const FragmentDefinitionMap& fragments, const std::shared_ptr<schema::Schema>& schema,
-	const std::shared_ptr<const schema::BaseType>& type)
+	const RequestSchemaType& type)
 	: _schemaLoader(schemaLoader)
 	, _fragments(fragments)
 	, _schema(schema)
@@ -741,6 +873,12 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 			[name](const std::shared_ptr<const schema::Field>& typeField) noexcept {
 				return typeField->name() == name;
 			});
+
+		if (itr == typeFields.end())
+		{
+			// Skip fields that are not found on the current type.
+			return;
+		}
 
 		responseField.type = (*itr)->type().lock();
 	}
@@ -869,20 +1007,55 @@ void RequestLoader::SelectionVisitor::visitFragmentSpread(const peg::ast_node& f
 		};
 	}
 
-	for (const auto& selection : itr->second->children)
-	{
-		visit(*selection);
-	}
+	const auto typeCondition = itr->second->children[1].get();
+	const auto fragmentType = _schema->LookupType(typeCondition->children.front()->string_view());
+	const auto& selection = *(itr->second->children.back());
+	SelectionVisitor selectionVisitor { _schemaLoader, _fragments, _schema, fragmentType };
+
+	selectionVisitor.visit(selection);
+	mergeFragmentFields(selectionVisitor.getFields());
 }
 
 void RequestLoader::SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 {
-	peg::on_first_child<peg::selection_set>(inlineFragment, [this](const peg::ast_node& child) {
-		for (const auto& selection : child.children)
+	const peg::ast_node* typeCondition = nullptr;
+
+	peg::on_first_child<peg::type_condition>(inlineFragment,
+		[&typeCondition](const peg::ast_node& child) {
+			typeCondition = &child;
+		});
+
+	peg::on_first_child<peg::selection_set>(inlineFragment,
+		[this, typeCondition](const peg::ast_node& child) {
+			const auto fragmentType = typeCondition
+				? _schema->LookupType(typeCondition->children.front()->string_view())
+				: _type;
+			const auto& selection = child;
+			SelectionVisitor selectionVisitor { _schemaLoader, _fragments, _schema, fragmentType };
+
+			selectionVisitor.visit(selection);
+			mergeFragmentFields(selectionVisitor.getFields());
+		});
+}
+
+void RequestLoader::SelectionVisitor::mergeFragmentFields(
+	ResponseFieldList&& fragmentFields) noexcept
+{
+	fragmentFields.erase(std::remove_if(fragmentFields.begin(),
+							 fragmentFields.end(),
+							 [this](const ResponseField& fragmentField) noexcept {
+								 return !_names.emplace(fragmentField.name).second;
+							 }),
+		fragmentFields.cend());
+
+	if (!fragmentFields.empty())
+	{
+		_fields.reserve(_fields.size() + fragmentFields.size());
+		for (auto& fragmentField : fragmentFields)
 		{
-			visit(*selection);
+			_fields.push_back(std::move(fragmentField));
 		}
-	});
+	}
 }
 
 } /* namespace graphql::generator */

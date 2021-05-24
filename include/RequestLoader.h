@@ -15,13 +15,16 @@
 
 namespace graphql::generator {
 
+using RequestSchemaType = std::shared_ptr<const schema::BaseType>;
+using RequestSchemaTypeList = std::vector<RequestSchemaType>;
+
 struct ResponseField;
 
 using ResponseFieldList = std::vector<ResponseField>;
 
 struct ResponseType
 {
-	std::shared_ptr<const schema::BaseType> type;
+	RequestSchemaType type;
 	std::string_view cppType;
 	ResponseFieldList fields;
 };
@@ -31,7 +34,7 @@ using ResponseFieldChildren = std::variant<ResponseFieldList, ResponseUnionOptio
 
 struct ResponseField
 {
-	std::shared_ptr<const schema::BaseType> type;
+	RequestSchemaType type;
 	TypeModifierStack modifiers;
 	std::string_view name;
 	std::string_view cppName;
@@ -41,7 +44,7 @@ struct ResponseField
 
 struct RequestVariable
 {
-	std::shared_ptr<const schema::BaseType> type;
+	RequestSchemaType type;
 	TypeModifierStack modifiers;
 	std::string_view name;
 	std::string_view cppName;
@@ -72,21 +75,30 @@ public:
 	std::string_view getOperationType() const noexcept;
 	std::string_view getRequestText() const noexcept;
 
-	const RequestVariableList& getVariables() const noexcept;
 	const ResponseType& getResponseType() const noexcept;
+	const RequestVariableList& getVariables() const noexcept;
+
+	const RequestSchemaTypeList& getReferencedInputTypes() const noexcept;
+	const RequestSchemaTypeList& getReferencedEnums() const noexcept;
+
+	std::string getInputCppType(const RequestVariable& variable) const noexcept;
+	std::string getOutputCppType(const ResponseField& field) const noexcept;
 
 private:
 	void buildSchema();
 	void addTypesToSchema();
-	std::shared_ptr<const schema::BaseType> getSchemaType(
+	RequestSchemaType getSchemaType(
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
 	static std::string_view trimWhitespace(std::string_view content) noexcept;
 
 	void findOperation();
-	void collectVariables() noexcept;
 	void collectFragments() noexcept;
+	void collectVariables() noexcept;
+	void collectInputTypes(const RequestSchemaType& variableType) noexcept;
+	void collectEnums(const RequestSchemaType& variableType) noexcept;
+	void collectEnums(const ResponseField& responseField) noexcept;
 
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
@@ -95,9 +107,8 @@ private:
 	{
 	public:
 		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
-			const FragmentDefinitionMap& fragments,
-			const std::shared_ptr<schema::Schema>& schema,
-			const std::shared_ptr<const schema::BaseType>& type);
+			const FragmentDefinitionMap& fragments, const std::shared_ptr<schema::Schema>& schema,
+			const RequestSchemaType& type);
 
 		void visit(const peg::ast_node& selection);
 
@@ -108,10 +119,12 @@ private:
 		void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 		void visitInlineFragment(const peg::ast_node& inlineFragment);
 
+		void mergeFragmentFields(ResponseFieldList&& fragmentFields) noexcept;
+
 		const SchemaLoader& _schemaLoader;
 		const FragmentDefinitionMap& _fragments;
 		const std::shared_ptr<schema::Schema>& _schema;
-		const std::shared_ptr<const schema::BaseType>& _type;
+		const RequestSchemaType& _type;
 
 		internal::string_view_set _names;
 		ResponseFieldList _fields;
@@ -126,10 +139,13 @@ private:
 	const peg::ast_node* _operation = nullptr;
 	std::string_view _operationName;
 	std::string_view _operationType;
-	RequestVariableList _variables;
-	ResponseType _responseType;
-
 	FragmentDefinitionMap _fragments;
+	ResponseType _responseType;
+	RequestVariableList _variables;
+	internal::string_view_set _inputTypeNames;
+	RequestSchemaTypeList _referencedInputTypes;
+	internal::string_view_set _enumNames;
+	RequestSchemaTypeList _referencedEnums;
 };
 
 } /* namespace graphql::generator */
