@@ -62,6 +62,7 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 
 	collectVariables();
 
+	// Variables can reference both input types and enums.
 	for (const auto& variable : _variables)
 	{
 		collectInputTypes(variable.type);
@@ -71,6 +72,7 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	// Handle nested input types by fully declaring the dependencies first.
 	reorderInputTypeDependencies();
 
+	// The response can also reference enums.
 	for (const auto& responseField : _responseType.fields)
 	{
 		collectEnums(responseField);
@@ -604,6 +606,48 @@ void RequestLoader::validateRequest() const
 	}
 }
 
+std::pair<RequestSchemaType, TypeModifierStack> RequestLoader::unwrapSchemaType(
+	RequestSchemaType&& type) noexcept
+{
+	std::pair<RequestSchemaType, TypeModifierStack> result { std::move(type), {} };
+	bool wrapped = true;
+	bool nonNull = false;
+
+	while (wrapped)
+	{
+		switch (result.first->kind())
+		{
+			case introspection::TypeKind::NON_NULL:
+				nonNull = true;
+				result.first = result.first->ofType().lock();
+				break;
+
+			case introspection::TypeKind::LIST:
+				if (!nonNull)
+				{
+					result.second.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				result.second.push_back(service::TypeModifier::List);
+				result.first = result.first->ofType().lock();
+				break;
+
+			default:
+				if (!nonNull)
+				{
+					result.second.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				wrapped = false;
+				break;
+		}
+	}
+
+	return result;
+}
+
 std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcept
 {
 	const auto isSpacePredicate = [](char ch) noexcept {
@@ -764,16 +808,36 @@ void RequestLoader::collectVariables() noexcept
 
 void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noexcept
 {
-	// Input types may be referenced in any variable or field of a variable input type.
-	if (variableType->kind() == introspection::TypeKind::INPUT_OBJECT
-		&& _inputTypeNames.emplace(variableType->name()).second)
+	switch (variableType->kind())
 	{
-		_referencedInputTypes.push_back(variableType);
-
-		for (const auto& inputField : variableType->inputFields())
+		case introspection::TypeKind::INPUT_OBJECT:
 		{
-			collectInputTypes(inputField->type().lock());
+			if (_inputTypeNames.emplace(variableType->name()).second)
+			{
+				_referencedInputTypes.push_back(variableType);
+
+				// Input types can reference other input types and enums.
+				for (const auto& inputField : variableType->inputFields())
+				{
+					const auto fieldType = inputField->type().lock();
+
+					collectInputTypes(fieldType);
+					collectEnums(fieldType);
+				}
+			}
+
+			break;
 		}
+
+		case introspection::TypeKind::LIST:
+		case introspection::TypeKind::NON_NULL:
+		{
+			collectInputTypes(variableType->ofType().lock());
+			break;
+		}
+
+		default:
+			break;
 	}
 }
 
@@ -859,11 +923,27 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 
 void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
 {
-	// Enums may be referenced in any variable input type or in the response itself.
-	if (variableType->kind() == introspection::TypeKind::ENUM
-		&& _enumNames.emplace(variableType->name()).second)
+	switch (variableType->kind())
 	{
-		_referencedEnums.push_back(variableType);
+		case introspection::TypeKind::ENUM:
+		{
+			if (_enumNames.emplace(variableType->name()).second)
+			{
+				_referencedEnums.push_back(variableType);
+			}
+
+			break;
+		}
+
+		case introspection::TypeKind::LIST:
+		case introspection::TypeKind::NON_NULL:
+		{
+			collectEnums(variableType->ofType().lock());
+			break;
+		}
+
+		default:
+			break;
 	}
 }
 
@@ -1023,40 +1103,8 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 		responseField.type = (*itr)->type().lock();
 	}
 
-	bool wrapped = true;
-	bool nonNull = false;
-
-	while (wrapped)
-	{
-		switch (responseField.type->kind())
-		{
-			case introspection::TypeKind::NON_NULL:
-				nonNull = true;
-				responseField.type = responseField.type->ofType().lock();
-				break;
-
-			case introspection::TypeKind::LIST:
-				if (!nonNull)
-				{
-					responseField.modifiers.push_back(service::TypeModifier::Nullable);
-				}
-
-				nonNull = false;
-				responseField.modifiers.push_back(service::TypeModifier::List);
-				responseField.type = responseField.type->ofType().lock();
-				break;
-
-			default:
-				if (!nonNull)
-				{
-					responseField.modifiers.push_back(service::TypeModifier::Nullable);
-				}
-
-				nonNull = false;
-				wrapped = false;
-				break;
-		}
-	}
+	std::tie(responseField.type, responseField.modifiers) =
+		unwrapSchemaType(std::move(responseField.type));
 
 	const peg::ast_node* selection = nullptr;
 

@@ -91,6 +91,8 @@ private:
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
+	static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
+		RequestSchemaType&& type) noexcept;
 	static std::string_view trimWhitespace(std::string_view content) noexcept;
 
 	void findOperation();
