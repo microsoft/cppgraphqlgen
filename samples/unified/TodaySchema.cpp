@@ -88,6 +88,52 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 	};
 }
 
+template <>
+today::ThirdNestedInput ModifiedArgument<today::ThirdNestedInput>::convert(const response::Value& value)
+{
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+
+	return {
+		std::move(valueId)
+	};
+}
+
+template <>
+today::FourthNestedInput ModifiedArgument<today::FourthNestedInput>::convert(const response::Value& value)
+{
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+
+	return {
+		std::move(valueId)
+	};
+}
+
+template <>
+today::SecondNestedInput ModifiedArgument<today::SecondNestedInput>::convert(const response::Value& value)
+{
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+	auto valueThird = service::ModifiedArgument<today::ThirdNestedInput>::require("third", value);
+
+	return {
+		std::move(valueId),
+		std::move(valueThird)
+	};
+}
+
+template <>
+today::FirstNestedInput ModifiedArgument<today::FirstNestedInput>::convert(const response::Value& value)
+{
+	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+	auto valueSecond = service::ModifiedArgument<today::SecondNestedInput>::require("second", value);
+	auto valueThird = service::ModifiedArgument<today::ThirdNestedInput>::require("third", value);
+
+	return {
+		std::move(valueId),
+		std::move(valueSecond),
+		std::move(valueThird)
+	};
+}
+
 } /* namespace service */
 
 namespace today {
@@ -1107,6 +1153,14 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(TaskState)gql"sv, typeTaskState);
 	auto typeCompleteTaskInput = schema::InputObjectType::Make(R"gql(CompleteTaskInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CompleteTaskInput)gql"sv, typeCompleteTaskInput);
+	auto typeThirdNestedInput = schema::InputObjectType::Make(R"gql(ThirdNestedInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(ThirdNestedInput)gql"sv, typeThirdNestedInput);
+	auto typeFourthNestedInput = schema::InputObjectType::Make(R"gql(FourthNestedInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(FourthNestedInput)gql"sv, typeFourthNestedInput);
+	auto typeSecondNestedInput = schema::InputObjectType::Make(R"gql(SecondNestedInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(SecondNestedInput)gql"sv, typeSecondNestedInput);
+	auto typeFirstNestedInput = schema::InputObjectType::Make(R"gql(FirstNestedInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(FirstNestedInput)gql"sv, typeFirstNestedInput);
 	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
 	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
@@ -1155,6 +1209,21 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
 		schema::InputValue::Make(R"gql(isComplete)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(true)gql"sv),
 		schema::InputValue::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+	});
+	typeThirdNestedInput->AddInputValues({
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+	});
+	typeFourthNestedInput->AddInputValues({
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+	});
+	typeSecondNestedInput->AddInputValues({
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ThirdNestedInput")), R"gql()gql"sv)
+	});
+	typeFirstNestedInput->AddInputValues({
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(second)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("SecondNestedInput")), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ThirdNestedInput")), R"gql()gql"sv)
 	});
 
 	typeUnionType->AddPossibleTypes({

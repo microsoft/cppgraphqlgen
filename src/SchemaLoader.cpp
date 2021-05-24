@@ -199,6 +199,9 @@ void SchemaLoader::validateSchema()
 		fixupInputFieldList(entry.fields);
 	}
 
+	// Handle nested input types by fully declaring the dependencies first.
+	reorderInputTypeDependencies();
+
 	for (auto& entry : _interfaceTypes)
 	{
 		fixupOutputFieldList(entry.fields, std::nullopt, std::nullopt);
@@ -491,6 +494,63 @@ void SchemaLoader::fixupInputFieldList(InputFieldList& fields)
 				throw std::runtime_error(error.str());
 			}
 		}
+	}
+}
+
+void SchemaLoader::reorderInputTypeDependencies()
+{
+	// Build the dependency list for each input type.
+	for (auto& entry : _inputTypes)
+	{
+		fixupInputFieldList(entry.fields);
+
+		for (auto& field : entry.fields)
+		{
+			if (field.fieldType == InputFieldType::Input)
+			{
+				entry.dependencies.insert(field.type);
+			}
+		}
+	}
+
+	std::unordered_set<std::string_view> handled;
+	auto itr = _inputTypes.begin();
+
+	while (itr != _inputTypes.end())
+	{
+		// Put all of the input types without unhandled dependencies at the front.
+		const auto itrDependent = std::stable_partition(itr,
+			_inputTypes.end(),
+			[&handled](const InputType& entry) noexcept
+		{
+			return std::find_if(entry.dependencies.cbegin(),
+				entry.dependencies.cend(),
+				[&handled](std::string_view dependency) noexcept
+			{
+				return handled.find(dependency) == handled.cend();
+			})
+				== entry.dependencies.cend();
+		});
+
+		// Check to make sure we made progress.
+		if (itrDependent == itr)
+		{
+			std::ostringstream error;
+
+			error << "Input object cycle type: " << itr->type;
+
+			throw std::runtime_error(error.str());
+		}
+
+		if (itrDependent != _inputTypes.end())
+		{
+			std::for_each(itr, itrDependent, [&handled](const InputType& entry) noexcept
+			{
+				handled.insert(entry.type);
+			});
+		}
+
+		itr = itrDependent;
 	}
 }
 

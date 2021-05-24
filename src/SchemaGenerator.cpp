@@ -234,18 +234,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		// Forward declare all of the input types
-		if (_loader.getInputTypes().size() > 1)
-		{
-			for (const auto& inputType : _loader.getInputTypes())
-			{
-				headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(;
-)cpp";
-			}
-
-			headerFile << std::endl;
-		}
-
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
