@@ -149,3 +149,22 @@ type NestedType {
 type Expensive {
     order: Int!
 }
+
+input FirstNestedInput {
+    id: ID!
+    second: SecondNestedInput!
+    third: ThirdNestedInput!
+}
+
+input SecondNestedInput {
+    id: ID!
+    third: ThirdNestedInput!
+}
+
+input ThirdNestedInput {
+    id: ID!
+}
+
+input FourthNestedInput {
+    id: ID!
+}
