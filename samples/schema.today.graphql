@@ -32,6 +32,8 @@ type Query {
     unimplemented: String!
 
     expensive: [Expensive!]!
+
+    testTaskState: TaskState
 }
 
 "Node interface for Relay support"

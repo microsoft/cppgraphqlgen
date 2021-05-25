@@ -54,6 +54,9 @@ const std::string& GetRequestText() noexcept
 		      }
 		    }
 		  }
+		
+		  # Read a field with an enum type
+		  testTaskState
 		}
 	)gql"s;
 

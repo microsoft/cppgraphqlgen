@@ -33,4 +33,7 @@ query {
       }
     }
   }
+
+  # Read a field with an enum type
+  testTaskState
 }

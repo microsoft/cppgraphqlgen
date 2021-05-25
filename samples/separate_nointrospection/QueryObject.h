@@ -29,6 +29,7 @@ public:
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::optional<TaskState>> getTestTaskState(service::FieldParams&& params) const;
 
 private:
 	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
@@ -41,6 +42,7 @@ private:
 	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
 	std::future<service::ResolverResult> resolveUnimplemented(service::ResolverParams&& params);
 	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveTestTaskState(service::ResolverParams&& params);
 
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };

@@ -66,6 +66,9 @@ namespace graphql::query::Query {
  **       }
  **     }
  **   }
+ ** 
+ **   # Read a field with an enum type
+ **   testTaskState
  ** }
  **
  **/
@@ -75,6 +78,14 @@ const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
+
+enum class TaskState
+{
+	New,
+	Started,
+	Complete,
+	Unassigned,
+};
 
 struct Response
 {
@@ -138,6 +149,8 @@ struct Response
 	};
 
 	unreadCounts_FolderConnection unreadCounts;
+
+	std::optional<TaskState> testTaskState;
 };
 
 } /* namespace graphql::query::Query */

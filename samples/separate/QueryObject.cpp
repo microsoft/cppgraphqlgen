@@ -32,6 +32,7 @@ Query::Query()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(appointments)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointments(std::move(params)); } },
 		{ R"gql(unreadCounts)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCounts(std::move(params)); } },
+		{ R"gql(testTaskState)gql"sv, [this](service::ResolverParams&& params) { return resolveTestTaskState(std::move(params)); } },
 		{ R"gql(unimplemented)gql"sv, [this](service::ResolverParams&& params) { return resolveUnimplemented(std::move(params)); } },
 		{ R"gql(appointmentsById)gql"sv, [this](service::ResolverParams&& params) { return resolveAppointmentsById(std::move(params)); } },
 		{ R"gql(unreadCountsById)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCountsById(std::move(params)); } }
@@ -228,6 +229,21 @@ std::future<service::ResolverResult> Query::resolveExpensive(service::ResolverPa
 	return service::ModifiedResult<Expensive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
+service::FieldResult<std::optional<TaskState>> Query::getTestTaskState(service::FieldParams&&) const
+{
+	throw std::runtime_error(R"ex(Query::getTestTaskState is not implemented)ex");
+}
+
+std::future<service::ResolverResult> Query::resolveTestTaskState(service::ResolverParams&& params)
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getTestTaskState(service::FieldParams(std::move(params), std::move(directives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<TaskState>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
 std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
@@ -284,7 +300,8 @@ void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::s
 		}),
 		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
 		schema::Field::Make(R"gql(unimplemented)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive")))))
+		schema::Field::Make(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive"))))),
+		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("TaskState"))
 	});
 }
 
