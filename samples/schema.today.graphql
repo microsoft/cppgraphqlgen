@@ -78,6 +78,7 @@ type FolderConnection {
 
 input CompleteTaskInput {
     id: ID!
+    testTaskState: TaskState
     isComplete: Boolean = true
     clientMutationId: String
 }

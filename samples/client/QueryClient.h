@@ -24,7 +24,6 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace graphql::query::Query {
@@ -152,6 +151,8 @@ struct Response
 
 	std::optional<TaskState> testTaskState;
 };
+
+Response parseResponse(response::Value&& response);
 
 } /* namespace graphql::query::Query */
 

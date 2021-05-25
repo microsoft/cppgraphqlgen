@@ -22,10 +22,10 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
-	"New",
-	"Started",
-	"Complete",
-	"Unassigned"
+	"New"sv,
+	"Started"sv,
+	"Complete"sv,
+	"Unassigned"sv
 };
 
 template <>
@@ -36,7 +36,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { "not a valid TaskState value" } };
 	}
 
-	auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTaskState.cend())
 	{
@@ -50,11 +50,11 @@ template <>
 std::future<service::ResolverResult> ModifiedResult<today::TaskState>::convert(service::FieldResult<today::TaskState>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](today::TaskState&& value, const ResolverParams&)
+		[](today::TaskState value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_namesTaskState[static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_namesTaskState[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -75,6 +75,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 	}();
 
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+	auto valueTestTaskState = service::ModifiedArgument<today::TaskState>::require<service::TypeModifier::Nullable>("testTaskState", value);
 	auto pairIsComplete = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
@@ -83,6 +84,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 
 	return {
 		std::move(valueId),
+		std::move(valueTestTaskState),
 		std::move(valueIsComplete),
 		std::move(valueClientMutationId)
 	};
@@ -212,6 +214,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 
 	typeCompleteTaskInput->AddInputValues({
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, schema->LookupType("TaskState"), R"gql()gql"sv),
 		schema::InputValue::Make(R"gql(isComplete)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(true)gql"sv),
 		schema::InputValue::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
 	});

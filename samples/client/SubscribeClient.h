@@ -24,7 +24,6 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace graphql::subscription::TestSubscription {
@@ -63,6 +62,8 @@ struct Response
 
 	std::optional<nextAppointment_Appointment> nextAppointment;
 };
+
+Response parseResponse(response::Value&& response);
 
 } /* namespace graphql::subscription::TestSubscription */
 

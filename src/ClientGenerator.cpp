@@ -161,7 +161,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 )cpp";
@@ -171,6 +170,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	outputGetRequestDeclaration(headerFile);
 
+	// Define all of the enums referenced either in variables or the response.
 	for (const auto& enumType : _requestLoader.getReferencedEnums())
 	{
 		pendingSeparator.reset();
@@ -192,41 +192,43 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		pendingSeparator.add();
 	}
 
-	// Define all of the input object structs.
-	for (const auto& inputType : _requestLoader.getReferencedInputTypes())
-	{
-		pendingSeparator.reset();
-
-		headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(inputType->name()) << R"cpp(
-{
-)cpp";
-
-		for (const auto& inputField : inputType->inputFields())
-		{
-
-			headerFile << R"cpp(	)cpp"
-					   << _requestLoader.getInputCppType(inputField->type().lock()) << R"cpp( )cpp"
-					   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp(;
-)cpp";
-		}
-
-		headerFile << R"cpp(};
-)cpp";
-
-		pendingSeparator.add();
-	}
-
 	pendingSeparator.reset();
 
 	const auto& variables = _requestLoader.getVariables();
 
 	if (!variables.empty())
 	{
-		pendingSeparator.reset();
-
 		headerFile << R"cpp(struct Variables
 {
 )cpp";
+
+		// Define all of the input object structs referenced in variables.
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes())
+		{
+			pendingSeparator.reset();
+
+			headerFile << R"cpp(	struct )cpp" << _schemaLoader.getCppType(inputType->name())
+					   << R"cpp(
+{
+)cpp";
+
+			for (const auto& inputField : inputType->inputFields())
+			{
+
+				headerFile << R"cpp(		)cpp"
+						   << _requestLoader.getInputCppType(inputField->type().lock())
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp(;
+)cpp";
+			}
+
+			headerFile << R"cpp(	};
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
 
 		for (const auto& variable : variables)
 		{
@@ -236,6 +238,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 
 		headerFile << R"cpp(};
+
+response::Value serializeVariables(Variables&& variables);
 )cpp";
 
 		pendingSeparator.add();
@@ -267,6 +271,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	}
 
 	headerFile << R"cpp(};
+
+Response parseResponse(response::Value&& response);
 )cpp";
 
 	pendingSeparator.add();
@@ -452,11 +458,11 @@ bool Generator::outputSource() const noexcept
 #include ")cpp" << _schemaLoader.getFilenamePrefix()
 			   << R"cpp(Client.h"
 
+#include "graphqlservice/GraphQLService.h"
+
 #include <algorithm>
 #include <array>
-#include <functional>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -467,6 +473,171 @@ using namespace std::literals;
 	PendingBlankLine pendingSeparator { sourceFile };
 
 	outputGetRequestImplementation(sourceFile);
+
+	const auto& variables = _requestLoader.getVariables();
+
+	for (const auto& enumType : _requestLoader.getReferencedEnums())
+	{
+		pendingSeparator.reset();
+
+		const auto& enumValues = enumType->enumValues();
+		const auto cppType = _schemaLoader.getCppType(enumType->name());
+		bool firstValue = true;
+
+		sourceFile << R"cpp(static const std::array<std::string_view, )cpp" << enumValues.size()
+				   << R"cpp(> s_names)cpp" << cppType
+				   << R"cpp( = {
+)cpp";
+
+		for (const auto& enumValue : enumValues)
+		{
+			firstValue = false;
+			sourceFile << R"cpp(	")cpp" << SchemaLoader::getSafeCppName(enumValue->name())
+					   << R"cpp("sv,
+)cpp";
+		}
+
+		sourceFile << R"cpp(};
+)cpp";
+
+		if (!variables.empty())
+		{
+			sourceFile << R"cpp(
+response::Value serialize)cpp"
+					   << cppType << R"cpp(()cpp" << cppType << R"cpp( value)
+{
+	response::Value result(response::Type::EnumValue);
+
+	result.set<response::StringType>(response::StringType { s_names)cpp"
+					   << cppType << R"cpp([static_cast<size_t>(value)] });
+
+	return result;
+}
+)cpp";
+		}
+
+		pendingSeparator.add();
+	}
+
+	if (!variables.empty())
+	{
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes())
+		{
+			pendingSeparator.reset();
+
+			const auto cppType = _schemaLoader.getCppType(inputType->name());
+
+			sourceFile << R"cpp(response::Value serialize)cpp"
+				<< cppType << R"cpp((Variables::)cpp"
+				<< cppType << R"cpp(&& inputValue)
+{
+	response::Value result;
+
+)cpp";
+			for (const auto& inputField : inputType->inputFields())
+			{
+				sourceFile << R"cpp(	// )cpp"
+					<< _requestLoader.getInputCppType(inputField->type().lock())
+					<< R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+					<< R"cpp(;
+)cpp";
+			}
+
+			sourceFile << R"cpp(
+	return result;
+}
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		sourceFile << R"cpp(response::Value serializeVariables(Variables&& variables)
+{
+	response::Value result;
+
+)cpp";
+
+		for (const auto& variable : variables)
+		{
+			const auto cppType = _schemaLoader.getCppType(variable.type->name());
+
+			sourceFile << R"cpp(	// )cpp" << variable.cppName
+				<< R"cpp( = serialize)cpp"
+				<< cppType
+				<< R"cpp((std::move(variables.)cpp" << variable.cppName
+				<< R"cpp());
+)cpp";
+		}
+
+		sourceFile << R"cpp(
+	return result;
+}
+)cpp";
+
+		pendingSeparator.add();
+	}
+
+	for (const auto& enumType : _requestLoader.getReferencedEnums())
+	{
+		pendingSeparator.reset();
+
+		const auto cppType = _schemaLoader.getCppType(enumType->name());
+
+		sourceFile << cppType << R"cpp( parse)cpp"
+<< cppType << R"cpp((const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { "not a valid )cpp"
+			<< cppType << R"cpp( value" } };
+	}
+
+	const auto itr = std::find(s_names)cpp"
+			<< cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
+			<< R"cpp(.cend(), value.get<response::StringType>());
+
+	if (itr == s_names)cpp"
+			<< cppType << R"cpp(.cend())
+	{
+		throw service::schema_exception { { "not a valid )cpp"
+			<< cppType << R"cpp( value" } };
+	}
+
+	return static_cast<)cpp"
+			<< cppType << R"cpp(>(itr - s_names)cpp" << cppType << R"cpp(.cbegin());
+}
+)cpp";
+
+		pendingSeparator.add();
+	}
+
+	pendingSeparator.reset();
+	pendingSeparator.add();
+
+	const auto& responseType = _requestLoader.getResponseType();
+
+	sourceFile << R"cpp(Response parseResponse(response::Value&& response)
+{
+	Response result;
+
+)cpp";
+
+	for (const auto& responseField : responseType.fields)
+	{
+		sourceFile << R"cpp(	// )cpp"
+				   << RequestLoader::getOutputCppType(getResponseFieldCppType(responseField),
+						  responseField.modifiers)
+				   << R"cpp( )cpp" << responseField.cppName << R"cpp(;
+)cpp";
+	}
+
+	sourceFile << R"cpp(
+	return result;
+}
+)cpp";
+
 	pendingSeparator.reset();
 
 	return true;

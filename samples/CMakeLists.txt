@@ -171,7 +171,7 @@ target_compile_definitions(separateschema PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  separate)
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # wait for the sample update to complete
@@ -191,7 +191,7 @@ target_compile_definitions(separateschema_nointrospection PUBLIC IMPL_SEPARATE_T
 target_include_directories(separateschema_nointrospection PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  separate_nointrospection)
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # wait for the sample update to complete
@@ -274,12 +274,12 @@ endif()
 
 if(GRAPHQL_BUILD_TESTS)
   # tests
-  add_library(unifiedschema STATIC unified/TodaySchema.cpp)
+  add_library(unifiedschema STATIC ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp)
   target_link_libraries(unifiedschema PUBLIC graphqlintrospection)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    unified)
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
@@ -291,12 +291,12 @@ if(GRAPHQL_BUILD_TESTS)
   target_include_directories(unifiedgraphql PUBLIC today)
   add_bigobj_flag(unifiedgraphql)
 
-  add_library(unifiedschema_nointrospection STATIC unified_nointrospection/TodaySchema.cpp)
+  add_library(unifiedschema_nointrospection STATIC ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp)
   target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice)
   target_include_directories(unifiedschema_nointrospection PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    unified_nointrospection)
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
@@ -309,13 +309,13 @@ if(GRAPHQL_BUILD_TESTS)
   add_bigobj_flag(unifiedgraphql_nointrospection)
 
   add_library(validationgraphql STATIC
-    validation/ValidationMock.cpp
-    validation/ValidationSchema.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationMock.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp)
   target_link_libraries(validationgraphql PUBLIC graphqlintrospection)
   target_include_directories(validationgraphql PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    validation)
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation)
   add_bigobj_flag(validationgraphql)
 
   if(GRAPHQL_UPDATE_SAMPLES)
@@ -327,16 +327,16 @@ endif()
 if(GRAPHQL_BUILD_CLIENTGEN)
   # todayclient
   add_library(todayclient STATIC
-    client/QueryClient.cpp
-    client/MutateClient.cpp
-    client/SubscribeClient.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/client/QueryClient.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/client/MutateClient.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/client/SubscribeClient.cpp)
   target_link_libraries(todayclient PUBLIC
     graphqlpeg
     graphqlresponse)
   target_include_directories(todayclient PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    client)
+    ${CMAKE_CURRENT_SOURCE_DIR}/client)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete

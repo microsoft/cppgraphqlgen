@@ -5,11 +5,11 @@
 
 #include "MutateClient.h"
 
+#include "graphqlservice/GraphQLService.h"
+
 #include <algorithm>
 #include <array>
-#include <functional>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -49,6 +49,69 @@ const peg::ast& GetRequestObject() noexcept
 	}();
 
 	return s_request;
+}
+
+static const std::array<std::string_view, 4> s_namesTaskState = {
+	"New"sv,
+	"Started"sv,
+	"Complete"sv,
+	"Unassigned"sv,
+};
+
+response::Value serializeTaskState(TaskState value)
+{
+	response::Value result(response::Type::EnumValue);
+
+	result.set<response::StringType>(response::StringType { s_namesTaskState[static_cast<size_t>(value)] });
+
+	return result;
+}
+
+response::Value serializeCompleteTaskInput(Variables::CompleteTaskInput&& inputValue)
+{
+	response::Value result;
+
+	// response::IdType id;
+	// std::optional<TaskState> testTaskState;
+	// std::optional<response::BooleanType> isComplete;
+	// std::optional<response::StringType> clientMutationId;
+
+	return result;
+}
+
+response::Value serializeVariables(Variables&& variables)
+{
+	response::Value result;
+
+	// input = serializeCompleteTaskInput(std::move(variables.input));
+
+	return result;
+}
+
+TaskState parseTaskState(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { "not a valid TaskState value" } };
+	}
+
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
+
+	if (itr == s_namesTaskState.cend())
+	{
+		throw service::schema_exception { { "not a valid TaskState value" } };
+	}
+
+	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
+}
+
+Response parseResponse(response::Value&& response)
+{
+	Response result;
+
+	// completedTask_CompleteTaskPayload completedTask;
+
+	return result;
 }
 
 } /* namespace graphql::mutation::CompleteTaskMutation */

@@ -623,7 +623,7 @@ using namespace std::literals;
 				}
 
 				firstValue = false;
-				sourceFile << R"cpp(	")cpp" << value.value << R"cpp(")cpp";
+				sourceFile << R"cpp(	")cpp" << value.value << R"cpp("sv)cpp";
 			}
 
 			sourceFile << R"cpp(
@@ -641,7 +641,7 @@ template <>
 					   << enumType.type << R"cpp( value" } };
 	}
 
-	auto itr = std::find(s_names)cpp"
+	const auto itr = std::find(s_names)cpp"
 					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
 					   << R"cpp(.cend(), value.get<response::StringType>());
 
@@ -667,12 +667,12 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 	return resolve(std::move(result), std::move(params),
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(&& value, const ResolverParams&)
+					   << R"cpp( value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_names)cpp"
-					   << enumType.cppType << R"cpp([static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_names)cpp"
+					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
 
 			return result;
 		});

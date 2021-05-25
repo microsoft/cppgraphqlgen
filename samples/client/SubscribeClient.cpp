@@ -5,11 +5,11 @@
 
 #include "SubscribeClient.h"
 
+#include "graphqlservice/GraphQLService.h"
+
 #include <algorithm>
 #include <array>
-#include <functional>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -47,6 +47,15 @@ const peg::ast& GetRequestObject() noexcept
 	}();
 
 	return s_request;
+}
+
+Response parseResponse(response::Value&& response)
+{
+	Response result;
+
+	// std::optional<nextAppointment_Appointment> nextAppointment;
+
+	return result;
 }
 
 } /* namespace graphql::subscription::TestSubscription */

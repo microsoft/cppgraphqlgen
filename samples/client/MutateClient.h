@@ -24,7 +24,6 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace graphql::mutation::CompleteTaskMutation {
@@ -53,17 +52,28 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
-struct CompleteTaskInput
+enum class TaskState
 {
-	response::IdType id;
-	std::optional<response::BooleanType> isComplete;
-	std::optional<response::StringType> clientMutationId;
+	New,
+	Started,
+	Complete,
+	Unassigned,
 };
 
 struct Variables
 {
+	struct CompleteTaskInput
+{
+		response::IdType id;
+		std::optional<TaskState> testTaskState;
+		std::optional<response::BooleanType> isComplete;
+		std::optional<response::StringType> clientMutationId;
+	};
+
 	CompleteTaskInput input;
 };
+
+response::Value serializeVariables(Variables&& variables);
 
 struct Response
 {
@@ -83,6 +93,8 @@ struct Response
 
 	completedTask_CompleteTaskPayload completedTask;
 };
+
+Response parseResponse(response::Value&& response);
 
 } /* namespace graphql::mutation::CompleteTaskMutation */
 

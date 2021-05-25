@@ -20,14 +20,14 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 8> s_namesTypeKind = {
-	"SCALAR",
-	"OBJECT",
-	"INTERFACE",
-	"UNION",
-	"ENUM",
-	"INPUT_OBJECT",
-	"LIST",
-	"NON_NULL"
+	"SCALAR"sv,
+	"OBJECT"sv,
+	"INTERFACE"sv,
+	"UNION"sv,
+	"ENUM"sv,
+	"INPUT_OBJECT"sv,
+	"LIST"sv,
+	"NON_NULL"sv
 };
 
 template <>
@@ -38,7 +38,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { "not a valid __TypeKind value" } };
 	}
 
-	auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
@@ -52,35 +52,35 @@ template <>
 std::future<service::ResolverResult> ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](introspection::TypeKind&& value, const ResolverParams&)
+		[](introspection::TypeKind value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_namesTypeKind[static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_namesTypeKind[static_cast<size_t>(value)] });
 
 			return result;
 		});
 }
 
 static const std::array<std::string_view, 18> s_namesDirectiveLocation = {
-	"QUERY",
-	"MUTATION",
-	"SUBSCRIPTION",
-	"FIELD",
-	"FRAGMENT_DEFINITION",
-	"FRAGMENT_SPREAD",
-	"INLINE_FRAGMENT",
-	"SCHEMA",
-	"SCALAR",
-	"OBJECT",
-	"FIELD_DEFINITION",
-	"ARGUMENT_DEFINITION",
-	"INTERFACE",
-	"UNION",
-	"ENUM",
-	"ENUM_VALUE",
-	"INPUT_OBJECT",
-	"INPUT_FIELD_DEFINITION"
+	"QUERY"sv,
+	"MUTATION"sv,
+	"SUBSCRIPTION"sv,
+	"FIELD"sv,
+	"FRAGMENT_DEFINITION"sv,
+	"FRAGMENT_SPREAD"sv,
+	"INLINE_FRAGMENT"sv,
+	"SCHEMA"sv,
+	"SCALAR"sv,
+	"OBJECT"sv,
+	"FIELD_DEFINITION"sv,
+	"ARGUMENT_DEFINITION"sv,
+	"INTERFACE"sv,
+	"UNION"sv,
+	"ENUM"sv,
+	"ENUM_VALUE"sv,
+	"INPUT_OBJECT"sv,
+	"INPUT_FIELD_DEFINITION"sv
 };
 
 template <>
@@ -91,7 +91,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
 	}
 
-	auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{
@@ -105,11 +105,11 @@ template <>
 std::future<service::ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](introspection::DirectiveLocation&& value, const ResolverParams&)
+		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_namesDirectiveLocation[static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_namesDirectiveLocation[static_cast<size_t>(value)] });
 
 			return result;
 		});

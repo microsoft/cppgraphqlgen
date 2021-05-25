@@ -33,6 +33,7 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	response::IdType id;
+	std::optional<TaskState> testTaskState;
 	std::optional<response::BooleanType> isComplete;
 	std::optional<response::StringType> clientMutationId;
 };
