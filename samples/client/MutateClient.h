@@ -53,13 +53,35 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
-struct CompleteTaskInput;
-
-struct CompleteTaskInput {};
+struct CompleteTaskInput
+{
+	response::IdType id;
+	std::optional<response::BooleanType> isComplete;
+	std::optional<response::StringType> clientMutationId;
+};
 
 struct Variables
 {
 	CompleteTaskInput input;
+};
+
+struct Response
+{
+	struct completedTask_CompleteTaskPayload
+	{
+		struct completedTask_Task
+		{
+			response::IdType completedTaskId;
+			std::optional<response::StringType> title;
+			response::BooleanType isComplete;
+		};
+
+		std::optional<completedTask_Task> completedTask;
+
+		std::optional<response::StringType> clientMutationId;
+	};
+
+	completedTask_CompleteTaskPayload completedTask;
 };
 
 } /* namespace graphql::mutation::CompleteTaskMutation */

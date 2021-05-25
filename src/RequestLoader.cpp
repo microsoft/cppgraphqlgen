@@ -136,22 +136,23 @@ const RequestSchemaTypeList& RequestLoader::getReferencedEnums() const noexcept
 	return _referencedEnums;
 }
 
-std::string RequestLoader::getInputCppType(const RequestVariable& variable) const noexcept
+std::string RequestLoader::getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept
 {
 	size_t templateCount = 0;
-	std::ostringstream inputType;
+	std::ostringstream cppType;
+	auto [inputType, modifiers] = unwrapSchemaType(RequestSchemaType { wrappedInputType });
 
-	for (auto modifier : variable.modifiers)
+	for (auto modifier : modifiers)
 	{
 		switch (modifier)
 		{
 			case service::TypeModifier::Nullable:
-				inputType << R"cpp(std::optional<)cpp";
+				cppType << R"cpp(std::optional<)cpp";
 				++templateCount;
 				break;
 
 			case service::TypeModifier::List:
-				inputType << R"cpp(std::vector<)cpp";
+				cppType << R"cpp(std::vector<)cpp";
 				++templateCount;
 				break;
 
@@ -160,27 +161,28 @@ std::string RequestLoader::getInputCppType(const RequestVariable& variable) cons
 		}
 	}
 
-	inputType << _schemaLoader.getCppType(variable.type->name());
+	cppType << _schemaLoader.getCppType(inputType->name());
 
 	for (size_t i = 0; i < templateCount; ++i)
 	{
-		inputType << R"cpp(>)cpp";
+		cppType << R"cpp(>)cpp";
 	}
 
-	return inputType.str();
+	return cppType.str();
 }
 
-std::string RequestLoader::getOutputCppType(const ResponseField& field) const noexcept
+std::string RequestLoader::getOutputCppType(
+	std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept
 {
 	bool nonNull = true;
 	size_t templateCount = 0;
-	std::ostringstream outputType;
+	std::ostringstream cppType;
 
-	for (auto modifier : field.modifiers)
+	for (auto modifier : modifiers)
 	{
 		if (!nonNull)
 		{
-			outputType << R"cpp(std::optional<)cpp";
+			cppType << R"cpp(std::optional<)cpp";
 			++templateCount;
 		}
 
@@ -196,39 +198,26 @@ std::string RequestLoader::getOutputCppType(const ResponseField& field) const no
 
 			case service::TypeModifier::List:
 				nonNull = true;
-				outputType << R"cpp(std::vector<)cpp";
+				cppType << R"cpp(std::vector<)cpp";
 				++templateCount;
 				break;
 		}
 	}
 
-	switch (field.type->kind())
+	if (!nonNull)
 	{
-		case introspection::TypeKind::OBJECT:
-		case introspection::TypeKind::UNION:
-		case introspection::TypeKind::INTERFACE:
-			// Even if it's non-nullable, we still want to return a shared_ptr for complex types
-			outputType << R"cpp(std::shared_ptr<)cpp";
-			++templateCount;
-			break;
-
-		default:
-			if (!nonNull)
-			{
-				outputType << R"cpp(std::optional<)cpp";
-				++templateCount;
-			}
-			break;
+		cppType << R"cpp(std::optional<)cpp";
+		++templateCount;
 	}
 
-	outputType << _schemaLoader.getCppType(field.type->name());
+	cppType << outputCppType;
 
 	for (size_t i = 0; i < templateCount; ++i)
 	{
-		outputType << R"cpp(>)cpp";
+		cppType << R"cpp(>)cpp";
 	}
 
-	return outputType.str();
+	return cppType.str();
 }
 
 void RequestLoader::buildSchema()
@@ -1066,8 +1055,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 	// Special case to handle __typename on any ResponseType
 	if (name == R"gql(__typename)gql"sv)
 	{
-		responseField.type =
-			_schema->WrapType(introspection::TypeKind::NON_NULL, _schema->LookupType("String"sv));
+		responseField.type = _schema->LookupType("String"sv);
 		_fields.push_back(std::move(responseField));
 		return;
 	}
@@ -1076,12 +1064,12 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 	{
 		if (name == R"gql(__schema)gql"sv)
 		{
-			responseField.type = _schema->WrapType(introspection::TypeKind::NON_NULL,
-				_schema->LookupType("__Schema"sv));
+			responseField.type = _schema->LookupType("__Schema"sv);
 		}
 		else if (name == R"gql(__type)gql"sv)
 		{
 			responseField.type = _schema->LookupType("__Type"sv);
+			responseField.modifiers = { service::TypeModifier::Nullable };
 		}
 	}
 

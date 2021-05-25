@@ -42,6 +42,10 @@ private:
 
 	bool outputHeader() const noexcept;
 	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
+	bool outputResponseFieldType(std::ostream& headerFile, const ResponseField& responseField,
+		size_t indent = 0) const noexcept;
+
+	std::string getResponseFieldCppType(const ResponseField& responseField) const noexcept;
 
 	bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;

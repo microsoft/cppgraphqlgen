@@ -81,8 +81,9 @@ public:
 	const RequestSchemaTypeList& getReferencedInputTypes() const noexcept;
 	const RequestSchemaTypeList& getReferencedEnums() const noexcept;
 
-	std::string getInputCppType(const RequestVariable& variable) const noexcept;
-	std::string getOutputCppType(const ResponseField& field) const noexcept;
+	std::string getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept;
+	static std::string getOutputCppType(
+		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
 
 private:
 	void buildSchema();

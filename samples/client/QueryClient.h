@@ -76,6 +76,70 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+struct Response
+{
+	struct appointments_AppointmentConnection
+	{
+		struct edges_AppointmentEdge
+		{
+			struct node_Appointment
+			{
+				response::IdType id;
+				std::optional<response::StringType> subject;
+				std::optional<response::Value> when;
+				response::BooleanType isNow;
+				response::StringType _typename;
+			};
+
+			std::optional<node_Appointment> node;
+		};
+
+		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges;
+	};
+
+	appointments_AppointmentConnection appointments;
+
+	struct tasks_TaskConnection
+	{
+		struct edges_TaskEdge
+		{
+			struct node_Task
+			{
+				response::IdType id;
+				std::optional<response::StringType> title;
+				response::BooleanType isComplete;
+				response::StringType _typename;
+			};
+
+			std::optional<node_Task> node;
+		};
+
+		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges;
+	};
+
+	tasks_TaskConnection tasks;
+
+	struct unreadCounts_FolderConnection
+	{
+		struct edges_FolderEdge
+		{
+			struct node_Folder
+			{
+				response::IdType id;
+				std::optional<response::StringType> name;
+				response::IntType unreadCount;
+				response::StringType _typename;
+			};
+
+			std::optional<node_Folder> node;
+		};
+
+		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges;
+	};
+
+	unreadCounts_FolderConnection unreadCounts;
+};
+
 } /* namespace graphql::query::Query */
 
 #endif // QUERYCLIENT_H

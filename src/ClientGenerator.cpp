@@ -171,47 +171,57 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	outputGetRequestDeclaration(headerFile);
 
+	for (const auto& enumType : _requestLoader.getReferencedEnums())
+	{
+		pendingSeparator.reset();
+
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
+				   << R"cpp(
+{
+)cpp";
+		for (const auto& enumValue : enumType->enumValues())
+		{
+			headerFile << R"cpp(	)cpp" << SchemaLoader::getSafeCppName(enumValue->name())
+					   << R"cpp(,
+)cpp";
+		}
+
+		headerFile << R"cpp(};
+)cpp";
+
+		pendingSeparator.add();
+	}
+
+	// Define all of the input object structs.
+	for (const auto& inputType : _requestLoader.getReferencedInputTypes())
+	{
+		pendingSeparator.reset();
+
+		headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(inputType->name()) << R"cpp(
+{
+)cpp";
+
+		for (const auto& inputField : inputType->inputFields())
+		{
+
+			headerFile << R"cpp(	)cpp"
+					   << _requestLoader.getInputCppType(inputField->type().lock()) << R"cpp( )cpp"
+					   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp(;
+)cpp";
+		}
+
+		headerFile << R"cpp(};
+)cpp";
+
+		pendingSeparator.add();
+	}
+
+	pendingSeparator.reset();
+
 	const auto& variables = _requestLoader.getVariables();
 
 	if (!variables.empty())
 	{
-		// TODO: Recurse through the variable types and define all of the enums referenced in the variables.
-		// std::map<std::string_view, std::shared_ptr<const schema::BaseType>> enumTypes;
-
-		// TODO: Recurse through the variable types and build a list of referenced input types to forward declare,
-		// TODO: and output them in alphabetical order. Don't define them yet, since they might have interdependencies.
-		// std::map<std::string_view, std::shared_ptr<const schema::BaseType>> inputTypes;
-
-		// TODO: After forward declaring all of the input type structs, emit the definitions in alphabetical order.
-
-		pendingSeparator.reset();
-
-		// Forward declare all of the input object structs.
-		for (const auto& variable : variables)
-		{
-			if (variable.type->kind() == introspection::TypeKind::INPUT_OBJECT)
-			{
-				headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(variable.type->name())
-						   << R"cpp(;
-)cpp";
-				pendingSeparator.add();
-			}
-		}
-
-		pendingSeparator.reset();
-
-		// Define all of the input object structs.
-		for (const auto& variable : variables)
-		{
-			if (variable.type->kind() == introspection::TypeKind::INPUT_OBJECT)
-			{
-				headerFile << R"cpp(struct )cpp" << _schemaLoader.getCppType(variable.type->name())
-					<< R"cpp( {};
-)cpp";
-				pendingSeparator.add();
-			}
-		}
-
 		pendingSeparator.reset();
 
 		headerFile << R"cpp(struct Variables
@@ -226,10 +236,40 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 
 		headerFile << R"cpp(};
+)cpp";
 
+		pendingSeparator.add();
+	}
+
+	pendingSeparator.reset();
+
+	const auto& responseType = _requestLoader.getResponseType();
+
+	headerFile << R"cpp(struct Response
+{)cpp";
+
+	pendingSeparator.add();
+
+	for (const auto& responseField : responseType.fields)
+	{
+		pendingSeparator.reset();
+
+		if (outputResponseFieldType(headerFile, responseField, 1))
+		{
+			pendingSeparator.add();
+		}
+
+		headerFile << R"cpp(	)cpp"
+				   << RequestLoader::getOutputCppType(getResponseFieldCppType(responseField),
+						  responseField.modifiers)
+				   << R"cpp( )cpp" << responseField.cppName << R"cpp(;
 )cpp";
 	}
 
+	headerFile << R"cpp(};
+)cpp";
+
+	pendingSeparator.add();
 	pendingSeparator.reset();
 
 	return true;
@@ -260,6 +300,144 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 )cpp";
+}
+
+bool Generator::outputResponseFieldType(std::ostream& headerFile,
+	const ResponseField& responseField, size_t indent /* = 0 */) const noexcept
+{
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			// This is a complex type that requires a custom struct declaration.
+			break;
+
+		default:
+			// This is a scalar type, it doesn't require a type declaration.
+			return false;
+	}
+
+	const std::string indentTabs(indent, '\t');
+	std::unordered_set<std::string_view> fieldNames;
+	PendingBlankLine pendingSeparator { headerFile };
+
+	headerFile << indentTabs << R"cpp(struct )cpp" << getResponseFieldCppType(responseField)
+			   << R"cpp(
+)cpp" << indentTabs
+			   << R"cpp({)cpp";
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		{
+			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
+
+			for (const auto& field : fields)
+			{
+				pendingSeparator.reset();
+
+				if (fieldNames.emplace(field.name).second)
+				{
+					if (outputResponseFieldType(headerFile, field, indent + 1))
+					{
+						pendingSeparator.add();
+					}
+
+					headerFile << indentTabs << R"cpp(	)cpp"
+							   << RequestLoader::getOutputCppType(getResponseFieldCppType(field),
+									  field.modifiers)
+							   << R"cpp( )cpp" << field.cppName << R"cpp(;
+)cpp";
+				}
+				else
+				{
+					headerFile << indentTabs << R"cpp(	// duplicate: )cpp" << field.cppName
+							   << R"cpp(
+)cpp";
+				}
+			}
+			break;
+		}
+
+		case introspection::TypeKind::UNION:
+		{
+			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
+
+			for (const auto& possibleType : possibleTypes)
+			{
+				pendingSeparator.reset();
+
+				headerFile << indentTabs << R"cpp(	// possible type: )cpp"
+						   << possibleType.type->name() << R"cpp(
+)cpp";
+
+				for (const auto& possibleTypeField : possibleType.fields)
+				{
+					pendingSeparator.reset();
+
+					if (fieldNames.emplace(possibleTypeField.name).second)
+					{
+						if (outputResponseFieldType(headerFile, possibleTypeField, indent + 1))
+						{
+							pendingSeparator.add();
+						}
+
+						headerFile << indentTabs << R"cpp(	)cpp"
+								   << RequestLoader::getOutputCppType(
+										  getResponseFieldCppType(possibleTypeField),
+										  possibleTypeField.modifiers)
+								   << R"cpp( )cpp" << possibleTypeField.cppName << R"cpp(;
+)cpp";
+					}
+					else
+					{
+						headerFile << indentTabs << R"cpp(	// duplicate: )cpp"
+								   << possibleTypeField.cppName << R"cpp(
+)cpp";
+					}
+				}
+
+				pendingSeparator.add();
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	headerFile << indentTabs << R"cpp(};
+
+)cpp";
+
+	return true;
+}
+
+std::string Generator::getResponseFieldCppType(const ResponseField& responseField) const noexcept
+{
+	std::string result;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			std::ostringstream oss;
+
+			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
+			result = SchemaLoader::getSafeCppName(oss.str());
+			break;
+		}
+
+		default:
+			result = _schemaLoader.getCppType(responseField.type->name());
+	}
+
+	return result;
 }
 
 bool Generator::outputSource() const noexcept

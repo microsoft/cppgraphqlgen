@@ -51,6 +51,19 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+struct Response
+{
+	struct nextAppointment_Appointment
+	{
+		response::IdType nextAppointmentId;
+		std::optional<response::Value> when;
+		std::optional<response::StringType> subject;
+		response::BooleanType isNow;
+	};
+
+	std::optional<nextAppointment_Appointment> nextAppointment;
+};
+
 } /* namespace graphql::subscription::TestSubscription */
 
 #endif // SUBSCRIBECLIENT_H
