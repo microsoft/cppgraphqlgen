@@ -460,6 +460,7 @@ bool Generator::outputSource() const noexcept
 
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 #include <sstream>
 #include <string_view>
 
@@ -588,8 +589,8 @@ response::Value serialize)cpp"
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid )cpp"
-			<< cppType << R"cpp( value" } };
+		throw std::logic_error { "not a valid )cpp"
+			<< cppType << R"cpp( value" };
 	}
 
 	const auto itr = std::find(s_names)cpp"
@@ -599,8 +600,8 @@ response::Value serialize)cpp"
 	if (itr == s_names)cpp"
 			<< cppType << R"cpp(.cend())
 	{
-		throw service::schema_exception { { "not a valid )cpp"
-			<< cppType << R"cpp( value" } };
+		throw std::logic_error { "not a valid )cpp"
+			<< cppType << R"cpp( value" };
 	}
 
 	return static_cast<)cpp"

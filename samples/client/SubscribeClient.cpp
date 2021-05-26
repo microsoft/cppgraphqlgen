@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 #include <sstream>
 #include <string_view>
 

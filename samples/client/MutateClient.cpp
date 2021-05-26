@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 #include <sstream>
 #include <string_view>
 
@@ -90,14 +91,14 @@ TaskState parseTaskState(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid TaskState value" } };
+		throw std::logic_error { "not a valid TaskState value" };
 	}
 
 	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTaskState.cend())
 	{
-		throw service::schema_exception { { "not a valid TaskState value" } };
+		throw std::logic_error { "not a valid TaskState value" };
 	}
 
 	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
