@@ -26,23 +26,24 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
-namespace graphql::subscription::TestSubscription {
 
-/** Operation: subscription TestSubscription
- **
- ** # Copyright (c) Microsoft Corporation. All rights reserved.
- ** # Licensed under the MIT License.
- ** 
- ** subscription TestSubscription {
- **   nextAppointment: nextAppointmentChange {
- **     nextAppointmentId: id
- **     when
- **     subject
- **     isNow
- **   }
- ** }
- **
- **/
+/// <summary>
+/// Operation: subscription TestSubscription
+/// </summary>
+/// <code class="language-graphql">
+/// # Copyright (c) Microsoft Corporation. All rights reserved.
+/// # Licensed under the MIT License.
+/// 
+/// subscription TestSubscription {
+///   nextAppointment: nextAppointmentChange {
+///     nextAppointmentId: id
+///     when
+///     subject
+///     isNow
+///   }
+/// }
+/// </code>
+namespace graphql::subscription::TestSubscription {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;

@@ -26,51 +26,52 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
-namespace graphql::query::Query {
 
-/** Operation: query (default)
- **
- ** # Copyright (c) Microsoft Corporation. All rights reserved.
- ** # Licensed under the MIT License.
- ** 
- ** query {
- **   appointments {
- **     edges {
- **       node {
- **         id
- **         subject
- **         when
- **         isNow
- **         __typename
- **       }
- **     }
- **   }
- **   tasks {
- **     edges {
- **       node {
- **         id
- **         title
- **         isComplete
- **         __typename
- **       }
- **     }
- **   }
- **   unreadCounts {
- **     edges {
- **       node {
- **         id
- **         name
- **         unreadCount
- **         __typename
- **       }
- **     }
- **   }
- ** 
- **   # Read a field with an enum type
- **   testTaskState
- ** }
- **
- **/
+/// <summary>
+/// Operation: query (default)
+/// </summary>
+/// <code class="language-graphql">
+/// # Copyright (c) Microsoft Corporation. All rights reserved.
+/// # Licensed under the MIT License.
+/// 
+/// query {
+///   appointments {
+///     edges {
+///       node {
+///         id
+///         subject
+///         when
+///         isNow
+///         __typename
+///       }
+///     }
+///   }
+///   tasks {
+///     edges {
+///       node {
+///         id
+///         title
+///         isComplete
+///         __typename
+///       }
+///     }
+///   }
+///   unreadCounts {
+///     edges {
+///       node {
+///         id
+///         name
+///         unreadCount
+///         __typename
+///       }
+///     }
+///   }
+/// 
+///   # Read a field with an enum type
+///   testTaskState
+/// }
+/// </code>
+namespace graphql::query::Query {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;

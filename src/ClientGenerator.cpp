@@ -165,6 +165,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
+	outputRequestComment(headerFile);
+
 	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
 	PendingBlankLine pendingSeparator { headerFile };
 
@@ -281,25 +283,31 @@ Response parseResponse(response::Value&& response);
 	return true;
 }
 
-void Generator::outputGetRequestDeclaration(std::ostream& headerFile) const noexcept
+void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 {
 	headerFile << R"cpp(
-/** Operation: )cpp"
+/// <summary>
+/// Operation: )cpp"
 			   << _requestLoader.getOperationType() << ' '
 			   << _requestLoader.getOperationDisplayName() << R"cpp(
- **
+/// </summary>
+/// <code class="language-graphql">
 )cpp";
 
 	std::istringstream request { std::string { _requestLoader.getRequestText() } };
 
 	for (std::string line; std::getline(request, line);)
 	{
-		headerFile << R"cpp( ** )cpp" << line << std::endl;
+		headerFile << R"cpp(/// )cpp" << line << std::endl;
 	}
 
-	headerFile << R"cpp( **
- **/
+	headerFile << R"cpp(/// </code>
+)cpp";
+}
 
+void Generator::outputGetRequestDeclaration(std::ostream& headerFile) const noexcept
+{
+	headerFile << R"cpp(
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
 

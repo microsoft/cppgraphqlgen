@@ -41,6 +41,7 @@ private:
 	const std::string& getClientNamespace() const noexcept;
 
 	bool outputHeader() const noexcept;
+	void outputRequestComment(std::ostream& headerFile) const noexcept;
 	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
 	bool outputResponseFieldType(std::ostream& headerFile, const ResponseField& responseField,
 		size_t indent = 0) const noexcept;

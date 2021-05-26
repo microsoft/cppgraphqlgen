@@ -26,25 +26,26 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
-namespace graphql::mutation::CompleteTaskMutation {
 
-/** Operation: mutation CompleteTaskMutation
- **
- ** # Copyright (c) Microsoft Corporation. All rights reserved.
- ** # Licensed under the MIT License.
- ** 
- ** mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
- **   completedTask: completeTask(input: $input) {
- **     completedTask: task {
- **       completedTaskId: id
- **       title
- **       isComplete
- **     }
- **     clientMutationId
- **   }
- ** }
- **
- **/
+/// <summary>
+/// Operation: mutation CompleteTaskMutation
+/// </summary>
+/// <code class="language-graphql">
+/// # Copyright (c) Microsoft Corporation. All rights reserved.
+/// # Licensed under the MIT License.
+/// 
+/// mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+///   completedTask: completeTask(input: $input) {
+///     completedTask: task {
+///       completedTaskId: id
+///       title
+///       isComplete
+///     }
+///     clientMutationId
+///   }
+/// }
+/// </code>
+namespace graphql::mutation::CompleteTaskMutation {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
