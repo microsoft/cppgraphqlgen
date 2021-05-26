@@ -65,6 +65,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} /* namespace graphql::subscription::TestSubscription */
+} // namespace graphql::subscription::TestSubscription
 
 #endif // SUBSCRIBECLIENT_H

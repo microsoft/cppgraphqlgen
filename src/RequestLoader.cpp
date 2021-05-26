@@ -1234,4 +1234,4 @@ void RequestLoader::SelectionVisitor::mergeFragmentFields(
 	}
 }
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator

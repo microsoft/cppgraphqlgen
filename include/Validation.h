@@ -256,6 +256,6 @@ private:
 	internal::string_view_map<ValidateField> _selectionFields;
 };
 
-} /* namespace graphql::service */
+} // namespace graphql::service
 
 #endif // VALIDATION_H

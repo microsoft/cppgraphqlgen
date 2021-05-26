@@ -64,7 +64,7 @@ std::future<service::ResolverResult> FolderEdge::resolve_typename(service::Resol
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderEdge)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddFolderEdgeDetails(std::shared_ptr<schema::ObjectType> typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddFolderEdgeDetails(std::shared_ptr<schema::ObjectType> typeFolderEdge, co
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

@@ -15,15 +15,14 @@ IncludeGuardScope::IncludeGuardScope(
 	std::transform(headerFileName.begin(),
 		headerFileName.end(),
 		_includeGuardName.begin(),
-		[](char ch) noexcept -> char
-	{
-		if (ch == '.')
-		{
-			return '_';
-		}
+		[](char ch) noexcept -> char {
+			if (ch == '.')
+			{
+				return '_';
+			}
 
-		return std::toupper(ch);
-	});
+			return std::toupper(ch);
+		});
 
 	_outputFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -33,9 +32,9 @@ IncludeGuardScope::IncludeGuardScope(
 #pragma once
 
 #ifndef )cpp" << _includeGuardName
-<< R"cpp(
+				<< R"cpp(
 #define )cpp" << _includeGuardName
-<< R"cpp(
+				<< R"cpp(
 
 )cpp";
 }
@@ -44,7 +43,7 @@ IncludeGuardScope::~IncludeGuardScope() noexcept
 {
 	_outputFile << R"cpp(
 #endif // )cpp" << _includeGuardName
-<< R"cpp(
+				<< R"cpp(
 )cpp";
 }
 
@@ -77,8 +76,18 @@ bool NamespaceScope::enter() noexcept
 	if (!_inside)
 	{
 		_inside = true;
-		_outputFile << R"cpp(namespace )cpp" << _cppNamespace << R"cpp( {
+
+		if (_cppNamespace.empty())
+		{
+			_outputFile << R"cpp(namespace {
 )cpp";
+		}
+		else
+		{
+			_outputFile << R"cpp(namespace )cpp" << _cppNamespace << R"cpp( {
+)cpp";
+		}
+
 		return true;
 	}
 
@@ -89,8 +98,17 @@ bool NamespaceScope::exit() noexcept
 {
 	if (_inside)
 	{
-		_outputFile << R"cpp(} /* namespace )cpp" << _cppNamespace << R"cpp( */
+		if (_cppNamespace.empty())
+		{
+			_outputFile << R"cpp(} // namespace
 )cpp";
+		}
+		else
+		{
+			_outputFile << R"cpp(} // namespace )cpp" << _cppNamespace << R"cpp(
+)cpp";
+		}
+
 		_inside = false;
 		return true;
 	}
@@ -120,4 +138,4 @@ bool PendingBlankLine::reset() noexcept
 	return false;
 }
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator

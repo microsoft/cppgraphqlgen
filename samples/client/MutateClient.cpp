@@ -113,4 +113,4 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-} /* namespace graphql::mutation::CompleteTaskMutation */
+} // namespace graphql::mutation::CompleteTaskMutation

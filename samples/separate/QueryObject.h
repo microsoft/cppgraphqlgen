@@ -51,6 +51,6 @@ private:
 	std::shared_ptr<schema::Schema> _schema;
 };
 
-} /* namespace graphql::today::object */
+} // namespace graphql::today::object
 
 #endif // QUERYOBJECT_H

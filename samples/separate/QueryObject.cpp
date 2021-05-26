@@ -263,7 +263,7 @@ std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams
 	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -305,4 +305,4 @@ void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::s
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

@@ -2328,4 +2328,4 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 	}
 }
 
-} /* namespace graphql::service */
+} // namespace graphql::service

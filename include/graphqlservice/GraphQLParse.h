@@ -40,10 +40,10 @@ GRAPHQLPEG_EXPORT ast parseSchemaFile(std::string_view filename);
 GRAPHQLPEG_EXPORT ast parseString(std::string_view input);
 GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
 
-} /* namespace peg */
+} // namespace peg
 
 GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(const char* text, size_t size);
 
-} /* namespace graphql */
+} // namespace graphql
 
 #endif // GRAPHQLPARSE_H

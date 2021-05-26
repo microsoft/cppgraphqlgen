@@ -641,7 +641,6 @@ public:
 	explicit EmptyOperations();
 };
 
-
-} /* namespace graphql::today */
+} // namespace graphql::today
 
 #endif // TODAYMOCK_H

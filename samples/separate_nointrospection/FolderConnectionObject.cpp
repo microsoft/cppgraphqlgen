@@ -64,7 +64,7 @@ std::future<service::ResolverResult> FolderConnection::resolve_typename(service:
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderConnection)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddFolderConnectionDetails(std::shared_ptr<schema::ObjectType> typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddFolderConnectionDetails(std::shared_ptr<schema::ObjectType> typeFolderCo
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

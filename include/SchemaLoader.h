@@ -314,6 +314,6 @@ private:
 	OperationTypeList _operationTypes;
 };
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator
 
 #endif // SCHEMALOADER_H

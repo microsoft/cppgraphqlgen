@@ -695,4 +695,4 @@ const Value& Value::operator[](size_t index) const
 	return std::get<ListType>(_data).at(index);
 }
 
-} /* namespace graphql::response */
+} // namespace graphql::response

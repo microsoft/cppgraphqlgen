@@ -26,6 +26,6 @@ JSONRESPONSE_EXPORT std::string toJSON(Value&& response);
 
 JSONRESPONSE_EXPORT Value parseJSON(const std::string& json);
 
-} /* namespace graphql::response */
+} // namespace graphql::response
 
 #endif // JSONRESPONSE_H

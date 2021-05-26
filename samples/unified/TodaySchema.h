@@ -80,7 +80,7 @@ class Folder;
 class NestedType;
 class Expensive;
 
-} /* namespace object */
+} // namespace object
 
 struct Node
 {
@@ -394,7 +394,7 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace object */
+} // namespace object
 
 class Operations
 	: public service::Request
@@ -410,7 +410,7 @@ private:
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql
 
 #endif // TODAYSCHEMA_H

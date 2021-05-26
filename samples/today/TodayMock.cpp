@@ -279,7 +279,10 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 			loadAppointments(state);
 
 			EdgeConstraints<Appointment, AppointmentConnection> constraints(state, _appointments);
-			auto connection = constraints(firstWrapped, std::move(afterWrapped), lastWrapped, std::move(beforeWrapped));
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::AppointmentConnection>(connection);
 		},
@@ -305,7 +308,10 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 			loadTasks(state);
 
 			EdgeConstraints<Task, TaskConnection> constraints(state, _tasks);
-			auto connection = constraints(firstWrapped, std::move(afterWrapped), lastWrapped, std::move(beforeWrapped));
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::TaskConnection>(connection);
 		},
@@ -331,7 +337,10 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 			loadUnreadCounts(state);
 
 			EdgeConstraints<Folder, FolderConnection> constraints(state, _unreadCounts);
-			auto connection = constraints(firstWrapped, std::move(afterWrapped), lastWrapped, std::move(beforeWrapped));
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::FolderConnection>(connection);
 		},
@@ -542,4 +551,4 @@ EmptyOperations::EmptyOperations()
 {
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

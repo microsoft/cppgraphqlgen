@@ -152,6 +152,6 @@ private:
 	const std::shared_ptr<const schema::Directive> _directive;
 };
 
-} /* namespace graphql::introspection */
+} // namespace graphql::introspection
 
 #endif // INTROSPECTION_H

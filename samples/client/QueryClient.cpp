@@ -112,4 +112,4 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-} /* namespace graphql::query::Query */
+} // namespace graphql::query::Query

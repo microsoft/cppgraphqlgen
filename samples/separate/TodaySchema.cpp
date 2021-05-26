@@ -136,7 +136,7 @@ today::FirstNestedInput ModifiedArgument<today::FirstNestedInput>::convert(const
 	};
 }
 
-} /* namespace service */
+} // namespace service
 
 namespace today {
 
@@ -316,5 +316,5 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql

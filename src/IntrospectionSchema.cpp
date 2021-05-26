@@ -115,7 +115,7 @@ std::future<service::ResolverResult> ModifiedResult<introspection::DirectiveLoca
 		});
 }
 
-} /* namespace service */
+} // namespace service
 
 namespace introspection {
 namespace object {
@@ -586,7 +586,7 @@ std::future<service::ResolverResult> Directive::resolve_typename(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Directive)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
@@ -714,5 +714,5 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	}));
 }
 
-} /* namespace introspection */
-} /* namespace graphql */
+} // namespace introspection
+} // namespace graphql

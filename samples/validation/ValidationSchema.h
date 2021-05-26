@@ -53,7 +53,7 @@ class Subscription;
 class Message;
 class Arguments;
 
-} /* namespace object */
+} // namespace object
 
 struct Sentient;
 struct Pet;
@@ -278,7 +278,7 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace object */
+} // namespace object
 
 class Operations
 	: public service::Request
@@ -294,7 +294,7 @@ private:
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} /* namespace validation */
-} /* namespace graphql */
+} // namespace validation
+} // namespace graphql
 
 #endif // VALIDATIONSCHEMA_H

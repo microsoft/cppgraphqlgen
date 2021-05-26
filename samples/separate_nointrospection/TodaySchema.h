@@ -80,7 +80,7 @@ class Folder;
 class NestedType;
 class Expensive;
 
-} /* namespace object */
+} // namespace object
 
 struct Node
 {
@@ -118,7 +118,7 @@ void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, cons
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql
 
 #endif // TODAYSCHEMA_H

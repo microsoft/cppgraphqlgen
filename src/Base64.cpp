@@ -149,4 +149,4 @@ std::string Base64::toBase64(const std::vector<std::uint8_t>& bytes)
 	return result;
 }
 
-} /* namespace graphql::internal */
+} // namespace graphql::internal

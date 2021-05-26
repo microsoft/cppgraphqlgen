@@ -82,7 +82,7 @@ std::future<service::ResolverResult> Task::resolve_typename(service::ResolverPar
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Task)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddTaskDetails(std::shared_ptr<schema::ObjectType> typeTask, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -96,4 +96,4 @@ void AddTaskDetails(std::shared_ptr<schema::ObjectType> typeTask, const std::sha
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

@@ -394,4 +394,4 @@ service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Directive
 	return result;
 }
 
-} /* namespace graphql::introspection */
+} // namespace graphql::introspection

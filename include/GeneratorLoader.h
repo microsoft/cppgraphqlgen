@@ -70,6 +70,6 @@ private:
 	response::Value _value;
 };
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator
 
 #endif // GENERATORLOADER_H

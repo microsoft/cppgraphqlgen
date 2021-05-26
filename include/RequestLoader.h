@@ -152,6 +152,6 @@ private:
 	RequestSchemaTypeList _referencedEnums;
 };
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator
 
 #endif // REQUESTLOADER_H

@@ -2104,4 +2104,4 @@ void ValidateExecutableVisitor::visitDirectives(
 	}
 }
 
-} /* namespace graphql::service */
+} // namespace graphql::service

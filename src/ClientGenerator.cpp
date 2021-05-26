@@ -484,8 +484,7 @@ using namespace std::literals;
 		bool firstValue = true;
 
 		sourceFile << R"cpp(static const std::array<std::string_view, )cpp" << enumValues.size()
-				   << R"cpp(> s_names)cpp" << cppType
-				   << R"cpp( = {
+				   << R"cpp(> s_names)cpp" << cppType << R"cpp( = {
 )cpp";
 
 		for (const auto& enumValue : enumValues)
@@ -526,9 +525,8 @@ response::Value serialize)cpp"
 
 			const auto cppType = _schemaLoader.getCppType(inputType->name());
 
-			sourceFile << R"cpp(response::Value serialize)cpp"
-				<< cppType << R"cpp((Variables::)cpp"
-				<< cppType << R"cpp(&& inputValue)
+			sourceFile << R"cpp(response::Value serialize)cpp" << cppType << R"cpp((Variables::)cpp"
+					   << cppType << R"cpp(&& inputValue)
 {
 	response::Value result;
 
@@ -536,9 +534,9 @@ response::Value serialize)cpp"
 			for (const auto& inputField : inputType->inputFields())
 			{
 				sourceFile << R"cpp(	// )cpp"
-					<< _requestLoader.getInputCppType(inputField->type().lock())
-					<< R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-					<< R"cpp(;
+						   << _requestLoader.getInputCppType(inputField->type().lock())
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -562,11 +560,9 @@ response::Value serialize)cpp"
 		{
 			const auto cppType = _schemaLoader.getCppType(variable.type->name());
 
-			sourceFile << R"cpp(	// )cpp" << variable.cppName
-				<< R"cpp( = serialize)cpp"
-				<< cppType
-				<< R"cpp((std::move(variables.)cpp" << variable.cppName
-				<< R"cpp());
+			sourceFile << R"cpp(	// )cpp" << variable.cppName << R"cpp( = serialize)cpp"
+					   << cppType << R"cpp((std::move(variables.)cpp" << variable.cppName
+					   << R"cpp());
 )cpp";
 		}
 
@@ -584,28 +580,28 @@ response::Value serialize)cpp"
 
 		const auto cppType = _schemaLoader.getCppType(enumType->name());
 
-		sourceFile << cppType << R"cpp( parse)cpp"
-<< cppType << R"cpp((const response::Value& value)
+		sourceFile << cppType << R"cpp( parse)cpp" << cppType
+				   << R"cpp((const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
 		throw std::logic_error { "not a valid )cpp"
-			<< cppType << R"cpp( value" };
+				   << cppType << R"cpp( value" };
 	}
 
 	const auto itr = std::find(s_names)cpp"
-			<< cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
-			<< R"cpp(.cend(), value.get<response::StringType>());
+				   << cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
+				   << R"cpp(.cend(), value.get<response::StringType>());
 
 	if (itr == s_names)cpp"
-			<< cppType << R"cpp(.cend())
+				   << cppType << R"cpp(.cend())
 	{
 		throw std::logic_error { "not a valid )cpp"
-			<< cppType << R"cpp( value" };
+				   << cppType << R"cpp( value" };
 	}
 
 	return static_cast<)cpp"
-			<< cppType << R"cpp(>(itr - s_names)cpp" << cppType << R"cpp(.cbegin());
+				   << cppType << R"cpp(>(itr - s_names)cpp" << cppType << R"cpp(.cbegin());
 }
 )cpp";
 
@@ -678,7 +674,7 @@ const peg::ast& GetRequestObject() noexcept
 )cpp";
 }
 
-} /* namespace graphql::generator::client */
+} // namespace graphql::generator::client
 
 namespace po = boost::program_options;
 

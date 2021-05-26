@@ -1468,4 +1468,4 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 	return outputType.str();
 }
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator

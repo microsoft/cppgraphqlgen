@@ -36,6 +36,6 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace graphql::today::object */
+} // namespace graphql::today::object
 
 #endif // APPOINTMENTOBJECT_H

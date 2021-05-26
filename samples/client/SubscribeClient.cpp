@@ -57,4 +57,4 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-} /* namespace graphql::subscription::TestSubscription */
+} // namespace graphql::subscription::TestSubscription

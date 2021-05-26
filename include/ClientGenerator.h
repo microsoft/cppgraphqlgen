@@ -59,6 +59,6 @@ private:
 	const std::string _sourcePath;
 };
 
-} /* namespace graphql::generator::client */
+} // namespace graphql::generator::client
 
 #endif // CLIENTGENERATOR_H

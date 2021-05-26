@@ -280,6 +280,6 @@ template <>
 GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 #endif // GRAPHQL_DLLEXPORTS
 
-} /* namespace graphql::response */
+} // namespace graphql::response
 
 #endif // GRAPHQLRESPONSE_H

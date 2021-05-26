@@ -666,8 +666,7 @@ std::future<service::ResolverResult> ModifiedResult<)cpp"
 {
 	return resolve(std::move(result), std::move(params),
 		[]()cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp( value, const ResolverParams&)
+					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
@@ -1462,8 +1461,8 @@ void Generator::outputObjectImplementation(
 		{
 			sourceFile << R"cpp(
 service::FieldResult<)cpp"
-					   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << objectType.cppType
-					   << R"cpp(::)cpp" << outputField.accessor << fieldName
+					   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp"
+					   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
 					   << R"cpp((service::FieldParams&&)cpp";
 			for (const auto& argument : outputField.arguments)
 			{
@@ -2180,7 +2179,7 @@ using namespace std::literals;
 	return files;
 }
 
-} /* namespace graphql::generator::schema */
+} // namespace graphql::generator::schema
 
 namespace po = boost::program_options;
 

@@ -136,7 +136,7 @@ today::FirstNestedInput ModifiedArgument<today::FirstNestedInput>::convert(const
 	};
 }
 
-} /* namespace service */
+} // namespace service
 
 namespace today {
 namespace object {
@@ -1149,7 +1149,7 @@ std::future<service::ResolverResult> Expensive::resolve_typename(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Expensive)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
@@ -1426,5 +1426,5 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql

@@ -96,6 +96,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} /* namespace graphql::mutation::CompleteTaskMutation */
+} // namespace graphql::mutation::CompleteTaskMutation
 
 #endif // MUTATECLIENT_H

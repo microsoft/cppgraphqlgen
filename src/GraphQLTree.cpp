@@ -849,7 +849,7 @@ ast parseFile(std::string_view filename)
 	return result;
 }
 
-} /* namespace peg */
+} // namespace peg
 
 peg::ast operator"" _graphql(const char* text, size_t size)
 {
@@ -880,4 +880,4 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 	return result;
 }
 
-} /* namespace graphql */
+} // namespace graphql

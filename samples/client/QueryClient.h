@@ -154,6 +154,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} /* namespace graphql::query::Query */
+} // namespace graphql::query::Query
 
 #endif // QUERYCLIENT_H

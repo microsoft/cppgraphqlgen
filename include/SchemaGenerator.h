@@ -75,6 +75,6 @@ private:
 	const std::string _sourcePath;
 };
 
-} /* namespace graphql::generator::schema */
+} // namespace graphql::generator::schema
 
 #endif // SCHEMAGENERATOR_H

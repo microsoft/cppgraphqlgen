@@ -57,6 +57,6 @@ private:
 	std::ostream& _outputFile;
 };
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator
 
 #endif // GENERATORUTIL_H

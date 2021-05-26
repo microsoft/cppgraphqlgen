@@ -219,11 +219,11 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace object */
+} // namespace object
 
 GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
-} /* namespace introspection */
+} // namespace introspection
 
 namespace service {
 
@@ -243,7 +243,7 @@ GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspec
 	FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params);
 #endif // GRAPHQL_DLLEXPORTS
 
-} /* namespace service */
-} /* namespace graphql */
+} // namespace service
+} // namespace graphql
 
 #endif // INTROSPECTIONSCHEMA_H

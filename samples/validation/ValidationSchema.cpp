@@ -107,7 +107,7 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 	};
 }
 
-} /* namespace service */
+} // namespace service
 
 namespace validation {
 namespace object {
@@ -867,7 +867,7 @@ std::future<service::ResolverResult> Arguments::resolve_typename(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Arguments)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
@@ -1070,5 +1070,5 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} /* namespace validation */
-} /* namespace graphql */
+} // namespace validation
+} // namespace graphql

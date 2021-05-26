@@ -100,7 +100,7 @@ void DefaultValueVisitor::visit(const peg::ast_node& value)
 		const auto position = value.begin();
 
 		error << "Unexpected variable in default value line: " << position.line
-			<< " column: " << position.column;
+			  << " column: " << position.column;
 
 		throw std::runtime_error(error.str());
 	}
@@ -170,4 +170,4 @@ response::Value DefaultValueVisitor::getValue()
 	return response::Value(std::move(_value));
 }
 
-} /* namespace graphql::generator */
+} // namespace graphql::generator

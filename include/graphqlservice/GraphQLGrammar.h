@@ -1175,6 +1175,6 @@ struct schema_document : must<schema_document_content>
 {
 };
 
-} /* namespace graphql::peg */
+} // namespace graphql::peg
 
 #endif // GRAPHQLGRAMMAR_H
