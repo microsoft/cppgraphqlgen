@@ -137,7 +137,8 @@ const std::string& Generator::getFullNamespace() const noexcept
 	return s_namespace;
 }
 
-std::string Generator::getResponseFieldCppType(const ResponseField& responseField) const noexcept
+std::string Generator::getResponseFieldCppType(
+	const ResponseField& responseField, std::string_view currentScope /* = {} */) const noexcept
 {
 	std::string result;
 
@@ -148,6 +149,11 @@ std::string Generator::getResponseFieldCppType(const ResponseField& responseFiel
 		case introspection::TypeKind::UNION:
 		{
 			std::ostringstream oss;
+
+			if (!currentScope.empty())
+			{
+				oss << currentScope << R"cpp(::)cpp";
+			}
 
 			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
 			result = SchemaLoader::getSafeCppName(oss.str());
@@ -502,7 +508,8 @@ using namespace std::literals;
 	PendingBlankLine pendingSeparator { sourceFile };
 
 	sourceFile << R"cpp(
-using namespace )cpp" << getRequestNamespace() << R"cpp(;
+using namespace )cpp"
+			   << getRequestNamespace() << R"cpp(;
 )cpp";
 
 	const auto& variables = _requestLoader.getVariables();
@@ -544,8 +551,8 @@ using namespace )cpp" << getRequestNamespace() << R"cpp(;
 
 			if (!variables.empty())
 			{
-				sourceFile << R"cpp(response::Value ModifiedVariable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
+				sourceFile << R"cpp(response::Value ModifiedVariable<)cpp" << cppType
+						   << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
@@ -566,8 +573,8 @@ using namespace )cpp" << getRequestNamespace() << R"cpp(;
 
 			const auto cppType = _schemaLoader.getCppType(inputType->name());
 
-			sourceFile << R"cpp(response::Value ModifiedVariable<Variables::)cpp" << cppType << R"cpp(>::serialize(Variables::)cpp"
-					   << cppType << R"cpp(&& inputValue)
+			sourceFile << R"cpp(response::Value ModifiedVariable<Variables::)cpp" << cppType
+					   << R"cpp(>::serialize(Variables::)cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -600,8 +607,8 @@ using namespace )cpp" << getRequestNamespace() << R"cpp(;
 
 		const auto cppType = _schemaLoader.getCppType(enumType->name());
 
-		sourceFile << cppType << R"cpp( parse)cpp" << cppType
-				   << R"cpp((const response::Value& value)
+		sourceFile << cppType << R"cpp( ModifiedResponse<)cpp" << cppType
+				   << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -611,7 +618,7 @@ using namespace )cpp" << getRequestNamespace() << R"cpp(;
 
 	const auto itr = std::find(s_names)cpp"
 				   << cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
-				   << R"cpp(.cend(), value.get<response::StringType>());
+				   << R"cpp(.cend(), value.release<response::StringType>());
 
 	if (itr == s_names)cpp"
 				   << cppType << R"cpp(.cend())
@@ -626,6 +633,17 @@ using namespace )cpp" << getRequestNamespace() << R"cpp(;
 )cpp";
 
 		pendingSeparator.add();
+	}
+
+	const auto& responseType = _requestLoader.getResponseType();
+	const auto currentScope = R"cpp(Response)cpp"s;
+
+	for (const auto& responseField : responseType.fields)
+	{
+		if (outputModifiedResponseImplementation(sourceFile, currentScope, responseField))
+		{
+			pendingSeparator.add();
+		}
 	}
 
 	pendingSeparator.reset();
@@ -648,10 +666,10 @@ response::Value serializeVariables(Variables&& variables)
 		for (const auto& variable : variables)
 		{
 			sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << variable.name
-				<< R"cpp()js"s, ModifiedVariable<Variables::)cpp"
-				<< _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
-				<< getTypeModifierList(variable.modifiers) << R"cpp((std::move(variables.)cpp"
-				<< variable.cppName << R"cpp()));
+					   << R"cpp()js"s, ModifiedVariable<Variables::)cpp"
+					   << _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
+					   << getTypeModifierList(variable.modifiers)
+					   << R"cpp((std::move(variables.)cpp" << variable.cppName << R"cpp()));
 )cpp";
 		}
 
@@ -661,25 +679,42 @@ response::Value serializeVariables(Variables&& variables)
 )cpp";
 	}
 
-	const auto& responseType = _requestLoader.getResponseType();
-
 	sourceFile << R"cpp(
 Response parseResponse(response::Value&& response)
 {
 	Response result;
 
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
 )cpp";
+
+	std::unordered_set<std::string_view> fieldNames;
 
 	for (const auto& responseField : responseType.fields)
 	{
-		sourceFile << R"cpp(	// )cpp"
-				   << RequestLoader::getOutputCppType(getResponseFieldCppType(responseField),
-						  responseField.modifiers)
-				   << R"cpp( )cpp" << responseField.cppName << R"cpp(;
+		if (fieldNames.emplace(responseField.name).second)
+		{
+			sourceFile << R"cpp(			if (member.first == R"js()cpp" << responseField.name
+					   << R"cpp()js"sv)
+			{
+				result.)cpp"
+					   << responseField.cppName << R"cpp( = ModifiedResponse<)cpp"
+					   << getResponseFieldCppType(responseField, currentScope)
+					   << R"cpp(>::parse)cpp" << getTypeModifierList(responseField.modifiers)
+					   << R"cpp((std::move(member.second));
+				continue;
+			}
 )cpp";
+		}
 	}
 
-	sourceFile << R"cpp(
+	sourceFile << R"cpp(		}
+	}
+
 	return result;
 }
 )cpp";
@@ -723,6 +758,144 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 )cpp";
+}
+
+bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
+	const std::string& outerScope, const ResponseField& responseField) const noexcept
+{
+	std::ostringstream oss;
+
+	oss << outerScope << R"cpp(::)cpp" << getResponseFieldCppType(responseField);
+
+	const auto cppType = oss.str();
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		{
+			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
+
+			for (const auto& field : fields)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputModifiedResponseImplementation(sourceFile, cppType, field);
+				}
+			}
+			break;
+		}
+
+		case introspection::TypeKind::UNION:
+		{
+			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
+
+			for (const auto& possibleType : possibleTypes)
+			{
+				for (const auto& possibleTypeField : possibleType.fields)
+				{
+					if (fieldNames.emplace(possibleTypeField.name).second)
+					{
+						outputModifiedResponseImplementation(sourceFile,
+							cppType,
+							possibleTypeField);
+					}
+				}
+			}
+
+			break;
+		}
+
+		default:
+			// This is a scalar type, it doesn't require a type declaration.
+			return false;
+	}
+
+	fieldNames.clear();
+
+	// This is a complex type that requires a custom ModifiedResponse implementation.
+	sourceFile << R"cpp(
+)cpp" << cppType
+			   << R"cpp( ModifiedResponse<)cpp" << cppType
+			   << R"cpp(>::parse(response::Value&& response)
+{
+	)cpp" << cppType
+			   << R"cpp( result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+)cpp";
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		{
+			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
+
+			for (const auto& field : fields)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					sourceFile << R"cpp(			if (member.first == R"js()cpp" << field.name
+							   << R"cpp()js"sv)
+			{
+				result.)cpp" << field.cppName
+							   << R"cpp( = ModifiedResponse<)cpp"
+							   << getResponseFieldCppType(field, cppType) << R"cpp(>::parse)cpp"
+							   << getTypeModifierList(field.modifiers)
+							   << R"cpp((std::move(member.second));
+				continue;
+			}
+)cpp";
+				}
+			}
+			break;
+		}
+
+		case introspection::TypeKind::UNION:
+		{
+			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
+
+			for (const auto& possibleType : possibleTypes)
+			{
+				for (const auto& possibleTypeField : possibleType.fields)
+				{
+					if (fieldNames.emplace(possibleTypeField.name).second)
+					{
+						sourceFile << R"cpp(			if (member.first == R"js()cpp"
+								   << possibleTypeField.name << R"cpp()js"sv)
+			{
+				result.)cpp" << possibleTypeField.cppName
+								   << R"cpp( = ModifiedResponse<)cpp"
+								   << getResponseFieldCppType(possibleTypeField, cppType)
+								   << R"cpp(>::parse)cpp"
+								   << getTypeModifierList(possibleTypeField.modifiers)
+								   << R"cpp((std::move(member.second));
+				continue;
+			}
+)cpp";
+					}
+				}
+			}
+
+			break;
+		}
+	}
+
+	sourceFile << R"cpp(		}
+	}
+
+	return result;
+}
+)cpp";
+
+	return true;
 }
 
 std::string Generator::getTypeModifierList(const TypeModifierStack& modifiers) noexcept

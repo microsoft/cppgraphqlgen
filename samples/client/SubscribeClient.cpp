@@ -19,6 +19,42 @@ namespace graphql::client {
 
 using namespace subscription::TestSubscription;
 
+Response::nextAppointment_Appointment ModifiedResponse<Response::nextAppointment_Appointment>::parse(response::Value&& response)
+{
+	Response::nextAppointment_Appointment result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(nextAppointmentId)js"sv)
+			{
+				result.nextAppointmentId = ModifiedResponse<response::IdType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(when)js"sv)
+			{
+				result.when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(subject)js"sv)
+			{
+				result.subject = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isNow)js"sv)
+			{
+				result.isNow = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
 namespace subscription::TestSubscription {
 
 const std::string& GetRequestText() noexcept
@@ -58,7 +94,19 @@ Response parseResponse(response::Value&& response)
 {
 	Response result;
 
-	// std::optional<nextAppointment_Appointment> nextAppointment;
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(nextAppointment)js"sv)
+			{
+				result.nextAppointment = ModifiedResponse<Response::nextAppointment_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
 
 	return result;
 }

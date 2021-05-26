@@ -47,14 +47,14 @@ response::Value ModifiedVariable<Variables::CompleteTaskInput>::serialize(Variab
 	return result;
 }
 
-TaskState parseTaskState(const response::Value& value)
+TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
 		throw std::logic_error { "not a valid TaskState value" };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<response::StringType>());
 
 	if (itr == s_namesTaskState.cend())
 	{
@@ -62,6 +62,63 @@ TaskState parseTaskState(const response::Value& value)
 	}
 
 	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
+}
+
+Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+{
+	Response::completedTask_CompleteTaskPayload::completedTask_Task result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTaskId)js"sv)
+			{
+				result.completedTaskId = ModifiedResponse<response::IdType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(title)js"sv)
+			{
+				result.title = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isComplete)js"sv)
+			{
+				result.isComplete = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+Response::completedTask_CompleteTaskPayload ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+{
+	Response::completedTask_CompleteTaskPayload result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTask)js"sv)
+			{
+				result.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(clientMutationId)js"sv)
+			{
+				result.clientMutationId = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
 }
 
 namespace mutation::CompleteTaskMutation {
@@ -114,7 +171,19 @@ Response parseResponse(response::Value&& response)
 {
 	Response result;
 
-	// completedTask_CompleteTaskPayload completedTask;
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTask)js"sv)
+			{
+				result.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
 
 	return result;
 }

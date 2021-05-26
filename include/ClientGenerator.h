@@ -41,7 +41,8 @@ private:
 	const std::string& getClientNamespace() const noexcept;
 	const std::string& getRequestNamespace() const noexcept;
 	const std::string& getFullNamespace() const noexcept;
-	std::string getResponseFieldCppType(const ResponseField& responseField) const noexcept;
+	std::string getResponseFieldCppType(
+		const ResponseField& responseField, std::string_view currentScope = {}) const noexcept;
 
 	bool outputHeader() const noexcept;
 	void outputRequestComment(std::ostream& headerFile) const noexcept;
@@ -51,6 +52,8 @@ private:
 
 	bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
+	bool outputModifiedResponseImplementation(std::ostream& sourceFile,
+		const std::string& outerScope, const ResponseField& responseField) const noexcept;
 	static std::string getTypeModifierList(const TypeModifierStack& modifiers) noexcept;
 
 	const SchemaLoader _schemaLoader;
