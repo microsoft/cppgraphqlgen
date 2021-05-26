@@ -310,7 +310,7 @@ IdType Value::release<IdType>()
 	return internal::Base64::fromBase64(stringValue);
 }
 
-Value::Value(Type type /*= Type::Null*/)
+Value::Value(Type type /* = Type::Null */)
 {
 	switch (type)
 	{

@@ -345,6 +345,17 @@ if(GRAPHQL_BUILD_CLIENTGEN)
   target_link_libraries(clientgen PRIVATE graphqlintrospection)
 endif()
 
+# graphqlclient
+add_library(graphqlclient GraphQLClient.cpp)
+add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
+target_link_libraries(graphqlclient PUBLIC
+    graphqlpeg
+    graphqlresponse)
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlclient)
+endif()
+
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
 # JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.

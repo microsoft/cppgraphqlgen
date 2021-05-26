@@ -324,22 +324,18 @@ if(GRAPHQL_BUILD_TESTS)
   endif()
 endif()
 
-if(GRAPHQL_BUILD_CLIENTGEN)
-  # todayclient
-  add_library(todayclient STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/client/QueryClient.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/client/MutateClient.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/client/SubscribeClient.cpp)
-  target_link_libraries(todayclient PUBLIC
-    graphqlpeg
-    graphqlresponse)
-  target_include_directories(todayclient PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/client)
+# todayclient
+add_library(todayclient STATIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/QueryClient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/MutateClient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/SubscribeClient.cpp)
+target_link_libraries(todayclient PUBLIC graphqlclient)
+target_include_directories(todayclient PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/client)
 
-  if(GRAPHQL_UPDATE_SAMPLES)
-    # wait for the sample update to complete
-    add_dependencies(todayclient update_client_samples)
-  endif()
+if(GRAPHQL_UPDATE_SAMPLES AND GRAPHQL_BUILD_CLIENTGEN)
+  # wait for the sample update to complete
+  add_dependencies(todayclient update_client_samples)
 endif()
