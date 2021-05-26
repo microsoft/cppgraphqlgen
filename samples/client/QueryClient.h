@@ -28,7 +28,7 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 
 
 /// <summary>
-/// Operation: query (default)
+/// Operation: query (unnamed)
 /// </summary>
 /// <code class="language-graphql">
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -71,7 +71,7 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 ///   testTaskState
 /// }
 /// </code>
-namespace graphql::query::Query {
+namespace graphql::client::query::Query {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -155,6 +155,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::query::Query
+} // namespace graphql::client::query::Query
 
 #endif // QUERYCLIENT_H

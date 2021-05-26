@@ -45,7 +45,7 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::mutation::CompleteTaskMutation {
+namespace graphql::client::mutation::CompleteTaskMutation {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -97,6 +97,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::mutation::CompleteTaskMutation
+} // namespace graphql::client::mutation::CompleteTaskMutation
 
 #endif // MUTATECLIENT_H

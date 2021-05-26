@@ -15,7 +15,11 @@
 
 using namespace std::literals;
 
-namespace graphql::subscription::TestSubscription {
+namespace graphql::client {
+
+using namespace subscription::TestSubscription;
+
+namespace subscription::TestSubscription {
 
 const std::string& GetRequestText() noexcept
 {
@@ -59,4 +63,5 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-} // namespace graphql::subscription::TestSubscription
+} // namespace subscription::TestSubscription
+} // namespace graphql::client

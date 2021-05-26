@@ -15,7 +15,35 @@
 
 using namespace std::literals;
 
-namespace graphql::query::Query {
+namespace graphql::client {
+
+using namespace query::Query;
+
+static const std::array<std::string_view, 4> s_namesTaskState = {
+	"New"sv,
+	"Started"sv,
+	"Complete"sv,
+	"Unassigned"sv,
+};
+
+TaskState parseTaskState(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw std::logic_error { "not a valid TaskState value" };
+	}
+
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
+
+	if (itr == s_namesTaskState.cend())
+	{
+		throw std::logic_error { "not a valid TaskState value" };
+	}
+
+	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
+}
+
+namespace query::Query {
 
 const std::string& GetRequestText() noexcept
 {
@@ -78,30 +106,6 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	"New"sv,
-	"Started"sv,
-	"Complete"sv,
-	"Unassigned"sv,
-};
-
-TaskState parseTaskState(const response::Value& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw std::logic_error { "not a valid TaskState value" };
-	}
-
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
-
-	if (itr == s_namesTaskState.cend())
-	{
-		throw std::logic_error { "not a valid TaskState value" };
-	}
-
-	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
-}
-
 Response parseResponse(response::Value&& response)
 {
 	Response result;
@@ -114,4 +118,5 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-} // namespace graphql::query::Query
+} // namespace query::Query
+} // namespace graphql::client

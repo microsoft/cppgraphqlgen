@@ -86,7 +86,7 @@ std::string_view RequestLoader::getRequestFilename() const noexcept
 
 std::string_view RequestLoader::getOperationDisplayName() const noexcept
 {
-	return _operationName.empty() ? "(default)"sv : _operationName;
+	return _operationName.empty() ? "(unnamed)"sv : _operationName;
 }
 
 std::string RequestLoader::getOperationNamespace() const noexcept
@@ -218,6 +218,48 @@ std::string RequestLoader::getOutputCppType(
 	}
 
 	return cppType.str();
+}
+
+std::pair<RequestSchemaType, TypeModifierStack> RequestLoader::unwrapSchemaType(
+	RequestSchemaType&& type) noexcept
+{
+	std::pair<RequestSchemaType, TypeModifierStack> result { std::move(type), {} };
+	bool wrapped = true;
+	bool nonNull = false;
+
+	while (wrapped)
+	{
+		switch (result.first->kind())
+		{
+			case introspection::TypeKind::NON_NULL:
+				nonNull = true;
+				result.first = result.first->ofType().lock();
+				break;
+
+			case introspection::TypeKind::LIST:
+				if (!nonNull)
+				{
+					result.second.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				result.second.push_back(service::TypeModifier::List);
+				result.first = result.first->ofType().lock();
+				break;
+
+			default:
+				if (!nonNull)
+				{
+					result.second.push_back(service::TypeModifier::Nullable);
+				}
+
+				nonNull = false;
+				wrapped = false;
+				break;
+		}
+	}
+
+	return result;
 }
 
 void RequestLoader::buildSchema()
@@ -593,48 +635,6 @@ void RequestLoader::validateRequest() const
 	{
 		throw service::schema_exception { std::move(errors) };
 	}
-}
-
-std::pair<RequestSchemaType, TypeModifierStack> RequestLoader::unwrapSchemaType(
-	RequestSchemaType&& type) noexcept
-{
-	std::pair<RequestSchemaType, TypeModifierStack> result { std::move(type), {} };
-	bool wrapped = true;
-	bool nonNull = false;
-
-	while (wrapped)
-	{
-		switch (result.first->kind())
-		{
-			case introspection::TypeKind::NON_NULL:
-				nonNull = true;
-				result.first = result.first->ofType().lock();
-				break;
-
-			case introspection::TypeKind::LIST:
-				if (!nonNull)
-				{
-					result.second.push_back(service::TypeModifier::Nullable);
-				}
-
-				nonNull = false;
-				result.second.push_back(service::TypeModifier::List);
-				result.first = result.first->ofType().lock();
-				break;
-
-			default:
-				if (!nonNull)
-				{
-					result.second.push_back(service::TypeModifier::Nullable);
-				}
-
-				nonNull = false;
-				wrapped = false;
-				break;
-		}
-	}
-
-	return result;
 }
 
 std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcept

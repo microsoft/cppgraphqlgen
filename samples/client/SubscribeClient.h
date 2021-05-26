@@ -43,7 +43,7 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::subscription::TestSubscription {
+namespace graphql::client::subscription::TestSubscription {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -66,6 +66,6 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::subscription::TestSubscription
+} // namespace graphql::client::subscription::TestSubscription
 
 #endif // SUBSCRIBECLIENT_H

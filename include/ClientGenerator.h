@@ -39,6 +39,9 @@ private:
 	std::string getHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
 	const std::string& getClientNamespace() const noexcept;
+	const std::string& getRequestNamespace() const noexcept;
+	const std::string& getFullNamespace() const noexcept;
+	std::string getResponseFieldCppType(const ResponseField& responseField) const noexcept;
 
 	bool outputHeader() const noexcept;
 	void outputRequestComment(std::ostream& headerFile) const noexcept;
@@ -46,10 +49,9 @@ private:
 	bool outputResponseFieldType(std::ostream& headerFile, const ResponseField& responseField,
 		size_t indent = 0) const noexcept;
 
-	std::string getResponseFieldCppType(const ResponseField& responseField) const noexcept;
-
 	bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
+	static std::string getTypeModifierList(const TypeModifierStack& modifiers) noexcept;
 
 	const SchemaLoader _schemaLoader;
 	const RequestLoader _requestLoader;

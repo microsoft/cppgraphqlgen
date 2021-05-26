@@ -105,16 +105,60 @@ std::string Generator::getSourcePath() const noexcept
 
 const std::string& Generator::getClientNamespace() const noexcept
 {
+	static const auto s_namespace = R"cpp(graphql::client)cpp"s;
+
+	return s_namespace;
+}
+
+const std::string& Generator::getRequestNamespace() const noexcept
+{
 	static const auto s_namespace = [this]() noexcept {
 		std::ostringstream oss;
 
-		oss << R"cpp(graphql::)cpp" << _requestLoader.getOperationType() << R"cpp(::)cpp"
+		oss << _requestLoader.getOperationType() << R"cpp(::)cpp"
 			<< _requestLoader.getOperationNamespace();
 
 		return oss.str();
 	}();
 
 	return s_namespace;
+}
+
+const std::string& Generator::getFullNamespace() const noexcept
+{
+	static const auto s_namespace = [this]() noexcept {
+		std::ostringstream oss;
+
+		oss << getClientNamespace() << R"cpp(::)cpp" << getRequestNamespace();
+
+		return oss.str();
+	}();
+
+	return s_namespace;
+}
+
+std::string Generator::getResponseFieldCppType(const ResponseField& responseField) const noexcept
+{
+	std::string result;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			std::ostringstream oss;
+
+			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
+			result = SchemaLoader::getSafeCppName(oss.str());
+			break;
+		}
+
+		default:
+			result = _schemaLoader.getCppType(responseField.type->name());
+	}
+
+	return result;
 }
 
 std::vector<std::string> Generator::Build() const noexcept
@@ -167,7 +211,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	outputRequestComment(headerFile);
 
-	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
+	NamespaceScope fullNamespaceScope { headerFile, getFullNamespace() };
 	PendingBlankLine pendingSeparator { headerFile };
 
 	outputGetRequestDeclaration(headerFile);
@@ -430,30 +474,6 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	return true;
 }
 
-std::string Generator::getResponseFieldCppType(const ResponseField& responseField) const noexcept
-{
-	std::string result;
-
-	switch (responseField.type->kind())
-	{
-		case introspection::TypeKind::OBJECT:
-		case introspection::TypeKind::INTERFACE:
-		case introspection::TypeKind::UNION:
-		{
-			std::ostringstream oss;
-
-			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
-			result = SchemaLoader::getSafeCppName(oss.str());
-			break;
-		}
-
-		default:
-			result = _schemaLoader.getCppType(responseField.type->name());
-	}
-
-	return result;
-}
-
 bool Generator::outputSource() const noexcept
 {
 	std::ofstream sourceFile(_sourcePath, std::ios_base::trunc);
@@ -481,7 +501,9 @@ using namespace std::literals;
 	NamespaceScope clientNamespaceScope { sourceFile, getClientNamespace() };
 	PendingBlankLine pendingSeparator { sourceFile };
 
-	outputGetRequestImplementation(sourceFile);
+	sourceFile << R"cpp(
+using namespace )cpp" << getRequestNamespace() << R"cpp(;
+)cpp";
 
 	const auto& variables = _requestLoader.getVariables();
 
@@ -508,45 +530,58 @@ using namespace std::literals;
 		sourceFile << R"cpp(};
 )cpp";
 
-		if (!variables.empty())
-		{
-			sourceFile << R"cpp(
-response::Value serialize)cpp"
-					   << cppType << R"cpp(()cpp" << cppType << R"cpp( value)
-{
-	response::Value result(response::Type::EnumValue);
-
-	result.set<response::StringType>(response::StringType { s_names)cpp"
-					   << cppType << R"cpp([static_cast<size_t>(value)] });
-
-	return result;
-}
-)cpp";
-		}
-
 		pendingSeparator.add();
 	}
 
 	if (!variables.empty())
 	{
+		for (const auto& enumType : _requestLoader.getReferencedEnums())
+		{
+			pendingSeparator.reset();
+
+			const auto& enumValues = enumType->enumValues();
+			const auto cppType = _schemaLoader.getCppType(enumType->name());
+
+			if (!variables.empty())
+			{
+				sourceFile << R"cpp(response::Value ModifiedVariable<)cpp"
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
+{
+	response::Value result { response::Type::EnumValue };
+
+	result.set<response::StringType>(response::StringType { s_names)cpp"
+						   << cppType << R"cpp([static_cast<size_t>(value)] });
+
+	return result;
+}
+)cpp";
+			}
+
+			pendingSeparator.add();
+		}
+
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes())
 		{
 			pendingSeparator.reset();
 
 			const auto cppType = _schemaLoader.getCppType(inputType->name());
 
-			sourceFile << R"cpp(response::Value serialize)cpp" << cppType << R"cpp((Variables::)cpp"
+			sourceFile << R"cpp(response::Value ModifiedVariable<Variables::)cpp" << cppType << R"cpp(>::serialize(Variables::)cpp"
 					   << cppType << R"cpp(&& inputValue)
 {
-	response::Value result;
+	response::Value result { response::Type::Map };
 
 )cpp";
 			for (const auto& inputField : inputType->inputFields())
 			{
-				sourceFile << R"cpp(	// )cpp"
-						   << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(;
+				const auto [type, modifiers] =
+					RequestLoader::unwrapSchemaType(inputField->type().lock());
+
+				sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << inputField->name()
+						   << R"cpp()js"s, ModifiedVariable<)cpp"
+						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::serialize)cpp"
+						   << getTypeModifierList(modifiers) << R"cpp((std::move(inputValue.)cpp"
+						   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp()));
 )cpp";
 			}
 
@@ -557,31 +592,6 @@ response::Value serialize)cpp"
 
 			pendingSeparator.add();
 		}
-
-		pendingSeparator.reset();
-
-		sourceFile << R"cpp(response::Value serializeVariables(Variables&& variables)
-{
-	response::Value result;
-
-)cpp";
-
-		for (const auto& variable : variables)
-		{
-			const auto cppType = _schemaLoader.getCppType(variable.type->name());
-
-			sourceFile << R"cpp(	// )cpp" << variable.cppName << R"cpp( = serialize)cpp"
-					   << cppType << R"cpp((std::move(variables.)cpp" << variable.cppName
-					   << R"cpp());
-)cpp";
-		}
-
-		sourceFile << R"cpp(
-	return result;
-}
-)cpp";
-
-		pendingSeparator.add();
 	}
 
 	for (const auto& enumType : _requestLoader.getReferencedEnums())
@@ -619,11 +629,42 @@ response::Value serialize)cpp"
 	}
 
 	pendingSeparator.reset();
+
+	NamespaceScope requestNamespaceScope { sourceFile, getRequestNamespace() };
+
 	pendingSeparator.add();
+
+	outputGetRequestImplementation(sourceFile);
+
+	if (!variables.empty())
+	{
+		sourceFile << R"cpp(
+response::Value serializeVariables(Variables&& variables)
+{
+	response::Value result;
+
+)cpp";
+
+		for (const auto& variable : variables)
+		{
+			sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << variable.name
+				<< R"cpp()js"s, ModifiedVariable<Variables::)cpp"
+				<< _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
+				<< getTypeModifierList(variable.modifiers) << R"cpp((std::move(variables.)cpp"
+				<< variable.cppName << R"cpp()));
+)cpp";
+		}
+
+		sourceFile << R"cpp(
+	return result;
+}
+)cpp";
+	}
 
 	const auto& responseType = _requestLoader.getResponseType();
 
-	sourceFile << R"cpp(Response parseResponse(response::Value&& response)
+	sourceFile << R"cpp(
+Response parseResponse(response::Value&& response)
 {
 	Response result;
 
@@ -682,6 +723,48 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 )cpp";
+}
+
+std::string Generator::getTypeModifierList(const TypeModifierStack& modifiers) noexcept
+{
+	if (modifiers.empty())
+	{
+		return {};
+	}
+
+	bool firstModifier = true;
+	std::ostringstream oss;
+
+	oss << '<';
+
+	for (auto modifier : modifiers)
+	{
+		if (!firstModifier)
+		{
+			oss << R"cpp(, )cpp";
+		}
+
+		firstModifier = false;
+
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				oss << R"cpp(TypeModifier::None)cpp";
+				break;
+
+			case service::TypeModifier::Nullable:
+				oss << R"cpp(TypeModifier::Nullable)cpp";
+				break;
+
+			case service::TypeModifier::List:
+				oss << R"cpp(TypeModifier::List)cpp";
+				break;
+		}
+	}
+
+	oss << '>';
+
+	return oss.str();
 }
 
 } // namespace graphql::generator::client
