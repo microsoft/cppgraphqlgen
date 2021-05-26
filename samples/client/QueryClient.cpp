@@ -26,6 +26,7 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
+template <>
 TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
@@ -43,6 +44,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
 }
 
+template <>
 Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
 	Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
@@ -84,6 +86,7 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appoin
 	return result;
 }
 
+template <>
 Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
 	Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
@@ -105,6 +108,7 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResp
 	return result;
 }
 
+template <>
 Response::appointments_AppointmentConnection ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
 	Response::appointments_AppointmentConnection result;
@@ -126,6 +130,7 @@ Response::appointments_AppointmentConnection ModifiedResponse<Response::appointm
 	return result;
 }
 
+template <>
 Response::tasks_TaskConnection::edges_TaskEdge::node_Task ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
 {
 	Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
@@ -162,6 +167,7 @@ Response::tasks_TaskConnection::edges_TaskEdge::node_Task ModifiedResponse<Respo
 	return result;
 }
 
+template <>
 Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
 {
 	Response::tasks_TaskConnection::edges_TaskEdge result;
@@ -183,6 +189,7 @@ Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<Response::tasks_
 	return result;
 }
 
+template <>
 Response::tasks_TaskConnection ModifiedResponse<Response::tasks_TaskConnection>::parse(response::Value&& response)
 {
 	Response::tasks_TaskConnection result;
@@ -204,6 +211,7 @@ Response::tasks_TaskConnection ModifiedResponse<Response::tasks_TaskConnection>:
 	return result;
 }
 
+template <>
 Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
 {
 	Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
@@ -240,6 +248,7 @@ Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder ModifiedR
 	return result;
 }
 
+template <>
 Response::unreadCounts_FolderConnection::edges_FolderEdge ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
 {
 	Response::unreadCounts_FolderConnection::edges_FolderEdge result;
@@ -261,6 +270,7 @@ Response::unreadCounts_FolderConnection::edges_FolderEdge ModifiedResponse<Respo
 	return result;
 }
 
+template <>
 Response::unreadCounts_FolderConnection ModifiedResponse<Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
 {
 	Response::unreadCounts_FolderConnection result;

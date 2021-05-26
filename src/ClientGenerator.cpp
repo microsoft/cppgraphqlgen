@@ -551,7 +551,8 @@ using namespace )cpp"
 
 			if (!variables.empty())
 			{
-				sourceFile << R"cpp(response::Value ModifiedVariable<)cpp" << cppType
+				sourceFile << R"cpp(template <>
+response::Value ModifiedVariable<)cpp" << cppType
 						   << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
 {
 	response::Value result { response::Type::EnumValue };
@@ -573,7 +574,8 @@ using namespace )cpp"
 
 			const auto cppType = _schemaLoader.getCppType(inputType->name());
 
-			sourceFile << R"cpp(response::Value ModifiedVariable<Variables::)cpp" << cppType
+			sourceFile << R"cpp(template <>
+response::Value ModifiedVariable<Variables::)cpp" << cppType
 					   << R"cpp(>::serialize(Variables::)cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
@@ -607,7 +609,8 @@ using namespace )cpp"
 
 		const auto cppType = _schemaLoader.getCppType(enumType->name());
 
-		sourceFile << cppType << R"cpp( ModifiedResponse<)cpp" << cppType
+		sourceFile << R"cpp(template <>
+)cpp" << cppType << R"cpp( ModifiedResponse<)cpp" << cppType
 				   << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
@@ -816,6 +819,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 
 	// This is a complex type that requires a custom ModifiedResponse implementation.
 	sourceFile << R"cpp(
+template <>
 )cpp" << cppType
 			   << R"cpp( ModifiedResponse<)cpp" << cppType
 			   << R"cpp(>::parse(response::Value&& response)

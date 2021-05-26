@@ -19,6 +19,7 @@ namespace graphql::client {
 
 using namespace subscription::TestSubscription;
 
+template <>
 Response::nextAppointment_Appointment ModifiedResponse<Response::nextAppointment_Appointment>::parse(response::Value&& response)
 {
 	Response::nextAppointment_Appointment result;

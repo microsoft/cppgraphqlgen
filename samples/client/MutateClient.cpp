@@ -26,6 +26,7 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
+template <>
 response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
@@ -35,6 +36,7 @@ response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 	return result;
 }
 
+template <>
 response::Value ModifiedVariable<Variables::CompleteTaskInput>::serialize(Variables::CompleteTaskInput&& inputValue)
 {
 	response::Value result { response::Type::Map };
@@ -47,6 +49,7 @@ response::Value ModifiedVariable<Variables::CompleteTaskInput>::serialize(Variab
 	return result;
 }
 
+template <>
 TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
@@ -64,6 +67,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
 }
 
+template <>
 Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
 {
 	Response::completedTask_CompleteTaskPayload::completedTask_Task result;
@@ -95,6 +99,7 @@ Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse
 	return result;
 }
 
+template <>
 Response::completedTask_CompleteTaskPayload ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
 {
 	Response::completedTask_CompleteTaskPayload result;
