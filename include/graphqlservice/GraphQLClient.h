@@ -98,7 +98,7 @@ struct ModifiedVariable
 	{
 		response::Value result { response::Type::List };
 
-		result.reserve(values.size());
+		result.reserve(listValue.size());
 		std::for_each(listValue.begin(), listValue.end(), [&result](auto& value) {
 			result.emplace_back(serialize<Other...>(std::move(value)));
 		});
