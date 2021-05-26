@@ -458,8 +458,6 @@ bool Generator::outputSource() const noexcept
 #include ")cpp" << _schemaLoader.getFilenamePrefix()
 			   << R"cpp(Client.h"
 
-#include "graphqlservice/GraphQLService.h"
-
 #include <algorithm>
 #include <array>
 #include <sstream>

@@ -183,8 +183,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(
-			service::Base64::toBase64(_appointment->getId(std::move(params)).get()));
+		return response::Value(_appointment->getId(std::move(params)).get());
 	}
 
 private:
@@ -277,7 +276,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(service::Base64::toBase64(_task->getId(std::move(params)).get()));
+		return response::Value(_task->getId(std::move(params)).get());
 	}
 
 private:
@@ -370,7 +369,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(service::Base64::toBase64(_folder->getId(std::move(params)).get()));
+		return response::Value(_folder->getId(std::move(params)).get());
 	}
 
 private:

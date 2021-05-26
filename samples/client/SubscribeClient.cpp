@@ -5,8 +5,6 @@
 
 #include "SubscribeClient.h"
 
-#include "graphqlservice/GraphQLService.h"
-
 #include <algorithm>
 #include <array>
 #include <sstream>

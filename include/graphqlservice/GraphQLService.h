@@ -281,46 +281,6 @@ struct ResolverResult
 using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
 using ResolverMap = internal::string_view_map<Resolver>;
 
-// Binary data and opaque strings like IDs are encoded in Base64.
-class Base64
-{
-public:
-	// Map a single Base64-encoded character to its 6-bit integer value.
-	static constexpr uint8_t fromBase64(char ch) noexcept
-	{
-		return (ch >= 'A' && ch <= 'Z'
-				? ch - 'A'
-				: (ch >= 'a' && ch <= 'z'
-						? ch - 'a' + 26
-						: (ch >= '0' && ch <= '9' ? ch - '0' + 52
-												  : (ch == '+' ? 62 : (ch == '/' ? 63 : 0xFF)))));
-	}
-
-	// Convert a Base64-encoded string to a vector of bytes.
-	GRAPHQLSERVICE_EXPORT static std::vector<uint8_t> fromBase64(const char* encoded, size_t count);
-
-	// Map a single 6-bit integer value to its Base64-encoded character.
-	static constexpr char toBase64(uint8_t i) noexcept
-	{
-		return (i < 26 ? static_cast<char>(i + static_cast<uint8_t>('A'))
-					   : (i < 52 ? static_cast<char>(i - 26 + static_cast<uint8_t>('a'))
-								 : (i < 62 ? static_cast<char>(i - 52 + static_cast<uint8_t>('0'))
-										   : (i == 62 ? '+' : (i == 63 ? '/' : padding)))));
-	}
-
-	// Convert a set of bytes to Base64.
-	GRAPHQLSERVICE_EXPORT static std::string toBase64(const std::vector<uint8_t>& bytes);
-
-private:
-	static constexpr char padding = '=';
-
-	// Throw a schema_exception if the character is out of range.
-	static uint8_t verifyFromBase64(char ch);
-
-	// Throw a logic_error if the integer is out of range.
-	static char verifyToBase64(uint8_t i);
-};
-
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.

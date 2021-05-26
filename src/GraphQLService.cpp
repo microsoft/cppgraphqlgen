@@ -522,153 +522,6 @@ schema_location ResolverParams::getLocation() const
 	return { position.line, position.column };
 }
 
-uint8_t Base64::verifyFromBase64(char ch)
-{
-	uint8_t result = fromBase64(ch);
-
-	if (result > 63)
-	{
-		throw schema_exception { { "invalid character in base64 encoded string" } };
-	}
-
-	return result;
-}
-
-std::vector<uint8_t> Base64::fromBase64(const char* encoded, size_t count)
-{
-	std::vector<uint8_t> result;
-
-	if (!count)
-	{
-		return result;
-	}
-
-	result.reserve((count + (count % 4)) * 3 / 4);
-
-	// First decode all of the full unpadded segments 24 bits at a time
-	while (count >= 4 && encoded[3] != padding)
-	{
-		const uint32_t segment = (static_cast<uint32_t>(verifyFromBase64(encoded[0])) << 18)
-			| (static_cast<uint32_t>(verifyFromBase64(encoded[1])) << 12)
-			| (static_cast<uint32_t>(verifyFromBase64(encoded[2])) << 6)
-			| static_cast<uint32_t>(verifyFromBase64(encoded[3]));
-
-		result.emplace_back(static_cast<uint8_t>((segment & 0xFF0000) >> 16));
-		result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
-		result.emplace_back(static_cast<uint8_t>(segment & 0xFF));
-
-		encoded += 4;
-		count -= 4;
-	}
-
-	// Get any leftover partial segment with 2 or 3 non-padding characters
-	if (count > 1)
-	{
-		const bool triplet = (count > 2 && padding != encoded[2]);
-		const uint8_t tail = (triplet ? verifyFromBase64(encoded[2]) : 0);
-		const uint16_t segment = (static_cast<uint16_t>(verifyFromBase64(encoded[0])) << 10)
-			| (static_cast<uint16_t>(verifyFromBase64(encoded[1])) << 4)
-			| (static_cast<uint16_t>(tail) >> 2);
-
-		if (triplet)
-		{
-			if (tail & 0x3)
-			{
-				throw schema_exception {
-					{ "invalid padding at the end of a base64 encoded string" }
-				};
-			}
-
-			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
-			result.emplace_back(static_cast<uint8_t>(segment & 0xFF));
-
-			encoded += 3;
-			count -= 3;
-		}
-		else
-		{
-			if (segment & 0xFF)
-			{
-				throw schema_exception {
-					{ "invalid padding at the end of a base64 encoded string" }
-				};
-			}
-
-			result.emplace_back(static_cast<uint8_t>((segment & 0xFF00) >> 8));
-
-			encoded += 2;
-			count -= 2;
-		}
-	}
-
-	// Make sure anything that's left is 0 - 2 characters of padding
-	if ((count > 0 && padding != encoded[0]) || (count > 1 && padding != encoded[1]) || count > 2)
-	{
-		throw schema_exception { { "invalid padding at the end of a base64 encoded string" } };
-	}
-
-	return result;
-}
-
-char Base64::verifyToBase64(uint8_t i)
-{
-	unsigned char result = toBase64(i);
-
-	if (result == padding)
-	{
-		throw schema_exception { { "invalid 6-bit value" } };
-	}
-
-	return result;
-}
-
-std::string Base64::toBase64(const std::vector<uint8_t>& bytes)
-{
-	std::string result;
-
-	if (bytes.empty())
-	{
-		return result;
-	}
-
-	size_t count = bytes.size();
-	const uint8_t* data = bytes.data();
-
-	result.reserve((count + (count % 3)) * 4 / 3);
-
-	// First encode all of the full unpadded segments 24 bits at a time
-	while (count >= 3)
-	{
-		const uint32_t segment = (static_cast<uint32_t>(data[0]) << 16)
-			| (static_cast<uint32_t>(data[1]) << 8) | static_cast<uint32_t>(data[2]);
-
-		result.append({ verifyToBase64(static_cast<uint8_t>((segment & 0xFC0000) >> 18)),
-			verifyToBase64(static_cast<uint8_t>((segment & 0x3F000) >> 12)),
-			verifyToBase64(static_cast<uint8_t>((segment & 0xFC0) >> 6)),
-			verifyToBase64(static_cast<uint8_t>(segment & 0x3F)) });
-
-		data += 3;
-		count -= 3;
-	}
-
-	// Get any leftover partial segment with 1 or 2 bytes
-	if (count > 0)
-	{
-		const bool pair = (count > 1);
-		const uint16_t segment =
-			(static_cast<uint16_t>(data[0]) << 8) | (pair ? static_cast<uint16_t>(data[1]) : 0);
-		const std::array<char, 4> remainder { verifyToBase64(
-												  static_cast<uint8_t>((segment & 0xFC00) >> 10)),
-			verifyToBase64(static_cast<uint8_t>((segment & 0x3F0) >> 4)),
-			(pair ? verifyToBase64(static_cast<uint8_t>((segment & 0xF) << 2)) : padding),
-			padding };
-
-		result.append(remainder.data(), remainder.size());
-	}
-
-	return result;
-}
-
 template <>
 response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value)
 {
@@ -727,9 +580,18 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 		throw schema_exception { { "not a string" } };
 	}
 
-	const auto& encoded = value.get<response::StringType>();
+	response::IdType result;
 
-	return Base64::fromBase64(encoded.c_str(), encoded.size());
+	try
+	{
+		result = value.get<response::IdType>();
+	}
+	catch (const std::logic_error& ex)
+	{
+		throw schema_exception { { ex.what() } };
+	}
+
+	return result;
 }
 
 void blockSubFields(const ResolverParams& params)
@@ -822,7 +684,7 @@ std::future<ResolverResult> ModifiedResult<response::IdType>::convert(
 	return resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(Base64::toBase64(value));
+			return response::Value(value);
 		});
 }
 

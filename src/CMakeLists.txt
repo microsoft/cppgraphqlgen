@@ -84,7 +84,9 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # graphqlresponse
-add_library(graphqlresponse GraphQLResponse.cpp)
+add_library(graphqlresponse
+  Base64.cpp
+  GraphQLResponse.cpp)
 add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>

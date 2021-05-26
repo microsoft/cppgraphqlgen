@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/internal/Base64.h"
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include "Validation.h"
@@ -9,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <stdexcept>
 
 using namespace std::literals;
 
@@ -1186,12 +1188,12 @@ bool ValidateExecutableVisitor::validateInputValue(
 				{
 					try
 					{
-						const auto value = std::get<std::string_view>(argument.value->data);
-						auto decoded = Base64::fromBase64(value.data(), value.size());
+						auto decoded = internal::Base64::fromBase64(
+							std::get<std::string_view>(argument.value->data));
 
 						return true;
 					}
-					catch (const schema_exception&)
+					catch (const std::logic_error&)
 					{
 						// Eat the exception and fail validation
 					}
