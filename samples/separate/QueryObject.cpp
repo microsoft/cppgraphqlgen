@@ -26,6 +26,7 @@ Query::Query()
 		{ R"gql(tasks)gql"sv, [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
 		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
+		{ R"gql(anyType)gql"sv, [this](service::ResolverParams&& params) { return resolveAnyType(std::move(params)); } },
 		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ R"gql(expensive)gql"sv, [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
 		{ R"gql(tasksById)gql"sv, [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
@@ -244,6 +245,22 @@ std::future<service::ResolverResult> Query::resolveTestTaskState(service::Resolv
 	return service::ModifiedResult<TaskState>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAnyType(service::FieldParams&&, std::vector<response::IdType>&&) const
+{
+	throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+}
+
+std::future<service::ResolverResult> Query::resolveAnyType(service::ResolverParams&& params)
+{
+	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
+	auto result = getAnyType(service::FieldParams(std::move(params), std::move(directives)), std::move(argIds));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
 std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
@@ -301,7 +318,10 @@ void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::s
 		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
 		schema::Field::Make(R"gql(unimplemented)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
 		schema::Field::Make(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive"))))),
-		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("TaskState"))
+		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("TaskState")),
+		schema::Field::Make(R"gql(anyType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("UnionType"))), {
+			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		})
 	});
 }
 

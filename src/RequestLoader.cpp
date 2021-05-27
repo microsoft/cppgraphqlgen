@@ -952,30 +952,11 @@ void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
 
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
-		{
-			if (responseField.children)
-			{
-				for (const auto& field : std::get<ResponseFieldList>(*responseField.children))
-				{
-					collectEnums(field);
-				}
-			}
-
-			break;
-		}
-
 		case introspection::TypeKind::UNION:
 		{
-			if (responseField.children)
+			for (const auto& field : responseField.children)
 			{
-				for (const auto& responseType :
-					std::get<ResponseUnionOptions>(*responseField.children))
-				{
-					for (const auto& field : responseType.fields)
-					{
-						collectEnums(field);
-					}
-				}
+				collectEnums(field);
 			}
 
 			break;
@@ -1106,6 +1087,7 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 		{
 			case introspection::TypeKind::OBJECT:
 			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
 			{
 				SelectionVisitor selectionVisitor { _schemaLoader,
 					_fragments,
@@ -1119,43 +1101,6 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 				if (!selectionFields.empty())
 				{
 					responseField.children = std::move(selectionFields);
-				}
-
-				break;
-			}
-
-			case introspection::TypeKind::UNION:
-			{
-				ResponseUnionOptions options;
-				const auto& possibleTypes = responseField.type->possibleTypes();
-
-				for (const auto& weakType : possibleTypes)
-				{
-					const auto possibleType = weakType.lock();
-					SelectionVisitor possibleTypeVisitor { _schemaLoader,
-						_fragments,
-						_schema,
-						possibleType };
-
-					possibleTypeVisitor.visit(*selection);
-
-					auto possibleTypeFields = possibleTypeVisitor.getFields();
-
-					if (!possibleTypeFields.empty())
-					{
-						ResponseType option;
-
-						option.type = possibleType;
-						option.cppType = _schemaLoader.getCppType(possibleType->name());
-						option.fields = std::move(possibleTypeFields);
-
-						options.push_back(std::move(option));
-					}
-				}
-
-				if (!options.empty())
-				{
-					responseField.children = std::move(options);
 				}
 
 				break;

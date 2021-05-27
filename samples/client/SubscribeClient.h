@@ -55,13 +55,13 @@ struct Response
 {
 	struct nextAppointment_Appointment
 	{
-		response::IdType nextAppointmentId;
-		std::optional<response::Value> when;
-		std::optional<response::StringType> subject;
-		response::BooleanType isNow;
+		response::IdType nextAppointmentId {};
+		std::optional<response::Value> when {};
+		std::optional<response::StringType> subject {};
+		response::BooleanType isNow {};
 	};
 
-	std::optional<nextAppointment_Appointment> nextAppointment;
+	std::optional<nextAppointment_Appointment> nextAppointment {};
 };
 
 Response parseResponse(response::Value&& response);

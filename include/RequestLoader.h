@@ -29,9 +29,6 @@ struct ResponseType
 	ResponseFieldList fields;
 };
 
-using ResponseUnionOptions = std::vector<ResponseType>;
-using ResponseFieldChildren = std::variant<ResponseFieldList, ResponseUnionOptions>;
-
 struct ResponseField
 {
 	RequestSchemaType type;
@@ -39,7 +36,7 @@ struct ResponseField
 	std::string_view name;
 	std::string_view cppName;
 	std::optional<tao::graphqlpeg::position> position;
-	std::optional<ResponseFieldChildren> children;
+	ResponseFieldList children;
 };
 
 struct RequestVariable

@@ -65,10 +65,10 @@ struct Variables
 {
 	struct CompleteTaskInput
 {
-		response::IdType id;
-		std::optional<TaskState> testTaskState;
-		std::optional<response::BooleanType> isComplete;
-		std::optional<response::StringType> clientMutationId;
+		response::IdType id {};
+		std::optional<TaskState> testTaskState {};
+		std::optional<response::BooleanType> isComplete {};
+		std::optional<response::StringType> clientMutationId {};
 	};
 
 	CompleteTaskInput input;
@@ -82,17 +82,17 @@ struct Response
 	{
 		struct completedTask_Task
 		{
-			response::IdType completedTaskId;
-			std::optional<response::StringType> title;
-			response::BooleanType isComplete;
+			response::IdType completedTaskId {};
+			std::optional<response::StringType> title {};
+			response::BooleanType isComplete {};
 		};
 
-		std::optional<completedTask_Task> completedTask;
+		std::optional<completedTask_Task> completedTask {};
 
-		std::optional<response::StringType> clientMutationId;
+		std::optional<response::StringType> clientMutationId {};
 	};
 
-	completedTask_CompleteTaskPayload completedTask;
+	completedTask_CompleteTaskPayload completedTask {};
 };
 
 Response parseResponse(response::Value&& response);

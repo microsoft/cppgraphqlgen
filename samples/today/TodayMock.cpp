@@ -41,16 +41,16 @@ Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 
 void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->appointmentsRequestId = todayState->requestId;
-		todayState->loadAppointmentsCount++;
-	}
-
 	if (_getAppointments)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->appointmentsRequestId = todayState->requestId;
+			todayState->loadAppointmentsCount++;
+		}
+
 		_appointments = _getAppointments();
 		_getAppointments = nullptr;
 	}
@@ -74,16 +74,16 @@ std::shared_ptr<Appointment> Query::findAppointment(
 
 void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->tasksRequestId = todayState->requestId;
-		todayState->loadTasksCount++;
-	}
-
 	if (_getTasks)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->tasksRequestId = todayState->requestId;
+			todayState->loadTasksCount++;
+		}
+
 		_tasks = _getTasks();
 		_getTasks = nullptr;
 	}
@@ -107,16 +107,16 @@ std::shared_ptr<Task> Query::findTask(
 
 void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->unreadCountsRequestId = todayState->requestId;
-		todayState->loadUnreadCountsCount++;
-	}
-
 	if (_getUnreadCounts)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->unreadCountsRequestId = todayState->requestId;
+			todayState->loadUnreadCountsCount++;
+		}
+
 		_unreadCounts = _getUnreadCounts();
 		_getUnreadCounts = nullptr;
 	}
@@ -428,6 +428,23 @@ service::FieldResult<std::optional<TaskState>> Query::getTestTaskState(
 	service::FieldParams&& /*params*/) const
 {
 	return TaskState::Unassigned;
+}
+
+service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAnyType(
+	service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const
+{
+	loadAppointments(params.state);
+
+	std::vector<std::shared_ptr<service::Object>> result(_appointments.size());
+
+	std::transform(_appointments.cbegin(),
+		_appointments.cend(),
+		result.begin(),
+		[](const std::shared_ptr<object::Appointment>& appointment) noexcept {
+			return std::static_pointer_cast<service::Object>(appointment);
+		});
+
+	return result;
 }
 
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)

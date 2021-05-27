@@ -69,6 +69,25 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 /// 
 ///   # Read a field with an enum type
 ///   testTaskState
+/// 
+///   # Try a field with a union type
+///   anyType(ids: ["ZmFrZVRhc2tJZA=="]) {
+///     __typename
+///     ...on Node {
+///       id
+///     }
+///     ...on Task {
+///       id
+///       title
+///       isComplete
+///     }
+///     ...on Appointment {
+///       id
+///       subject
+///       when
+///       isNow
+///     }
+///   }
 /// }
 /// </code>
 namespace graphql::client::query::Query {
@@ -95,20 +114,20 @@ struct Response
 		{
 			struct node_Appointment
 			{
-				response::IdType id;
-				std::optional<response::StringType> subject;
-				std::optional<response::Value> when;
-				response::BooleanType isNow;
-				response::StringType _typename;
+				response::IdType id {};
+				std::optional<response::StringType> subject {};
+				std::optional<response::Value> when {};
+				response::BooleanType isNow {};
+				response::StringType _typename {};
 			};
 
-			std::optional<node_Appointment> node;
+			std::optional<node_Appointment> node {};
 		};
 
-		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges;
+		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
-	appointments_AppointmentConnection appointments;
+	appointments_AppointmentConnection appointments {};
 
 	struct tasks_TaskConnection
 	{
@@ -116,19 +135,19 @@ struct Response
 		{
 			struct node_Task
 			{
-				response::IdType id;
-				std::optional<response::StringType> title;
-				response::BooleanType isComplete;
-				response::StringType _typename;
+				response::IdType id {};
+				std::optional<response::StringType> title {};
+				response::BooleanType isComplete {};
+				response::StringType _typename {};
 			};
 
-			std::optional<node_Task> node;
+			std::optional<node_Task> node {};
 		};
 
-		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges;
+		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
 
-	tasks_TaskConnection tasks;
+	tasks_TaskConnection tasks {};
 
 	struct unreadCounts_FolderConnection
 	{
@@ -136,21 +155,33 @@ struct Response
 		{
 			struct node_Folder
 			{
-				response::IdType id;
-				std::optional<response::StringType> name;
-				response::IntType unreadCount;
-				response::StringType _typename;
+				response::IdType id {};
+				std::optional<response::StringType> name {};
+				response::IntType unreadCount {};
+				response::StringType _typename {};
 			};
 
-			std::optional<node_Folder> node;
+			std::optional<node_Folder> node {};
 		};
 
-		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges;
+		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
-	unreadCounts_FolderConnection unreadCounts;
+	unreadCounts_FolderConnection unreadCounts {};
 
-	std::optional<TaskState> testTaskState;
+	std::optional<TaskState> testTaskState {};
+	struct anyType_UnionType
+	{
+		response::StringType _typename {};
+		response::IdType id {};
+		std::optional<response::StringType> title {};
+		response::BooleanType isComplete {};
+		std::optional<response::StringType> subject {};
+		std::optional<response::Value> when {};
+		response::BooleanType isNow {};
+	};
+
+	std::vector<std::optional<anyType_UnionType>> anyType {};
 };
 
 Response parseResponse(response::Value&& response);

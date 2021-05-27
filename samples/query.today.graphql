@@ -36,4 +36,23 @@ query {
 
   # Read a field with an enum type
   testTaskState
+
+  # Try a field with a union type
+  anyType(ids: ["ZmFrZVRhc2tJZA=="]) {
+    __typename
+    ...on Node {
+      id
+    }
+    ...on Task {
+      id
+      title
+      isComplete
+    }
+    ...on Appointment {
+      id
+      subject
+      when
+      isNow
+    }
+  }
 }

@@ -270,7 +270,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				headerFile << R"cpp(		)cpp"
 						   << _requestLoader.getInputCppType(inputField->type().lock())
 						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(;
+						   << R"cpp( {};
 )cpp";
 			}
 
@@ -318,7 +318,7 @@ response::Value serializeVariables(Variables&& variables);
 		headerFile << R"cpp(	)cpp"
 				   << RequestLoader::getOutputCppType(getResponseFieldCppType(responseField),
 						  responseField.modifiers)
-				   << R"cpp( )cpp" << responseField.cppName << R"cpp(;
+				   << R"cpp( )cpp" << responseField.cppName << R"cpp( {};
 )cpp";
 	}
 
@@ -395,10 +395,9 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
 		{
-			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
-
-			for (const auto& field : fields)
+			for (const auto& field : responseField.children)
 			{
 				pendingSeparator.reset();
 
@@ -412,7 +411,7 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 					headerFile << indentTabs << R"cpp(	)cpp"
 							   << RequestLoader::getOutputCppType(getResponseFieldCppType(field),
 									  field.modifiers)
-							   << R"cpp( )cpp" << field.cppName << R"cpp(;
+							   << R"cpp( )cpp" << field.cppName << R"cpp( {};
 )cpp";
 				}
 				else
@@ -422,50 +421,6 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 )cpp";
 				}
 			}
-			break;
-		}
-
-		case introspection::TypeKind::UNION:
-		{
-			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
-
-			for (const auto& possibleType : possibleTypes)
-			{
-				pendingSeparator.reset();
-
-				headerFile << indentTabs << R"cpp(	// possible type: )cpp"
-						   << possibleType.type->name() << R"cpp(
-)cpp";
-
-				for (const auto& possibleTypeField : possibleType.fields)
-				{
-					pendingSeparator.reset();
-
-					if (fieldNames.emplace(possibleTypeField.name).second)
-					{
-						if (outputResponseFieldType(headerFile, possibleTypeField, indent + 1))
-						{
-							pendingSeparator.add();
-						}
-
-						headerFile << indentTabs << R"cpp(	)cpp"
-								   << RequestLoader::getOutputCppType(
-										  getResponseFieldCppType(possibleTypeField),
-										  possibleTypeField.modifiers)
-								   << R"cpp( )cpp" << possibleTypeField.cppName << R"cpp(;
-)cpp";
-					}
-					else
-					{
-						headerFile << indentTabs << R"cpp(	// duplicate: )cpp"
-								   << possibleTypeField.cppName << R"cpp(
-)cpp";
-					}
-				}
-
-				pendingSeparator.add();
-			}
-
 			break;
 		}
 
@@ -777,36 +732,15 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
 		{
-			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
-
-			for (const auto& field : fields)
+			for (const auto& field : responseField.children)
 			{
 				if (fieldNames.emplace(field.name).second)
 				{
 					outputModifiedResponseImplementation(sourceFile, cppType, field);
 				}
 			}
-			break;
-		}
-
-		case introspection::TypeKind::UNION:
-		{
-			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
-
-			for (const auto& possibleType : possibleTypes)
-			{
-				for (const auto& possibleTypeField : possibleType.fields)
-				{
-					if (fieldNames.emplace(possibleTypeField.name).second)
-					{
-						outputModifiedResponseImplementation(sourceFile,
-							cppType,
-							possibleTypeField);
-					}
-				}
-			}
-
 			break;
 		}
 
@@ -839,10 +773,9 @@ template <>
 	{
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
 		{
-			const auto& fields = std::get<ResponseFieldList>(*responseField.children);
-
-			for (const auto& field : fields)
+			for (const auto& field : responseField.children)
 			{
 				if (fieldNames.emplace(field.name).second)
 				{
@@ -859,35 +792,6 @@ template <>
 )cpp";
 				}
 			}
-			break;
-		}
-
-		case introspection::TypeKind::UNION:
-		{
-			const auto& possibleTypes = std::get<ResponseUnionOptions>(*responseField.children);
-
-			for (const auto& possibleType : possibleTypes)
-			{
-				for (const auto& possibleTypeField : possibleType.fields)
-				{
-					if (fieldNames.emplace(possibleTypeField.name).second)
-					{
-						sourceFile << R"cpp(			if (member.first == R"js()cpp"
-								   << possibleTypeField.name << R"cpp()js"sv)
-			{
-				result.)cpp" << possibleTypeField.cppName
-								   << R"cpp( = ModifiedResponse<)cpp"
-								   << getResponseFieldCppType(possibleTypeField, cppType)
-								   << R"cpp(>::parse)cpp"
-								   << getTypeModifierList(possibleTypeField.modifiers)
-								   << R"cpp((std::move(member.second));
-				continue;
-			}
-)cpp";
-					}
-				}
-			}
-
 			break;
 		}
 	}

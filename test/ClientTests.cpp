@@ -174,6 +174,19 @@ TEST_F(ClientCase, QueryEverything)
 		ASSERT_TRUE(response.testTaskState.has_value()) << "testTaskState should be set";
 		EXPECT_EQ(client::query::Query::TaskState::Unassigned, *response.testTaskState)
 			<< "testTaskState should match";
+
+		ASSERT_EQ(1, response.anyType.size()) << "anyType should have 1 entry";
+		ASSERT_TRUE(response.anyType[0].has_value()) << "appointment should be set";
+		const auto& anyType = *response.anyType[0];
+		EXPECT_EQ("Appointment", anyType._typename) << "__typename should match";
+		EXPECT_EQ(_fakeAppointmentId, anyType.id) << "id should match in base64 encoding";
+		EXPECT_FALSE(anyType.title.has_value()) << "appointment should not have a title";
+		EXPECT_FALSE(anyType.isComplete) << "appointment should not set isComplete";
+		ASSERT_TRUE(anyType.subject.has_value()) << "subject should be set";
+		EXPECT_EQ("Lunch?", *(anyType.subject)) << "subject should match";
+		ASSERT_TRUE(anyType.when.has_value()) << "when should be set";
+		EXPECT_EQ("tomorrow", anyType.when->get<response::StringType>()) << "when should match";
+		EXPECT_FALSE(anyType.isNow) << "isNow should match";
 	}
 	catch (const std::logic_error& ex)
 	{

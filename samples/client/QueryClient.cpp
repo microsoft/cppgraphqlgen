@@ -292,6 +292,58 @@ Response::unreadCounts_FolderConnection ModifiedResponse<Response::unreadCounts_
 	return result;
 }
 
+template <>
+Response::anyType_UnionType ModifiedResponse<Response::anyType_UnionType>::parse(response::Value&& response)
+{
+	Response::anyType_UnionType result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(__typename)js"sv)
+			{
+				result._typename = ModifiedResponse<response::StringType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(id)js"sv)
+			{
+				result.id = ModifiedResponse<response::IdType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(title)js"sv)
+			{
+				result.title = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isComplete)js"sv)
+			{
+				result.isComplete = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(subject)js"sv)
+			{
+				result.subject = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(when)js"sv)
+			{
+				result.when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isNow)js"sv)
+			{
+				result.isNow = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
 namespace query::Query {
 
 const std::string& GetRequestText() noexcept
@@ -335,6 +387,25 @@ const std::string& GetRequestText() noexcept
 		
 		  # Read a field with an enum type
 		  testTaskState
+		
+		  # Try a field with a union type
+		  anyType(ids: ["ZmFrZVRhc2tJZA=="]) {
+		    __typename
+		    ...on Node {
+		      id
+		    }
+		    ...on Task {
+		      id
+		      title
+		      isComplete
+		    }
+		    ...on Appointment {
+		      id
+		      subject
+		      when
+		      isNow
+		    }
+		  }
 		}
 	)gql"s;
 
@@ -383,6 +454,11 @@ Response parseResponse(response::Value&& response)
 			if (member.first == R"js(testTaskState)js"sv)
 			{
 				result.testTaskState = ModifiedResponse<TaskState>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(anyType)js"sv)
+			{
+				result.anyType = ModifiedResponse<Response::anyType_UnionType>::parse<TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}

@@ -34,6 +34,8 @@ type Query {
     expensive: [Expensive!]!
 
     testTaskState: TaskState
+
+    anyType(ids: [ID!]!): [UnionType]!
 }
 
 "Node interface for Relay support"
