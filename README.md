@@ -28,8 +28,9 @@ If what you're after is a way to consume a GraphQL service from C++, as of
 a `graphqlclient` library and a `clientgen` utility to generate types matching a GraphQL request
 document, its variables, and all of the serialization code you need to talk to a `graphqlservice`
 implementation. If you want to consume another service, you will need access to the schema definition
-(rather than the Introspection query results), and you will need send requests and parse responses
-into a `graphql::response::Value` (e.g. with the `graphqljson` library) in your code.
+(rather than the Introspection query results), and you will need be able to send requests along with
+any variables to the service and parse its responses into a `graphql::response::Value` (e.g. with the
+`graphqljson` library) in your code.
 
 # Getting Started
 
