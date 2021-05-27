@@ -23,6 +23,14 @@ service, you can use the same GraphQL client code to access your native data sou
 service online. You might even be able to share some more of that code between a progressive web
 app and your native/hybrid app.
 
+If what you're after is a way to consume a GraphQL service from C++, as of
+[v3.6.0](https://github.com/microsoft/cppgraphqlgen/releases/tag/v3.6.0) this project also includes
+a `graphqlclient` library and a `clientgen` utility to generate types matching a GraphQL request
+document, its variables, and all of the serialization code you need to talk to a `graphqlservice`
+implementation. If you want to consume another service, you will need access to the schema definition
+(rather than the Introspection query results), and you will need send requests and parse responses
+into a `graphql::response::Value` (e.g. with the `graphqljson` library) in your code.
+
 # Getting Started
 
 ## Related projects
@@ -115,6 +123,41 @@ If you are building shared libraries on Windows (DLLs) using vcpkg or `BUILD_SHA
 adds a runtime dependency on a Boost DLL. The `schemagen` tool won't run without it. However, in addition to automating
 the install of Boost, vcpkg also takes care of installing the dependencies next to `schemagen.exe` when building the
 Windows and UWP shared library targets (the platform triplets which don't end in `-static`).
+
+### clientgen
+
+The `clientgen` utility is based on `schemagen` and shares the same external dependencies. The command line arguments
+are almost the same, except it takes an extra file for the request document and there is no equivalent to `--no-stubs` or
+`--separate-files`:
+```
+Usage:  clientgen [options] <schema file> <request file> <output filename prefix> <output namespace>
+Command line options:
+  --version              Print the version number
+  -? [ --help ]          Print the command line options
+  -v [ --verbose ]       Verbose output including generated header names as
+                         well as sources
+  -s [ --schema ] arg    Schema definition file path
+  -r [ --request ] arg   Request document file path
+  -o [ --operation ] arg Operation name if the request document contains more
+                         than one
+  -p [ --prefix ] arg    Prefix to use for the generated C++ filenames
+  -n [ --namespace ] arg C++ sub-namespace for the generated types
+  --source-dir arg       Target path for the <prefix>Client.cpp source file
+  --header-dir arg       Target path for the <prefix>Client.h header file
+  --no-introspection     Do not expect support for Introspection
+```
+
+This utility should output one header and one source file for each request document. A request document may contain
+more than one operation, in which case you must specify the `--operation` (or `-o`) parameter to indicate which one
+should be used to generate the files. If you want to generate client code for more than one operation in the same
+document, you will need to run `clientgen` more than once and specify another operation name each time.
+
+The generated code depends on the `graphqlclient` library for serialization of built-in types. If you link the generated
+code, you'll also need to link `graphqlclient`, `graphqlpeg` for the pre-parsed, pre-validated request AST, and
+`graphqlresponse` for the `graphql::response::Value` implementation.
+
+Sample output for `clientgen` is in the [samples/client](samples/client) directory, and each sample is consumed by
+a unit test in [test/ClientTests.cpp](test/ClientTests.cpp).
 
 ### tests (`GRAPHQL_BUILD_TESTS=ON`)
 
