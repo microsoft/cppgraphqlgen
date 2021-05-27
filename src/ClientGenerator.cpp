@@ -212,7 +212,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 #include <optional>
 #include <string>
 #include <vector>
-
 )cpp";
 
 	outputRequestComment(headerFile);

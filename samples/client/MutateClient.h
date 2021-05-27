@@ -26,7 +26,6 @@ static_assert(graphql::internal::MinorVersion == 6, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
-
 /// <summary>
 /// Operation: mutation CompleteTaskMutation
 /// </summary>
