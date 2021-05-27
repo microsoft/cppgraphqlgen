@@ -147,6 +147,20 @@ if(GRAPHQL_UPDATE_SAMPLES)
       WORKING_DIRECTORY client
       COMMENT "Generating SubscribeClient samples")
 
+    # client.benchmark.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/client.benchmark.today.graphql" --prefix="Benchmark" --namespace="benchmark"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        BenchmarkClient.cpp
+        BenchmarkClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql client.benchmark.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating BenchmarkClient samples")
+
     add_custom_target(update_client_samples ALL
       DEPENDS
         ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.cpp
@@ -154,7 +168,9 @@ if(GRAPHQL_UPDATE_SAMPLES)
         ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.h
         ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h)
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.h)
   endif()
 endif()
 
@@ -234,6 +250,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
+      $<TARGET_FILE:graphqlclient>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch copied_sample_dlls
     DEPENDS
@@ -241,7 +258,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlintrospection
       graphqljson
       graphqlpeg
-      graphqlresponse)
+      graphqlresponse
+      graphqlclient)
 
   add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
 
@@ -338,4 +356,21 @@ target_include_directories(todayclient PUBLIC
 if(GRAPHQL_UPDATE_SAMPLES AND GRAPHQL_BUILD_CLIENTGEN)
   # wait for the sample update to complete
   add_dependencies(todayclient update_client_samples)
+endif()
+
+# client_benchmark
+add_executable(client_benchmark
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/BenchmarkClient.cpp
+  client/benchmark.cpp)
+target_link_libraries(client_benchmark PRIVATE
+  separategraphql
+  todayclient
+  graphqlclient)
+target_include_directories(client_benchmark PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/client)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_dependencies(client_benchmark copy_sample_dlls)
 endif()
