@@ -71,7 +71,7 @@ struct Variables
 		std::optional<response::StringType> clientMutationId {};
 	};
 
-	CompleteTaskInput input;
+	CompleteTaskInput input {};
 };
 
 response::Value serializeVariables(Variables&& variables);

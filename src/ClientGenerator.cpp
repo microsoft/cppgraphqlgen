@@ -285,7 +285,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		for (const auto& variable : variables)
 		{
 			headerFile << R"cpp(	)cpp" << _schemaLoader.getCppType(variable.type->name())
-					   << R"cpp( )cpp" << variable.cppName << R"cpp(;
+					   << R"cpp( )cpp" << variable.cppName << R"cpp( {};
 )cpp";
 		}
 
