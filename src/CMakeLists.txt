@@ -417,6 +417,7 @@ install(TARGETS
     graphqlresponse
     graphqlservice
     graphqlintrospection
+    graphqlclient
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
@@ -429,10 +430,12 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLClient.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
