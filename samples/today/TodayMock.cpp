@@ -424,8 +424,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::get
 	return result;
 }
 
-service::FieldResult<std::optional<TaskState>> Query::getTestTaskState(
-	service::FieldParams&& /*params*/) const
+service::FieldResult<TaskState> Query::getTestTaskState(service::FieldParams&& /*params*/) const
 {
 	return TaskState::Unassigned;
 }

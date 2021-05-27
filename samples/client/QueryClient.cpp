@@ -453,7 +453,7 @@ Response parseResponse(response::Value&& response)
 			}
 			if (member.first == R"js(testTaskState)js"sv)
 			{
-				result.testTaskState = ModifiedResponse<TaskState>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.testTaskState = ModifiedResponse<TaskState>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(anyType)js"sv)

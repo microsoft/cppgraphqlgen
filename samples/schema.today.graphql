@@ -33,7 +33,7 @@ type Query {
 
     expensive: [Expensive!]!
 
-    testTaskState: TaskState
+    testTaskState: TaskState!
 
     anyType(ids: [ID!]!): [UnionType]!
 }

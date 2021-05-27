@@ -74,8 +74,7 @@ public:
 		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> getExpensive(
 		service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<TaskState>> getTestTaskState(
-		service::FieldParams&& params) const final;
+	service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(
 		service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final;
 

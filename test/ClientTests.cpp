@@ -171,8 +171,7 @@ TEST_F(ClientCase, QueryEverything)
 		EXPECT_EQ(3, unreadCountNode->unreadCount) << "unreadCount should match";
 		EXPECT_EQ("Folder", unreadCountNode->_typename) << "__typename should match";
 
-		ASSERT_TRUE(response.testTaskState.has_value()) << "testTaskState should be set";
-		EXPECT_EQ(client::query::Query::TaskState::Unassigned, *response.testTaskState)
+		EXPECT_EQ(client::query::Query::TaskState::Unassigned, response.testTaskState)
 			<< "testTaskState should match";
 
 		ASSERT_EQ(1, response.anyType.size()) << "anyType should have 1 entry";

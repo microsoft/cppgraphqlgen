@@ -106,7 +106,7 @@ public:
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<TaskState>> getTestTaskState(service::FieldParams&& params) const;
+	virtual service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 
 private:

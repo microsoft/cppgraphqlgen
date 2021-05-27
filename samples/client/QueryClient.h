@@ -169,7 +169,7 @@ struct Response
 
 	unreadCounts_FolderConnection unreadCounts {};
 
-	std::optional<TaskState> testTaskState {};
+	TaskState testTaskState {};
 	struct anyType_UnionType
 	{
 		response::StringType _typename {};
