@@ -50,15 +50,35 @@ target_link_libraries(argument_tests PRIVATE
 add_bigobj_flag(argument_tests)
 gtest_add_tests(TARGET argument_tests)
 
-add_executable(pegtl_tests PegtlTests.cpp)
-target_link_libraries(pegtl_tests PRIVATE
+add_executable(pegtl_combined_tests PegtlCombinedTests.cpp)
+target_link_libraries(pegtl_combined_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_tests PUBLIC
+target_include_directories(pegtl_combined_tests PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
-gtest_add_tests(TARGET pegtl_tests)
+gtest_add_tests(TARGET pegtl_combined_tests)
+
+add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
+target_link_libraries(pegtl_executable_tests PRIVATE
+  taocpp::pegtl
+  GTest::GTest
+  GTest::Main)
+target_include_directories(pegtl_executable_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+gtest_add_tests(TARGET pegtl_executable_tests)
+
+add_executable(pegtl_schema_tests PegtlSchemaTests.cpp)
+target_link_libraries(pegtl_schema_tests PRIVATE
+  taocpp::pegtl
+  GTest::GTest
+  GTest::Main)
+target_include_directories(pegtl_schema_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+gtest_add_tests(TARGET pegtl_schema_tests)
 
 add_executable(response_tests ResponseTests.cpp)
 target_link_libraries(response_tests PRIVATE
@@ -96,6 +116,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_dependencies(client_tests copy_test_dlls)
   add_dependencies(nointrospection_tests copy_test_dlls)
   add_dependencies(argument_tests copy_test_dlls)
-  add_dependencies(pegtl_tests copy_test_dlls)
+  add_dependencies(pegtl_combined_tests copy_test_dlls)
+  add_dependencies(pegtl_executable_tests copy_test_dlls)
+  add_dependencies(pegtl_schema_tests copy_test_dlls)
   add_dependencies(response_tests copy_test_dlls)
 endif()
