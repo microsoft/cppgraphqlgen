@@ -23,6 +23,15 @@ target_link_libraries(today_tests PRIVATE
 add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
+add_executable(client_tests ClientTests.cpp)
+target_link_libraries(client_tests PRIVATE
+  unifiedgraphql
+  todayclient
+  GTest::GTest
+  GTest::Main)
+add_bigobj_flag(client_tests)
+gtest_add_tests(TARGET client_tests)
+
 add_executable(nointrospection_tests NoIntrospectionTests.cpp)
 target_link_libraries(nointrospection_tests PRIVATE
   unifiedgraphql_nointrospection
@@ -82,6 +91,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 
   add_dependencies(validation_tests copy_test_dlls)
   add_dependencies(today_tests copy_test_dlls)
+  add_dependencies(client_tests copy_test_dlls)
   add_dependencies(nointrospection_tests copy_test_dlls)
   add_dependencies(argument_tests copy_test_dlls)
   add_dependencies(pegtl_tests copy_test_dlls)

@@ -424,6 +424,12 @@ service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::get
 	return result;
 }
 
+service::FieldResult<std::optional<TaskState>> Query::getTestTaskState(
+	service::FieldParams&& /*params*/) const
+{
+	return TaskState::Unassigned;
+}
+
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 	: _mutateCompleteTask(std::move(mutateCompleteTask))
 {

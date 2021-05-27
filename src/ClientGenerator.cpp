@@ -662,7 +662,7 @@ response::Value ModifiedVariable<Variables::)cpp" << cppType
 		sourceFile << R"cpp(
 response::Value serializeVariables(Variables&& variables)
 {
-	response::Value result;
+	response::Value result { response::Type::Map };
 
 )cpp";
 

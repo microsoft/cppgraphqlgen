@@ -165,7 +165,7 @@ const peg::ast& GetRequestObject() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
-	response::Value result;
+	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(input)js"s, ModifiedVariable<Variables::CompleteTaskInput>::serialize(std::move(variables.input)));
 

@@ -74,6 +74,8 @@ public:
 		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> getExpensive(
 		service::FieldParams&& params) const final;
+	service::FieldResult<std::optional<TaskState>> getTestTaskState(
+		service::FieldParams&& params) const final;
 
 private:
 	std::shared_ptr<Appointment> findAppointment(
