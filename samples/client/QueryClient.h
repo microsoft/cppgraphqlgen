@@ -127,8 +127,6 @@ struct Response
 		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
-	appointments_AppointmentConnection appointments {};
-
 	struct tasks_TaskConnection
 	{
 		struct edges_TaskEdge
@@ -146,8 +144,6 @@ struct Response
 
 		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
-
-	tasks_TaskConnection tasks {};
 
 	struct unreadCounts_FolderConnection
 	{
@@ -167,9 +163,6 @@ struct Response
 		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
-	unreadCounts_FolderConnection unreadCounts {};
-
-	TaskState testTaskState {};
 	struct anyType_UnionType
 	{
 		response::StringType _typename {};
@@ -181,6 +174,10 @@ struct Response
 		response::BooleanType isNow {};
 	};
 
+	appointments_AppointmentConnection appointments {};
+	tasks_TaskConnection tasks {};
+	unreadCounts_FolderConnection unreadCounts {};
+	TaskState testTaskState {};
 	std::vector<std::optional<anyType_UnionType>> anyType {};
 };
 

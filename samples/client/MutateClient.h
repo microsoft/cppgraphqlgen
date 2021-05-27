@@ -64,7 +64,7 @@ enum class TaskState
 struct Variables
 {
 	struct CompleteTaskInput
-{
+	{
 		response::IdType id {};
 		std::optional<TaskState> testTaskState {};
 		std::optional<response::BooleanType> isComplete {};
@@ -88,7 +88,6 @@ struct Response
 		};
 
 		std::optional<completedTask_Task> completedTask {};
-
 		std::optional<response::StringType> clientMutationId {};
 	};
 

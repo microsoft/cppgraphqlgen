@@ -261,7 +261,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			headerFile << R"cpp(	struct )cpp" << _schemaLoader.getCppType(inputType->name())
 					   << R"cpp(
-{
+	{
 )cpp";
 
 			for (const auto& inputField : inputType->inputFields())
@@ -314,6 +314,11 @@ response::Value serializeVariables(Variables&& variables);
 		{
 			pendingSeparator.add();
 		}
+	}
+
+	for (const auto& responseField : responseType.fields)
+	{
+		pendingSeparator.reset();
 
 		headerFile << R"cpp(	)cpp"
 				   << RequestLoader::getOutputCppType(getResponseFieldCppType(responseField),
@@ -401,26 +406,29 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 			{
 				pendingSeparator.reset();
 
+				if (fieldNames.emplace(field.name).second
+					&& outputResponseFieldType(headerFile, field, indent + 1))
+				{
+					pendingSeparator.add();
+				}
+			}
+
+			fieldNames.clear();
+
+			for (const auto& field : responseField.children)
+			{
+				pendingSeparator.reset();
+
 				if (fieldNames.emplace(field.name).second)
 				{
-					if (outputResponseFieldType(headerFile, field, indent + 1))
-					{
-						pendingSeparator.add();
-					}
-
 					headerFile << indentTabs << R"cpp(	)cpp"
 							   << RequestLoader::getOutputCppType(getResponseFieldCppType(field),
 									  field.modifiers)
 							   << R"cpp( )cpp" << field.cppName << R"cpp( {};
 )cpp";
 				}
-				else
-				{
-					headerFile << indentTabs << R"cpp(	// duplicate: )cpp" << field.cppName
-							   << R"cpp(
-)cpp";
-				}
 			}
+
 			break;
 		}
 
@@ -429,7 +437,6 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	}
 
 	headerFile << indentTabs << R"cpp(};
-
 )cpp";
 
 	return true;
@@ -507,8 +514,8 @@ using namespace )cpp"
 			if (!variables.empty())
 			{
 				sourceFile << R"cpp(template <>
-response::Value ModifiedVariable<)cpp" << cppType
-						   << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
+response::Value ModifiedVariable<)cpp"
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
@@ -530,8 +537,9 @@ response::Value ModifiedVariable<)cpp" << cppType
 			const auto cppType = _schemaLoader.getCppType(inputType->name());
 
 			sourceFile << R"cpp(template <>
-response::Value ModifiedVariable<Variables::)cpp" << cppType
-					   << R"cpp(>::serialize(Variables::)cpp" << cppType << R"cpp(&& inputValue)
+response::Value ModifiedVariable<Variables::)cpp"
+					   << cppType << R"cpp(>::serialize(Variables::)cpp" << cppType
+					   << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -565,8 +573,8 @@ response::Value ModifiedVariable<Variables::)cpp" << cppType
 		const auto cppType = _schemaLoader.getCppType(enumType->name());
 
 		sourceFile << R"cpp(template <>
-)cpp" << cppType << R"cpp( ModifiedResponse<)cpp" << cppType
-				   << R"cpp(>::parse(response::Value&& value)
+)cpp" << cppType << R"cpp( ModifiedResponse<)cpp"
+				   << cppType << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
