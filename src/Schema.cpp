@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/GraphQLSchema.h"
+#include "graphqlservice/internal/Schema.h"
+
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 using namespace std::literals;
@@ -209,8 +210,7 @@ ObjectType::ObjectType(init&& params)
 {
 }
 
-void ObjectType::AddInterfaces(
-	std::vector<std::shared_ptr<const InterfaceType>>&& interfaces)
+void ObjectType::AddInterfaces(std::vector<std::shared_ptr<const InterfaceType>>&& interfaces)
 {
 	_interfaces = std::move(interfaces);
 

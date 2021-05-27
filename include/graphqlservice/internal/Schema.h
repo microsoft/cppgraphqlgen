@@ -307,7 +307,8 @@ public:
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<Field> Make(std::string_view name,
 		std::string_view description, std::optional<std::string_view> deprecationReason,
-		std::weak_ptr<const BaseType> type, std::vector<std::shared_ptr<const InputValue>>&& args = {});
+		std::weak_ptr<const BaseType> type,
+		std::vector<std::shared_ptr<const InputValue>>&& args = {});
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;

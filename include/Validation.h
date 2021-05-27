@@ -6,8 +6,9 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 
-#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Schema.h"
 
 namespace graphql::service {
 

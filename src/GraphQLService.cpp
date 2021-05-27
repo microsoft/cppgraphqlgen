@@ -2,7 +2,8 @@
 // Licensed under the MIT License.
 
 #include "graphqlservice/GraphQLService.h"
-#include "graphqlservice/GraphQLGrammar.h"
+
+#include "graphqlservice/internal/Grammar.h"
 
 #include "Validation.h"
 

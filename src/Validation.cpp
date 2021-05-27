@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/GraphQLGrammar.h"
-#include "graphqlservice/internal/Base64.h"
-#include "graphqlservice/introspection/IntrospectionSchema.h"
-
 #include "Validation.h"
+
+#include "graphqlservice/internal/Base64.h"
+#include "graphqlservice/internal/Grammar.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <iostream>

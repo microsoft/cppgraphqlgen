@@ -5,9 +5,9 @@
 #include "SchemaLoader.h"
 #include "Validation.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/internal/Grammar.h"
 
-#include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/introspection/Introspection.h"
 
 #include <algorithm>
 #include <array>

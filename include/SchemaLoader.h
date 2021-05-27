@@ -8,9 +8,10 @@
 
 #include "GeneratorLoader.h"
 
-#include "graphqlservice/GraphQLGrammar.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Grammar.h"
 
 #include <array>
 #include <unordered_map>

@@ -8,8 +8,7 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
-#include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/internal/Schema.h"
 
 // Check if the library version is compatible with schemagen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");

@@ -142,8 +142,7 @@ bool Generator::outputHeader() const noexcept
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
 	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
 
-	headerFile << R"cpp(#include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/GraphQLService.h"
+	headerFile << R"cpp(#include "graphqlservice/internal/Schema.h"
 
 // Check if the library version is compatible with schemagen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion

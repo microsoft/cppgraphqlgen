@@ -5,6 +5,7 @@
 #include "GeneratorUtil.h"
 
 #include "graphqlservice/internal/Version.h"
+
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #ifdef _MSC_VER

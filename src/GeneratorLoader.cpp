@@ -3,7 +3,7 @@
 
 #include "GeneratorLoader.h"
 
-#include "graphqlservice/GraphQLGrammar.h"
+#include "graphqlservice/internal/Grammar.h"
 
 #include <algorithm>
 

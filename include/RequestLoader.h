@@ -8,10 +8,11 @@
 
 #include "GeneratorLoader.h"
 
-#include "graphqlservice/GraphQLGrammar.h"
 #include "graphqlservice/GraphQLParse.h"
-#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Grammar.h"
+#include "graphqlservice/internal/Schema.h"
 
 namespace graphql::generator {
 
