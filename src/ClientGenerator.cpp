@@ -190,7 +190,8 @@ bool Generator::outputHeader() const noexcept
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
 	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
 
-	headerFile << R"cpp(#include "graphqlservice/GraphQLParse.h"
+	headerFile << R"cpp(#include "graphqlservice/GraphQLClient.h"
+#include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
 #include "graphqlservice/internal/Version.h"
@@ -448,8 +449,6 @@ bool Generator::outputSource() const noexcept
 
 #include ")cpp" << _schemaLoader.getFilenamePrefix()
 			   << R"cpp(Client.h"
-
-#include "graphqlservice/GraphQLClient.h"
 
 #include <algorithm>
 #include <array>

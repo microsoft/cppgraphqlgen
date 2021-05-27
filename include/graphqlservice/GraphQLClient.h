@@ -31,6 +31,36 @@
 
 namespace graphql::client {
 
+// Errors may specify the line number and column number where the error occurred.
+struct ErrorLocation
+{
+	response::IntType line {};
+	response::IntType column {};
+};
+
+// Errors may specify a path to the field which triggered the error. The path consists of
+// field names and the indices of elements in a list.
+using ErrorPathSegment = std::variant<response::StringType, response::IntType>;
+
+// Error returned from the service.
+struct Error
+{
+	std::string message;
+	std::vector<ErrorLocation> locations;
+	std::vector<ErrorPathSegment> path;
+};
+
+// Complete response from the service, split into the unparsed graphql::response::Value in
+// data and the (typically empty) collection of Errors in errors.
+struct ServiceResponse
+{
+	response::Value data;
+	std::vector<Error> errors;
+};
+
+// Split a service response into separate ServiceResponse data and errors members.
+GRAPHQLCLIENT_EXPORT ServiceResponse parseServiceResponse(response::Value&& response);
+
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.

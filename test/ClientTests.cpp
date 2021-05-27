@@ -127,13 +127,10 @@ TEST_F(ClientCase, QueryEverything)
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
-		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<response::MapType>().cend())
-		{
-			FAIL() << "service returned errors";
-		}
+		auto serviceResponse = client::parseServiceResponse(std::move(result));
+		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		const auto response = parseResponse(service::ScalarArgument::require("data", result));
+		EXPECT_EQ(0, serviceResponse.errors.size()) << "no errors expected";
 
 		ASSERT_TRUE(response.appointments.edges.has_value()) << "appointments should be set";
 		ASSERT_EQ(1, response.appointments.edges->size()) << "appointments should have 1 entry";
@@ -209,13 +206,10 @@ TEST_F(ClientCase, MutateCompleteTask)
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
-		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<response::MapType>().cend())
-		{
-			FAIL() << "service returned errors";
-		}
+		auto serviceResponse = client::parseServiceResponse(std::move(result));
+		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		const auto response = parseResponse(service::ScalarArgument::require("data", result));
+		EXPECT_EQ(0, serviceResponse.errors.size()) << "no errors expected";
 
 		const auto& completedTask = response.completedTask;
 		const auto& task = completedTask.completedTask;
@@ -257,13 +251,10 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 	try
 	{
 		ASSERT_TRUE(result.type() == response::Type::Map);
-		auto errorsItr = result.find("errors");
-		if (errorsItr != result.get<response::MapType>().cend())
-		{
-			FAIL() << "service returned errors";
-		}
+		auto serviceResponse = client::parseServiceResponse(std::move(result));
+		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		const auto response = parseResponse(service::ScalarArgument::require("data", result));
+		EXPECT_EQ(0, serviceResponse.errors.size()) << "no errors expected";
 
 		const auto& appointmentNode = response.nextAppointment;
 		ASSERT_TRUE(appointmentNode.has_value()) << "should get back a task";

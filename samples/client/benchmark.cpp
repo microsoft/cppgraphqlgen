@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
 #include "BenchmarkClient.h"
+#include "TodayMock.h"
 
 #include <chrono>
 #include <iostream>
@@ -128,6 +128,7 @@ int main(int argc, char** argv)
 
 	auto service = buildService();
 	std::vector<std::chrono::steady_clock::duration> durationResolve(iterations);
+	std::vector<std::chrono::steady_clock::duration> durationParseServiceResponse(iterations);
 	std::vector<std::chrono::steady_clock::duration> durationParseResponse(iterations);
 	const auto startTime = std::chrono::steady_clock::now();
 
@@ -142,11 +143,14 @@ int main(int argc, char** argv)
 			const auto startResolve = std::chrono::steady_clock::now();
 			auto response =
 				service->resolve(nullptr, query, "", response::Value(response::Type::Map)).get();
+			const auto startParseServiceResponse = std::chrono::steady_clock::now();
+			auto serviceResponse = client::parseServiceResponse(std::move(response));
 			const auto startParseResponse = std::chrono::steady_clock::now();
-			const auto parsed = parseResponse(std::move(response));
+			const auto parsed = parseResponse(std::move(serviceResponse.data));
 			const auto endParseResponse = std::chrono::steady_clock::now();
 
-			durationResolve[i] = startParseResponse - startResolve;
+			durationResolve[i] = startParseServiceResponse - startResolve;
+			durationParseServiceResponse[i] = startParseResponse - startParseServiceResponse;
 			durationParseResponse[i] = endParseResponse - startParseResponse;
 		}
 	}
@@ -162,6 +166,7 @@ int main(int argc, char** argv)
 	outputOverview(iterations, totalDuration);
 
 	outputSegment("Resolve"sv, durationResolve);
+	outputSegment("ParseServiceResponse"sv, durationParseServiceResponse);
 	outputSegment("ParseResponse"sv, durationParseResponse);
 
 	return 0;

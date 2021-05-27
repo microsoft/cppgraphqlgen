@@ -8,6 +8,7 @@
 #ifndef MUTATECLIENT_H
 #define MUTATECLIENT_H
 
+#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 

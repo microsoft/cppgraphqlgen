@@ -8,6 +8,7 @@
 #ifndef BENCHMARKCLIENT_H
 #define BENCHMARKCLIENT_H
 
+#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 

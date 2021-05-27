@@ -5,8 +5,6 @@
 
 #include "MutateClient.h"
 
-#include "graphqlservice/GraphQLClient.h"
-
 #include <algorithm>
 #include <array>
 #include <stdexcept>

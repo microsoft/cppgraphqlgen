@@ -8,6 +8,7 @@
 #ifndef SUBSCRIBECLIENT_H
 #define SUBSCRIBECLIENT_H
 
+#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
