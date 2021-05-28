@@ -249,4 +249,4 @@ Value parseJSON(const std::string& json)
 	return handler.getResponse();
 }
 
-} /* namespace graphql::response */
+} // namespace graphql::response

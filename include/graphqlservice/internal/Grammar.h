@@ -9,7 +9,7 @@
 #ifndef GRAPHQLGRAMMAR_H
 #define GRAPHQLGRAMMAR_H
 
-#include "graphqlservice/GraphQLTree.h"
+#include "graphqlservice/internal/SyntaxTree.h"
 
 #define TAO_PEGTL_NAMESPACE tao::graphqlpeg
 
@@ -1175,6 +1175,6 @@ struct schema_document : must<schema_document_content>
 {
 };
 
-} /* namespace graphql::peg */
+} // namespace graphql::peg
 
 #endif // GRAPHQLGRAMMAR_H

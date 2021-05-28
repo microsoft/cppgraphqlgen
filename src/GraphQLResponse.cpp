@@ -3,6 +3,8 @@
 
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/Base64.h"
+
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -106,6 +108,17 @@ void Value::set<ScalarType>(ScalarType&& value)
 }
 
 template <>
+void Value::set<IdType>(const IdType& value)
+{
+	if (!std::holds_alternative<StringData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::set for IdType");
+	}
+
+	std::get<StringData>(_data).string = internal::Base64::toBase64(value);
+}
+
+template <>
 const MapType& Value::get<MapType>() const
 {
 	if (!std::holds_alternative<MapData>(_data))
@@ -200,6 +213,17 @@ const ScalarType& Value::get<ScalarType>() const
 }
 
 template <>
+IdType Value::get<IdType>() const
+{
+	if (!std::holds_alternative<StringData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::get for IdType");
+	}
+
+	return internal::Base64::fromBase64(std::get<StringData>(_data).string);
+}
+
+template <>
 MapType Value::release<MapType>()
 {
 	if (!std::holds_alternative<MapData>(_data))
@@ -272,7 +296,21 @@ ScalarType Value::release<ScalarType>()
 	return result;
 }
 
-Value::Value(Type type /*= Type::Null*/)
+template <>
+IdType Value::release<IdType>()
+{
+	if (!std::holds_alternative<StringData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::release for IdType");
+	}
+
+	auto& stringData = std::get<StringData>(_data);
+	auto stringValue = std::move(stringData.string);
+
+	return internal::Base64::fromBase64(stringValue);
+}
+
+Value::Value(Type type /* = Type::Null */)
 {
 	switch (type)
 	{
@@ -343,6 +381,11 @@ Value::Value(IntType value)
 
 Value::Value(FloatType value)
 	: _data(TypeData { value })
+{
+}
+
+Value::Value(const IdType& value)
+	: _data(TypeData { StringData { internal::Base64::toBase64(value), false } })
 {
 }
 
@@ -652,4 +695,4 @@ const Value& Value::operator[](size_t index) const
 	return std::get<ListType>(_data).at(index);
 }
 
-} /* namespace graphql::response */
+} // namespace graphql::response

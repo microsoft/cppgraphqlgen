@@ -8,12 +8,11 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
-#include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 3.5.0
+// Check if the library version is compatible with schemagen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
 
 #include <memory>
 #include <string>
@@ -33,6 +32,7 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	response::IdType id;
+	std::optional<TaskState> testTaskState;
 	std::optional<response::BooleanType> isComplete;
 	std::optional<response::StringType> clientMutationId;
 };
@@ -79,7 +79,7 @@ class Folder;
 class NestedType;
 class Expensive;
 
-} /* namespace object */
+} // namespace object
 
 struct Node
 {
@@ -105,6 +105,8 @@ public:
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const;
+	virtual service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 
 private:
 	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
@@ -117,6 +119,8 @@ private:
 	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
 	std::future<service::ResolverResult> resolveUnimplemented(service::ResolverParams&& params);
 	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveTestTaskState(service::ResolverParams&& params);
+	std::future<service::ResolverResult> resolveAnyType(service::ResolverParams&& params);
 
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
@@ -387,7 +391,7 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace object */
+} // namespace object
 
 class Operations
 	: public service::Request
@@ -403,7 +407,7 @@ private:
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql
 
 #endif // TODAYSCHEMA_H

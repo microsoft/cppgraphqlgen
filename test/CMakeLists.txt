@@ -23,6 +23,15 @@ target_link_libraries(today_tests PRIVATE
 add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
+add_executable(client_tests ClientTests.cpp)
+target_link_libraries(client_tests PRIVATE
+  unifiedgraphql
+  todayclient
+  GTest::GTest
+  GTest::Main)
+add_bigobj_flag(client_tests)
+gtest_add_tests(TARGET client_tests)
+
 add_executable(nointrospection_tests NoIntrospectionTests.cpp)
 target_link_libraries(nointrospection_tests PRIVATE
   unifiedgraphql_nointrospection
@@ -41,15 +50,35 @@ target_link_libraries(argument_tests PRIVATE
 add_bigobj_flag(argument_tests)
 gtest_add_tests(TARGET argument_tests)
 
-add_executable(pegtl_tests PegtlTests.cpp)
-target_link_libraries(pegtl_tests PRIVATE
+add_executable(pegtl_combined_tests PegtlCombinedTests.cpp)
+target_link_libraries(pegtl_combined_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_tests PUBLIC
+target_include_directories(pegtl_combined_tests PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
-gtest_add_tests(TARGET pegtl_tests)
+gtest_add_tests(TARGET pegtl_combined_tests)
+
+add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
+target_link_libraries(pegtl_executable_tests PRIVATE
+  taocpp::pegtl
+  GTest::GTest
+  GTest::Main)
+target_include_directories(pegtl_executable_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+gtest_add_tests(TARGET pegtl_executable_tests)
+
+add_executable(pegtl_schema_tests PegtlSchemaTests.cpp)
+target_link_libraries(pegtl_schema_tests PRIVATE
+  taocpp::pegtl
+  GTest::GTest
+  GTest::Main)
+target_include_directories(pegtl_schema_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+gtest_add_tests(TARGET pegtl_schema_tests)
 
 add_executable(response_tests ResponseTests.cpp)
 target_link_libraries(response_tests PRIVATE
@@ -68,6 +97,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
+      $<TARGET_FILE:graphqlclient>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/copied_test_dlls
     DEPENDS
@@ -76,14 +106,18 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqljson
       graphqlpeg
       graphqlresponse
+      graphqlclient
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
 
   add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
 
   add_dependencies(validation_tests copy_test_dlls)
   add_dependencies(today_tests copy_test_dlls)
+  add_dependencies(client_tests copy_test_dlls)
   add_dependencies(nointrospection_tests copy_test_dlls)
   add_dependencies(argument_tests copy_test_dlls)
-  add_dependencies(pegtl_tests copy_test_dlls)
+  add_dependencies(pegtl_combined_tests copy_test_dlls)
+  add_dependencies(pegtl_executable_tests copy_test_dlls)
+  add_dependencies(pegtl_schema_tests copy_test_dlls)
   add_dependencies(response_tests copy_test_dlls)
 endif()

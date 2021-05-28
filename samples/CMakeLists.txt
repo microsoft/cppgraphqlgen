@@ -9,8 +9,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
@@ -25,8 +25,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
@@ -41,8 +41,8 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ValidationSchema.cpp
@@ -56,7 +56,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate
     DEPENDS schemagen graphqlpeg schema.today.graphql
@@ -67,7 +67,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection)
 
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection/today_schema_files
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
     COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection --separate-files > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection
     DEPENDS schemagen graphqlpeg schema.today.graphql
@@ -88,18 +88,90 @@ if(GRAPHQL_UPDATE_SAMPLES)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/update_samples.cmake"
     COMMAND ${CMAKE_COMMAND} -E touch updated_samples
     DEPENDS 
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/separate/today_schema_files
-      ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
     COMMENT "Updating sample files")
 
   add_custom_target(update_samples ALL
-    DEPENDS updated_samples)
+    DEPENDS
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
+      updated_samples)
+
+  if(GRAPHQL_BUILD_CLIENTGEN)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/client)
+
+    # query.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/query.today.graphql" --prefix="Query" --namespace="query"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        QueryClient.cpp
+        QueryClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql query.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating QueryClient samples")
+
+    # mutate.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/mutate.today.graphql" --prefix="Mutate" --namespace="mutate"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        MutateClient.cpp
+        MutateClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql mutate.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating MutateClient samples")
+
+    # subscribe.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/subscribe.today.graphql" --prefix="Subscribe" --namespace="subscribe"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        SubscribeClient.cpp
+        SubscribeClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql subscribe.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating SubscribeClient samples")
+
+    # client.benchmark.today.graphql
+    add_custom_command(
+      OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.h
+      COMMAND clientgen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --request="${CMAKE_CURRENT_SOURCE_DIR}/client.benchmark.today.graphql" --prefix="Benchmark" --namespace="benchmark"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        BenchmarkClient.cpp
+        BenchmarkClient.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/client
+      DEPENDS clientgen schema.today.graphql client.benchmark.today.graphql
+      WORKING_DIRECTORY client
+      COMMENT "Generating BenchmarkClient samples")
+
+    add_custom_target(update_client_samples ALL
+      DEPENDS
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/QueryClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/MutateClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/SubscribeClient.h
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/client/BenchmarkClient.h)
+  endif()
 endif()
 
 # separateschema
@@ -115,7 +187,7 @@ target_compile_definitions(separateschema PUBLIC IMPL_SEPARATE_TODAY)
 target_include_directories(separateschema PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  separate)
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # wait for the sample update to complete
@@ -135,7 +207,7 @@ target_compile_definitions(separateschema_nointrospection PUBLIC IMPL_SEPARATE_T
 target_include_directories(separateschema_nointrospection PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-  separate_nointrospection)
+  ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # wait for the sample update to complete
@@ -178,6 +250,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
+      $<TARGET_FILE:graphqlclient>
       ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch copied_sample_dlls
     DEPENDS
@@ -185,7 +258,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlintrospection
       graphqljson
       graphqlpeg
-      graphqlresponse)
+      graphqlresponse
+      graphqlclient)
 
   add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
 
@@ -218,12 +292,12 @@ endif()
 
 if(GRAPHQL_BUILD_TESTS)
   # tests
-  add_library(unifiedschema STATIC unified/TodaySchema.cpp)
+  add_library(unifiedschema STATIC ${CMAKE_CURRENT_SOURCE_DIR}/unified/TodaySchema.cpp)
   target_link_libraries(unifiedschema PUBLIC graphqlintrospection)
   target_include_directories(unifiedschema PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    unified)
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
@@ -235,12 +309,12 @@ if(GRAPHQL_BUILD_TESTS)
   target_include_directories(unifiedgraphql PUBLIC today)
   add_bigobj_flag(unifiedgraphql)
 
-  add_library(unifiedschema_nointrospection STATIC unified_nointrospection/TodaySchema.cpp)
+  add_library(unifiedschema_nointrospection STATIC ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection/TodaySchema.cpp)
   target_link_libraries(unifiedschema_nointrospection PUBLIC graphqlservice)
   target_include_directories(unifiedschema_nointrospection PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    unified_nointrospection)
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
@@ -253,17 +327,50 @@ if(GRAPHQL_BUILD_TESTS)
   add_bigobj_flag(unifiedgraphql_nointrospection)
 
   add_library(validationgraphql STATIC
-    validation/ValidationMock.cpp
-    validation/ValidationSchema.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationMock.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation/ValidationSchema.cpp)
   target_link_libraries(validationgraphql PUBLIC graphqlintrospection)
   target_include_directories(validationgraphql PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
-    validation)
+    ${CMAKE_CURRENT_SOURCE_DIR}/validation)
   add_bigobj_flag(validationgraphql)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     # wait for the sample update to complete
     add_dependencies(validationgraphql update_samples)
   endif()
+endif()
+
+# todayclient
+add_library(todayclient STATIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/QueryClient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/MutateClient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/SubscribeClient.cpp)
+target_link_libraries(todayclient PUBLIC graphqlclient)
+target_include_directories(todayclient PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/client)
+
+if(GRAPHQL_UPDATE_SAMPLES AND GRAPHQL_BUILD_CLIENTGEN)
+  # wait for the sample update to complete
+  add_dependencies(todayclient update_client_samples)
+endif()
+
+# client_benchmark
+add_executable(client_benchmark
+  ${CMAKE_CURRENT_SOURCE_DIR}/client/BenchmarkClient.cpp
+  client/benchmark.cpp)
+target_link_libraries(client_benchmark PRIVATE
+  separategraphql
+  todayclient
+  graphqlclient)
+target_include_directories(client_benchmark PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/client)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_dependencies(client_benchmark copy_sample_dlls)
 endif()

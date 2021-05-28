@@ -107,7 +107,10 @@ struct ValueTypeTraits<FloatType>
 template <>
 struct ValueTypeTraits<IdType>
 {
-	// ID values are represented as a String, there's no separate handling of this type.
+	// ID values are represented as a Base64 String, so they require conversion.
+	using set_type = const IdType&;
+	using get_type = IdType;
+	using release_type = IdType;
 };
 
 // Represent a discriminated union of GraphQL response value types.
@@ -121,6 +124,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(const IdType& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -247,6 +251,8 @@ GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
 template <>
 GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
 template <>
+GRAPHQLRESPONSE_EXPORT void Value::set<IdType>(const IdType& value);
+template <>
 GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const ListType& Value::get<ListType>() const;
@@ -261,6 +267,8 @@ GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
 template <>
+GRAPHQLRESPONSE_EXPORT IdType Value::get<IdType>() const;
+template <>
 GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
 template <>
 GRAPHQLRESPONSE_EXPORT ListType Value::release<ListType>();
@@ -268,8 +276,10 @@ template <>
 GRAPHQLRESPONSE_EXPORT StringType Value::release<StringType>();
 template <>
 GRAPHQLRESPONSE_EXPORT ScalarType Value::release<ScalarType>();
+template <>
+GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 #endif // GRAPHQL_DLLEXPORTS
 
-} /* namespace graphql::response */
+} // namespace graphql::response
 
 #endif // GRAPHQLRESPONSE_H

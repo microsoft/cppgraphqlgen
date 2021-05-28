@@ -64,7 +64,7 @@ std::future<service::ResolverResult> TaskEdge::resolve_typename(service::Resolve
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskEdge)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddTaskEdgeDetails(std::shared_ptr<schema::ObjectType> typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddTaskEdgeDetails(std::shared_ptr<schema::ObjectType> typeTaskEdge, const 
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

@@ -48,7 +48,7 @@ std::future<service::ResolverResult> Expensive::resolve_typename(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Expensive)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -57,4 +57,4 @@ void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, cons
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

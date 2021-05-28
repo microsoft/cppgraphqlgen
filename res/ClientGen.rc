@@ -1,0 +1,43 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#include <winver.h>
+
+#define CLIENTGEN_RC_VERSION     3,6,0,0
+#define CLIENTGEN_RC_VERSION_STR "3.6.0"
+
+#ifndef DEBUG
+#define VER_DEBUG   0
+#else
+#define VER_DEBUG   VS_FF_DEBUG
+#endif
+
+VS_VERSION_INFO	VERSIONINFO
+FILEVERSION     CLIENTGEN_RC_VERSION
+PRODUCTVERSION  CLIENTGEN_RC_VERSION
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       VER_DEBUG
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",        "Microsoft Corporation"
+            VALUE "FileDescription",    "Code generator for https://github.com/microsoft/cppgraphqlgen"
+            VALUE "FileVersion",        CLIENTGEN_RC_VERSION_STR
+            VALUE "InternalName",       "clientgen"
+            VALUE "LegalCopyright",     "Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License."
+            VALUE "OriginalFilename",   "clientgen.exe"
+            VALUE "ProductName",        "CppGraphQLGen"
+            VALUE "ProductVersion",     CLIENTGEN_RC_VERSION_STR
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

@@ -64,7 +64,7 @@ std::future<service::ResolverResult> CompleteTaskPayload::resolve_typename(servi
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddCompleteTaskPayloadDetails(std::shared_ptr<schema::ObjectType> typeCompleteTaskPayload, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddCompleteTaskPayloadDetails(std::shared_ptr<schema::ObjectType> typeCompl
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

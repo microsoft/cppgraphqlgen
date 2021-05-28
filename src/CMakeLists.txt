@@ -9,12 +9,13 @@ if(GRAPHQL_UPDATE_VERSION)
     ${CMAKE_CURRENT_BINARY_DIR}/Version.h
     @ONLY)
 
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
+  add_custom_command(OUTPUT updated_version_h
     COMMAND ${CMAKE_COMMAND} -E copy_if_different Version.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal
+    COMMAND ${CMAKE_COMMAND} -E touch updated_version_h
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 
   add_custom_target(update_version_h ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h)
+    DEPENDS updated_version_h)
 
   # res/target_version.rc
   set(GRAPHQL_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
@@ -29,12 +30,14 @@ if(GRAPHQL_UPDATE_VERSION)
       ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
       @ONLY)
 
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc
+    add_custom_command(OUTPUT updated_${target}_version_rc
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${target}_version.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_${target}_version_rc
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc)
 
     add_custom_target(update_${target}_version_rc ALL
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
+      DEPENDS updated_${target}_version_rc)
+    add_dependencies(${target} update_${target}_version_rc)
   endfunction()
 endif()
 
@@ -59,7 +62,7 @@ function(add_bigobj_flag target)
 endfunction()
 
 # graphqlpeg
-add_library(graphqlpeg GraphQLTree.cpp)
+add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
@@ -81,7 +84,9 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # graphqlresponse
-add_library(graphqlresponse GraphQLResponse.cpp)
+add_library(graphqlresponse
+  Base64.cpp
+  GraphQLResponse.cpp)
 add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -99,15 +104,100 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlresponse)
 endif()
 
+
+# Common schemagen and clientgen dependencies
+if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
+  add_library(generator_util STATIC
+    SchemaLoader.cpp
+    GeneratorLoader.cpp
+    GeneratorUtil.cpp)
+  target_link_libraries(generator_util PUBLIC
+    graphqlpeg
+    graphqlresponse)
+endif()
+
+# clientgen
+if(GRAPHQL_BUILD_CLIENTGEN)
+  add_executable(clientgen
+    ClientGenerator.cpp
+    RequestLoader.cpp)
+  add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
+  target_link_libraries(clientgen PRIVATE generator_util)
+  add_bigobj_flag(clientgen)
+
+  # ClientGen.rc
+  if(GRAPHQL_UPDATE_VERSION)
+    add_dependencies(clientgen update_version_h)
+  
+    set(CLIENTGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+    set(CLIENTGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+  
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ClientGen.rc.in 
+      ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc
+      @ONLY)
+  
+    add_custom_command(OUTPUT updated_clientgen_rc
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ClientGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_clientgen_rc
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc)
+  
+    add_custom_target(update_clientgen_rc ALL
+      DEPENDS updated_clientgen_rc)
+    add_dependencies(clientgen update_clientgen_rc)
+  endif()
+
+  if(WIN32)
+    add_library(clientgen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
+    target_link_libraries(clientgen PRIVATE clientgen_version)
+  endif()
+  
+  install(TARGETS clientgen
+    EXPORT cppgraphqlgen-targets
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
+endif()
+
 # schemagen
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
-  target_link_libraries(schemagen PRIVATE
-    graphqlpeg
-    graphqlresponse)
+  target_link_libraries(schemagen PRIVATE generator_util)
   add_bigobj_flag(schemagen)
+
+  # SchemaGen.rc
+  if(GRAPHQL_UPDATE_VERSION)
+    add_dependencies(schemagen update_version_h)
+
+    set(SCHEMAGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+    set(SCHEMAGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/SchemaGen.rc.in 
+      ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
+      @ONLY)
+
+    add_custom_command(OUTPUT updated_schemagen_rc
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different SchemaGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
+      COMMAND ${CMAKE_COMMAND} -E touch updated_schemagen_rc
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
+
+    add_custom_target(update_schemagen_rc ALL
+      DEPENDS updated_schemagen_rc)
+    add_dependencies(schemagen update_schemagen_rc)
+  endif()
+
+  if(WIN32)
+    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
+    target_link_libraries(schemagen PRIVATE schemagen_version)
+  endif()
   
+  install(TARGETS schemagen
+    EXPORT cppgraphqlgen-targets
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
+endif()
+
+# Common schemagen and clientgen filesystem and Boost dependencies
+if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
   set(BOOST_COMPONENTS program_options)
   set(BOOST_LIBRARIES Boost::program_options)
 
@@ -132,7 +222,12 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
 
         if(TEST_RESULT)
           # Looks like the optional library was required, go ahead and add it to the link options.
-          target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
+          if(GRAPHQL_BUILD_SCHEMAGEN)
+            target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
+          endif()
+          if(GRAPHQL_BUILD_CLIENTGEN)
+            target_link_libraries(clientgen PRIVATE ${OPTIONAL_LIB})
+          endif()
           break()
         endif()
       endforeach(OPTIONAL_LIB)
@@ -147,49 +242,40 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
   check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
   if(STD_FILESYTEM)
-    target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
+    if(GRAPHQL_BUILD_SCHEMAGEN)
+      target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
+    endif()
+    if(GRAPHQL_BUILD_CLIENTGEN)
+      target_compile_definitions(clientgen PRIVATE USE_STD_FILESYSTEM)
+    endif()
   else()
     check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
     if(STD_EXPERIMENTAL_FILESYTEM)
-      target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+      if(GRAPHQL_BUILD_SCHEMAGEN)
+        target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+      endif()
+      if(GRAPHQL_BUILD_CLIENTGEN)
+        target_compile_definitions(clientgen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
+      endif()
     else()
       set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
       set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-      target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
+      if(GRAPHQL_BUILD_SCHEMAGEN)
+        target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
+      endif()
+      if(GRAPHQL_BUILD_CLIENTGEN)
+        target_compile_definitions(clientgen PRIVATE USE_BOOST_FILESYSTEM)
+      endif()
     endif()
   endif()
 
   find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-  target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
-
-  # SchemaGen.rc
-  if(GRAPHQL_UPDATE_VERSION)
-    add_dependencies(schemagen update_version_h)
-
-    set(SCHEMAGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
-    set(SCHEMAGEN_RC_VERSION_STR "${PROJECT_VERSION}")
-
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/SchemaGen.rc.in 
-      ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
-      @ONLY)
-
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different SchemaGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc)
-
-    add_custom_target(update_schemagen_rc ALL
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
+  if(GRAPHQL_BUILD_SCHEMAGEN)
+    target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
   endif()
-
-  if(WIN32)
-    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
-    target_link_libraries(schemagen PRIVATE schemagen_version)
+  if(GRAPHQL_BUILD_CLIENTGEN)
+    target_link_libraries(clientgen PRIVATE ${BOOST_LIBRARIES})
   endif()
-  
-  install(TARGETS schemagen
-    EXPORT cppgraphqlgen-targets
-    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-    RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
 endif()
 
 # introspection
@@ -210,7 +296,7 @@ endif()
 # graphqlservice
 add_library(graphqlservice
   GraphQLService.cpp
-  GraphQLSchema.cpp
+  Schema.cpp
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
@@ -255,6 +341,29 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlintrospection)
 endif()
 
+if(GRAPHQL_BUILD_CLIENTGEN)
+  target_link_libraries(clientgen PRIVATE graphqlintrospection)
+endif()
+
+# graphqlclient
+add_library(graphqlclient GraphQLClient.cpp)
+add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
+target_link_libraries(graphqlclient PUBLIC
+    graphqlpeg
+    graphqlresponse)
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlclient)
+endif()
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlclient
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLCLIENT_DLL)
+
+  add_version_rc(graphqlclient)
+endif()
+
 # RapidJSON is the only option for JSON serialization used in this project, but if you want
 # to use another JSON library you can implement an alternate version of the functions in
 # JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
@@ -285,6 +394,41 @@ if(GRAPHQL_USE_RAPIDJSON)
   endif()
 endif()
 
+install(TARGETS
+    graphqlclient
+    graphqlintrospection
+    graphqlpeg
+    graphqlresponse
+    graphqlservice
+  EXPORT cppgraphqlgen-targets
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLClient.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SyntaxTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
+  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
+
 # graphqljson
 if(BUILD_GRAPHQLJSON)
   option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
@@ -302,38 +446,6 @@ if(BUILD_GRAPHQLJSON)
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
 endif()
-
-install(TARGETS
-    graphqlpeg
-    graphqlresponse
-    graphqlservice
-    graphqlintrospection
-  EXPORT cppgraphqlgen-targets
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLSchema.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLGrammar.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLTree.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
 
 install(EXPORT cppgraphqlgen-targets
   NAMESPACE cppgraphqlgen::

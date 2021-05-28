@@ -66,7 +66,7 @@ std::future<service::ResolverResult> Mutation::resolve_typename(service::Resolve
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -80,4 +80,4 @@ void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const 
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

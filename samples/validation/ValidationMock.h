@@ -28,6 +28,6 @@ public:
 	explicit Subscription() = default;
 };
 
-} /* namespace graphql::validation */
+} // namespace graphql::validation
 
 #endif // VALIDATIONMOCK_H

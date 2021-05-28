@@ -41,16 +41,16 @@ Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 
 void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->appointmentsRequestId = todayState->requestId;
-		todayState->loadAppointmentsCount++;
-	}
-
 	if (_getAppointments)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->appointmentsRequestId = todayState->requestId;
+			todayState->loadAppointmentsCount++;
+		}
+
 		_appointments = _getAppointments();
 		_getAppointments = nullptr;
 	}
@@ -74,16 +74,16 @@ std::shared_ptr<Appointment> Query::findAppointment(
 
 void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->tasksRequestId = todayState->requestId;
-		todayState->loadTasksCount++;
-	}
-
 	if (_getTasks)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->tasksRequestId = todayState->requestId;
+			todayState->loadTasksCount++;
+		}
+
 		_tasks = _getTasks();
 		_getTasks = nullptr;
 	}
@@ -107,16 +107,16 @@ std::shared_ptr<Task> Query::findTask(
 
 void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state) const
 {
-	if (state)
-	{
-		auto todayState = std::static_pointer_cast<RequestState>(state);
-
-		todayState->unreadCountsRequestId = todayState->requestId;
-		todayState->loadUnreadCountsCount++;
-	}
-
 	if (_getUnreadCounts)
 	{
+		if (state)
+		{
+			auto todayState = std::static_pointer_cast<RequestState>(state);
+
+			todayState->unreadCountsRequestId = todayState->requestId;
+			todayState->loadUnreadCountsCount++;
+		}
+
 		_unreadCounts = _getUnreadCounts();
 		_getUnreadCounts = nullptr;
 	}
@@ -183,16 +183,15 @@ struct EdgeConstraints
 	}
 
 	std::shared_ptr<_Connection> operator()(const std::optional<int>& first,
-		const std::optional<response::Value>& after, const std::optional<int>& last,
-		const std::optional<response::Value>& before) const
+		std::optional<response::Value>&& after, const std::optional<int>& last,
+		std::optional<response::Value>&& before) const
 	{
 		auto itrFirst = _objects.cbegin();
 		auto itrLast = _objects.cend();
 
 		if (after)
 		{
-			const auto& encoded = after->get<response::StringType>();
-			auto afterId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
+			auto afterId = after->release<response::IdType>();
 			auto itrAfter =
 				std::find_if(itrFirst, itrLast, [&afterId](const std::shared_ptr<_Object>& entry) {
 					return entry->id() == afterId;
@@ -206,8 +205,7 @@ struct EdgeConstraints
 
 		if (before)
 		{
-			const auto& encoded = before->get<response::StringType>();
-			auto beforeId = service::Base64::fromBase64(encoded.c_str(), encoded.size());
+			auto beforeId = before->release<response::IdType>();
 			auto itrBefore =
 				std::find_if(itrFirst, itrLast, [&beforeId](const std::shared_ptr<_Object>& entry) {
 					return entry->id() == beforeId;
@@ -281,7 +279,10 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 			loadAppointments(state);
 
 			EdgeConstraints<Appointment, AppointmentConnection> constraints(state, _appointments);
-			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::AppointmentConnection>(connection);
 		},
@@ -307,7 +308,10 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 			loadTasks(state);
 
 			EdgeConstraints<Task, TaskConnection> constraints(state, _tasks);
-			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::TaskConnection>(connection);
 		},
@@ -333,7 +337,10 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 			loadUnreadCounts(state);
 
 			EdgeConstraints<Folder, FolderConnection> constraints(state, _unreadCounts);
-			auto connection = constraints(firstWrapped, afterWrapped, lastWrapped, beforeWrapped);
+			auto connection = constraints(firstWrapped,
+				std::move(afterWrapped),
+				lastWrapped,
+				std::move(beforeWrapped));
 
 			return std::static_pointer_cast<object::FolderConnection>(connection);
 		},
@@ -413,6 +420,28 @@ service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::get
 	{
 		entry = std::make_shared<Expensive>();
 	}
+
+	return result;
+}
+
+service::FieldResult<TaskState> Query::getTestTaskState(service::FieldParams&& /*params*/) const
+{
+	return TaskState::Unassigned;
+}
+
+service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAnyType(
+	service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const
+{
+	loadAppointments(params.state);
+
+	std::vector<std::shared_ptr<service::Object>> result(_appointments.size());
+
+	std::transform(_appointments.cbegin(),
+		_appointments.cend(),
+		result.begin(),
+		[](const std::shared_ptr<object::Appointment>& appointment) noexcept {
+			return std::static_pointer_cast<service::Object>(appointment);
+		});
 
 	return result;
 }
@@ -544,4 +573,4 @@ EmptyOperations::EmptyOperations()
 {
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

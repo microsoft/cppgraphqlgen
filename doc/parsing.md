@@ -17,8 +17,8 @@ you have another use for a GraphQL parser you could probably make a few small
 tweaks to include additional information in the rules or in the resulting AST.
 You could also use the grammar without the AST module if you want to handle
 the parsing callbacks another way. The grammar itself is defined in
-[GraphQLGrammar.h](../include/graphqlservice/GraphQLGrammar.h), and the AST
-selector callbacks are all defined in [GraphQLTree.cpp](../src/GraphQLTree.cpp).
+[Grammar.h](../include/graphqlservice/internal/Grammar.h), and the AST
+selector callbacks are all defined in [SyntaxTree.cpp](../src/SyntaxTree.cpp).
 The grammar handles both the schema definition syntax which is used in
 `schemagen`, and the query/mutation/subscription operation syntax used in
 `Request::resolve` and `Request::subscribe`.

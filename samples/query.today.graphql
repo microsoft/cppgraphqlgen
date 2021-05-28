@@ -1,0 +1,58 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+query {
+  appointments {
+    edges {
+      node {
+        id
+        subject
+        when
+        isNow
+        __typename
+      }
+    }
+  }
+  tasks {
+    edges {
+      node {
+        id
+        title
+        isComplete
+        __typename
+      }
+    }
+  }
+  unreadCounts {
+    edges {
+      node {
+        id
+        name
+        unreadCount
+        __typename
+      }
+    }
+  }
+
+  # Read a field with an enum type
+  testTaskState
+
+  # Try a field with a union type
+  anyType(ids: ["ZmFrZVRhc2tJZA=="]) {
+    __typename
+    ...on Node {
+      id
+    }
+    ...on Task {
+      id
+      title
+      isComplete
+    }
+    ...on Appointment {
+      id
+      subject
+      when
+      isNow
+    }
+  }
+}

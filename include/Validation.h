@@ -6,8 +6,9 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 
-#include "graphqlservice/GraphQLSchema.h"
 #include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Schema.h"
 
 namespace graphql::service {
 
@@ -169,11 +170,11 @@ private:
 class ValidateExecutableVisitor
 {
 public:
-	ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema);
+	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema);
 
-	void visit(const peg::ast_node& root);
+	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& root);
 
-	std::list<schema_error> getStructuredErrors();
+	GRAPHQLSERVICE_EXPORT std::list<schema_error> getStructuredErrors();
 
 private:
 	static ValidateTypeFieldArguments getArguments(
@@ -256,6 +257,6 @@ private:
 	internal::string_view_map<ValidateField> _selectionFields;
 };
 
-} /* namespace graphql::service */
+} // namespace graphql::service
 
 #endif // VALIDATION_H

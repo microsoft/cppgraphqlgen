@@ -1,14 +1,17 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/GraphQLGrammar.h"
-#include "graphqlservice/introspection/IntrospectionSchema.h"
-
 #include "Validation.h"
+
+#include "graphqlservice/internal/Base64.h"
+#include "graphqlservice/internal/Grammar.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <stdexcept>
 
 using namespace std::literals;
 
@@ -1186,12 +1189,12 @@ bool ValidateExecutableVisitor::validateInputValue(
 				{
 					try
 					{
-						const auto value = std::get<std::string_view>(argument.value->data);
-						auto decoded = Base64::fromBase64(value.data(), value.size());
+						auto decoded = internal::Base64::fromBase64(
+							std::get<std::string_view>(argument.value->data));
 
 						return true;
 					}
-					catch (const schema_exception&)
+					catch (const std::logic_error&)
 					{
 						// Eat the exception and fail validation
 					}
@@ -1567,7 +1570,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 		case introspection::TypeKind::UNION:
 		{
-			if (name != R"gql(__typename)gql")
+			if (name != R"gql(__typename)gql"sv)
 			{
 				// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
 				auto position = field.begin();
@@ -2102,4 +2105,4 @@ void ValidateExecutableVisitor::visitDirectives(
 	}
 }
 
-} /* namespace graphql::service */
+} // namespace graphql::service

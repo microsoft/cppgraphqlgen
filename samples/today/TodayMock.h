@@ -74,6 +74,9 @@ public:
 		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> getExpensive(
 		service::FieldParams&& params) const final;
+	service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final;
+	service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(
+		service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final;
 
 private:
 	std::shared_ptr<Appointment> findAppointment(
@@ -183,8 +186,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(
-			service::Base64::toBase64(_appointment->getId(std::move(params)).get()));
+		return response::Value(_appointment->getId(std::move(params)).get());
 	}
 
 private:
@@ -277,7 +279,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(service::Base64::toBase64(_task->getId(std::move(params)).get()));
+		return response::Value(_task->getId(std::move(params)).get());
 	}
 
 private:
@@ -370,7 +372,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(service::Base64::toBase64(_folder->getId(std::move(params)).get()));
+		return response::Value(_folder->getId(std::move(params)).get());
 	}
 
 private:
@@ -642,7 +644,6 @@ public:
 	explicit EmptyOperations();
 };
 
-
-} /* namespace graphql::today */
+} // namespace graphql::today
 
 #endif // TODAYMOCK_H

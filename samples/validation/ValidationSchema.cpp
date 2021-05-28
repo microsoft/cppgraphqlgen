@@ -22,9 +22,9 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 3> s_namesDogCommand = {
-	"SIT",
-	"DOWN",
-	"HEEL"
+	"SIT"sv,
+	"DOWN"sv,
+	"HEEL"sv
 };
 
 template <>
@@ -35,7 +35,7 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 		throw service::schema_exception { { "not a valid DogCommand value" } };
 	}
 
-	auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesDogCommand.cend())
 	{
@@ -49,18 +49,18 @@ template <>
 std::future<service::ResolverResult> ModifiedResult<validation::DogCommand>::convert(service::FieldResult<validation::DogCommand>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](validation::DogCommand&& value, const ResolverParams&)
+		[](validation::DogCommand value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_namesDogCommand[static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_namesDogCommand[static_cast<size_t>(value)] });
 
 			return result;
 		});
 }
 
 static const std::array<std::string_view, 1> s_namesCatCommand = {
-	"JUMP"
+	"JUMP"sv
 };
 
 template <>
@@ -71,7 +71,7 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 		throw service::schema_exception { { "not a valid CatCommand value" } };
 	}
 
-	auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesCatCommand.cend())
 	{
@@ -85,11 +85,11 @@ template <>
 std::future<service::ResolverResult> ModifiedResult<validation::CatCommand>::convert(service::FieldResult<validation::CatCommand>&& result, ResolverParams&& params)
 {
 	return resolve(std::move(result), std::move(params),
-		[](validation::CatCommand&& value, const ResolverParams&)
+		[](validation::CatCommand value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(std::string(s_namesCatCommand[static_cast<size_t>(value)]));
+			result.set<response::StringType>(response::StringType { s_namesCatCommand[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -107,7 +107,7 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 	};
 }
 
-} /* namespace service */
+} // namespace service
 
 namespace validation {
 namespace object {
@@ -867,7 +867,7 @@ std::future<service::ResolverResult> Arguments::resolve_typename(service::Resolv
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Arguments)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
@@ -1070,5 +1070,5 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} /* namespace validation */
-} /* namespace graphql */
+} // namespace validation
+} // namespace graphql

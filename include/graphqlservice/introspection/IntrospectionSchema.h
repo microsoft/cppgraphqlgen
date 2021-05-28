@@ -8,12 +8,11 @@
 #ifndef INTROSPECTIONSCHEMA_H
 #define INTROSPECTIONSCHEMA_H
 
-#include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 3.5.0
+// Check if the library version is compatible with schemagen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
 
 // clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
@@ -219,11 +218,31 @@ private:
 	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
 };
 
-} /* namespace object */
+} // namespace object
 
 GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
-} /* namespace introspection */
-} /* namespace graphql */
+} // namespace introspection
+
+namespace service {
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLINTROSPECTION_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::TypeKind>::convert(
+	FieldResult<introspection::TypeKind>&& result, ResolverParams&& params);
+template <>
+GRAPHQLINTROSPECTION_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(
+	FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params);
+#endif // GRAPHQL_DLLEXPORTS
+
+} // namespace service
+} // namespace graphql
 
 #endif // INTROSPECTIONSCHEMA_H

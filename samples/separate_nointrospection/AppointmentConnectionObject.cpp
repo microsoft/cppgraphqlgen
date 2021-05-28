@@ -64,7 +64,7 @@ std::future<service::ResolverResult> AppointmentConnection::resolve_typename(ser
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentConnection)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddAppointmentConnectionDetails(std::shared_ptr<schema::ObjectType> typeAppointmentConnection, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddAppointmentConnectionDetails(std::shared_ptr<schema::ObjectType> typeApp
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

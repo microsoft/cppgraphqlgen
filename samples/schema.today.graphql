@@ -32,6 +32,10 @@ type Query {
     unimplemented: String!
 
     expensive: [Expensive!]!
+
+    testTaskState: TaskState!
+
+    anyType(ids: [ID!]!): [UnionType]!
 }
 
 "Node interface for Relay support"
@@ -76,6 +80,7 @@ type FolderConnection {
 
 input CompleteTaskInput {
     id: ID!
+    testTaskState: TaskState
     isComplete: Boolean = true
     clientMutationId: String
 }

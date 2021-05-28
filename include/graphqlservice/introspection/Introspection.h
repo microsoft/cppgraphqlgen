@@ -6,7 +6,8 @@
 #ifndef INTROSPECTION_H
 #define INTROSPECTION_H
 
-#include "graphqlservice/GraphQLSchema.h"
+#include "graphqlservice/internal/Schema.h"
+
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 namespace graphql::introspection {
@@ -152,6 +153,6 @@ private:
 	const std::shared_ptr<const schema::Directive> _directive;
 };
 
-} /* namespace graphql::introspection */
+} // namespace graphql::introspection
 
 #endif // INTROSPECTION_H

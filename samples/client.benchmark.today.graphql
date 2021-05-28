@@ -1,0 +1,18 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+query {
+  appointments {
+    pageInfo {
+      hasNextPage
+    }
+    edges {
+      node {
+        id
+        when
+        subject
+        isNow
+      }
+    }
+  }
+}

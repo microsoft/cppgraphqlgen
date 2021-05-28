@@ -84,6 +84,8 @@ else()
   set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
 endif()
 
+option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
+
 option(GRAPHQL_UPDATE_VERSION "Regenerate graphqlservice/internal/Version.h and all of the version info rc files for Windows." ON)
 
 add_subdirectory(cmake)

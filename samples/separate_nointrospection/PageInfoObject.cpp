@@ -64,7 +64,7 @@ std::future<service::ResolverResult> PageInfo::resolve_typename(service::Resolve
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddPageInfoDetails(std::shared_ptr<schema::ObjectType> typePageInfo, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddPageInfoDetails(std::shared_ptr<schema::ObjectType> typePageInfo, const 
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

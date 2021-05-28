@@ -64,7 +64,7 @@ std::future<service::ResolverResult> NestedType::resolve_typename(service::Resol
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
 }
 
-} /* namespace object */
+} // namespace object
 
 void AddNestedTypeDetails(std::shared_ptr<schema::ObjectType> typeNestedType, const std::shared_ptr<schema::Schema>& schema)
 {
@@ -74,4 +74,4 @@ void AddNestedTypeDetails(std::shared_ptr<schema::ObjectType> typeNestedType, co
 	});
 }
 
-} /* namespace graphql::today */
+} // namespace graphql::today

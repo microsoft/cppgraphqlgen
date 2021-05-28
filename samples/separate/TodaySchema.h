@@ -8,12 +8,11 @@
 #ifndef TODAYSCHEMA_H
 #define TODAYSCHEMA_H
 
-#include "graphqlservice/GraphQLSchema.h"
-#include "graphqlservice/GraphQLService.h"
+#include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 3.5.0
+// Check if the library version is compatible with schemagen 3.6.0
 static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
 
 #include <memory>
 #include <string>
@@ -33,6 +32,7 @@ enum class TaskState
 struct CompleteTaskInput
 {
 	response::IdType id;
+	std::optional<TaskState> testTaskState;
 	std::optional<response::BooleanType> isComplete;
 	std::optional<response::StringType> clientMutationId;
 };
@@ -79,7 +79,7 @@ class Folder;
 class NestedType;
 class Expensive;
 
-} /* namespace object */
+} // namespace object
 
 struct Node
 {
@@ -117,7 +117,7 @@ void AddExpensiveDetails(std::shared_ptr<schema::ObjectType> typeExpensive, cons
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} /* namespace today */
-} /* namespace graphql */
+} // namespace today
+} // namespace graphql
 
 #endif // TODAYSCHEMA_H
