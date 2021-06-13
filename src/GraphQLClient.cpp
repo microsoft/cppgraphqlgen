@@ -55,6 +55,9 @@ ErrorPathSegment parseServiceErrorPathSegment(response::Value&& segment)
 		case response::Type::String:
 			result = segment.release<response::StringType>();
 			break;
+
+		default:
+			break;
 	}
 
 	return result;
