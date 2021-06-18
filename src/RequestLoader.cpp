@@ -961,6 +961,9 @@ void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
 
 			break;
 		}
+
+		default:
+			break;
 	}
 }
 
@@ -1105,6 +1108,9 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 
 				break;
 			}
+
+			default:
+				break;
 		}
 	}
 
