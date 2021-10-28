@@ -33,8 +33,6 @@ endif()
 
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
-set(CMAKE_CXX_STANDARD 17)
-
 set(GRAPHQL_INSTALL_INCLUDE_DIR include CACHE PATH "Header file install directory")
 set(GRAPHQL_INSTALL_TOOLS_DIR bin CACHE PATH "schemagen install directory")
 set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install directory")

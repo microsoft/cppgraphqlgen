@@ -65,6 +65,7 @@ endfunction()
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_compile_features(graphqlpeg PUBLIC cxx_std_20)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
@@ -88,6 +89,7 @@ add_library(graphqlresponse
   Base64.cpp
   GraphQLResponse.cpp)
 add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
+target_compile_features(graphqlresponse PUBLIC cxx_std_20)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
@@ -122,6 +124,7 @@ if(GRAPHQL_BUILD_CLIENTGEN)
     ClientGenerator.cpp
     RequestLoader.cpp)
   add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
+  target_compile_features(clientgen PRIVATE cxx_std_20)
   target_link_libraries(clientgen PRIVATE generator_util)
   add_bigobj_flag(clientgen)
 
@@ -161,6 +164,7 @@ endif()
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
+  target_compile_features(schemagen PRIVATE cxx_std_20)
   target_link_libraries(schemagen PRIVATE generator_util)
   add_bigobj_flag(schemagen)
 
@@ -299,6 +303,7 @@ add_library(graphqlservice
   Schema.cpp
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
+target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     graphqlresponse
@@ -327,6 +332,7 @@ add_library(graphqlintrospection
   Introspection.cpp
   IntrospectionSchema.cpp)
 add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
+target_compile_features(graphqlintrospection PUBLIC cxx_std_20)
 target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
 
 if(GRAPHQL_UPDATE_VERSION)
@@ -348,6 +354,7 @@ endif()
 # graphqlclient
 add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
+target_compile_features(graphqlclient PUBLIC cxx_std_20)
 target_link_libraries(graphqlclient PUBLIC
     graphqlpeg
     graphqlresponse)
@@ -378,6 +385,7 @@ if(GRAPHQL_USE_RAPIDJSON)
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson JSONResponse.cpp)
   add_library(cppgraphqlgen::graphqljson ALIAS graphqljson)
+  target_compile_features(graphqljson PUBLIC cxx_std_20)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 
