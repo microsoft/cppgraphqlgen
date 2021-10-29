@@ -289,12 +289,12 @@ target_include_directories(sample_nointrospection PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
-# learn
-add_executable(learn star_wars/sample.cpp)
-target_link_libraries(learn PRIVATE
+# learn_star_wars
+add_executable(learn_star_wars star_wars/sample.cpp)
+target_link_libraries(learn_star_wars PRIVATE
   star_wars
   graphqljson)
-target_include_directories(learn PRIVATE
+target_include_directories(learn_star_wars PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
