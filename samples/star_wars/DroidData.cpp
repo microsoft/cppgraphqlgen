@@ -32,7 +32,8 @@ void Droid::addFriends(
 		[](const auto& spFriend) noexcept {
 			return std::visit(
 				[](const auto& hero) noexcept {
-					return WeakHero { std::weak_ptr { hero } };
+					return WeakHero { std::weak_ptr<std::decay_t<decltype(hero)>::element_type> {
+						hero } };
 				},
 				spFriend);
 		});
