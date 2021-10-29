@@ -18,17 +18,15 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(
 	service::FieldParams&&, std::optional<Episode>&& episodeArg) const
 {
 	std::shared_ptr<service::Object> result;
+	const auto episode = episodeArg ? *episodeArg : Episode::NEW_HOPE;
 
-	if (episodeArg)
+	if (const auto itr = heroes_.find(episode); itr != heroes_.end())
 	{
-		if (const auto itr = heroes_.find(*episodeArg); itr != heroes_.end())
-		{
-			result = std::visit(
-				[](const auto& hero) noexcept {
-					return std::static_pointer_cast<service::Object>(hero);
-				},
-				itr->second);
-		}
+		result = std::visit(
+			[](const auto& hero) noexcept {
+				return std::static_pointer_cast<service::Object>(hero);
+			},
+			itr->second);
 	}
 
 	return { result };
