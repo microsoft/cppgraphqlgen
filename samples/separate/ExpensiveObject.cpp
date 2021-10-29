@@ -37,7 +37,7 @@ std::future<service::ResolverResult> Expensive::resolveOrder(service::ResolverPa
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getOrder(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getOrder(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));

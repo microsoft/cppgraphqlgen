@@ -38,7 +38,7 @@ std::future<service::ResolverResult> TaskEdge::resolveNode(service::ResolverPara
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNode(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getNode(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> TaskEdge::resolveCursor(service::ResolverPa
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getCursor(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getCursor(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));

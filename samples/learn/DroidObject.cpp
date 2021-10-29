@@ -42,7 +42,7 @@ std::future<service::ResolverResult> Droid::resolveId(service::ResolverParams&& 
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
@@ -57,7 +57,7 @@ std::future<service::ResolverResult> Droid::resolveName(service::ResolverParams&
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -72,7 +72,7 @@ std::future<service::ResolverResult> Droid::resolveFriends(service::ResolverPara
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getFriends(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getFriends(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -87,7 +87,7 @@ std::future<service::ResolverResult> Droid::resolveAppearsIn(service::ResolverPa
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getAppearsIn(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getAppearsIn(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Episode>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -102,7 +102,7 @@ std::future<service::ResolverResult> Droid::resolvePrimaryFunction(service::Reso
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getPrimaryFunction(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getPrimaryFunction(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

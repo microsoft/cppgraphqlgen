@@ -43,7 +43,7 @@ std::future<service::ResolverResult> Query::resolveHero(service::ResolverParams&
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHero(service::FieldParams(std::move(params), std::move(directives)), std::move(argEpisode));
+	auto result = getHero(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEpisode));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHuman(service::FieldParams(std::move(params), std::move(directives)), std::move(argId));
+	auto result = getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -75,7 +75,7 @@ std::future<service::ResolverResult> Query::resolveDroid(service::ResolverParams
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getDroid(service::FieldParams(std::move(params), std::move(directives)), std::move(argId));
+	auto result = getDroid(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Droid>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

@@ -38,7 +38,7 @@ std::future<service::ResolverResult> Review::resolveStars(service::ResolverParam
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getStars(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getStars(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> Review::resolveCommentary(service::Resolver
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getCommentary(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getCommentary(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

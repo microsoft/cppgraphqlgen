@@ -41,7 +41,7 @@ std::future<service::ResolverResult> Folder::resolveId(service::ResolverParams&&
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
@@ -56,7 +56,7 @@ std::future<service::ResolverResult> Folder::resolveName(service::ResolverParams
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getName(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -71,7 +71,7 @@ std::future<service::ResolverResult> Folder::resolveUnreadCount(service::Resolve
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getUnreadCount(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getUnreadCount(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));

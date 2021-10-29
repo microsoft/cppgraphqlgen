@@ -38,7 +38,7 @@ std::future<service::ResolverResult> CompleteTaskPayload::resolveTask(service::R
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getTask(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> CompleteTaskPayload::resolveClientMutationI
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getClientMutationId(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getClientMutationId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

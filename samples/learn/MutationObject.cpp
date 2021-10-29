@@ -39,7 +39,7 @@ std::future<service::ResolverResult> Mutation::resolveCreateReview(service::Reso
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applyCreateReview(service::FieldParams(std::move(params), std::move(directives)), std::move(argEp), std::move(argReview));
+	auto result = applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));

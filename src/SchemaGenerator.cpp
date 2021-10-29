@@ -1533,7 +1533,7 @@ std::future<service::ResolverResult> )cpp"
 	auto directives = std::move(params.fieldDirectives);
 	auto result = )cpp"
 				   << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams(std::move(params), std::move(directives)))cpp";
+				   << R"cpp((service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
 
 		if (!outputField.arguments.empty())
 		{
