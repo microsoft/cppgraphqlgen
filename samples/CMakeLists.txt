@@ -74,6 +74,17 @@ if(GRAPHQL_UPDATE_SAMPLES)
     WORKING_DIRECTORY separate_nointrospection
     COMMENT "Generating mock TodaySchema without Introspection (--no-introspection --separate-files)")
 
+  # learn
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/learn)
+
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/learn/learn_schema_files
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.learn.graphql" --prefix="StarWars" --namespace="learn" --separate-files > learn_schema_files
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different learn_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/learn
+    DEPENDS schemagen graphqlpeg schema.learn.graphql
+    WORKING_DIRECTORY learn
+    COMMENT "Generating mock StarWarsSchema (--separate-files)")
+
   add_custom_command(
     OUTPUT updated_samples
     COMMAND ${CMAKE_COMMAND}
@@ -86,10 +97,16 @@ if(GRAPHQL_UPDATE_SAMPLES)
       "-DSCHEMA_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection"
       "-DSCHEMA_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection"
       -P "${CMAKE_CURRENT_SOURCE_DIR}/update_samples.cmake"
+    COMMAND ${CMAKE_COMMAND}
+      "-DSCHEMA_SOURCE_LIST=learn_schema_files"
+      "-DSCHEMA_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/learn"
+      "-DSCHEMA_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/learn"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/update_samples.cmake"
     COMMAND ${CMAKE_COMMAND} -E touch updated_samples
     DEPENDS 
       ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
       ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
+      ${CMAKE_CURRENT_BINARY_DIR}/learn/learn_schema_files
     COMMENT "Updating sample files")
 
   add_custom_target(update_samples ALL
@@ -214,6 +231,25 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_dependencies(separateschema_nointrospection update_samples)
 endif()
 
+# learnschema
+set(LEARN_SCHEMA_PATHS "")
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/learn/learn_schema_files LEARN_SCHEMA_FILES)
+foreach(CPP_FILE IN LISTS LEARN_SCHEMA_FILES)
+  list(APPEND LEARN_SCHEMA_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/learn/${CPP_FILE}")
+endforeach(CPP_FILE)
+
+add_library(learnschema STATIC ${LEARN_SCHEMA_PATHS})
+target_link_libraries(learnschema PUBLIC graphqlintrospection)
+target_include_directories(learnschema PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/learn)
+
+if(GRAPHQL_UPDATE_SAMPLES)
+  # wait for the sample update to complete
+  add_dependencies(learnschema update_samples)
+endif()
+
 # separategraphql
 add_library(separategraphql STATIC today/TodayMock.cpp)
 target_link_libraries(separategraphql PUBLIC separateschema)
@@ -223,6 +259,17 @@ target_include_directories(separategraphql PUBLIC today)
 add_library(separategraphql_nointrospection STATIC today/TodayMock.cpp)
 target_link_libraries(separategraphql_nointrospection PUBLIC separateschema_nointrospection)
 target_include_directories(separategraphql_nointrospection PUBLIC today)
+
+# star_wars
+add_library(star_wars STATIC
+  star_wars/DroidData.cpp
+  star_wars/HumanData.cpp
+  star_wars/QueryData.cpp
+  star_wars/ReviewData.cpp
+  star_wars/MutationData.cpp
+  star_wars/StarWarsData.cpp)
+target_link_libraries(star_wars PUBLIC learnschema)
+target_include_directories(star_wars PUBLIC star_wars)
 
 # sample
 add_executable(sample today/sample.cpp)
@@ -239,6 +286,15 @@ target_link_libraries(sample_nointrospection PRIVATE
   separategraphql_nointrospection
   graphqljson)
 target_include_directories(sample_nointrospection PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+
+# learn
+add_executable(learn star_wars/sample.cpp)
+target_link_libraries(learn PRIVATE
+  star_wars
+  graphqljson)
+target_include_directories(learn PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
 
