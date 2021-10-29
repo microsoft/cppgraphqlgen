@@ -15,7 +15,7 @@ namespace graphql::learn {
 class Mutation : public object::Mutation
 {
 public:
-	explicit Mutation() noexcept = default;
+	explicit Mutation() noexcept;
 
 	service::FieldResult<std::shared_ptr<object::Review>> applyCreateReview(
 		service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final;

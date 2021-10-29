@@ -5,6 +5,10 @@
 
 namespace graphql::learn {
 
+Mutation::Mutation() noexcept
+{
+}
+
 service::FieldResult<std::shared_ptr<object::Review>> Mutation::applyCreateReview(
 	service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const
 {
