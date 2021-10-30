@@ -38,7 +38,7 @@ std::future<service::ResolverResult> Subscription::resolveNextAppointmentChange(
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNextAppointmentChange(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getNextAppointmentChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -54,7 +54,7 @@ std::future<service::ResolverResult> Subscription::resolveNodeChange(service::Re
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNodeChange(service::FieldParams(std::move(params), std::move(directives)), std::move(argId));
+	auto result = getNodeChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
