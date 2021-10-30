@@ -39,7 +39,7 @@ std::future<service::ResolverResult> Mutation::resolveCompleteTask(service::Reso
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applyCompleteTask(service::FieldParams(std::move(params), std::move(directives)), std::move(argInput));
+	auto result = applyCompleteTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argInput));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
@@ -55,7 +55,7 @@ std::future<service::ResolverResult> Mutation::resolveSetFloat(service::Resolver
 	auto argValue = service::ModifiedArgument<response::FloatType>::require("value", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applySetFloat(service::FieldParams(std::move(params), std::move(directives)), std::move(argValue));
+	auto result = applySetFloat(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argValue));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::FloatType>::convert(std::move(result), std::move(params));

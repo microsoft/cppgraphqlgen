@@ -38,7 +38,7 @@ std::future<service::ResolverResult> FolderConnection::resolvePageInfo(service::
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getPageInfo(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getPageInfo(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> FolderConnection::resolveEdges(service::Res
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getEdges(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getEdges(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));

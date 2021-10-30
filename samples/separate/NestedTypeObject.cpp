@@ -38,7 +38,7 @@ std::future<service::ResolverResult> NestedType::resolveDepth(service::ResolverP
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getDepth(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getDepth(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> NestedType::resolveNested(service::Resolver
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNested(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getNested(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));

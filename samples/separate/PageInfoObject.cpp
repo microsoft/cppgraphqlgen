@@ -38,7 +38,7 @@ std::future<service::ResolverResult> PageInfo::resolveHasNextPage(service::Resol
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHasNextPage(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getHasNextPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
@@ -53,7 +53,7 @@ std::future<service::ResolverResult> PageInfo::resolveHasPreviousPage(service::R
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHasPreviousPage(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getHasPreviousPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));

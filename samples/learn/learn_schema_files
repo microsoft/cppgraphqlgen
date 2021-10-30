@@ -1,0 +1,6 @@
+StarWarsSchema.cpp
+HumanObject.cpp
+DroidObject.cpp
+QueryObject.cpp
+ReviewObject.cpp
+MutationObject.cpp

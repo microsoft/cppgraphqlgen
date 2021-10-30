@@ -41,7 +41,7 @@ std::future<service::ResolverResult> Task::resolveId(service::ResolverParams&& p
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
@@ -56,7 +56,7 @@ std::future<service::ResolverResult> Task::resolveTitle(service::ResolverParams&
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getTitle(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getTitle(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -71,7 +71,7 @@ std::future<service::ResolverResult> Task::resolveIsComplete(service::ResolverPa
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getIsComplete(service::FieldParams(std::move(params), std::move(directives)));
+	auto result = getIsComplete(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
