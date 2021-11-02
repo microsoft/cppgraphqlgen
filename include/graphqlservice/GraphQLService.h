@@ -25,16 +25,12 @@
 #include "graphqlservice/internal/Version.h"
 
 // clang-format off
-#ifdef USE_STD_COROUTINE
+#ifdef USE_STD_EXPERIMENTAL_COROUTINE
+	#include <experimental/coroutine>
+	namespace coro = std::experimental;
+#else // !USE_STD_EXPERIMENTAL_COROUTINE
 	#include <coroutine>
 	namespace coro = std;
-#else // !USE_STD_COROUTINE
-	#ifdef USE_STD_EXPERIMENTAL_COROUTINE
-		#include <experimental/coroutine>
-		namespace coro = std::experimental;
-	#else // !USE_STD_EXPERIMENTAL_COROUTINE
-		#define GRAPHQLSERVICE_NO_COROUTINE
-	#endif
 #endif
 // clang-format on
 
@@ -227,7 +223,6 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
-#ifndef GRAPHQLSERVICE_NO_COROUTINE
 	struct promise_type
 	{
 		FieldResult<T> get_return_object() noexcept
@@ -283,7 +278,6 @@ public:
 	{
 		return std::get<std::future<T>>(_value).get();
 	}
-#endif // !GRAPHQLSERVICE_NO_COROUTINE
 
 private:
 	std::variant<T, std::future<T>> _value;

@@ -308,7 +308,7 @@ target_link_libraries(graphqlservice PUBLIC
     graphqlresponse
     Threads::Threads)
 
-function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OUT_RESULT)
+function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_${OUT_RESULT}.cpp")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)  
 
@@ -317,20 +317,37 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OUT_RESULT)
     ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
     CXX_STANDARD 20)
 
+  if(NOT TEST_RESULT)
+      # Retry with each of the optional libraries.
+      foreach(OPTIONAL_FLAG IN LISTS OPTIONAL_FLAGS)
+        try_compile(TEST_RESULT
+          ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+          CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${OPTIONAL_FLAG}"
+          CXX_STANDARD 20)
+  
+        if(TEST_RESULT)
+          # Looks like the optional flag was required, go ahead and add it to the compile options.
+          target_compile_options(graphqlservice PUBLIC ${OPTIONAL_FLAG})
+          break()
+        endif()
+      endforeach(OPTIONAL_FLAG)
+  endif()
+
   set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
 endfunction()
 
-check_coroutine_impl("coroutine" "std" STD_COROUTINE)
+check_coroutine_impl("coroutine" "std" "" STD_COROUTINE)
 if(STD_COROUTINE)
   message(STATUS "Using std coroutine")
   target_compile_definitions(graphqlservice PUBLIC USE_STD_COROUTINE)
 else()
-  check_coroutine_impl("experimental/coroutine" "std::experimental" STD_EXPERIMENTAL_COROUTINE)
+  check_coroutine_impl("experimental/coroutine" "std::experimental" "-fcoroutines" STD_EXPERIMENTAL_COROUTINE)
   if(STD_EXPERIMENTAL_COROUTINE)
     message(STATUS "Using std::experimental coroutine")
     target_compile_definitions(graphqlservice PUBLIC USE_STD_EXPERIMENTAL_COROUTINE)
   else()
-    message(STATUS "Missing coroutine support")
+    message(FATAL_ERROR "Missing coroutine support")
   endif()
 endif()
 
