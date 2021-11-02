@@ -37,7 +37,7 @@ service::FieldResult<response::IdType> Folder::getId(service::FieldParams&&) con
 	throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Folder::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -52,7 +52,7 @@ service::FieldResult<std::optional<response::StringType>> Folder::getName(servic
 	throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Folder::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -67,7 +67,7 @@ service::FieldResult<response::IntType> Folder::getUnreadCount(service::FieldPar
 	throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Folder::resolveUnreadCount(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -77,7 +77,7 @@ std::future<service::ResolverResult> Folder::resolveUnreadCount(service::Resolve
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Folder::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Folder)gql" }, std::move(params));
 }

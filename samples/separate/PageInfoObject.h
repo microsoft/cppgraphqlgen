@@ -23,10 +23,10 @@ public:
 	virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveHasNextPage(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveHasPreviousPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasNextPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasPreviousPage(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

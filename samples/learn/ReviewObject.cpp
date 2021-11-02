@@ -34,7 +34,7 @@ service::FieldResult<response::IntType> Review::getStars(service::FieldParams&&)
 	throw std::runtime_error(R"ex(Review::getStars is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Review::resolveStars(service::ResolverParams&& params)
+service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -49,7 +49,7 @@ service::FieldResult<std::optional<response::StringType>> Review::getCommentary(
 	throw std::runtime_error(R"ex(Review::getCommentary is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Review::resolveCommentary(service::ResolverParams&& params)
+service::AwaitableResolver Review::resolveCommentary(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> Review::resolveCommentary(service::Resolver
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Review::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Review::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Review)gql" }, std::move(params));
 }

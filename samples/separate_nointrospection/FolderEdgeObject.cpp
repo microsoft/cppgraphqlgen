@@ -34,7 +34,7 @@ service::FieldResult<std::shared_ptr<Folder>> FolderEdge::getNode(service::Field
 	throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
 }
 
-std::future<service::ResolverResult> FolderEdge::resolveNode(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -49,7 +49,7 @@ service::FieldResult<response::Value> FolderEdge::getCursor(service::FieldParams
 	throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
 }
 
-std::future<service::ResolverResult> FolderEdge::resolveCursor(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> FolderEdge::resolveCursor(service::Resolver
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> FolderEdge::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderEdge)gql" }, std::move(params));
 }

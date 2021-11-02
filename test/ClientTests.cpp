@@ -242,8 +242,8 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 									   std::move(query),
 									   "TestSubscription",
 									   std::move(variables) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);

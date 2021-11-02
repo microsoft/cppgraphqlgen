@@ -33,20 +33,20 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAppointments(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTasks(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCounts(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAppointmentsById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTasksById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCountsById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnimplemented(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTestTaskState(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAnyType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAppointments(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTasks(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTasksById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params);
+	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

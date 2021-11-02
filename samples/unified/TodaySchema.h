@@ -109,22 +109,22 @@ public:
 	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAppointments(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTasks(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCounts(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAppointmentsById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTasksById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCountsById(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnimplemented(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveExpensive(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTestTaskState(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAnyType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAppointments(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTasks(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTasksById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params);
+	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_schema(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<schema::Schema> _schema;
 };
@@ -140,10 +140,10 @@ public:
 	virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveHasNextPage(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveHasPreviousPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasNextPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasPreviousPage(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class AppointmentEdge
@@ -157,10 +157,10 @@ public:
 	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class AppointmentConnection
@@ -174,10 +174,10 @@ public:
 	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolvePageInfo(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveEdges(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePageInfo(service::ResolverParams&& params);
+	service::AwaitableResolver resolveEdges(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class TaskEdge
@@ -191,10 +191,10 @@ public:
 	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class TaskConnection
@@ -208,10 +208,10 @@ public:
 	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolvePageInfo(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveEdges(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePageInfo(service::ResolverParams&& params);
+	service::AwaitableResolver resolveEdges(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class FolderEdge
@@ -225,10 +225,10 @@ public:
 	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class FolderConnection
@@ -242,10 +242,10 @@ public:
 	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolvePageInfo(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveEdges(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePageInfo(service::ResolverParams&& params);
+	service::AwaitableResolver resolveEdges(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class CompleteTaskPayload
@@ -259,10 +259,10 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveTask(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveClientMutationId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTask(service::ResolverParams&& params);
+	service::AwaitableResolver resolveClientMutationId(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Mutation
@@ -276,10 +276,10 @@ public:
 	virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveCompleteTask(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSetFloat(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCompleteTask(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSetFloat(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Subscription
@@ -293,10 +293,10 @@ public:
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveNextAppointmentChange(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveNodeChange(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNextAppointmentChange(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNodeChange(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Appointment
@@ -314,13 +314,13 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveWhen(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSubject(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsNow(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveForceError(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveWhen(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSubject(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params);
+	service::AwaitableResolver resolveForceError(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Task
@@ -336,11 +336,11 @@ public:
 	virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTitle(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsComplete(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTitle(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsComplete(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Folder
@@ -356,11 +356,11 @@ public:
 	virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCount(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCount(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class NestedType
@@ -374,10 +374,10 @@ public:
 	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveDepth(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveNested(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDepth(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 class Expensive
@@ -390,9 +390,9 @@ public:
 	virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveOrder(service::ResolverParams&& params);
+	service::AwaitableResolver resolveOrder(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace object

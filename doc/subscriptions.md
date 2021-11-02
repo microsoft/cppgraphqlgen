@@ -39,7 +39,7 @@ The `SubscriptionCallback` signature is:
 ```cpp
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
-using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
+using SubscriptionCallback = std::function<void(response::AwaitableValue)>;
 ```
 
 ## `ResolverContext::NotifySubscribe` and `ResolverContext::NotifyUnsubscribe`

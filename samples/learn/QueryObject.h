@@ -24,13 +24,13 @@ public:
 	virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveHero(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveHuman(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDroid(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHero(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDroid(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_schema(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<schema::Schema> _schema;
 };

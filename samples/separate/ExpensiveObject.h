@@ -22,9 +22,9 @@ public:
 	virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveOrder(service::ResolverParams&& params);
+	service::AwaitableResolver resolveOrder(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

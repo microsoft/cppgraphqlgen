@@ -34,7 +34,7 @@ service::FieldResult<std::shared_ptr<PageInfo>> FolderConnection::getPageInfo(se
 	throw std::runtime_error(R"ex(FolderConnection::getPageInfo is not implemented)ex");
 }
 
-std::future<service::ResolverResult> FolderConnection::resolvePageInfo(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -49,7 +49,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> Fo
 	throw std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex");
 }
 
-std::future<service::ResolverResult> FolderConnection::resolveEdges(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolveEdges(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> FolderConnection::resolveEdges(service::Res
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> FolderConnection::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderConnection)gql" }, std::move(params));
 }

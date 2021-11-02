@@ -34,7 +34,7 @@ service::FieldResult<std::shared_ptr<Appointment>> AppointmentEdge::getNode(serv
 	throw std::runtime_error(R"ex(AppointmentEdge::getNode is not implemented)ex");
 }
 
-std::future<service::ResolverResult> AppointmentEdge::resolveNode(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -49,7 +49,7 @@ service::FieldResult<response::Value> AppointmentEdge::getCursor(service::FieldP
 	throw std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex");
 }
 
-std::future<service::ResolverResult> AppointmentEdge::resolveCursor(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentEdge::resolveCursor(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> AppointmentEdge::resolveCursor(service::Res
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> AppointmentEdge::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentEdge::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentEdge)gql" }, std::move(params));
 }

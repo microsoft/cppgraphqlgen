@@ -25,11 +25,11 @@ public:
 	virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCount(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCount(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

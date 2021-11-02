@@ -38,7 +38,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(service::F
 	throw std::runtime_error(R"ex(Query::getHero is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveHero(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 {
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -54,7 +54,7 @@ service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParam
 	throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -70,7 +70,7 @@ service::FieldResult<std::shared_ptr<Droid>> Query::getDroid(service::FieldParam
 	throw std::runtime_error(R"ex(Query::getDroid is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveDroid(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -81,17 +81,17 @@ std::future<service::ResolverResult> Query::resolveDroid(service::ResolverParams
 	return service::ModifiedResult<Droid>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }
 
-std::future<service::ResolverResult> Query::resolve_schema(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
 }
 
-std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);

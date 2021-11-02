@@ -23,10 +23,10 @@ public:
 	virtual service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveNextAppointmentChange(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveNodeChange(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNextAppointmentChange(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNodeChange(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

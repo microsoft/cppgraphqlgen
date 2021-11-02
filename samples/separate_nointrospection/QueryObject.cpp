@@ -44,7 +44,7 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(service::F
 	throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveNode(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -60,7 +60,7 @@ service::FieldResult<std::shared_ptr<AppointmentConnection>> Query::getAppointme
 	throw std::runtime_error(R"ex(Query::getAppointments is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveAppointments(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveAppointments(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -79,7 +79,7 @@ service::FieldResult<std::shared_ptr<TaskConnection>> Query::getTasks(service::F
 	throw std::runtime_error(R"ex(Query::getTasks is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveTasks(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveTasks(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -98,7 +98,7 @@ service::FieldResult<std::shared_ptr<FolderConnection>> Query::getUnreadCounts(s
 	throw std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveUnreadCounts(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveUnreadCounts(service::ResolverParams&& params)
 {
 	auto argFirst = service::ModifiedArgument<response::IntType>::require<service::TypeModifier::Nullable>("first", params.arguments);
 	auto argAfter = service::ModifiedArgument<response::Value>::require<service::TypeModifier::Nullable>("after", params.arguments);
@@ -117,7 +117,7 @@ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> Query::getAppoin
 	throw std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveAppointmentsById(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveAppointmentsById(service::ResolverParams&& params)
 {
 	const auto defaultArguments = []()
 	{
@@ -155,7 +155,7 @@ service::FieldResult<std::vector<std::shared_ptr<Task>>> Query::getTasksById(ser
 	throw std::runtime_error(R"ex(Query::getTasksById is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveTasksById(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveTasksById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -171,7 +171,7 @@ service::FieldResult<std::vector<std::shared_ptr<Folder>>> Query::getUnreadCount
 	throw std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveUnreadCountsById(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveUnreadCountsById(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -187,7 +187,7 @@ service::FieldResult<std::shared_ptr<NestedType>> Query::getNested(service::Fiel
 	throw std::runtime_error(R"ex(Query::getNested is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveNested(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveNested(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -202,7 +202,7 @@ service::FieldResult<response::StringType> Query::getUnimplemented(service::Fiel
 	throw std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveUnimplemented(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveUnimplemented(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -217,7 +217,7 @@ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> Query::getExpensiv
 	throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveExpensive(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveExpensive(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -232,7 +232,7 @@ service::FieldResult<TaskState> Query::getTestTaskState(service::FieldParams&&) 
 	throw std::runtime_error(R"ex(Query::getTestTaskState is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveTestTaskState(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveTestTaskState(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -247,7 +247,7 @@ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAn
 	throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Query::resolveAnyType(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveAnyType(service::ResolverParams&& params)
 {
 	auto argIds = service::ModifiedArgument<response::IdType>::require<service::TypeModifier::List>("ids", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -258,7 +258,7 @@ std::future<service::ResolverResult> Query::resolveAnyType(service::ResolverPara
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Query::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
 }

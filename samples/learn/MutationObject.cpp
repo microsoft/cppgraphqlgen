@@ -33,7 +33,7 @@ service::FieldResult<std::shared_ptr<Review>> Mutation::applyCreateReview(servic
 	throw std::runtime_error(R"ex(Mutation::applyCreateReview is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Mutation::resolveCreateReview(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params)
 {
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
@@ -45,7 +45,7 @@ std::future<service::ResolverResult> Mutation::resolveCreateReview(service::Reso
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }

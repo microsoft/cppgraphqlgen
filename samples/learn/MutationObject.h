@@ -22,9 +22,9 @@ public:
 	virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const;
 
 private:
-	std::future<service::ResolverResult> resolveCreateReview(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::learn::object

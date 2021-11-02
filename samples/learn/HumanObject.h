@@ -27,13 +27,13 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveFriends(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveAppearsIn(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveHomePlanet(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveFriends(service::ResolverParams&& params);
+	service::AwaitableResolver resolveAppearsIn(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHomePlanet(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::learn::object

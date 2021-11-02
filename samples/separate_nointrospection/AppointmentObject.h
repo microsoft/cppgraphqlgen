@@ -27,13 +27,13 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveWhen(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSubject(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsNow(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveForceError(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveWhen(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSubject(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params);
+	service::AwaitableResolver resolveForceError(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

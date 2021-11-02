@@ -34,7 +34,7 @@ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> Mutation::applyComple
 	throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Mutation::resolveCompleteTask(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -50,7 +50,7 @@ service::FieldResult<response::FloatType> Mutation::applySetFloat(service::Field
 	throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Mutation::resolveSetFloat(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveSetFloat(service::ResolverParams&& params)
 {
 	auto argValue = service::ModifiedArgument<response::FloatType>::require("value", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -61,7 +61,7 @@ std::future<service::ResolverResult> Mutation::resolveSetFloat(service::Resolver
 	return service::ModifiedResult<response::FloatType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }

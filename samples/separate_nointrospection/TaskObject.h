@@ -25,11 +25,11 @@ public:
 	virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTitle(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsComplete(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTitle(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsComplete(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

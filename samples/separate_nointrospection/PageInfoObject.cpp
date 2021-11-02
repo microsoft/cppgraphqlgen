@@ -34,7 +34,7 @@ service::FieldResult<response::BooleanType> PageInfo::getHasNextPage(service::Fi
 	throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
 }
 
-std::future<service::ResolverResult> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
+service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -49,7 +49,7 @@ service::FieldResult<response::BooleanType> PageInfo::getHasPreviousPage(service
 	throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
 }
 
-std::future<service::ResolverResult> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
+service::AwaitableResolver PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -59,7 +59,7 @@ std::future<service::ResolverResult> PageInfo::resolveHasPreviousPage(service::R
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> PageInfo::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver PageInfo::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
 }

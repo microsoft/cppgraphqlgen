@@ -23,10 +23,10 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveTask(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveClientMutationId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTask(service::ResolverParams&& params);
+	service::AwaitableResolver resolveClientMutationId(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

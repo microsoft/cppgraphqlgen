@@ -186,7 +186,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(_appointment->getId(std::move(params)).get());
+		co_return response::Value(co_await _appointment->getId(std::move(params)));
 	}
 
 private:
@@ -279,7 +279,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(_task->getId(std::move(params)).get());
+		co_return response::Value(co_await _task->getId(std::move(params)));
 	}
 
 private:
@@ -372,7 +372,7 @@ public:
 
 	service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 	{
-		return response::Value(_folder->getId(std::move(params)).get());
+		co_return response::Value(co_await _folder->getId(std::move(params)));
 	}
 
 private:

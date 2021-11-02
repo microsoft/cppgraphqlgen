@@ -62,6 +62,7 @@ function(add_bigobj_flag target)
 endfunction()
 
 add_library(graphqlcoro INTERFACE)
+target_compile_features(graphqlcoro INTERFACE cxx_std_20)
 
 function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_${OUT_RESULT}.cpp")
@@ -108,8 +109,9 @@ endif()
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
-target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
-target_compile_features(graphqlpeg PUBLIC cxx_std_20)
+target_link_libraries(graphqlpeg PUBLIC
+  graphqlcoro
+  taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
@@ -133,10 +135,10 @@ add_library(graphqlresponse
   Base64.cpp
   GraphQLResponse.cpp)
 add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
-target_compile_features(graphqlresponse PUBLIC cxx_std_20)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+target_link_libraries(graphqlresponse PUBLIC graphqlcoro)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -158,8 +160,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
     GeneratorUtil.cpp)
   target_link_libraries(generator_util PUBLIC
     graphqlpeg
-    graphqlresponse
-    graphqlcoro)
+    graphqlresponse)
 endif()
 
 # clientgen
@@ -168,7 +169,6 @@ if(GRAPHQL_BUILD_CLIENTGEN)
     ClientGenerator.cpp
     RequestLoader.cpp)
   add_executable(cppgraphqlgen::clientgen ALIAS clientgen)
-  target_compile_features(clientgen PRIVATE cxx_std_20)
   target_link_libraries(clientgen PRIVATE generator_util)
   add_bigobj_flag(clientgen)
 
@@ -208,7 +208,6 @@ endif()
 if(GRAPHQL_BUILD_SCHEMAGEN)
   add_executable(schemagen SchemaGenerator.cpp)
   add_executable(cppgraphqlgen::schemagen ALIAS schemagen)
-  target_compile_features(schemagen PRIVATE cxx_std_20)
   target_link_libraries(schemagen PRIVATE generator_util)
   add_bigobj_flag(schemagen)
 
@@ -347,11 +346,9 @@ add_library(graphqlservice
   Schema.cpp
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
-target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     graphqlresponse
-    graphqlcoro
     Threads::Threads)
 
 if(GRAPHQL_UPDATE_SAMPLES)
@@ -377,7 +374,6 @@ add_library(graphqlintrospection
   Introspection.cpp
   IntrospectionSchema.cpp)
 add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
-target_compile_features(graphqlintrospection PUBLIC cxx_std_20)
 target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
 
 if(GRAPHQL_UPDATE_VERSION)
@@ -399,7 +395,6 @@ endif()
 # graphqlclient
 add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
-target_compile_features(graphqlclient PUBLIC cxx_std_20)
 target_link_libraries(graphqlclient PUBLIC
     graphqlpeg
     graphqlresponse)
@@ -430,7 +425,6 @@ if(GRAPHQL_USE_RAPIDJSON)
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson JSONResponse.cpp)
   add_library(cppgraphqlgen::graphqljson ALIAS graphqljson)
-  target_compile_features(graphqljson PUBLIC cxx_std_20)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 
@@ -451,9 +445,9 @@ install(TARGETS
     graphqlclient
     graphqlintrospection
     graphqlpeg
+    graphqlcoro
     graphqlresponse
     graphqlservice
-    graphqlcoro
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
@@ -468,6 +462,7 @@ install(FILES
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/AwaitableFuture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h

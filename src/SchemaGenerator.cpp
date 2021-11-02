@@ -405,7 +405,7 @@ GRAPHQLINTROSPECTION_EXPORT )cpp"
 						   << R"cpp(::)cpp" << enumType.cppType << R"cpp(>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<)cpp"
+GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	FieldResult<)cpp" << _loader.getSchemaNamespace()
@@ -491,14 +491,14 @@ private:
 		}
 
 		headerFile << R"cpp(
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 )cpp";
 
 		if (!_options.noIntrospection && isQueryType)
 		{
 			headerFile
-				<< R"cpp(	std::future<service::ResolverResult> resolve_schema(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolve_type(service::ResolverParams&& params);
+				<< R"cpp(	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<schema::Schema> _schema;
 )cpp";
@@ -555,7 +555,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::string fieldName(outputField.cppName);
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	std::future<service::ResolverResult> resolve)cpp" << fieldName
+	output << R"cpp(	service::AwaitableResolver resolve)cpp" << fieldName
 		   << R"cpp((service::ResolverParams&& params);
 )cpp";
 
@@ -657,7 +657,7 @@ template <>
 }
 
 template <>
-std::future<service::ResolverResult> ModifiedResult<)cpp"
+service::AwaitableResolver ModifiedResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::FieldResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
@@ -1478,7 +1478,7 @@ service::FieldResult<)cpp"
 		}
 
 		sourceFile << R"cpp(
-std::future<service::ResolverResult> )cpp"
+service::AwaitableResolver )cpp"
 				   << objectType.cppType << R"cpp(::resolve)cpp" << fieldName
 				   << R"cpp((service::ResolverParams&& params)
 {
@@ -1558,7 +1558,7 @@ std::future<service::ResolverResult> )cpp"
 	}
 
 	sourceFile << R"cpp(
-std::future<service::ResolverResult> )cpp"
+service::AwaitableResolver )cpp"
 			   << objectType.cppType << R"cpp(::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql()cpp"
@@ -1570,7 +1570,7 @@ std::future<service::ResolverResult> )cpp"
 	{
 		sourceFile
 			<< R"cpp(
-std::future<service::ResolverResult> )cpp"
+service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
@@ -1578,7 +1578,7 @@ std::future<service::ResolverResult> )cpp"
 			<< R"cpp(::Schema>(_schema)), std::move(params));
 }
 
-std::future<service::ResolverResult> )cpp"
+service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);

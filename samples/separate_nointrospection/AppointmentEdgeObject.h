@@ -23,10 +23,10 @@ public:
 	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::today::object

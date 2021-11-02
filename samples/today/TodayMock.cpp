@@ -4,6 +4,8 @@
 #include "TodayMock.h"
 
 #include <algorithm>
+#include <chrono>
+#include <future>
 #include <iostream>
 
 namespace graphql::today {
@@ -138,9 +140,50 @@ std::shared_ptr<Folder> Query::findUnreadCount(
 	return nullptr;
 }
 
+template <class _Rep, class _Period>
+auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
+{
+	struct awaiter
+	{
+		const std::chrono::duration<_Rep, _Period> delay;
+		std::promise<void> promise;
+
+		bool await_ready() const
+		{
+			std::cerr << "duration awaiter::await_ready" << std::endl;
+			return false;
+		}
+
+		void await_suspend(coro::coroutine_handle<> h) noexcept
+		{
+			std::cerr << "duration awaiter::await_suspend" << std::endl;
+			std::thread([this, h]() mutable {
+				std::this_thread::sleep_for(delay);
+				promise.set_value();
+				std::cerr << "duration awaiter::await_suspend: resuming" << std::endl;
+				h.resume();
+			}).detach();
+		}
+
+		void await_resume()
+		{
+			std::cerr << "duration awaiter::await_resume: waiting" << std::endl;
+			promise.get_future().get();
+			std::cerr << "duration awaiter::await_resume: resumed" << std::endl;
+		}
+	};
+
+	return awaiter { delay };
+}
+
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
 	service::FieldParams&& params, response::IdType&& id) const
 {
+	// {node(id: "ZmFrZVRhc2tJZA=="){...on Task{title}}}
+	std::cerr << "Query::getNode" << std::endl;
+	using namespace std::literals;
+	co_await 100ms;
+
 	auto appointment = findAppointment(params, id);
 
 	if (appointment)

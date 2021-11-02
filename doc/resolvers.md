@@ -34,7 +34,7 @@ schema {
 
 Executing a query or mutation starts by calling `Request::resolve` from [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
+GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
 	const std::shared_ptr<RequestState>& state, peg::ast& query,
 	const std::string& operationName, response::Value&& variables) const;
 ```
@@ -44,7 +44,7 @@ an override of `Request::resolve` which lets you substitute the
 `std::launch::async` option to begin executing the query on multiple threads
 in parallel:
 ```cpp
-GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch,
+GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::launch launch,
 	const std::shared_ptr<RequestState>& state, peg::ast& query,
 	const std::string& operationName, response::Value&& variables) const;
 ```

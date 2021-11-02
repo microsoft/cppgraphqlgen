@@ -38,7 +38,7 @@ service::FieldResult<response::StringType> Human::getId(service::FieldParams&&) 
 	throw std::runtime_error(R"ex(Human::getId is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Human::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -53,7 +53,7 @@ service::FieldResult<std::optional<response::StringType>> Human::getName(service
 	throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Human::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -68,7 +68,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 	throw std::runtime_error(R"ex(Human::getFriends is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Human::resolveFriends(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveFriends(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -83,7 +83,7 @@ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::
 	throw std::runtime_error(R"ex(Human::getAppearsIn is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Human::resolveAppearsIn(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveAppearsIn(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -98,7 +98,7 @@ service::FieldResult<std::optional<response::StringType>> Human::getHomePlanet(s
 	throw std::runtime_error(R"ex(Human::getHomePlanet is not implemented)ex");
 }
 
-std::future<service::ResolverResult> Human::resolveHomePlanet(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveHomePlanet(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -108,7 +108,7 @@ std::future<service::ResolverResult> Human::resolveHomePlanet(service::ResolverP
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Human::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Human)gql" }, std::move(params));
 }

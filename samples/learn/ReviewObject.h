@@ -23,10 +23,10 @@ public:
 	virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const;
 
 private:
-	std::future<service::ResolverResult> resolveStars(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCommentary(service::ResolverParams&& params);
+	service::AwaitableResolver resolveStars(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCommentary(service::ResolverParams&& params);
 
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
 };
 
 } // namespace graphql::learn::object
