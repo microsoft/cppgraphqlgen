@@ -141,33 +141,28 @@ std::shared_ptr<Folder> Query::findUnreadCount(
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
 	service::FieldParams&& params, response::IdType&& id) const
 {
-	std::promise<std::shared_ptr<service::Object>> promise;
 	auto appointment = findAppointment(params, id);
 
 	if (appointment)
 	{
-		promise.set_value(appointment);
-		return promise.get_future();
+		co_return appointment;
 	}
 
 	auto task = findTask(params, id);
 
 	if (task)
 	{
-		promise.set_value(task);
-		return promise.get_future();
+		co_return task;
 	}
 
 	auto folder = findUnreadCount(params, id);
 
 	if (folder)
 	{
-		promise.set_value(folder);
-		return promise.get_future();
+		co_return folder;
 	}
 
-	promise.set_value(nullptr);
-	return promise.get_future();
+	co_return nullptr;
 }
 
 template <class _Object, class _Connection>

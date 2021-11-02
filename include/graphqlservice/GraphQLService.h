@@ -24,6 +24,8 @@
 #include "graphqlservice/internal/SortedMap.h"
 #include "graphqlservice/internal/Version.h"
 
+#include <chrono>
+#include <coroutine>
 #include <functional>
 #include <future>
 #include <list>
@@ -35,8 +37,8 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -197,9 +199,14 @@ public:
 	{
 	}
 
+	bool is_future() const noexcept
+	{
+		return std::holds_alternative<std::future<T>>(_value);
+	}
+
 	T get()
 	{
-		if (std::holds_alternative<std::future<T>>(_value))
+		if (is_future())
 		{
 			return std::get<std::future<T>>(std::move(_value)).get();
 		}
@@ -207,9 +214,60 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
-	bool is_future() const noexcept
+	struct promise_type
 	{
-		return std::holds_alternative<std::future<T>>(_value);
+		FieldResult<T> get_return_object() noexcept
+		{
+			return { _promise.get_future() };
+		}
+
+		std::suspend_always initial_suspend() const noexcept
+		{
+			return {};
+		}
+
+		std::suspend_never final_suspend() const noexcept
+		{
+			return {};
+		}
+
+		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		{
+			_promise.set_value(value);
+		}
+
+		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		{
+			_promise.set_value(std::move(value));
+		}
+
+		void unhandled_exception() noexcept
+		{
+			_promise.set_exception(std::current_exception());
+		}
+
+	private:
+		std::promise<T> _promise;
+	};
+
+	bool await_ready() const noexcept
+	{
+		using namespace std::literals;
+
+		return (std::get<std::future<T>>(_value).wait_for(0s) != std::future_status::timeout);
+	}
+
+	void await_suspend(std::coroutine_handle<> h) const
+	{
+		std::thread([this, h] {
+			std::get<std::future<T>>(_value).wait();
+			h.resume();
+		}).detach();
+	}
+
+	T await_resume()
+	{
+		return std::get<std::future<T>>(_value).get();
 	}
 
 private:
