@@ -61,28 +61,7 @@ function(add_bigobj_flag target)
   endif()
 endfunction()
 
-# graphqlpeg
-add_library(graphqlpeg SyntaxTree.cpp)
-add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
-target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
-target_compile_features(graphqlpeg PUBLIC cxx_std_20)
-target_include_directories(graphqlpeg PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
-  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-add_bigobj_flag(graphqlpeg)
-
-if(GRAPHQL_UPDATE_VERSION)
-  update_version_rc(graphqlpeg)
-endif()
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  target_compile_definitions(graphqlpeg
-    PUBLIC GRAPHQL_DLLEXPORTS
-    PRIVATE IMPL_GRAPHQLPEG_DLL)
-
-  add_version_rc(graphqlpeg)
-endif()
+add_library(graphqlcoro INTERFACE)
 
 function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_${OUT_RESULT}.cpp")
@@ -104,7 +83,7 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAG
   
         if(TEST_RESULT)
           # Looks like the optional flag was required, go ahead and add it to the compile options.
-          target_compile_options(graphqlpeg PUBLIC ${OPTIONAL_FLAG})
+          target_compile_options(graphqlcoro INTERFACE ${OPTIONAL_FLAG})
           break()
         endif()
       endforeach(OPTIONAL_FLAG)
@@ -120,10 +99,33 @@ else()
   check_coroutine_impl("experimental/coroutine" "std::experimental" "" STD_EXPERIMENTAL_COROUTINE)
   if(STD_EXPERIMENTAL_COROUTINE)
     message(STATUS "Using std::experimental coroutine")
-    target_compile_definitions(graphqlpeg PUBLIC USE_STD_EXPERIMENTAL_COROUTINE)
+    target_compile_definitions(graphqlcoro INTERFACE USE_STD_EXPERIMENTAL_COROUTINE)
   else()
     message(FATAL_ERROR "Missing coroutine support")
   endif()
+endif()
+
+# graphqlpeg
+add_library(graphqlpeg SyntaxTree.cpp)
+add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
+target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_compile_features(graphqlpeg PUBLIC cxx_std_20)
+target_include_directories(graphqlpeg PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
+  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+add_bigobj_flag(graphqlpeg)
+
+if(GRAPHQL_UPDATE_VERSION)
+  update_version_rc(graphqlpeg)
+endif()
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(graphqlpeg
+    PUBLIC GRAPHQL_DLLEXPORTS
+    PRIVATE IMPL_GRAPHQLPEG_DLL)
+
+  add_version_rc(graphqlpeg)
 endif()
 
 # graphqlresponse
@@ -156,7 +158,8 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
     GeneratorUtil.cpp)
   target_link_libraries(generator_util PUBLIC
     graphqlpeg
-    graphqlresponse)
+    graphqlresponse
+    graphqlcoro)
 endif()
 
 # clientgen
@@ -348,6 +351,7 @@ target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     graphqlresponse
+    graphqlcoro
     Threads::Threads)
 
 if(GRAPHQL_UPDATE_SAMPLES)
@@ -449,6 +453,7 @@ install(TARGETS
     graphqlpeg
     graphqlresponse
     graphqlservice
+    graphqlcoro
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
