@@ -106,7 +106,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlresponse)
 endif()
 
-
 # Common schemagen and clientgen dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
   add_library(generator_util STATIC
@@ -308,6 +307,32 @@ target_link_libraries(graphqlservice PUBLIC
     graphqlpeg
     graphqlresponse
     Threads::Threads)
+
+function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OUT_RESULT)
+  set(TEST_FILE "test_${OUT_RESULT}.cpp")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)  
+
+  try_compile(TEST_RESULT
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+    CXX_STANDARD 20)
+
+  set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
+endfunction()
+
+check_coroutine_impl("coroutine" "std" STD_COROUTINE)
+if(STD_COROUTINE)
+  message(STATUS "Using std coroutine")
+  target_compile_definitions(graphqlservice PUBLIC USE_STD_COROUTINE)
+else()
+  check_coroutine_impl("experimental/coroutine" "std::experimental" STD_EXPERIMENTAL_COROUTINE)
+  if(STD_EXPERIMENTAL_COROUTINE)
+    message(STATUS "Using std::experimental coroutine")
+    target_compile_definitions(graphqlservice PUBLIC USE_STD_EXPERIMENTAL_COROUTINE)
+  else()
+    message(STATUS "Missing coroutine support")
+  endif()
+endif()
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still

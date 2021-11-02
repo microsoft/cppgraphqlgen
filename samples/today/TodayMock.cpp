@@ -145,24 +145,48 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
 
 	if (appointment)
 	{
+#ifdef GRAPHQLSERVICE_NO_COROUTINE
+		std::promise<std::shared_ptr<service::Object>> promise;
+		promise.set_value(appointment);
+		return promise.get_future();
+#else // !GRAPHQLSERVICE_NO_COROUTINE
 		co_return appointment;
+#endif
 	}
 
 	auto task = findTask(params, id);
 
 	if (task)
 	{
+#ifdef GRAPHQLSERVICE_NO_COROUTINE
+		std::promise<std::shared_ptr<service::Object>> promise;
+		promise.set_value(task);
+		return promise.get_future();
+#else // !GRAPHQLSERVICE_NO_COROUTINE
 		co_return task;
+#endif
 	}
 
 	auto folder = findUnreadCount(params, id);
 
 	if (folder)
 	{
+#ifdef GRAPHQLSERVICE_NO_COROUTINE
+		std::promise<std::shared_ptr<service::Object>> promise;
+		promise.set_value(folder);
+		return promise.get_future();
+#else // !GRAPHQLSERVICE_NO_COROUTINE
 		co_return folder;
+#endif
 	}
 
+#ifdef GRAPHQLSERVICE_NO_COROUTINE
+	std::promise<std::shared_ptr<service::Object>> promise;
+	promise.set_value(nullptr);
+	return promise.get_future();
+#else // !GRAPHQLSERVICE_NO_COROUTINE
 	co_return nullptr;
+#endif
 }
 
 template <class _Object, class _Connection>

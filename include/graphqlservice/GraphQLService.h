@@ -24,8 +24,21 @@
 #include "graphqlservice/internal/SortedMap.h"
 #include "graphqlservice/internal/Version.h"
 
+// clang-format off
+#ifdef USE_STD_COROUTINE
+	#include <coroutine>
+	namespace coro = std;
+#else // !USE_STD_COROUTINE
+	#ifdef USE_STD_EXPERIMENTAL_COROUTINE
+		#include <experimental/coroutine>
+		namespace coro = std::experimental;
+	#else // !USE_STD_EXPERIMENTAL_COROUTINE
+		#define GRAPHQLSERVICE_NO_COROUTINE
+	#endif
+#endif
+// clang-format on
+
 #include <chrono>
-#include <coroutine>
 #include <functional>
 #include <future>
 #include <list>
@@ -214,6 +227,7 @@ public:
 		return std::get<T>(std::move(_value));
 	}
 
+#ifndef GRAPHQLSERVICE_NO_COROUTINE
 	struct promise_type
 	{
 		FieldResult<T> get_return_object() noexcept
@@ -221,12 +235,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		std::suspend_always initial_suspend() const noexcept
+		coro::suspend_always initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		std::suspend_never final_suspend() const noexcept
+		coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -257,9 +271,9 @@ public:
 		return (std::get<std::future<T>>(_value).wait_for(0s) != std::future_status::timeout);
 	}
 
-	void await_suspend(std::coroutine_handle<> h) const
+	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		std::thread([this, h] {
+		std::thread([this, h]() mutable {
 			std::get<std::future<T>>(_value).wait();
 			h.resume();
 		}).detach();
@@ -269,6 +283,7 @@ public:
 	{
 		return std::get<std::future<T>>(_value).get();
 	}
+#endif // !GRAPHQLSERVICE_NO_COROUTINE
 
 private:
 	std::variant<T, std::future<T>> _value;
