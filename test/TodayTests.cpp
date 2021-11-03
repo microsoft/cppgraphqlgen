@@ -1631,7 +1631,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		[&result](response::Value&& response) {
 			result = std::move(response);
 		});
-	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr);
+	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr).get();
 	_service->unsubscribe(key);
 
 	try

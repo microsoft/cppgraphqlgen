@@ -25,6 +25,7 @@
 #include "graphqlservice/internal/SortedMap.h"
 #include "graphqlservice/internal/Version.h"
 
+#include <chrono>
 #include <functional>
 #include <future>
 #include <list>
@@ -198,11 +199,6 @@ public:
 	{
 	}
 
-	bool is_future() const noexcept
-	{
-		return std::holds_alternative<std::future<T>>(_value);
-	}
-
 	struct promise_type
 	{
 		FieldResult<T> get_return_object() noexcept
@@ -241,18 +237,54 @@ public:
 
 	bool await_ready() const noexcept
 	{
-		return true;
+		return std::visit(
+			[](const auto& value) noexcept {
+				using value_type = std::decay_t<decltype(value)>;
+
+				if constexpr (std::is_same_v<value_type, T>)
+				{
+					return true;
+				}
+				else if constexpr (std::is_same_v<value_type, std::future<T>>)
+				{
+					using namespace std::literals;
+
+					return value.wait_for(0s) != std::future_status::timeout;
+				}
+			},
+			_value);
 	}
 
 	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		h.resume();
+		using namespace std::literals;
+
+		std::async(
+			std::launch::async,
+			[this](auto h) {
+				std::get<std::future<T>>(_value).wait();
+				h.resume();
+			},
+			std::move(h))
+			.wait_for(0s);
 	}
 
 	T await_resume()
 	{
-		return is_future() ? std::get<std::future<T>>(_value).get()
-						   : T { std::move(std::get<T>(_value)) };
+		return std::visit(
+			[](auto&& value) {
+				using value_type = std::decay_t<decltype(value)>;
+
+				if constexpr (std::is_same_v<value_type, T>)
+				{
+					return value;
+				}
+				else if constexpr (std::is_same_v<value_type, std::future<T>>)
+				{
+					return value.get();
+				}
+			},
+			std::move(_value));
 	}
 
 private:
@@ -577,9 +609,18 @@ struct ModifiedResult
 		// Object.
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
+
+		auto pendingResult = std::move(result);
+		auto pendingParams = std::move(params);
+
+		if (pendingParams.launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
+
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
-			std::static_pointer_cast<Object>(co_await result),
-			std::move(params));
+			std::static_pointer_cast<Object>(co_await pendingResult),
+			std::move(pendingParams));
 
 		co_return std::move(awaitedResult);
 	}
@@ -603,15 +644,23 @@ struct ModifiedResult
 	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& params)
 	{
-		auto awaitedResult = co_await result;
+		auto pendingResult = std::move(result);
+		auto pendingParams = std::move(params);
+
+		if (pendingParams.launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
+
+		auto awaitedResult = co_await pendingResult;
 
 		if (!awaitedResult)
 		{
 			co_return ResolverResult {};
 		}
 
-		auto modifiedResult =
-			co_await ModifiedResult::convert<Other...>(std::move(awaitedResult), std::move(params));
+		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(awaitedResult),
+			std::move(pendingParams));
 
 		co_return modifiedResult;
 	}
@@ -628,7 +677,15 @@ struct ModifiedResult
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		auto awaitedResult = co_await result;
+		auto pendingResult = std::move(result);
+		auto pendingParams = std::move(params);
+
+		if (pendingParams.launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
+
+		auto awaitedResult = co_await pendingResult;
 
 		if (!awaitedResult)
 		{
@@ -636,7 +693,7 @@ struct ModifiedResult
 		}
 
 		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(*awaitedResult),
-			std::move(params));
+			std::move(pendingParams));
 
 		co_return modifiedResult;
 	}
@@ -647,12 +704,20 @@ struct ModifiedResult
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& params)
 	{
+		auto pendingResult = std::move(result);
+		auto pendingParams = std::move(params);
 		std::vector<AwaitableResolver> children;
-		const auto parentPath = params.errorPath;
-		auto awaitedResult = co_await result;
+		const auto parentPath = pendingParams.errorPath;
+
+		if (pendingParams.launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
+
+		auto awaitedResult = co_await pendingResult;
 
 		children.reserve(awaitedResult.size());
-		params.errorPath = std::make_optional(
+		pendingParams.errorPath = std::make_optional(
 			field_path { parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
 				path_segment { size_t { 0 } } });
 
@@ -666,30 +731,35 @@ struct ModifiedResult
 			// Copy the values from the std::vector<> rather than moving them.
 			for (typename vector_type::value_type entry : awaitedResult)
 			{
-				children.push_back(
-					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
+					ResolverParams(pendingParams)));
+				++std::get<size_t>(pendingParams.errorPath->segment);
 			}
 		}
 		else
 		{
 			for (auto& entry : awaitedResult)
 			{
-				children.push_back(
-					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
+					ResolverParams(pendingParams)));
+				++std::get<size_t>(pendingParams.errorPath->segment);
 			}
 		}
 
 		ResolverResult document { response::Value { response::Type::List } };
 
 		document.data.reserve(children.size());
-		std::get<size_t>(params.errorPath->segment) = 0;
+		std::get<size_t>(pendingParams.errorPath->segment) = 0;
 
 		for (auto& child : children)
 		{
 			try
 			{
+				if (pendingParams.launch == std::launch::async)
+				{
+					co_await internal::await_async();
+				}
+
 				auto value = co_await child;
 
 				document.data.emplace_back(std::move(value.data));
@@ -712,15 +782,15 @@ struct ModifiedResult
 			{
 				std::ostringstream message;
 
-				message << "Field error name: " << params.fieldName
+				message << "Field error name: " << pendingParams.fieldName
 						<< " unknown error: " << ex.what();
 
 				document.errors.emplace_back(schema_error { message.str(),
-					params.getLocation(),
-					buildErrorPath(params.errorPath) });
+					pendingParams.getLocation(),
+					buildErrorPath(pendingParams.errorPath) });
 			}
 
-			++std::get<size_t>(params.errorPath->segment);
+			++std::get<size_t>(pendingParams.errorPath->segment);
 		}
 
 		co_return document;
@@ -736,11 +806,19 @@ private:
 		static_assert(!std::is_base_of_v<Object, Type>,
 			"ModfiedResult<Object> needs special handling");
 
+		auto pendingResult = std::move(result);
+		auto pendingParams = std::move(params);
+		auto pendingResolver = std::move(resolver);
 		ResolverResult document;
 
 		try
 		{
-			document.data = resolver(co_await result, params);
+			if (pendingParams.launch == std::launch::async)
+			{
+				co_await internal::await_async();
+			}
+
+			document.data = pendingResolver(co_await pendingResult, pendingParams);
 		}
 		catch (schema_exception& scx)
 		{

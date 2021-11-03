@@ -703,19 +703,27 @@ template <>
 AwaitableResolver ModifiedResult<Object>::convert(
 	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params)
 {
-	requireSubFields(params);
+	auto pendingResult = std::move(result);
+	auto pendingParams = std::move(params);
 
-	auto awaitedResult = co_await result;
+	requireSubFields(pendingParams);
+
+	if (pendingParams.launch == std::launch::async)
+	{
+		co_await internal::await_async();
+	}
+
+	auto awaitedResult = co_await pendingResult;
 
 	if (!awaitedResult)
 	{
 		co_return ResolverResult {};
 	}
 
-	auto document = co_await awaitedResult->resolve(params,
-		*params.selection,
-		params.fragments,
-		params.variables);
+	auto document = co_await awaitedResult->resolve(pendingParams,
+		*pendingParams.selection,
+		pendingParams.fragments,
+		pendingParams.variables);
 
 	co_return std::move(document);
 }
@@ -1118,6 +1126,7 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 	endSelectionSet(selectionSetParams);
 
 	auto children = visitor.getValues();
+	const auto launch = selectionSetParams.launch;
 	ResolverResult document { response::Value { response::Type::Map } };
 
 	document.data.reserve(children.size());
@@ -1128,6 +1137,11 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 		try
 		{
+			if (launch == std::launch::async)
+			{
+				co_await internal::await_async();
+			}
+
 			auto value = co_await child.second;
 
 			if (!document.data.emplace_back(std::string { name }, std::move(value.data)))
@@ -1278,9 +1292,14 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 		co_return ResolverResult {};
 	}
 
-	auto result = co_await *_result;
+	auto result = std::move(*_result);
 
-	co_return std::move(result);
+	if (_launch == std::launch::async)
+	{
+		co_await internal::await_async();
+	}
+
+	co_return co_await result;
 }
 
 void OperationDefinitionVisitor::visit(
@@ -1710,6 +1729,11 @@ response::AwaitableValue Request::resolve(std::launch launch,
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
+		if (launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
+
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
 
@@ -1828,6 +1852,11 @@ internal::Awaitable<SubscriptionKey> Request::subscribe(
 
 		try
 		{
+			if (launch == std::launch::async)
+			{
+				co_await internal::await_async();
+			}
+
 			co_await operation->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
@@ -1894,6 +1923,11 @@ internal::Awaitable<void> Request::unsubscribe(std::launch launch, SubscriptionK
 			{},
 			launch,
 		};
+
+		if (launch == std::launch::async)
+		{
+			co_await internal::await_async();
+		}
 
 		co_await operation->resolve(selectionSetParams,
 			registration->selection,
@@ -2088,6 +2122,11 @@ internal::Awaitable<void> Request::deliver(std::launch launch, const Subscriptio
 
 		try
 		{
+			if (launch == std::launch::async)
+			{
+				co_await internal::await_async();
+			}
+
 			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
