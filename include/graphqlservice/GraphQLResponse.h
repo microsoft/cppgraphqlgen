@@ -18,7 +18,7 @@
 #endif // !GRAPHQL_DLLEXPORTS
 // clang-format on
 
-#include "graphqlservice/internal/AwaitableFuture.h"
+#include "graphqlservice/internal/Awaitable.h"
 
 #include <memory>
 #include <string>
@@ -261,7 +261,7 @@ template <>
 GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 #endif // GRAPHQL_DLLEXPORTS
 
-using AwaitableValue = internal::AwaitableFuture<Value>;
+using AwaitableValue = internal::Awaitable<Value>;
 
 } // namespace graphql::response
 

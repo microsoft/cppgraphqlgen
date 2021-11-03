@@ -1803,7 +1803,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	return key;
 }
 
-AwaitableSubscriptionKey Request::subscribe(
+internal::Awaitable<SubscriptionKey> Request::subscribe(
 	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
 	const auto spThis = shared_from_this();
@@ -1874,7 +1874,7 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-AwaitableVoid Request::unsubscribe(std::launch launch, SubscriptionKey key)
+internal::Awaitable<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 {
 	const auto spThis = shared_from_this();
 	const auto itrOperation = spThis->_operations.find(strSubscription);
@@ -1940,7 +1940,7 @@ void Request::deliver(const SubscriptionName& name,
 	deliver(std::launch::deferred, name, applyArguments, applyDirectives, subscriptionObject).get();
 }
 
-AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
+internal::Awaitable<void> Request::deliver(std::launch launch, const SubscriptionName& name,
 	const std::shared_ptr<Object>& subscriptionObject) const
 {
 	return deliver(launch,
@@ -1950,13 +1950,13 @@ AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
 		subscriptionObject);
 }
 
-AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
+internal::Awaitable<void> Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionArguments& arguments, const std::shared_ptr<Object>& subscriptionObject) const
 {
 	return deliver(launch, name, arguments, SubscriptionArguments {}, subscriptionObject);
 }
 
-AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
+internal::Awaitable<void> Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
 	const std::shared_ptr<Object>& subscriptionObject) const
 {
@@ -1977,7 +1977,7 @@ AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
 	return deliver(launch, name, argumentsMatch, directivesMatch, subscriptionObject);
 }
 
-AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
+internal::Awaitable<void> Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyArguments,
 	const std::shared_ptr<Object>& subscriptionObject) const
 {
@@ -1991,7 +1991,7 @@ AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
 		subscriptionObject);
 }
 
-AwaitableVoid Request::deliver(std::launch launch, const SubscriptionName& name,
+internal::Awaitable<void> Request::deliver(std::launch launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyArguments,
 	const SubscriptionFilterCallback& applyDirectives,
 	const std::shared_ptr<Object>& subscriptionObject) const

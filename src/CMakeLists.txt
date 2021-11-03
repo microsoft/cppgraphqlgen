@@ -462,7 +462,7 @@ install(FILES
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/AwaitableFuture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Awaitable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h

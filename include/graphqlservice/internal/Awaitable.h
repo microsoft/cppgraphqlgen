@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef AWAITABLEFUTURE_H
-#define AWAITABLEFUTURE_H
+#ifndef Awaitable_H
+#define Awaitable_H
 
 // clang-format off
 #ifdef USE_STD_EXPERIMENTAL_COROUTINE
@@ -17,42 +17,30 @@
 // clang-format on
 
 #include <future>
-#include <thread>
 #include <type_traits>
 
 namespace graphql::internal {
 
-class AwaitableVoid
+template <typename T>
+class Awaitable;
+
+template<>
+class Awaitable<void>
 {
 public:
-	AwaitableVoid(std::future<void>&& value)
+	Awaitable(std::future<void>&& value)
 		: _value { std::move(value) }
 	{
 	}
 
 	void get()
 	{
-		using namespace std::literals;
-
-		if (_value.wait_for(0s) != std::future_status::timeout)
-		{
-			_value.get();
-		}
-
-		std::promise<void> promise;
-		auto future = promise.get_future();
-
-		std::thread([&promise, self = std::move(*this)]() mutable -> AwaitableVoid {
-			co_await self;
-			promise.set_value();
-		}).detach();
-
-		return future.get();
+		_value.get();
 	}
 
 	struct promise_type
 	{
-		AwaitableVoid get_return_object() noexcept
+		Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -81,19 +69,14 @@ public:
 		std::promise<void> _promise;
 	};
 
-	bool await_ready() const noexcept
+	constexpr bool await_ready() const noexcept
 	{
-		using namespace std::literals;
-
-		return (_value.wait_for(0s) != std::future_status::timeout);
+		return true;
 	}
 
 	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		std::thread([this, h]() mutable {
-			_value.wait();
-			h.resume();
-		}).detach();
+		h.resume();
 	}
 
 	void await_resume()
@@ -106,36 +89,22 @@ private:
 };
 
 template <typename T>
-class AwaitableFuture
+class Awaitable
 {
 public:
-	AwaitableFuture(std::future<T>&& value)
+	Awaitable(std::future<T>&& value)
 		: _value { std::move(value) }
 	{
 	}
 
 	T get()
 	{
-		using namespace std::literals;
-
-		if (_value.wait_for(0s) != std::future_status::timeout)
-		{
-			return _value.get();
-		}
-
-		std::promise<T> promise;
-		auto future = promise.get_future();
-
-		std::thread([&promise, self = std::move(*this)]() mutable -> AwaitableVoid {
-			promise.set_value(co_await self);
-		}).detach();
-
-		return future.get();
+		return _value.get();
 	}
 
 	struct promise_type
 	{
-		AwaitableFuture get_return_object() noexcept
+		Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -169,19 +138,14 @@ public:
 		std::promise<T> _promise;
 	};
 
-	bool await_ready() const noexcept
+	constexpr bool await_ready() const noexcept
 	{
-		using namespace std::literals;
-
-		return (_value.wait_for(0s) != std::future_status::timeout);
+		return true;
 	}
 
 	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		std::thread([this, h]() mutable {
-			_value.wait();
-			h.resume();
-		}).detach();
+		h.resume();
 	}
 
 	T await_resume()
@@ -195,4 +159,4 @@ private:
 
 } // namespace graphql::internal
 
-#endif // AWAITABLEFUTURE_H
+#endif // Awaitable_H
