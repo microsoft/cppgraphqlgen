@@ -724,7 +724,7 @@ AwaitableResolver ModifiedResult<Object>::convert(
 		co_await await_async {};
 	}
 
-	auto awaitedResult = co_await pendingResult;
+	auto awaitedResult = co_await std::move(pendingResult);
 
 	if (!awaitedResult)
 	{
@@ -1153,7 +1153,7 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 				co_await await_async {};
 			}
 
-			auto value = co_await child.second;
+			auto value = co_await std::move(child.second);
 
 			if (!document.data.emplace_back(std::string { name }, std::move(value.data)))
 			{

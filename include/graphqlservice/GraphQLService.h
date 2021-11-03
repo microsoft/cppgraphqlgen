@@ -661,7 +661,7 @@ struct ModifiedResult
 			co_await await_async {};
 		}
 
-		auto awaitedResult = co_await pendingResult;
+		auto awaitedResult = co_await std::move(pendingResult);
 
 		if (!awaitedResult)
 		{
@@ -694,7 +694,7 @@ struct ModifiedResult
 			co_await await_async {};
 		}
 
-		auto awaitedResult = co_await pendingResult;
+		auto awaitedResult = co_await std::move(pendingResult);
 
 		if (!awaitedResult)
 		{
@@ -723,7 +723,7 @@ struct ModifiedResult
 			co_await await_async {};
 		}
 
-		auto awaitedResult = co_await pendingResult;
+		auto awaitedResult = co_await std::move(pendingResult);
 
 		children.reserve(awaitedResult.size());
 		pendingParams.errorPath = std::make_optional(
@@ -769,7 +769,7 @@ struct ModifiedResult
 					co_await await_async {};
 				}
 
-				auto value = co_await child;
+				auto value = co_await std::move(child);
 
 				document.data.emplace_back(std::move(value.data));
 
