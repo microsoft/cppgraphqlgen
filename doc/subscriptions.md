@@ -15,11 +15,12 @@ and `Request::unsubscribe` methods in [GraphQLService.h](../include/graphqlservi
 ```cpp
 GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
 	SubscriptionParams&& params, SubscriptionCallback&& callback);
-GRAPHQLSERVICE_EXPORT std::future<SubscriptionKey> subscribe(
+GRAPHQLSERVICE_EXPORT internal::Awaitable<SubscriptionKey> subscribe(
 	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-GRAPHQLSERVICE_EXPORT std::future<void> unsubscribe(std::launch launch, SubscriptionKey key);
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> unsubscribe(
+	std::launch launch, SubscriptionKey key);
 ```
 You need to fill in a `SubscriptionParams` struct with the [parsed](./parsing.md)
 query and any other relevant operation parameters:
@@ -39,7 +40,7 @@ The `SubscriptionCallback` signature is:
 ```cpp
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
-using SubscriptionCallback = std::function<void(response::AwaitableValue)>;
+using SubscriptionCallback = std::function<void(response::Value&&)>;
 ```
 
 ## `ResolverContext::NotifySubscribe` and `ResolverContext::NotifyUnsubscribe`
@@ -114,25 +115,25 @@ GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 ```
 
 By default, `deliver` invokes all of the `SubscriptionCallback` listeners with
-`std::future` payloads which are resolved on-demand but synchronously, using
-`std::launch::deferred` with the `std::async` function. There's also a version
-of each overload which  lets you substitute the `std::launch::async` option to
-begin executing the queries and invoke the callbacks on multiple threads in
-parallel:
+`std::future` payloads which are resolved on-demand but synchronously. You can
+also use an override of `Request::resolve` which lets you substitute the
+`std::launch::async` option to begin executing the queries and invoke the
+callbacks on multiple threads in parallel:
 ```cpp
-GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
+	const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
+	const SubscriptionName& name, const SubscriptionArguments& arguments,
 	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-	const SubscriptionArguments& arguments,
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
+	const SubscriptionName& name, const SubscriptionArguments& arguments,
+	const SubscriptionArguments& directives,
 	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
+	const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
 	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-	const SubscriptionFilterCallback& applyArguments,
-	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-	const SubscriptionFilterCallback& applyArguments,
+GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
+	const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
 	const SubscriptionFilterCallback& applyDirectives,
 	const std::shared_ptr<Object>& subscriptionObject) const;
 ```

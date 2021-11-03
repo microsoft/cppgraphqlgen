@@ -38,11 +38,10 @@ GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
 	const std::shared_ptr<RequestState>& state, peg::ast& query,
 	const std::string& operationName, response::Value&& variables) const;
 ```
-By default, the `std::future` results are resolved on-demand but synchronously,
-using `std::launch::deferred` with the `std::async` function. You can also use
-an override of `Request::resolve` which lets you substitute the
-`std::launch::async` option to begin executing the query on multiple threads
-in parallel:
+By default, the `std::future` results are resolved on-demand but synchronously.
+You can also use an override of `Request::resolve` which lets you substitute
+the `std::launch::async` option to begin executing the query on multiple
+threads in parallel:
 ```cpp
 GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::launch launch,
 	const std::shared_ptr<RequestState>& state, peg::ast& query,
@@ -70,7 +69,7 @@ recursively call the `resolvers` for each of the `fields` in the nested
 `graphql::today::object::Appointment` object from the `today` sample in
 [AppointmentObject.h](../samples/separate/AppointmentObject.h).
 ```cpp
-std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
+service::AwaitableResolver resolveId(service::ResolverParams&& params);
 ```
 In this example, the `resolveId` method invokes `getId`:
 ```cpp
