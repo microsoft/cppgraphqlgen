@@ -277,7 +277,7 @@ public:
 
 				if constexpr (std::is_same_v<value_type, T>)
 				{
-					return value;
+					return T { std::move(value) };
 				}
 				else if constexpr (std::is_same_v<value_type, std::future<T>>)
 				{
