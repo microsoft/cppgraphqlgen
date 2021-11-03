@@ -257,16 +257,13 @@ public:
 
 	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		using namespace std::literals;
-
-		std::async(
-			std::launch::async,
-			[this](auto h) {
+		std::thread(
+			[this](coro::coroutine_handle<>&& h) noexcept {
 				std::get<std::future<T>>(_value).wait();
 				h.resume();
 			},
 			std::move(h))
-			.wait_for(0s);
+			.detach();
 	}
 
 	T await_resume()
