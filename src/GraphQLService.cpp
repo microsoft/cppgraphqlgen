@@ -590,6 +590,16 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 	return result;
 }
 
+await_async::await_async(std::launch launch) noexcept
+	: _launch { launch }
+{
+}
+
+bool await_async::await_ready() const noexcept
+{
+	return (_launch & std::launch::async) != std::launch::async;
+}
+
 void await_async::await_suspend(coro::coroutine_handle<> h) const
 {
 	std::thread(
@@ -719,10 +729,7 @@ AwaitableResolver ModifiedResult<Object>::convert(
 
 	requireSubFields(pendingParams);
 
-	if ((pendingParams.launch & std::launch::async) == std::launch::async)
-	{
-		co_await await_async {};
-	}
+	co_await await_async { pendingParams.launch };
 
 	auto awaitedResult = co_await std::move(pendingResult);
 
@@ -1148,10 +1155,7 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 		try
 		{
-			if ((launch & std::launch::async) == std::launch::async)
-			{
-				co_await await_async {};
-			}
+			co_await await_async { launch };
 
 			auto value = co_await std::move(child.second);
 
@@ -1305,11 +1309,7 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 
 	auto result = std::move(*_result);
 
-	if ((_launch & std::launch::async) == std::launch::async)
-	{
-		co_await await_async {};
-	}
-
+	co_await await_async { _launch };
 	co_return co_await result;
 }
 
@@ -1740,10 +1740,7 @@ response::AwaitableValue Request::resolve(std::launch launch,
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		if ((launch & std::launch::async) == std::launch::async)
-		{
-			co_await await_async {};
-		}
+		co_await await_async { launch };
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
@@ -1863,11 +1860,7 @@ internal::Awaitable<SubscriptionKey> Request::subscribe(
 
 		try
 		{
-			if ((launch & std::launch::async) == std::launch::async)
-			{
-				co_await await_async {};
-			}
-
+			co_await await_async { launch };
 			co_await operation->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
@@ -1935,11 +1928,7 @@ internal::Awaitable<void> Request::unsubscribe(std::launch launch, SubscriptionK
 			launch,
 		};
 
-		if ((launch & std::launch::async) == std::launch::async)
-		{
-			co_await await_async {};
-		}
-
+		co_await await_async { launch };
 		co_await operation->resolve(selectionSetParams,
 			registration->selection,
 			registration->data->fragments,
@@ -2133,10 +2122,7 @@ internal::Awaitable<void> Request::deliver(std::launch launch, const Subscriptio
 
 		try
 		{
-			if ((launch & std::launch::async) == std::launch::async)
-			{
-				co_await await_async {};
-			}
+			co_await await_async { launch };
 
 			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
