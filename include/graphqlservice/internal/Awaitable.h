@@ -17,7 +17,6 @@
 // clang-format on
 
 #include <future>
-#include <thread>
 #include <type_traits>
 
 namespace graphql::internal {
@@ -157,24 +156,6 @@ public:
 private:
 	std::future<T> _value;
 };
-
-auto await_async() noexcept
-{
-	struct awaitable : coro::suspend_always
-	{
-		void await_suspend(coro::coroutine_handle<> h) const
-		{
-			std::thread(
-				[](coro::coroutine_handle<>&& h) noexcept {
-					h.resume();
-				},
-				std::move(h))
-				.detach();
-		}
-	};
-
-	return awaitable {};
-}
 
 } // namespace graphql::internal
 

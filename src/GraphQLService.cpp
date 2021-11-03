@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <thread>
 
 namespace graphql::service {
 
@@ -589,6 +590,16 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 	return result;
 }
 
+void await_async::await_suspend(coro::coroutine_handle<> h) const
+{
+	std::thread(
+		[](coro::coroutine_handle<>&& h) noexcept {
+			h.resume();
+		},
+		std::move(h))
+		.detach();
+}
+
 void blockSubFields(const ResolverParams& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
@@ -708,9 +719,9 @@ AwaitableResolver ModifiedResult<Object>::convert(
 
 	requireSubFields(pendingParams);
 
-	if (pendingParams.launch == std::launch::async)
+	if ((pendingParams.launch & std::launch::async) == std::launch::async)
 	{
-		co_await internal::await_async();
+		co_await await_async {};
 	}
 
 	auto awaitedResult = co_await pendingResult;
@@ -1137,9 +1148,9 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 		try
 		{
-			if (launch == std::launch::async)
+			if ((launch & std::launch::async) == std::launch::async)
 			{
-				co_await internal::await_async();
+				co_await await_async {};
 			}
 
 			auto value = co_await child.second;
@@ -1294,9 +1305,9 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 
 	auto result = std::move(*_result);
 
-	if (_launch == std::launch::async)
+	if ((_launch & std::launch::async) == std::launch::async)
 	{
-		co_await internal::await_async();
+		co_await await_async {};
 	}
 
 	co_return co_await result;
@@ -1729,9 +1740,9 @@ response::AwaitableValue Request::resolve(std::launch launch,
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		if (launch == std::launch::async)
+		if ((launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		auto result = co_await operationVisitor.getValue();
@@ -1852,9 +1863,9 @@ internal::Awaitable<SubscriptionKey> Request::subscribe(
 
 		try
 		{
-			if (launch == std::launch::async)
+			if ((launch & std::launch::async) == std::launch::async)
 			{
-				co_await internal::await_async();
+				co_await await_async {};
 			}
 
 			co_await operation->resolve(selectionSetParams,
@@ -1924,9 +1935,9 @@ internal::Awaitable<void> Request::unsubscribe(std::launch launch, SubscriptionK
 			launch,
 		};
 
-		if (launch == std::launch::async)
+		if ((launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		co_await operation->resolve(selectionSetParams,
@@ -2122,9 +2133,9 @@ internal::Awaitable<void> Request::deliver(std::launch launch, const Subscriptio
 
 		try
 		{
-			if (launch == std::launch::async)
+			if ((launch & std::launch::async) == std::launch::async)
 			{
-				co_await internal::await_async();
+				co_await await_async {};
 			}
 
 			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,

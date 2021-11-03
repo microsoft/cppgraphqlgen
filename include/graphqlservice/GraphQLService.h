@@ -563,6 +563,15 @@ private:
 	ResolverMap _resolvers;
 };
 
+// Resume coroutine execution on a worker thread. This is used internally to implement the APIs
+// which can take std::launch::async as a parameter.
+struct await_async : coro::suspend_always
+{
+	GRAPHQLSERVICE_EXPORT explicit await_async() noexcept = default;
+
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+};
+
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
 template <typename Type>
@@ -613,9 +622,9 @@ struct ModifiedResult
 		auto pendingResult = std::move(result);
 		auto pendingParams = std::move(params);
 
-		if (pendingParams.launch == std::launch::async)
+		if ((pendingParams.launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
@@ -647,9 +656,9 @@ struct ModifiedResult
 		auto pendingResult = std::move(result);
 		auto pendingParams = std::move(params);
 
-		if (pendingParams.launch == std::launch::async)
+		if ((pendingParams.launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		auto awaitedResult = co_await pendingResult;
@@ -680,9 +689,9 @@ struct ModifiedResult
 		auto pendingResult = std::move(result);
 		auto pendingParams = std::move(params);
 
-		if (pendingParams.launch == std::launch::async)
+		if ((pendingParams.launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		auto awaitedResult = co_await pendingResult;
@@ -709,9 +718,9 @@ struct ModifiedResult
 		std::vector<AwaitableResolver> children;
 		const auto parentPath = pendingParams.errorPath;
 
-		if (pendingParams.launch == std::launch::async)
+		if ((pendingParams.launch & std::launch::async) == std::launch::async)
 		{
-			co_await internal::await_async();
+			co_await await_async {};
 		}
 
 		auto awaitedResult = co_await pendingResult;
@@ -755,9 +764,9 @@ struct ModifiedResult
 		{
 			try
 			{
-				if (pendingParams.launch == std::launch::async)
+				if ((pendingParams.launch & std::launch::async) == std::launch::async)
 				{
-					co_await internal::await_async();
+					co_await await_async {};
 				}
 
 				auto value = co_await child;
@@ -813,9 +822,9 @@ private:
 
 		try
 		{
-			if (pendingParams.launch == std::launch::async)
+			if ((pendingParams.launch & std::launch::async) == std::launch::async)
 			{
-				co_await internal::await_async();
+				co_await await_async {};
 			}
 
 			document.data = pendingResolver(co_await pendingResult, pendingParams);
