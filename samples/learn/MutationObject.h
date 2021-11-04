@@ -19,7 +19,7 @@ protected:
 	explicit Mutation();
 
 public:
-	virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const;
+	virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
 
 private:
 	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params);

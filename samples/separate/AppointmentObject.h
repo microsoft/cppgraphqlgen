@@ -20,7 +20,7 @@ protected:
 	explicit Appointment();
 
 public:
-	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
+	service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const;

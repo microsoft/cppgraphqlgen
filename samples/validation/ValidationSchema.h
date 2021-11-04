@@ -108,7 +108,7 @@ protected:
 	explicit Dog();
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const;
 	virtual service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const;
@@ -134,7 +134,7 @@ protected:
 	explicit Alien();
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const;
 
 private:
@@ -152,7 +152,7 @@ protected:
 	explicit Human();
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const;
 
 private:
@@ -170,7 +170,7 @@ protected:
 	explicit Cat();
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const;
 	virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const;

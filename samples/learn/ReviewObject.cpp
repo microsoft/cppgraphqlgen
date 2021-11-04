@@ -29,11 +29,6 @@ Review::Review()
 {
 }
 
-service::FieldResult<response::IntType> Review::getStars(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Review::getStars is not implemented)ex");
-}
-
 service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -42,11 +37,6 @@ service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Review::getCommentary(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Review::getCommentary is not implemented)ex");
 }
 
 service::AwaitableResolver Review::resolveCommentary(service::ResolverParams&& params)

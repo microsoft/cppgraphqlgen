@@ -33,11 +33,6 @@ Query::Query()
 {
 }
 
-service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(service::FieldParams&&, std::optional<Episode>&&) const
-{
-	throw std::runtime_error(R"ex(Query::getHero is not implemented)ex");
-}
-
 service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 {
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);
@@ -49,11 +44,6 @@ service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParams&&, response::StringType&&) const
-{
-	throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
-}
-
 service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
@@ -63,11 +53,6 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::shared_ptr<Droid>> Query::getDroid(service::FieldParams&&, response::StringType&&) const
-{
-	throw std::runtime_error(R"ex(Query::getDroid is not implemented)ex");
 }
 
 service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)

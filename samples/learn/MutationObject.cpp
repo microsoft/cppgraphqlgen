@@ -28,11 +28,6 @@ Mutation::Mutation()
 {
 }
 
-service::FieldResult<std::shared_ptr<Review>> Mutation::applyCreateReview(service::FieldParams&&, Episode&&, ReviewInput&&) const
-{
-	throw std::runtime_error(R"ex(Mutation::applyCreateReview is not implemented)ex");
-}
-
 service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params)
 {
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);

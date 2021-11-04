@@ -20,7 +20,7 @@ protected:
 	explicit Task();
 
 public:
-	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
+	service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
 	virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const;
 	virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
 

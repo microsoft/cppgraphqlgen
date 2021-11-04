@@ -524,7 +524,15 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual service::FieldResult<)cpp" << _loader.getOutputCppType(outputField)
+	output << R"cpp(	)cpp";
+
+	if (outputField.interfaceField || _loader.isIntrospection() || _options.noStubs
+		|| !outputField.inheritedField)
+	{
+		output << R"cpp(virtual )cpp";
+	}
+
+	output << R"cpp(service::FieldResult<)cpp" << _loader.getOutputCppType(outputField)
 		   << R"cpp(> )cpp" << outputField.accessor << fieldName
 		   << R"cpp((service::FieldParams&& params)cpp";
 
@@ -1529,11 +1537,12 @@ service::AwaitableResolver )cpp"
 			}
 		}
 
-		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
+		sourceFile
+			<< R"cpp(	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = )cpp"
-				   << outputField.accessor << fieldName
-				   << R"cpp((service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
+			<< outputField.accessor << fieldName
+			<< R"cpp((service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
 
 		if (!outputField.arguments.empty())
 		{

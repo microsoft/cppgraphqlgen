@@ -33,11 +33,6 @@ Human::Human()
 {
 }
 
-service::FieldResult<response::StringType> Human::getId(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getId is not implemented)ex");
-}
-
 service::AwaitableResolver Human::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -46,11 +41,6 @@ service::AwaitableResolver Human::resolveId(service::ResolverParams&& params)
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Human::getName(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
 }
 
 service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
@@ -63,11 +53,6 @@ service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Human::getFriends(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getFriends is not implemented)ex");
-}
-
 service::AwaitableResolver Human::resolveFriends(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -78,11 +63,6 @@ service::AwaitableResolver Human::resolveFriends(service::ResolverParams&& param
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::getAppearsIn(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getAppearsIn is not implemented)ex");
-}
-
 service::AwaitableResolver Human::resolveAppearsIn(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -91,11 +71,6 @@ service::AwaitableResolver Human::resolveAppearsIn(service::ResolverParams&& par
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Episode>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Human::getHomePlanet(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getHomePlanet is not implemented)ex");
 }
 
 service::AwaitableResolver Human::resolveHomePlanet(service::ResolverParams&& params)

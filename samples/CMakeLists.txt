@@ -79,11 +79,11 @@ if(GRAPHQL_UPDATE_SAMPLES)
 
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/learn/learn_schema_files
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.learn.graphql" --prefix="StarWars" --namespace="learn" --separate-files > learn_schema_files
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.learn.graphql" --prefix="StarWars" --namespace="learn" --no-stubs --separate-files > learn_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different learn_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/learn
     DEPENDS schemagen graphqlpeg schema.learn.graphql
     WORKING_DIRECTORY learn
-    COMMENT "Generating mock StarWarsSchema (--separate-files)")
+    COMMENT "Generating mock StarWarsSchema (--no-stubs --separate-files)")
 
   add_custom_command(
     OUTPUT updated_samples

@@ -20,11 +20,7 @@ protected:
 	explicit Human();
 
 public:
-	virtual service::FieldResult<response::StringType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
 
 private:
 	service::AwaitableResolver resolveId(service::ResolverParams&& params);

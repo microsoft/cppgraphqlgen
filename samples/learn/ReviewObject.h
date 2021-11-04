@@ -19,8 +19,8 @@ protected:
 	explicit Review();
 
 public:
-	virtual service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const;
+	virtual service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const = 0;
 
 private:
 	service::AwaitableResolver resolveStars(service::ResolverParams&& params);

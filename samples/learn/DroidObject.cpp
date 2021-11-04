@@ -33,11 +33,6 @@ Droid::Droid()
 {
 }
 
-service::FieldResult<response::StringType> Droid::getId(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getId is not implemented)ex");
-}
-
 service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -46,11 +41,6 @@ service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Droid::getName(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getName is not implemented)ex");
 }
 
 service::AwaitableResolver Droid::resolveName(service::ResolverParams&& params)
@@ -63,11 +53,6 @@ service::AwaitableResolver Droid::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Droid::getFriends(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getFriends is not implemented)ex");
-}
-
 service::AwaitableResolver Droid::resolveFriends(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -78,11 +63,6 @@ service::AwaitableResolver Droid::resolveFriends(service::ResolverParams&& param
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::getAppearsIn(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getAppearsIn is not implemented)ex");
-}
-
 service::AwaitableResolver Droid::resolveAppearsIn(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -91,11 +71,6 @@ service::AwaitableResolver Droid::resolveAppearsIn(service::ResolverParams&& par
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Episode>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Droid::getPrimaryFunction(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getPrimaryFunction is not implemented)ex");
 }
 
 service::AwaitableResolver Droid::resolvePrimaryFunction(service::ResolverParams&& params)
