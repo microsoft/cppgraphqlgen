@@ -26,15 +26,15 @@ public:
 
 	// Accessors
 	service::FieldResult<std::vector<std::shared_ptr<object::Type>>> getTypes(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getQueryType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getMutationType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getSubscriptionType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> getDirectives(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<schema::Schema> _schema;
@@ -46,25 +46,25 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<const schema::BaseType>& type);
 
 	// Accessors
-	service::FieldResult<TypeKind> getKind(service::FieldParams&&) const override;
+	service::FieldResult<TypeKind> getKind(service::FieldParams&&) const final;
 	service::FieldResult<std::optional<response::StringType>> getName(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDescription(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> getFields(
 		service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const override;
+		std::optional<response::BooleanType>&& includeDeprecatedArg) const final;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> getInterfaces(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>>
-	getPossibleTypes(service::FieldParams&& params) const override;
+	getPossibleTypes(service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue>>>>
 	getEnumValues(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const override;
+		std::optional<response::BooleanType>&& includeDeprecatedArg) const final;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValue>>>>
-	getInputFields(service::FieldParams&& params) const override;
+	getInputFields(service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getOfType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<const schema::BaseType> _type;
@@ -76,18 +76,17 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<const schema::Field>& field);
 
 	// Accessors
-	service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDescription(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> getArgs(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<response::BooleanType> getIsDeprecated(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDeprecationReason(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<const schema::Field> _field;
@@ -100,14 +99,13 @@ public:
 		const std::shared_ptr<const schema::InputValue>& inputValue);
 
 	// Accessors
-	service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDescription(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::shared_ptr<object::Type>> getType(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDefaultValue(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<const schema::InputValue> _inputValue;
@@ -120,14 +118,13 @@ public:
 		const std::shared_ptr<const schema::EnumValue>& enumValue);
 
 	// Accessors
-	service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDescription(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<response::BooleanType> getIsDeprecated(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDeprecationReason(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<const schema::EnumValue> _enumValue;
@@ -140,14 +137,13 @@ public:
 		const std::shared_ptr<const schema::Directive>& directive);
 
 	// Accessors
-	service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const override;
+	service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final;
 	service::FieldResult<std::optional<response::StringType>> getDescription(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<DirectiveLocation>> getLocations(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 	service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> getArgs(
-		service::FieldParams&& params) const override;
+		service::FieldParams&& params) const final;
 
 private:
 	const std::shared_ptr<const schema::Directive> _directive;

@@ -59,7 +59,7 @@ struct Response
 	std::optional<nextAppointment_Appointment> nextAppointment {};
 };
 
-Response parseResponse(response::Value&& response);
+Response parseResponse(response::Value response);
 
 } // namespace graphql::client::subscription::TestSubscription
 

@@ -28,7 +28,7 @@ template <>
 class Awaitable<void>
 {
 public:
-	Awaitable(std::future<void>&& value)
+	Awaitable(std::future<void> value)
 		: _value { std::move(value) }
 	{
 	}
@@ -92,7 +92,7 @@ template <typename T>
 class Awaitable
 {
 public:
-	Awaitable(std::future<T>&& value)
+	Awaitable(std::future<T> value)
 		: _value { std::move(value) }
 	{
 	}

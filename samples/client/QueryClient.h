@@ -176,7 +176,7 @@ struct Response
 	std::vector<std::optional<anyType_UnionType>> anyType {};
 };
 
-Response parseResponse(response::Value&& response);
+Response parseResponse(response::Value response);
 
 } // namespace graphql::client::query::Query
 

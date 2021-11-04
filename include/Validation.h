@@ -170,7 +170,7 @@ private:
 class ValidateExecutableVisitor
 {
 public:
-	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema);
+	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(std::shared_ptr<schema::Schema> schema);
 
 	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& root);
 

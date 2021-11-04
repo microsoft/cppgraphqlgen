@@ -358,7 +358,7 @@ ValidateType ValidateVariableTypeVisitor::getType()
 	return result;
 }
 
-ValidateExecutableVisitor::ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema)
+ValidateExecutableVisitor::ValidateExecutableVisitor(std::shared_ptr<schema::Schema> schema)
 	: _schema(schema)
 {
 	const auto& queryType = _schema->queryType();

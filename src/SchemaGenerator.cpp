@@ -410,7 +410,7 @@ GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<)cpp"
 						   << R"cpp(>::convert(
 	FieldResult<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>&& result, ResolverParams&& params);
+						   << R"cpp(> result, ResolverParams params);
 )cpp";
 			}
 
@@ -661,7 +661,7 @@ service::AwaitableResolver ModifiedResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::FieldResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>&& result, ResolverParams&& params)
+					   << R"cpp(> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[]()cpp" << _loader.getSchemaNamespace()

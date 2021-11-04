@@ -82,7 +82,7 @@ struct Response
 	appointments_AppointmentConnection appointments {};
 };
 
-Response parseResponse(response::Value&& response);
+Response parseResponse(response::Value response);
 
 } // namespace graphql::client::query::Query
 
