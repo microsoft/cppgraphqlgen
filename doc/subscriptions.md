@@ -15,12 +15,11 @@ and `Request::unsubscribe` methods in [GraphQLService.h](../include/graphqlservi
 ```cpp
 GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
 	SubscriptionParams&& params, SubscriptionCallback&& callback);
-GRAPHQLSERVICE_EXPORT internal::Awaitable<SubscriptionKey> subscribe(
+GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> unsubscribe(
-	std::launch launch, SubscriptionKey key);
+GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(std::launch launch, SubscriptionKey key);
 ```
 You need to fill in a `SubscriptionParams` struct with the [parsed](./parsing.md)
 query and any other relevant operation parameters:
@@ -120,22 +119,20 @@ also use an override of `Request::resolve` which lets you substitute the
 `std::launch::async` option to begin executing the queries and invoke the
 callbacks on multiple threads in parallel:
 ```cpp
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-	const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-	const SubscriptionName& name, const SubscriptionArguments& arguments,
-	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-	const SubscriptionName& name, const SubscriptionArguments& arguments,
-	const SubscriptionArguments& directives,
-	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-	const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
-	const std::shared_ptr<Object>& subscriptionObject) const;
-GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-	const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
+GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	std::shared_ptr<Object> subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+	std::shared_ptr<Object> subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
+	std::shared_ptr<Object> subscriptionObject) const;
+GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	const SubscriptionFilterCallback& applyArguments,
 	const SubscriptionFilterCallback& applyDirectives,
-	const std::shared_ptr<Object>& subscriptionObject) const;
+	std::shared_ptr<Object> subscriptionObject) const;
 ```
 
 ## Handling Multiple Operation Types

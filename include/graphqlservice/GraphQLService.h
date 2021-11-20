@@ -902,6 +902,10 @@ using SubscriptionFilterCallback = std::function<bool(response::MapType::const_r
 using SubscriptionKey = size_t;
 using SubscriptionName = std::string;
 
+using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
+using AwaitableUnsubscribe = internal::Awaitable<void>;
+using AwaitableDeliver = internal::Awaitable<void>;
+
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
@@ -948,18 +952,16 @@ public:
 
 	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
 		SubscriptionParams&& params, SubscriptionCallback&& callback);
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<SubscriptionKey> subscribe(
+	GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 		std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> unsubscribe(
-		std::launch launch, SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(std::launch launch, SubscriptionKey key);
 
 	GRAPHQLSERVICE_EXPORT void deliver(
 		const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArguments& arguments,
-		std::shared_ptr<Object> subscriptionObject) const;
+		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
 		std::shared_ptr<Object> subscriptionObject) const;
@@ -971,20 +973,18 @@ public:
 		const SubscriptionFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;
 
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-		const SubscriptionName& name, std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-		const SubscriptionName& name, const SubscriptionArguments& arguments,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-		const SubscriptionName& name, const SubscriptionArguments& arguments,
-		const SubscriptionArguments& directives,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-		const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		const SubscriptionFilterCallback& applyArguments,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT internal::Awaitable<void> deliver(std::launch launch,
-		const SubscriptionName& name, const SubscriptionFilterCallback& applyArguments,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		const SubscriptionFilterCallback& applyArguments,
 		const SubscriptionFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;
 
