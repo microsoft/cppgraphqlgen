@@ -12,25 +12,24 @@
 
 namespace graphql::learn {
 
-class Human : public object::Human
+class Human
 {
 public:
 	explicit Human(response::StringType id, std::optional<response::StringType> name,
-		std::vector<Episode> appearsIn,
-		std::optional<response::StringType> homePlanet) noexcept;
+		std::vector<Episode> appearsIn, std::optional<response::StringType> homePlanet) noexcept;
 
 	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;
 
-	service::FieldResult<response::StringType> getId(service::FieldParams&& params) const final;
+	service::FieldResult<response::StringType> getId(service::FieldParams&& params) const;
 	service::FieldResult<std::optional<response::StringType>> getName(
-		service::FieldParams&& params) const final;
+		service::FieldParams&& params) const;
 	service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(
-		service::FieldParams&& params) const final;
+		service::FieldParams&& params) const;
 	service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(
-		service::FieldParams&& params) const final;
+		service::FieldParams&& params) const;
 	service::FieldResult<std::optional<response::StringType>> getHomePlanet(
-		service::FieldParams&& params) const final;
+		service::FieldParams&& params) const;
 
 private:
 	const response::StringType id_;

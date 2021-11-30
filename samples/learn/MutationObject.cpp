@@ -18,13 +18,18 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Mutation::Mutation()
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Mutation"
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(createReview)gql"sv, [this](service::ResolverParams&& params) { return resolveCreateReview(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
+{
+}
+
+Mutation::~Mutation()
 {
 }
 
@@ -34,7 +39,7 @@ service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
+	auto result = _pimpl->applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));

@@ -14,22 +14,61 @@ namespace graphql::today::object {
 
 class Task
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Task();
-
-public:
-	service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveId(service::ResolverParams&& params);
 	service::AwaitableResolver resolveTitle(service::ResolverParams&& params);
 	service::AwaitableResolver resolveIsComplete(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			return _pimpl->getId(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
+		{
+			return _pimpl->getTitle(std::move(params));
+		}
+
+		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
+		{
+			return _pimpl->getIsComplete(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Task(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Task(std::shared_ptr<T> pimpl)
+		: Task { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Task();
 };
 
 } // namespace graphql::today::object

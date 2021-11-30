@@ -14,14 +14,7 @@ namespace graphql::learn::object {
 
 class Droid
 	: public service::Object
-	, public Character
 {
-protected:
-	explicit Droid();
-
-public:
-	virtual service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const = 0;
-
 private:
 	service::AwaitableResolver resolveId(service::ResolverParams&& params);
 	service::AwaitableResolver resolveName(service::ResolverParams&& params);
@@ -30,6 +23,63 @@ private:
 	service::AwaitableResolver resolvePrimaryFunction(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Character
+	{
+		virtual service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::StringType> getId(service::FieldParams&& params) const final
+		{
+			return _pimpl->getId(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		{
+			return _pimpl->getName(std::move(params));
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const final
+		{
+			return _pimpl->getFriends(std::move(params));
+		}
+
+		service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
+		{
+			return _pimpl->getAppearsIn(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const final
+		{
+			return _pimpl->getPrimaryFunction(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Droid(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Droid(std::shared_ptr<T> pimpl)
+		: Droid { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Droid();
 };
 
 } // namespace graphql::learn::object

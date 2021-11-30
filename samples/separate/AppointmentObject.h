@@ -14,18 +14,7 @@ namespace graphql::today::object {
 
 class Appointment
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Appointment();
-
-public:
-	service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveId(service::ResolverParams&& params);
 	service::AwaitableResolver resolveWhen(service::ResolverParams&& params);
@@ -34,6 +23,66 @@ private:
 	service::AwaitableResolver resolveForceError(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			return _pimpl->getId(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		{
+			return _pimpl->getWhen(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
+		{
+			return _pimpl->getSubject(std::move(params));
+		}
+
+		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
+		{
+			return _pimpl->getIsNow(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
+		{
+			return _pimpl->getForceError(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Appointment(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Appointment(std::shared_ptr<T> pimpl)
+		: Appointment { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Appointment();
 };
 
 } // namespace graphql::today::object

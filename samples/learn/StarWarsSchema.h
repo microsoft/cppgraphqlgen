@@ -58,6 +58,12 @@ class Operations
 public:
 	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation);
 
+	template <class TQuery, class TMutation>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
+		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)) }
+	{
+	}
+
 private:
 	std::shared_ptr<object::Query> _query;
 	std::shared_ptr<object::Mutation> _mutation;

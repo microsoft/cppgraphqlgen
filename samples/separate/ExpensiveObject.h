@@ -15,16 +15,46 @@ namespace graphql::today::object {
 class Expensive
 	: public service::Object
 {
-protected:
-	explicit Expensive();
-
-public:
-	virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveOrder(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
+		{
+			return _pimpl->getOrder(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Expensive(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Expensive(std::shared_ptr<T> pimpl)
+		: Expensive { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Expensive();
 };
 
 } // namespace graphql::today::object

@@ -15,16 +15,46 @@ namespace graphql::learn::object {
 class Mutation
 	: public service::Object
 {
-protected:
-	explicit Mutation();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
-
 private:
 	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
+		{
+			return _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Mutation(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Mutation(std::shared_ptr<T> pimpl)
+		: Mutation { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Mutation();
 };
 
 } // namespace graphql::learn::object

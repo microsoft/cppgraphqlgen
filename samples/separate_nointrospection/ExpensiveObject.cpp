@@ -18,26 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Expensive::Expensive()
+Expensive::Expensive(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Expensive"
 	}, {
 		{ R"gql(order)gql"sv, [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams&&) const
+Expensive::~Expensive()
 {
-	throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
 }
 
 service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getOrder(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getOrder(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));

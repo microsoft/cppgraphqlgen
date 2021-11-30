@@ -58,11 +58,22 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 
 	std::transform(friends_.begin(),
 		friends_.end(),
-		std::back_inserter(result),
+		result.begin(),
 		[](const auto& wpFriend) noexcept {
 			return std::visit(
 				[](const auto& hero) noexcept {
-					return std::static_pointer_cast<service::Object>(hero.lock());
+					using hero_t = std::decay_t<decltype(hero)>;
+
+					if constexpr (std::is_same_v<std::weak_ptr<Human>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Human>(hero.lock()));
+					}
+					else if constexpr (std::is_same_v<std::weak_ptr<Droid>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Droid>(hero.lock()));
+					}
 				},
 				wpFriend);
 		});

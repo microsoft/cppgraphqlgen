@@ -177,21 +177,21 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
 
 	if (appointment)
 	{
-		co_return appointment;
+		co_return std::make_shared<object::Appointment>(std::move(appointment));
 	}
 
 	auto task = findTask(params, id);
 
 	if (task)
 	{
-		co_return task;
+		co_return std::make_shared<object::Task>(std::move(task));
 	}
 
 	auto folder = findUnreadCount(params, id);
 
 	if (folder)
 	{
-		co_return folder;
+		co_return std::make_shared<object::Folder>(std::move(folder));
 	}
 
 	co_return nullptr;
@@ -311,7 +311,7 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 				lastWrapped,
 				std::move(beforeWrapped));
 
-			return std::static_pointer_cast<object::AppointmentConnection>(connection);
+			return std::make_shared<object::AppointmentConnection>(connection);
 		},
 		std::move(first),
 		std::move(after),
@@ -340,7 +340,7 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 				lastWrapped,
 				std::move(beforeWrapped));
 
-			return std::static_pointer_cast<object::TaskConnection>(connection);
+			return std::make_shared<object::TaskConnection>(connection);
 		},
 		std::move(first),
 		std::move(after),
@@ -369,7 +369,7 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 				lastWrapped,
 				std::move(beforeWrapped));
 
-			return std::static_pointer_cast<object::FolderConnection>(connection);
+			return std::make_shared<object::FolderConnection>(connection);
 		},
 		std::move(first),
 		std::move(after),
@@ -387,7 +387,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Appointment>>> Query::g
 		ids.cend(),
 		result.begin(),
 		[this, &params](const response::IdType& id) {
-			return std::static_pointer_cast<object::Appointment>(findAppointment(params, id));
+			return std::make_shared<object::Appointment>(findAppointment(params, id));
 		});
 	promise.set_value(std::move(result));
 
@@ -404,7 +404,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Task>>> Query::getTasks
 		ids.cend(),
 		result.begin(),
 		[this, &params](const response::IdType& id) {
-			return std::static_pointer_cast<object::Task>(findTask(params, id));
+			return std::make_shared<object::Task>(findTask(params, id));
 		});
 	promise.set_value(std::move(result));
 
@@ -421,7 +421,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Folder>>> Query::getUnr
 		ids.cend(),
 		result.begin(),
 		[this, &params](const response::IdType& id) {
-			return std::static_pointer_cast<object::Folder>(findUnreadCount(params, id));
+			return std::make_shared<object::Folder>(findUnreadCount(params, id));
 		});
 	promise.set_value(std::move(result));
 
@@ -433,7 +433,8 @@ service::FieldResult<std::shared_ptr<object::NestedType>> Query::getNested(
 {
 	std::promise<std::shared_ptr<object::NestedType>> promise;
 
-	promise.set_value(std::make_shared<NestedType>(std::move(params), 1));
+	promise.set_value(
+		std::make_shared<object::NestedType>(std::make_shared<NestedType>(std::move(params), 1)));
 
 	return promise.get_future();
 }
@@ -445,7 +446,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::get
 
 	for (auto& entry : result)
 	{
-		entry = std::make_shared<Expensive>();
+		entry = std::make_shared<object::Expensive>(std::make_shared<Expensive>());
 	}
 
 	return result;
@@ -466,8 +467,9 @@ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAn
 	std::transform(_appointments.cbegin(),
 		_appointments.cend(),
 		result.begin(),
-		[](const std::shared_ptr<object::Appointment>& appointment) noexcept {
-			return std::static_pointer_cast<service::Object>(appointment);
+		[](const auto& appointment) noexcept {
+			return std::static_pointer_cast<service::Object>(
+				std::make_shared<object::Appointment>(appointment));
 		});
 
 	return result;
@@ -479,11 +481,12 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 }
 
 service::FieldResult<std::shared_ptr<object::CompleteTaskPayload>> Mutation::applyCompleteTask(
-	service::FieldParams&& params, CompleteTaskInput&& input) const
+	service::FieldParams&& params, CompleteTaskInput&& input)
 {
 	std::promise<std::shared_ptr<object::CompleteTaskPayload>> promise;
 
-	promise.set_value(_mutateCompleteTask(std::move(input)));
+	promise.set_value(
+		std::make_shared<object::CompleteTaskPayload>(_mutateCompleteTask(std::move(input))));
 
 	return promise.get_future();
 }
@@ -496,7 +499,7 @@ double Mutation::getFloat() noexcept
 }
 
 service::FieldResult<response::FloatType> Mutation::applySetFloat(
-	service::FieldParams&& params, response::FloatType&& valueArg) const
+	service::FieldParams&& params, response::FloatType&& valueArg)
 {
 	_setFloat = std::make_optional(valueArg);
 	return valueArg;
@@ -528,7 +531,8 @@ service::FieldResult<std::shared_ptr<object::NestedType>> NestedType::getNested(
 {
 	std::promise<std::shared_ptr<object::NestedType>> promise;
 
-	promise.set_value(std::make_shared<NestedType>(std::move(params), depth + 1));
+	promise.set_value(std::make_shared<object::NestedType>(
+		std::make_shared<NestedType>(std::move(params), depth + 1)));
 
 	return promise.get_future();
 }

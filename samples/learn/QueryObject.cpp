@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Query::Query()
+Query::Query(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Query"
 	}, {
@@ -30,6 +30,11 @@ Query::Query()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _schema(GetSchema())
+	, _pimpl(std::move(pimpl))
+{
+}
+
+Query::~Query()
 {
 }
 
@@ -38,7 +43,7 @@ service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHero(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEpisode));
+	auto result = _pimpl->getHero(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEpisode));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -49,7 +54,7 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
+	auto result = _pimpl->getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -60,7 +65,7 @@ service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getDroid(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
+	auto result = _pimpl->getDroid(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Droid>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -73,14 +78,14 @@ service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& par
 
 service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::Schema>(_schema)), std::move(params));
+	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::object::Schema>(std::make_shared<introspection::Schema>(_schema))), std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 {
 	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
-	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::Type>(baseType) : nullptr };
+	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::object::Type>(std::make_shared<introspection::Type>(baseType)) : nullptr };
 
 	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
 }

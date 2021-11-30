@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Appointment::Appointment()
+Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Node",
 		"UnionType",
@@ -31,79 +31,59 @@ Appointment::Appointment()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(forceError)gql"sv, [this](service::ResolverParams&& params) { return resolveForceError(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::IdType> Appointment::getId(service::FieldParams&&) const
+Appointment::~Appointment()
 {
-	throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
 }
 
 service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::Value>> Appointment::getWhen(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
 }
 
 service::AwaitableResolver Appointment::resolveWhen(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getWhen(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getWhen(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Appointment::getSubject(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
 }
 
 service::AwaitableResolver Appointment::resolveSubject(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getSubject(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getSubject(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<response::BooleanType> Appointment::getIsNow(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
 }
 
 service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getIsNow(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getIsNow(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Appointment::getForceError(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
 }
 
 service::AwaitableResolver Appointment::resolveForceError(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getForceError(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getForceError(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

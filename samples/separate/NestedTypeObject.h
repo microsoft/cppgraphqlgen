@@ -15,18 +15,53 @@ namespace graphql::today::object {
 class NestedType
 	: public service::Object
 {
-protected:
-	explicit NestedType();
-
-public:
-	virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveDepth(service::ResolverParams&& params);
 	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
+		{
+			return _pimpl->getDepth(std::move(params));
+		}
+
+		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
+		{
+			return _pimpl->getNested(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	NestedType(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	NestedType(std::shared_ptr<T> pimpl)
+		: NestedType { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~NestedType();
 };
 
 } // namespace graphql::today::object

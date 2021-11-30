@@ -14,22 +14,61 @@ namespace graphql::today::object {
 
 class Folder
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Folder();
-
-public:
-	service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveId(service::ResolverParams&& params);
 	service::AwaitableResolver resolveName(service::ResolverParams&& params);
 	service::AwaitableResolver resolveUnreadCount(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			return _pimpl->getId(std::move(params));
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		{
+			return _pimpl->getName(std::move(params));
+		}
+
+		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
+		{
+			return _pimpl->getUnreadCount(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Folder(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Folder(std::shared_ptr<T> pimpl)
+		: Folder { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Folder();
 };
 
 } // namespace graphql::today::object

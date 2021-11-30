@@ -15,18 +15,53 @@ namespace graphql::today::object {
 class TaskEdge
 	: public service::Object
 {
-protected:
-	explicit TaskEdge();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
-
 private:
 	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
 	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
+		{
+			return _pimpl->getNode(std::move(params));
+		}
+
+		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
+		{
+			return _pimpl->getCursor(std::move(params));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	TaskEdge(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	TaskEdge(std::shared_ptr<T> pimpl)
+		: TaskEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~TaskEdge();
 };
 
 } // namespace graphql::today::object

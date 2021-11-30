@@ -13,7 +13,7 @@
 
 namespace graphql::learn {
 
-class Query : public object::Query
+class Query
 {
 public:
 	explicit Query(std::map<Episode, SharedHero> heroes,
@@ -21,11 +21,11 @@ public:
 		std::map<response::StringType, std::shared_ptr<Droid>> droids) noexcept;
 
 	service::FieldResult<std::shared_ptr<service::Object>> getHero(
-		service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final;
+		service::FieldParams&& params, std::optional<Episode>&& episodeArg) const;
 	service::FieldResult<std::shared_ptr<object::Human>> getHuman(
-		service::FieldParams&& params, response::StringType&& idArg) const final;
+		service::FieldParams&& params, response::StringType&& idArg) const;
 	service::FieldResult<std::shared_ptr<object::Droid>> getDroid(
-		service::FieldParams&& params, response::StringType&& idArg) const final;
+		service::FieldParams&& params, response::StringType&& idArg) const;
 
 private:
 	const std::map<Episode, SharedHero> heroes_;

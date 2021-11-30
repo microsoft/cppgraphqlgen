@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-NestedType::NestedType()
+NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"NestedType"
 	}, {
@@ -26,34 +26,29 @@ NestedType::NestedType()
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParams&&) const
+NestedType::~NestedType()
 {
-	throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
 }
 
 service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getDepth(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDepth(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::shared_ptr<NestedType>> NestedType::getNested(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
 }
 
 service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNested(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNested(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));

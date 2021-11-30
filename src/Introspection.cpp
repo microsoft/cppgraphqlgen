@@ -17,7 +17,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getType
 	std::vector<std::shared_ptr<object::Type>> result(types.size());
 
 	std::transform(types.begin(), types.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<Type>(entry.second);
+		return std::make_shared<object::Type>(std::make_shared<Type>(entry.second));
 	});
 
 	return result;
@@ -28,7 +28,7 @@ service::FieldResult<std::shared_ptr<object::Type>> Schema::getQueryType(
 {
 	const auto& queryType = _schema->queryType();
 
-	return queryType ? std::make_shared<Type>(queryType) : nullptr;
+	return queryType ? std::make_shared<object::Type>(std::make_shared<Type>(queryType)) : nullptr;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Schema::getMutationType(
@@ -36,7 +36,8 @@ service::FieldResult<std::shared_ptr<object::Type>> Schema::getMutationType(
 {
 	const auto& mutationType = _schema->mutationType();
 
-	return mutationType ? std::make_shared<Type>(mutationType) : nullptr;
+	return mutationType ? std::make_shared<object::Type>(std::make_shared<Type>(mutationType))
+						: nullptr;
 }
 
 service::FieldResult<std::shared_ptr<object::Type>> Schema::getSubscriptionType(
@@ -44,7 +45,9 @@ service::FieldResult<std::shared_ptr<object::Type>> Schema::getSubscriptionType(
 {
 	const auto& subscriptionType = _schema->subscriptionType();
 
-	return subscriptionType ? std::make_shared<Type>(subscriptionType) : nullptr;
+	return subscriptionType
+		? std::make_shared<object::Type>(std::make_shared<Type>(subscriptionType))
+		: nullptr;
 }
 
 service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> Schema::getDirectives(
@@ -54,7 +57,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> Schema::ge
 	std::vector<std::shared_ptr<object::Directive>> result(directives.size());
 
 	std::transform(directives.begin(), directives.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<Directive>(entry);
+		return std::make_shared<object::Directive>(std::make_shared<Directive>(entry));
 	});
 
 	return result;
@@ -109,7 +112,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
 	{
 		if (deprecated || !field->deprecationReason())
 		{
-			result->push_back(std::make_shared<Field>(field));
+			result->push_back(std::make_shared<object::Field>(std::make_shared<Field>(field)));
 		}
 	}
 
@@ -132,7 +135,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(interfaces.size());
 
 	std::transform(interfaces.begin(), interfaces.end(), result->begin(), [](const auto& entry) {
-		return std::make_shared<Type>(entry);
+		return std::make_shared<object::Type>(std::make_shared<Type>(entry));
 	});
 
 	return result;
@@ -159,7 +162,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 		possibleTypes.end(),
 		result->begin(),
 		[](const auto& entry) {
-			return std::make_shared<Type>(entry.lock());
+			return std::make_shared<object::Type>(std::make_shared<Type>(entry.lock()));
 		});
 
 	return result;
@@ -187,7 +190,8 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue
 	{
 		if (deprecated || !value->deprecationReason())
 		{
-			result->push_back(std::make_shared<EnumValue>(value));
+			result->push_back(
+				std::make_shared<object::EnumValue>(std::make_shared<EnumValue>(value)));
 		}
 	}
 
@@ -211,7 +215,7 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValu
 		std::make_optional<std::vector<std::shared_ptr<object::InputValue>>>(inputFields.size());
 
 	std::transform(inputFields.begin(), inputFields.end(), result->begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;
@@ -231,7 +235,7 @@ service::FieldResult<std::shared_ptr<object::Type>> Type::getOfType(service::Fie
 
 	const auto ofType = _type->ofType().lock();
 
-	return ofType ? std::make_shared<Type>(ofType) : nullptr;
+	return ofType ? std::make_shared<object::Type>(std::make_shared<Type>(ofType)) : nullptr;
 }
 
 Field::Field(const std::shared_ptr<const schema::Field>& field)
@@ -260,7 +264,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Field::ge
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
 	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;
@@ -270,7 +274,7 @@ service::FieldResult<std::shared_ptr<object::Type>> Field::getType(service::Fiel
 {
 	const auto type = _field->type().lock();
 
-	return type ? std::make_shared<Type>(type) : nullptr;
+	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
 service::FieldResult<response::BooleanType> Field::getIsDeprecated(service::FieldParams&&) const
@@ -311,7 +315,7 @@ service::FieldResult<std::shared_ptr<object::Type>> InputValue::getType(
 {
 	const auto type = _inputValue->type().lock();
 
-	return type ? std::make_shared<Type>(type) : nullptr;
+	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
 service::FieldResult<std::optional<response::StringType>> InputValue::getDefaultValue(
@@ -388,7 +392,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Directive
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
 	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;

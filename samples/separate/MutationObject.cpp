@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Mutation::Mutation()
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Mutation"
 	}, {
@@ -26,12 +26,12 @@ Mutation::Mutation()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(completeTask)gql"sv, [this](service::ResolverParams&& params) { return resolveCompleteTask(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<std::shared_ptr<CompleteTaskPayload>> Mutation::applyCompleteTask(service::FieldParams&&, CompleteTaskInput&&) const
+Mutation::~Mutation()
 {
-	throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
 }
 
 service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams&& params)
@@ -39,15 +39,10 @@ service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applyCompleteTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argInput));
+	auto result = _pimpl->applyCompleteTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argInput));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<response::FloatType> Mutation::applySetFloat(service::FieldParams&&, response::FloatType&&) const
-{
-	throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
 }
 
 service::AwaitableResolver Mutation::resolveSetFloat(service::ResolverParams&& params)
@@ -55,7 +50,7 @@ service::AwaitableResolver Mutation::resolveSetFloat(service::ResolverParams&& p
 	auto argValue = service::ModifiedArgument<response::FloatType>::require("value", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applySetFloat(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argValue));
+	auto result = _pimpl->applySetFloat(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argValue));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::FloatType>::convert(std::move(result), std::move(params));

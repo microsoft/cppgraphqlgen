@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Review::Review()
+Review::Review(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Review"
 	}, {
@@ -26,6 +26,11 @@ Review::Review()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(commentary)gql"sv, [this](service::ResolverParams&& params) { return resolveCommentary(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
+{
+}
+
+Review::~Review()
 {
 }
 
@@ -33,7 +38,7 @@ service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getStars(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getStars(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
@@ -43,7 +48,7 @@ service::AwaitableResolver Review::resolveCommentary(service::ResolverParams&& p
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getCommentary(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getCommentary(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

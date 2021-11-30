@@ -15,18 +15,53 @@ namespace graphql::today::object {
 class Mutation
 	: public service::Object
 {
-protected:
-	explicit Mutation();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
-	virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const;
-
 private:
 	service::AwaitableResolver resolveCompleteTask(service::ResolverParams&& params);
 	service::AwaitableResolver resolveSetFloat(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
+		virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
+		{
+			return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+		}
+
+		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
+		{
+			return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Mutation(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Mutation(std::shared_ptr<T> pimpl)
+		: Mutation { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Mutation();
 };
 
 } // namespace graphql::today::object

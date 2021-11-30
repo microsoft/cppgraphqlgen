@@ -15,14 +15,6 @@ namespace graphql::learn::object {
 class Query
 	: public service::Object
 {
-protected:
-	explicit Query();
-
-public:
-	virtual service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const = 0;
-
 private:
 	service::AwaitableResolver resolveHero(service::ResolverParams&& params);
 	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
@@ -33,6 +25,54 @@ private:
 	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
 
 	std::shared_ptr<schema::Schema> _schema;
+
+	struct Concept
+	{
+		virtual service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
+		{
+			return _pimpl->getHero(std::move(params), std::move(episodeArg));
+		}
+
+		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const final
+		{
+			return _pimpl->getHuman(std::move(params), std::move(idArg));
+		}
+
+		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const final
+		{
+			return _pimpl->getDroid(std::move(params), std::move(idArg));
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Query(std::unique_ptr<Concept>&& pimpl);
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Query(std::shared_ptr<T> pimpl)
+		: Query { std::make_unique<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	~Query();
 };
 
 } // namespace graphql::learn::object
