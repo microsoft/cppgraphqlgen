@@ -633,7 +633,7 @@ public:
 	)cpp" << objectType.cppType
 			   << R"cpp((std::shared_ptr<T> pimpl)
 		: )cpp" << objectType.cppType
-			   << R"cpp( { std::make_unique<Model<T>>(std::move(pimpl)) }
+			   << R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	FolderConnection(std::shared_ptr<T> pimpl)
-		: FolderConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: FolderConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

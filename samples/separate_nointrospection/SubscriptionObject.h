@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	Subscription(std::shared_ptr<T> pimpl)
-		: Subscription { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

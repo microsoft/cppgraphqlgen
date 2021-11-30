@@ -52,7 +52,7 @@ private:
 public:
 	template <class T>
 	Mutation(std::shared_ptr<T> pimpl)
-		: Mutation { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	Review(std::shared_ptr<T> pimpl)
-		: Review { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Review { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

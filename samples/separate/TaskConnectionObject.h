@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	TaskConnection(std::shared_ptr<T> pimpl)
-		: TaskConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: TaskConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

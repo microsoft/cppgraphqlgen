@@ -77,7 +77,7 @@ private:
 public:
 	template <class T>
 	Human(std::shared_ptr<T> pimpl)
-		: Human { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

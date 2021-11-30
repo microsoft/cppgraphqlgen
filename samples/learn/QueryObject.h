@@ -70,7 +70,7 @@ private:
 public:
 	template <class T>
 	Query(std::shared_ptr<T> pimpl)
-		: Query { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

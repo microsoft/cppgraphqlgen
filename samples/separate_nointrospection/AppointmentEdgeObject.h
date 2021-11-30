@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	AppointmentEdge(std::shared_ptr<T> pimpl)
-		: AppointmentEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: AppointmentEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

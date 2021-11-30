@@ -209,7 +209,7 @@ private:
 public:
 	template <class T>
 	Query(std::shared_ptr<T> pimpl)
-		: Query { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -263,7 +263,7 @@ private:
 public:
 	template <class T>
 	PageInfo(std::shared_ptr<T> pimpl)
-		: PageInfo { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -317,7 +317,7 @@ private:
 public:
 	template <class T>
 	AppointmentEdge(std::shared_ptr<T> pimpl)
-		: AppointmentEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: AppointmentEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -371,7 +371,7 @@ private:
 public:
 	template <class T>
 	AppointmentConnection(std::shared_ptr<T> pimpl)
-		: AppointmentConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: AppointmentConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -425,7 +425,7 @@ private:
 public:
 	template <class T>
 	TaskEdge(std::shared_ptr<T> pimpl)
-		: TaskEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: TaskEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -479,7 +479,7 @@ private:
 public:
 	template <class T>
 	TaskConnection(std::shared_ptr<T> pimpl)
-		: TaskConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: TaskConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -533,7 +533,7 @@ private:
 public:
 	template <class T>
 	FolderEdge(std::shared_ptr<T> pimpl)
-		: FolderEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: FolderEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -587,7 +587,7 @@ private:
 public:
 	template <class T>
 	FolderConnection(std::shared_ptr<T> pimpl)
-		: FolderConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: FolderConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -641,7 +641,7 @@ private:
 public:
 	template <class T>
 	CompleteTaskPayload(std::shared_ptr<T> pimpl)
-		: CompleteTaskPayload { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -695,7 +695,7 @@ private:
 public:
 	template <class T>
 	Mutation(std::shared_ptr<T> pimpl)
-		: Mutation { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -749,7 +749,7 @@ private:
 public:
 	template <class T>
 	Subscription(std::shared_ptr<T> pimpl)
-		: Subscription { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -824,7 +824,7 @@ private:
 public:
 	template <class T>
 	Appointment(std::shared_ptr<T> pimpl)
-		: Appointment { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Appointment { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -885,7 +885,7 @@ private:
 public:
 	template <class T>
 	Task(std::shared_ptr<T> pimpl)
-		: Task { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -946,7 +946,7 @@ private:
 public:
 	template <class T>
 	Folder(std::shared_ptr<T> pimpl)
-		: Folder { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Folder { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -1000,7 +1000,7 @@ private:
 public:
 	template <class T>
 	NestedType(std::shared_ptr<T> pimpl)
-		: NestedType { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: NestedType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -1047,7 +1047,7 @@ private:
 public:
 	template <class T>
 	Expensive(std::shared_ptr<T> pimpl)
-		: Expensive { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Expensive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

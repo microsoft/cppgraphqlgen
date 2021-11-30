@@ -52,7 +52,7 @@ private:
 public:
 	template <class T>
 	Expensive(std::shared_ptr<T> pimpl)
-		: Expensive { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Expensive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

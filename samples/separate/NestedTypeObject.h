@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	NestedType(std::shared_ptr<T> pimpl)
-		: NestedType { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: NestedType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

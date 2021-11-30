@@ -155,7 +155,7 @@ private:
 public:
 	template <class T>
 	Query(std::shared_ptr<T> pimpl)
-		: Query { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -237,7 +237,7 @@ private:
 public:
 	template <class T>
 	Dog(std::shared_ptr<T> pimpl)
-		: Dog { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Dog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -291,7 +291,7 @@ private:
 public:
 	template <class T>
 	Alien(std::shared_ptr<T> pimpl)
-		: Alien { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Alien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -345,7 +345,7 @@ private:
 public:
 	template <class T>
 	Human(std::shared_ptr<T> pimpl)
-		: Human { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -413,7 +413,7 @@ private:
 public:
 	template <class T>
 	Cat(std::shared_ptr<T> pimpl)
-		: Cat { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -460,7 +460,7 @@ private:
 public:
 	template <class T>
 	Mutation(std::shared_ptr<T> pimpl)
-		: Mutation { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -507,7 +507,7 @@ private:
 public:
 	template <class T>
 	MutateDogResult(std::shared_ptr<T> pimpl)
-		: MutateDogResult { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: MutateDogResult { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -561,7 +561,7 @@ private:
 public:
 	template <class T>
 	Subscription(std::shared_ptr<T> pimpl)
-		: Subscription { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -615,7 +615,7 @@ private:
 public:
 	template <class T>
 	Message(std::shared_ptr<T> pimpl)
-		: Message { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Message { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -711,7 +711,7 @@ private:
 public:
 	template <class T>
 	Arguments(std::shared_ptr<T> pimpl)
-		: Arguments { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Arguments { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

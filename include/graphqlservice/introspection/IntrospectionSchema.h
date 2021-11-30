@@ -144,7 +144,7 @@ private:
 public:
 	template <class T>
 	Schema(std::shared_ptr<T> pimpl)
-		: Schema { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Schema { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -247,7 +247,7 @@ private:
 public:
 	template <class T>
 	Type(std::shared_ptr<T> pimpl)
-		: Type { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Type { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -329,7 +329,7 @@ private:
 public:
 	template <class T>
 	Field(std::shared_ptr<T> pimpl)
-		: Field { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Field { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -397,7 +397,7 @@ private:
 public:
 	template <class T>
 	InputValue(std::shared_ptr<T> pimpl)
-		: InputValue { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: InputValue { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -465,7 +465,7 @@ private:
 public:
 	template <class T>
 	EnumValue(std::shared_ptr<T> pimpl)
-		: EnumValue { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: EnumValue { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
@@ -533,7 +533,7 @@ private:
 public:
 	template <class T>
 	Directive(std::shared_ptr<T> pimpl)
-		: Directive { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Directive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

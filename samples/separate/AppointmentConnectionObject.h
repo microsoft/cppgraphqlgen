@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	AppointmentConnection(std::shared_ptr<T> pimpl)
-		: AppointmentConnection { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: AppointmentConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

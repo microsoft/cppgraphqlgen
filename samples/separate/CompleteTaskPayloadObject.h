@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	CompleteTaskPayload(std::shared_ptr<T> pimpl)
-		: CompleteTaskPayload { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

@@ -66,7 +66,7 @@ private:
 public:
 	template <class T>
 	Task(std::shared_ptr<T> pimpl)
-		: Task { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

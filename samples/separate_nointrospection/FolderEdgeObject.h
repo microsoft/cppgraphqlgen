@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	FolderEdge(std::shared_ptr<T> pimpl)
-		: FolderEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: FolderEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

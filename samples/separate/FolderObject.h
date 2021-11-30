@@ -66,7 +66,7 @@ private:
 public:
 	template <class T>
 	Folder(std::shared_ptr<T> pimpl)
-		: Folder { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Folder { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

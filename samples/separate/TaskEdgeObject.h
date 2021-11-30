@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	TaskEdge(std::shared_ptr<T> pimpl)
-		: TaskEdge { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: TaskEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

@@ -77,7 +77,7 @@ private:
 public:
 	template <class T>
 	Droid(std::shared_ptr<T> pimpl)
-		: Droid { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: Droid { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 

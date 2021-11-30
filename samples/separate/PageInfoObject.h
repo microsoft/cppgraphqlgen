@@ -59,7 +59,7 @@ private:
 public:
 	template <class T>
 	PageInfo(std::shared_ptr<T> pimpl)
-		: PageInfo { std::make_unique<Model<T>>(std::move(pimpl)) }
+		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
