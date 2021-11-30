@@ -675,7 +675,8 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 			result = std::move(response);
 		});
 	_service->deliver("nextAppointmentChange",
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1196,8 +1197,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 			EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
@@ -1209,7 +1212,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1265,7 +1269,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1309,8 +1314,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(fuzzyId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
@@ -1322,7 +1329,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		});
 	_service->deliver("nodeChange",
 		filterCallback,
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1388,7 +1396,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		});
 	_service->deliver("nodeChange",
 		filterCallback,
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1423,8 +1432,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
@@ -1436,7 +1447,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
