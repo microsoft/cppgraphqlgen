@@ -23,6 +23,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};

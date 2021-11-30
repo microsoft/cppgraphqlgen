@@ -23,6 +23,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};

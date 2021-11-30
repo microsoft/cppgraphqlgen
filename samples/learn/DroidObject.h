@@ -27,6 +27,8 @@ private:
 	struct Concept
 		: Character
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const = 0;
 	};
 

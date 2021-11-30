@@ -89,6 +89,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const = 0;
@@ -176,6 +178,8 @@ private:
 	struct Concept
 		: Pet
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
@@ -252,6 +256,8 @@ private:
 	struct Concept
 		: Sentient
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
 	};
 
@@ -304,6 +310,8 @@ private:
 	struct Concept
 		: Sentient
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const = 0;
 	};
 
@@ -358,6 +366,8 @@ private:
 	struct Concept
 		: Pet
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
 		virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const = 0;
@@ -420,6 +430,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const = 0;
 	};
 
@@ -465,6 +477,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
 	};
 
@@ -511,6 +525,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
 	};
@@ -563,6 +579,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const = 0;
 	};
@@ -621,6 +639,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const = 0;
 		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const = 0;
 		virtual service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const = 0;

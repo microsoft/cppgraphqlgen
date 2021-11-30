@@ -23,6 +23,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};

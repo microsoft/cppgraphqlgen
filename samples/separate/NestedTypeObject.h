@@ -23,6 +23,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};

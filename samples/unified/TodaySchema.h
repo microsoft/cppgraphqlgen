@@ -113,6 +113,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
@@ -225,6 +227,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};
@@ -277,6 +281,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
@@ -329,6 +335,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};
@@ -381,6 +389,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
@@ -433,6 +443,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};
@@ -485,6 +497,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
@@ -537,6 +551,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};
@@ -589,6 +605,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const = 0;
 	};
@@ -641,6 +659,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
 		virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const = 0;
 	};
@@ -693,6 +713,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
@@ -749,6 +771,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;
@@ -820,6 +844,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
 	};
@@ -879,6 +905,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
 	};
@@ -936,6 +964,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
@@ -987,6 +1017,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
 	};
 

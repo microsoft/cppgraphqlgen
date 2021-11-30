@@ -22,6 +22,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
 	};
 

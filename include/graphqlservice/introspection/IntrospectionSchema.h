@@ -90,6 +90,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
@@ -167,6 +169,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
@@ -265,6 +269,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
@@ -343,6 +349,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
@@ -409,6 +417,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
@@ -475,6 +485,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;

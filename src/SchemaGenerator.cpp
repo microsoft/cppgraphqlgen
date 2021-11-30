@@ -555,6 +555,8 @@ private:
 
 	headerFile << R"cpp(
 	{
+		virtual ~Concept() = default;
+
 )cpp";
 
 	for (const auto& outputField : objectType.fields)

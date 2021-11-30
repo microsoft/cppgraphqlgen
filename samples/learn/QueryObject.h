@@ -28,6 +28,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const = 0;

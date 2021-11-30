@@ -27,6 +27,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;

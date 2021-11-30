@@ -25,6 +25,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
 	};

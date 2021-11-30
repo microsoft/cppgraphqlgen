@@ -23,6 +23,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const = 0;
 	};

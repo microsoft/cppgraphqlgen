@@ -22,6 +22,8 @@ private:
 
 	struct Concept
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
 	};
 

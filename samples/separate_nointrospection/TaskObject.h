@@ -25,6 +25,8 @@ private:
 	struct Concept
 		: Node
 	{
+		virtual ~Concept() = default;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
 	};
