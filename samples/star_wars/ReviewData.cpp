@@ -11,15 +11,15 @@ Review::Review(response::IntType stars, std::optional<response::StringType> comm
 {
 }
 
-service::FieldResult<response::IntType> Review::getStars(service::FieldParams&& params) const
+response::IntType Review::getStars(service::FieldParams&& params) const noexcept
 {
-	return { stars_ };
+	return stars_;
 }
 
-service::FieldResult<std::optional<response::StringType>> Review::getCommentary(
-	service::FieldParams&& params) const
+std::optional<response::StringType> Review::getCommentary(
+	service::FieldParams&& params) const noexcept
 {
-	return { commentary_ };
+	return commentary_;
 }
 
 } // namespace graphql::learn

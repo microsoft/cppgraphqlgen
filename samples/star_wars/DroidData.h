@@ -24,15 +24,14 @@ public:
 	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;
 
-	service::FieldResult<response::StringType> getId(service::FieldParams&& params) const;
-	service::FieldResult<std::optional<response::StringType>> getName(
-		service::FieldParams&& params) const;
-	service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(
-		service::FieldParams&& params) const;
-	service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(
-		service::FieldParams&& params) const;
-	service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(
-		service::FieldParams&& params) const;
+	response::StringType getId(service::FieldParams&& params) const noexcept;
+	std::optional<response::StringType> getName(service::FieldParams&& params) const noexcept;
+	std::optional<std::vector<std::shared_ptr<service::Object>>> getFriends(
+		service::FieldParams&& params) const noexcept;
+	std::optional<std::vector<std::optional<Episode>>> getAppearsIn(
+		service::FieldParams&& params) const noexcept;
+	std::optional<response::StringType> getPrimaryFunction(
+		service::FieldParams&& params) const noexcept;
 
 private:
 	const response::StringType id_;

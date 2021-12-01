@@ -40,19 +40,18 @@ void Droid::addFriends(
 		});
 }
 
-service::FieldResult<response::StringType> Droid::getId(service::FieldParams&& params) const
+response::StringType Droid::getId(service::FieldParams&& params) const noexcept
 {
-	return { id_ };
+	return id_;
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getName(
-	service::FieldParams&& params) const
+std::optional<response::StringType> Droid::getName(service::FieldParams&& params) const noexcept
 {
-	return { name_ };
+	return name_;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Droid::
-	getFriends(service::FieldParams&& params) const
+std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends(
+	service::FieldParams&& params) const noexcept
 {
 	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
 
@@ -84,11 +83,11 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 					 }),
 		result.end());
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::getAppearsIn(
-	service::FieldParams&& params) const
+std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn(
+	service::FieldParams&& params) const noexcept
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
@@ -99,13 +98,13 @@ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::
 			return std::make_optional(entry);
 		});
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getPrimaryFunction(
-	service::FieldParams&& params) const
+std::optional<response::StringType> Droid::getPrimaryFunction(
+	service::FieldParams&& params) const noexcept
 {
-	return { primaryFunction_ };
+	return primaryFunction_;
 }
 
 } // namespace graphql::learn

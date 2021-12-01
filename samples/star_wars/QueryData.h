@@ -20,12 +20,12 @@ public:
 		std::map<response::StringType, std::shared_ptr<Human>> humans,
 		std::map<response::StringType, std::shared_ptr<Droid>> droids) noexcept;
 
-	service::FieldResult<std::shared_ptr<service::Object>> getHero(
-		service::FieldParams&& params, std::optional<Episode>&& episodeArg) const;
-	service::FieldResult<std::shared_ptr<object::Human>> getHuman(
-		service::FieldParams&& params, response::StringType&& idArg) const;
-	service::FieldResult<std::shared_ptr<object::Droid>> getDroid(
-		service::FieldParams&& params, response::StringType&& idArg) const;
+	std::shared_ptr<service::Object> getHero(
+		service::FieldParams&& params, std::optional<Episode>&& episodeArg) const noexcept;
+	std::shared_ptr<object::Human> getHuman(
+		service::FieldParams&& params, response::StringType&& idArg) const noexcept;
+	std::shared_ptr<object::Droid> getDroid(
+		service::FieldParams&& params, response::StringType&& idArg) const noexcept;
 
 private:
 	const std::map<Episode, SharedHero> heroes_;

@@ -16,9 +16,8 @@ public:
 	explicit Review(
 		response::IntType stars, std::optional<response::StringType> commentary) noexcept;
 
-	service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const;
-	service::FieldResult<std::optional<response::StringType>> getCommentary(
-		service::FieldParams&& params) const;
+	response::IntType getStars(service::FieldParams&& params) const noexcept;
+	std::optional<response::StringType> getCommentary(service::FieldParams&& params) const noexcept;
 
 private:
 	const response::IntType stars_;

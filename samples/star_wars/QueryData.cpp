@@ -14,8 +14,8 @@ Query::Query(std::map<Episode, SharedHero> heroes,
 {
 }
 
-service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(
-	service::FieldParams&&, std::optional<Episode>&& episodeArg) const
+std::shared_ptr<service::Object> Query::getHero(
+	service::FieldParams&&, std::optional<Episode>&& episodeArg) const noexcept
 {
 	std::shared_ptr<service::Object> result;
 	const auto episode = episodeArg ? *episodeArg : Episode::NEW_HOPE;
@@ -40,11 +40,11 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(
 			itr->second);
 	}
 
-	return { result };
+	return result;
 }
 
-service::FieldResult<std::shared_ptr<object::Human>> Query::getHuman(
-	service::FieldParams&&, response::StringType&& idArg) const
+std::shared_ptr<object::Human> Query::getHuman(
+	service::FieldParams&&, response::StringType&& idArg) const noexcept
 {
 	std::shared_ptr<Human> result;
 
@@ -56,8 +56,8 @@ service::FieldResult<std::shared_ptr<object::Human>> Query::getHuman(
 	return std::make_shared<object::Human>(std::move(result));
 }
 
-service::FieldResult<std::shared_ptr<object::Droid>> Query::getDroid(
-	service::FieldParams&&, response::StringType&& idArg) const
+std::shared_ptr<object::Droid> Query::getDroid(
+	service::FieldParams&&, response::StringType&& idArg) const noexcept
 {
 	std::shared_ptr<Droid> result;
 

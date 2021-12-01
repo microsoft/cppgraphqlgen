@@ -39,19 +39,18 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 		});
 }
 
-service::FieldResult<response::StringType> Human::getId(service::FieldParams&& params) const
+response::StringType Human::getId(service::FieldParams&& params) const noexcept
 {
-	return { id_ };
+	return id_;
 }
 
-service::FieldResult<std::optional<response::StringType>> Human::getName(
-	service::FieldParams&& params) const
+std::optional<response::StringType> Human::getName(service::FieldParams&& params) const noexcept
 {
-	return { name_ };
+	return name_;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Human::
-	getFriends(service::FieldParams&& params) const
+std::optional<std::vector<std::shared_ptr<service::Object>>> Human::getFriends(
+	service::FieldParams&& params) const noexcept
 {
 	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
 
@@ -83,11 +82,11 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 					 }),
 		result.end());
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::getAppearsIn(
-	service::FieldParams&& params) const
+std::optional<std::vector<std::optional<Episode>>> Human::getAppearsIn(
+	service::FieldParams&& params) const noexcept
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
@@ -98,13 +97,13 @@ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::
 			return std::make_optional(entry);
 		});
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<response::StringType>> Human::getHomePlanet(
-	service::FieldParams&& params) const
+std::optional<response::StringType> Human::getHomePlanet(
+	service::FieldParams&& params) const noexcept
 {
-	return { homePlanet_ };
+	return homePlanet_;
 }
 
 } // namespace graphql::learn
