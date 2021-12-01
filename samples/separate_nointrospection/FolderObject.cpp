@@ -33,6 +33,16 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Folder::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Folder::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

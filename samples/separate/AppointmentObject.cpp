@@ -35,6 +35,16 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Appointment::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Appointment::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

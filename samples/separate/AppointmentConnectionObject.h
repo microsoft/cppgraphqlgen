@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace AppointmentConnectionStubs {
+namespace stub::AppointmentConnectionStubs {
 
 template <class TImpl>
 concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
@@ -26,7 +25,19 @@ concept HasEdges = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
-} // namespace AppointmentConnectionStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::AppointmentConnectionStubs
 
 class AppointmentConnection
 	: public service::Object
@@ -41,6 +52,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};
@@ -54,9 +68,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::AppointmentConnectionStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::AppointmentConnectionStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (AppointmentConnectionStubs::HasPageInfo<T>)
+			if constexpr (stub::AppointmentConnectionStubs::HasPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
 			}
@@ -68,7 +98,7 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (AppointmentConnectionStubs::HasEdges<T>)
+			if constexpr (stub::AppointmentConnectionStubs::HasEdges<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
 			}
@@ -83,6 +113,9 @@ private:
 	};
 
 	AppointmentConnection(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

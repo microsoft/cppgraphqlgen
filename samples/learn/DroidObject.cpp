@@ -34,6 +34,16 @@ Droid::Droid(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Droid::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Droid::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

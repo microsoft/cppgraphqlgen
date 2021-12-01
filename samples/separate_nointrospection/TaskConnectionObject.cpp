@@ -30,6 +30,16 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void TaskConnection::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void TaskConnection::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

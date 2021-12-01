@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace TaskStubs {
+namespace stub::TaskStubs {
 
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
@@ -32,7 +31,19 @@ concept HasIsComplete = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
 };
 
-} // namespace TaskStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::TaskStubs
 
 class Task
 	: public service::Object
@@ -49,6 +60,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
 	};
@@ -62,9 +76,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::TaskStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::TaskStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (TaskStubs::HasId<T>)
+			if constexpr (stub::TaskStubs::HasId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
@@ -76,7 +106,7 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
 		{
-			if constexpr (TaskStubs::HasTitle<T>)
+			if constexpr (stub::TaskStubs::HasTitle<T>)
 			{
 				return { _pimpl->getTitle(std::move(params)) };
 			}
@@ -88,7 +118,7 @@ private:
 
 		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
 		{
-			if constexpr (TaskStubs::HasIsComplete<T>)
+			if constexpr (stub::TaskStubs::HasIsComplete<T>)
 			{
 				return { _pimpl->getIsComplete(std::move(params)) };
 			}
@@ -103,6 +133,9 @@ private:
 	};
 
 	Task(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

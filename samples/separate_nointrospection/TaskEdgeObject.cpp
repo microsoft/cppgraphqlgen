@@ -30,6 +30,16 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void TaskEdge::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void TaskEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

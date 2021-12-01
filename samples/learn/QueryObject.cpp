@@ -34,6 +34,16 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Query::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Query::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 {
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);

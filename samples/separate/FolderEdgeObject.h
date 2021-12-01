@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace FolderEdgeStubs {
+namespace stub::FolderEdgeStubs {
 
 template <class TImpl>
 concept HasNode = requires (TImpl impl, service::FieldParams params) 
@@ -26,7 +25,19 @@ concept HasCursor = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
-} // namespace FolderEdgeStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::FolderEdgeStubs
 
 class FolderEdge
 	: public service::Object
@@ -41,6 +52,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
@@ -54,9 +68,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::FolderEdgeStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::FolderEdgeStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (FolderEdgeStubs::HasNode<T>)
+			if constexpr (stub::FolderEdgeStubs::HasNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
 			}
@@ -68,7 +98,7 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (FolderEdgeStubs::HasCursor<T>)
+			if constexpr (stub::FolderEdgeStubs::HasCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
 			}
@@ -83,6 +113,9 @@ private:
 	};
 
 	FolderEdge(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

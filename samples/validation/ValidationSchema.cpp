@@ -132,6 +132,16 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Query::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Query::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -242,6 +252,16 @@ Dog::Dog(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Dog::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Dog::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -323,6 +343,16 @@ Alien::Alien(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Alien::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Alien::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -361,6 +391,16 @@ Human::Human(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Human::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Human::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
@@ -402,6 +442,16 @@ Cat::Cat(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Cat::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Cat::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params)
@@ -461,6 +511,16 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -485,6 +545,16 @@ MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void MutateDogResult::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void MutateDogResult::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& params)
@@ -512,6 +582,16 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Subscription::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params)
@@ -549,6 +629,16 @@ Message::Message(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Message::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Message::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params)
@@ -592,6 +682,16 @@ Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Arguments::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Arguments::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParams&& params)

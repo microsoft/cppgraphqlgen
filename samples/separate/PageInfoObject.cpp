@@ -30,6 +30,16 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void PageInfo::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void PageInfo::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

@@ -42,6 +42,8 @@ private:
 	std::string getSourcePath() const noexcept;
 
 	bool outputHeader() const noexcept;
+	void outputObjectStubs(
+		std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectDeclaration(
 		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;

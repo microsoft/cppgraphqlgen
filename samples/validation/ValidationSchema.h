@@ -68,7 +68,7 @@ struct Pet
 };
 
 namespace object {
-
+namespace stub {
 namespace QueryStubs {
 
 template <class TImpl>
@@ -113,147 +113,19 @@ concept HasBooleanList = requires (TImpl impl, service::FieldParams params, std:
 	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
-} // namespace QueryStubs
-
-class Query
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePet(service::ResolverParams&& params);
-	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveArguments(service::ResolverParams&& params);
-	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
-
-	std::shared_ptr<schema::Schema> _schema;
-
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
-		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
-		{
-			if constexpr (QueryStubs::HasDog<T>)
-			{
-				return { _pimpl->getDog(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getDog is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
-		{
-			if constexpr (QueryStubs::HasHuman<T>)
-			{
-				return { _pimpl->getHuman(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const final
-		{
-			if constexpr (QueryStubs::HasPet<T>)
-			{
-				return { _pimpl->getPet(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const final
-		{
-			if constexpr (QueryStubs::HasCatOrDog<T>)
-			{
-				return { _pimpl->getCatOrDog(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
-		{
-			if constexpr (QueryStubs::HasArguments<T>)
-			{
-				return { _pimpl->getArguments(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
-		{
-			if constexpr (QueryStubs::HasFindDog<T>)
-			{
-				return { _pimpl->getFindDog(std::move(params), std::move(complexArg)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const final
-		{
-			if constexpr (QueryStubs::HasBooleanList<T>)
-			{
-				return { _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Query(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Query(std::shared_ptr<T> pimpl)
-		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace QueryStubs
 
 namespace DogStubs {
 
@@ -293,129 +165,19 @@ concept HasOwner = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
 };
 
-} // namespace DogStubs
-
-class Dog
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params);
-	service::AwaitableResolver resolveOwner(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-		: Pet
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
-		{
-			if constexpr (DogStubs::HasName<T>)
-			{
-				return { _pimpl->getName(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getName is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
-		{
-			if constexpr (DogStubs::HasNickname<T>)
-			{
-				return { _pimpl->getNickname(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getNickname is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const final
-		{
-			if constexpr (DogStubs::HasBarkVolume<T>)
-			{
-				return { _pimpl->getBarkVolume(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getBarkVolume is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
-		{
-			if constexpr (DogStubs::HasDoesKnowCommand<T>)
-			{
-				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getDoesKnowCommand is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const final
-		{
-			if constexpr (DogStubs::HasIsHousetrained<T>)
-			{
-				return { _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getIsHousetrained is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
-		{
-			if constexpr (DogStubs::HasOwner<T>)
-			{
-				return { _pimpl->getOwner(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Dog::getOwner is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Dog(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Dog(std::shared_ptr<T> pimpl)
-		: Dog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace DogStubs
 
 namespace AlienStubs {
 
@@ -431,73 +193,19 @@ concept HasHomePlanet = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet(std::move(params)) } };
 };
 
-} // namespace AlienStubs
-
-class Alien
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHomePlanet(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-		: Sentient
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
-		{
-			if constexpr (AlienStubs::HasName<T>)
-			{
-				return { _pimpl->getName(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Alien::getName is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
-		{
-			if constexpr (AlienStubs::HasHomePlanet<T>)
-			{
-				return { _pimpl->getHomePlanet(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Alien::getHomePlanet is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Alien(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Alien(std::shared_ptr<T> pimpl)
-		: Alien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace AlienStubs
 
 namespace HumanStubs {
 
@@ -513,73 +221,19 @@ concept HasPets = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getPets(std::move(params)) } };
 };
 
-} // namespace HumanStubs
-
-class Human
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePets(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-		: Sentient
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
-		{
-			if constexpr (HumanStubs::HasName<T>)
-			{
-				return { _pimpl->getName(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const final
-		{
-			if constexpr (HumanStubs::HasPets<T>)
-			{
-				return { _pimpl->getPets(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Human(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Human(std::shared_ptr<T> pimpl)
-		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace HumanStubs
 
 namespace CatStubs {
 
@@ -607,101 +261,19 @@ concept HasMeowVolume = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::optional<response::IntType>> { impl.getMeowVolume(std::move(params)) } };
 };
 
-} // namespace CatStubs
-
-class Cat
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
-	service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-		: Pet
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
-		virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
-		{
-			if constexpr (CatStubs::HasName<T>)
-			{
-				return { _pimpl->getName(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Cat::getName is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
-		{
-			if constexpr (CatStubs::HasNickname<T>)
-			{
-				return { _pimpl->getNickname(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Cat::getNickname is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
-		{
-			if constexpr (CatStubs::HasDoesKnowCommand<T>)
-			{
-				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Cat::getDoesKnowCommand is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const final
-		{
-			if constexpr (CatStubs::HasMeowVolume<T>)
-			{
-				return { _pimpl->getMeowVolume(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Cat::getMeowVolume is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Cat(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Cat(std::shared_ptr<T> pimpl)
-		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace CatStubs
 
 namespace MutationStubs {
 
@@ -711,59 +283,19 @@ concept HasMutateDog = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog(std::move(params)) } };
 };
 
-} // namespace MutationStubs
-
-class Mutation
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveMutateDog(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
-		{
-			if constexpr (MutationStubs::HasMutateDog<T>)
-			{
-				return { _pimpl->applyMutateDog(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Mutation(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Mutation(std::shared_ptr<T> pimpl)
-		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace MutationStubs
 
 namespace MutateDogResultStubs {
 
@@ -773,59 +305,19 @@ concept HasId = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
-} // namespace MutateDogResultStubs
-
-class MutateDogResult
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveId(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
-		{
-			if constexpr (MutateDogResultStubs::HasId<T>)
-			{
-				return { _pimpl->getId(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(MutateDogResult::getId is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	MutateDogResult(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	MutateDogResult(std::shared_ptr<T> pimpl)
-		: MutateDogResult { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace MutateDogResultStubs
 
 namespace SubscriptionStubs {
 
@@ -841,73 +333,19 @@ concept HasDisallowedSecondRootField = requires (TImpl impl, service::FieldParam
 	{ service::FieldResult<response::BooleanType> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
-} // namespace SubscriptionStubs
-
-class Subscription
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveNewMessage(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDisallowedSecondRootField(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
-		{
-			if constexpr (SubscriptionStubs::HasNewMessage<T>)
-			{
-				return { _pimpl->getNewMessage(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const final
-		{
-			if constexpr (SubscriptionStubs::HasDisallowedSecondRootField<T>)
-			{
-				return { _pimpl->getDisallowedSecondRootField(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Subscription(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Subscription(std::shared_ptr<T> pimpl)
-		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace SubscriptionStubs
 
 namespace MessageStubs {
 
@@ -923,73 +361,19 @@ concept HasSender = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::IdType> { impl.getSender(std::move(params)) } };
 };
 
-} // namespace MessageStubs
-
-class Message
-	: public service::Object
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
-private:
-	service::AwaitableResolver resolveBody(service::ResolverParams&& params);
-	service::AwaitableResolver resolveSender(service::ResolverParams&& params);
-
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const = 0;
-	};
-
-	template <class T>
-	struct Model
-		: Concept
-	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const final
-		{
-			if constexpr (MessageStubs::HasBody<T>)
-			{
-				return { _pimpl->getBody(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
-			}
-		}
-
-		service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const final
-		{
-			if constexpr (MessageStubs::HasSender<T>)
-			{
-				return { _pimpl->getSender(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
-			}
-		}
-
-	private:
-		const std::shared_ptr<T> _pimpl;
-	};
-
-	Message(std::unique_ptr<Concept>&& pimpl);
-
-	const std::unique_ptr<Concept> _pimpl;
-
-public:
-	template <class T>
-	Message(std::shared_ptr<T> pimpl)
-		: Message { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
+	{ impl.beginSelectionSet(params) };
 };
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace MessageStubs
 
 namespace ArgumentsStubs {
 
@@ -1041,7 +425,942 @@ concept HasOptionalNonNullBooleanArgField = requires (TImpl impl, service::Field
 	{ service::FieldResult<response::BooleanType> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
 } // namespace ArgumentsStubs
+} // namespace stub
+
+class Query
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveDog(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePet(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params);
+	service::AwaitableResolver resolveArguments(service::ResolverParams&& params);
+	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params);
+	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
+
+	std::shared_ptr<schema::Schema> _schema;
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
+		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasDog<T>)
+			{
+				return { _pimpl->getDog(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getDog is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasHuman<T>)
+			{
+				return { _pimpl->getHuman(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasPet<T>)
+			{
+				return { _pimpl->getPet(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasCatOrDog<T>)
+			{
+				return { _pimpl->getCatOrDog(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasArguments<T>)
+			{
+				return { _pimpl->getArguments(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
+		{
+			if constexpr (stub::QueryStubs::HasFindDog<T>)
+			{
+				return { _pimpl->getFindDog(std::move(params), std::move(complexArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const final
+		{
+			if constexpr (stub::QueryStubs::HasBooleanList<T>)
+			{
+				return { _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Query(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Query(std::shared_ptr<T> pimpl)
+		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Dog
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
+	service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params);
+	service::AwaitableResolver resolveOwner(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Pet
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::DogStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::DogStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::DogStubs::HasName<T>)
+			{
+				return { _pimpl->getName(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getName is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::DogStubs::HasNickname<T>)
+			{
+				return { _pimpl->getNickname(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getNickname is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::DogStubs::HasBarkVolume<T>)
+			{
+				return { _pimpl->getBarkVolume(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getBarkVolume is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
+		{
+			if constexpr (stub::DogStubs::HasDoesKnowCommand<T>)
+			{
+				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getDoesKnowCommand is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const final
+		{
+			if constexpr (stub::DogStubs::HasIsHousetrained<T>)
+			{
+				return { _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getIsHousetrained is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::DogStubs::HasOwner<T>)
+			{
+				return { _pimpl->getOwner(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getOwner is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Dog(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Dog(std::shared_ptr<T> pimpl)
+		: Dog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Alien
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHomePlanet(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Sentient
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::AlienStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::AlienStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::AlienStubs::HasName<T>)
+			{
+				return { _pimpl->getName(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Alien::getName is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::AlienStubs::HasHomePlanet<T>)
+			{
+				return { _pimpl->getHomePlanet(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Alien::getHomePlanet is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Alien(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Alien(std::shared_ptr<T> pimpl)
+		: Alien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Human
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePets(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Sentient
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::HumanStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::HumanStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::HumanStubs::HasName<T>)
+			{
+				return { _pimpl->getName(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::HumanStubs::HasPets<T>)
+			{
+				return { _pimpl->getPets(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Human(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Human(std::shared_ptr<T> pimpl)
+		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Cat
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
+	service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Pet
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
+		virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::CatStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::CatStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::CatStubs::HasName<T>)
+			{
+				return { _pimpl->getName(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getName is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::CatStubs::HasNickname<T>)
+			{
+				return { _pimpl->getNickname(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getNickname is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
+		{
+			if constexpr (stub::CatStubs::HasDoesKnowCommand<T>)
+			{
+				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getDoesKnowCommand is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::CatStubs::HasMeowVolume<T>)
+			{
+				return { _pimpl->getMeowVolume(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getMeowVolume is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Cat(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Cat(std::shared_ptr<T> pimpl)
+		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Mutation
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveMutateDog(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MutationStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MutationStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::MutationStubs::HasMutateDog<T>)
+			{
+				return { _pimpl->applyMutateDog(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Mutation(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Mutation(std::shared_ptr<T> pimpl)
+		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class MutateDogResult
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MutateDogResultStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MutateDogResultStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::MutateDogResultStubs::HasId<T>)
+			{
+				return { _pimpl->getId(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(MutateDogResult::getId is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	MutateDogResult(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	MutateDogResult(std::shared_ptr<T> pimpl)
+		: MutateDogResult { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Subscription
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveNewMessage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDisallowedSecondRootField(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::SubscriptionStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::SubscriptionStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::SubscriptionStubs::HasNewMessage<T>)
+			{
+				return { _pimpl->getNewMessage(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::SubscriptionStubs::HasDisallowedSecondRootField<T>)
+			{
+				return { _pimpl->getDisallowedSecondRootField(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Subscription(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Subscription(std::shared_ptr<T> pimpl)
+		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
+
+class Message
+	: public service::Object
+{
+private:
+	service::AwaitableResolver resolveBody(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSender(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MessageStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::MessageStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::MessageStubs::HasBody<T>)
+			{
+				return { _pimpl->getBody(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const final
+		{
+			if constexpr (stub::MessageStubs::HasSender<T>)
+			{
+				return { _pimpl->getSender(std::move(params)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Message(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Message(std::shared_ptr<T> pimpl)
+		: Message { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
+};
 
 class Arguments
 	: public service::Object
@@ -1062,6 +1381,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const = 0;
 		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const = 0;
 		virtual service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const = 0;
@@ -1081,9 +1403,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ArgumentsStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ArgumentsStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasMultipleReqs<T>)
+			if constexpr (stub::ArgumentsStubs::HasMultipleReqs<T>)
 			{
 				return { _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) };
 			}
@@ -1095,7 +1433,7 @@ private:
 
 		service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasBooleanArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasBooleanArgField<T>)
 			{
 				return { _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg)) };
 			}
@@ -1107,7 +1445,7 @@ private:
 
 		service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasFloatArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasFloatArgField<T>)
 			{
 				return { _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg)) };
 			}
@@ -1119,7 +1457,7 @@ private:
 
 		service::FieldResult<std::optional<response::IntType>> getIntArgField(service::FieldParams&& params, std::optional<response::IntType>&& intArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasIntArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasIntArgField<T>)
 			{
 				return { _pimpl->getIntArgField(std::move(params), std::move(intArgArg)) };
 			}
@@ -1131,7 +1469,7 @@ private:
 
 		service::FieldResult<response::BooleanType> getNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& nonNullBooleanArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasNonNullBooleanArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasNonNullBooleanArgField<T>)
 			{
 				return { _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) };
 			}
@@ -1143,7 +1481,7 @@ private:
 
 		service::FieldResult<std::optional<std::vector<response::BooleanType>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& nonNullBooleanListArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasNonNullBooleanListField<T>)
+			if constexpr (stub::ArgumentsStubs::HasNonNullBooleanListField<T>)
 			{
 				return { _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) };
 			}
@@ -1155,7 +1493,7 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<response::BooleanType>>&& booleanListArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasBooleanListArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasBooleanListArgField<T>)
 			{
 				return { _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) };
 			}
@@ -1167,7 +1505,7 @@ private:
 
 		service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const final
 		{
-			if constexpr (ArgumentsStubs::HasOptionalNonNullBooleanArgField<T>)
+			if constexpr (stub::ArgumentsStubs::HasOptionalNonNullBooleanArgField<T>)
 			{
 				return { _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) };
 			}
@@ -1182,6 +1520,9 @@ private:
 	};
 
 	Arguments(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

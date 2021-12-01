@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace NestedTypeStubs {
+namespace stub::NestedTypeStubs {
 
 template <class TImpl>
 concept HasDepth = requires (TImpl impl, service::FieldParams params) 
@@ -26,7 +25,19 @@ concept HasNested = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
-} // namespace NestedTypeStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::NestedTypeStubs
 
 class NestedType
 	: public service::Object
@@ -41,6 +52,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
@@ -54,9 +68,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::NestedTypeStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::NestedTypeStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
 		{
-			if constexpr (NestedTypeStubs::HasDepth<T>)
+			if constexpr (stub::NestedTypeStubs::HasDepth<T>)
 			{
 				return { _pimpl->getDepth(std::move(params)) };
 			}
@@ -68,7 +98,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (NestedTypeStubs::HasNested<T>)
+			if constexpr (stub::NestedTypeStubs::HasNested<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
 			}
@@ -83,6 +113,9 @@ private:
 	};
 
 	NestedType(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

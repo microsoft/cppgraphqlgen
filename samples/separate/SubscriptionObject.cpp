@@ -30,6 +30,16 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Subscription::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

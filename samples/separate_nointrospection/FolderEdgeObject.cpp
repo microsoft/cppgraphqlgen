@@ -30,6 +30,16 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void FolderEdge::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void FolderEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

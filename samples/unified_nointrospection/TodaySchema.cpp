@@ -163,6 +163,16 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Query::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Query::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
@@ -339,6 +349,16 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void PageInfo::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void PageInfo::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -374,6 +394,16 @@ AppointmentEdge::AppointmentEdge(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void AppointmentEdge::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void AppointmentEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver AppointmentEdge::resolveNode(service::ResolverParams&& params)
@@ -413,6 +443,16 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void AppointmentConnection::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void AppointmentConnection::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -448,6 +488,16 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void TaskEdge::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void TaskEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& params)
@@ -487,6 +537,16 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void TaskConnection::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void TaskConnection::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -522,6 +582,16 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void FolderEdge::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void FolderEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
@@ -561,6 +631,16 @@ FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void FolderConnection::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void FolderConnection::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -596,6 +676,16 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void CompleteTaskPayload::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void CompleteTaskPayload::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
@@ -635,6 +725,16 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
@@ -672,6 +772,16 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Subscription::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
@@ -715,6 +825,16 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Appointment::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Appointment::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params)
@@ -787,6 +907,16 @@ Task::Task(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Task::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Task::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Task::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -837,6 +967,16 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Folder::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Folder::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -884,6 +1024,16 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void NestedType::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void NestedType::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -918,6 +1068,16 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl)
 	})
 	, _pimpl(std::move(pimpl))
 {
+}
+
+void Expensive::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Expensive::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 
 service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& params)

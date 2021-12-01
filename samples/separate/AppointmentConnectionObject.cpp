@@ -30,6 +30,16 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void AppointmentConnection::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void AppointmentConnection::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

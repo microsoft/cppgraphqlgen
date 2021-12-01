@@ -30,6 +30,16 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void NestedType::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void NestedType::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

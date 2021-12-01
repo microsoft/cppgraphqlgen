@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace QueryStubs {
+namespace stub::QueryStubs {
 
 template <class TImpl>
 concept HasNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
@@ -86,7 +85,19 @@ concept HasAnyType = requires (TImpl impl, service::FieldParams params, std::vec
 	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
-} // namespace QueryStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::QueryStubs
 
 class Query
 	: public service::Object
@@ -115,6 +126,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
@@ -138,9 +152,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::QueryStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (QueryStubs::HasNode<T>)
+			if constexpr (stub::QueryStubs::HasNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params), std::move(idArg)) };
 			}
@@ -152,7 +182,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (QueryStubs::HasAppointments<T>)
+			if constexpr (stub::QueryStubs::HasAppointments<T>)
 			{
 				return { _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -164,7 +194,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (QueryStubs::HasTasks<T>)
+			if constexpr (stub::QueryStubs::HasTasks<T>)
 			{
 				return { _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -176,7 +206,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (QueryStubs::HasUnreadCounts<T>)
+			if constexpr (stub::QueryStubs::HasUnreadCounts<T>)
 			{
 				return { _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -188,7 +218,7 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (QueryStubs::HasAppointmentsById<T>)
+			if constexpr (stub::QueryStubs::HasAppointmentsById<T>)
 			{
 				return { _pimpl->getAppointmentsById(std::move(params), std::move(idsArg)) };
 			}
@@ -200,7 +230,7 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (QueryStubs::HasTasksById<T>)
+			if constexpr (stub::QueryStubs::HasTasksById<T>)
 			{
 				return { _pimpl->getTasksById(std::move(params), std::move(idsArg)) };
 			}
@@ -212,7 +242,7 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (QueryStubs::HasUnreadCountsById<T>)
+			if constexpr (stub::QueryStubs::HasUnreadCountsById<T>)
 			{
 				return { _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg)) };
 			}
@@ -224,7 +254,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (QueryStubs::HasNested<T>)
+			if constexpr (stub::QueryStubs::HasNested<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
 			}
@@ -236,7 +266,7 @@ private:
 
 		service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const final
 		{
-			if constexpr (QueryStubs::HasUnimplemented<T>)
+			if constexpr (stub::QueryStubs::HasUnimplemented<T>)
 			{
 				return { _pimpl->getUnimplemented(std::move(params)) };
 			}
@@ -248,7 +278,7 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
-			if constexpr (QueryStubs::HasExpensive<T>)
+			if constexpr (stub::QueryStubs::HasExpensive<T>)
 			{
 				return { _pimpl->getExpensive(std::move(params)) };
 			}
@@ -260,7 +290,7 @@ private:
 
 		service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
-			if constexpr (QueryStubs::HasTestTaskState<T>)
+			if constexpr (stub::QueryStubs::HasTestTaskState<T>)
 			{
 				return { _pimpl->getTestTaskState(std::move(params)) };
 			}
@@ -272,7 +302,7 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (QueryStubs::HasAnyType<T>)
+			if constexpr (stub::QueryStubs::HasAnyType<T>)
 			{
 				return { _pimpl->getAnyType(std::move(params), std::move(idsArg)) };
 			}
@@ -287,6 +317,9 @@ private:
 	};
 
 	Query(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

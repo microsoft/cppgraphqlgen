@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace FolderStubs {
+namespace stub::FolderStubs {
 
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
@@ -32,7 +31,19 @@ concept HasUnreadCount = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
 };
 
-} // namespace FolderStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::FolderStubs
 
 class Folder
 	: public service::Object
@@ -49,6 +60,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
 	};
@@ -62,9 +76,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::FolderStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::FolderStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (FolderStubs::HasId<T>)
+			if constexpr (stub::FolderStubs::HasId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
@@ -76,7 +106,7 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (FolderStubs::HasName<T>)
+			if constexpr (stub::FolderStubs::HasName<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
@@ -88,7 +118,7 @@ private:
 
 		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
 		{
-			if constexpr (FolderStubs::HasUnreadCount<T>)
+			if constexpr (stub::FolderStubs::HasUnreadCount<T>)
 			{
 				return { _pimpl->getUnreadCount(std::move(params)) };
 			}
@@ -103,6 +133,9 @@ private:
 	};
 
 	Folder(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

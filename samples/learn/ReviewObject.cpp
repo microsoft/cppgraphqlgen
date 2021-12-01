@@ -30,6 +30,16 @@ Review::Review(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Review::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Review::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

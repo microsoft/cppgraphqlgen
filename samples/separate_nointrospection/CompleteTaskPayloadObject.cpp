@@ -30,6 +30,16 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void CompleteTaskPayload::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void CompleteTaskPayload::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

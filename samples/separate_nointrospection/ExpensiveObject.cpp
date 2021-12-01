@@ -29,6 +29,16 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
+void Expensive::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Expensive::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

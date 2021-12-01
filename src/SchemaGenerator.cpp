@@ -254,14 +254,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		if (_loader.isIntrospection())
 		{
-			// Forward declare all of the concrete types for the Introspection schema
-			for (const auto& objectType : _loader.getObjectTypes())
-			{
-				headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(;
-)cpp";
-			}
-
-			headerFile << std::endl;
 		}
 
 		objectNamespace.enter();
@@ -316,8 +308,49 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	if (!_loader.getObjectTypes().empty() && !_options.separateFiles)
 	{
-		if (objectNamespace.enter())
+		if (_loader.isIntrospection())
 		{
+			if (objectNamespace.exit())
+			{
+				headerFile << std::endl;
+			}
+
+			// Forward declare all of the concrete types for the Introspection schema
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(;
+)cpp";
+			}
+
+			headerFile << std::endl;
+			objectNamespace.enter();
+			headerFile << std::endl;
+		}
+		else
+		{
+			objectNamespace.enter();
+
+			NamespaceScope stubNamespace { headerFile, "stub", true };
+
+			// Output the stub concept declarations
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				if (!stubNamespace.enter())
+				{
+					headerFile << std::endl;
+				}
+
+				std::ostringstream ossConceptNamespace;
+
+				ossConceptNamespace << objectType.cppType << R"cpp(Stubs)cpp";
+
+				const auto conceptNamespace = ossConceptNamespace.str();
+				NamespaceScope conceptSubNamespace { headerFile, conceptNamespace };
+
+				outputObjectStubs(headerFile, objectType);
+			}
+
+			stubNamespace.exit();
 			headerFile << std::endl;
 		}
 
@@ -511,21 +544,10 @@ GRAPHQLINTROSPECTION_EXPORT )cpp"
 	return true;
 }
 
-void Generator::outputObjectDeclaration(
-	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
+void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const
 {
-	std::ostringstream ossNamespace;
-
-	ossNamespace << objectType.cppType << "Stubs";
-
-	const auto stubNamespace = ossNamespace.str();
-
 	if (!_options.noStubs && !_loader.isIntrospection())
 	{
-		NamespaceScope conceptsNamespace { headerFile, stubNamespace };
-
-		headerFile << std::endl;
-
 		for (const auto& outputField : objectType.fields)
 		{
 			std::string fieldName(outputField.cppName);
@@ -533,7 +555,8 @@ void Generator::outputObjectDeclaration(
 			fieldName[0] =
 				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 
-			headerFile << R"cpp(template <class TImpl>
+			headerFile << R"cpp(
+template <class TImpl>
 concept Has)cpp" << fieldName
 					   << R"cpp( = requires (TImpl impl, service::FieldParams params)cpp";
 			for (const auto& argument : outputField.arguments)
@@ -554,16 +577,36 @@ concept Has)cpp" << fieldName
 
 			headerFile << R"cpp() } };
 };
-
 )cpp";
-		}
-
-		if (conceptsNamespace.exit())
-		{
-			headerFile << std::endl;
 		}
 	}
 
+	if (_loader.isIntrospection())
+	{
+		headerFile << std::endl;
+	}
+	else
+	{
+		headerFile << R"cpp(
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+)cpp";
+	}
+}
+
+void Generator::outputObjectDeclaration(
+	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
+{
 	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
 	: public service::Object
 {
@@ -621,6 +664,15 @@ private:
 
 )cpp";
 
+	if (!_loader.isIntrospection())
+	{
+		headerFile
+			<< R"cpp(		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+)cpp";
+	}
+
 	for (const auto& outputField : objectType.fields)
 	{
 		if (outputField.inheritedField)
@@ -642,6 +694,29 @@ private:
 		{
 		}
 )cpp";
+
+	if (!_loader.isIntrospection())
+	{
+		headerFile << R"cpp(
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::)cpp"
+				   << objectType.cppType << R"cpp(Stubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::)cpp"
+				   << objectType.cppType << R"cpp(Stubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+)cpp";
+	}
 
 	for (const auto& outputField : objectType.fields)
 	{
@@ -665,14 +740,14 @@ private:
 
 		if (!_options.noStubs && !_loader.isIntrospection())
 		{
-			headerFile << R"cpp(if constexpr ()cpp" << stubNamespace << R"cpp(::Has)cpp"
-					   << fieldName << R"cpp(<T>)
+			headerFile << R"cpp(if constexpr (stub::)cpp" << objectType.cppType
+					   << R"cpp(Stubs::Has)cpp" << fieldName << R"cpp(<T>)
 			{
 				)cpp";
 		}
 
-		headerFile << R"cpp(return { _pimpl->)cpp"
-				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+		headerFile << R"cpp(return { _pimpl->)cpp" << outputField.accessor << fieldName
+				   << R"cpp((std::move(params))cpp";
 
 		for (const auto& argument : outputField.arguments)
 		{
@@ -723,6 +798,9 @@ public:
 	{
 		headerFile
 			<< objectType.cppType << R"cpp((std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 
@@ -1325,8 +1403,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -1706,6 +1783,22 @@ void Generator::outputObjectImplementation(
 {
 	// This is empty, but explicitly defined here so that it can access the un-exported destructor
 	// of the implementation type.
+}
+)cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp(
+void )cpp" << objectType.cppType
+				   << R"cpp(::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void )cpp" << objectType.cppType
+				   << R"cpp(::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
 }
 )cpp";
 	}
@@ -2348,10 +2441,6 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		ossNamespace << R"cpp(graphql::)cpp" << _loader.getSchemaNamespace();
 
 		const auto schemaNamespace = ossNamespace.str();
-
-		ossNamespace << R"cpp(::object)cpp";
-
-		const auto objectNamespace = ossNamespace.str();
 		const bool isQueryType = objectType.type == queryType;
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 		auto headerPath = (headerDir / headerFilename).string();
@@ -2362,7 +2451,23 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
+		std::ostringstream ossObjectNamespace;
+
+		ossObjectNamespace << schemaNamespace << R"cpp(::object)cpp";
+
+		const auto objectNamespace = ossObjectNamespace.str();
 		NamespaceScope headerNamespace { headerFile, objectNamespace };
+
+		// Output the stub concepts
+		std::ostringstream ossConceptNamespace;
+
+		ossConceptNamespace << R"cpp(stub::)cpp" << objectType.cppType << R"cpp(Stubs)cpp";
+
+		const auto conceptNamespace = ossConceptNamespace.str();
+		NamespaceScope stubNamespace { headerFile, conceptNamespace };
+
+		outputObjectStubs(headerFile, objectType);
+		stubNamespace.exit();
 
 		// Output the full declaration
 		headerFile << std::endl;

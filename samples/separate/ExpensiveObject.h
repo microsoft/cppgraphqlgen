@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace ExpensiveStubs {
+namespace stub::ExpensiveStubs {
 
 template <class TImpl>
 concept HasOrder = requires (TImpl impl, service::FieldParams params) 
@@ -20,7 +19,19 @@ concept HasOrder = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
 };
 
-} // namespace ExpensiveStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::ExpensiveStubs
 
 class Expensive
 	: public service::Object
@@ -34,6 +45,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
 	};
 
@@ -46,9 +60,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ExpensiveStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ExpensiveStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
 		{
-			if constexpr (ExpensiveStubs::HasOrder<T>)
+			if constexpr (stub::ExpensiveStubs::HasOrder<T>)
 			{
 				return { _pimpl->getOrder(std::move(params)) };
 			}
@@ -63,6 +93,9 @@ private:
 	};
 
 	Expensive(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

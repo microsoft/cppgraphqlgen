@@ -11,6 +11,21 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
+namespace stub::ReviewStubs {
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::ReviewStubs
 
 class Review
 	: public service::Object
@@ -25,6 +40,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const = 0;
 	};
@@ -36,6 +54,22 @@ private:
 		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ReviewStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::ReviewStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
 		}
 
 		service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final
@@ -53,6 +87,9 @@ private:
 	};
 
 	Review(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 

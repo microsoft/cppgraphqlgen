@@ -11,8 +11,7 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-
-namespace PageInfoStubs {
+namespace stub::PageInfoStubs {
 
 template <class TImpl>
 concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
@@ -26,7 +25,19 @@ concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params)
 	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
-} // namespace PageInfoStubs
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace stub::PageInfoStubs
 
 class PageInfo
 	: public service::Object
@@ -41,6 +52,9 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
 		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};
@@ -54,9 +68,25 @@ private:
 		{
 		}
 
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::PageInfoStubs::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (stub::PageInfoStubs::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
 		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
 		{
-			if constexpr (PageInfoStubs::HasHasNextPage<T>)
+			if constexpr (stub::PageInfoStubs::HasHasNextPage<T>)
 			{
 				return { _pimpl->getHasNextPage(std::move(params)) };
 			}
@@ -68,7 +98,7 @@ private:
 
 		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			if constexpr (PageInfoStubs::HasHasPreviousPage<T>)
+			if constexpr (stub::PageInfoStubs::HasHasPreviousPage<T>)
 			{
 				return { _pimpl->getHasPreviousPage(std::move(params)) };
 			}
@@ -83,6 +113,9 @@ private:
 	};
 
 	PageInfo(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
 	const std::unique_ptr<Concept> _pimpl;
 
