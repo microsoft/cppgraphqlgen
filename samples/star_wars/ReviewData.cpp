@@ -5,18 +5,18 @@
 
 namespace graphql::learn {
 
-Review::Review(response::IntType stars, std::optional<response::StringType>&& commentary) noexcept
+Review::Review(int stars, std::optional<std::string>&& commentary) noexcept
 	: stars_ { stars }
 	, commentary_ { std::move(commentary) }
 {
 }
 
-response::IntType Review::getStars() const noexcept
+int Review::getStars() const noexcept
 {
 	return stars_;
 }
 
-const std::optional<response::StringType>& Review::getCommentary() const noexcept
+const std::optional<std::string>& Review::getCommentary() const noexcept
 {
 	return commentary_;
 }

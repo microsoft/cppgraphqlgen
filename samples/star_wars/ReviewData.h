@@ -13,15 +13,14 @@ namespace graphql::learn {
 class Review
 {
 public:
-	explicit Review(
-		response::IntType stars, std::optional<response::StringType>&& commentary) noexcept;
+	explicit Review(int stars, std::optional<std::string>&& commentary) noexcept;
 
-	response::IntType getStars() const noexcept;
-	const std::optional<response::StringType>& getCommentary() const noexcept;
+	int getStars() const noexcept;
+	const std::optional<std::string>& getCommentary() const noexcept;
 
 private:
-	const response::IntType stars_;
-	const std::optional<response::StringType> commentary_;
+	const int stars_;
+	const std::optional<std::string> commentary_;
 };
 
 } // namespace graphql::learn

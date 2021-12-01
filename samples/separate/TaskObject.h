@@ -28,25 +28,25 @@ concept NoParamsId = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsTitle = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsTitle = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getTitle() } };
 };
 
 template <class TImpl>
 concept WithParamsIsComplete = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getIsComplete(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsIsComplete = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsComplete() } };
+	{ service::FieldResult<bool> { impl.getIsComplete() } };
 };
 
 template <class TImpl>
@@ -81,8 +81,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -110,7 +110,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskMethod::WithParamsTitle<T>)
 			{
@@ -126,7 +126,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
+		service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskMethod::WithParamsIsComplete<T>)
 			{

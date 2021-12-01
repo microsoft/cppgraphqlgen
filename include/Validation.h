@@ -79,17 +79,16 @@ struct ValidateArgumentMap
 	internal::string_view_map<ValidateArgumentValuePtr> values;
 };
 
-using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
-	response::FloatType, std::string_view, response::BooleanType, ValidateArgumentEnumValue,
-	ValidateArgumentList, ValidateArgumentMap>;
+using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, int, double,
+	std::string_view, bool, ValidateArgumentEnumValue, ValidateArgumentList, ValidateArgumentMap>;
 
 struct ValidateArgumentValue
 {
 	ValidateArgumentValue(ValidateArgumentVariable&& value);
-	ValidateArgumentValue(response::IntType value);
-	ValidateArgumentValue(response::FloatType value);
+	ValidateArgumentValue(int value);
+	ValidateArgumentValue(double value);
 	ValidateArgumentValue(std::string_view value);
-	ValidateArgumentValue(response::BooleanType value);
+	ValidateArgumentValue(bool value);
 	ValidateArgumentValue(ValidateArgumentEnumValue&& value);
 	ValidateArgumentValue(ValidateArgumentList&& value);
 	ValidateArgumentValue(ValidateArgumentMap&& value);

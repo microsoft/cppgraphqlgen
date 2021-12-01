@@ -35,8 +35,8 @@ enum class CatCommand
 
 struct ComplexInput
 {
-	std::optional<response::StringType> name;
-	std::optional<response::StringType> owner;
+	std::optional<std::string> name;
+	std::optional<std::string> owner;
 };
 
 namespace object {
@@ -59,12 +59,12 @@ struct Pet;
 
 struct Sentient
 {
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
 };
 
 struct Pet
 {
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
 };
 
 namespace object {
@@ -144,15 +144,15 @@ concept NoParamsFindDog = requires (TImpl impl, std::optional<ComplexInput> comp
 };
 
 template <class TImpl>
-concept WithParamsBooleanList = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> booleanListArgArg) 
+concept WithParamsBooleanList = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
+	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanList = requires (TImpl impl, std::optional<std::vector<response::BooleanType>> booleanListArgArg) 
+concept NoParamsBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
+	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
@@ -174,61 +174,61 @@ namespace DogMethod {
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName() } };
+	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept WithParamsNickname = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsNickname = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
 concept WithParamsBarkVolume = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getBarkVolume(std::move(params)) } };
+	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsBarkVolume = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getBarkVolume() } };
+	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume() } };
 };
 
 template <class TImpl>
 concept WithParamsDoesKnowCommand = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
+	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
 concept NoParamsDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
+	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsIsHousetrained = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> atOtherHomesArg) 
+concept WithParamsIsHousetrained = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
+	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsIsHousetrained = requires (TImpl impl, std::optional<response::BooleanType> atOtherHomesArg) 
+concept NoParamsIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
+	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
@@ -262,25 +262,25 @@ namespace AlienMethod {
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName() } };
+	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept WithParamsHomePlanet = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHomePlanet = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet() } };
 };
 
 template <class TImpl>
@@ -302,13 +302,13 @@ namespace HumanMethod {
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName() } };
+	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
@@ -342,49 +342,49 @@ namespace CatMethod {
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getName() } };
+	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept WithParamsNickname = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsNickname = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
 concept WithParamsDoesKnowCommand = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
+	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
 concept NoParamsDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
+	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
 concept WithParamsMeowVolume = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getMeowVolume(std::move(params)) } };
+	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsMeowVolume = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getMeowVolume() } };
+	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume() } };
 };
 
 template <class TImpl>
@@ -474,13 +474,13 @@ concept NoParamsNewMessage = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsDisallowedSecondRootField = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDisallowedSecondRootField(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsDisallowedSecondRootField = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getDisallowedSecondRootField() } };
+	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField() } };
 };
 
 template <class TImpl>
@@ -502,13 +502,13 @@ namespace MessageMethod {
 template <class TImpl>
 concept WithParamsBody = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getBody(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getBody(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsBody = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getBody() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getBody() } };
 };
 
 template <class TImpl>
@@ -540,99 +540,99 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 namespace ArgumentsMethod {
 
 template <class TImpl>
-concept WithParamsMultipleReqs = requires (TImpl impl, service::FieldParams params, response::IntType xArg, response::IntType yArg) 
+concept WithParamsMultipleReqs = requires (TImpl impl, service::FieldParams params, int xArg, int yArg) 
 {
-	{ service::FieldResult<response::IntType> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
+	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsMultipleReqs = requires (TImpl impl, response::IntType xArg, response::IntType yArg) 
+concept NoParamsMultipleReqs = requires (TImpl impl, int xArg, int yArg) 
 {
-	{ service::FieldResult<response::IntType> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
+	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsBooleanArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> booleanArgArg) 
+concept WithParamsBooleanArgField = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg) 
 {
-	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
+	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanArgField = requires (TImpl impl, std::optional<response::BooleanType> booleanArgArg) 
+concept NoParamsBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg) 
 {
-	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
+	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsFloatArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::FloatType> floatArgArg) 
+concept WithParamsFloatArgField = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg) 
 {
-	{ service::FieldResult<std::optional<response::FloatType>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
+	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsFloatArgField = requires (TImpl impl, std::optional<response::FloatType> floatArgArg) 
+concept NoParamsFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg) 
 {
-	{ service::FieldResult<std::optional<response::FloatType>> { impl.getFloatArgField(std::move(floatArgArg)) } };
+	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsIntArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> intArgArg) 
+concept WithParamsIntArgField = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
+	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsIntArgField = requires (TImpl impl, std::optional<response::IntType> intArgArg) 
+concept NoParamsIntArgField = requires (TImpl impl, std::optional<int> intArgArg) 
 {
-	{ service::FieldResult<std::optional<response::IntType>> { impl.getIntArgField(std::move(intArgArg)) } };
+	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType nonNullBooleanArgArg) 
+concept WithParamsNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
+	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNonNullBooleanArgField = requires (TImpl impl, response::BooleanType nonNullBooleanArgArg) 
+concept NoParamsNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
+	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsNonNullBooleanListField = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> nonNullBooleanListArgArg) 
+concept WithParamsNonNullBooleanListField = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<response::BooleanType>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
+	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<response::BooleanType>> nonNullBooleanListArgArg) 
+concept NoParamsNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<response::BooleanType>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
+	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsBooleanListArgField = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<response::BooleanType>> booleanListArgArg) 
+concept WithParamsBooleanListArgField = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
+	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanListArgField = requires (TImpl impl, std::vector<std::optional<response::BooleanType>> booleanListArgArg) 
+concept NoParamsBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
+	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsOptionalNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType optionalBooleanArgArg) 
+concept WithParamsOptionalNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
+	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsOptionalNonNullBooleanArgField = requires (TImpl impl, response::BooleanType optionalBooleanArgArg) 
+concept NoParamsOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
+	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
@@ -681,7 +681,7 @@ private:
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
-		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const = 0;
+		virtual service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
 	template <class T>
@@ -789,7 +789,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const final
+		service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsBooleanList<T>)
 			{
@@ -861,10 +861,10 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
+		virtual service::FieldResult<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
 	};
 
@@ -877,7 +877,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogMethod::WithParamsName<T>)
 			{
@@ -893,7 +893,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogMethod::WithParamsNickname<T>)
 			{
@@ -909,7 +909,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogMethod::WithParamsBarkVolume<T>)
 			{
@@ -925,7 +925,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
+		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
 		{
 			if constexpr (methods::DogMethod::WithParamsDoesKnowCommand<T>)
 			{
@@ -941,7 +941,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const final
+		service::FieldResult<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
 		{
 			if constexpr (methods::DogMethod::WithParamsIsHousetrained<T>)
 			{
@@ -1025,7 +1025,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1037,7 +1037,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AlienMethod::WithParamsName<T>)
 			{
@@ -1053,7 +1053,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AlienMethod::WithParamsHomePlanet<T>)
 			{
@@ -1133,7 +1133,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanMethod::WithParamsName<T>)
 			{
@@ -1219,9 +1219,9 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
-		virtual service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
+		virtual service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1233,7 +1233,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatMethod::WithParamsName<T>)
 			{
@@ -1249,7 +1249,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatMethod::WithParamsNickname<T>)
 			{
@@ -1265,7 +1265,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
+		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
 			if constexpr (methods::CatMethod::WithParamsDoesKnowCommand<T>)
 			{
@@ -1281,7 +1281,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatMethod::WithParamsMeowVolume<T>)
 			{
@@ -1505,7 +1505,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1533,7 +1533,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const final
+		service::FieldResult<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionMethod::WithParamsDisallowedSecondRootField<T>)
 			{
@@ -1600,7 +1600,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getBody(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const = 0;
 	};
 
@@ -1613,7 +1613,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getBody(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MessageMethod::WithParamsBody<T>)
 			{
@@ -1702,14 +1702,14 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const = 0;
-		virtual service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const = 0;
-		virtual service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const = 0;
-		virtual service::FieldResult<std::optional<response::IntType>> getIntArgField(service::FieldParams&& params, std::optional<response::IntType>&& intArgArg) const = 0;
-		virtual service::FieldResult<response::BooleanType> getNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& nonNullBooleanArgArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<response::BooleanType>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& nonNullBooleanListArgArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<response::BooleanType>>&& booleanListArgArg) const = 0;
-		virtual service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const = 0;
+		virtual service::FieldResult<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const = 0;
+		virtual service::FieldResult<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const = 0;
+		virtual service::FieldResult<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const = 0;
+		virtual service::FieldResult<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const = 0;
+		virtual service::FieldResult<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const = 0;
+		virtual service::FieldResult<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const = 0;
 	};
 
 	template <class T>
@@ -1721,7 +1721,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const final
+		service::FieldResult<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsMultipleReqs<T>)
 			{
@@ -1737,7 +1737,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const final
+		service::FieldResult<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsBooleanArgField<T>)
 			{
@@ -1753,7 +1753,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const final
+		service::FieldResult<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsFloatArgField<T>)
 			{
@@ -1769,7 +1769,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::IntType>> getIntArgField(service::FieldParams&& params, std::optional<response::IntType>&& intArgArg) const final
+		service::FieldResult<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsIntArgField<T>)
 			{
@@ -1785,7 +1785,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& nonNullBooleanArgArg) const final
+		service::FieldResult<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsNonNullBooleanArgField<T>)
 			{
@@ -1801,7 +1801,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<response::BooleanType>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& nonNullBooleanListArgArg) const final
+		service::FieldResult<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsNonNullBooleanListField<T>)
 			{
@@ -1817,7 +1817,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<response::BooleanType>>&& booleanListArgArg) const final
+		service::FieldResult<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsBooleanListArgField<T>)
 			{
@@ -1833,7 +1833,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const final
+		service::FieldResult<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsMethod::WithParamsOptionalNonNullBooleanArgField<T>)
 			{

@@ -40,37 +40,37 @@ concept NoParamsWhen = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsSubject = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getSubject() } };
 };
 
 template <class TImpl>
 concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsIsNow = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsNow() } };
+	{ service::FieldResult<bool> { impl.getIsNow() } };
 };
 
 template <class TImpl>
 concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsForceError = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getForceError() } };
 };
 
 template <class TImpl>
@@ -108,9 +108,9 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsNow(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -154,7 +154,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
 			{
@@ -170,7 +170,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
+		service::FieldResult<bool> getIsNow(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
 			{
@@ -186,7 +186,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
 			{

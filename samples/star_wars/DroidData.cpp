@@ -7,9 +7,8 @@
 
 namespace graphql::learn {
 
-Droid::Droid(response::StringType&& id, std::optional<response::StringType>&& name,
-	std::vector<Episode>&& appearsIn,
-	std::optional<response::StringType>&& primaryFunction) noexcept
+Droid::Droid(std::string&& id, std::optional<std::string>&& name, std::vector<Episode>&& appearsIn,
+	std::optional<std::string>&& primaryFunction) noexcept
 	: id_ { std::move(id) }
 	, name_ { std::move(name) }
 	, appearsIn_ { std::move(appearsIn) }
@@ -36,12 +35,12 @@ void Droid::addFriends(
 		});
 }
 
-const response::StringType& Droid::getId() const noexcept
+const std::string& Droid::getId() const noexcept
 {
 	return id_;
 }
 
-const std::optional<response::StringType>& Droid::getName() const noexcept
+const std::optional<std::string>& Droid::getName() const noexcept
 {
 	return name_;
 }
@@ -95,7 +94,7 @@ std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn() const n
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-const std::optional<response::StringType>& Droid::getPrimaryFunction() const noexcept
+const std::optional<std::string>& Droid::getPrimaryFunction() const noexcept
 {
 	return primaryFunction_;
 }

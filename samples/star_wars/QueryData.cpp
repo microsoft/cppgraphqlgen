@@ -6,8 +6,8 @@
 namespace graphql::learn {
 
 Query::Query(std::map<Episode, SharedHero>&& heroes,
-	std::map<response::StringType, std::shared_ptr<Human>>&& humans,
-	std::map<response::StringType, std::shared_ptr<Droid>>&& droids) noexcept
+	std::map<std::string, std::shared_ptr<Human>>&& humans,
+	std::map<std::string, std::shared_ptr<Droid>>&& droids) noexcept
 	: heroes_ { std::move(heroes) }
 	, humans_ { std::move(humans) }
 	, droids_ { std::move(droids) }
@@ -42,7 +42,7 @@ std::shared_ptr<service::Object> Query::getHero(std::optional<Episode> episodeAr
 	return result;
 }
 
-std::shared_ptr<object::Human> Query::getHuman(const response::StringType& idArg) const noexcept
+std::shared_ptr<object::Human> Query::getHuman(const std::string& idArg) const noexcept
 {
 	std::shared_ptr<Human> result;
 
@@ -54,7 +54,7 @@ std::shared_ptr<object::Human> Query::getHuman(const response::StringType& idArg
 	return std::make_shared<object::Human>(std::move(result));
 }
 
-std::shared_ptr<object::Droid> Query::getDroid(const response::StringType& idArg) const noexcept
+std::shared_ptr<object::Droid> Query::getDroid(const std::string& idArg) const noexcept
 {
 	std::shared_ptr<Droid> result;
 

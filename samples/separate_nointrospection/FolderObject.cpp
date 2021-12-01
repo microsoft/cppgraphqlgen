@@ -60,7 +60,7 @@ service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params)
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& params)
@@ -70,12 +70,12 @@ service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& 
 	auto result = _pimpl->getUnreadCount(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Folder::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Folder)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Folder)gql" }, std::move(params));
 }
 
 } // namespace object

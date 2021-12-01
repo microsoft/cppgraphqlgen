@@ -36,7 +36,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { "not a valid TaskState value" } };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<std::string>());
 
 	if (itr == s_namesTaskState.cend())
 	{
@@ -54,7 +54,7 @@ service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::Fi
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_namesTaskState[static_cast<size_t>(value)] });
+			result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -76,11 +76,11 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 	auto valueTestTaskState = service::ModifiedArgument<today::TaskState>::require<service::TypeModifier::Nullable>("testTaskState", value);
-	auto pairIsComplete = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("isComplete", value);
+	auto pairIsComplete = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("isComplete", value);
 	auto valueIsComplete = (pairIsComplete.second
 		? std::move(pairIsComplete.first)
-		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
-	auto valueClientMutationId = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("clientMutationId", value);
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
+	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("clientMutationId", value);
 
 	return {
 		std::move(valueId),

@@ -28,13 +28,13 @@ concept NoParamsTask = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsClientMutationId = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
@@ -68,7 +68,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
 			{

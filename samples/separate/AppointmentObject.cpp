@@ -72,7 +72,7 @@ service::AwaitableResolver Appointment::resolveSubject(service::ResolverParams&&
 	auto result = _pimpl->getSubject(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& params)
@@ -82,7 +82,7 @@ service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& p
 	auto result = _pimpl->getIsNow(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Appointment::resolveForceError(service::ResolverParams&& params)
@@ -92,12 +92,12 @@ service::AwaitableResolver Appointment::resolveForceError(service::ResolverParam
 	auto result = _pimpl->getForceError(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Appointment::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Appointment)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Appointment)gql" }, std::move(params));
 }
 
 } // namespace object

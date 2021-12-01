@@ -51,7 +51,7 @@ service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Droid::resolveName(service::ResolverParams&& params)
@@ -61,7 +61,7 @@ service::AwaitableResolver Droid::resolveName(service::ResolverParams&& params)
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Droid::resolveFriends(service::ResolverParams&& params)
@@ -91,12 +91,12 @@ service::AwaitableResolver Droid::resolvePrimaryFunction(service::ResolverParams
 	auto result = _pimpl->getPrimaryFunction(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Droid::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Droid)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Droid)gql" }, std::move(params));
 }
 
 } // namespace object

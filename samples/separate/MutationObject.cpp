@@ -53,18 +53,18 @@ service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams
 
 service::AwaitableResolver Mutation::resolveSetFloat(service::ResolverParams&& params)
 {
-	auto argValue = service::ModifiedArgument<response::FloatType>::require("value", params.arguments);
+	auto argValue = service::ModifiedArgument<double>::require("value", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->applySetFloat(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argValue));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::FloatType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<double>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Mutation)gql" }, std::move(params));
 }
 
 } // namespace object

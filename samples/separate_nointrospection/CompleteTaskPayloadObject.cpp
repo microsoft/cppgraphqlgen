@@ -57,12 +57,12 @@ service::AwaitableResolver CompleteTaskPayload::resolveClientMutationId(service:
 	auto result = _pimpl->getClientMutationId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver CompleteTaskPayload::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(CompleteTaskPayload)gql" }, std::move(params));
 }
 
 } // namespace object

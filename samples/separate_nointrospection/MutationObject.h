@@ -26,15 +26,15 @@ concept NoParamsCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg)
 };
 
 template <class TImpl>
-concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, double valueArg) 
 {
-	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
+	{ service::FieldResult<double> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsSetFloat = requires (TImpl impl, response::FloatType valueArg) 
+concept NoParamsSetFloat = requires (TImpl impl, double valueArg) 
 {
-	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(valueArg)) } };
+	{ service::FieldResult<double> { impl.applySetFloat(std::move(valueArg)) } };
 };
 
 template <class TImpl>
@@ -68,7 +68,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
-		virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const = 0;
+		virtual service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const = 0;
 	};
 
 	template <class T>
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
+		service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const final
 		{
 			if constexpr (methods::MutationMethod::WithParamsSetFloat<T>)
 			{

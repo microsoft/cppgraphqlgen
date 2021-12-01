@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -29,7 +29,7 @@ response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
-	result.set<response::StringType>(response::StringType { s_namesTaskState[static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
 
 	return result;
 }
@@ -41,8 +41,8 @@ response::Value ModifiedVariable<Variables::CompleteTaskInput>::serialize(Variab
 
 	result.emplace_back(R"js(id)js"s, ModifiedVariable<response::IdType>::serialize(std::move(inputValue.id)));
 	result.emplace_back(R"js(testTaskState)js"s, ModifiedVariable<TaskState>::serialize<TypeModifier::Nullable>(std::move(inputValue.testTaskState)));
-	result.emplace_back(R"js(isComplete)js"s, ModifiedVariable<response::BooleanType>::serialize<TypeModifier::Nullable>(std::move(inputValue.isComplete)));
-	result.emplace_back(R"js(clientMutationId)js"s, ModifiedVariable<response::StringType>::serialize<TypeModifier::Nullable>(std::move(inputValue.clientMutationId)));
+	result.emplace_back(R"js(isComplete)js"s, ModifiedVariable<bool>::serialize<TypeModifier::Nullable>(std::move(inputValue.isComplete)));
+	result.emplace_back(R"js(clientMutationId)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.clientMutationId)));
 
 	return result;
 }
@@ -55,7 +55,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value value)
 		throw std::logic_error { "not a valid TaskState value" };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<response::StringType>());
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<std::string>());
 
 	if (itr == s_namesTaskState.cend())
 	{
@@ -83,12 +83,12 @@ Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse
 			}
 			if (member.first == R"js(title)js"sv)
 			{
-				result.title = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(isComplete)js"sv)
 			{
-				result.isComplete = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isComplete = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 		}
@@ -115,7 +115,7 @@ Response::completedTask_CompleteTaskPayload ModifiedResponse<Response::completed
 			}
 			if (member.first == R"js(clientMutationId)js"sv)
 			{
-				result.clientMutationId = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.clientMutationId = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}

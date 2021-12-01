@@ -7,8 +7,8 @@
 
 namespace graphql::learn {
 
-Human::Human(response::StringType&& id, std::optional<response::StringType>&& name,
-	std::vector<Episode>&& appearsIn, std::optional<response::StringType>&& homePlanet) noexcept
+Human::Human(std::string&& id, std::optional<std::string>&& name, std::vector<Episode>&& appearsIn,
+	std::optional<std::string>&& homePlanet) noexcept
 	: id_ { std::move(id) }
 	, name_ { std::move(name) }
 	, appearsIn_ { std::move(appearsIn) }
@@ -34,12 +34,12 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 		});
 }
 
-const response::StringType& Human::getId() const noexcept
+const std::string& Human::getId() const noexcept
 {
 	return id_;
 }
 
-const std::optional<response::StringType>& Human::getName() const noexcept
+const std::optional<std::string>& Human::getName() const noexcept
 {
 	return name_;
 }
@@ -93,7 +93,7 @@ std::optional<std::vector<std::optional<Episode>>> Human::getAppearsIn() const n
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-const std::optional<response::StringType>& Human::getHomePlanet() const noexcept
+const std::optional<std::string>& Human::getHomePlanet() const noexcept
 {
 	return homePlanet_;
 }

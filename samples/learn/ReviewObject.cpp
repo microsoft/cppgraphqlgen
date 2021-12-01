@@ -47,7 +47,7 @@ service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params
 	auto result = _pimpl->getStars(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Review::resolveCommentary(service::ResolverParams&& params)
@@ -57,12 +57,12 @@ service::AwaitableResolver Review::resolveCommentary(service::ResolverParams&& p
 	auto result = _pimpl->getCommentary(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Review::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Review)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Review)gql" }, std::move(params));
 }
 
 } // namespace object

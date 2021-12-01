@@ -1302,7 +1302,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 							  response::MapType::const_reference fuzzy) noexcept -> bool {
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
-		EXPECT_EQ("ZmFr", fuzzy.second.get<response::StringType>());
+		EXPECT_EQ("ZmFr", fuzzy.second.get<std::string>());
 		filterCalled = true;
 		return true;
 	};
@@ -1375,7 +1375,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 							  response::MapType::const_reference fuzzy) noexcept -> bool {
 		EXPECT_FALSE(filterCalled);
 		EXPECT_EQ("id", fuzzy.first) << "should only get called once for the id argument";
-		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<response::StringType>());
+		EXPECT_EQ("ZmFrZVRhc2tJZA==", fuzzy.second.get<std::string>());
 		filterCalled = true;
 		return false;
 	};

@@ -46,12 +46,12 @@ service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& par
 	auto result = _pimpl->getOrder(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Expensive::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Expensive)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Expensive)gql" }, std::move(params));
 }
 
 } // namespace object

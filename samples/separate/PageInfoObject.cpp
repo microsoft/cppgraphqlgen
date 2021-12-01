@@ -47,7 +47,7 @@ service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&
 	auto result = _pimpl->getHasNextPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
@@ -57,12 +57,12 @@ service::AwaitableResolver PageInfo::resolveHasPreviousPage(service::ResolverPar
 	auto result = _pimpl->getHasPreviousPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver PageInfo::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(PageInfo)gql" }, std::move(params));
 }
 
 } // namespace object

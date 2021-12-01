@@ -110,10 +110,10 @@ struct Response
 			struct node_Appointment
 			{
 				response::IdType id {};
-				std::optional<response::StringType> subject {};
+				std::optional<std::string> subject {};
 				std::optional<response::Value> when {};
-				response::BooleanType isNow {};
-				response::StringType _typename {};
+				bool isNow {};
+				std::string _typename {};
 			};
 
 			std::optional<node_Appointment> node {};
@@ -129,9 +129,9 @@ struct Response
 			struct node_Task
 			{
 				response::IdType id {};
-				std::optional<response::StringType> title {};
-				response::BooleanType isComplete {};
-				response::StringType _typename {};
+				std::optional<std::string> title {};
+				bool isComplete {};
+				std::string _typename {};
 			};
 
 			std::optional<node_Task> node {};
@@ -147,9 +147,9 @@ struct Response
 			struct node_Folder
 			{
 				response::IdType id {};
-				std::optional<response::StringType> name {};
-				response::IntType unreadCount {};
-				response::StringType _typename {};
+				std::optional<std::string> name {};
+				int unreadCount {};
+				std::string _typename {};
 			};
 
 			std::optional<node_Folder> node {};
@@ -160,13 +160,13 @@ struct Response
 
 	struct anyType_UnionType
 	{
-		response::StringType _typename {};
+		std::string _typename {};
 		response::IdType id {};
-		std::optional<response::StringType> title {};
-		response::BooleanType isComplete {};
-		std::optional<response::StringType> subject {};
+		std::optional<std::string> title {};
+		bool isComplete {};
+		std::optional<std::string> subject {};
 		std::optional<response::Value> when {};
-		response::BooleanType isNow {};
+		bool isNow {};
 	};
 
 	appointments_AppointmentConnection appointments {};

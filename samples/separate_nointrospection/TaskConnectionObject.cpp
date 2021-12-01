@@ -62,7 +62,7 @@ service::AwaitableResolver TaskConnection::resolveEdges(service::ResolverParams&
 
 service::AwaitableResolver TaskConnection::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(TaskConnection)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(TaskConnection)gql" }, std::move(params));
 }
 
 } // namespace object

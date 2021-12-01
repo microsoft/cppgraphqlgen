@@ -134,7 +134,7 @@ void DefaultValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 void DefaultValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
-	_value.set<response::StringType>(enumValue.string());
+	_value.set<std::string>(enumValue.string());
 }
 
 void DefaultValueVisitor::visitListValue(const peg::ast_node& listValue)

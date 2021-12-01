@@ -16,13 +16,13 @@ namespace methods::ExpensiveMethod {
 template <class TImpl>
 concept WithParamsOrder = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsOrder = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getOrder() } };
+	{ service::FieldResult<int> { impl.getOrder() } };
 };
 
 template <class TImpl>
@@ -54,7 +54,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getOrder(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
+		service::FieldResult<int> getOrder(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ExpensiveMethod::WithParamsOrder<T>)
 			{

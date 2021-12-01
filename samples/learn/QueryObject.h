@@ -26,25 +26,25 @@ concept NoParamsHero = requires (TImpl impl, std::optional<Episode> episodeArg)
 };
 
 template <class TImpl>
-concept WithParamsHuman = requires (TImpl impl, service::FieldParams params, response::StringType idArg) 
+concept WithParamsHuman = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsHuman = requires (TImpl impl, response::StringType idArg) 
+concept NoParamsHuman = requires (TImpl impl, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsDroid = requires (TImpl impl, service::FieldParams params, response::StringType idArg) 
+concept WithParamsDroid = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsDroid = requires (TImpl impl, response::StringType idArg) 
+concept NoParamsDroid = requires (TImpl impl, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
 };
@@ -85,8 +85,8 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const = 0;
 	};
 
 	template <class T>
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const final
+		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsHuman<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const final
+		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsDroid<T>)
 			{

@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -32,7 +32,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value value)
 		throw std::logic_error { "not a valid TaskState value" };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<response::StringType>());
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<std::string>());
 
 	if (itr == s_namesTaskState.cend())
 	{
@@ -60,7 +60,7 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appoin
 			}
 			if (member.first == R"js(subject)js"sv)
 			{
-				result.subject = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(when)js"sv)
@@ -70,12 +70,12 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appoin
 			}
 			if (member.first == R"js(isNow)js"sv)
 			{
-				result.isNow = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(__typename)js"sv)
 			{
-				result._typename = ModifiedResponse<response::StringType>::parse(std::move(member.second));
+				result._typename = ModifiedResponse<std::string>::parse(std::move(member.second));
 				continue;
 			}
 		}
@@ -146,17 +146,17 @@ Response::tasks_TaskConnection::edges_TaskEdge::node_Task ModifiedResponse<Respo
 			}
 			if (member.first == R"js(title)js"sv)
 			{
-				result.title = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(isComplete)js"sv)
 			{
-				result.isComplete = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isComplete = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(__typename)js"sv)
 			{
-				result._typename = ModifiedResponse<response::StringType>::parse(std::move(member.second));
+				result._typename = ModifiedResponse<std::string>::parse(std::move(member.second));
 				continue;
 			}
 		}
@@ -227,17 +227,17 @@ Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder ModifiedR
 			}
 			if (member.first == R"js(name)js"sv)
 			{
-				result.name = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.name = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(unreadCount)js"sv)
 			{
-				result.unreadCount = ModifiedResponse<response::IntType>::parse(std::move(member.second));
+				result.unreadCount = ModifiedResponse<int>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(__typename)js"sv)
 			{
-				result._typename = ModifiedResponse<response::StringType>::parse(std::move(member.second));
+				result._typename = ModifiedResponse<std::string>::parse(std::move(member.second));
 				continue;
 			}
 		}
@@ -303,7 +303,7 @@ Response::anyType_UnionType ModifiedResponse<Response::anyType_UnionType>::parse
 		{
 			if (member.first == R"js(__typename)js"sv)
 			{
-				result._typename = ModifiedResponse<response::StringType>::parse(std::move(member.second));
+				result._typename = ModifiedResponse<std::string>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(id)js"sv)
@@ -313,17 +313,17 @@ Response::anyType_UnionType ModifiedResponse<Response::anyType_UnionType>::parse
 			}
 			if (member.first == R"js(title)js"sv)
 			{
-				result.title = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(isComplete)js"sv)
 			{
-				result.isComplete = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isComplete = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(subject)js"sv)
 			{
-				result.subject = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(when)js"sv)
@@ -333,7 +333,7 @@ Response::anyType_UnionType ModifiedResponse<Response::anyType_UnionType>::parse
 			}
 			if (member.first == R"js(isNow)js"sv)
 			{
-				result.isNow = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 		}

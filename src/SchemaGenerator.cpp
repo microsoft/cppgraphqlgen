@@ -1044,7 +1044,7 @@ template <>
 
 	const auto itr = std::find(s_names)cpp"
 					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<response::StringType>());
+					   << R"cpp(.cend(), value.get<std::string>());
 
 	if (itr == s_names)cpp"
 					   << enumType.cppType << R"cpp(.cend())
@@ -1071,7 +1071,7 @@ service::AwaitableResolver ModifiedResult<)cpp"
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_names)cpp"
+			result.set<std::string>(std::string { s_names)cpp"
 					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
 
 			return result;
@@ -1999,7 +1999,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			   << objectType.cppType << R"cpp(::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql()cpp"
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql()cpp"
 			   << objectType.type << R"cpp()gql" }, std::move(params));
 }
 )cpp";
@@ -2021,7 +2021,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
 	std::shared_ptr<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
@@ -2218,7 +2218,7 @@ std::string Generator::getArgumentDefaultValue(
 		{
 			argumentDefaultValue << padding
 								 << R"cpp(		entry = response::Value(std::string(R"gql()cpp"
-								 << defaultValue.get<response::StringType>() << R"cpp()gql"));
+								 << defaultValue.get<std::string>() << R"cpp()gql"));
 )cpp";
 			break;
 		}
@@ -2233,8 +2233,7 @@ std::string Generator::getArgumentDefaultValue(
 		case response::Type::Boolean:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value()cpp"
-								 << (defaultValue.get<response::BooleanType>() ? R"cpp(true)cpp"
-																			   : R"cpp(false)cpp")
+								 << (defaultValue.get<bool>() ? R"cpp(true)cpp" : R"cpp(false)cpp")
 								 << R"cpp();
 )cpp";
 			break;
@@ -2242,20 +2241,18 @@ std::string Generator::getArgumentDefaultValue(
 
 		case response::Type::Int:
 		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::IntType>()cpp"
-				<< defaultValue.get<response::IntType>() << R"cpp());
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(static_cast<int>()cpp"
+								 << defaultValue.get<int>() << R"cpp());
 )cpp";
 			break;
 		}
 
 		case response::Type::Float:
 		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::FloatType>()cpp"
-				<< defaultValue.get<response::FloatType>() << R"cpp());
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(static_cast<double>()cpp"
+								 << defaultValue.get<double>() << R"cpp());
 )cpp";
 			break;
 		}
@@ -2264,8 +2261,8 @@ std::string Generator::getArgumentDefaultValue(
 		{
 			argumentDefaultValue
 				<< padding << R"cpp(		entry = response::Value(response::Type::EnumValue);
-		entry.set<response::StringType>(R"gql()cpp"
-				<< defaultValue.get<response::StringType>() << R"cpp()gql");
+		entry.set<std::string>(R"gql()cpp"
+				<< defaultValue.get<std::string>() << R"cpp()gql");
 )cpp";
 			break;
 		}

@@ -30,9 +30,9 @@ void addErrorLocation(const schema_location& location, response::Value& error)
 
 	errorLocation.reserve(2);
 	errorLocation.emplace_back(std::string { strLine },
-		response::Value(static_cast<response::IntType>(location.line)));
+		response::Value(static_cast<int>(location.line)));
 	errorLocation.emplace_back(std::string { strColumn },
-		response::Value(static_cast<response::IntType>(location.column)));
+		response::Value(static_cast<int>(location.column)));
 
 	response::Value errorLocations(response::Type::List);
 
@@ -61,8 +61,7 @@ void addErrorPath(const error_path& path, response::Value& error)
 		}
 		else if (std::holds_alternative<size_t>(segment))
 		{
-			errorPath.emplace_back(
-				response::Value(static_cast<response::IntType>(std::get<size_t>(segment))));
+			errorPath.emplace_back(response::Value(static_cast<int>(std::get<size_t>(segment))));
 		}
 	}
 
@@ -297,7 +296,7 @@ void ValueVisitor::visitNullValue(const peg::ast_node& /*nullValue*/)
 void ValueVisitor::visitEnumValue(const peg::ast_node& enumValue)
 {
 	_value = response::Value(response::Type::EnumValue);
-	_value.set<response::StringType>(enumValue.string());
+	_value.set<std::string>(enumValue.string());
 }
 
 void ValueVisitor::visitListValue(const peg::ast_node& listValue)
@@ -442,7 +441,7 @@ bool DirectiveVisitor::shouldSkip() const
 				throw schema_exception { { error.str() } };
 			}
 
-			argumentTrue = argument.second.get<response::BooleanType>();
+			argumentTrue = argument.second.get<bool>();
 			argumentFalse = !argumentTrue;
 		}
 
@@ -519,47 +518,47 @@ schema_location ResolverParams::getLocation() const
 }
 
 template <>
-response::IntType ModifiedArgument<response::IntType>::convert(const response::Value& value)
+int ModifiedArgument<int>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Int)
 	{
 		throw schema_exception { { "not an integer" } };
 	}
 
-	return value.get<response::IntType>();
+	return value.get<int>();
 }
 
 template <>
-response::FloatType ModifiedArgument<response::FloatType>::convert(const response::Value& value)
+double ModifiedArgument<double>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
 		throw schema_exception { { "not a float" } };
 	}
 
-	return value.get<response::FloatType>();
+	return value.get<double>();
 }
 
 template <>
-response::StringType ModifiedArgument<response::StringType>::convert(const response::Value& value)
+std::string ModifiedArgument<std::string>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
 		throw schema_exception { { "not a string" } };
 	}
 
-	return value.get<response::StringType>();
+	return value.get<std::string>();
 }
 
 template <>
-response::BooleanType ModifiedArgument<response::BooleanType>::convert(const response::Value& value)
+bool ModifiedArgument<bool>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
 		throw schema_exception { { "not a boolean" } };
 	}
 
-	return value.get<response::BooleanType>();
+	return value.get<bool>();
 }
 
 template <>
@@ -627,55 +626,46 @@ void blockSubFields(const ResolverParams& params)
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::IntType>::convert(
-	FieldResult<response::IntType> result, ResolverParams params)
+AwaitableResolver ModifiedResult<int>::convert(FieldResult<int> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::IntType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return resolve(std::move(result), std::move(params), [](int&& value, const ResolverParams&) {
+		return response::Value(value);
+	});
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::FloatType>::convert(
-	FieldResult<response::FloatType> result, ResolverParams params)
+AwaitableResolver ModifiedResult<double>::convert(FieldResult<double> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::FloatType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return resolve(std::move(result), std::move(params), [](double&& value, const ResolverParams&) {
+		return response::Value(value);
+	});
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::StringType>::convert(
-	FieldResult<response::StringType> result, ResolverParams params)
+AwaitableResolver ModifiedResult<std::string>::convert(
+	FieldResult<std::string> result, ResolverParams params)
 {
 	blockSubFields(params);
 
 	return resolve(std::move(result),
 		std::move(params),
-		[](response::StringType&& value, const ResolverParams&) {
+		[](std::string&& value, const ResolverParams&) {
 			return response::Value(std::move(value));
 		});
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::BooleanType>::convert(
-	FieldResult<response::BooleanType> result, ResolverParams params)
+AwaitableResolver ModifiedResult<bool>::convert(FieldResult<bool> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
-		std::move(params),
-		[](response::BooleanType&& value, const ResolverParams&) {
-			return response::Value(value);
-		});
+	return resolve(std::move(result), std::move(params), [](bool&& value, const ResolverParams&) {
+		return response::Value(value);
+	});
 }
 
 template <>

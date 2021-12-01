@@ -520,7 +520,7 @@ void RequestLoader::addTypesToSchema()
 			[](std::string_view locationName) noexcept {
 				response::Value locationValue(response::Type::EnumValue);
 
-				locationValue.set<response::StringType>(response::StringType { locationName });
+				locationValue.set<std::string>(std::string { locationName });
 
 				return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
 					locationValue);

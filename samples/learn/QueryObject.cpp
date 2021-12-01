@@ -57,7 +57,7 @@ service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 
 service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
@@ -68,7 +68,7 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 
 service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
 {
-	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getDroid(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
@@ -79,7 +79,7 @@ service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Query)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params)
@@ -89,7 +89,7 @@ service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& param
 
 service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
 	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::object::Type>(std::make_shared<introspection::Type>(baseType)) : nullptr };
 

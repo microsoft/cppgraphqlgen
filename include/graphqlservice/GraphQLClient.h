@@ -34,13 +34,13 @@ namespace graphql::client {
 // Errors may specify the line number and column number where the error occurred.
 struct ErrorLocation
 {
-	response::IntType line {};
-	response::IntType column {};
+	int line {};
+	int column {};
 };
 
 // Errors may specify a path to the field which triggered the error. The path consists of
 // field names and the indices of elements in a list.
-using ErrorPathSegment = std::variant<response::StringType, response::IntType>;
+using ErrorPathSegment = std::variant<std::string, int>;
 
 // Error returned from the service.
 struct Error
@@ -141,27 +141,23 @@ struct ModifiedVariable
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLClient library, other specializations
 // for input types should be generated in schemagen.
-using IntVariable = ModifiedVariable<response::IntType>;
-using FloatVariable = ModifiedVariable<response::FloatType>;
-using StringVariable = ModifiedVariable<response::StringType>;
-using BooleanVariable = ModifiedVariable<response::BooleanType>;
+using IntVariable = ModifiedVariable<int>;
+using FloatVariable = ModifiedVariable<double>;
+using StringVariable = ModifiedVariable<std::string>;
+using BooleanVariable = ModifiedVariable<bool>;
 using IdVariable = ModifiedVariable<response::IdType>;
 using ScalarVariable = ModifiedVariable<response::Value>;
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<response::IntType>::serialize(
-	response::IntType&& value);
+GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<int>::serialize(int&& value);
 template <>
-GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<response::FloatType>::serialize(
-	response::FloatType&& value);
+GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<double>::serialize(double&& value);
 template <>
-GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<response::StringType>::serialize(
-	response::StringType&& value);
+GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<std::string>::serialize(std::string&& value);
 template <>
-GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<response::BooleanType>::serialize(
-	response::BooleanType&& value);
+GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<bool>::serialize(bool&& value);
 template <>
 GRAPHQLCLIENT_EXPORT response::Value ModifiedVariable<response::IdType>::serialize(
 	response::IdType&& value);
@@ -245,27 +241,23 @@ struct ModifiedResponse
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLClient library, other specializations
 // for output types should be generated in schemagen.
-using IntResponse = ModifiedResponse<response::IntType>;
-using FloatResponse = ModifiedResponse<response::FloatType>;
-using StringResponse = ModifiedResponse<response::StringType>;
-using BooleanResponse = ModifiedResponse<response::BooleanType>;
+using IntResponse = ModifiedResponse<int>;
+using FloatResponse = ModifiedResponse<double>;
+using StringResponse = ModifiedResponse<std::string>;
+using BooleanResponse = ModifiedResponse<bool>;
 using IdResponse = ModifiedResponse<response::IdType>;
 using ScalarResponse = ModifiedResponse<response::Value>;
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLCLIENT_EXPORT response::IntType ModifiedResponse<response::IntType>::parse(
-	response::Value response);
+GRAPHQLCLIENT_EXPORT int ModifiedResponse<int>::parse(response::Value response);
 template <>
-GRAPHQLCLIENT_EXPORT response::FloatType ModifiedResponse<response::FloatType>::parse(
-	response::Value response);
+GRAPHQLCLIENT_EXPORT double ModifiedResponse<double>::parse(response::Value response);
 template <>
-GRAPHQLCLIENT_EXPORT response::StringType ModifiedResponse<response::StringType>::parse(
-	response::Value response);
+GRAPHQLCLIENT_EXPORT std::string ModifiedResponse<std::string>::parse(response::Value response);
 template <>
-GRAPHQLCLIENT_EXPORT response::BooleanType ModifiedResponse<response::BooleanType>::parse(
-	response::Value response);
+GRAPHQLCLIENT_EXPORT bool ModifiedResponse<bool>::parse(response::Value response);
 template <>
 GRAPHQLCLIENT_EXPORT response::IdType ModifiedResponse<response::IdType>::parse(
 	response::Value response);

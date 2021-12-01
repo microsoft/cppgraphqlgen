@@ -59,7 +59,7 @@ struct Response
 	{
 		struct pageInfo_PageInfo
 		{
-			response::BooleanType hasNextPage {};
+			bool hasNextPage {};
 		};
 
 		struct edges_AppointmentEdge
@@ -68,8 +68,8 @@ struct Response
 			{
 				response::IdType id {};
 				std::optional<response::Value> when {};
-				std::optional<response::StringType> subject {};
-				response::BooleanType isNow {};
+				std::optional<std::string> subject {};
+				bool isNow {};
 			};
 
 			std::optional<node_Appointment> node {};

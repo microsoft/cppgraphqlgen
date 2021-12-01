@@ -30,8 +30,8 @@ enum class Episode
 
 struct ReviewInput
 {
-	response::IntType stars;
-	std::optional<response::StringType> commentary;
+	int stars;
+	std::optional<std::string> commentary;
 };
 
 namespace object {
@@ -46,8 +46,8 @@ class Mutation;
 
 struct Character
 {
-	virtual service::FieldResult<response::StringType> getId(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::string> getId(service::FieldParams&& params) const = 0;
+	virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
 	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const = 0;
 	virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
 };

@@ -53,7 +53,7 @@ service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams
 
 service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Mutation)gql" }, std::move(params));
 }
 
 } // namespace object

@@ -16,25 +16,25 @@ namespace methods::HumanMethod {
 template <class TImpl>
 concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getId(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsId = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getId() } };
+	{ service::FieldResult<std::string> { impl.getId() } };
 };
 
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
@@ -64,13 +64,13 @@ concept NoParamsAppearsIn = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsHomePlanet = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHomePlanet = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet() } };
 };
 
 template <class TImpl>
@@ -107,7 +107,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -119,7 +119,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getId(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanMethod::WithParamsId<T>)
 			{
@@ -132,7 +132,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanMethod::WithParamsName<T>)
 			{
@@ -171,7 +171,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanMethod::WithParamsHomePlanet<T>)
 			{

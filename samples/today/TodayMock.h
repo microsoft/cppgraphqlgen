@@ -53,16 +53,16 @@ public:
 	service::FieldResult<std::shared_ptr<service::Object>> getNode(
 		service::FieldParams params, response::IdType id);
 	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(
-		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		const service::FieldParams& params, std::optional<int> first,
+		std::optional<response::Value>&& after, std::optional<int> last,
 		std::optional<response::Value>&& before);
 	std::future<std::shared_ptr<object::TaskConnection>> getTasks(
-		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		const service::FieldParams& params, std::optional<int> first,
+		std::optional<response::Value>&& after, std::optional<int> last,
 		std::optional<response::Value>&& before);
 	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(
-		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		const service::FieldParams& params, std::optional<int> first,
+		std::optional<response::Value>&& after, std::optional<int> last,
 		std::optional<response::Value>&& before);
 	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(
 		const service::FieldParams& params, const std::vector<response::IdType>& ids);
@@ -143,9 +143,9 @@ public:
 		return std::make_optional<response::Value>(std::string(_when));
 	}
 
-	std::optional<response::StringType> getSubject() const noexcept
+	std::optional<std::string> getSubject() const noexcept
 	{
-		return std::make_optional<response::StringType>(_subject);
+		return std::make_optional<std::string>(_subject);
 	}
 
 	bool getIsNow() const noexcept
@@ -153,7 +153,7 @@ public:
 		return _isNow;
 	}
 
-	std::optional<response::StringType> getForceError() const
+	std::optional<std::string> getForceError() const
 	{
 		throw std::runtime_error(R"ex(this error was forced)ex");
 	}
@@ -239,9 +239,9 @@ public:
 		return _id;
 	}
 
-	std::optional<response::StringType> getTitle() const noexcept
+	std::optional<std::string> getTitle() const noexcept
 	{
-		return std::make_optional<response::StringType>(_title);
+		return std::make_optional<std::string>(_title);
 	}
 
 	bool getIsComplete() const noexcept
@@ -329,9 +329,9 @@ public:
 		return _id;
 	}
 
-	std::optional<response::StringType> getName() const noexcept
+	std::optional<std::string> getName() const noexcept
 	{
-		return std::make_optional<response::StringType>(_name);
+		return std::make_optional<std::string>(_name);
 	}
 
 	int getUnreadCount() const noexcept
@@ -406,7 +406,7 @@ class CompleteTaskPayload
 {
 public:
 	explicit CompleteTaskPayload(
-		std::shared_ptr<Task> task, std::optional<response::StringType>&& clientMutationId)
+		std::shared_ptr<Task> task, std::optional<std::string>&& clientMutationId)
 		: _task(std::move(task))
 		, _clientMutationId(std::move(clientMutationId))
 	{
@@ -417,14 +417,14 @@ public:
 		return std::make_shared<object::Task>(_task);
 	}
 
-	const std::optional<response::StringType>& getClientMutationId() const noexcept
+	const std::optional<std::string>& getClientMutationId() const noexcept
 	{
 		return _clientMutationId;
 	}
 
 private:
 	std::shared_ptr<Task> _task;
-	std::optional<response::StringType> _clientMutationId;
+	std::optional<std::string> _clientMutationId;
 };
 
 class Mutation
@@ -439,11 +439,11 @@ public:
 
 	std::shared_ptr<object::CompleteTaskPayload> applyCompleteTask(
 		CompleteTaskInput&& input) noexcept;
-	response::FloatType applySetFloat(response::FloatType valueArg) noexcept;
+	double applySetFloat(double valueArg) noexcept;
 
 private:
 	completeTaskMutation _mutateCompleteTask;
-	static std::optional<response::FloatType> _setFloat;
+	static std::optional<double> _setFloat;
 };
 
 class Subscription
@@ -578,7 +578,7 @@ class NestedType
 public:
 	explicit NestedType(service::FieldParams&& params, int depth);
 
-	response::IntType getDepth() const noexcept;
+	int getDepth() const noexcept;
 	std::shared_ptr<object::NestedType> getNested(service::FieldParams&& params) const noexcept;
 
 	static std::stack<CapturedParams> getCapturedParams() noexcept;
@@ -598,7 +598,7 @@ public:
 	explicit Expensive();
 	~Expensive();
 
-	std::future<response::IntType> getOrder(const service::FieldParams& params) const noexcept;
+	std::future<int> getOrder(const service::FieldParams& params) const noexcept;
 
 	static constexpr size_t count = 5;
 	static std::mutex testMutex;

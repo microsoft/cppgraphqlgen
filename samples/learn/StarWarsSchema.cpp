@@ -35,7 +35,7 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 		throw service::schema_exception { { "not a valid Episode value" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
 
 	if (itr == s_namesEpisode.cend())
 	{
@@ -53,7 +53,7 @@ service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::Fiel
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_namesEpisode[static_cast<size_t>(value)] });
+			result.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -62,8 +62,8 @@ service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::Fiel
 template <>
 learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response::Value& value)
 {
-	auto valueStars = service::ModifiedArgument<response::IntType>::require("stars", value);
-	auto valueCommentary = service::ModifiedArgument<response::StringType>::require<service::TypeModifier::Nullable>("commentary", value);
+	auto valueStars = service::ModifiedArgument<int>::require("stars", value);
+	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);
 
 	return {
 		std::move(valueStars),

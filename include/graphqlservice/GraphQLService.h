@@ -494,27 +494,24 @@ struct ModifiedArgument
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for input types should be generated in schemagen.
-using IntArgument = ModifiedArgument<response::IntType>;
-using FloatArgument = ModifiedArgument<response::FloatType>;
-using StringArgument = ModifiedArgument<response::StringType>;
-using BooleanArgument = ModifiedArgument<response::BooleanType>;
+using IntArgument = ModifiedArgument<int>;
+using FloatArgument = ModifiedArgument<double>;
+using StringArgument = ModifiedArgument<std::string>;
+using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT response::IntType ModifiedArgument<response::IntType>::convert(
+GRAPHQLSERVICE_EXPORT int ModifiedArgument<int>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT double ModifiedArgument<double>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::string ModifiedArgument<std::string>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT response::FloatType ModifiedArgument<response::FloatType>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::StringType ModifiedArgument<response::StringType>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::BooleanType ModifiedArgument<response::BooleanType>::convert(
-	const response::Value& value);
+GRAPHQLSERVICE_EXPORT bool ModifiedArgument<bool>::convert(const response::Value& value);
 template <>
 GRAPHQLSERVICE_EXPORT response::IdType ModifiedArgument<response::IdType>::convert(
 	const response::Value& value);
@@ -829,10 +826,10 @@ private:
 // Convenient type aliases for testing, generated code won't actually use these. These are also
 // the specializations which are implemented in the GraphQLService library, other specializations
 // for output types should be generated in schemagen.
-using IntResult = ModifiedResult<response::IntType>;
-using FloatResult = ModifiedResult<response::FloatType>;
-using StringResult = ModifiedResult<response::StringType>;
-using BooleanResult = ModifiedResult<response::BooleanType>;
+using IntResult = ModifiedResult<int>;
+using FloatResult = ModifiedResult<double>;
+using StringResult = ModifiedResult<std::string>;
+using BooleanResult = ModifiedResult<bool>;
 using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
@@ -840,17 +837,17 @@ using ObjectResult = ModifiedResult<Object>;
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IntType>::convert(
-	FieldResult<response::IntType> result, ResolverParams params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<int>::convert(
+	FieldResult<int> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::FloatType>::convert(
-	FieldResult<response::FloatType> result, ResolverParams params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<double>::convert(
+	FieldResult<double> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::StringType>::convert(
-	FieldResult<response::StringType> result, ResolverParams params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<std::string>::convert(
+	FieldResult<std::string> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::BooleanType>::convert(
-	FieldResult<response::BooleanType> result, ResolverParams params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<bool>::convert(
+	FieldResult<bool> result, ResolverParams params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IdType>::convert(
 	FieldResult<response::IdType> result, ResolverParams params);

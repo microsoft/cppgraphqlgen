@@ -16,25 +16,25 @@ namespace methods::ReviewMethod {
 template <class TImpl>
 concept WithParamsStars = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getStars(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getStars(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsStars = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getStars() } };
+	{ service::FieldResult<int> { impl.getStars() } };
 };
 
 template <class TImpl>
 concept WithParamsCommentary = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getCommentary(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsCommentary = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getCommentary() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getStars(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getCommentary(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final
+		service::FieldResult<int> getStars(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewMethod::WithParamsStars<T>)
 			{
@@ -93,7 +93,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewMethod::WithParamsCommentary<T>)
 			{

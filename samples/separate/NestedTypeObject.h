@@ -16,13 +16,13 @@ namespace methods::NestedTypeMethod {
 template <class TImpl>
 concept WithParamsDepth = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getDepth(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsDepth = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getDepth() } };
+	{ service::FieldResult<int> { impl.getDepth() } };
 };
 
 template <class TImpl>
@@ -67,7 +67,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getDepth(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
 
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
+		service::FieldResult<int> getDepth(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeMethod::WithParamsDepth<T>)
 			{

@@ -47,7 +47,7 @@ service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& pa
 	auto result = _pimpl->getDepth(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& params)
@@ -62,7 +62,7 @@ service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& p
 
 service::AwaitableResolver NestedType::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(NestedType)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(NestedType)gql" }, std::move(params));
 }
 
 } // namespace object

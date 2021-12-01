@@ -33,8 +33,8 @@ struct CompleteTaskInput
 {
 	response::IdType id;
 	std::optional<TaskState> testTaskState;
-	std::optional<response::BooleanType> isComplete;
-	std::optional<response::StringType> clientMutationId;
+	std::optional<bool> isComplete;
+	std::optional<std::string> clientMutationId;
 };
 
 struct ThirdNestedInput

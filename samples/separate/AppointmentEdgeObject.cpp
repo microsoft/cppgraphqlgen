@@ -62,7 +62,7 @@ service::AwaitableResolver AppointmentEdge::resolveCursor(service::ResolverParam
 
 service::AwaitableResolver AppointmentEdge::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(AppointmentEdge)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(AppointmentEdge)gql" }, std::move(params));
 }
 
 } // namespace object

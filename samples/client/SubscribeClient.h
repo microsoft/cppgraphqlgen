@@ -52,8 +52,8 @@ struct Response
 	{
 		response::IdType nextAppointmentId {};
 		std::optional<response::Value> when {};
-		std::optional<response::StringType> subject {};
-		response::BooleanType isNow {};
+		std::optional<std::string> subject {};
+		bool isNow {};
 	};
 
 	std::optional<nextAppointment_Appointment> nextAppointment {};

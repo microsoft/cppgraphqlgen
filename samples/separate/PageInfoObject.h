@@ -16,25 +16,25 @@ namespace methods::PageInfoMethod {
 template <class TImpl>
 concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHasNextPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage() } };
+	{ service::FieldResult<bool> { impl.getHasNextPage() } };
 };
 
 template <class TImpl>
 concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHasPreviousPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage() } };
+	{ service::FieldResult<bool> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
+		service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
+		service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
 			{

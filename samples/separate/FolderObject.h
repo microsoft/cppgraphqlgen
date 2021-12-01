@@ -28,25 +28,25 @@ concept NoParamsId = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
 concept WithParamsUnreadCount = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getUnreadCount(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsUnreadCount = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getUnreadCount() } };
+	{ service::FieldResult<int> { impl.getUnreadCount() } };
 };
 
 template <class TImpl>
@@ -81,8 +81,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -110,7 +110,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderMethod::WithParamsName<T>)
 			{
@@ -126,7 +126,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
+		service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderMethod::WithParamsUnreadCount<T>)
 			{

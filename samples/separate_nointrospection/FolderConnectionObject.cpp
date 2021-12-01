@@ -62,7 +62,7 @@ service::AwaitableResolver FolderConnection::resolveEdges(service::ResolverParam
 
 service::AwaitableResolver FolderConnection::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderConnection)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(FolderConnection)gql" }, std::move(params));
 }
 
 } // namespace object

@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -30,7 +30,7 @@ Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse
 		{
 			if (member.first == R"js(hasNextPage)js"sv)
 			{
-				result.hasNextPage = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.hasNextPage = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 		}
@@ -62,12 +62,12 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appoin
 			}
 			if (member.first == R"js(subject)js"sv)
 			{
-				result.subject = ModifiedResponse<response::StringType>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(isNow)js"sv)
 			{
-				result.isNow = ModifiedResponse<response::BooleanType>::parse(std::move(member.second));
+				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
 		}

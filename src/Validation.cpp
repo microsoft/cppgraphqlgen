@@ -64,12 +64,12 @@ ValidateArgumentValue::ValidateArgumentValue(ValidateArgumentVariable&& value)
 {
 }
 
-ValidateArgumentValue::ValidateArgumentValue(response::IntType value)
+ValidateArgumentValue::ValidateArgumentValue(int value)
 	: data(value)
 {
 }
 
-ValidateArgumentValue::ValidateArgumentValue(response::FloatType value)
+ValidateArgumentValue::ValidateArgumentValue(double value)
 	: data(value)
 {
 }
@@ -79,7 +79,7 @@ ValidateArgumentValue::ValidateArgumentValue(std::string_view value)
 {
 }
 
-ValidateArgumentValue::ValidateArgumentValue(response::BooleanType value)
+ValidateArgumentValue::ValidateArgumentValue(bool value)
 	: data(value)
 {
 }
@@ -162,7 +162,7 @@ void ValidateArgumentValueVisitor::visitVariable(const peg::ast_node& variable)
 
 void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 {
-	response::IntType value { std::atoi(intValue.string().c_str()) };
+	int value { std::atoi(intValue.string().c_str()) };
 	auto position = intValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -171,7 +171,7 @@ void ValidateArgumentValueVisitor::visitIntValue(const peg::ast_node& intValue)
 
 void ValidateArgumentValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 {
-	response::FloatType value { std::atof(floatValue.string().c_str()) };
+	double value { std::atof(floatValue.string().c_str()) };
 	auto position = floatValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -189,7 +189,7 @@ void ValidateArgumentValueVisitor::visitStringValue(const peg::ast_node& stringV
 
 void ValidateArgumentValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
 {
-	response::BooleanType value { booleanValue.is_type<peg::true_keyword>() };
+	bool value { booleanValue.is_type<peg::true_keyword>() };
 	auto position = booleanValue.begin();
 
 	_argumentValue.value = std::make_unique<ValidateArgumentValue>(value);
@@ -1160,7 +1160,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 			if (name == R"gql(Int)gql"sv)
 			{
-				if (!std::holds_alternative<response::IntType>(argument.value->data))
+				if (!std::holds_alternative<int>(argument.value->data))
 				{
 					_errors.push_back({ "Expected Int value", argument.position });
 					return false;
@@ -1168,8 +1168,8 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 			else if (name == R"gql(Float)gql"sv)
 			{
-				if (!std::holds_alternative<response::FloatType>(argument.value->data)
-					&& !std::holds_alternative<response::IntType>(argument.value->data))
+				if (!std::holds_alternative<double>(argument.value->data)
+					&& !std::holds_alternative<int>(argument.value->data))
 				{
 					_errors.push_back({ "Expected Float value", argument.position });
 					return false;
@@ -1205,7 +1205,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 			else if (name == R"gql(Boolean)gql"sv)
 			{
-				if (!std::holds_alternative<response::BooleanType>(argument.value->data))
+				if (!std::holds_alternative<bool>(argument.value->data))
 				{
 					_errors.push_back({ "Expected Boolean value", argument.position });
 					return false;

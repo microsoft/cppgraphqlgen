@@ -63,7 +63,7 @@ service::AwaitableResolver Subscription::resolveNodeChange(service::ResolverPara
 
 service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Subscription)gql" }, std::move(params));
 }
 
 } // namespace object

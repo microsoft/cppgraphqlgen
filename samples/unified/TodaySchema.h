@@ -33,8 +33,8 @@ struct CompleteTaskInput
 {
 	response::IdType id;
 	std::optional<TaskState> testTaskState;
-	std::optional<response::BooleanType> isComplete;
-	std::optional<response::StringType> clientMutationId;
+	std::optional<bool> isComplete;
+	std::optional<std::string> clientMutationId;
 };
 
 struct ThirdNestedInput
@@ -103,37 +103,37 @@ concept NoParamsNode = requires (TImpl impl, response::IdType idArg)
 };
 
 template <class TImpl>
-concept WithParamsAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept WithParamsAppointments = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsAppointments = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsAppointments = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept WithParamsTasks = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsTasks = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsTasks = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept WithParamsUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsUnreadCounts = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsUnreadCounts = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
@@ -189,13 +189,13 @@ concept NoParamsNested = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsUnimplemented = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::StringType> { impl.getUnimplemented(std::move(params)) } };
+	{ service::FieldResult<std::string> { impl.getUnimplemented(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsUnimplemented = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::StringType> { impl.getUnimplemented() } };
+	{ service::FieldResult<std::string> { impl.getUnimplemented() } };
 };
 
 template <class TImpl>
@@ -253,25 +253,25 @@ namespace PageInfoMethod {
 template <class TImpl>
 concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHasNextPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage() } };
+	{ service::FieldResult<bool> { impl.getHasNextPage() } };
 };
 
 template <class TImpl>
 concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsHasPreviousPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage() } };
+	{ service::FieldResult<bool> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
@@ -545,13 +545,13 @@ concept NoParamsTask = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsClientMutationId = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
@@ -583,15 +583,15 @@ concept NoParamsCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg)
 };
 
 template <class TImpl>
-concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, double valueArg) 
 {
-	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
+	{ service::FieldResult<double> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsSetFloat = requires (TImpl impl, response::FloatType valueArg) 
+concept NoParamsSetFloat = requires (TImpl impl, double valueArg) 
 {
-	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(valueArg)) } };
+	{ service::FieldResult<double> { impl.applySetFloat(std::move(valueArg)) } };
 };
 
 template <class TImpl>
@@ -677,37 +677,37 @@ concept NoParamsWhen = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsSubject = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getSubject() } };
 };
 
 template <class TImpl>
 concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsIsNow = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsNow() } };
+	{ service::FieldResult<bool> { impl.getIsNow() } };
 };
 
 template <class TImpl>
 concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsForceError = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getForceError() } };
 };
 
 template <class TImpl>
@@ -741,25 +741,25 @@ concept NoParamsId = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsTitle = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsTitle = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getTitle() } };
 };
 
 template <class TImpl>
 concept WithParamsIsComplete = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
+	{ service::FieldResult<bool> { impl.getIsComplete(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsIsComplete = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::BooleanType> { impl.getIsComplete() } };
+	{ service::FieldResult<bool> { impl.getIsComplete() } };
 };
 
 template <class TImpl>
@@ -793,25 +793,25 @@ concept NoParamsId = requires (TImpl impl)
 template <class TImpl>
 concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
 concept WithParamsUnreadCount = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getUnreadCount(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsUnreadCount = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getUnreadCount() } };
+	{ service::FieldResult<int> { impl.getUnreadCount() } };
 };
 
 template <class TImpl>
@@ -833,13 +833,13 @@ namespace NestedTypeMethod {
 template <class TImpl>
 concept WithParamsDepth = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getDepth(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsDepth = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getDepth() } };
+	{ service::FieldResult<int> { impl.getDepth() } };
 };
 
 template <class TImpl>
@@ -873,13 +873,13 @@ namespace ExpensiveMethod {
 template <class TImpl>
 concept WithParamsOrder = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
+	{ service::FieldResult<int> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
 concept NoParamsOrder = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IntType> { impl.getOrder() } };
+	{ service::FieldResult<int> { impl.getOrder() } };
 };
 
 template <class TImpl>
@@ -928,14 +928,14 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getUnimplemented(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
@@ -966,7 +966,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsAppointments<T>)
 			{
@@ -982,7 +982,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsTasks<T>)
 			{
@@ -998,7 +998,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsUnreadCounts<T>)
 			{
@@ -1078,7 +1078,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const final
+		service::FieldResult<std::string> getUnimplemented(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryMethod::WithParamsUnimplemented<T>)
 			{
@@ -1193,8 +1193,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1206,7 +1206,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
+		service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
 			{
@@ -1222,7 +1222,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
+		service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
 			{
@@ -1866,7 +1866,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1894,7 +1894,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
 			{
@@ -1962,7 +1962,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
-		virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const = 0;
+		virtual service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const = 0;
 	};
 
 	template <class T>
@@ -1990,7 +1990,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
+		service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const final
 		{
 			if constexpr (methods::MutationMethod::WithParamsSetFloat<T>)
 			{
@@ -2158,9 +2158,9 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsNow(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -2204,7 +2204,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
 			{
@@ -2220,7 +2220,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
+		service::FieldResult<bool> getIsNow(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
 			{
@@ -2236,7 +2236,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
 			{
@@ -2305,8 +2305,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -2334,7 +2334,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskMethod::WithParamsTitle<T>)
 			{
@@ -2350,7 +2350,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
+		service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskMethod::WithParamsIsComplete<T>)
 			{
@@ -2419,8 +2419,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -2448,7 +2448,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderMethod::WithParamsName<T>)
 			{
@@ -2464,7 +2464,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
+		service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderMethod::WithParamsUnreadCount<T>)
 			{
@@ -2531,7 +2531,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getDepth(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
 
@@ -2544,7 +2544,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
+		service::FieldResult<int> getDepth(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeMethod::WithParamsDepth<T>)
 			{
@@ -2626,7 +2626,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<int> getOrder(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -2638,7 +2638,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
+		service::FieldResult<int> getOrder(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ExpensiveMethod::WithParamsOrder<T>)
 			{

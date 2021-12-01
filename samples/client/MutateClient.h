@@ -62,8 +62,8 @@ struct Variables
 	{
 		response::IdType id {};
 		std::optional<TaskState> testTaskState {};
-		std::optional<response::BooleanType> isComplete {};
-		std::optional<response::StringType> clientMutationId {};
+		std::optional<bool> isComplete {};
+		std::optional<std::string> clientMutationId {};
 	};
 
 	CompleteTaskInput input {};
@@ -78,12 +78,12 @@ struct Response
 		struct completedTask_Task
 		{
 			response::IdType completedTaskId {};
-			std::optional<response::StringType> title {};
-			response::BooleanType isComplete {};
+			std::optional<std::string> title {};
+			bool isComplete {};
 		};
 
 		std::optional<completedTask_Task> completedTask {};
-		std::optional<response::StringType> clientMutationId {};
+		std::optional<std::string> clientMutationId {};
 	};
 
 	completedTask_CompleteTaskPayload completedTask {};

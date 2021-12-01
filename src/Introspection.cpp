@@ -68,23 +68,22 @@ TypeKind Type::getKind() const
 	return _type->kind();
 }
 
-std::optional<response::StringType> Type::getName() const
+std::optional<std::string> Type::getName() const
 {
 	const auto name = _type->name();
 
-	return { name.empty() ? std::nullopt : std::make_optional<response::StringType>(name) };
+	return { name.empty() ? std::nullopt : std::make_optional<std::string>(name) };
 }
 
-std::optional<response::StringType> Type::getDescription() const
+std::optional<std::string> Type::getDescription() const
 {
 	const auto description = _type->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
 std::optional<std::vector<std::shared_ptr<object::Field>>> Type::getFields(
-	std::optional<response::BooleanType>&& includeDeprecatedArg) const
+	std::optional<bool>&& includeDeprecatedArg) const
 {
 	switch (_type->kind())
 	{
@@ -160,7 +159,7 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes
 }
 
 std::optional<std::vector<std::shared_ptr<object::EnumValue>>> Type::getEnumValues(
-	std::optional<response::BooleanType>&& includeDeprecatedArg) const
+	std::optional<bool>&& includeDeprecatedArg) const
 {
 	switch (_type->kind())
 	{
@@ -232,17 +231,16 @@ Field::Field(const std::shared_ptr<const schema::Field>& field)
 {
 }
 
-response::StringType Field::getName() const
+std::string Field::getName() const
 {
-	return response::StringType { _field->name() };
+	return std::string { _field->name() };
 }
 
-std::optional<response::StringType> Field::getDescription() const
+std::optional<std::string> Field::getDescription() const
 {
 	const auto description = _field->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
 std::vector<std::shared_ptr<object::InputValue>> Field::getArgs() const
@@ -264,16 +262,16 @@ std::shared_ptr<object::Type> Field::getType() const
 	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
-response::BooleanType Field::getIsDeprecated() const
+bool Field::getIsDeprecated() const
 {
 	return _field->deprecationReason().has_value();
 }
 
-std::optional<response::StringType> Field::getDeprecationReason() const
+std::optional<std::string> Field::getDeprecationReason() const
 {
 	const auto& deprecationReason = _field->deprecationReason();
 
-	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+	return { deprecationReason ? std::make_optional<std::string>(*deprecationReason)
 							   : std::nullopt };
 }
 
@@ -282,17 +280,16 @@ InputValue::InputValue(const std::shared_ptr<const schema::InputValue>& inputVal
 {
 }
 
-response::StringType InputValue::getName() const
+std::string InputValue::getName() const
 {
-	return response::StringType { _inputValue->name() };
+	return std::string { _inputValue->name() };
 }
 
-std::optional<response::StringType> InputValue::getDescription() const
+std::optional<std::string> InputValue::getDescription() const
 {
 	const auto description = _inputValue->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
 std::shared_ptr<object::Type> InputValue::getType() const
@@ -302,12 +299,11 @@ std::shared_ptr<object::Type> InputValue::getType() const
 	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
-std::optional<response::StringType> InputValue::getDefaultValue() const
+std::optional<std::string> InputValue::getDefaultValue() const
 {
 	const auto defaultValue = _inputValue->defaultValue();
 
-	return { defaultValue.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(defaultValue) };
+	return { defaultValue.empty() ? std::nullopt : std::make_optional<std::string>(defaultValue) };
 }
 
 EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
@@ -315,29 +311,28 @@ EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
 {
 }
 
-response::StringType EnumValue::getName() const
+std::string EnumValue::getName() const
 {
-	return response::StringType { _enumValue->name() };
+	return std::string { _enumValue->name() };
 }
 
-std::optional<response::StringType> EnumValue::getDescription() const
+std::optional<std::string> EnumValue::getDescription() const
 {
 	const auto description = _enumValue->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-response::BooleanType EnumValue::getIsDeprecated() const
+bool EnumValue::getIsDeprecated() const
 {
 	return _enumValue->deprecationReason().has_value();
 }
 
-std::optional<response::StringType> EnumValue::getDeprecationReason() const
+std::optional<std::string> EnumValue::getDeprecationReason() const
 {
 	const auto& deprecationReason = _enumValue->deprecationReason();
 
-	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+	return { deprecationReason ? std::make_optional<std::string>(*deprecationReason)
 							   : std::nullopt };
 }
 
@@ -346,17 +341,16 @@ Directive::Directive(const std::shared_ptr<const schema::Directive>& directive)
 {
 }
 
-response::StringType Directive::getName() const
+std::string Directive::getName() const
 {
-	return response::StringType { _directive->name() };
+	return std::string { _directive->name() };
 }
 
-std::optional<response::StringType> Directive::getDescription() const
+std::optional<std::string> Directive::getDescription() const
 {
 	const auto description = _directive->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
 std::vector<DirectiveLocation> Directive::getLocations() const
