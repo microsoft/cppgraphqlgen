@@ -17,7 +17,7 @@ namespace ExpensiveStubs {
 template <class TImpl>
 concept HasOrder = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getOrder(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
 };
 
 } // namespace ExpensiveStubs
@@ -50,7 +50,7 @@ private:
 		{
 			if constexpr (ExpensiveStubs::HasOrder<T>)
 			{
-				return _pimpl->getOrder(std::move(params));
+				return { _pimpl->getOrder(std::move(params)) };
 			}
 			else
 			{

@@ -17,73 +17,73 @@ namespace QueryStubs {
 template <class TImpl>
 concept HasNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
-	{ impl.getNode(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNode(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
 concept HasAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
-	{ impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<AppointmentConnection>>>;
+	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
 concept HasTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
-	{ impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<TaskConnection>>>;
+	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
 concept HasUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
-	{ impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<FolderConnection>>>;
+	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
 concept HasAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ impl.getAppointmentsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Appointment>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
 concept HasTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ impl.getTasksById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Task>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
 concept HasUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Folder>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
 concept HasNested = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasUnimplemented = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getUnimplemented(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+	{ service::FieldResult<response::StringType> { impl.getUnimplemented(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasExpensive = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getExpensive(std::move(params)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Expensive>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasTestTaskState = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getTestTaskState(std::move(params)) } -> std::convertible_to<service::FieldResult<TaskState>>;
+	{ service::FieldResult<TaskState> { impl.getTestTaskState(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ impl.getAnyType(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<service::Object>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 } // namespace QueryStubs
@@ -138,7 +138,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasNode<T>)
 			{
-				return _pimpl->getNode(std::move(params), std::move(idArg));
+				return { _pimpl->getNode(std::move(params), std::move(idArg)) };
 			}
 			else
 			{
@@ -150,7 +150,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasAppointments<T>)
 			{
-				return _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+				return { _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -162,7 +162,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasTasks<T>)
 			{
-				return _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+				return { _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -174,7 +174,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasUnreadCounts<T>)
 			{
-				return _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+				return { _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -186,7 +186,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasAppointmentsById<T>)
 			{
-				return _pimpl->getAppointmentsById(std::move(params), std::move(idsArg));
+				return { _pimpl->getAppointmentsById(std::move(params), std::move(idsArg)) };
 			}
 			else
 			{
@@ -198,7 +198,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasTasksById<T>)
 			{
-				return _pimpl->getTasksById(std::move(params), std::move(idsArg));
+				return { _pimpl->getTasksById(std::move(params), std::move(idsArg)) };
 			}
 			else
 			{
@@ -210,7 +210,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasUnreadCountsById<T>)
 			{
-				return _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg));
+				return { _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg)) };
 			}
 			else
 			{
@@ -222,7 +222,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasNested<T>)
 			{
-				return _pimpl->getNested(std::move(params));
+				return { _pimpl->getNested(std::move(params)) };
 			}
 			else
 			{
@@ -234,7 +234,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasUnimplemented<T>)
 			{
-				return _pimpl->getUnimplemented(std::move(params));
+				return { _pimpl->getUnimplemented(std::move(params)) };
 			}
 			else
 			{
@@ -246,7 +246,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasExpensive<T>)
 			{
-				return _pimpl->getExpensive(std::move(params));
+				return { _pimpl->getExpensive(std::move(params)) };
 			}
 			else
 			{
@@ -258,7 +258,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasTestTaskState<T>)
 			{
-				return _pimpl->getTestTaskState(std::move(params));
+				return { _pimpl->getTestTaskState(std::move(params)) };
 			}
 			else
 			{
@@ -270,7 +270,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasAnyType<T>)
 			{
-				return _pimpl->getAnyType(std::move(params), std::move(idsArg));
+				return { _pimpl->getAnyType(std::move(params), std::move(idsArg)) };
 			}
 			else
 			{

@@ -17,13 +17,13 @@ namespace CompleteTaskPayloadStubs {
 template <class TImpl>
 concept HasTask = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getTask(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasClientMutationId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getClientMutationId(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 } // namespace CompleteTaskPayloadStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (CompleteTaskPayloadStubs::HasTask<T>)
 			{
-				return _pimpl->getTask(std::move(params));
+				return { _pimpl->getTask(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (CompleteTaskPayloadStubs::HasClientMutationId<T>)
 			{
-				return _pimpl->getClientMutationId(std::move(params));
+				return { _pimpl->getClientMutationId(std::move(params)) };
 			}
 			else
 			{

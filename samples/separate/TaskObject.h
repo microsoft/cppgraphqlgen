@@ -17,19 +17,19 @@ namespace TaskStubs {
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasTitle = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getTitle(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasIsComplete = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getIsComplete(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
 };
 
 } // namespace TaskStubs
@@ -66,7 +66,7 @@ private:
 		{
 			if constexpr (TaskStubs::HasId<T>)
 			{
-				return _pimpl->getId(std::move(params));
+				return { _pimpl->getId(std::move(params)) };
 			}
 			else
 			{
@@ -78,7 +78,7 @@ private:
 		{
 			if constexpr (TaskStubs::HasTitle<T>)
 			{
-				return _pimpl->getTitle(std::move(params));
+				return { _pimpl->getTitle(std::move(params)) };
 			}
 			else
 			{
@@ -90,7 +90,7 @@ private:
 		{
 			if constexpr (TaskStubs::HasIsComplete<T>)
 			{
-				return _pimpl->getIsComplete(std::move(params));
+				return { _pimpl->getIsComplete(std::move(params)) };
 			}
 			else
 			{

@@ -43,27 +43,27 @@ private:
 
 		service::FieldResult<response::StringType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			return { _pimpl->getId(std::move(params)) };
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			return { _pimpl->getName(std::move(params)) };
 		}
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const final
 		{
-			return _pimpl->getFriends(std::move(params));
+			return { _pimpl->getFriends(std::move(params)) };
 		}
 
 		service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
 		{
-			return _pimpl->getAppearsIn(std::move(params));
+			return { _pimpl->getAppearsIn(std::move(params)) };
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHomePlanet(std::move(params));
+			return { _pimpl->getHomePlanet(std::move(params)) };
 		}
 
 	private:

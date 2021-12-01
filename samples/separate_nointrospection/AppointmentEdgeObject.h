@@ -17,13 +17,13 @@ namespace AppointmentEdgeStubs {
 template <class TImpl>
 concept HasNode = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Appointment>>>;
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasCursor = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 } // namespace AppointmentEdgeStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (AppointmentEdgeStubs::HasNode<T>)
 			{
-				return _pimpl->getNode(std::move(params));
+				return { _pimpl->getNode(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (AppointmentEdgeStubs::HasCursor<T>)
 			{
-				return _pimpl->getCursor(std::move(params));
+				return { _pimpl->getCursor(std::move(params)) };
 			}
 			else
 			{

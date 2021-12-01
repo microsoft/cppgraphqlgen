@@ -17,13 +17,13 @@ namespace NestedTypeStubs {
 template <class TImpl>
 concept HasDepth = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getDepth(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+	{ service::FieldResult<response::IntType> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasNested = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 } // namespace NestedTypeStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (NestedTypeStubs::HasDepth<T>)
 			{
-				return _pimpl->getDepth(std::move(params));
+				return { _pimpl->getDepth(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (NestedTypeStubs::HasNested<T>)
 			{
-				return _pimpl->getNested(std::move(params));
+				return { _pimpl->getNested(std::move(params)) };
 			}
 			else
 			{

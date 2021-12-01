@@ -38,7 +38,7 @@ private:
 
 		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
 		{
-			return _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg));
+			return { _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) };
 		}
 
 	private:

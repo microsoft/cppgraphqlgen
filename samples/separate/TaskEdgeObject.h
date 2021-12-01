@@ -17,13 +17,13 @@ namespace TaskEdgeStubs {
 template <class TImpl>
 concept HasNode = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasCursor = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 } // namespace TaskEdgeStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (TaskEdgeStubs::HasNode<T>)
 			{
-				return _pimpl->getNode(std::move(params));
+				return { _pimpl->getNode(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (TaskEdgeStubs::HasCursor<T>)
 			{
-				return _pimpl->getCursor(std::move(params));
+				return { _pimpl->getCursor(std::move(params)) };
 			}
 			else
 			{

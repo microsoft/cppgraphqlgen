@@ -17,31 +17,31 @@ namespace AppointmentStubs {
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasWhen = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getWhen(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::Value>>>;
+	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasSubject = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getSubject(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasIsNow = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getIsNow(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasForceError = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getForceError(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
 };
 
 } // namespace AppointmentStubs
@@ -82,7 +82,7 @@ private:
 		{
 			if constexpr (AppointmentStubs::HasId<T>)
 			{
-				return _pimpl->getId(std::move(params));
+				return { _pimpl->getId(std::move(params)) };
 			}
 			else
 			{
@@ -94,7 +94,7 @@ private:
 		{
 			if constexpr (AppointmentStubs::HasWhen<T>)
 			{
-				return _pimpl->getWhen(std::move(params));
+				return { _pimpl->getWhen(std::move(params)) };
 			}
 			else
 			{
@@ -106,7 +106,7 @@ private:
 		{
 			if constexpr (AppointmentStubs::HasSubject<T>)
 			{
-				return _pimpl->getSubject(std::move(params));
+				return { _pimpl->getSubject(std::move(params)) };
 			}
 			else
 			{
@@ -118,7 +118,7 @@ private:
 		{
 			if constexpr (AppointmentStubs::HasIsNow<T>)
 			{
-				return _pimpl->getIsNow(std::move(params));
+				return { _pimpl->getIsNow(std::move(params)) };
 			}
 			else
 			{
@@ -130,7 +130,7 @@ private:
 		{
 			if constexpr (AppointmentStubs::HasForceError<T>)
 			{
-				return _pimpl->getForceError(std::move(params));
+				return { _pimpl->getForceError(std::move(params)) };
 			}
 			else
 			{

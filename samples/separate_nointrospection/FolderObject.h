@@ -17,19 +17,19 @@ namespace FolderStubs {
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasUnreadCount = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getUnreadCount(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
 };
 
 } // namespace FolderStubs
@@ -66,7 +66,7 @@ private:
 		{
 			if constexpr (FolderStubs::HasId<T>)
 			{
-				return _pimpl->getId(std::move(params));
+				return { _pimpl->getId(std::move(params)) };
 			}
 			else
 			{
@@ -78,7 +78,7 @@ private:
 		{
 			if constexpr (FolderStubs::HasName<T>)
 			{
-				return _pimpl->getName(std::move(params));
+				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
@@ -90,7 +90,7 @@ private:
 		{
 			if constexpr (FolderStubs::HasUnreadCount<T>)
 			{
-				return _pimpl->getUnreadCount(std::move(params));
+				return { _pimpl->getUnreadCount(std::move(params)) };
 			}
 			else
 			{

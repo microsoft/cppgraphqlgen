@@ -14,7 +14,6 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-#include <concepts>
 #include <memory>
 #include <string>
 #include <vector>
@@ -75,43 +74,43 @@ namespace QueryStubs {
 template <class TImpl>
 concept HasDog = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Dog>>>;
+	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasHuman = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getHuman(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Human>>>;
+	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasPet = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getPet(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getPet(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasCatOrDog = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getCatOrDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getCatOrDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasArguments = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getArguments(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Arguments>>>;
+	{ service::FieldResult<std::shared_ptr<Arguments>> { impl.getArguments(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasFindDog = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
 {
-	{ impl.getFindDog(std::move(params), std::move(complexArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Dog>>>;
+	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
 concept HasBooleanList = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> booleanListArgArg) 
 {
-	{ impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::BooleanType>>>;
+	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 } // namespace QueryStubs
@@ -160,7 +159,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasDog<T>)
 			{
-				return _pimpl->getDog(std::move(params));
+				return { _pimpl->getDog(std::move(params)) };
 			}
 			else
 			{
@@ -172,7 +171,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasHuman<T>)
 			{
-				return _pimpl->getHuman(std::move(params));
+				return { _pimpl->getHuman(std::move(params)) };
 			}
 			else
 			{
@@ -184,7 +183,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasPet<T>)
 			{
-				return _pimpl->getPet(std::move(params));
+				return { _pimpl->getPet(std::move(params)) };
 			}
 			else
 			{
@@ -196,7 +195,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasCatOrDog<T>)
 			{
-				return _pimpl->getCatOrDog(std::move(params));
+				return { _pimpl->getCatOrDog(std::move(params)) };
 			}
 			else
 			{
@@ -208,7 +207,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasArguments<T>)
 			{
-				return _pimpl->getArguments(std::move(params));
+				return { _pimpl->getArguments(std::move(params)) };
 			}
 			else
 			{
@@ -220,7 +219,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasFindDog<T>)
 			{
-				return _pimpl->getFindDog(std::move(params), std::move(complexArg));
+				return { _pimpl->getFindDog(std::move(params), std::move(complexArg)) };
 			}
 			else
 			{
@@ -232,7 +231,7 @@ private:
 		{
 			if constexpr (QueryStubs::HasBooleanList<T>)
 			{
-				return _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg));
+				return { _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg)) };
 			}
 			else
 			{
@@ -261,37 +260,37 @@ namespace DogStubs {
 template <class TImpl>
 concept HasName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasNickname = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNickname(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasBarkVolume = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getBarkVolume(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+	{ service::FieldResult<std::optional<response::IntType>> { impl.getBarkVolume(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasDoesKnowCommand = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
 {
-	{ impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
 concept HasIsHousetrained = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> atOtherHomesArg) 
 {
-	{ impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
 concept HasOwner = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getOwner(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Human>>>;
+	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
 };
 
 } // namespace DogStubs
@@ -334,7 +333,7 @@ private:
 		{
 			if constexpr (DogStubs::HasName<T>)
 			{
-				return _pimpl->getName(std::move(params));
+				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
@@ -346,7 +345,7 @@ private:
 		{
 			if constexpr (DogStubs::HasNickname<T>)
 			{
-				return _pimpl->getNickname(std::move(params));
+				return { _pimpl->getNickname(std::move(params)) };
 			}
 			else
 			{
@@ -358,7 +357,7 @@ private:
 		{
 			if constexpr (DogStubs::HasBarkVolume<T>)
 			{
-				return _pimpl->getBarkVolume(std::move(params));
+				return { _pimpl->getBarkVolume(std::move(params)) };
 			}
 			else
 			{
@@ -370,7 +369,7 @@ private:
 		{
 			if constexpr (DogStubs::HasDoesKnowCommand<T>)
 			{
-				return _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg));
+				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) };
 			}
 			else
 			{
@@ -382,7 +381,7 @@ private:
 		{
 			if constexpr (DogStubs::HasIsHousetrained<T>)
 			{
-				return _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg));
+				return { _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) };
 			}
 			else
 			{
@@ -394,7 +393,7 @@ private:
 		{
 			if constexpr (DogStubs::HasOwner<T>)
 			{
-				return _pimpl->getOwner(std::move(params));
+				return { _pimpl->getOwner(std::move(params)) };
 			}
 			else
 			{
@@ -423,13 +422,13 @@ namespace AlienStubs {
 template <class TImpl>
 concept HasName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasHomePlanet = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getHomePlanet(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getHomePlanet(std::move(params)) } };
 };
 
 } // namespace AlienStubs
@@ -464,7 +463,7 @@ private:
 		{
 			if constexpr (AlienStubs::HasName<T>)
 			{
-				return _pimpl->getName(std::move(params));
+				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
@@ -476,7 +475,7 @@ private:
 		{
 			if constexpr (AlienStubs::HasHomePlanet<T>)
 			{
-				return _pimpl->getHomePlanet(std::move(params));
+				return { _pimpl->getHomePlanet(std::move(params)) };
 			}
 			else
 			{
@@ -505,13 +504,13 @@ namespace HumanStubs {
 template <class TImpl>
 concept HasName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasPets = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getPets(std::move(params)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<service::Object>>>>;
+	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getPets(std::move(params)) } };
 };
 
 } // namespace HumanStubs
@@ -546,7 +545,7 @@ private:
 		{
 			if constexpr (HumanStubs::HasName<T>)
 			{
-				return _pimpl->getName(std::move(params));
+				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
@@ -558,7 +557,7 @@ private:
 		{
 			if constexpr (HumanStubs::HasPets<T>)
 			{
-				return _pimpl->getPets(std::move(params));
+				return { _pimpl->getPets(std::move(params)) };
 			}
 			else
 			{
@@ -587,25 +586,25 @@ namespace CatStubs {
 template <class TImpl>
 concept HasName = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+	{ service::FieldResult<response::StringType> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasNickname = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNickname(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasDoesKnowCommand = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
 {
-	{ impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
 concept HasMeowVolume = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getMeowVolume(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+	{ service::FieldResult<std::optional<response::IntType>> { impl.getMeowVolume(std::move(params)) } };
 };
 
 } // namespace CatStubs
@@ -644,7 +643,7 @@ private:
 		{
 			if constexpr (CatStubs::HasName<T>)
 			{
-				return _pimpl->getName(std::move(params));
+				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
@@ -656,7 +655,7 @@ private:
 		{
 			if constexpr (CatStubs::HasNickname<T>)
 			{
-				return _pimpl->getNickname(std::move(params));
+				return { _pimpl->getNickname(std::move(params)) };
 			}
 			else
 			{
@@ -668,7 +667,7 @@ private:
 		{
 			if constexpr (CatStubs::HasDoesKnowCommand<T>)
 			{
-				return _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg));
+				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg)) };
 			}
 			else
 			{
@@ -680,7 +679,7 @@ private:
 		{
 			if constexpr (CatStubs::HasMeowVolume<T>)
 			{
-				return _pimpl->getMeowVolume(std::move(params));
+				return { _pimpl->getMeowVolume(std::move(params)) };
 			}
 			else
 			{
@@ -709,7 +708,7 @@ namespace MutationStubs {
 template <class TImpl>
 concept HasMutateDog = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.applyMutateDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<MutateDogResult>>>;
+	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog(std::move(params)) } };
 };
 
 } // namespace MutationStubs
@@ -742,7 +741,7 @@ private:
 		{
 			if constexpr (MutationStubs::HasMutateDog<T>)
 			{
-				return _pimpl->applyMutateDog(std::move(params));
+				return { _pimpl->applyMutateDog(std::move(params)) };
 			}
 			else
 			{
@@ -771,7 +770,7 @@ namespace MutateDogResultStubs {
 template <class TImpl>
 concept HasId = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 } // namespace MutateDogResultStubs
@@ -804,7 +803,7 @@ private:
 		{
 			if constexpr (MutateDogResultStubs::HasId<T>)
 			{
-				return _pimpl->getId(std::move(params));
+				return { _pimpl->getId(std::move(params)) };
 			}
 			else
 			{
@@ -833,13 +832,13 @@ namespace SubscriptionStubs {
 template <class TImpl>
 concept HasNewMessage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNewMessage(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Message>>>;
+	{ service::FieldResult<std::shared_ptr<Message>> { impl.getNewMessage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasDisallowedSecondRootField = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getDisallowedSecondRootField(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
 } // namespace SubscriptionStubs
@@ -874,7 +873,7 @@ private:
 		{
 			if constexpr (SubscriptionStubs::HasNewMessage<T>)
 			{
-				return _pimpl->getNewMessage(std::move(params));
+				return { _pimpl->getNewMessage(std::move(params)) };
 			}
 			else
 			{
@@ -886,7 +885,7 @@ private:
 		{
 			if constexpr (SubscriptionStubs::HasDisallowedSecondRootField<T>)
 			{
-				return _pimpl->getDisallowedSecondRootField(std::move(params));
+				return { _pimpl->getDisallowedSecondRootField(std::move(params)) };
 			}
 			else
 			{
@@ -915,13 +914,13 @@ namespace MessageStubs {
 template <class TImpl>
 concept HasBody = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getBody(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getBody(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasSender = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getSender(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+	{ service::FieldResult<response::IdType> { impl.getSender(std::move(params)) } };
 };
 
 } // namespace MessageStubs
@@ -956,7 +955,7 @@ private:
 		{
 			if constexpr (MessageStubs::HasBody<T>)
 			{
-				return _pimpl->getBody(std::move(params));
+				return { _pimpl->getBody(std::move(params)) };
 			}
 			else
 			{
@@ -968,7 +967,7 @@ private:
 		{
 			if constexpr (MessageStubs::HasSender<T>)
 			{
-				return _pimpl->getSender(std::move(params));
+				return { _pimpl->getSender(std::move(params)) };
 			}
 			else
 			{
@@ -997,49 +996,49 @@ namespace ArgumentsStubs {
 template <class TImpl>
 concept HasMultipleReqs = requires (TImpl impl, service::FieldParams params, response::IntType xArg, response::IntType yArg) 
 {
-	{ impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+	{ service::FieldResult<response::IntType> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
 concept HasBooleanArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> booleanArgArg) 
 {
-	{ impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::BooleanType>>>;
+	{ service::FieldResult<std::optional<response::BooleanType>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
 concept HasFloatArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::FloatType> floatArgArg) 
 {
-	{ impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::FloatType>>>;
+	{ service::FieldResult<std::optional<response::FloatType>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
 concept HasIntArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> intArgArg) 
 {
-	{ impl.getIntArgField(std::move(params), std::move(intArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+	{ service::FieldResult<std::optional<response::IntType>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
 };
 
 template <class TImpl>
 concept HasNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType nonNullBooleanArgArg) 
 {
-	{ impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
 concept HasNonNullBooleanListField = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> nonNullBooleanListArgArg) 
 {
-	{ impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<response::BooleanType>>>>;
+	{ service::FieldResult<std::optional<std::vector<response::BooleanType>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept HasBooleanListArgField = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<response::BooleanType>> booleanListArgArg) 
 {
-	{ impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>>>;
+	{ service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept HasOptionalNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType optionalBooleanArgArg) 
 {
-	{ impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
 } // namespace ArgumentsStubs
@@ -1086,7 +1085,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasMultipleReqs<T>)
 			{
-				return _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg));
+				return { _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) };
 			}
 			else
 			{
@@ -1098,7 +1097,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasBooleanArgField<T>)
 			{
-				return _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg));
+				return { _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg)) };
 			}
 			else
 			{
@@ -1110,7 +1109,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasFloatArgField<T>)
 			{
-				return _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg));
+				return { _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg)) };
 			}
 			else
 			{
@@ -1122,7 +1121,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasIntArgField<T>)
 			{
-				return _pimpl->getIntArgField(std::move(params), std::move(intArgArg));
+				return { _pimpl->getIntArgField(std::move(params), std::move(intArgArg)) };
 			}
 			else
 			{
@@ -1134,7 +1133,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasNonNullBooleanArgField<T>)
 			{
-				return _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg));
+				return { _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) };
 			}
 			else
 			{
@@ -1146,7 +1145,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasNonNullBooleanListField<T>)
 			{
-				return _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg));
+				return { _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) };
 			}
 			else
 			{
@@ -1158,7 +1157,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasBooleanListArgField<T>)
 			{
-				return _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg));
+				return { _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) };
 			}
 			else
 			{
@@ -1170,7 +1169,7 @@ private:
 		{
 			if constexpr (ArgumentsStubs::HasOptionalNonNullBooleanArgField<T>)
 			{
-				return _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg));
+				return { _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) };
 			}
 			else
 			{

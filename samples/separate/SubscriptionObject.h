@@ -17,13 +17,13 @@ namespace SubscriptionStubs {
 template <class TImpl>
 concept HasNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getNextAppointmentChange(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Appointment>>>;
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
-	{ impl.getNodeChange(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
 };
 
 } // namespace SubscriptionStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (SubscriptionStubs::HasNextAppointmentChange<T>)
 			{
-				return _pimpl->getNextAppointmentChange(std::move(params));
+				return { _pimpl->getNextAppointmentChange(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (SubscriptionStubs::HasNodeChange<T>)
 			{
-				return _pimpl->getNodeChange(std::move(params), std::move(idArg));
+				return { _pimpl->getNodeChange(std::move(params), std::move(idArg)) };
 			}
 			else
 			{

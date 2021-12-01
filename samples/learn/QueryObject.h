@@ -46,17 +46,17 @@ private:
 
 		service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
 		{
-			return _pimpl->getHero(std::move(params), std::move(episodeArg));
+			return { _pimpl->getHero(std::move(params), std::move(episodeArg)) };
 		}
 
 		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::StringType&& idArg) const final
 		{
-			return _pimpl->getHuman(std::move(params), std::move(idArg));
+			return { _pimpl->getHuman(std::move(params), std::move(idArg)) };
 		}
 
 		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::StringType&& idArg) const final
 		{
-			return _pimpl->getDroid(std::move(params), std::move(idArg));
+			return { _pimpl->getDroid(std::move(params), std::move(idArg)) };
 		}
 
 	private:

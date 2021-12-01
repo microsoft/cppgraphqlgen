@@ -17,13 +17,13 @@ namespace PageInfoStubs {
 template <class TImpl>
 concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getHasNextPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getHasPreviousPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 } // namespace PageInfoStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (PageInfoStubs::HasHasNextPage<T>)
 			{
-				return _pimpl->getHasNextPage(std::move(params));
+				return { _pimpl->getHasNextPage(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (PageInfoStubs::HasHasPreviousPage<T>)
 			{
-				return _pimpl->getHasPreviousPage(std::move(params));
+				return { _pimpl->getHasPreviousPage(std::move(params)) };
 			}
 			else
 			{

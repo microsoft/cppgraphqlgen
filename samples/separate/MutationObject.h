@@ -17,13 +17,13 @@ namespace MutationStubs {
 template <class TImpl>
 concept HasCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
 {
-	{ impl.applyCompleteTask(std::move(params), std::move(inputArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<CompleteTaskPayload>>>;
+	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
 concept HasSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
 {
-	{ impl.applySetFloat(std::move(params), std::move(valueArg)) } -> std::convertible_to<service::FieldResult<response::FloatType>>;
+	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 } // namespace MutationStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (MutationStubs::HasCompleteTask<T>)
 			{
-				return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+				return { _pimpl->applyCompleteTask(std::move(params), std::move(inputArg)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (MutationStubs::HasSetFloat<T>)
 			{
-				return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+				return { _pimpl->applySetFloat(std::move(params), std::move(valueArg)) };
 			}
 			else
 			{

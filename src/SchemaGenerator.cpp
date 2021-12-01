@@ -172,12 +172,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 	}
-	else if (!_options.noStubs)
-	{
-		headerFile <<
-			R"cpp(#include <concepts>
-)cpp";
-	}
 
 	headerFile <<
 		R"cpp(#include <memory>
@@ -550,15 +544,15 @@ concept Has)cpp" << fieldName
 
 			headerFile << R"cpp() 
 {
-	{ impl.)cpp" << outputField.accessor
-					   << fieldName << R"cpp((std::move(params))cpp";
+	{ service::FieldResult<)cpp"
+					   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
 			for (const auto& argument : outputField.arguments)
 			{
 				headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
 			}
 
-			headerFile << R"cpp() } -> std::convertible_to<service::FieldResult<)cpp"
-					   << _loader.getOutputCppType(outputField) << R"cpp(>>;
+			headerFile << R"cpp() } };
 };
 
 )cpp";
@@ -669,26 +663,23 @@ private:
 		{
 			)cpp";
 
-		if (_options.noStubs || _loader.isIntrospection())
-		{
-			headerFile << R"cpp(return _pimpl->)cpp" << outputField.accessor << fieldName
-					   << R"cpp((std::move(params))cpp";
-		}
-		else
+		if (!_options.noStubs && !_loader.isIntrospection())
 		{
 			headerFile << R"cpp(if constexpr ()cpp" << stubNamespace << R"cpp(::Has)cpp"
 					   << fieldName << R"cpp(<T>)
 			{
-				return _pimpl->)cpp"
-					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+				)cpp";
 		}
+
+		headerFile << R"cpp(return { _pimpl->)cpp"
+				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
 
 		for (const auto& argument : outputField.arguments)
 		{
 			headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
 		}
 
-		headerFile << R"cpp();)cpp";
+		headerFile << R"cpp() };)cpp";
 
 		if (!_options.noStubs && !_loader.isIntrospection())
 		{

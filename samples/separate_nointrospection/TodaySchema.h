@@ -14,7 +14,6 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-#include <concepts>
 #include <memory>
 #include <string>
 #include <vector>

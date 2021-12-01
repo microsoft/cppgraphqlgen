@@ -40,12 +40,12 @@ private:
 
 		service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final
 		{
-			return _pimpl->getStars(std::move(params));
+			return { _pimpl->getStars(std::move(params)) };
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCommentary(std::move(params));
+			return { _pimpl->getCommentary(std::move(params)) };
 		}
 
 	private:

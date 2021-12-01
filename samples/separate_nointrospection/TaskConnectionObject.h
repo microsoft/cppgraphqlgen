@@ -17,13 +17,13 @@ namespace TaskConnectionStubs {
 template <class TImpl>
 concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getPageInfo(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<PageInfo>>>;
+	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
 concept HasEdges = requires (TImpl impl, service::FieldParams params) 
 {
-	{ impl.getEdges(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>>>;
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 } // namespace TaskConnectionStubs
@@ -58,7 +58,7 @@ private:
 		{
 			if constexpr (TaskConnectionStubs::HasPageInfo<T>)
 			{
-				return _pimpl->getPageInfo(std::move(params));
+				return { _pimpl->getPageInfo(std::move(params)) };
 			}
 			else
 			{
@@ -70,7 +70,7 @@ private:
 		{
 			if constexpr (TaskConnectionStubs::HasEdges<T>)
 			{
-				return _pimpl->getEdges(std::move(params));
+				return { _pimpl->getEdges(std::move(params)) };
 			}
 			else
 			{
