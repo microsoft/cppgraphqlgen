@@ -54,27 +54,27 @@ public:
 		service::FieldParams params, response::IdType id);
 	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(
 		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value> after, std::optional<response::IntType> last,
-		std::optional<response::Value> before);
+		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		std::optional<response::Value>&& before);
 	std::future<std::shared_ptr<object::TaskConnection>> getTasks(
 		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value> after, std::optional<response::IntType> last,
-		std::optional<response::Value> before);
+		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		std::optional<response::Value>&& before);
 	std::future<std::shared_ptr<object::FolderConnection>> getUnreadCounts(
 		const service::FieldParams& params, std::optional<response::IntType> first,
-		std::optional<response::Value> after, std::optional<response::IntType> last,
-		std::optional<response::Value> before);
+		std::optional<response::Value>&& after, std::optional<response::IntType> last,
+		std::optional<response::Value>&& before);
 	std::vector<std::shared_ptr<object::Appointment>> getAppointmentsById(
-		const service::FieldParams& params, std::vector<response::IdType>&& ids);
+		const service::FieldParams& params, const std::vector<response::IdType>& ids);
 	std::vector<std::shared_ptr<object::Task>> getTasksById(
-		const service::FieldParams& params, std::vector<response::IdType>&& ids);
+		const service::FieldParams& params, const std::vector<response::IdType>& ids);
 	std::vector<std::shared_ptr<object::Folder>> getUnreadCountsById(
-		const service::FieldParams& params, std::vector<response::IdType>&& ids);
-	std::shared_ptr<object::NestedType> getNested(service::FieldParams params);
+		const service::FieldParams& params, const std::vector<response::IdType>& ids);
+	std::shared_ptr<object::NestedType> getNested(service::FieldParams&& params);
 	std::vector<std::shared_ptr<object::Expensive>> getExpensive();
 	TaskState getTestTaskState();
 	std::vector<std::shared_ptr<service::Object>> getAnyType(
-		const service::FieldParams& params, std::vector<response::IdType>&& idsArg);
+		const service::FieldParams& params, const std::vector<response::IdType>& ids);
 
 private:
 	std::shared_ptr<Appointment> findAppointment(
@@ -438,7 +438,7 @@ public:
 	static double getFloat() noexcept;
 
 	std::shared_ptr<object::CompleteTaskPayload> applyCompleteTask(
-		CompleteTaskInput input) noexcept;
+		CompleteTaskInput&& input) noexcept;
 	response::FloatType applySetFloat(response::FloatType valueArg) noexcept;
 
 private:
@@ -551,7 +551,7 @@ public:
 	}
 
 	std::shared_ptr<service::Object> getNodeChange(
-		const service::FieldParams& params, response::IdType idArg) const
+		const service::FieldParams& params, response::IdType&& idArg) const
 	{
 		return std::static_pointer_cast<service::Object>(
 			_changeNode(params.state, std::move(idArg)));
@@ -579,7 +579,7 @@ public:
 	explicit NestedType(service::FieldParams&& params, int depth);
 
 	response::IntType getDepth() const noexcept;
-	std::shared_ptr<object::NestedType> getNested(service::FieldParams params) const noexcept;
+	std::shared_ptr<object::NestedType> getNested(service::FieldParams&& params) const noexcept;
 
 	static std::stack<CapturedParams> getCapturedParams() noexcept;
 

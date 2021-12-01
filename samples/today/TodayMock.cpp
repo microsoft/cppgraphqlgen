@@ -292,8 +292,8 @@ private:
 
 std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(
 	const service::FieldParams& params, std::optional<int> first,
-	std::optional<response::Value> after, std::optional<int> last,
-	std::optional<response::Value> before)
+	std::optional<response::Value>&& after, std::optional<int> last,
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -321,8 +321,8 @@ std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointmen
 
 std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 	const service::FieldParams& params, std::optional<int> first,
-	std::optional<response::Value> after, std::optional<int> last,
-	std::optional<response::Value> before)
+	std::optional<response::Value>&& after, std::optional<int> last,
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -350,8 +350,8 @@ std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 
 std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
 	const service::FieldParams& params, std::optional<int> first,
-	std::optional<response::Value> after, std::optional<int> last,
-	std::optional<response::Value> before)
+	std::optional<response::Value>&& after, std::optional<int> last,
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -378,7 +378,7 @@ std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
 }
 
 std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(
-	const service::FieldParams& params, std::vector<response::IdType>&& ids)
+	const service::FieldParams& params, const std::vector<response::IdType>& ids)
 {
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
@@ -393,7 +393,7 @@ std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(
 }
 
 std::vector<std::shared_ptr<object::Task>> Query::getTasksById(
-	const service::FieldParams& params, std::vector<response::IdType>&& ids)
+	const service::FieldParams& params, const std::vector<response::IdType>& ids)
 {
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
@@ -408,7 +408,7 @@ std::vector<std::shared_ptr<object::Task>> Query::getTasksById(
 }
 
 std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(
-	const service::FieldParams& params, std::vector<response::IdType>&& ids)
+	const service::FieldParams& params, const std::vector<response::IdType>& ids)
 {
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
@@ -422,7 +422,7 @@ std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(
 	return result;
 }
 
-std::shared_ptr<object::NestedType> Query::getNested(service::FieldParams params)
+std::shared_ptr<object::NestedType> Query::getNested(service::FieldParams&& params)
 {
 	return std::make_shared<object::NestedType>(std::make_shared<NestedType>(std::move(params), 1));
 }
@@ -445,7 +445,7 @@ TaskState Query::getTestTaskState()
 }
 
 std::vector<std::shared_ptr<service::Object>> Query::getAnyType(
-	const service::FieldParams& params, std::vector<response::IdType>&& idsArg)
+	const service::FieldParams& params, const std::vector<response::IdType>&)
 {
 	loadAppointments(params.state);
 
@@ -468,7 +468,7 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 }
 
 std::shared_ptr<object::CompleteTaskPayload> Mutation::applyCompleteTask(
-	CompleteTaskInput input) noexcept
+	CompleteTaskInput&& input) noexcept
 {
 	return std::make_shared<object::CompleteTaskPayload>(_mutateCompleteTask(std::move(input)));
 }
@@ -504,7 +504,7 @@ response::IntType NestedType::getDepth() const noexcept
 }
 
 std::shared_ptr<object::NestedType> NestedType::getNested(
-	service::FieldParams params) const noexcept
+	service::FieldParams&& params) const noexcept
 {
 	return std::make_shared<object::NestedType>(
 		std::make_shared<NestedType>(std::move(params), depth + 1));
