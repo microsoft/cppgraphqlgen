@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::SubscriptionStubs {
+namespace methods::SubscriptionMethod {
 
 template <class TImpl>
-concept HasNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept NoParamsNextAppointmentChange = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
+};
+
+template <class TImpl>
+concept WithParamsNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
+};
+
+template <class TImpl>
+concept NoParamsNodeChange = requires (TImpl impl, response::IdType idArg) 
+{
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(idArg)) } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::SubscriptionStubs
+} // namespace methods::SubscriptionMethod
 
 class Subscription
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::SubscriptionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::SubscriptionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::SubscriptionStubs::HasNextAppointmentChange<T>)
+			if constexpr (methods::SubscriptionMethod::WithParamsNextAppointmentChange<T>)
 			{
 				return { _pimpl->getNextAppointmentChange(std::move(params)) };
+			}
+			else if constexpr (methods::SubscriptionMethod::NoParamsNextAppointmentChange<T>)
+			{
+				return { _pimpl->getNextAppointmentChange() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (stub::SubscriptionStubs::HasNodeChange<T>)
+			if constexpr (methods::SubscriptionMethod::WithParamsNodeChange<T>)
 			{
 				return { _pimpl->getNodeChange(std::move(params), std::move(idArg)) };
+			}
+			else if constexpr (methods::SubscriptionMethod::NoParamsNodeChange<T>)
+			{
+				return { _pimpl->getNodeChange(std::move(idArg)) };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::SubscriptionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::SubscriptionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

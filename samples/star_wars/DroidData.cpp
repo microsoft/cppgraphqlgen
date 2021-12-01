@@ -40,18 +40,17 @@ void Droid::addFriends(
 		});
 }
 
-response::StringType Droid::getId(service::FieldParams&& params) const noexcept
+response::StringType Droid::getId() const noexcept
 {
 	return id_;
 }
 
-std::optional<response::StringType> Droid::getName(service::FieldParams&& params) const noexcept
+std::optional<response::StringType> Droid::getName() const noexcept
 {
 	return name_;
 }
 
-std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends(
-	service::FieldParams&& params) const noexcept
+std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends() const noexcept
 {
 	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
 
@@ -86,8 +85,7 @@ std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends(
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn(
-	service::FieldParams&& params) const noexcept
+std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn() const noexcept
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
@@ -101,8 +99,7 @@ std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn(
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-std::optional<response::StringType> Droid::getPrimaryFunction(
-	service::FieldParams&& params) const noexcept
+std::optional<response::StringType> Droid::getPrimaryFunction() const noexcept
 {
 	return primaryFunction_;
 }

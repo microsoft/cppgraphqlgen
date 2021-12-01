@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::FolderEdgeStubs {
+namespace methods::FolderEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::FolderEdgeStubs
+} // namespace methods::FolderEdgeMethod
 
 class FolderEdge
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderEdgeStubs::HasNode<T>)
+			if constexpr (methods::FolderEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderEdgeStubs::HasCursor<T>)
+			if constexpr (methods::FolderEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

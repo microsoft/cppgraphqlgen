@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::PageInfoStubs {
+namespace methods::PageInfoMethod {
 
 template <class TImpl>
-concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsHasNextPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage() } };
+};
+
+template <class TImpl>
+concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsHasPreviousPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::PageInfoStubs
+} // namespace methods::PageInfoMethod
 
 class PageInfo
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::PageInfoStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::PageInfoStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::PageInfoStubs::HasHasNextPage<T>)
+			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
 			{
 				return { _pimpl->getHasNextPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasNextPage<T>)
+			{
+				return { _pimpl->getHasNextPage() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::PageInfoStubs::HasHasPreviousPage<T>)
+			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
 			{
 				return { _pimpl->getHasPreviousPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasPreviousPage<T>)
+			{
+				return { _pimpl->getHasPreviousPage() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

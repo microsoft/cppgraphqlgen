@@ -330,7 +330,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		{
 			objectNamespace.enter();
 
-			NamespaceScope stubNamespace { headerFile, "stub", true };
+			NamespaceScope stubNamespace { headerFile, "methods", true };
 
 			// Output the stub concept declarations
 			for (const auto& objectType : _loader.getObjectTypes())
@@ -342,7 +342,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 				std::ostringstream ossConceptNamespace;
 
-				ossConceptNamespace << objectType.cppType << R"cpp(Stubs)cpp";
+				ossConceptNamespace << objectType.cppType << R"cpp(Method)cpp";
 
 				const auto conceptNamespace = ossConceptNamespace.str();
 				NamespaceScope conceptSubNamespace { headerFile, conceptNamespace };
@@ -546,7 +546,7 @@ GRAPHQLINTROSPECTION_EXPORT )cpp"
 
 void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const
 {
-	if (!_options.noStubs && !_loader.isIntrospection())
+	if (!_loader.isIntrospection())
 	{
 		for (const auto& outputField : objectType.fields)
 		{
@@ -555,9 +555,25 @@ void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& ob
 			fieldName[0] =
 				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 
+			std::ostringstream ossPassedArguments;
+			bool firstArgument = true;
+
+			for (const auto& argument : outputField.arguments)
+			{
+				if (!firstArgument)
+				{
+					ossPassedArguments << R"cpp(, )cpp";
+				}
+
+				ossPassedArguments << R"cpp(std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+				firstArgument = false;
+			}
+
+			const auto passedArguments = ossPassedArguments.str();
+
 			headerFile << R"cpp(
 template <class TImpl>
-concept Has)cpp" << fieldName
+concept WithParams)cpp" << fieldName
 					   << R"cpp( = requires (TImpl impl, service::FieldParams params)cpp";
 			for (const auto& argument : outputField.arguments)
 			{
@@ -570,9 +586,33 @@ concept Has)cpp" << fieldName
 	{ service::FieldResult<)cpp"
 					   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
 					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+
+			if (!passedArguments.empty())
+			{
+				headerFile << R"cpp(, )cpp" << passedArguments;
+			}
+
+			headerFile << R"cpp() } };
+};
+
+template <class TImpl>
+concept NoParams)cpp" << fieldName
+					   << R"cpp( = requires (TImpl impl)cpp";
 			for (const auto& argument : outputField.arguments)
 			{
-				headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+				headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
+						   << argument.cppName << R"cpp(Arg)cpp";
+			}
+
+			headerFile << R"cpp() 
+{
+	{ service::FieldResult<)cpp"
+					   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+					   << outputField.accessor << fieldName << R"cpp(()cpp";
+
+			if (!passedArguments.empty())
+			{
+				headerFile << passedArguments;
 			}
 
 			headerFile << R"cpp() } };
@@ -695,29 +735,6 @@ private:
 		}
 )cpp";
 
-	if (!_loader.isIntrospection())
-	{
-		headerFile << R"cpp(
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::)cpp"
-				   << objectType.cppType << R"cpp(Stubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::)cpp"
-				   << objectType.cppType << R"cpp(Stubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-)cpp";
-	}
-
 	for (const auto& outputField : objectType.fields)
 	{
 		std::string fieldName(outputField.cppName);
@@ -738,37 +755,108 @@ private:
 		{
 			)cpp";
 
-		if (!_options.noStubs && !_loader.isIntrospection())
-		{
-			headerFile << R"cpp(if constexpr (stub::)cpp" << objectType.cppType
-					   << R"cpp(Stubs::Has)cpp" << fieldName << R"cpp(<T>)
-			{
-				)cpp";
-		}
-
-		headerFile << R"cpp(return { _pimpl->)cpp" << outputField.accessor << fieldName
-				   << R"cpp((std::move(params))cpp";
+		std::ostringstream ossPassedArguments;
+		bool firstArgument = true;
 
 		for (const auto& argument : outputField.arguments)
 		{
-			headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+			if (!firstArgument)
+			{
+				ossPassedArguments << R"cpp(, )cpp";
+			}
+
+			ossPassedArguments << R"cpp(std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+			firstArgument = false;
 		}
 
-		headerFile << R"cpp() };)cpp";
+		const auto passedArguments = ossPassedArguments.str();
 
-		if (!_options.noStubs && !_loader.isIntrospection())
+		if (_loader.isIntrospection())
 		{
-			headerFile << R"cpp(
+			headerFile << R"cpp(return { _pimpl->)cpp" << outputField.accessor << fieldName
+					   << R"cpp((std::move(params))cpp";
+
+			if (!passedArguments.empty())
+			{
+				headerFile << R"cpp(, )cpp" << passedArguments;
+			}
+
+			headerFile << R"cpp() };)cpp";
+		}
+		else
+		{
+			headerFile << R"cpp(if constexpr (methods::)cpp" << objectType.cppType
+					   << R"cpp(Method::WithParams)cpp" << fieldName << R"cpp(<T>)
+			{
+				return { _pimpl->)cpp"
+					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+
+			if (!passedArguments.empty())
+			{
+				headerFile << R"cpp(, )cpp" << passedArguments;
+			}
+
+			headerFile << R"cpp() };
+			}
+			else if constexpr (methods::)cpp"
+					   << objectType.cppType << R"cpp(Method::NoParams)cpp" << fieldName
+					   << R"cpp(<T>)
+			{
+				return { _pimpl->)cpp"
+					   << outputField.accessor << fieldName << R"cpp(()cpp";
+
+			if (!passedArguments.empty())
+			{
+				headerFile << passedArguments;
+			}
+
+			headerFile << R"cpp() };
 			}
 			else
 			{
-				throw std::runtime_error(R"ex()cpp"
-					   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
-					   << R"cpp( is not implemented)ex");
+				)cpp";
+
+			if (_options.noStubs)
+			{
+				headerFile << R"cpp(static_assert(false, R"msg()cpp" << objectType.cppType
+						   << R"cpp(::)cpp" << outputField.accessor << fieldName
+						   << R"cpp( is not implemented)msg");)cpp";
+			}
+			else
+			{
+				headerFile << R"cpp(throw std::runtime_error(R"ex()cpp"
+						   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor
+						   << fieldName << R"cpp( is not implemented)ex");)cpp";
+			}
+
+			headerFile << R"cpp(
 			})cpp";
 		}
 
 		headerFile << R"cpp(
+		}
+)cpp";
+	}
+
+	if (!_loader.isIntrospection())
+	{
+		headerFile << R"cpp(
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::)cpp"
+				   << objectType.cppType << R"cpp(Method::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::)cpp"
+				   << objectType.cppType << R"cpp(Method::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
 		}
 )cpp";
 	}
@@ -1403,7 +1491,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
+						   << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -2461,7 +2550,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		// Output the stub concepts
 		std::ostringstream ossConceptNamespace;
 
-		ossConceptNamespace << R"cpp(stub::)cpp" << objectType.cppType << R"cpp(Stubs)cpp";
+		ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Method)cpp";
 
 		const auto conceptNamespace = ossConceptNamespace.str();
 		NamespaceScope stubNamespace { headerFile, conceptNamespace };

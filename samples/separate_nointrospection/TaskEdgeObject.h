@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::TaskEdgeStubs {
+namespace methods::TaskEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::TaskEdgeStubs
+} // namespace methods::TaskEdgeMethod
 
 class TaskEdge
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskEdgeStubs::HasNode<T>)
+			if constexpr (methods::TaskEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskEdgeStubs::HasCursor<T>)
+			if constexpr (methods::TaskEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

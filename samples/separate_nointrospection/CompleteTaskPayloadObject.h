@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::CompleteTaskPayloadStubs {
+namespace methods::CompleteTaskPayloadMethod {
 
 template <class TImpl>
-concept HasTask = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsTask = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasClientMutationId = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsTask = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask() } };
+};
+
+template <class TImpl>
+concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsClientMutationId = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::CompleteTaskPayloadStubs
+} // namespace methods::CompleteTaskPayloadMethod
 
 class CompleteTaskPayload
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasTask<T>)
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsTask<T>)
 			{
 				return { _pimpl->getTask(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsTask<T>)
+			{
+				return { _pimpl->getTask() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasClientMutationId<T>)
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
 			{
 				return { _pimpl->getClientMutationId(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsClientMutationId<T>)
+			{
+				return { _pimpl->getClientMutationId() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

@@ -10,7 +10,7 @@ Mutation::Mutation() noexcept
 }
 
 std::shared_ptr<object::Review> Mutation::applyCreateReview(
-	service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) noexcept
+	Episode epArg, ReviewInput reviewArg) noexcept
 {
 	auto review = std::make_shared<Review>(reviewArg.stars, std::move(reviewArg.commentary));
 

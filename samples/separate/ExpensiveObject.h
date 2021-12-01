@@ -11,12 +11,18 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::ExpensiveStubs {
+namespace methods::ExpensiveMethod {
 
 template <class TImpl>
-concept HasOrder = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsOrder = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsOrder = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getOrder() } };
 };
 
 template <class TImpl>
@@ -31,7 +37,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::ExpensiveStubs
+} // namespace methods::ExpensiveMethod
 
 class Expensive
 	: public service::Object
@@ -60,9 +66,25 @@ private:
 		{
 		}
 
+		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::ExpensiveMethod::WithParamsOrder<T>)
+			{
+				return { _pimpl->getOrder(std::move(params)) };
+			}
+			else if constexpr (methods::ExpensiveMethod::NoParamsOrder<T>)
+			{
+				return { _pimpl->getOrder() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
+			}
+		}
+
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ExpensiveStubs::HasBeginSelectionSet<T>)
+			if constexpr (methods::ExpensiveMethod::HasBeginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -70,21 +92,9 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ExpensiveStubs::HasEndSelectionSet<T>)
+			if constexpr (methods::ExpensiveMethod::HasEndSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
-			}
-		}
-
-		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
-		{
-			if constexpr (stub::ExpensiveStubs::HasOrder<T>)
-			{
-				return { _pimpl->getOrder(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
 			}
 		}
 

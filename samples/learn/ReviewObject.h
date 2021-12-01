@@ -11,7 +11,31 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
-namespace stub::ReviewStubs {
+namespace methods::ReviewMethod {
+
+template <class TImpl>
+concept WithParamsStars = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::IntType> { impl.getStars(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsStars = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getStars() } };
+};
+
+template <class TImpl>
+concept WithParamsCommentary = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getCommentary(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCommentary = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getCommentary() } };
+};
 
 template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
@@ -25,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::ReviewStubs
+} // namespace methods::ReviewMethod
 
 class Review
 	: public service::Object
@@ -56,9 +80,41 @@ private:
 		{
 		}
 
+		service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::ReviewMethod::WithParamsStars<T>)
+			{
+				return { _pimpl->getStars(std::move(params)) };
+			}
+			else if constexpr (methods::ReviewMethod::NoParamsStars<T>)
+			{
+				return { _pimpl->getStars() };
+			}
+			else
+			{
+				static_assert(false, R"msg(Review::getStars is not implemented)msg");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::ReviewMethod::WithParamsCommentary<T>)
+			{
+				return { _pimpl->getCommentary(std::move(params)) };
+			}
+			else if constexpr (methods::ReviewMethod::NoParamsCommentary<T>)
+			{
+				return { _pimpl->getCommentary() };
+			}
+			else
+			{
+				static_assert(false, R"msg(Review::getCommentary is not implemented)msg");
+			}
+		}
+
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ReviewStubs::HasBeginSelectionSet<T>)
+			if constexpr (methods::ReviewMethod::HasBeginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -66,20 +122,10 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ReviewStubs::HasEndSelectionSet<T>)
+			if constexpr (methods::ReviewMethod::HasEndSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
-		}
-
-		service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final
-		{
-			return { _pimpl->getStars(std::move(params)) };
-		}
-
-		service::FieldResult<std::optional<response::StringType>> getCommentary(service::FieldParams&& params) const final
-		{
-			return { _pimpl->getCommentary(std::move(params)) };
 		}
 
 	private:

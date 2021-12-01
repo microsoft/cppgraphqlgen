@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::FolderConnectionStubs {
+namespace methods::FolderConnectionMethod {
 
 template <class TImpl>
-concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsPageInfo = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsPageInfo = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
+};
+
+template <class TImpl>
+concept WithParamsEdges = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> { impl.getEdges(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsEdges = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> { impl.getEdges() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::FolderConnectionStubs
+} // namespace methods::FolderConnectionMethod
 
 class FolderConnection
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderConnectionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderConnectionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderConnectionStubs::HasPageInfo<T>)
+			if constexpr (methods::FolderConnectionMethod::WithParamsPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
+			}
+			else if constexpr (methods::FolderConnectionMethod::NoParamsPageInfo<T>)
+			{
+				return { _pimpl->getPageInfo() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderConnectionStubs::HasEdges<T>)
+			if constexpr (methods::FolderConnectionMethod::WithParamsEdges<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
+			}
+			else if constexpr (methods::FolderConnectionMethod::NoParamsEdges<T>)
+			{
+				return { _pimpl->getEdges() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderConnectionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderConnectionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

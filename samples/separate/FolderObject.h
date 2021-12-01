@@ -11,24 +11,42 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::FolderStubs {
+namespace methods::FolderMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasName = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasUnreadCount = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsName = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+};
+
+template <class TImpl>
+concept WithParamsUnreadCount = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsUnreadCount = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getUnreadCount() } };
 };
 
 template <class TImpl>
@@ -43,7 +61,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::FolderStubs
+} // namespace methods::FolderMethod
 
 class Folder
 	: public service::Object
@@ -76,27 +94,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasId<T>)
+			if constexpr (methods::FolderMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -106,9 +112,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasName<T>)
+			if constexpr (methods::FolderMethod::WithParamsName<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsName<T>)
+			{
+				return { _pimpl->getName() };
 			}
 			else
 			{
@@ -118,13 +128,33 @@ private:
 
 		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasUnreadCount<T>)
+			if constexpr (methods::FolderMethod::WithParamsUnreadCount<T>)
 			{
 				return { _pimpl->getUnreadCount(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsUnreadCount<T>)
+			{
+				return { _pimpl->getUnreadCount() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

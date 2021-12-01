@@ -11,24 +11,42 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::TaskStubs {
+namespace methods::TaskMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasTitle = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsTitle = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasIsComplete = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsTitle = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle() } };
+};
+
+template <class TImpl>
+concept WithParamsIsComplete = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsIsComplete = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsComplete() } };
 };
 
 template <class TImpl>
@@ -43,7 +61,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::TaskStubs
+} // namespace methods::TaskMethod
 
 class Task
 	: public service::Object
@@ -76,27 +94,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasId<T>)
+			if constexpr (methods::TaskMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -106,9 +112,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasTitle<T>)
+			if constexpr (methods::TaskMethod::WithParamsTitle<T>)
 			{
 				return { _pimpl->getTitle(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsTitle<T>)
+			{
+				return { _pimpl->getTitle() };
 			}
 			else
 			{
@@ -118,13 +128,33 @@ private:
 
 		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasIsComplete<T>)
+			if constexpr (methods::TaskMethod::WithParamsIsComplete<T>)
 			{
 				return { _pimpl->getIsComplete(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsIsComplete<T>)
+			{
+				return { _pimpl->getIsComplete() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

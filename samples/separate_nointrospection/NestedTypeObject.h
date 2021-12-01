@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::NestedTypeStubs {
+namespace methods::NestedTypeMethod {
 
 template <class TImpl>
-concept HasDepth = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsDepth = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasNested = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsDepth = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getDepth() } };
+};
+
+template <class TImpl>
+concept WithParamsNested = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsNested = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::NestedTypeStubs
+} // namespace methods::NestedTypeMethod
 
 class NestedType
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::NestedTypeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::NestedTypeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::NestedTypeStubs::HasDepth<T>)
+			if constexpr (methods::NestedTypeMethod::WithParamsDepth<T>)
 			{
 				return { _pimpl->getDepth(std::move(params)) };
+			}
+			else if constexpr (methods::NestedTypeMethod::NoParamsDepth<T>)
+			{
+				return { _pimpl->getDepth() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::NestedTypeStubs::HasNested<T>)
+			if constexpr (methods::NestedTypeMethod::WithParamsNested<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
+			}
+			else if constexpr (methods::NestedTypeMethod::NoParamsNested<T>)
+			{
+				return { _pimpl->getNested() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::NestedTypeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::NestedTypeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

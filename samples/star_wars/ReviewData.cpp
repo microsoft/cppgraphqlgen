@@ -11,13 +11,12 @@ Review::Review(response::IntType stars, std::optional<response::StringType> comm
 {
 }
 
-response::IntType Review::getStars(service::FieldParams&& params) const noexcept
+response::IntType Review::getStars() const noexcept
 {
 	return stars_;
 }
 
-std::optional<response::StringType> Review::getCommentary(
-	service::FieldParams&& params) const noexcept
+std::optional<response::StringType> Review::getCommentary() const noexcept
 {
 	return commentary_;
 }

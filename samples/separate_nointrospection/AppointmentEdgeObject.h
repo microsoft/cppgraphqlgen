@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::AppointmentEdgeStubs {
+namespace methods::AppointmentEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::AppointmentEdgeStubs
+} // namespace methods::AppointmentEdgeMethod
 
 class AppointmentEdge
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentEdgeStubs::HasNode<T>)
+			if constexpr (methods::AppointmentEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentEdgeStubs::HasCursor<T>)
+			if constexpr (methods::AppointmentEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

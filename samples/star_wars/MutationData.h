@@ -18,7 +18,7 @@ public:
 	explicit Mutation() noexcept;
 
 	std::shared_ptr<object::Review> applyCreateReview(
-		service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) noexcept;
+		Episode epArg, ReviewInput reviewArg) noexcept;
 
 private:
 	// This is just an example, the Mutation object probably shouldn't own a mutable store for the

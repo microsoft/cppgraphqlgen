@@ -11,36 +11,66 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::AppointmentStubs {
+namespace methods::AppointmentMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasWhen = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsWhen = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasSubject = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsWhen = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen() } };
+};
+
+template <class TImpl>
+concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasIsNow = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsSubject = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject() } };
+};
+
+template <class TImpl>
+concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasForceError = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsIsNow = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsNow() } };
+};
+
+template <class TImpl>
+concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsForceError = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError() } };
 };
 
 template <class TImpl>
@@ -55,7 +85,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::AppointmentStubs
+} // namespace methods::AppointmentMethod
 
 class Appointment
 	: public service::Object
@@ -92,27 +122,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasId<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -122,9 +140,13 @@ private:
 
 		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasWhen<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsWhen<T>)
 			{
 				return { _pimpl->getWhen(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsWhen<T>)
+			{
+				return { _pimpl->getWhen() };
 			}
 			else
 			{
@@ -134,9 +156,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasSubject<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
 			{
 				return { _pimpl->getSubject(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsSubject<T>)
+			{
+				return { _pimpl->getSubject() };
 			}
 			else
 			{
@@ -146,9 +172,13 @@ private:
 
 		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasIsNow<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
 			{
 				return { _pimpl->getIsNow(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsIsNow<T>)
+			{
+				return { _pimpl->getIsNow() };
 			}
 			else
 			{
@@ -158,13 +188,33 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasForceError<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
 			{
 				return { _pimpl->getForceError(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsForceError<T>)
+			{
+				return { _pimpl->getForceError() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 

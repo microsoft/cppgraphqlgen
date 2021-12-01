@@ -11,7 +11,19 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
-namespace stub::MutationStubs {
+namespace methods::MutationMethod {
+
+template <class TImpl>
+concept WithParamsCreateReview = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg) 
+{
+	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) } };
+};
+
+template <class TImpl>
+concept NoParamsCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg) 
+{
+	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(epArg), std::move(reviewArg)) } };
+};
 
 template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
@@ -25,7 +37,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::MutationStubs
+} // namespace methods::MutationMethod
 
 class Mutation
 	: public service::Object
@@ -54,9 +66,25 @@ private:
 		{
 		}
 
+		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
+		{
+			if constexpr (methods::MutationMethod::WithParamsCreateReview<T>)
+			{
+				return { _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsCreateReview<T>)
+			{
+				return { _pimpl->applyCreateReview(std::move(epArg), std::move(reviewArg)) };
+			}
+			else
+			{
+				static_assert(false, R"msg(Mutation::applyCreateReview is not implemented)msg");
+			}
+		}
+
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::MutationStubs::HasBeginSelectionSet<T>)
+			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -64,15 +92,10 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::MutationStubs::HasEndSelectionSet<T>)
+			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
-		}
-
-		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
-		{
-			return { _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) };
 		}
 
 	private:

@@ -87,82 +87,154 @@ struct Node
 };
 
 namespace object {
-namespace stub {
-namespace QueryStubs {
+namespace methods {
+namespace QueryMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNode(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept HasAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsNode = requires (TImpl impl, response::IdType idArg) 
+{
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNode(std::move(idArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept HasTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsAppointments = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept HasUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+concept NoParamsTasks = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept HasAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept NoParamsUnreadCounts = requires (TImpl impl, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept HasTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept NoParamsAppointmentsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+{
+	{ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(idsArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept HasUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept NoParamsTasksById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+{
+	{ service::FieldResult<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(idsArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept HasNested = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsUnreadCountsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+{
+	{ service::FieldResult<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(idsArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsNested = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasUnimplemented = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNested = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
+};
+
+template <class TImpl>
+concept WithParamsUnimplemented = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::StringType> { impl.getUnimplemented(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasExpensive = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsUnimplemented = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::StringType> { impl.getUnimplemented() } };
+};
+
+template <class TImpl>
+concept WithParamsExpensive = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasTestTaskState = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsExpensive = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive() } };
+};
+
+template <class TImpl>
+concept WithParamsTestTaskState = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<TaskState> { impl.getTestTaskState(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept NoParamsTestTaskState = requires (TImpl impl) 
+{
+	{ service::FieldResult<TaskState> { impl.getTestTaskState() } };
+};
+
+template <class TImpl>
+concept WithParamsAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
+concept NoParamsAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+{
+	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(idsArg)) } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -174,23 +246,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace QueryStubs
+} // namespace QueryMethod
 
-namespace PageInfoStubs {
+namespace PageInfoMethod {
 
 template <class TImpl>
-concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsHasNextPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage() } };
+};
+
+template <class TImpl>
+concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsHasPreviousPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -202,20 +286,32 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace PageInfoStubs
+} // namespace PageInfoMethod
 
-namespace AppointmentEdgeStubs {
+namespace AppointmentEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -230,23 +326,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace AppointmentEdgeStubs
+} // namespace AppointmentEdgeMethod
 
-namespace AppointmentConnectionStubs {
+namespace AppointmentConnectionMethod {
 
 template <class TImpl>
-concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsPageInfo = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsPageInfo = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
+};
+
+template <class TImpl>
+concept WithParamsEdges = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsEdges = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -258,20 +366,32 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace AppointmentConnectionStubs
+} // namespace AppointmentConnectionMethod
 
-namespace TaskEdgeStubs {
+namespace TaskEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -286,23 +406,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace TaskEdgeStubs
+} // namespace TaskEdgeMethod
 
-namespace TaskConnectionStubs {
+namespace TaskConnectionMethod {
 
 template <class TImpl>
-concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsPageInfo = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsPageInfo = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
+};
+
+template <class TImpl>
+concept WithParamsEdges = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsEdges = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -314,23 +446,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace TaskConnectionStubs
+} // namespace TaskConnectionMethod
 
-namespace FolderEdgeStubs {
+namespace FolderEdgeMethod {
 
 template <class TImpl>
-concept HasNode = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -342,23 +486,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace FolderEdgeStubs
+} // namespace FolderEdgeMethod
 
-namespace FolderConnectionStubs {
+namespace FolderConnectionMethod {
 
 template <class TImpl>
-concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsPageInfo = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsPageInfo = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
+};
+
+template <class TImpl>
+concept WithParamsEdges = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsEdges = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> { impl.getEdges() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -370,23 +526,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace FolderConnectionStubs
+} // namespace FolderConnectionMethod
 
-namespace CompleteTaskPayloadStubs {
+namespace CompleteTaskPayloadMethod {
 
 template <class TImpl>
-concept HasTask = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsTask = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasClientMutationId = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsTask = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask() } };
+};
+
+template <class TImpl>
+concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsClientMutationId = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -398,23 +566,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace CompleteTaskPayloadStubs
+} // namespace CompleteTaskPayloadMethod
 
-namespace MutationStubs {
+namespace MutationMethod {
 
 template <class TImpl>
-concept HasCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+concept WithParamsCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
 {
 	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
-concept HasSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+concept NoParamsCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg) 
+{
+	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
 {
 	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 template <class TImpl>
+concept NoParamsSetFloat = requires (TImpl impl, response::FloatType valueArg) 
+{
+	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(valueArg)) } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -426,23 +606,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace MutationStubs
+} // namespace MutationMethod
 
-namespace SubscriptionStubs {
+namespace SubscriptionMethod {
 
 template <class TImpl>
-concept HasNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept NoParamsNextAppointmentChange = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
+};
+
+template <class TImpl>
+concept WithParamsNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
+concept NoParamsNodeChange = requires (TImpl impl, response::IdType idArg) 
+{
+	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(idArg)) } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -454,41 +646,71 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace SubscriptionStubs
+} // namespace SubscriptionMethod
 
-namespace AppointmentStubs {
+namespace AppointmentMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasWhen = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsWhen = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasSubject = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsWhen = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen() } };
+};
+
+template <class TImpl>
+concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasIsNow = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsSubject = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject() } };
+};
+
+template <class TImpl>
+concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasForceError = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsIsNow = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsNow() } };
+};
+
+template <class TImpl>
+concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsForceError = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -500,29 +722,47 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace AppointmentStubs
+} // namespace AppointmentMethod
 
-namespace TaskStubs {
+namespace TaskMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasTitle = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsTitle = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasIsComplete = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsTitle = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle() } };
+};
+
+template <class TImpl>
+concept WithParamsIsComplete = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsIsComplete = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsComplete() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -534,29 +774,47 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace TaskStubs
+} // namespace TaskMethod
 
-namespace FolderStubs {
+namespace FolderMethod {
 
 template <class TImpl>
-concept HasId = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasName = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasUnreadCount = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsName = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+};
+
+template <class TImpl>
+concept WithParamsUnreadCount = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsUnreadCount = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getUnreadCount() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -568,23 +826,35 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace FolderStubs
+} // namespace FolderMethod
 
-namespace NestedTypeStubs {
+namespace NestedTypeMethod {
 
 template <class TImpl>
-concept HasDepth = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsDepth = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
-concept HasNested = requires (TImpl impl, service::FieldParams params) 
+concept NoParamsDepth = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getDepth() } };
+};
+
+template <class TImpl>
+concept WithParamsNested = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsNested = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -596,17 +866,23 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace NestedTypeStubs
+} // namespace NestedTypeMethod
 
-namespace ExpensiveStubs {
+namespace ExpensiveMethod {
 
 template <class TImpl>
-concept HasOrder = requires (TImpl impl, service::FieldParams params) 
+concept WithParamsOrder = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IntType> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
+concept NoParamsOrder = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getOrder() } };
+};
+
+template <class TImpl>
 concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
@@ -618,8 +894,8 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace ExpensiveStubs
-} // namespace stub
+} // namespace ExpensiveMethod
+} // namespace methods
 
 class Query
 	: public service::Object
@@ -670,27 +946,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::QueryStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::QueryStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasNode<T>)
+			if constexpr (methods::QueryMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params), std::move(idArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode(std::move(idArg)) };
 			}
 			else
 			{
@@ -700,9 +964,13 @@ private:
 
 		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasAppointments<T>)
+			if constexpr (methods::QueryMethod::WithParamsAppointments<T>)
 			{
 				return { _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsAppointments<T>)
+			{
+				return { _pimpl->getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -712,9 +980,13 @@ private:
 
 		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasTasks<T>)
+			if constexpr (methods::QueryMethod::WithParamsTasks<T>)
 			{
 				return { _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsTasks<T>)
+			{
+				return { _pimpl->getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -724,9 +996,13 @@ private:
 
 		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasUnreadCounts<T>)
+			if constexpr (methods::QueryMethod::WithParamsUnreadCounts<T>)
 			{
 				return { _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsUnreadCounts<T>)
+			{
+				return { _pimpl->getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
 			else
 			{
@@ -736,9 +1012,13 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasAppointmentsById<T>)
+			if constexpr (methods::QueryMethod::WithParamsAppointmentsById<T>)
 			{
 				return { _pimpl->getAppointmentsById(std::move(params), std::move(idsArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsAppointmentsById<T>)
+			{
+				return { _pimpl->getAppointmentsById(std::move(idsArg)) };
 			}
 			else
 			{
@@ -748,9 +1028,13 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasTasksById<T>)
+			if constexpr (methods::QueryMethod::WithParamsTasksById<T>)
 			{
 				return { _pimpl->getTasksById(std::move(params), std::move(idsArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsTasksById<T>)
+			{
+				return { _pimpl->getTasksById(std::move(idsArg)) };
 			}
 			else
 			{
@@ -760,9 +1044,13 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasUnreadCountsById<T>)
+			if constexpr (methods::QueryMethod::WithParamsUnreadCountsById<T>)
 			{
 				return { _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsUnreadCountsById<T>)
+			{
+				return { _pimpl->getUnreadCountsById(std::move(idsArg)) };
 			}
 			else
 			{
@@ -772,9 +1060,13 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::QueryStubs::HasNested<T>)
+			if constexpr (methods::QueryMethod::WithParamsNested<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsNested<T>)
+			{
+				return { _pimpl->getNested() };
 			}
 			else
 			{
@@ -784,9 +1076,13 @@ private:
 
 		service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::QueryStubs::HasUnimplemented<T>)
+			if constexpr (methods::QueryMethod::WithParamsUnimplemented<T>)
 			{
 				return { _pimpl->getUnimplemented(std::move(params)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsUnimplemented<T>)
+			{
+				return { _pimpl->getUnimplemented() };
 			}
 			else
 			{
@@ -796,9 +1092,13 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::QueryStubs::HasExpensive<T>)
+			if constexpr (methods::QueryMethod::WithParamsExpensive<T>)
 			{
 				return { _pimpl->getExpensive(std::move(params)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsExpensive<T>)
+			{
+				return { _pimpl->getExpensive() };
 			}
 			else
 			{
@@ -808,9 +1108,13 @@ private:
 
 		service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::QueryStubs::HasTestTaskState<T>)
+			if constexpr (methods::QueryMethod::WithParamsTestTaskState<T>)
 			{
 				return { _pimpl->getTestTaskState(std::move(params)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsTestTaskState<T>)
+			{
+				return { _pimpl->getTestTaskState() };
 			}
 			else
 			{
@@ -820,13 +1124,33 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (stub::QueryStubs::HasAnyType<T>)
+			if constexpr (methods::QueryMethod::WithParamsAnyType<T>)
 			{
 				return { _pimpl->getAnyType(std::move(params), std::move(idsArg)) };
+			}
+			else if constexpr (methods::QueryMethod::NoParamsAnyType<T>)
+			{
+				return { _pimpl->getAnyType(std::move(idsArg)) };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::QueryMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::QueryMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -878,27 +1202,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::PageInfoStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::PageInfoStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::PageInfoStubs::HasHasNextPage<T>)
+			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
 			{
 				return { _pimpl->getHasNextPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasNextPage<T>)
+			{
+				return { _pimpl->getHasNextPage() };
 			}
 			else
 			{
@@ -908,13 +1220,33 @@ private:
 
 		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::PageInfoStubs::HasHasPreviousPage<T>)
+			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
 			{
 				return { _pimpl->getHasPreviousPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasPreviousPage<T>)
+			{
+				return { _pimpl->getHasPreviousPage() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -966,27 +1298,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentEdgeStubs::HasNode<T>)
+			if constexpr (methods::AppointmentEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -996,13 +1316,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentEdgeStubs::HasCursor<T>)
+			if constexpr (methods::AppointmentEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1054,27 +1394,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentConnectionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentConnectionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentConnectionStubs::HasPageInfo<T>)
+			if constexpr (methods::AppointmentConnectionMethod::WithParamsPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentConnectionMethod::NoParamsPageInfo<T>)
+			{
+				return { _pimpl->getPageInfo() };
 			}
 			else
 			{
@@ -1084,13 +1412,33 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentConnectionStubs::HasEdges<T>)
+			if constexpr (methods::AppointmentConnectionMethod::WithParamsEdges<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentConnectionMethod::NoParamsEdges<T>)
+			{
+				return { _pimpl->getEdges() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(AppointmentConnection::getEdges is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentConnectionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentConnectionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1142,27 +1490,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskEdgeStubs::HasNode<T>)
+			if constexpr (methods::TaskEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -1172,13 +1508,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskEdgeStubs::HasCursor<T>)
+			if constexpr (methods::TaskEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1230,27 +1586,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskConnectionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskConnectionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskConnectionStubs::HasPageInfo<T>)
+			if constexpr (methods::TaskConnectionMethod::WithParamsPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
+			}
+			else if constexpr (methods::TaskConnectionMethod::NoParamsPageInfo<T>)
+			{
+				return { _pimpl->getPageInfo() };
 			}
 			else
 			{
@@ -1260,13 +1604,33 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskConnectionStubs::HasEdges<T>)
+			if constexpr (methods::TaskConnectionMethod::WithParamsEdges<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
+			}
+			else if constexpr (methods::TaskConnectionMethod::NoParamsEdges<T>)
+			{
+				return { _pimpl->getEdges() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(TaskConnection::getEdges is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskConnectionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskConnectionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1318,27 +1682,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderEdgeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderEdgeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderEdgeStubs::HasNode<T>)
+			if constexpr (methods::FolderEdgeMethod::WithParamsNode<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
 			}
 			else
 			{
@@ -1348,13 +1700,33 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderEdgeStubs::HasCursor<T>)
+			if constexpr (methods::FolderEdgeMethod::WithParamsCursor<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1406,27 +1778,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderConnectionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderConnectionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderConnectionStubs::HasPageInfo<T>)
+			if constexpr (methods::FolderConnectionMethod::WithParamsPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
+			}
+			else if constexpr (methods::FolderConnectionMethod::NoParamsPageInfo<T>)
+			{
+				return { _pimpl->getPageInfo() };
 			}
 			else
 			{
@@ -1436,13 +1796,33 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderConnectionStubs::HasEdges<T>)
+			if constexpr (methods::FolderConnectionMethod::WithParamsEdges<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
+			}
+			else if constexpr (methods::FolderConnectionMethod::NoParamsEdges<T>)
+			{
+				return { _pimpl->getEdges() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderConnectionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderConnectionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1494,27 +1874,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasTask<T>)
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsTask<T>)
 			{
 				return { _pimpl->getTask(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsTask<T>)
+			{
+				return { _pimpl->getTask() };
 			}
 			else
 			{
@@ -1524,13 +1892,33 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::CompleteTaskPayloadStubs::HasClientMutationId<T>)
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
 			{
 				return { _pimpl->getClientMutationId(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsClientMutationId<T>)
+			{
+				return { _pimpl->getClientMutationId() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1582,27 +1970,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::MutationStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::MutationStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
 		{
-			if constexpr (stub::MutationStubs::HasCompleteTask<T>)
+			if constexpr (methods::MutationMethod::WithParamsCompleteTask<T>)
 			{
 				return { _pimpl->applyCompleteTask(std::move(params), std::move(inputArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsCompleteTask<T>)
+			{
+				return { _pimpl->applyCompleteTask(std::move(inputArg)) };
 			}
 			else
 			{
@@ -1612,13 +1988,33 @@ private:
 
 		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
 		{
-			if constexpr (stub::MutationStubs::HasSetFloat<T>)
+			if constexpr (methods::MutationMethod::WithParamsSetFloat<T>)
 			{
 				return { _pimpl->applySetFloat(std::move(params), std::move(valueArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsSetFloat<T>)
+			{
+				return { _pimpl->applySetFloat(std::move(valueArg)) };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1670,27 +2066,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::SubscriptionStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::SubscriptionStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::SubscriptionStubs::HasNextAppointmentChange<T>)
+			if constexpr (methods::SubscriptionMethod::WithParamsNextAppointmentChange<T>)
 			{
 				return { _pimpl->getNextAppointmentChange(std::move(params)) };
+			}
+			else if constexpr (methods::SubscriptionMethod::NoParamsNextAppointmentChange<T>)
+			{
+				return { _pimpl->getNextAppointmentChange() };
 			}
 			else
 			{
@@ -1700,13 +2084,33 @@ private:
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (stub::SubscriptionStubs::HasNodeChange<T>)
+			if constexpr (methods::SubscriptionMethod::WithParamsNodeChange<T>)
 			{
 				return { _pimpl->getNodeChange(std::move(params), std::move(idArg)) };
+			}
+			else if constexpr (methods::SubscriptionMethod::NoParamsNodeChange<T>)
+			{
+				return { _pimpl->getNodeChange(std::move(idArg)) };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::SubscriptionMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::SubscriptionMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1764,27 +2168,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::AppointmentStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasId<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -1794,9 +2186,13 @@ private:
 
 		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasWhen<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsWhen<T>)
 			{
 				return { _pimpl->getWhen(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsWhen<T>)
+			{
+				return { _pimpl->getWhen() };
 			}
 			else
 			{
@@ -1806,9 +2202,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasSubject<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
 			{
 				return { _pimpl->getSubject(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsSubject<T>)
+			{
+				return { _pimpl->getSubject() };
 			}
 			else
 			{
@@ -1818,9 +2218,13 @@ private:
 
 		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasIsNow<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
 			{
 				return { _pimpl->getIsNow(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsIsNow<T>)
+			{
+				return { _pimpl->getIsNow() };
 			}
 			else
 			{
@@ -1830,13 +2234,33 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::AppointmentStubs::HasForceError<T>)
+			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
 			{
 				return { _pimpl->getForceError(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsForceError<T>)
+			{
+				return { _pimpl->getForceError() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1890,27 +2314,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::TaskStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasId<T>)
+			if constexpr (methods::TaskMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -1920,9 +2332,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasTitle<T>)
+			if constexpr (methods::TaskMethod::WithParamsTitle<T>)
 			{
 				return { _pimpl->getTitle(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsTitle<T>)
+			{
+				return { _pimpl->getTitle() };
 			}
 			else
 			{
@@ -1932,13 +2348,33 @@ private:
 
 		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::TaskStubs::HasIsComplete<T>)
+			if constexpr (methods::TaskMethod::WithParamsIsComplete<T>)
 			{
 				return { _pimpl->getIsComplete(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsIsComplete<T>)
+			{
+				return { _pimpl->getIsComplete() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -1992,27 +2428,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::FolderStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasId<T>)
+			if constexpr (methods::FolderMethod::WithParamsId<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
 			}
 			else
 			{
@@ -2022,9 +2446,13 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasName<T>)
+			if constexpr (methods::FolderMethod::WithParamsName<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsName<T>)
+			{
+				return { _pimpl->getName() };
 			}
 			else
 			{
@@ -2034,13 +2462,33 @@ private:
 
 		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::FolderStubs::HasUnreadCount<T>)
+			if constexpr (methods::FolderMethod::WithParamsUnreadCount<T>)
 			{
 				return { _pimpl->getUnreadCount(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsUnreadCount<T>)
+			{
+				return { _pimpl->getUnreadCount() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -2092,27 +2540,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::NestedTypeStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::NestedTypeStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::NestedTypeStubs::HasDepth<T>)
+			if constexpr (methods::NestedTypeMethod::WithParamsDepth<T>)
 			{
 				return { _pimpl->getDepth(std::move(params)) };
+			}
+			else if constexpr (methods::NestedTypeMethod::NoParamsDepth<T>)
+			{
+				return { _pimpl->getDepth() };
 			}
 			else
 			{
@@ -2122,13 +2558,33 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (stub::NestedTypeStubs::HasNested<T>)
+			if constexpr (methods::NestedTypeMethod::WithParamsNested<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
+			}
+			else if constexpr (methods::NestedTypeMethod::NoParamsNested<T>)
+			{
+				return { _pimpl->getNested() };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::NestedTypeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::NestedTypeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
@@ -2178,9 +2634,25 @@ private:
 		{
 		}
 
+		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::ExpensiveMethod::WithParamsOrder<T>)
+			{
+				return { _pimpl->getOrder(std::move(params)) };
+			}
+			else if constexpr (methods::ExpensiveMethod::NoParamsOrder<T>)
+			{
+				return { _pimpl->getOrder() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
+			}
+		}
+
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ExpensiveStubs::HasBeginSelectionSet<T>)
+			if constexpr (methods::ExpensiveMethod::HasBeginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -2188,21 +2660,9 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (stub::ExpensiveStubs::HasEndSelectionSet<T>)
+			if constexpr (methods::ExpensiveMethod::HasEndSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
-			}
-		}
-
-		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
-		{
-			if constexpr (stub::ExpensiveStubs::HasOrder<T>)
-			{
-				return { _pimpl->getOrder(std::move(params)) };
-			}
-			else
-			{
-				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
 			}
 		}
 

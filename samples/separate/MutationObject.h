@@ -11,18 +11,30 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace stub::MutationStubs {
+namespace methods::MutationMethod {
 
 template <class TImpl>
-concept HasCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+concept WithParamsCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
 {
 	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
-concept HasSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+concept NoParamsCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg) 
+{
+	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
 {
 	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
+};
+
+template <class TImpl>
+concept NoParamsSetFloat = requires (TImpl impl, response::FloatType valueArg) 
+{
+	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(valueArg)) } };
 };
 
 template <class TImpl>
@@ -37,7 +49,7 @@ concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetPa
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace stub::MutationStubs
+} // namespace methods::MutationMethod
 
 class Mutation
 	: public service::Object
@@ -68,27 +80,15 @@ private:
 		{
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::MutationStubs::HasBeginSelectionSet<T>)
-			{
-				_pimpl->beginSelectionSet(params);
-			}
-		}
-
-		void endSelectionSet(const service::SelectionSetParams& params) const final
-		{
-			if constexpr (stub::MutationStubs::HasEndSelectionSet<T>)
-			{
-				_pimpl->endSelectionSet(params);
-			}
-		}
-
 		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
 		{
-			if constexpr (stub::MutationStubs::HasCompleteTask<T>)
+			if constexpr (methods::MutationMethod::WithParamsCompleteTask<T>)
 			{
 				return { _pimpl->applyCompleteTask(std::move(params), std::move(inputArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsCompleteTask<T>)
+			{
+				return { _pimpl->applyCompleteTask(std::move(inputArg)) };
 			}
 			else
 			{
@@ -98,13 +98,33 @@ private:
 
 		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
 		{
-			if constexpr (stub::MutationStubs::HasSetFloat<T>)
+			if constexpr (methods::MutationMethod::WithParamsSetFloat<T>)
 			{
 				return { _pimpl->applySetFloat(std::move(params), std::move(valueArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsSetFloat<T>)
+			{
+				return { _pimpl->applySetFloat(std::move(valueArg)) };
 			}
 			else
 			{
 				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
 			}
 		}
 
