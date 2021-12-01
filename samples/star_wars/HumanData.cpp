@@ -7,8 +7,8 @@
 
 namespace graphql::learn {
 
-Human::Human(response::StringType id, std::optional<response::StringType> name,
-	std::vector<Episode> appearsIn, std::optional<response::StringType> homePlanet) noexcept
+Human::Human(response::StringType&& id, std::optional<response::StringType>&& name,
+	std::vector<Episode>&& appearsIn, std::optional<response::StringType>&& homePlanet) noexcept
 	: id_ { std::move(id) }
 	, name_ { std::move(name) }
 	, appearsIn_ { std::move(appearsIn) }

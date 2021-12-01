@@ -15,8 +15,9 @@ namespace graphql::learn {
 class Human
 {
 public:
-	explicit Human(response::StringType id, std::optional<response::StringType> name,
-		std::vector<Episode> appearsIn, std::optional<response::StringType> homePlanet) noexcept;
+	explicit Human(response::StringType&& id, std::optional<response::StringType>&& name,
+		std::vector<Episode>&& appearsIn,
+		std::optional<response::StringType>&& homePlanet) noexcept;
 
 	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;

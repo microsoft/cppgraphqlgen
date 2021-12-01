@@ -17,9 +17,9 @@ class Human;
 class Droid
 {
 public:
-	explicit Droid(response::StringType id, std::optional<response::StringType> name,
-		std::vector<Episode> appearsIn,
-		std::optional<response::StringType> primaryFunction) noexcept;
+	explicit Droid(response::StringType&& id, std::optional<response::StringType>&& name,
+		std::vector<Episode>&& appearsIn,
+		std::optional<response::StringType>&& primaryFunction) noexcept;
 
 	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;
