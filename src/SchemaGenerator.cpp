@@ -744,7 +744,13 @@ private:
 		headerFile << R"cpp(
 		service::FieldResult<)cpp"
 				   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
-				   << fieldName << R"cpp((service::FieldParams&& params)cpp";
+				   << fieldName << R"cpp((service::FieldParams&&)cpp";
+
+		if (!_loader.isIntrospection())
+		{
+			headerFile << R"cpp( params)cpp";
+		}
+
 		for (const auto& argument : outputField.arguments)
 		{
 			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp(&& )cpp"
@@ -774,11 +780,11 @@ private:
 		if (_loader.isIntrospection())
 		{
 			headerFile << R"cpp(return { _pimpl->)cpp" << outputField.accessor << fieldName
-					   << R"cpp((std::move(params))cpp";
+					   << R"cpp(()cpp";
 
 			if (!passedArguments.empty())
 			{
-				headerFile << R"cpp(, )cpp" << passedArguments;
+				headerFile << passedArguments;
 			}
 
 			headerFile << R"cpp() };)cpp";

@@ -25,17 +25,12 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::vector<std::shared_ptr<object::Type>>>
-	getTypes(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>> getQueryType(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>> getMutationType(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>>
-	getSubscriptionType(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::vector<std::shared_ptr<object::Directive>>>
-	getDirectives(service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::Type>> getTypes() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getQueryType() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getMutationType() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getSubscriptionType() const;
+	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::Directive>> getDirectives()
+		const;
 
 private:
 	const std::shared_ptr<schema::Schema> _schema;
@@ -47,31 +42,20 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<const schema::BaseType>& type);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<TypeKind> getKind(
-		service::FieldParams&&) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>> getName(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDescription(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::optional<std::vector<std::shared_ptr<object::Field>>>>
-	getFields(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::optional<std::vector<std::shared_ptr<object::Type>>>>
-	getInterfaces(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::optional<std::vector<std::shared_ptr<object::Type>>>>
-	getPossibleTypes(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::optional<std::vector<std::shared_ptr<object::EnumValue>>>>
-	getEnumValues(service::FieldParams&& params,
-		std::optional<response::BooleanType>&& includeDeprecatedArg) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::optional<std::vector<std::shared_ptr<object::InputValue>>>>
-	getInputFields(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>> getOfType(
-		service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT TypeKind getKind() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getName() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDescription() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Field>>>
+	getFields(std::optional<response::BooleanType>&& includeDeprecatedArg) const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
+	getInterfaces() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
+	getPossibleTypes() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::EnumValue>>>
+	getEnumValues(std::optional<response::BooleanType>&& includeDeprecatedArg) const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::InputValue>>>
+	getInputFields() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getOfType() const;
 
 private:
 	const std::shared_ptr<const schema::BaseType> _type;
@@ -83,19 +67,12 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<const schema::Field>& field);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDescription(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::vector<std::shared_ptr<object::InputValue>>>
-	getArgs(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>> getType(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::BooleanType> getIsDeprecated(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDeprecationReason(service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT response::StringType getName() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDescription() const;
+	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getType() const;
+	GRAPHQLINTROSPECTION_EXPORT response::BooleanType getIsDeprecated() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDeprecationReason() const;
 
 private:
 	const std::shared_ptr<const schema::Field> _field;
@@ -108,14 +85,10 @@ public:
 		const std::shared_ptr<const schema::InputValue>& inputValue);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDescription(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::shared_ptr<object::Type>> getType(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDefaultValue(service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT response::StringType getName() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDescription() const;
+	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getType() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDefaultValue() const;
 
 private:
 	const std::shared_ptr<const schema::InputValue> _inputValue;
@@ -128,14 +101,10 @@ public:
 		const std::shared_ptr<const schema::EnumValue>& enumValue);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDescription(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::BooleanType> getIsDeprecated(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDeprecationReason(service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT response::StringType getName() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDescription() const;
+	GRAPHQLINTROSPECTION_EXPORT response::BooleanType getIsDeprecated() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDeprecationReason() const;
 
 private:
 	const std::shared_ptr<const schema::EnumValue> _enumValue;
@@ -148,15 +117,10 @@ public:
 		const std::shared_ptr<const schema::Directive>& directive);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<response::StringType> getName(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::optional<response::StringType>>
-	getDescription(service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<std::vector<DirectiveLocation>> getLocations(
-		service::FieldParams&& params) const;
-	GRAPHQLINTROSPECTION_EXPORT service::FieldResult<
-		std::vector<std::shared_ptr<object::InputValue>>>
-	getArgs(service::FieldParams&& params) const;
+	GRAPHQLINTROSPECTION_EXPORT response::StringType getName() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<response::StringType> getDescription() const;
+	GRAPHQLINTROSPECTION_EXPORT std::vector<DirectiveLocation> getLocations() const;
+	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
 
 private:
 	const std::shared_ptr<const schema::Directive> _directive;

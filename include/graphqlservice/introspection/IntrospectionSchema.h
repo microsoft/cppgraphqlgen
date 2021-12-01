@@ -119,29 +119,29 @@ private:
 		{
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&&) const final
 		{
-			return { _pimpl->getTypes(std::move(params)) };
+			return { _pimpl->getTypes() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getQueryType(std::move(params)) };
+			return { _pimpl->getQueryType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getMutationType(std::move(params)) };
+			return { _pimpl->getMutationType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getSubscriptionType(std::move(params)) };
+			return { _pimpl->getSubscriptionType() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDirectives(std::move(params)) };
+			return { _pimpl->getDirectives() };
 		}
 
 	private:
@@ -195,49 +195,49 @@ private:
 		{
 		}
 
-		service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const final
+		service::FieldResult<TypeKind> getKind(service::FieldParams&&) const final
 		{
-			return { _pimpl->getKind(std::move(params)) };
+			return { _pimpl->getKind() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&&) const final
 		{
-			return { _pimpl->getName(std::move(params)) };
+			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDescription(std::move(params)) };
+			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
 		{
-			return { _pimpl->getFields(std::move(params), std::move(includeDeprecatedArg)) };
+			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&&) const final
 		{
-			return { _pimpl->getInterfaces(std::move(params)) };
+			return { _pimpl->getInterfaces() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&&) const final
 		{
-			return { _pimpl->getPossibleTypes(std::move(params)) };
+			return { _pimpl->getPossibleTypes() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
 		{
-			return { _pimpl->getEnumValues(std::move(params), std::move(includeDeprecatedArg)) };
+			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&&) const final
 		{
-			return { _pimpl->getInputFields(std::move(params)) };
+			return { _pimpl->getInputFields() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getOfType(std::move(params)) };
+			return { _pimpl->getOfType() };
 		}
 
 	private:
@@ -285,34 +285,34 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
 		{
-			return { _pimpl->getName(std::move(params)) };
+			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDescription(std::move(params)) };
+			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&&) const final
 		{
-			return { _pimpl->getArgs(std::move(params)) };
+			return { _pimpl->getArgs() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getType(std::move(params)) };
+			return { _pimpl->getType() };
 		}
 
-		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const final
+		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
 		{
-			return { _pimpl->getIsDeprecated(std::move(params)) };
+			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDeprecationReason(std::move(params)) };
+			return { _pimpl->getDeprecationReason() };
 		}
 
 	private:
@@ -356,24 +356,24 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
 		{
-			return { _pimpl->getName(std::move(params)) };
+			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDescription(std::move(params)) };
+			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&&) const final
 		{
-			return { _pimpl->getType(std::move(params)) };
+			return { _pimpl->getType() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDefaultValue(std::move(params)) };
+			return { _pimpl->getDefaultValue() };
 		}
 
 	private:
@@ -417,24 +417,24 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
 		{
-			return { _pimpl->getName(std::move(params)) };
+			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDescription(std::move(params)) };
+			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const final
+		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
 		{
-			return { _pimpl->getIsDeprecated(std::move(params)) };
+			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDeprecationReason(std::move(params)) };
+			return { _pimpl->getDeprecationReason() };
 		}
 
 	private:
@@ -478,24 +478,24 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
 		{
-			return { _pimpl->getName(std::move(params)) };
+			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
 		{
-			return { _pimpl->getDescription(std::move(params)) };
+			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&&) const final
 		{
-			return { _pimpl->getLocations(std::move(params)) };
+			return { _pimpl->getLocations() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&&) const final
 		{
-			return { _pimpl->getArgs(std::move(params)) };
+			return { _pimpl->getArgs() };
 		}
 
 	private:
