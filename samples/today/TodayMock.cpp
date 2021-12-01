@@ -41,7 +41,7 @@ Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 {
 }
 
-void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state) const
+void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state)
 {
 	if (_getAppointments)
 	{
@@ -59,7 +59,7 @@ void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state
 }
 
 std::shared_ptr<Appointment> Query::findAppointment(
-	const service::FieldParams& params, const response::IdType& id) const
+	const service::FieldParams& params, const response::IdType& id)
 {
 	loadAppointments(params.state);
 
@@ -74,7 +74,7 @@ std::shared_ptr<Appointment> Query::findAppointment(
 	return nullptr;
 }
 
-void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
+void Query::loadTasks(const std::shared_ptr<service::RequestState>& state)
 {
 	if (_getTasks)
 	{
@@ -92,7 +92,7 @@ void Query::loadTasks(const std::shared_ptr<service::RequestState>& state) const
 }
 
 std::shared_ptr<Task> Query::findTask(
-	const service::FieldParams& params, const response::IdType& id) const
+	const service::FieldParams& params, const response::IdType& id)
 {
 	loadTasks(params.state);
 
@@ -107,7 +107,7 @@ std::shared_ptr<Task> Query::findTask(
 	return nullptr;
 }
 
-void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state) const
+void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state)
 {
 	if (_getUnreadCounts)
 	{
@@ -125,7 +125,7 @@ void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state
 }
 
 std::shared_ptr<Folder> Query::findUnreadCount(
-	const service::FieldParams& params, const response::IdType& id) const
+	const service::FieldParams& params, const response::IdType& id)
 {
 	loadUnreadCounts(params.state);
 
@@ -167,7 +167,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 }
 
 service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
-	service::FieldParams&& params, response::IdType&& id) const
+	service::FieldParams&& params, response::IdType&& id)
 {
 	// query { node(id: "ZmFrZVRhc2tJZA==") { ...on Task { title } } }
 	using namespace std::literals;
@@ -290,10 +290,10 @@ private:
 	const vec_type& _objects;
 };
 
-service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(
+std::future<std::shared_ptr<object::AppointmentConnection>> Query::getAppointments(
 	service::FieldParams&& params, std::optional<int>&& first,
 	std::optional<response::Value>&& after, std::optional<int>&& last,
-	std::optional<response::Value>&& before) const
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -319,10 +319,9 @@ service::FieldResult<std::shared_ptr<object::AppointmentConnection>> Query::getA
 		std::move(before));
 }
 
-service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
-	service::FieldParams&& params, std::optional<int>&& first,
-	std::optional<response::Value>&& after, std::optional<int>&& last,
-	std::optional<response::Value>&& before) const
+std::future<std::shared_ptr<object::TaskConnection>> Query::getTasks(service::FieldParams&& params,
+	std::optional<int>&& first, std::optional<response::Value>&& after, std::optional<int>&& last,
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -348,10 +347,10 @@ service::FieldResult<std::shared_ptr<object::TaskConnection>> Query::getTasks(
 		std::move(before));
 }
 
-service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
+std::future<std::shared_ptr<object::FolderConnection>> Query::getUnreadCounts(
 	service::FieldParams&& params, std::optional<int>&& first,
 	std::optional<response::Value>&& after, std::optional<int>&& last,
-	std::optional<response::Value>&& before) const
+	std::optional<response::Value>&& before)
 {
 	auto spThis = shared_from_this();
 	auto state = params.state;
@@ -377,8 +376,8 @@ service::FieldResult<std::shared_ptr<object::FolderConnection>> Query::getUnread
 		std::move(before));
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(
-	service::FieldParams&& params, std::vector<response::IdType>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Appointment>>> Query::getAppointmentsById(
+	service::FieldParams&& params, std::vector<response::IdType>&& ids)
 {
 	std::promise<std::vector<std::shared_ptr<object::Appointment>>> promise;
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
@@ -394,8 +393,8 @@ service::FieldResult<std::vector<std::shared_ptr<object::Appointment>>> Query::g
 	return promise.get_future();
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Task>>> Query::getTasksById(
-	service::FieldParams&& params, std::vector<response::IdType>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Task>>> Query::getTasksById(
+	service::FieldParams&& params, std::vector<response::IdType>&& ids)
 {
 	std::promise<std::vector<std::shared_ptr<object::Task>>> promise;
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
@@ -411,8 +410,8 @@ service::FieldResult<std::vector<std::shared_ptr<object::Task>>> Query::getTasks
 	return promise.get_future();
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Folder>>> Query::getUnreadCountsById(
-	service::FieldParams&& params, std::vector<response::IdType>&& ids) const
+std::future<std::vector<std::shared_ptr<object::Folder>>> Query::getUnreadCountsById(
+	service::FieldParams&& params, std::vector<response::IdType>&& ids)
 {
 	std::promise<std::vector<std::shared_ptr<object::Folder>>> promise;
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
@@ -428,8 +427,7 @@ service::FieldResult<std::vector<std::shared_ptr<object::Folder>>> Query::getUnr
 	return promise.get_future();
 }
 
-service::FieldResult<std::shared_ptr<object::NestedType>> Query::getNested(
-	service::FieldParams&& params) const
+std::future<std::shared_ptr<object::NestedType>> Query::getNested(service::FieldParams&& params)
 {
 	std::promise<std::shared_ptr<object::NestedType>> promise;
 
@@ -439,8 +437,8 @@ service::FieldResult<std::shared_ptr<object::NestedType>> Query::getNested(
 	return promise.get_future();
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::getExpensive(
-	service::FieldParams&& /*params*/) const
+std::vector<std::shared_ptr<object::Expensive>> Query::getExpensive(
+	service::FieldParams&& /*params*/)
 {
 	std::vector<std::shared_ptr<object::Expensive>> result(Expensive::count);
 
@@ -452,13 +450,13 @@ service::FieldResult<std::vector<std::shared_ptr<object::Expensive>>> Query::get
 	return result;
 }
 
-service::FieldResult<TaskState> Query::getTestTaskState(service::FieldParams&& /*params*/) const
+TaskState Query::getTestTaskState(service::FieldParams&& /*params*/)
 {
 	return TaskState::Unassigned;
 }
 
-service::FieldResult<std::vector<std::shared_ptr<service::Object>>> Query::getAnyType(
-	service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const
+std::vector<std::shared_ptr<service::Object>> Query::getAnyType(
+	service::FieldParams&& params, std::vector<response::IdType>&& idsArg)
 {
 	loadAppointments(params.state);
 
@@ -480,8 +478,8 @@ Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 {
 }
 
-service::FieldResult<std::shared_ptr<object::CompleteTaskPayload>> Mutation::applyCompleteTask(
-	service::FieldParams&& params, CompleteTaskInput&& input)
+std::future<std::shared_ptr<object::CompleteTaskPayload>> Mutation::applyCompleteTask(
+	service::FieldParams&& params, CompleteTaskInput&& input) noexcept
 {
 	std::promise<std::shared_ptr<object::CompleteTaskPayload>> promise;
 
@@ -498,8 +496,8 @@ double Mutation::getFloat() noexcept
 	return *_setFloat;
 }
 
-service::FieldResult<response::FloatType> Mutation::applySetFloat(
-	service::FieldParams&& params, response::FloatType&& valueArg)
+response::FloatType Mutation::applySetFloat(
+	service::FieldParams&& params, response::FloatType&& valueArg) noexcept
 {
 	_setFloat = std::make_optional(valueArg);
 	return valueArg;
@@ -517,7 +515,7 @@ NestedType::NestedType(service::FieldParams&& params, int depth)
 		std::move(params.fieldDirectives) });
 }
 
-service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParams&& params) const
+std::future<response::IntType> NestedType::getDepth(service::FieldParams&& params) const noexcept
 {
 	std::promise<response::IntType> promise;
 
@@ -526,8 +524,8 @@ service::FieldResult<response::IntType> NestedType::getDepth(service::FieldParam
 	return promise.get_future();
 }
 
-service::FieldResult<std::shared_ptr<object::NestedType>> NestedType::getNested(
-	service::FieldParams&& params) const
+std::future<std::shared_ptr<object::NestedType>> NestedType::getNested(
+	service::FieldParams&& params) const noexcept
 {
 	std::promise<std::shared_ptr<object::NestedType>> promise;
 
@@ -537,7 +535,7 @@ service::FieldResult<std::shared_ptr<object::NestedType>> NestedType::getNested(
 	return promise.get_future();
 }
 
-std::stack<CapturedParams> NestedType::getCapturedParams()
+std::stack<CapturedParams> NestedType::getCapturedParams() noexcept
 {
 	auto result = std::move(_capturedParams);
 
@@ -571,7 +569,7 @@ Expensive::~Expensive()
 	--instances;
 }
 
-service::FieldResult<response::IntType> Expensive::getOrder(service::FieldParams&& params) const
+std::future<response::IntType> Expensive::getOrder(service::FieldParams&& params) const noexcept
 {
 	return std::async(
 		params.launch,
