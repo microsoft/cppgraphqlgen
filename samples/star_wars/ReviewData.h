@@ -17,7 +17,7 @@ public:
 		response::IntType stars, std::optional<response::StringType>&& commentary) noexcept;
 
 	response::IntType getStars() const noexcept;
-	std::optional<response::StringType> getCommentary() const noexcept;
+	const std::optional<response::StringType>& getCommentary() const noexcept;
 
 private:
 	const response::IntType stars_;

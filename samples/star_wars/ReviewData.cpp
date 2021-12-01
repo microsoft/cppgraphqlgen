@@ -16,7 +16,7 @@ response::IntType Review::getStars() const noexcept
 	return stars_;
 }
 
-std::optional<response::StringType> Review::getCommentary() const noexcept
+const std::optional<response::StringType>& Review::getCommentary() const noexcept
 {
 	return commentary_;
 }

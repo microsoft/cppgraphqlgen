@@ -16,11 +16,6 @@ Human::Human(response::StringType&& id, std::optional<response::StringType>&& na
 {
 }
 
-const response::StringType& Human::id() const noexcept
-{
-	return id_;
-}
-
 void Human::addFriends(std::vector<SharedHero> friends) noexcept
 {
 	friends_.resize(friends.size());
@@ -39,12 +34,12 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 		});
 }
 
-response::StringType Human::getId() const noexcept
+const response::StringType& Human::getId() const noexcept
 {
 	return id_;
 }
 
-std::optional<response::StringType> Human::getName() const noexcept
+const std::optional<response::StringType>& Human::getName() const noexcept
 {
 	return name_;
 }
@@ -98,7 +93,7 @@ std::optional<std::vector<std::optional<Episode>>> Human::getAppearsIn() const n
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-std::optional<response::StringType> Human::getHomePlanet() const noexcept
+const std::optional<response::StringType>& Human::getHomePlanet() const noexcept
 {
 	return homePlanet_;
 }

@@ -21,14 +21,13 @@ public:
 		std::vector<Episode>&& appearsIn,
 		std::optional<response::StringType>&& primaryFunction) noexcept;
 
-	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;
 
-	response::StringType getId() const noexcept;
-	std::optional<response::StringType> getName() const noexcept;
+	const response::StringType& getId() const noexcept;
+	const std::optional<response::StringType>& getName() const noexcept;
 	std::optional<std::vector<std::shared_ptr<service::Object>>> getFriends() const noexcept;
 	std::optional<std::vector<std::optional<Episode>>> getAppearsIn() const noexcept;
-	std::optional<response::StringType> getPrimaryFunction() const noexcept;
+	const std::optional<response::StringType>& getPrimaryFunction() const noexcept;
 
 private:
 	const response::StringType id_;

@@ -417,7 +417,7 @@ public:
 		return std::make_shared<object::Task>(_task);
 	}
 
-	std::optional<response::StringType> getClientMutationId() const noexcept
+	const std::optional<response::StringType>& getClientMutationId() const noexcept
 	{
 		return _clientMutationId;
 	}

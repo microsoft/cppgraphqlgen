@@ -17,11 +17,6 @@ Droid::Droid(response::StringType&& id, std::optional<response::StringType>&& na
 {
 }
 
-const response::StringType& Droid::id() const noexcept
-{
-	return id_;
-}
-
 void Droid::addFriends(
 	std::vector<std::variant<std::shared_ptr<Human>, std::shared_ptr<Droid>>> friends) noexcept
 {
@@ -41,12 +36,12 @@ void Droid::addFriends(
 		});
 }
 
-response::StringType Droid::getId() const noexcept
+const response::StringType& Droid::getId() const noexcept
 {
 	return id_;
 }
 
-std::optional<response::StringType> Droid::getName() const noexcept
+const std::optional<response::StringType>& Droid::getName() const noexcept
 {
 	return name_;
 }
@@ -100,7 +95,7 @@ std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn() const n
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-std::optional<response::StringType> Droid::getPrimaryFunction() const noexcept
+const std::optional<response::StringType>& Droid::getPrimaryFunction() const noexcept
 {
 	return primaryFunction_;
 }
