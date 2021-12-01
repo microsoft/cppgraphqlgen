@@ -72,13 +72,10 @@ private:
 			{
 				return { _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) };
 			}
-			else if constexpr (methods::MutationMethod::NoParamsCreateReview<T>)
-			{
-				return { _pimpl->applyCreateReview(std::move(epArg), std::move(reviewArg)) };
-			}
 			else
 			{
-				static_assert(false, R"msg(Mutation::applyCreateReview is not implemented)msg");
+				static_assert(methods::MutationMethod::NoParamsCreateReview<T>);
+				return { _pimpl->applyCreateReview(std::move(epArg), std::move(reviewArg)) };
 			}
 		}
 

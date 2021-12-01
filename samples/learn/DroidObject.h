@@ -125,13 +125,10 @@ private:
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
-			else if constexpr (methods::DroidMethod::NoParamsId<T>)
-			{
-				return { _pimpl->getId() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Droid::getId is not implemented)msg");
+				static_assert(methods::DroidMethod::NoParamsId<T>);
+				return { _pimpl->getId() };
 			}
 		}
 
@@ -141,13 +138,10 @@ private:
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::DroidMethod::NoParamsName<T>)
-			{
-				return { _pimpl->getName() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Droid::getName is not implemented)msg");
+				static_assert(methods::DroidMethod::NoParamsName<T>);
+				return { _pimpl->getName() };
 			}
 		}
 
@@ -157,13 +151,10 @@ private:
 			{
 				return { _pimpl->getFriends(std::move(params)) };
 			}
-			else if constexpr (methods::DroidMethod::NoParamsFriends<T>)
-			{
-				return { _pimpl->getFriends() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Droid::getFriends is not implemented)msg");
+				static_assert(methods::DroidMethod::NoParamsFriends<T>);
+				return { _pimpl->getFriends() };
 			}
 		}
 
@@ -173,13 +164,10 @@ private:
 			{
 				return { _pimpl->getAppearsIn(std::move(params)) };
 			}
-			else if constexpr (methods::DroidMethod::NoParamsAppearsIn<T>)
-			{
-				return { _pimpl->getAppearsIn() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Droid::getAppearsIn is not implemented)msg");
+				static_assert(methods::DroidMethod::NoParamsAppearsIn<T>);
+				return { _pimpl->getAppearsIn() };
 			}
 		}
 
@@ -189,13 +177,10 @@ private:
 			{
 				return { _pimpl->getPrimaryFunction(std::move(params)) };
 			}
-			else if constexpr (methods::DroidMethod::NoParamsPrimaryFunction<T>)
-			{
-				return { _pimpl->getPrimaryFunction() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Droid::getPrimaryFunction is not implemented)msg");
+				static_assert(methods::DroidMethod::NoParamsPrimaryFunction<T>);
+				return { _pimpl->getPrimaryFunction() };
 			}
 		}
 

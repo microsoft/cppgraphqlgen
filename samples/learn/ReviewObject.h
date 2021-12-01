@@ -86,13 +86,10 @@ private:
 			{
 				return { _pimpl->getStars(std::move(params)) };
 			}
-			else if constexpr (methods::ReviewMethod::NoParamsStars<T>)
-			{
-				return { _pimpl->getStars() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Review::getStars is not implemented)msg");
+				static_assert(methods::ReviewMethod::NoParamsStars<T>);
+				return { _pimpl->getStars() };
 			}
 		}
 
@@ -102,13 +99,10 @@ private:
 			{
 				return { _pimpl->getCommentary(std::move(params)) };
 			}
-			else if constexpr (methods::ReviewMethod::NoParamsCommentary<T>)
-			{
-				return { _pimpl->getCommentary() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Review::getCommentary is not implemented)msg");
+				static_assert(methods::ReviewMethod::NoParamsCommentary<T>);
+				return { _pimpl->getCommentary() };
 			}
 		}
 

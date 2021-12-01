@@ -125,13 +125,10 @@ private:
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsId<T>)
-			{
-				return { _pimpl->getId() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Human::getId is not implemented)msg");
+				static_assert(methods::HumanMethod::NoParamsId<T>);
+				return { _pimpl->getId() };
 			}
 		}
 
@@ -141,13 +138,10 @@ private:
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsName<T>)
-			{
-				return { _pimpl->getName() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Human::getName is not implemented)msg");
+				static_assert(methods::HumanMethod::NoParamsName<T>);
+				return { _pimpl->getName() };
 			}
 		}
 
@@ -157,13 +151,10 @@ private:
 			{
 				return { _pimpl->getFriends(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsFriends<T>)
-			{
-				return { _pimpl->getFriends() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Human::getFriends is not implemented)msg");
+				static_assert(methods::HumanMethod::NoParamsFriends<T>);
+				return { _pimpl->getFriends() };
 			}
 		}
 
@@ -173,13 +164,10 @@ private:
 			{
 				return { _pimpl->getAppearsIn(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsAppearsIn<T>)
-			{
-				return { _pimpl->getAppearsIn() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Human::getAppearsIn is not implemented)msg");
+				static_assert(methods::HumanMethod::NoParamsAppearsIn<T>);
+				return { _pimpl->getAppearsIn() };
 			}
 		}
 
@@ -189,13 +177,10 @@ private:
 			{
 				return { _pimpl->getHomePlanet(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsHomePlanet<T>)
-			{
-				return { _pimpl->getHomePlanet() };
-			}
 			else
 			{
-				static_assert(false, R"msg(Human::getHomePlanet is not implemented)msg");
+				static_assert(methods::HumanMethod::NoParamsHomePlanet<T>);
+				return { _pimpl->getHomePlanet() };
 			}
 		}
 

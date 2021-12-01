@@ -798,10 +798,24 @@ private:
 
 			headerFile << R"cpp() };
 			}
-			else if constexpr (methods::)cpp"
-					   << objectType.cppType << R"cpp(Method::NoParams)cpp" << fieldName
-					   << R"cpp(<T>)
+			else)cpp";
+
+			if (_options.noStubs)
 			{
+				headerFile << R"cpp(
+			{
+				static_assert(methods::)cpp"
+						   << objectType.cppType << R"cpp(Method::NoParams)cpp" << fieldName
+						   << R"cpp(<T>);)cpp";
+			}
+			else
+			{
+				headerFile << R"cpp( if constexpr (methods::)cpp" << objectType.cppType
+						   << R"cpp(Method::NoParams)cpp" << fieldName << R"cpp(<T>)
+			{)cpp";
+			}
+
+			headerFile << R"cpp(
 				return { _pimpl->)cpp"
 					   << outputField.accessor << fieldName << R"cpp(()cpp";
 
@@ -811,26 +825,18 @@ private:
 			}
 
 			headerFile << R"cpp() };
-			}
-			else
-			{
-				)cpp";
-
-			if (_options.noStubs)
-			{
-				headerFile << R"cpp(static_assert(false, R"msg()cpp" << objectType.cppType
-						   << R"cpp(::)cpp" << outputField.accessor << fieldName
-						   << R"cpp( is not implemented)msg");)cpp";
-			}
-			else
-			{
-				headerFile << R"cpp(throw std::runtime_error(R"ex()cpp"
-						   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor
-						   << fieldName << R"cpp( is not implemented)ex");)cpp";
-			}
-
-			headerFile << R"cpp(
 			})cpp";
+
+			if (!_options.noStubs)
+			{
+				headerFile << R"cpp(
+			else
+			{
+				throw std::runtime_error(R"ex()cpp"
+						   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor
+						   << fieldName << R"cpp( is not implemented)ex");
+			})cpp";
+			}
 		}
 
 		headerFile << R"cpp(

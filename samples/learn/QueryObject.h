@@ -104,13 +104,10 @@ private:
 			{
 				return { _pimpl->getHero(std::move(params), std::move(episodeArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsHero<T>)
-			{
-				return { _pimpl->getHero(std::move(episodeArg)) };
-			}
 			else
 			{
-				static_assert(false, R"msg(Query::getHero is not implemented)msg");
+				static_assert(methods::QueryMethod::NoParamsHero<T>);
+				return { _pimpl->getHero(std::move(episodeArg)) };
 			}
 		}
 
@@ -120,13 +117,10 @@ private:
 			{
 				return { _pimpl->getHuman(std::move(params), std::move(idArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsHuman<T>)
-			{
-				return { _pimpl->getHuman(std::move(idArg)) };
-			}
 			else
 			{
-				static_assert(false, R"msg(Query::getHuman is not implemented)msg");
+				static_assert(methods::QueryMethod::NoParamsHuman<T>);
+				return { _pimpl->getHuman(std::move(idArg)) };
 			}
 		}
 
@@ -136,13 +130,10 @@ private:
 			{
 				return { _pimpl->getDroid(std::move(params), std::move(idArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsDroid<T>)
-			{
-				return { _pimpl->getDroid(std::move(idArg)) };
-			}
 			else
 			{
-				static_assert(false, R"msg(Query::getDroid is not implemented)msg");
+				static_assert(methods::QueryMethod::NoParamsDroid<T>);
+				return { _pimpl->getDroid(std::move(idArg)) };
 			}
 		}
 
