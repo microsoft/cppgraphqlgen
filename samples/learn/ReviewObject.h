@@ -88,7 +88,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::ReviewMethod::NoParamsStars<T>);
+				static_assert(methods::ReviewMethod::NoParamsStars<T>, R"msg(Review::getStars is not implemented)msg");
 				return { _pimpl->getStars() };
 			}
 		}
@@ -101,7 +101,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::ReviewMethod::NoParamsCommentary<T>);
+				static_assert(methods::ReviewMethod::NoParamsCommentary<T>, R"msg(Review::getCommentary is not implemented)msg");
 				return { _pimpl->getCommentary() };
 			}
 		}

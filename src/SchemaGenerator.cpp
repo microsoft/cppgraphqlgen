@@ -806,7 +806,9 @@ private:
 			{
 				static_assert(methods::)cpp"
 						   << objectType.cppType << R"cpp(Method::NoParams)cpp" << fieldName
-						   << R"cpp(<T>);)cpp";
+						   << R"cpp(<T>, R"msg()cpp" << objectType.cppType << R"cpp(::)cpp"
+						   << outputField.accessor << fieldName
+						   << R"cpp( is not implemented)msg");)cpp";
 			}
 			else
 			{

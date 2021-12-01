@@ -74,7 +74,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::MutationMethod::NoParamsCreateReview<T>);
+				static_assert(methods::MutationMethod::NoParamsCreateReview<T>, R"msg(Mutation::applyCreateReview is not implemented)msg");
 				return { _pimpl->applyCreateReview(std::move(epArg), std::move(reviewArg)) };
 			}
 		}

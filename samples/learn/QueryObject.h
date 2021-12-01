@@ -106,7 +106,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsHero<T>);
+				static_assert(methods::QueryMethod::NoParamsHero<T>, R"msg(Query::getHero is not implemented)msg");
 				return { _pimpl->getHero(std::move(episodeArg)) };
 			}
 		}
@@ -119,7 +119,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsHuman<T>);
+				static_assert(methods::QueryMethod::NoParamsHuman<T>, R"msg(Query::getHuman is not implemented)msg");
 				return { _pimpl->getHuman(std::move(idArg)) };
 			}
 		}
@@ -132,7 +132,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsDroid<T>);
+				static_assert(methods::QueryMethod::NoParamsDroid<T>, R"msg(Query::getDroid is not implemented)msg");
 				return { _pimpl->getDroid(std::move(idArg)) };
 			}
 		}

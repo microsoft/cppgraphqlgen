@@ -127,7 +127,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::HumanMethod::NoParamsId<T>);
+				static_assert(methods::HumanMethod::NoParamsId<T>, R"msg(Human::getId is not implemented)msg");
 				return { _pimpl->getId() };
 			}
 		}
@@ -140,7 +140,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::HumanMethod::NoParamsName<T>);
+				static_assert(methods::HumanMethod::NoParamsName<T>, R"msg(Human::getName is not implemented)msg");
 				return { _pimpl->getName() };
 			}
 		}
@@ -153,7 +153,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::HumanMethod::NoParamsFriends<T>);
+				static_assert(methods::HumanMethod::NoParamsFriends<T>, R"msg(Human::getFriends is not implemented)msg");
 				return { _pimpl->getFriends() };
 			}
 		}
@@ -166,7 +166,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::HumanMethod::NoParamsAppearsIn<T>);
+				static_assert(methods::HumanMethod::NoParamsAppearsIn<T>, R"msg(Human::getAppearsIn is not implemented)msg");
 				return { _pimpl->getAppearsIn() };
 			}
 		}
@@ -179,7 +179,7 @@ private:
 			}
 			else
 			{
-				static_assert(methods::HumanMethod::NoParamsHomePlanet<T>);
+				static_assert(methods::HumanMethod::NoParamsHomePlanet<T>, R"msg(Human::getHomePlanet is not implemented)msg");
 				return { _pimpl->getHomePlanet() };
 			}
 		}
