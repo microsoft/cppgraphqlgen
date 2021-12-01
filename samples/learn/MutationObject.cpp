@@ -29,10 +29,6 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Mutation::~Mutation()
-{
-}
-
 service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params)
 {
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);

@@ -30,10 +30,6 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-PageInfo::~PageInfo()
-{
-}
-
 service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

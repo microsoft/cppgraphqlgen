@@ -30,10 +30,6 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-TaskConnection::~TaskConnection()
-{
-}
-
 service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

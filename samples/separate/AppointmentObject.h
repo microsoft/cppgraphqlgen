@@ -12,6 +12,40 @@
 
 namespace graphql::today::object {
 
+namespace AppointmentStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasWhen = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getWhen(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::Value>>>;
+};
+
+template <class TImpl>
+concept HasSubject = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getSubject(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasIsNow = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getIsNow(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasForceError = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getForceError(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+} // namespace AppointmentStubs
+
 class Appointment
 	: public service::Object
 {
@@ -46,27 +80,62 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (AppointmentStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
-			return _pimpl->getWhen(std::move(params));
+			if constexpr (AppointmentStubs::HasWhen<T>)
+			{
+				return _pimpl->getWhen(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
 		{
-			return _pimpl->getSubject(std::move(params));
+			if constexpr (AppointmentStubs::HasSubject<T>)
+			{
+				return _pimpl->getSubject(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
 		{
-			return _pimpl->getIsNow(std::move(params));
+			if constexpr (AppointmentStubs::HasIsNow<T>)
+			{
+				return _pimpl->getIsNow(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
 		{
-			return _pimpl->getForceError(std::move(params));
+			if constexpr (AppointmentStubs::HasForceError<T>)
+			{
+				return _pimpl->getForceError(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+			}
 		}
 
 	private:
@@ -83,8 +152,6 @@ public:
 		: Appointment { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Appointment();
 };
 
 } // namespace graphql::today::object

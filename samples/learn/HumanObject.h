@@ -80,8 +80,6 @@ public:
 		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Human();
 };
 
 } // namespace graphql::learn::object

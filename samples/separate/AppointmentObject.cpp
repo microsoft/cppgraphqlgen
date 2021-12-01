@@ -35,10 +35,6 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Appointment::~Appointment()
-{
-}
-
 service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

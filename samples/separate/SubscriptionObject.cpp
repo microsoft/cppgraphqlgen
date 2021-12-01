@@ -30,10 +30,6 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Subscription::~Subscription()
-{
-}
-
 service::AwaitableResolver Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

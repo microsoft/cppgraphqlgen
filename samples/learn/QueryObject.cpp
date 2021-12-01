@@ -34,10 +34,6 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Query::~Query()
-{
-}
-
 service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 {
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);

@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace AppointmentConnectionStubs {
+
+template <class TImpl>
+concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPageInfo(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<PageInfo>>>;
+};
+
+template <class TImpl>
+concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getEdges(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>>>;
+};
+
+} // namespace AppointmentConnectionStubs
+
 class AppointmentConnection
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPageInfo(std::move(params));
+			if constexpr (AppointmentConnectionStubs::HasPageInfo<T>)
+			{
+				return _pimpl->getPageInfo(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentConnection::getPageInfo is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			return _pimpl->getEdges(std::move(params));
+			if constexpr (AppointmentConnectionStubs::HasEdges<T>)
+			{
+				return _pimpl->getEdges(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentConnection::getEdges is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: AppointmentConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~AppointmentConnection();
 };
 
 } // namespace graphql::today::object

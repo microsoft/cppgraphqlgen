@@ -30,10 +30,6 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-AppointmentConnection::~AppointmentConnection()
-{
-}
-
 service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

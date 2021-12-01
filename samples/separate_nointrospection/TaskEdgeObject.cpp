@@ -30,10 +30,6 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-TaskEdge::~TaskEdge()
-{
-}
-
 service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

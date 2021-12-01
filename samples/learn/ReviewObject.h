@@ -62,8 +62,6 @@ public:
 		: Review { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Review();
 };
 
 } // namespace graphql::learn::object

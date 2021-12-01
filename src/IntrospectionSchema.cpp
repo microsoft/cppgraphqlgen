@@ -120,7 +120,7 @@ service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::con
 namespace introspection {
 namespace object {
 
-Schema::Schema(std::unique_ptr<Concept>&& pimpl)
+Schema::Schema(std::shared_ptr<introspection::Schema> pimpl)
 	: service::Object({
 		"__Schema"
 	}, {
@@ -131,12 +131,14 @@ Schema::Schema(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(mutationType)gql"sv, [this](service::ResolverParams&& params) { return resolveMutationType(std::move(params)); } },
 		{ R"gql(subscriptionType)gql"sv, [this](service::ResolverParams&& params) { return resolveSubscriptionType(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::Schema>>(std::move(pimpl)))
 {
 }
 
 Schema::~Schema()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver Schema::resolveTypes(service::ResolverParams&& params)
@@ -194,7 +196,7 @@ service::AwaitableResolver Schema::resolve_typename(service::ResolverParams&& pa
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Schema)gql" }, std::move(params));
 }
 
-Type::Type(std::unique_ptr<Concept>&& pimpl)
+Type::Type(std::shared_ptr<introspection::Type> pimpl)
 	: service::Object({
 		"__Type"
 	}, {
@@ -209,12 +211,14 @@ Type::Type(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(inputFields)gql"sv, [this](service::ResolverParams&& params) { return resolveInputFields(std::move(params)); } },
 		{ R"gql(possibleTypes)gql"sv, [this](service::ResolverParams&& params) { return resolvePossibleTypes(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::Type>>(std::move(pimpl)))
 {
 }
 
 Type::~Type()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver Type::resolveKind(service::ResolverParams&& params)
@@ -342,7 +346,7 @@ service::AwaitableResolver Type::resolve_typename(service::ResolverParams&& para
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Type)gql" }, std::move(params));
 }
 
-Field::Field(std::unique_ptr<Concept>&& pimpl)
+Field::Field(std::shared_ptr<introspection::Field> pimpl)
 	: service::Object({
 		"__Field"
 	}, {
@@ -354,12 +358,14 @@ Field::Field(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(isDeprecated)gql"sv, [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
 		{ R"gql(deprecationReason)gql"sv, [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::Field>>(std::move(pimpl)))
 {
 }
 
 Field::~Field()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver Field::resolveName(service::ResolverParams&& params)
@@ -427,7 +433,7 @@ service::AwaitableResolver Field::resolve_typename(service::ResolverParams&& par
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Field)gql" }, std::move(params));
 }
 
-InputValue::InputValue(std::unique_ptr<Concept>&& pimpl)
+InputValue::InputValue(std::shared_ptr<introspection::InputValue> pimpl)
 	: service::Object({
 		"__InputValue"
 	}, {
@@ -437,12 +443,14 @@ InputValue::InputValue(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
 		{ R"gql(defaultValue)gql"sv, [this](service::ResolverParams&& params) { return resolveDefaultValue(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::InputValue>>(std::move(pimpl)))
 {
 }
 
 InputValue::~InputValue()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver InputValue::resolveName(service::ResolverParams&& params)
@@ -490,7 +498,7 @@ service::AwaitableResolver InputValue::resolve_typename(service::ResolverParams&
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__InputValue)gql" }, std::move(params));
 }
 
-EnumValue::EnumValue(std::unique_ptr<Concept>&& pimpl)
+EnumValue::EnumValue(std::shared_ptr<introspection::EnumValue> pimpl)
 	: service::Object({
 		"__EnumValue"
 	}, {
@@ -500,12 +508,14 @@ EnumValue::EnumValue(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(isDeprecated)gql"sv, [this](service::ResolverParams&& params) { return resolveIsDeprecated(std::move(params)); } },
 		{ R"gql(deprecationReason)gql"sv, [this](service::ResolverParams&& params) { return resolveDeprecationReason(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::EnumValue>>(std::move(pimpl)))
 {
 }
 
 EnumValue::~EnumValue()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver EnumValue::resolveName(service::ResolverParams&& params)
@@ -553,7 +563,7 @@ service::AwaitableResolver EnumValue::resolve_typename(service::ResolverParams&&
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__EnumValue)gql" }, std::move(params));
 }
 
-Directive::Directive(std::unique_ptr<Concept>&& pimpl)
+Directive::Directive(std::shared_ptr<introspection::Directive> pimpl)
 	: service::Object({
 		"__Directive"
 	}, {
@@ -563,12 +573,14 @@ Directive::Directive(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } }
 	})
-	, _pimpl(std::move(pimpl))
+	, _pimpl(std::make_unique<Model<introspection::Directive>>(std::move(pimpl)))
 {
 }
 
 Directive::~Directive()
 {
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
 }
 
 service::AwaitableResolver Directive::resolveName(service::ResolverParams&& params)

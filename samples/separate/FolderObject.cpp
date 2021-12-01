@@ -33,10 +33,6 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Folder::~Folder()
-{
-}
-
 service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

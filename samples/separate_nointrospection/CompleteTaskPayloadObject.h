@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace CompleteTaskPayloadStubs {
+
+template <class TImpl>
+concept HasTask = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTask(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+};
+
+template <class TImpl>
+concept HasClientMutationId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getClientMutationId(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+} // namespace CompleteTaskPayloadStubs
+
 class CompleteTaskPayload
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTask(std::move(params));
+			if constexpr (CompleteTaskPayloadStubs::HasTask<T>)
+			{
+				return _pimpl->getTask(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getClientMutationId(std::move(params));
+			if constexpr (CompleteTaskPayloadStubs::HasClientMutationId<T>)
+			{
+				return _pimpl->getClientMutationId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~CompleteTaskPayload();
 };
 
 } // namespace graphql::today::object

@@ -40,10 +40,6 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Query::~Query()
-{
-}
-
 service::AwaitableResolver Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);

@@ -12,6 +12,82 @@
 
 namespace graphql::today::object {
 
+namespace QueryStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+{
+	{ impl.getNode(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+template <class TImpl>
+concept HasAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<AppointmentConnection>>>;
+};
+
+template <class TImpl>
+concept HasTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<TaskConnection>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<FolderConnection>>>;
+};
+
+template <class TImpl>
+concept HasAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getAppointmentsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Appointment>>>>;
+};
+
+template <class TImpl>
+concept HasTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getTasksById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Task>>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Folder>>>>;
+};
+
+template <class TImpl>
+concept HasNested = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+};
+
+template <class TImpl>
+concept HasUnimplemented = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getUnimplemented(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasExpensive = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getExpensive(std::move(params)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Expensive>>>>;
+};
+
+template <class TImpl>
+concept HasTestTaskState = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTestTaskState(std::move(params)) } -> std::convertible_to<service::FieldResult<TaskState>>;
+};
+
+template <class TImpl>
+concept HasAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getAnyType(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<service::Object>>>>;
+};
+
+} // namespace QueryStubs
+
 class Query
 	: public service::Object
 {
@@ -64,62 +140,146 @@ private:
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			return _pimpl->getNode(std::move(params), std::move(idArg));
+			if constexpr (QueryStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params), std::move(idArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasAppointments<T>)
+			{
+				return _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAppointments is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasTasks<T>)
+			{
+				return _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTasks is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasUnreadCounts<T>)
+			{
+				return _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getAppointmentsById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasAppointmentsById<T>)
+			{
+				return _pimpl->getAppointmentsById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getTasksById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasTasksById<T>)
+			{
+				return _pimpl->getTasksById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTasksById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasUnreadCountsById<T>)
+			{
+				return _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNested(std::move(params));
+			if constexpr (QueryStubs::HasNested<T>)
+			{
+				return _pimpl->getNested(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getNested is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const final
 		{
-			return _pimpl->getUnimplemented(std::move(params));
+			if constexpr (QueryStubs::HasUnimplemented<T>)
+			{
+				return _pimpl->getUnimplemented(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
-			return _pimpl->getExpensive(std::move(params));
+			if constexpr (QueryStubs::HasExpensive<T>)
+			{
+				return _pimpl->getExpensive(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTestTaskState(std::move(params));
+			if constexpr (QueryStubs::HasTestTaskState<T>)
+			{
+				return _pimpl->getTestTaskState(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTestTaskState is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getAnyType(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasAnyType<T>)
+			{
+				return _pimpl->getAnyType(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+			}
 		}
 
 	private:
@@ -136,8 +296,6 @@ public:
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Query();
 };
 
 } // namespace graphql::today::object

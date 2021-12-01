@@ -29,10 +29,6 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Expensive::~Expensive()
-{
-}
-
 service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

@@ -80,8 +80,6 @@ public:
 		: Droid { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Droid();
 };
 
 } // namespace graphql::learn::object

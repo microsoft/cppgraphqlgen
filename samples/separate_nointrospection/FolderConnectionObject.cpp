@@ -30,10 +30,6 @@ FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-FolderConnection::~FolderConnection()
-{
-}
-
 service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

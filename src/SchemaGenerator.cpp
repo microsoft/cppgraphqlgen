@@ -172,6 +172,12 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 	}
+	else if (!_options.noStubs)
+	{
+		headerFile <<
+			R"cpp(#include <concepts>
+)cpp";
+	}
 
 	headerFile <<
 		R"cpp(#include <memory>
@@ -252,6 +258,18 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	if (!_loader.getObjectTypes().empty())
 	{
+		if (_loader.isIntrospection())
+		{
+			// Forward declare all of the concrete types for the Introspection schema
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(;
+)cpp";
+			}
+
+			headerFile << std::endl;
+		}
+
 		objectNamespace.enter();
 		headerFile << std::endl;
 
@@ -502,6 +520,56 @@ GRAPHQLINTROSPECTION_EXPORT )cpp"
 void Generator::outputObjectDeclaration(
 	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
+	std::ostringstream ossNamespace;
+
+	ossNamespace << objectType.cppType << "Stubs";
+
+	const auto stubNamespace = ossNamespace.str();
+
+	if (!_options.noStubs && !_loader.isIntrospection())
+	{
+		NamespaceScope conceptsNamespace { headerFile, stubNamespace };
+
+		headerFile << std::endl;
+
+		for (const auto& outputField : objectType.fields)
+		{
+			std::string fieldName(outputField.cppName);
+
+			fieldName[0] =
+				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+
+			headerFile << R"cpp(template <class TImpl>
+concept Has)cpp" << fieldName
+					   << R"cpp( = requires (TImpl impl, service::FieldParams params)cpp";
+			for (const auto& argument : outputField.arguments)
+			{
+				headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
+						   << argument.cppName << R"cpp(Arg)cpp";
+			}
+
+			headerFile << R"cpp() 
+{
+	{ impl.)cpp" << outputField.accessor
+					   << fieldName << R"cpp((std::move(params))cpp";
+			for (const auto& argument : outputField.arguments)
+			{
+				headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+			}
+
+			headerFile << R"cpp() } -> std::convertible_to<service::FieldResult<)cpp"
+					   << _loader.getOutputCppType(outputField) << R"cpp(>>;
+};
+
+)cpp";
+		}
+
+		if (conceptsNamespace.exit())
+		{
+			headerFile << std::endl;
+		}
+	}
+
 	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
 	: public service::Object
 {
@@ -594,20 +662,47 @@ private:
 		for (const auto& argument : outputField.arguments)
 		{
 			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp(&& )cpp"
-					   << argument.cppName << "Arg";
+					   << argument.cppName << R"cpp(Arg)cpp";
 		}
 
 		headerFile << R"cpp() const final
 		{
-			return _pimpl->)cpp"
-				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+			)cpp";
+
+		if (_options.noStubs || _loader.isIntrospection())
+		{
+			headerFile << R"cpp(return _pimpl->)cpp" << outputField.accessor << fieldName
+					   << R"cpp((std::move(params))cpp";
+		}
+		else
+		{
+			headerFile << R"cpp(if constexpr ()cpp" << stubNamespace << R"cpp(::Has)cpp"
+					   << fieldName << R"cpp(<T>)
+			{
+				return _pimpl->)cpp"
+					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+		}
 
 		for (const auto& argument : outputField.arguments)
 		{
-			headerFile << R"cpp(, std::move()cpp" << argument.cppName << "Arg)";
+			headerFile << R"cpp(, std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
 		}
 
-		headerFile << R"cpp();
+		headerFile << R"cpp();)cpp";
+
+		if (!_options.noStubs && !_loader.isIntrospection())
+		{
+			headerFile << R"cpp(
+			}
+			else
+			{
+				throw std::runtime_error(R"ex()cpp"
+					   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor << fieldName
+					   << R"cpp( is not implemented)ex");
+			})cpp";
+		}
+
+		headerFile << R"cpp(
 		}
 )cpp";
 	}
@@ -621,32 +716,37 @@ private:
 
 	if (_loader.isIntrospection())
 	{
-		headerFile << R"cpp(GRAPHQLINTROSPECTION_EXPORT )cpp";
-	}
+		headerFile << R"cpp(const std::unique_ptr<Concept> _pimpl;
 
-	headerFile << objectType.cppType << R"cpp((std::unique_ptr<Concept>&& pimpl);
+public:
+	GRAPHQLINTROSPECTION_EXPORT )cpp"
+				   << objectType.cppType << R"cpp((std::shared_ptr<)cpp"
+				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
+				   << objectType.cppType << R"cpp(> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~)cpp"
+				   << objectType.cppType << R"cpp(();
+};
+)cpp";
+	}
+	else
+	{
+		headerFile
+			<< objectType.cppType << R"cpp((std::unique_ptr<Concept>&& pimpl);
 
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
 	template <class T>
 	)cpp" << objectType.cppType
-			   << R"cpp((std::shared_ptr<T> pimpl)
-		: )cpp" << objectType.cppType
-			   << R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+			<< R"cpp((std::shared_ptr<T> pimpl)
+		: )cpp"
+			<< objectType.cppType
+			<< R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	)cpp";
-
-	if (_loader.isIntrospection())
-	{
-		headerFile << R"cpp(GRAPHQLINTROSPECTION_EXPORT )cpp";
-	}
-
-	headerFile << R"cpp(~)cpp" << objectType.cppType << R"cpp(();
 };
 )cpp";
+	}
 }
 
 std::string Generator::getFieldDeclaration(const InputField& inputField) const noexcept
@@ -664,15 +764,7 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	)cpp";
-
-	if (outputField.interfaceField || _loader.isIntrospection() || _options.noStubs
-		|| !outputField.inheritedField)
-	{
-		output << R"cpp(virtual )cpp";
-	}
-
-	output << R"cpp(service::FieldResult<)cpp" << _loader.getOutputCppType(outputField)
+	output << R"cpp(	virtual service::FieldResult<)cpp" << _loader.getOutputCppType(outputField)
 		   << R"cpp(> )cpp" << outputField.accessor << fieldName
 		   << R"cpp((service::FieldParams&& params)cpp";
 
@@ -1506,13 +1598,27 @@ void Generator::outputObjectImplementation(
 {
 	using namespace std::literals;
 
-	// Output the protected constructor which calls through to the service::Object constructor
-	// with arguments that declare the set of types it implements and bind the fields to the
-	// resolver methods.
-	sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
-			   << R"cpp((std::unique_ptr<Concept>&& pimpl)
+	if (_loader.isIntrospection())
+	{
+		// Output the public constructor which calls through to the service::Object constructor
+		// with arguments that declare the set of types it implements and bind the fields to the
+		// resolver methods.
+		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
+				   << R"cpp((std::shared_ptr<)cpp" << SchemaLoader::getIntrospectionNamespace()
+				   << R"cpp(::)cpp" << objectType.cppType << R"cpp(> pimpl)
 	: service::Object({
 )cpp";
+	}
+	else
+	{
+		// Output the private constructor which calls through to the service::Object constructor
+		// with arguments that declare the set of types it implements and bind the fields to the
+		// resolver methods.
+		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
+				   << R"cpp((std::unique_ptr<Concept>&& pimpl)
+	: service::Object({
+)cpp";
+	}
 
 	for (const auto& interfaceName : objectType.interfaces)
 	{
@@ -1584,16 +1690,34 @@ void Generator::outputObjectImplementation(
 	, _schema(GetSchema()))cpp";
 	}
 
+	if (_loader.isIntrospection())
+	{
+		sourceFile << R"cpp(
+	, _pimpl(std::make_unique<Model<)cpp"
+				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
+				   << objectType.cppType << R"cpp(>>(std::move(pimpl))))cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp(
+	, _pimpl(std::move(pimpl)))cpp";
+	}
 	sourceFile << R"cpp(
-	, _pimpl(std::move(pimpl))
-{
-}
-
-)cpp" << objectType.cppType
-			   << R"cpp(::~)cpp" << objectType.cppType << R"cpp(()
 {
 }
 )cpp";
+
+	if (_loader.isIntrospection())
+	{
+		sourceFile << R"cpp(
+)cpp" << objectType.cppType
+				   << R"cpp(::~)cpp" << objectType.cppType << R"cpp(()
+{
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
+}
+)cpp";
+	}
 
 	// Output each of the resolver implementations, which call the virtual property
 	// getters that the implementer must define.

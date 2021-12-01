@@ -12,6 +12,28 @@
 
 namespace graphql::today::object {
 
+namespace FolderStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCount = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getUnreadCount(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+} // namespace FolderStubs
+
 class Folder
 	: public service::Object
 {
@@ -42,17 +64,38 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (FolderStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (FolderStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
 		{
-			return _pimpl->getUnreadCount(std::move(params));
+			if constexpr (FolderStubs::HasUnreadCount<T>)
+			{
+				return _pimpl->getUnreadCount(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+			}
 		}
 
 	private:
@@ -69,8 +112,6 @@ public:
 		: Folder { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Folder();
 };
 
 } // namespace graphql::today::object

@@ -166,10 +166,6 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Query::~Query()
-{
-}
-
 service::AwaitableResolver Query::resolveNode(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
@@ -360,10 +356,6 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-PageInfo::~PageInfo()
-{
-}
-
 service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -398,10 +390,6 @@ AppointmentEdge::AppointmentEdge(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-AppointmentEdge::~AppointmentEdge()
 {
 }
 
@@ -442,10 +430,6 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-AppointmentConnection::~AppointmentConnection()
-{
-}
-
 service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -480,10 +464,6 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-TaskEdge::~TaskEdge()
 {
 }
 
@@ -524,10 +504,6 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-TaskConnection::~TaskConnection()
-{
-}
-
 service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -562,10 +538,6 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-FolderEdge::~FolderEdge()
 {
 }
 
@@ -606,10 +578,6 @@ FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-FolderConnection::~FolderConnection()
-{
-}
-
 service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -644,10 +612,6 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(clientMutationId)gql"sv, [this](service::ResolverParams&& params) { return resolveClientMutationId(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-CompleteTaskPayload::~CompleteTaskPayload()
 {
 }
 
@@ -688,10 +652,6 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Mutation::~Mutation()
-{
-}
-
 service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
@@ -728,10 +688,6 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(nextAppointmentChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Subscription::~Subscription()
 {
 }
 
@@ -775,10 +731,6 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(forceError)gql"sv, [this](service::ResolverParams&& params) { return resolveForceError(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Appointment::~Appointment()
 {
 }
 
@@ -852,10 +804,6 @@ Task::Task(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Task::~Task()
-{
-}
-
 service::AwaitableResolver Task::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -906,10 +854,6 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Folder::~Folder()
-{
-}
-
 service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -957,10 +901,6 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-NestedType::~NestedType()
-{
-}
-
 service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -994,10 +934,6 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Expensive::~Expensive()
 {
 }
 

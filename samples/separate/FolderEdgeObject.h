@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace FolderEdgeStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Folder>>>;
+};
+
+template <class TImpl>
+concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+};
+
+} // namespace FolderEdgeStubs
+
 class FolderEdge
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNode(std::move(params));
+			if constexpr (FolderEdgeStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCursor(std::move(params));
+			if constexpr (FolderEdgeStubs::HasCursor<T>)
+			{
+				return _pimpl->getCursor(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: FolderEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~FolderEdge();
 };
 
 } // namespace graphql::today::object

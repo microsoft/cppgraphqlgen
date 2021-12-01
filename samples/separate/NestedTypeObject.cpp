@@ -30,10 +30,6 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-NestedType::~NestedType()
-{
-}
-
 service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

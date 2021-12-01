@@ -132,10 +132,6 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Query::~Query()
-{
-}
-
 service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -246,10 +242,6 @@ Dog::Dog(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Dog::~Dog()
-{
-}
-
 service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -331,10 +323,6 @@ Alien::Alien(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Alien::~Alien()
-{
-}
-
 service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -372,10 +360,6 @@ Human::Human(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Human::~Human()
 {
 }
 
@@ -417,10 +401,6 @@ Cat::Cat(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(doesKnowCommand)gql"sv, [this](service::ResolverParams&& params) { return resolveDoesKnowCommand(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Cat::~Cat()
 {
 }
 
@@ -481,10 +461,6 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Mutation::~Mutation()
-{
-}
-
 service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -508,10 +484,6 @@ MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-MutateDogResult::~MutateDogResult()
 {
 }
 
@@ -539,10 +511,6 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(disallowedSecondRootField)gql"sv, [this](service::ResolverParams&& params) { return resolveDisallowedSecondRootField(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Subscription::~Subscription()
 {
 }
 
@@ -580,10 +548,6 @@ Message::Message(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Message::~Message()
 {
 }
 
@@ -627,10 +591,6 @@ Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(optionalNonNullBooleanArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveOptionalNonNullBooleanArgField(std::move(params)); } }
 	})
 	, _pimpl(std::move(pimpl))
-{
-}
-
-Arguments::~Arguments()
 {
 }
 

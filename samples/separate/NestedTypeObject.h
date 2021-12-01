@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace NestedTypeStubs {
+
+template <class TImpl>
+concept HasDepth = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getDepth(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+template <class TImpl>
+concept HasNested = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+};
+
+} // namespace NestedTypeStubs
+
 class NestedType
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
 		{
-			return _pimpl->getDepth(std::move(params));
+			if constexpr (NestedTypeStubs::HasDepth<T>)
+			{
+				return _pimpl->getDepth(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNested(std::move(params));
+			if constexpr (NestedTypeStubs::HasNested<T>)
+			{
+				return _pimpl->getNested(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: NestedType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~NestedType();
 };
 
 } // namespace graphql::today::object

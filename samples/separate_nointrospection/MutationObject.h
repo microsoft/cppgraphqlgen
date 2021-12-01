@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace MutationStubs {
+
+template <class TImpl>
+concept HasCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+{
+	{ impl.applyCompleteTask(std::move(params), std::move(inputArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<CompleteTaskPayload>>>;
+};
+
+template <class TImpl>
+concept HasSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+{
+	{ impl.applySetFloat(std::move(params), std::move(valueArg)) } -> std::convertible_to<service::FieldResult<response::FloatType>>;
+};
+
+} // namespace MutationStubs
+
 class Mutation
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
 		{
-			return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+			if constexpr (MutationStubs::HasCompleteTask<T>)
+			{
+				return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
 		{
-			return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+			if constexpr (MutationStubs::HasSetFloat<T>)
+			{
+				return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Mutation();
 };
 
 } // namespace graphql::today::object

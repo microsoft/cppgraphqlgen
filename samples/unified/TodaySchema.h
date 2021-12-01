@@ -14,6 +14,7 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
+#include <concepts>
 #include <memory>
 #include <string>
 #include <vector>
@@ -88,6 +89,82 @@ struct Node
 
 namespace object {
 
+namespace QueryStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+{
+	{ impl.getNode(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+template <class TImpl>
+concept HasAppointments = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<AppointmentConnection>>>;
+};
+
+template <class TImpl>
+concept HasTasks = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<TaskConnection>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> firstArg, std::optional<response::Value> afterArg, std::optional<response::IntType> lastArg, std::optional<response::Value> beforeArg) 
+{
+	{ impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<FolderConnection>>>;
+};
+
+template <class TImpl>
+concept HasAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getAppointmentsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Appointment>>>>;
+};
+
+template <class TImpl>
+concept HasTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getTasksById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Task>>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Folder>>>>;
+};
+
+template <class TImpl>
+concept HasNested = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+};
+
+template <class TImpl>
+concept HasUnimplemented = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getUnimplemented(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasExpensive = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getExpensive(std::move(params)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<Expensive>>>>;
+};
+
+template <class TImpl>
+concept HasTestTaskState = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTestTaskState(std::move(params)) } -> std::convertible_to<service::FieldResult<TaskState>>;
+};
+
+template <class TImpl>
+concept HasAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+{
+	{ impl.getAnyType(std::move(params), std::move(idsArg)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<service::Object>>>>;
+};
+
+} // namespace QueryStubs
+
 class Query
 	: public service::Object
 {
@@ -140,62 +217,146 @@ private:
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			return _pimpl->getNode(std::move(params), std::move(idArg));
+			if constexpr (QueryStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params), std::move(idArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasAppointments<T>)
+			{
+				return _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAppointments is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasTasks<T>)
+			{
+				return _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTasks is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<response::IntType>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<response::IntType>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			return _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			if constexpr (QueryStubs::HasUnreadCounts<T>)
+			{
+				return _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getAppointmentsById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasAppointmentsById<T>)
+			{
+				return _pimpl->getAppointmentsById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getTasksById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasTasksById<T>)
+			{
+				return _pimpl->getTasksById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTasksById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasUnreadCountsById<T>)
+			{
+				return _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNested(std::move(params));
+			if constexpr (QueryStubs::HasNested<T>)
+			{
+				return _pimpl->getNested(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getNested is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::StringType> getUnimplemented(service::FieldParams&& params) const final
 		{
-			return _pimpl->getUnimplemented(std::move(params));
+			if constexpr (QueryStubs::HasUnimplemented<T>)
+			{
+				return _pimpl->getUnimplemented(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
-			return _pimpl->getExpensive(std::move(params));
+			if constexpr (QueryStubs::HasExpensive<T>)
+			{
+				return _pimpl->getExpensive(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTestTaskState(std::move(params));
+			if constexpr (QueryStubs::HasTestTaskState<T>)
+			{
+				return _pimpl->getTestTaskState(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getTestTaskState is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			return _pimpl->getAnyType(std::move(params), std::move(idsArg));
+			if constexpr (QueryStubs::HasAnyType<T>)
+			{
+				return _pimpl->getAnyType(std::move(params), std::move(idsArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+			}
 		}
 
 	private:
@@ -212,9 +373,23 @@ public:
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Query();
 };
+
+namespace PageInfoStubs {
+
+template <class TImpl>
+concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHasNextPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHasPreviousPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace PageInfoStubs
 
 class PageInfo
 	: public service::Object
@@ -244,12 +419,26 @@ private:
 
 		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHasNextPage(std::move(params));
+			if constexpr (PageInfoStubs::HasHasNextPage<T>)
+			{
+				return _pimpl->getHasNextPage(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHasPreviousPage(std::move(params));
+			if constexpr (PageInfoStubs::HasHasPreviousPage<T>)
+			{
+				return _pimpl->getHasPreviousPage(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+			}
 		}
 
 	private:
@@ -266,9 +455,23 @@ public:
 		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~PageInfo();
 };
+
+namespace AppointmentEdgeStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Appointment>>>;
+};
+
+template <class TImpl>
+concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+};
+
+} // namespace AppointmentEdgeStubs
 
 class AppointmentEdge
 	: public service::Object
@@ -298,12 +501,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNode(std::move(params));
+			if constexpr (AppointmentEdgeStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentEdge::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCursor(std::move(params));
+			if constexpr (AppointmentEdgeStubs::HasCursor<T>)
+			{
+				return _pimpl->getCursor(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex");
+			}
 		}
 
 	private:
@@ -320,9 +537,23 @@ public:
 		: AppointmentEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~AppointmentEdge();
 };
+
+namespace AppointmentConnectionStubs {
+
+template <class TImpl>
+concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPageInfo(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<PageInfo>>>;
+};
+
+template <class TImpl>
+concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getEdges(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>>>;
+};
+
+} // namespace AppointmentConnectionStubs
 
 class AppointmentConnection
 	: public service::Object
@@ -352,12 +583,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPageInfo(std::move(params));
+			if constexpr (AppointmentConnectionStubs::HasPageInfo<T>)
+			{
+				return _pimpl->getPageInfo(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentConnection::getPageInfo is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			return _pimpl->getEdges(std::move(params));
+			if constexpr (AppointmentConnectionStubs::HasEdges<T>)
+			{
+				return _pimpl->getEdges(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(AppointmentConnection::getEdges is not implemented)ex");
+			}
 		}
 
 	private:
@@ -374,9 +619,23 @@ public:
 		: AppointmentConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~AppointmentConnection();
 };
+
+namespace TaskEdgeStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+};
+
+template <class TImpl>
+concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+};
+
+} // namespace TaskEdgeStubs
 
 class TaskEdge
 	: public service::Object
@@ -406,12 +665,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNode(std::move(params));
+			if constexpr (TaskEdgeStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCursor(std::move(params));
+			if constexpr (TaskEdgeStubs::HasCursor<T>)
+			{
+				return _pimpl->getCursor(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+			}
 		}
 
 	private:
@@ -428,9 +701,23 @@ public:
 		: TaskEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~TaskEdge();
 };
+
+namespace TaskConnectionStubs {
+
+template <class TImpl>
+concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPageInfo(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<PageInfo>>>;
+};
+
+template <class TImpl>
+concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getEdges(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>>>;
+};
+
+} // namespace TaskConnectionStubs
 
 class TaskConnection
 	: public service::Object
@@ -460,12 +747,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPageInfo(std::move(params));
+			if constexpr (TaskConnectionStubs::HasPageInfo<T>)
+			{
+				return _pimpl->getPageInfo(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskConnection::getPageInfo is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			return _pimpl->getEdges(std::move(params));
+			if constexpr (TaskConnectionStubs::HasEdges<T>)
+			{
+				return _pimpl->getEdges(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskConnection::getEdges is not implemented)ex");
+			}
 		}
 
 	private:
@@ -482,9 +783,23 @@ public:
 		: TaskConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~TaskConnection();
 };
+
+namespace FolderEdgeStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Folder>>>;
+};
+
+template <class TImpl>
+concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+};
+
+} // namespace FolderEdgeStubs
 
 class FolderEdge
 	: public service::Object
@@ -514,12 +829,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNode(std::move(params));
+			if constexpr (FolderEdgeStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCursor(std::move(params));
+			if constexpr (FolderEdgeStubs::HasCursor<T>)
+			{
+				return _pimpl->getCursor(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+			}
 		}
 
 	private:
@@ -536,9 +865,23 @@ public:
 		: FolderEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~FolderEdge();
 };
+
+namespace FolderConnectionStubs {
+
+template <class TImpl>
+concept HasPageInfo = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPageInfo(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<PageInfo>>>;
+};
+
+template <class TImpl>
+concept HasEdges = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getEdges(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>>>;
+};
+
+} // namespace FolderConnectionStubs
 
 class FolderConnection
 	: public service::Object
@@ -568,12 +911,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPageInfo(std::move(params));
+			if constexpr (FolderConnectionStubs::HasPageInfo<T>)
+			{
+				return _pimpl->getPageInfo(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderConnection::getPageInfo is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<FolderEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			return _pimpl->getEdges(std::move(params));
+			if constexpr (FolderConnectionStubs::HasEdges<T>)
+			{
+				return _pimpl->getEdges(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex");
+			}
 		}
 
 	private:
@@ -590,9 +947,23 @@ public:
 		: FolderConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~FolderConnection();
 };
+
+namespace CompleteTaskPayloadStubs {
+
+template <class TImpl>
+concept HasTask = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTask(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+};
+
+template <class TImpl>
+concept HasClientMutationId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getClientMutationId(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+} // namespace CompleteTaskPayloadStubs
 
 class CompleteTaskPayload
 	: public service::Object
@@ -622,12 +993,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTask(std::move(params));
+			if constexpr (CompleteTaskPayloadStubs::HasTask<T>)
+			{
+				return _pimpl->getTask(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getClientMutationId(std::move(params));
+			if constexpr (CompleteTaskPayloadStubs::HasClientMutationId<T>)
+			{
+				return _pimpl->getClientMutationId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+			}
 		}
 
 	private:
@@ -644,9 +1029,23 @@ public:
 		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~CompleteTaskPayload();
 };
+
+namespace MutationStubs {
+
+template <class TImpl>
+concept HasCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+{
+	{ impl.applyCompleteTask(std::move(params), std::move(inputArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<CompleteTaskPayload>>>;
+};
+
+template <class TImpl>
+concept HasSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+{
+	{ impl.applySetFloat(std::move(params), std::move(valueArg)) } -> std::convertible_to<service::FieldResult<response::FloatType>>;
+};
+
+} // namespace MutationStubs
 
 class Mutation
 	: public service::Object
@@ -676,12 +1075,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
 		{
-			return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+			if constexpr (MutationStubs::HasCompleteTask<T>)
+			{
+				return _pimpl->applyCompleteTask(std::move(params), std::move(inputArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
 		{
-			return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+			if constexpr (MutationStubs::HasSetFloat<T>)
+			{
+				return _pimpl->applySetFloat(std::move(params), std::move(valueArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+			}
 		}
 
 	private:
@@ -698,9 +1111,23 @@ public:
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Mutation();
 };
+
+namespace SubscriptionStubs {
+
+template <class TImpl>
+concept HasNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNextAppointmentChange(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Appointment>>>;
+};
+
+template <class TImpl>
+concept HasNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+{
+	{ impl.getNodeChange(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+} // namespace SubscriptionStubs
 
 class Subscription
 	: public service::Object
@@ -730,12 +1157,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNextAppointmentChange(std::move(params));
+			if constexpr (SubscriptionStubs::HasNextAppointmentChange<T>)
+			{
+				return _pimpl->getNextAppointmentChange(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			return _pimpl->getNodeChange(std::move(params), std::move(idArg));
+			if constexpr (SubscriptionStubs::HasNodeChange<T>)
+			{
+				return _pimpl->getNodeChange(std::move(params), std::move(idArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
+			}
 		}
 
 	private:
@@ -752,9 +1193,41 @@ public:
 		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Subscription();
 };
+
+namespace AppointmentStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasWhen = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getWhen(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::Value>>>;
+};
+
+template <class TImpl>
+concept HasSubject = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getSubject(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasIsNow = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getIsNow(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasForceError = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getForceError(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+} // namespace AppointmentStubs
 
 class Appointment
 	: public service::Object
@@ -790,27 +1263,62 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (AppointmentStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
-			return _pimpl->getWhen(std::move(params));
+			if constexpr (AppointmentStubs::HasWhen<T>)
+			{
+				return _pimpl->getWhen(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
 		{
-			return _pimpl->getSubject(std::move(params));
+			if constexpr (AppointmentStubs::HasSubject<T>)
+			{
+				return _pimpl->getSubject(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
 		{
-			return _pimpl->getIsNow(std::move(params));
+			if constexpr (AppointmentStubs::HasIsNow<T>)
+			{
+				return _pimpl->getIsNow(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
 		{
-			return _pimpl->getForceError(std::move(params));
+			if constexpr (AppointmentStubs::HasForceError<T>)
+			{
+				return _pimpl->getForceError(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+			}
 		}
 
 	private:
@@ -827,9 +1335,29 @@ public:
 		: Appointment { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Appointment();
 };
+
+namespace TaskStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasTitle = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTitle(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasIsComplete = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getIsComplete(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace TaskStubs
 
 class Task
 	: public service::Object
@@ -861,17 +1389,38 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (TaskStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTitle(std::move(params));
+			if constexpr (TaskStubs::HasTitle<T>)
+			{
+				return _pimpl->getTitle(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
 		{
-			return _pimpl->getIsComplete(std::move(params));
+			if constexpr (TaskStubs::HasIsComplete<T>)
+			{
+				return _pimpl->getIsComplete(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+			}
 		}
 
 	private:
@@ -888,9 +1437,29 @@ public:
 		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Task();
 };
+
+namespace FolderStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasUnreadCount = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getUnreadCount(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+} // namespace FolderStubs
 
 class Folder
 	: public service::Object
@@ -922,17 +1491,38 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (FolderStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (FolderStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
 		{
-			return _pimpl->getUnreadCount(std::move(params));
+			if constexpr (FolderStubs::HasUnreadCount<T>)
+			{
+				return _pimpl->getUnreadCount(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+			}
 		}
 
 	private:
@@ -949,9 +1539,23 @@ public:
 		: Folder { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Folder();
 };
+
+namespace NestedTypeStubs {
+
+template <class TImpl>
+concept HasDepth = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getDepth(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+template <class TImpl>
+concept HasNested = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNested(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<NestedType>>>;
+};
+
+} // namespace NestedTypeStubs
 
 class NestedType
 	: public service::Object
@@ -981,12 +1585,26 @@ private:
 
 		service::FieldResult<response::IntType> getDepth(service::FieldParams&& params) const final
 		{
-			return _pimpl->getDepth(std::move(params));
+			if constexpr (NestedTypeStubs::HasDepth<T>)
+			{
+				return _pimpl->getDepth(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNested(std::move(params));
+			if constexpr (NestedTypeStubs::HasNested<T>)
+			{
+				return _pimpl->getNested(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+			}
 		}
 
 	private:
@@ -1003,9 +1621,17 @@ public:
 		: NestedType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~NestedType();
 };
+
+namespace ExpensiveStubs {
+
+template <class TImpl>
+concept HasOrder = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getOrder(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+} // namespace ExpensiveStubs
 
 class Expensive
 	: public service::Object
@@ -1033,7 +1659,14 @@ private:
 
 		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
 		{
-			return _pimpl->getOrder(std::move(params));
+			if constexpr (ExpensiveStubs::HasOrder<T>)
+			{
+				return _pimpl->getOrder(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
+			}
 		}
 
 	private:
@@ -1050,8 +1683,6 @@ public:
 		: Expensive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Expensive();
 };
 
 } // namespace object

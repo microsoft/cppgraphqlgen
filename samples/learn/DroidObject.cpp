@@ -34,10 +34,6 @@ Droid::Droid(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Droid::~Droid()
-{
-}
-
 service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

@@ -34,10 +34,6 @@ Human::Human(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Human::~Human()
-{
-}
-
 service::AwaitableResolver Human::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

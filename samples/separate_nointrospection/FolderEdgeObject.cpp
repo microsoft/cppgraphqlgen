@@ -30,10 +30,6 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-FolderEdge::~FolderEdge()
-{
-}
-
 service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

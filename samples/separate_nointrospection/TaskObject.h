@@ -12,6 +12,28 @@
 
 namespace graphql::today::object {
 
+namespace TaskStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+template <class TImpl>
+concept HasTitle = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getTitle(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasIsComplete = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getIsComplete(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace TaskStubs
+
 class Task
 	: public service::Object
 {
@@ -42,17 +64,38 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (TaskStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
 		{
-			return _pimpl->getTitle(std::move(params));
+			if constexpr (TaskStubs::HasTitle<T>)
+			{
+				return _pimpl->getTitle(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
 		{
-			return _pimpl->getIsComplete(std::move(params));
+			if constexpr (TaskStubs::HasIsComplete<T>)
+			{
+				return _pimpl->getIsComplete(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+			}
 		}
 
 	private:
@@ -69,8 +112,6 @@ public:
 		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Task();
 };
 
 } // namespace graphql::today::object

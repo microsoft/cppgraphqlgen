@@ -30,10 +30,6 @@ AppointmentEdge::AppointmentEdge(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-AppointmentEdge::~AppointmentEdge()
-{
-}
-
 service::AwaitableResolver AppointmentEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

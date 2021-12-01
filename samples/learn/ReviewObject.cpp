@@ -30,10 +30,6 @@ Review::Review(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Review::~Review()
-{
-}
-
 service::AwaitableResolver Review::resolveStars(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

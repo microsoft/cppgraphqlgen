@@ -12,6 +12,16 @@
 
 namespace graphql::today::object {
 
+namespace ExpensiveStubs {
+
+template <class TImpl>
+concept HasOrder = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getOrder(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+} // namespace ExpensiveStubs
+
 class Expensive
 	: public service::Object
 {
@@ -38,7 +48,14 @@ private:
 
 		service::FieldResult<response::IntType> getOrder(service::FieldParams&& params) const final
 		{
-			return _pimpl->getOrder(std::move(params));
+			if constexpr (ExpensiveStubs::HasOrder<T>)
+			{
+				return _pimpl->getOrder(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Expensive::getOrder is not implemented)ex");
+			}
 		}
 
 	private:
@@ -55,8 +72,6 @@ public:
 		: Expensive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Expensive();
 };
 
 } // namespace graphql::today::object

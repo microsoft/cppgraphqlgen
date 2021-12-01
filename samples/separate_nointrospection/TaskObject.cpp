@@ -33,10 +33,6 @@ Task::Task(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Task::~Task()
-{
-}
-
 service::AwaitableResolver Task::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

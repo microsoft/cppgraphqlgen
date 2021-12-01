@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace TaskEdgeStubs {
+
+template <class TImpl>
+concept HasNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNode(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Task>>>;
+};
+
+template <class TImpl>
+concept HasCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCursor(std::move(params)) } -> std::convertible_to<service::FieldResult<response::Value>>;
+};
+
+} // namespace TaskEdgeStubs
+
 class TaskEdge
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNode(std::move(params));
+			if constexpr (TaskEdgeStubs::HasNode<T>)
+			{
+				return _pimpl->getNode(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCursor(std::move(params));
+			if constexpr (TaskEdgeStubs::HasCursor<T>)
+			{
+				return _pimpl->getCursor(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: TaskEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~TaskEdge();
 };
 
 } // namespace graphql::today::object

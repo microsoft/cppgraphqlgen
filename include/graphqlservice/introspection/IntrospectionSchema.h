@@ -67,6 +67,13 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
+class Schema;
+class Type;
+class Field;
+class InputValue;
+class EnumValue;
+class Directive;
+
 namespace object {
 
 class Schema;
@@ -137,17 +144,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT Schema(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	Schema(std::shared_ptr<T> pimpl)
-		: Schema { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~Schema();
 };
 
@@ -240,17 +240,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT Type(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	Type(std::shared_ptr<T> pimpl)
-		: Type { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT Type(std::shared_ptr<introspection::Type> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~Type();
 };
 
@@ -322,17 +315,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT Field(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	Field(std::shared_ptr<T> pimpl)
-		: Field { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT Field(std::shared_ptr<introspection::Field> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~Field();
 };
 
@@ -390,17 +376,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT InputValue(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	InputValue(std::shared_ptr<T> pimpl)
-		: InputValue { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~InputValue();
 };
 
@@ -458,17 +437,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	EnumValue(std::shared_ptr<T> pimpl)
-		: EnumValue { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~EnumValue();
 };
 
@@ -526,17 +498,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	GRAPHQLINTROSPECTION_EXPORT Directive(std::unique_ptr<Concept>&& pimpl);
-
 	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	template <class T>
-	Directive(std::shared_ptr<T> pimpl)
-		: Directive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
-	{
-	}
-
+	GRAPHQLINTROSPECTION_EXPORT Directive(std::shared_ptr<introspection::Directive> pimpl);
 	GRAPHQLINTROSPECTION_EXPORT ~Directive();
 };
 

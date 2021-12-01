@@ -30,10 +30,6 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-Mutation::~Mutation()
-{
-}
-
 service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams&& params)
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);

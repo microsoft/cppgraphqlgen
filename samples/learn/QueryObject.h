@@ -73,8 +73,6 @@ public:
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Query();
 };
 
 } // namespace graphql::learn::object

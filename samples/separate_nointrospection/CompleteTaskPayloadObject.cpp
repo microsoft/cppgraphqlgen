@@ -30,10 +30,6 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl)
 {
 }
 
-CompleteTaskPayload::~CompleteTaskPayload()
-{
-}
-
 service::AwaitableResolver CompleteTaskPayload::resolveTask(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);

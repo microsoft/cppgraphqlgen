@@ -55,8 +55,6 @@ public:
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Mutation();
 };
 
 } // namespace graphql::learn::object

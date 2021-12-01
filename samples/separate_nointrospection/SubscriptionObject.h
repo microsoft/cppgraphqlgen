@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace SubscriptionStubs {
+
+template <class TImpl>
+concept HasNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNextAppointmentChange(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Appointment>>>;
+};
+
+template <class TImpl>
+concept HasNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+{
+	{ impl.getNodeChange(std::move(params), std::move(idArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+} // namespace SubscriptionStubs
+
 class Subscription
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNextAppointmentChange(std::move(params));
+			if constexpr (SubscriptionStubs::HasNextAppointmentChange<T>)
+			{
+				return _pimpl->getNextAppointmentChange(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			return _pimpl->getNodeChange(std::move(params), std::move(idArg));
+			if constexpr (SubscriptionStubs::HasNodeChange<T>)
+			{
+				return _pimpl->getNodeChange(std::move(params), std::move(idArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Subscription();
 };
 
 } // namespace graphql::today::object

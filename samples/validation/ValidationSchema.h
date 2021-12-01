@@ -14,6 +14,7 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
+#include <concepts>
 #include <memory>
 #include <string>
 #include <vector>
@@ -69,6 +70,52 @@ struct Pet
 
 namespace object {
 
+namespace QueryStubs {
+
+template <class TImpl>
+concept HasDog = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Dog>>>;
+};
+
+template <class TImpl>
+concept HasHuman = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHuman(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Human>>>;
+};
+
+template <class TImpl>
+concept HasPet = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPet(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+template <class TImpl>
+concept HasCatOrDog = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getCatOrDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<service::Object>>>;
+};
+
+template <class TImpl>
+concept HasArguments = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getArguments(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Arguments>>>;
+};
+
+template <class TImpl>
+concept HasFindDog = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
+{
+	{ impl.getFindDog(std::move(params), std::move(complexArg)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Dog>>>;
+};
+
+template <class TImpl>
+concept HasBooleanList = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> booleanListArgArg) 
+{
+	{ impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::BooleanType>>>;
+};
+
+} // namespace QueryStubs
+
 class Query
 	: public service::Object
 {
@@ -111,37 +158,86 @@ private:
 
 		service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
 		{
-			return _pimpl->getDog(std::move(params));
+			if constexpr (QueryStubs::HasDog<T>)
+			{
+				return _pimpl->getDog(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getDog is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHuman(std::move(params));
+			if constexpr (QueryStubs::HasHuman<T>)
+			{
+				return _pimpl->getHuman(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPet(std::move(params));
+			if constexpr (QueryStubs::HasPet<T>)
+			{
+				return _pimpl->getPet(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const final
 		{
-			return _pimpl->getCatOrDog(std::move(params));
+			if constexpr (QueryStubs::HasCatOrDog<T>)
+			{
+				return _pimpl->getCatOrDog(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
 		{
-			return _pimpl->getArguments(std::move(params));
+			if constexpr (QueryStubs::HasArguments<T>)
+			{
+				return _pimpl->getArguments(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
 		{
-			return _pimpl->getFindDog(std::move(params), std::move(complexArg));
+			if constexpr (QueryStubs::HasFindDog<T>)
+			{
+				return _pimpl->getFindDog(std::move(params), std::move(complexArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::BooleanType>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& booleanListArgArg) const final
 		{
-			return _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg));
+			if constexpr (QueryStubs::HasBooleanList<T>)
+			{
+				return _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
+			}
 		}
 
 	private:
@@ -158,9 +254,47 @@ public:
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Query();
 };
+
+namespace DogStubs {
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasNickname = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNickname(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasBarkVolume = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getBarkVolume(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+};
+
+template <class TImpl>
+concept HasDoesKnowCommand = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
+{
+	{ impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasIsHousetrained = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> atOtherHomesArg) 
+{
+	{ impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasOwner = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getOwner(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Human>>>;
+};
+
+} // namespace DogStubs
 
 class Dog
 	: public service::Object
@@ -198,32 +332,74 @@ private:
 
 		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (DogStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNickname(std::move(params));
+			if constexpr (DogStubs::HasNickname<T>)
+			{
+				return _pimpl->getNickname(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getNickname is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::IntType>> getBarkVolume(service::FieldParams&& params) const final
 		{
-			return _pimpl->getBarkVolume(std::move(params));
+			if constexpr (DogStubs::HasBarkVolume<T>)
+			{
+				return _pimpl->getBarkVolume(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getBarkVolume is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
 		{
-			return _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg));
+			if constexpr (DogStubs::HasDoesKnowCommand<T>)
+			{
+				return _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getDoesKnowCommand is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getIsHousetrained(service::FieldParams&& params, std::optional<response::BooleanType>&& atOtherHomesArg) const final
 		{
-			return _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg));
+			if constexpr (DogStubs::HasIsHousetrained<T>)
+			{
+				return _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getIsHousetrained is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
 		{
-			return _pimpl->getOwner(std::move(params));
+			if constexpr (DogStubs::HasOwner<T>)
+			{
+				return _pimpl->getOwner(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Dog::getOwner is not implemented)ex");
+			}
 		}
 
 	private:
@@ -240,9 +416,23 @@ public:
 		: Dog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Dog();
 };
+
+namespace AlienStubs {
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasHomePlanet = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHomePlanet(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+} // namespace AlienStubs
 
 class Alien
 	: public service::Object
@@ -272,12 +462,26 @@ private:
 
 		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (AlienStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Alien::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getHomePlanet(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHomePlanet(std::move(params));
+			if constexpr (AlienStubs::HasHomePlanet<T>)
+			{
+				return _pimpl->getHomePlanet(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Alien::getHomePlanet is not implemented)ex");
+			}
 		}
 
 	private:
@@ -294,9 +498,23 @@ public:
 		: Alien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Alien();
 };
+
+namespace HumanStubs {
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasPets = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getPets(std::move(params)) } -> std::convertible_to<service::FieldResult<std::vector<std::shared_ptr<service::Object>>>>;
+};
+
+} // namespace HumanStubs
 
 class Human
 	: public service::Object
@@ -326,12 +544,26 @@ private:
 
 		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (HumanStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const final
 		{
-			return _pimpl->getPets(std::move(params));
+			if constexpr (HumanStubs::HasPets<T>)
+			{
+				return _pimpl->getPets(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
+			}
 		}
 
 	private:
@@ -348,9 +580,35 @@ public:
 		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Human();
 };
+
+namespace CatStubs {
+
+template <class TImpl>
+concept HasName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getName(std::move(params)) } -> std::convertible_to<service::FieldResult<response::StringType>>;
+};
+
+template <class TImpl>
+concept HasNickname = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNickname(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasDoesKnowCommand = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
+{
+	{ impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasMeowVolume = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getMeowVolume(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+};
+
+} // namespace CatStubs
 
 class Cat
 	: public service::Object
@@ -384,22 +642,50 @@ private:
 
 		service::FieldResult<response::StringType> getName(service::FieldParams&& params) const final
 		{
-			return _pimpl->getName(std::move(params));
+			if constexpr (CatStubs::HasName<T>)
+			{
+				return _pimpl->getName(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getName is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::StringType>> getNickname(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNickname(std::move(params));
+			if constexpr (CatStubs::HasNickname<T>)
+			{
+				return _pimpl->getNickname(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getNickname is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
-			return _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg));
+			if constexpr (CatStubs::HasDoesKnowCommand<T>)
+			{
+				return _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getDoesKnowCommand is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::IntType>> getMeowVolume(service::FieldParams&& params) const final
 		{
-			return _pimpl->getMeowVolume(std::move(params));
+			if constexpr (CatStubs::HasMeowVolume<T>)
+			{
+				return _pimpl->getMeowVolume(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Cat::getMeowVolume is not implemented)ex");
+			}
 		}
 
 	private:
@@ -416,9 +702,17 @@ public:
 		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Cat();
 };
+
+namespace MutationStubs {
+
+template <class TImpl>
+concept HasMutateDog = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.applyMutateDog(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<MutateDogResult>>>;
+};
+
+} // namespace MutationStubs
 
 class Mutation
 	: public service::Object
@@ -446,7 +740,14 @@ private:
 
 		service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
 		{
-			return _pimpl->applyMutateDog(std::move(params));
+			if constexpr (MutationStubs::HasMutateDog<T>)
+			{
+				return _pimpl->applyMutateDog(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
+			}
 		}
 
 	private:
@@ -463,9 +764,17 @@ public:
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Mutation();
 };
+
+namespace MutateDogResultStubs {
+
+template <class TImpl>
+concept HasId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getId(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+} // namespace MutateDogResultStubs
 
 class MutateDogResult
 	: public service::Object
@@ -493,7 +802,14 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			return _pimpl->getId(std::move(params));
+			if constexpr (MutateDogResultStubs::HasId<T>)
+			{
+				return _pimpl->getId(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(MutateDogResult::getId is not implemented)ex");
+			}
 		}
 
 	private:
@@ -510,9 +826,23 @@ public:
 		: MutateDogResult { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~MutateDogResult();
 };
+
+namespace SubscriptionStubs {
+
+template <class TImpl>
+concept HasNewMessage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getNewMessage(std::move(params)) } -> std::convertible_to<service::FieldResult<std::shared_ptr<Message>>>;
+};
+
+template <class TImpl>
+concept HasDisallowedSecondRootField = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getDisallowedSecondRootField(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace SubscriptionStubs
 
 class Subscription
 	: public service::Object
@@ -542,12 +872,26 @@ private:
 
 		service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
 		{
-			return _pimpl->getNewMessage(std::move(params));
+			if constexpr (SubscriptionStubs::HasNewMessage<T>)
+			{
+				return _pimpl->getNewMessage(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getDisallowedSecondRootField(service::FieldParams&& params) const final
 		{
-			return _pimpl->getDisallowedSecondRootField(std::move(params));
+			if constexpr (SubscriptionStubs::HasDisallowedSecondRootField<T>)
+			{
+				return _pimpl->getDisallowedSecondRootField(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
+			}
 		}
 
 	private:
@@ -564,9 +908,23 @@ public:
 		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Subscription();
 };
+
+namespace MessageStubs {
+
+template <class TImpl>
+concept HasBody = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getBody(std::move(params)) } -> std::convertible_to<service::FieldResult<std::optional<response::StringType>>>;
+};
+
+template <class TImpl>
+concept HasSender = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getSender(std::move(params)) } -> std::convertible_to<service::FieldResult<response::IdType>>;
+};
+
+} // namespace MessageStubs
 
 class Message
 	: public service::Object
@@ -596,12 +954,26 @@ private:
 
 		service::FieldResult<std::optional<response::StringType>> getBody(service::FieldParams&& params) const final
 		{
-			return _pimpl->getBody(std::move(params));
+			if constexpr (MessageStubs::HasBody<T>)
+			{
+				return _pimpl->getBody(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const final
 		{
-			return _pimpl->getSender(std::move(params));
+			if constexpr (MessageStubs::HasSender<T>)
+			{
+				return _pimpl->getSender(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
+			}
 		}
 
 	private:
@@ -618,9 +990,59 @@ public:
 		: Message { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Message();
 };
+
+namespace ArgumentsStubs {
+
+template <class TImpl>
+concept HasMultipleReqs = requires (TImpl impl, service::FieldParams params, response::IntType xArg, response::IntType yArg) 
+{
+	{ impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } -> std::convertible_to<service::FieldResult<response::IntType>>;
+};
+
+template <class TImpl>
+concept HasBooleanArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::BooleanType> booleanArgArg) 
+{
+	{ impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::BooleanType>>>;
+};
+
+template <class TImpl>
+concept HasFloatArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::FloatType> floatArgArg) 
+{
+	{ impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::FloatType>>>;
+};
+
+template <class TImpl>
+concept HasIntArgField = requires (TImpl impl, service::FieldParams params, std::optional<response::IntType> intArgArg) 
+{
+	{ impl.getIntArgField(std::move(params), std::move(intArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<response::IntType>>>;
+};
+
+template <class TImpl>
+concept HasNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType nonNullBooleanArgArg) 
+{
+	{ impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasNonNullBooleanListField = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<response::BooleanType>> nonNullBooleanListArgArg) 
+{
+	{ impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<response::BooleanType>>>>;
+};
+
+template <class TImpl>
+concept HasBooleanListArgField = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<response::BooleanType>> booleanListArgArg) 
+{
+	{ impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } -> std::convertible_to<service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>>>;
+};
+
+template <class TImpl>
+concept HasOptionalNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, response::BooleanType optionalBooleanArgArg) 
+{
+	{ impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace ArgumentsStubs
 
 class Arguments
 	: public service::Object
@@ -662,42 +1084,98 @@ private:
 
 		service::FieldResult<response::IntType> getMultipleReqs(service::FieldParams&& params, response::IntType&& xArg, response::IntType&& yArg) const final
 		{
-			return _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg));
+			if constexpr (ArgumentsStubs::HasMultipleReqs<T>)
+			{
+				return _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getMultipleReqs is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::BooleanType>> getBooleanArgField(service::FieldParams&& params, std::optional<response::BooleanType>&& booleanArgArg) const final
 		{
-			return _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg));
+			if constexpr (ArgumentsStubs::HasBooleanArgField<T>)
+			{
+				return _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getBooleanArgField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::FloatType>> getFloatArgField(service::FieldParams&& params, std::optional<response::FloatType>&& floatArgArg) const final
 		{
-			return _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg));
+			if constexpr (ArgumentsStubs::HasFloatArgField<T>)
+			{
+				return _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getFloatArgField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<response::IntType>> getIntArgField(service::FieldParams&& params, std::optional<response::IntType>&& intArgArg) const final
 		{
-			return _pimpl->getIntArgField(std::move(params), std::move(intArgArg));
+			if constexpr (ArgumentsStubs::HasIntArgField<T>)
+			{
+				return _pimpl->getIntArgField(std::move(params), std::move(intArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getIntArgField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& nonNullBooleanArgArg) const final
 		{
-			return _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg));
+			if constexpr (ArgumentsStubs::HasNonNullBooleanArgField<T>)
+			{
+				return _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getNonNullBooleanArgField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<response::BooleanType>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<response::BooleanType>>&& nonNullBooleanListArgArg) const final
 		{
-			return _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg));
+			if constexpr (ArgumentsStubs::HasNonNullBooleanListField<T>)
+			{
+				return _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getNonNullBooleanListField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::optional<response::BooleanType>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<response::BooleanType>>&& booleanListArgArg) const final
 		{
-			return _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg));
+			if constexpr (ArgumentsStubs::HasBooleanListArgField<T>)
+			{
+				return _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getBooleanListArgField is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getOptionalNonNullBooleanArgField(service::FieldParams&& params, response::BooleanType&& optionalBooleanArgArg) const final
 		{
-			return _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg));
+			if constexpr (ArgumentsStubs::HasOptionalNonNullBooleanArgField<T>)
+			{
+				return _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Arguments::getOptionalNonNullBooleanArgField is not implemented)ex");
+			}
 		}
 
 	private:
@@ -714,8 +1192,6 @@ public:
 		: Arguments { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~Arguments();
 };
 
 } // namespace object

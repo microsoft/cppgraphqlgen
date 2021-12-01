@@ -12,6 +12,22 @@
 
 namespace graphql::today::object {
 
+namespace PageInfoStubs {
+
+template <class TImpl>
+concept HasHasNextPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHasNextPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+template <class TImpl>
+concept HasHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ impl.getHasPreviousPage(std::move(params)) } -> std::convertible_to<service::FieldResult<response::BooleanType>>;
+};
+
+} // namespace PageInfoStubs
+
 class PageInfo
 	: public service::Object
 {
@@ -40,12 +56,26 @@ private:
 
 		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHasNextPage(std::move(params));
+			if constexpr (PageInfoStubs::HasHasNextPage<T>)
+			{
+				return _pimpl->getHasNextPage(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
+			}
 		}
 
 		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			return _pimpl->getHasPreviousPage(std::move(params));
+			if constexpr (PageInfoStubs::HasHasPreviousPage<T>)
+			{
+				return _pimpl->getHasPreviousPage(std::move(params));
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+			}
 		}
 
 	private:
@@ -62,8 +92,6 @@ public:
 		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
-
-	~PageInfo();
 };
 
 } // namespace graphql::today::object
