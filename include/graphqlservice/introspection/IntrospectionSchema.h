@@ -10,9 +10,9 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 3.6.0
-static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
+// Check if the library version is compatible with schemagen 4.0.0
+static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
 // clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
@@ -76,146 +76,437 @@ class InputValue;
 class EnumValue;
 class Directive;
 
+} // namespace object
+
+class Schema;
+class Type;
+class Field;
+class InputValue;
+class EnumValue;
+class Directive;
+
+namespace object {
+
 class Schema
 	: public service::Object
 {
-protected:
-	explicit Schema();
+private:
+	service::AwaitableResolver resolveTypes(service::ResolverParams&& params);
+	service::AwaitableResolver resolveQueryType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveMutationType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDirectives(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&&) const final
+		{
+			return { _pimpl->getTypes() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getQueryType() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getMutationType() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getSubscriptionType() };
+		}
+
+		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDirectives() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveTypes(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveQueryType(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveMutationType(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSubscriptionType(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDirectives(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~Schema();
 };
 
 class Type
 	: public service::Object
 {
-protected:
-	explicit Type();
+private:
+	service::AwaitableResolver resolveKind(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
+	service::AwaitableResolver resolveFields(service::ResolverParams&& params);
+	service::AwaitableResolver resolveInterfaces(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePossibleTypes(service::ResolverParams&& params);
+	service::AwaitableResolver resolveEnumValues(service::ResolverParams&& params);
+	service::AwaitableResolver resolveInputFields(service::ResolverParams&& params);
+	service::AwaitableResolver resolveOfType(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<TypeKind> getKind(service::FieldParams&&) const final
+		{
+			return { _pimpl->getKind() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&&) const final
+		{
+			return { _pimpl->getName() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDescription() };
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		{
+			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&&) const final
+		{
+			return { _pimpl->getInterfaces() };
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&&) const final
+		{
+			return { _pimpl->getPossibleTypes() };
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		{
+			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
+		}
+
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&&) const final
+		{
+			return { _pimpl->getInputFields() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getOfType() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveKind(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveFields(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveInterfaces(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolvePossibleTypes(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveEnumValues(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveInputFields(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveOfType(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT Type(std::shared_ptr<introspection::Type> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~Type();
 };
 
 class Field
 	: public service::Object
 {
-protected:
-	explicit Field();
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
+	service::AwaitableResolver resolveArgs(service::ResolverParams&& params);
+	service::AwaitableResolver resolveType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		{
+			return { _pimpl->getName() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDescription() };
+		}
+
+		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&&) const final
+		{
+			return { _pimpl->getArgs() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getType() };
+		}
+
+		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
+		{
+			return { _pimpl->getIsDeprecated() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDeprecationReason() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveArgs(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveType(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDeprecationReason(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT Field(std::shared_ptr<introspection::Field> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~Field();
 };
 
 class InputValue
 	: public service::Object
 {
-protected:
-	explicit InputValue();
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
+	service::AwaitableResolver resolveType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		{
+			return { _pimpl->getName() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDescription() };
+		}
+
+		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&&) const final
+		{
+			return { _pimpl->getType() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDefaultValue() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveType(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDefaultValue(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~InputValue();
 };
 
 class EnumValue
 	: public service::Object
 {
-protected:
-	explicit EnumValue();
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		{
+			return { _pimpl->getName() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDescription() };
+		}
+
+		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
+		{
+			return { _pimpl->getIsDeprecated() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDeprecationReason() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsDeprecated(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDeprecationReason(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~EnumValue();
 };
 
 class Directive
 	: public service::Object
 {
-protected:
-	explicit Directive();
+private:
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
+	service::AwaitableResolver resolveLocations(service::ResolverParams&& params);
+	service::AwaitableResolver resolveArgs(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		{
+			return { _pimpl->getName() };
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		{
+			return { _pimpl->getDescription() };
+		}
+
+		service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&&) const final
+		{
+			return { _pimpl->getLocations() };
+		}
+
+		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&&) const final
+		{
+			return { _pimpl->getArgs() };
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
-
-private:
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveDescription(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveLocations(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveArgs(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	GRAPHQLINTROSPECTION_EXPORT Directive(std::shared_ptr<introspection::Directive> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT ~Directive();
 };
 
 } // namespace object
@@ -232,14 +523,14 @@ template <>
 GRAPHQLINTROSPECTION_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::TypeKind>::convert(
-	FieldResult<introspection::TypeKind>&& result, ResolverParams&& params);
+GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(
+	FieldResult<introspection::TypeKind> result, ResolverParams params);
 template <>
 GRAPHQLINTROSPECTION_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT std::future<ResolverResult> ModifiedResult<introspection::DirectiveLocation>::convert(
-	FieldResult<introspection::DirectiveLocation>&& result, ResolverParams&& params);
+GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(
+	FieldResult<introspection::DirectiveLocation> result, ResolverParams params);
 #endif // GRAPHQL_DLLEXPORTS
 
 } // namespace service

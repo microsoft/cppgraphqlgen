@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Task::Task()
+Task::Task(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Node",
 		"UnionType",
@@ -29,55 +29,51 @@ Task::Task()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(isComplete)gql"sv, [this](service::ResolverParams&& params) { return resolveIsComplete(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::IdType> Task::getId(service::FieldParams&&) const
+void Task::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> Task::resolveId(service::ResolverParams&& params)
+void Task::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver Task::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Task::getTitle(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Task::resolveTitle(service::ResolverParams&& params)
+service::AwaitableResolver Task::resolveTitle(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getTitle(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getTitle(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<response::BooleanType> Task::getIsComplete(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Task::resolveIsComplete(service::ResolverParams&& params)
+service::AwaitableResolver Task::resolveIsComplete(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getIsComplete(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getIsComplete(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Task::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Task::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Task)gql" }, std::move(params));
 }

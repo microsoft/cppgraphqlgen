@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-PageInfo::PageInfo()
+PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"PageInfo"
 	}, {
@@ -26,40 +26,41 @@ PageInfo::PageInfo()
 		{ R"gql(hasNextPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
 		{ R"gql(hasPreviousPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasPreviousPage(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::BooleanType> PageInfo::getHasNextPage(service::FieldParams&&) const
+void PageInfo::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> PageInfo::resolveHasNextPage(service::ResolverParams&& params)
+void PageInfo::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver PageInfo::resolveHasNextPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHasNextPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getHasNextPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-service::FieldResult<response::BooleanType> PageInfo::getHasPreviousPage(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
-}
-
-std::future<service::ResolverResult> PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
+service::AwaitableResolver PageInfo::resolveHasPreviousPage(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getHasPreviousPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getHasPreviousPage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> PageInfo::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver PageInfo::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(PageInfo)gql" }, std::move(params));
 }

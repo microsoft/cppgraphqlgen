@@ -100,16 +100,16 @@ std::shared_ptr<service::Request> GetService() noexcept
 	};
 
 	std::map<response::StringType, std::shared_ptr<learn::Human>> humans {
-		{ luke->id(), luke },
-		{ vader->id(), vader },
-		{ han->id(), han },
-		{ leia->id(), leia },
-		{ tarkin->id(), tarkin },
+		{ luke->getId(), luke },
+		{ vader->getId(), vader },
+		{ han->getId(), han },
+		{ leia->getId(), leia },
+		{ tarkin->getId(), tarkin },
 	};
 
 	std::map<response::StringType, std::shared_ptr<learn::Droid>> droids {
-		{ threepio->id(), threepio },
-		{ artoo->id(), artoo },
+		{ threepio->getId(), threepio },
+		{ artoo->getId(), artoo },
 	};
 
 	auto query =

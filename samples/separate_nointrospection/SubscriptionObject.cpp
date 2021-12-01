@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Subscription::Subscription()
+Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Subscription"
 	}, {
@@ -26,41 +26,42 @@ Subscription::Subscription()
 		{ R"gql(nodeChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
 		{ R"gql(nextAppointmentChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNextAppointmentChange(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<std::shared_ptr<Appointment>> Subscription::getNextAppointmentChange(service::FieldParams&&) const
+void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
+void Subscription::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver Subscription::resolveNextAppointmentChange(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNextAppointmentChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNextAppointmentChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::shared_ptr<service::Object>> Subscription::getNodeChange(service::FieldParams&&, response::IdType&&) const
-{
-	throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Subscription::resolveNodeChange(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolveNodeChange(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNodeChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
+	auto result = _pimpl->getNodeChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Subscription::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Subscription)gql" }, std::move(params));
 }

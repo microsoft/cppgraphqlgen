@@ -18,7 +18,7 @@ namespace graphql::client {
 using namespace query::Query;
 
 template <>
-Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
+Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value response)
 {
 	Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
 
@@ -40,7 +40,7 @@ Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse
 }
 
 template <>
-Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value response)
 {
 	Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
@@ -77,7 +77,7 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appoin
 }
 
 template <>
-Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value response)
 {
 	Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
@@ -99,7 +99,7 @@ Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResp
 }
 
 template <>
-Response::appointments_AppointmentConnection ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+Response::appointments_AppointmentConnection ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value response)
 {
 	Response::appointments_AppointmentConnection result;
 
@@ -167,7 +167,7 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-Response parseResponse(response::Value&& response)
+Response parseResponse(response::Value response)
 {
 	Response result;
 

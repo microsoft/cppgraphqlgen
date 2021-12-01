@@ -9,15 +9,15 @@ Mutation::Mutation() noexcept
 {
 }
 
-service::FieldResult<std::shared_ptr<object::Review>> Mutation::applyCreateReview(
-	service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const
+std::shared_ptr<object::Review> Mutation::applyCreateReview(
+	Episode epArg, ReviewInput&& reviewArg) noexcept
 {
 	auto review = std::make_shared<Review>(reviewArg.stars, std::move(reviewArg.commentary));
 
 	// Save a copy of this review associated with this episode.
 	reviews_[epArg].push_back(review);
 
-	return review;
+	return std::make_shared<object::Review>(std::move(review));
 }
 
 } // namespace graphql::learn

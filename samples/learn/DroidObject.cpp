@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Droid::Droid()
+Droid::Droid(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Character",
 		"Droid"
@@ -30,85 +30,71 @@ Droid::Droid()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(primaryFunction)gql"sv, [this](service::ResolverParams&& params) { return resolvePrimaryFunction(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::StringType> Droid::getId(service::FieldParams&&) const
+void Droid::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(Droid::getId is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> Droid::resolveId(service::ResolverParams&& params)
+void Droid::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver Droid::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getName(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getName is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Droid::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Droid::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Droid::getFriends(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getFriends is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Droid::resolveFriends(service::ResolverParams&& params)
+service::AwaitableResolver Droid::resolveFriends(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getFriends(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getFriends(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::getAppearsIn(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getAppearsIn is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Droid::resolveAppearsIn(service::ResolverParams&& params)
+service::AwaitableResolver Droid::resolveAppearsIn(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getAppearsIn(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getAppearsIn(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Episode>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getPrimaryFunction(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Droid::getPrimaryFunction is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Droid::resolvePrimaryFunction(service::ResolverParams&& params)
+service::AwaitableResolver Droid::resolvePrimaryFunction(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getPrimaryFunction(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getPrimaryFunction(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Droid::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Droid::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Droid)gql" }, std::move(params));
 }

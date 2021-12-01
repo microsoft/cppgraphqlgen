@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-FolderEdge::FolderEdge()
+FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"FolderEdge"
 	}, {
@@ -26,40 +26,41 @@ FolderEdge::FolderEdge()
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<std::shared_ptr<Folder>> FolderEdge::getNode(service::FieldParams&&) const
+void FolderEdge::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> FolderEdge::resolveNode(service::ResolverParams&& params)
+void FolderEdge::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getNode(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNode(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<response::Value> FolderEdge::getCursor(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
-}
-
-std::future<service::ResolverResult> FolderEdge::resolveCursor(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getCursor(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getCursor(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> FolderEdge::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(FolderEdge)gql" }, std::move(params));
 }

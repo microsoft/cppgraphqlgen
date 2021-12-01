@@ -11,22 +11,140 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::MutationMethod {
+
+template <class TImpl>
+concept WithParamsCompleteTask = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+{
+	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
+};
+
+template <class TImpl>
+concept NoParamsCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg) 
+{
+	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
+};
+
+template <class TImpl>
+concept WithParamsSetFloat = requires (TImpl impl, service::FieldParams params, response::FloatType valueArg) 
+{
+	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
+};
+
+template <class TImpl>
+concept NoParamsSetFloat = requires (TImpl impl, response::FloatType valueArg) 
+{
+	{ service::FieldResult<response::FloatType> { impl.applySetFloat(std::move(valueArg)) } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::MutationMethod
 
 class Mutation
 	: public service::Object
 {
-protected:
-	explicit Mutation();
+private:
+	service::AwaitableResolver resolveCompleteTask(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSetFloat(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
+		virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
+		{
+			if constexpr (methods::MutationMethod::WithParamsCompleteTask<T>)
+			{
+				return { _pimpl->applyCompleteTask(std::move(params), std::move(inputArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsCompleteTask<T>)
+			{
+				return { _pimpl->applyCompleteTask(std::move(inputArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const final
+		{
+			if constexpr (methods::MutationMethod::WithParamsSetFloat<T>)
+			{
+				return { _pimpl->applySetFloat(std::move(params), std::move(valueArg)) };
+			}
+			else if constexpr (methods::MutationMethod::NoParamsSetFloat<T>)
+			{
+				return { _pimpl->applySetFloat(std::move(valueArg)) };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Mutation(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const;
-	virtual service::FieldResult<response::FloatType> applySetFloat(service::FieldParams&& params, response::FloatType&& valueArg) const;
-
-private:
-	std::future<service::ResolverResult> resolveCompleteTask(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSetFloat(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	Mutation(std::shared_ptr<T> pimpl)
+		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

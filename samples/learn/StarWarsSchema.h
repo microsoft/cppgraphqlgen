@@ -10,9 +10,9 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 3.6.0
-static_assert(graphql::internal::MajorVersion == 3, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 6, "regenerate with schemagen: minor version mismatch");
+// Check if the library version is compatible with schemagen 4.0.0
+static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
 #include <memory>
 #include <string>
@@ -57,6 +57,12 @@ class Operations
 {
 public:
 	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation);
+
+	template <class TQuery, class TMutation>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
+		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)) }
+	{
+	}
 
 private:
 	std::shared_ptr<object::Query> _query;

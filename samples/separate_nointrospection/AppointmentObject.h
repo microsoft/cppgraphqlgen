@@ -11,29 +11,230 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::AppointmentMethod {
+
+template <class TImpl>
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsWhen = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsWhen = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen() } };
+};
+
+template <class TImpl>
+concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsSubject = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getSubject() } };
+};
+
+template <class TImpl>
+concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsNow(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsIsNow = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsNow() } };
+};
+
+template <class TImpl>
+concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsForceError = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getForceError() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::AppointmentMethod
 
 class Appointment
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Appointment();
+private:
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveWhen(service::ResolverParams&& params);
+	service::AwaitableResolver resolveSubject(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params);
+	service::AwaitableResolver resolveForceError(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::WithParamsId<T>)
+			{
+				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::WithParamsWhen<T>)
+			{
+				return { _pimpl->getWhen(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsWhen<T>)
+			{
+				return { _pimpl->getWhen() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
+			{
+				return { _pimpl->getSubject(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsSubject<T>)
+			{
+				return { _pimpl->getSubject() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
+			{
+				return { _pimpl->getIsNow(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsIsNow<T>)
+			{
+				return { _pimpl->getIsNow() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
+			{
+				return { _pimpl->getForceError(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentMethod::NoParamsForceError<T>)
+			{
+				return { _pimpl->getForceError() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::AppointmentMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Appointment(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getSubject(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getIsNow(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getForceError(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveWhen(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveSubject(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsNow(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveForceError(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	Appointment(std::shared_ptr<T> pimpl)
+		: Appointment { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

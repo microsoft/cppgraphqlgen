@@ -7,18 +7,13 @@
 
 namespace graphql::learn {
 
-Human::Human(response::StringType id, std::optional<response::StringType> name,
-	std::vector<Episode> appearsIn, std::optional<response::StringType> homePlanet) noexcept
+Human::Human(response::StringType&& id, std::optional<response::StringType>&& name,
+	std::vector<Episode>&& appearsIn, std::optional<response::StringType>&& homePlanet) noexcept
 	: id_ { std::move(id) }
 	, name_ { std::move(name) }
 	, appearsIn_ { std::move(appearsIn) }
 	, homePlanet_ { std::move(homePlanet) }
 {
-}
-
-const response::StringType& Human::id() const noexcept
-{
-	return id_;
 }
 
 void Human::addFriends(std::vector<SharedHero> friends) noexcept
@@ -39,29 +34,38 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 		});
 }
 
-service::FieldResult<response::StringType> Human::getId(service::FieldParams&& params) const
+const response::StringType& Human::getId() const noexcept
 {
-	return { id_ };
+	return id_;
 }
 
-service::FieldResult<std::optional<response::StringType>> Human::getName(
-	service::FieldParams&& params) const
+const std::optional<response::StringType>& Human::getName() const noexcept
 {
-	return { name_ };
+	return name_;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Human::
-	getFriends(service::FieldParams&& params) const
+std::optional<std::vector<std::shared_ptr<service::Object>>> Human::getFriends() const noexcept
 {
 	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
 
 	std::transform(friends_.begin(),
 		friends_.end(),
-		std::back_inserter(result),
+		result.begin(),
 		[](const auto& wpFriend) noexcept {
 			return std::visit(
 				[](const auto& hero) noexcept {
-					return std::static_pointer_cast<service::Object>(hero.lock());
+					using hero_t = std::decay_t<decltype(hero)>;
+
+					if constexpr (std::is_same_v<std::weak_ptr<Human>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Human>(hero.lock()));
+					}
+					else if constexpr (std::is_same_v<std::weak_ptr<Droid>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Droid>(hero.lock()));
+					}
 				},
 				wpFriend);
 		});
@@ -72,11 +76,10 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 					 }),
 		result.end());
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::getAppearsIn(
-	service::FieldParams&& params) const
+std::optional<std::vector<std::optional<Episode>>> Human::getAppearsIn() const noexcept
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
@@ -87,13 +90,12 @@ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::
 			return std::make_optional(entry);
 		});
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<response::StringType>> Human::getHomePlanet(
-	service::FieldParams&& params) const
+const std::optional<response::StringType>& Human::getHomePlanet() const noexcept
 {
-	return { homePlanet_ };
+	return homePlanet_;
 }
 
 } // namespace graphql::learn

@@ -7,18 +7,14 @@
 
 namespace graphql::learn {
 
-Droid::Droid(response::StringType id, std::optional<response::StringType> name,
-	std::vector<Episode> appearsIn, std::optional<response::StringType> primaryFunction) noexcept
+Droid::Droid(response::StringType&& id, std::optional<response::StringType>&& name,
+	std::vector<Episode>&& appearsIn,
+	std::optional<response::StringType>&& primaryFunction) noexcept
 	: id_ { std::move(id) }
 	, name_ { std::move(name) }
 	, appearsIn_ { std::move(appearsIn) }
 	, primaryFunction_ { std::move(primaryFunction) }
 {
-}
-
-const response::StringType& Droid::id() const noexcept
-{
-	return id_;
 }
 
 void Droid::addFriends(
@@ -40,29 +36,38 @@ void Droid::addFriends(
 		});
 }
 
-service::FieldResult<response::StringType> Droid::getId(service::FieldParams&& params) const
+const response::StringType& Droid::getId() const noexcept
 {
-	return { id_ };
+	return id_;
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getName(
-	service::FieldParams&& params) const
+const std::optional<response::StringType>& Droid::getName() const noexcept
 {
-	return { name_ };
+	return name_;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Droid::
-	getFriends(service::FieldParams&& params) const
+std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends() const noexcept
 {
 	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
 
 	std::transform(friends_.begin(),
 		friends_.end(),
-		std::back_inserter(result),
+		result.begin(),
 		[](const auto& wpFriend) noexcept {
 			return std::visit(
 				[](const auto& hero) noexcept {
-					return std::static_pointer_cast<service::Object>(hero.lock());
+					using hero_t = std::decay_t<decltype(hero)>;
+
+					if constexpr (std::is_same_v<std::weak_ptr<Human>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Human>(hero.lock()));
+					}
+					else if constexpr (std::is_same_v<std::weak_ptr<Droid>, hero_t>)
+					{
+						return std::static_pointer_cast<service::Object>(
+							std::make_shared<object::Droid>(hero.lock()));
+					}
 				},
 				wpFriend);
 		});
@@ -73,11 +78,10 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>
 					 }),
 		result.end());
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::getAppearsIn(
-	service::FieldParams&& params) const
+std::optional<std::vector<std::optional<Episode>>> Droid::getAppearsIn() const noexcept
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
@@ -88,13 +92,12 @@ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Droid::
 			return std::make_optional(entry);
 		});
 
-	return { result.empty() ? std::nullopt : std::make_optional(std::move(result)) };
+	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
-service::FieldResult<std::optional<response::StringType>> Droid::getPrimaryFunction(
-	service::FieldParams&& params) const
+const std::optional<response::StringType>& Droid::getPrimaryFunction() const noexcept
 {
-	return { primaryFunction_ };
+	return primaryFunction_;
 }
 
 } // namespace graphql::learn

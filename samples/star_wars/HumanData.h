@@ -12,25 +12,20 @@
 
 namespace graphql::learn {
 
-class Human : public object::Human
+class Human
 {
 public:
-	explicit Human(response::StringType id, std::optional<response::StringType> name,
-		std::vector<Episode> appearsIn,
-		std::optional<response::StringType> homePlanet) noexcept;
+	explicit Human(response::StringType&& id, std::optional<response::StringType>&& name,
+		std::vector<Episode>&& appearsIn,
+		std::optional<response::StringType>&& homePlanet) noexcept;
 
-	const response::StringType& id() const noexcept;
 	void addFriends(std::vector<SharedHero> friends) noexcept;
 
-	service::FieldResult<response::StringType> getId(service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<response::StringType>> getName(
-		service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(
-		service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(
-		service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<response::StringType>> getHomePlanet(
-		service::FieldParams&& params) const final;
+	const response::StringType& getId() const noexcept;
+	const std::optional<response::StringType>& getName() const noexcept;
+	std::optional<std::vector<std::shared_ptr<service::Object>>> getFriends() const noexcept;
+	std::optional<std::vector<std::optional<Episode>>> getAppearsIn() const noexcept;
+	const std::optional<response::StringType>& getHomePlanet() const noexcept;
 
 private:
 	const response::StringType id_;

@@ -11,22 +11,140 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::FolderEdgeMethod {
+
+template <class TImpl>
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::FolderEdgeMethod
 
 class FolderEdge
 	: public service::Object
 {
-protected:
-	explicit FolderEdge();
+private:
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::WithParamsNode<T>)
+			{
+				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::WithParamsCursor<T>)
+			{
+				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::FolderEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	FolderEdge(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	FolderEdge(std::shared_ptr<T> pimpl)
+		: FolderEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

@@ -10,15 +10,14 @@
 
 namespace graphql::learn {
 
-class Review : public object::Review
+class Review
 {
 public:
 	explicit Review(
-		response::IntType stars, std::optional<response::StringType> commentary) noexcept;
+		response::IntType stars, std::optional<response::StringType>&& commentary) noexcept;
 
-	service::FieldResult<response::IntType> getStars(service::FieldParams&& params) const final;
-	service::FieldResult<std::optional<response::StringType>> getCommentary(
-		service::FieldParams&& params) const final;
+	response::IntType getStars() const noexcept;
+	const std::optional<response::StringType>& getCommentary() const noexcept;
 
 private:
 	const response::IntType stars_;

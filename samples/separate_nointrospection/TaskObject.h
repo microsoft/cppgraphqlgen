@@ -11,25 +11,170 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::TaskMethod {
+
+template <class TImpl>
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsTitle = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsTitle = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getTitle() } };
+};
+
+template <class TImpl>
+concept WithParamsIsComplete = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsComplete(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsIsComplete = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getIsComplete() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::TaskMethod
 
 class Task
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Task();
+private:
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTitle(service::ResolverParams&& params);
+	service::AwaitableResolver resolveIsComplete(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::TaskMethod::WithParamsId<T>)
+			{
+				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::TaskMethod::WithParamsTitle<T>)
+			{
+				return { _pimpl->getTitle(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsTitle<T>)
+			{
+				return { _pimpl->getTitle() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::TaskMethod::WithParamsIsComplete<T>)
+			{
+				return { _pimpl->getIsComplete(std::move(params)) };
+			}
+			else if constexpr (methods::TaskMethod::NoParamsIsComplete<T>)
+			{
+				return { _pimpl->getIsComplete() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Task(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getTitle(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getIsComplete(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveTitle(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveIsComplete(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	Task(std::shared_ptr<T> pimpl)
+		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

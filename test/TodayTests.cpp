@@ -610,9 +610,9 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);
@@ -670,12 +670,13 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nextAppointmentChange",
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1196,20 +1197,23 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 			EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1259,13 +1263,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&calledGet](std::future<response::Value>) {
+									   std::move(variables) },
+		[&calledGet](response::Value&&) {
 			calledGet = true;
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1309,20 +1314,23 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(fuzzyId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nodeChange",
 		filterCallback,
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1382,13 +1390,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&calledGet](std::future<response::Value>) {
+									   std::move(variables) },
+		[&calledGet](response::Value&&) {
 			calledGet = true;
 		});
 	_service->deliver("nodeChange",
 		filterCallback,
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1423,20 +1432,23 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::static_pointer_cast<service::Object>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true));
+			return std::static_pointer_cast<service::Object>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
+					"Don't forget",
+					true)));
 		});
 	response::Value result;
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nodeChange",
 		{ { "id", response::Value(std::string("ZmFrZVRhc2tJZA==")) } },
-		std::static_pointer_cast<service::Object>(subscriptionObject));
+		std::static_pointer_cast<service::Object>(
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject))));
 	_service->unsubscribe(key);
 
 	try
@@ -1477,15 +1489,8 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 	variables.emplace_back("appointmentId",
 		response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(15);
-	auto future = _service->resolve(std::launch::deferred, state, query, "", std::move(variables));
-	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s)) << "should be deferred";
-	EXPECT_EQ(size_t(0), state->loadAppointmentsCount)
-		<< "today service should not call the loader until we block";
-	ASSERT_EQ(std::future_status::deferred, future.wait_for(0s))
-		<< "should stay deferred until we block";
-	EXPECT_EQ(size_t(0), state->loadAppointmentsCount)
-		<< "today service should not call the loader until we block";
-	auto result = future.get();
+	auto result =
+		_service->resolve(std::launch::deferred, state, query, "", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount)
@@ -1544,9 +1549,8 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 	variables.emplace_back("appointmentId",
 		response::Value(std::string("ZmFrZUFwcG9pbnRtZW50SWQ=")));
 	auto state = std::make_shared<today::RequestState>(16);
-	auto future = _service->resolve(std::launch::async, state, query, "", std::move(variables));
-	ASSERT_NE(std::future_status::deferred, future.wait_for(0s)) << "should not start out deferred";
-	auto result = future.get();
+	auto result =
+		_service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
 	EXPECT_GE(size_t(1), _getTasksCount)
@@ -1599,9 +1603,8 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	auto future =
-		_service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables));
-	auto result = future.get();
+	auto result =
+		_service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables)).get();
 
 	try
 	{
@@ -1636,11 +1639,11 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
-	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr);
+	_service->deliver(std::launch::async, "nextAppointmentChange", nullptr).get();
 	_service->unsubscribe(key);
 
 	try
@@ -1680,12 +1683,13 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(18);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::deferred,
-		state,
-		query,
-		"NonblockingDeferredExpensive",
-		std::move(variables));
-	auto result = future.get();
+	auto result = _service
+					  ->resolve(std::launch::deferred,
+						  state,
+						  query,
+						  "NonblockingDeferredExpensive",
+						  std::move(variables))
+					  .get();
 
 	try
 	{
@@ -1715,12 +1719,13 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(19);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto future = _service->resolve(std::launch::async,
-		state,
-		query,
-		"BlockingAsyncExpensive",
-		std::move(variables));
-	auto result = future.get();
+	auto result = _service
+					  ->resolve(std::launch::async,
+						  state,
+						  query,
+						  "BlockingAsyncExpensive",
+						  std::move(variables))
+					  .get();
 
 	try
 	{
@@ -1833,15 +1838,17 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service->subscribe(std::launch::async,
-		service::SubscriptionParams { state,
-			std::move(query),
-			"TestSubscription",
-			std::move(std::move(variables)) },
-		[&calledCallback](std::future<response::Value> response) {
-			calledCallback = true;
-		});
-	_service->unsubscribe(std::launch::async, key.get()).get();
+	auto key = _service
+				   ->subscribe(std::launch::async,
+					   service::SubscriptionParams { state,
+						   std::move(query),
+						   "TestSubscription",
+						   std::move(variables) },
+					   [&calledCallback](response::Value&& response) {
+						   calledCallback = true;
+					   })
+				   .get();
+	_service->unsubscribe(std::launch::async, key).get();
 	const auto notifySubscribeEnd =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
 	const auto subscriptionEnd =
@@ -1883,15 +1890,17 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service->subscribe(std::launch::deferred,
-		service::SubscriptionParams { state,
-			std::move(query),
-			"TestSubscription",
-			std::move(std::move(variables)) },
-		[&calledCallback](std::future<response::Value> response) {
-			calledCallback = true;
-		});
-	_service->unsubscribe(std::launch::deferred, key.get()).get();
+	auto key = _service
+				   ->subscribe(std::launch::deferred,
+					   service::SubscriptionParams { state,
+						   std::move(query),
+						   "TestSubscription",
+						   std::move(variables) },
+					   [&calledCallback](response::Value&& response) {
+						   calledCallback = true;
+					   })
+				   .get();
+	_service->unsubscribe(std::launch::deferred, key).get();
 	const auto notifySubscribeEnd =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
 	const auto subscriptionEnd =

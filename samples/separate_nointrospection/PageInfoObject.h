@@ -11,22 +11,140 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::PageInfoMethod {
+
+template <class TImpl>
+concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsHasNextPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasNextPage() } };
+};
+
+template <class TImpl>
+concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsHasPreviousPage = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::BooleanType> { impl.getHasPreviousPage() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::PageInfoMethod
 
 class PageInfo
 	: public service::Object
 {
-protected:
-	explicit PageInfo();
+private:
+	service::AwaitableResolver resolveHasNextPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasPreviousPage(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
+			{
+				return { _pimpl->getHasNextPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasNextPage<T>)
+			{
+				return { _pimpl->getHasNextPage() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
+			{
+				return { _pimpl->getHasPreviousPage(std::move(params)) };
+			}
+			else if constexpr (methods::PageInfoMethod::NoParamsHasPreviousPage<T>)
+			{
+				return { _pimpl->getHasPreviousPage() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::PageInfoMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	PageInfo(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::BooleanType> getHasNextPage(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::BooleanType> getHasPreviousPage(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveHasNextPage(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveHasPreviousPage(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	PageInfo(std::shared_ptr<T> pimpl)
+		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

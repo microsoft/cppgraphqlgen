@@ -21,9 +21,11 @@
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/Awaitable.h"
 #include "graphqlservice/internal/SortedMap.h"
 #include "graphqlservice/internal/Version.h"
 
+#include <chrono>
 #include <functional>
 #include <future>
 #include <list>
@@ -35,8 +37,8 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -176,13 +178,7 @@ struct SelectionSetParams
 struct FieldParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		SelectionSetParams&& selectionSetParams, response::Value&& directives);
-
-	[[deprecated(
-		"Use the FieldParams constructor overload which takes a SelectionSet r-value "
-		"reference instead.")]] GRAPHQLSERVICE_EXPORT explicit FieldParams(const SelectionSetParams&
-																			   selectionSetParams,
-		response::Value&& directives);
+		SelectionSetParams&& selectionSetParams, response::Value directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive
@@ -190,9 +186,9 @@ struct FieldParams : SelectionSetParams
 	response::Value fieldDirectives;
 };
 
-// Field accessors may return either a result of T or a std::future<T>, so at runtime the
-// implementer may choose to return by value or defer/parallelize expensive operations by returning
-// an async future.
+// Field accessors may return either a result of T, an awaitable of T, or a std::future<T>, so at
+// runtime the implementer may choose to return by value or defer/parallelize expensive operations
+// by returning an async future or an awaitable coroutine.
 template <typename T>
 class FieldResult
 {
@@ -203,19 +199,89 @@ public:
 	{
 	}
 
-	T get()
+	struct promise_type
 	{
-		if (std::holds_alternative<std::future<T>>(_value))
+		FieldResult<T> get_return_object() noexcept
 		{
-			return std::get<std::future<T>>(std::move(_value)).get();
+			return { _promise.get_future() };
 		}
 
-		return std::get<T>(std::move(_value));
+		coro::suspend_never initial_suspend() const noexcept
+		{
+			return {};
+		}
+
+		coro::suspend_never final_suspend() const noexcept
+		{
+			return {};
+		}
+
+		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		{
+			_promise.set_value(value);
+		}
+
+		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		{
+			_promise.set_value(std::move(value));
+		}
+
+		void unhandled_exception() noexcept
+		{
+			_promise.set_exception(std::current_exception());
+		}
+
+	private:
+		std::promise<T> _promise;
+	};
+
+	bool await_ready() const noexcept
+	{
+		return std::visit(
+			[](const auto& value) noexcept {
+				using value_type = std::decay_t<decltype(value)>;
+
+				if constexpr (std::is_same_v<value_type, T>)
+				{
+					return true;
+				}
+				else if constexpr (std::is_same_v<value_type, std::future<T>>)
+				{
+					using namespace std::literals;
+
+					return value.wait_for(0s) != std::future_status::timeout;
+				}
+			},
+			_value);
 	}
 
-	bool is_future() const noexcept
+	void await_suspend(coro::coroutine_handle<> h) const
 	{
-		return std::holds_alternative<std::future<T>>(_value);
+		std::thread(
+			[this](coro::coroutine_handle<> h) noexcept {
+				std::get<std::future<T>>(_value).wait();
+				h.resume();
+			},
+			std::move(h))
+			.detach();
+	}
+
+	T await_resume()
+	{
+		return std::visit(
+			[](auto&& value) {
+				using value_type = std::decay_t<decltype(value)>;
+
+				if constexpr (std::is_same_v<value_type, T>)
+				{
+					return T { std::move(value) };
+				}
+				else if constexpr (std::is_same_v<value_type, std::future<T>>)
+				{
+					return value.get();
+				}
+			},
+			std::move(_value));
 	}
 
 private:
@@ -251,8 +317,8 @@ using FragmentMap = internal::string_view_map<Fragment>;
 struct ResolverParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams,
-		const peg::ast_node& field, std::string&& fieldName, response::Value&& arguments,
-		response::Value&& fieldDirectives, const peg::ast_node* selection,
+		const peg::ast_node& field, std::string&& fieldName, response::Value arguments,
+		response::Value fieldDirectives, const peg::ast_node* selection,
 		const FragmentMap& fragments, const response::Value& variables);
 
 	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
@@ -278,7 +344,8 @@ struct ResolverResult
 	std::list<schema_error> errors;
 };
 
-using Resolver = std::function<std::future<ResolverResult>(ResolverParams&&)>;
+using AwaitableResolver = internal::Awaitable<ResolverResult>;
+using Resolver = std::function<AwaitableResolver(ResolverParams&&)>;
 using ResolverMap = internal::string_view_map<Resolver>;
 
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
@@ -319,7 +386,7 @@ struct ModifiedArgument
 	static Type convert(const response::Value& value);
 
 	// Call convert on this type without any modifiers.
-	static Type require(const std::string& name, const response::Value& arguments)
+	static Type require(std::string_view name, const response::Value& arguments)
 	{
 		try
 		{
@@ -359,7 +426,7 @@ struct ModifiedArgument
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
-	require(const std::string& name, const response::Value& arguments)
+	require(std::string_view name, const response::Value& arguments)
 	{
 		// Just call through to the non-template method without the modifiers.
 		return require(name, arguments);
@@ -369,7 +436,7 @@ struct ModifiedArgument
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	require(const std::string& name, const response::Value& arguments)
+	require(std::string_view name, const response::Value& arguments)
 	{
 		const auto& valueItr = arguments.find(name);
 
@@ -388,7 +455,7 @@ struct ModifiedArgument
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::List == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	require(const std::string& name, const response::Value& arguments)
+	require(std::string_view name, const response::Value& arguments)
 	{
 		const auto& values = arguments[name];
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
@@ -397,7 +464,7 @@ struct ModifiedArgument
 		std::transform(elements.cbegin(),
 			elements.cend(),
 			result.begin(),
-			[&name](const response::Value& element) {
+			[name](const response::Value& element) {
 				response::Value single(response::Type::Map);
 
 				single.emplace_back(std::string { name }, response::Value(element));
@@ -411,7 +478,7 @@ struct ModifiedArgument
 	// Wrap require with modifiers in a try/catch block.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool> find(
-		const std::string& name, const response::Value& arguments) noexcept
+		std::string_view name, const response::Value& arguments) noexcept
 	{
 		try
 		{
@@ -470,9 +537,9 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
-	GRAPHQLSERVICE_EXPORT std::future<ResolverResult> resolve(
-		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
-		const FragmentMap& fragments, const response::Value& variables) const;
+	GRAPHQLSERVICE_EXPORT AwaitableResolver resolve(const SelectionSetParams& selectionSetParams,
+		const peg::ast_node& selection, const FragmentMap& fragments,
+		const response::Value& variables) const;
 
 	GRAPHQLSERVICE_EXPORT bool matchesType(std::string_view typeName) const;
 
@@ -493,6 +560,24 @@ private:
 	ResolverMap _resolvers;
 };
 
+// Resume coroutine execution on a worker thread. This is used internally to implement the APIs
+// which can take std::launch::async as a parameter.
+class await_async
+{
+public:
+	GRAPHQLSERVICE_EXPORT explicit await_async(std::launch launch) noexcept;
+
+	GRAPHQLSERVICE_EXPORT bool await_ready() const noexcept;
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+
+	constexpr void await_resume() const noexcept
+	{
+	}
+
+private:
+	const std::launch _launch;
+};
+
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
 template <typename Type>
@@ -511,7 +596,7 @@ struct ModifiedResult
 				std::vector<typename ResultTraits<U, Other...>::type>,
 				typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>>>;
 
-		using future_type = FieldResult<type>&&;
+		using future_type = FieldResult<type>;
 	};
 
 	template <typename U>
@@ -521,40 +606,40 @@ struct ModifiedResult
 			typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>;
 
 		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
-			FieldResult<std::shared_ptr<Object>>, FieldResult<type>>&&;
+			FieldResult<std::shared_ptr<Object>>, FieldResult<type>>;
 	};
 
 	// Convert a single value of the specified type to JSON.
-	static std::future<ResolverResult> convert(
-		typename ResultTraits<Type>::future_type result, ResolverParams&& params);
+	static AwaitableResolver convert(
+		typename ResultTraits<Type>::future_type result, ResolverParams params);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
 			&& !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
-		std::future<ResolverResult>>
-	convert(FieldResult<typename ResultTraits<Type>::type>&& result, ResolverParams&& params)
+		AwaitableResolver>
+	convert(FieldResult<typename ResultTraits<Type>::type> result, ResolverParams params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
-		auto resultFuture = std::async(
-			std::launch::deferred,
-			[](auto&& objectType) {
-				return std::static_pointer_cast<Object>(objectType.get());
-			},
-			std::move(result));
 
-		return ModifiedResult<Object>::convert(std::move(resultFuture), std::move(params));
+		co_await await_async { params.launch };
+
+		auto awaitedResult = co_await ModifiedResult<Object>::convert(
+			std::static_pointer_cast<Object>(co_await result),
+			std::move(params));
+
+		co_return std::move(awaitedResult);
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
 			&& (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
-		std::future<ResolverResult>>
-	convert(typename ResultTraits<Type>::future_type result, ResolverParams&& params)
+		AwaitableResolver>
+	convert(typename ResultTraits<Type>::future_type result, ResolverParams params)
 	{
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
@@ -564,175 +649,113 @@ struct ModifiedResult
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<ResolverResult>>
-	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams&& params)
+		AwaitableResolver>
+	convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
-		return std::async(
-			std::launch::deferred,
-			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
-				auto wrappedResult = wrappedFuture.get();
+		co_await await_async { params.launch };
 
-				if (!wrappedResult)
-				{
-					return ResolverResult {};
-				}
+		auto awaitedResult = co_await std::move(result);
 
-				std::promise<typename ResultTraits<Type, Other...>::type> promise;
+		if (!awaitedResult)
+		{
+			co_return ResolverResult {};
+		}
 
-				promise.set_value(std::move(wrappedResult));
+		auto modifiedResult =
+			co_await ModifiedResult::convert<Other...>(std::move(awaitedResult), std::move(params));
 
-				return ModifiedResult::convert<Other...>(promise.get_future(),
-					std::move(wrappedParams))
-					.get();
-			},
-			std::move(result),
-			std::move(params));
+		co_return modifiedResult;
 	}
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		std::future<ResolverResult>>
-	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams&& params)
+		AwaitableResolver>
+	convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>,
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		return std::async(
-			std::launch::deferred,
-			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
-				auto wrappedResult = wrappedFuture.get();
+		co_await await_async { params.launch };
 
-				if (!wrappedResult)
-				{
-					return ResolverResult {};
-				}
+		auto awaitedResult = co_await std::move(result);
 
-				std::promise<typename ResultTraits<Type, Other...>::type> promise;
+		if (!awaitedResult)
+		{
+			co_return ResolverResult {};
+		}
 
-				promise.set_value(std::move(*wrappedResult));
-
-				return ModifiedResult::convert<Other...>(promise.get_future(),
-					std::move(wrappedParams))
-					.get();
-			},
-			std::move(result),
+		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(*awaitedResult),
 			std::move(params));
+
+		co_return modifiedResult;
 	}
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::List == Modifier, std::future<ResolverResult>>
-	convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams&& params)
+	static typename std::enable_if_t<TypeModifier::List == Modifier, AwaitableResolver> convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
-		return std::async(
-			params.launch,
-			[](auto&& wrappedFuture, ResolverParams&& wrappedParams) {
-				auto wrappedResult = wrappedFuture.get();
-				std::vector<std::future<ResolverResult>> children;
-				const auto parentPath = wrappedParams.errorPath;
+		std::vector<AwaitableResolver> children;
+		const auto parentPath = params.errorPath;
 
-				children.reserve(wrappedResult.size());
-				wrappedParams.errorPath = std::make_optional(field_path {
-					parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
-					path_segment { size_t { 0 } } });
+		co_await await_async { params.launch };
 
-				using vector_type = std::decay_t<decltype(wrappedFuture.get())>;
+		auto awaitedResult = co_await std::move(result);
 
-				if constexpr (!std::is_same_v<std::decay_t<typename vector_type::reference>,
-								  typename vector_type::value_type>)
-				{
-					// Special handling for std::vector<> specializations which don't return a
-					// reference to the underlying type, i.e. std::vector<bool> on many platforms.
-					// Copy the values from the std::vector<> rather than moving them.
-					for (typename vector_type::value_type entry : wrappedResult)
-					{
-						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath->segment);
-					}
-				}
-				else
-				{
-					for (auto& entry : wrappedResult)
-					{
-						children.push_back(ModifiedResult::convert<Other...>(std::move(entry),
-							ResolverParams(wrappedParams)));
-						++std::get<size_t>(wrappedParams.errorPath->segment);
-					}
-				}
+		children.reserve(awaitedResult.size());
+		params.errorPath = std::make_optional(
+			field_path { parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
+				path_segment { size_t { 0 } } });
 
-				ResolverResult document { response::Value { response::Type::List } };
+		using vector_type = std::decay_t<decltype(awaitedResult)>;
 
-				document.data.reserve(children.size());
-				std::get<size_t>(wrappedParams.errorPath->segment) = 0;
+		if constexpr (!std::is_same_v<std::decay_t<typename vector_type::reference>,
+						  typename vector_type::value_type>)
+		{
+			// Special handling for std::vector<> specializations which don't return a
+			// reference to the underlying type, i.e. std::vector<bool> on many platforms.
+			// Copy the values from the std::vector<> rather than moving them.
+			for (typename vector_type::value_type entry : awaitedResult)
+			{
+				children.push_back(
+					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
+				++std::get<size_t>(params.errorPath->segment);
+			}
+		}
+		else
+		{
+			for (auto& entry : awaitedResult)
+			{
+				children.push_back(
+					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
+				++std::get<size_t>(params.errorPath->segment);
+			}
+		}
 
-				for (auto& child : children)
-				{
-					try
-					{
-						auto value = child.get();
+		ResolverResult document { response::Value { response::Type::List } };
 
-						document.data.emplace_back(std::move(value.data));
+		document.data.reserve(children.size());
+		std::get<size_t>(params.errorPath->segment) = 0;
 
-						if (!value.errors.empty())
-						{
-							document.errors.splice(document.errors.end(), value.errors);
-						}
-					}
-					catch (schema_exception& scx)
-					{
-						auto errors = scx.getStructuredErrors();
-
-						if (!errors.empty())
-						{
-							document.errors.splice(document.errors.end(), errors);
-						}
-					}
-					catch (const std::exception& ex)
-					{
-						std::ostringstream message;
-
-						message << "Field error name: " << wrappedParams.fieldName
-								<< " unknown error: " << ex.what();
-
-						document.errors.emplace_back(schema_error { message.str(),
-							wrappedParams.getLocation(),
-							buildErrorPath(wrappedParams.errorPath) });
-					}
-
-					++std::get<size_t>(wrappedParams.errorPath->segment);
-				}
-
-				return document;
-			},
-			std::move(result),
-			std::move(params));
-	}
-
-private:
-	using ResolverCallback =
-		std::function<response::Value(typename ResultTraits<Type>::type&&, const ResolverParams&)>;
-
-	static std::future<ResolverResult> resolve(typename ResultTraits<Type>::future_type result,
-		ResolverParams&& params, ResolverCallback&& resolver)
-	{
-		static_assert(!std::is_base_of_v<Object, Type>,
-			"ModfiedResult<Object> needs special handling");
-
-		auto buildResult = [](auto&& resultFuture,
-							   ResolverParams&& paramsFuture,
-							   ResolverCallback&& resolverFuture) noexcept {
-			ResolverResult document;
-
+		for (auto& child : children)
+		{
 			try
 			{
-				document.data = resolverFuture(resultFuture.get(), paramsFuture);
+				co_await await_async { params.launch };
+
+				auto value = co_await std::move(child);
+
+				document.data.emplace_back(std::move(value.data));
+
+				if (!value.errors.empty())
+				{
+					document.errors.splice(document.errors.end(), value.errors);
+				}
 			}
 			catch (schema_exception& scx)
 			{
@@ -747,31 +770,59 @@ private:
 			{
 				std::ostringstream message;
 
-				message << "Field name: " << paramsFuture.fieldName
+				message << "Field error name: " << params.fieldName
 						<< " unknown error: " << ex.what();
 
 				document.errors.emplace_back(schema_error { message.str(),
-					paramsFuture.getLocation(),
-					buildErrorPath(paramsFuture.errorPath) });
+					params.getLocation(),
+					buildErrorPath(params.errorPath) });
 			}
 
-			return document;
-		};
-
-		if (result.is_future())
-		{
-			return std::async(std::launch::deferred,
-				std::move(buildResult),
-				std::move(result),
-				std::move(params),
-				std::move(resolver));
+			++std::get<size_t>(params.errorPath->segment);
 		}
 
-		std::promise<ResolverResult> promise;
+		co_return document;
+	}
 
-		promise.set_value(buildResult(std::move(result), std::move(params), std::move(resolver)));
+private:
+	using ResolverCallback =
+		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
-		return promise.get_future();
+	static AwaitableResolver resolve(typename ResultTraits<Type>::future_type result,
+		ResolverParams params, ResolverCallback&& resolver)
+	{
+		static_assert(!std::is_base_of_v<Object, Type>,
+			"ModfiedResult<Object> needs special handling");
+
+		auto pendingResolver = std::move(resolver);
+		ResolverResult document;
+
+		try
+		{
+			co_await await_async { params.launch };
+			document.data = pendingResolver(co_await result, params);
+		}
+		catch (schema_exception& scx)
+		{
+			auto errors = scx.getStructuredErrors();
+
+			if (!errors.empty())
+			{
+				document.errors.splice(document.errors.end(), errors);
+			}
+		}
+		catch (const std::exception& ex)
+		{
+			std::ostringstream message;
+
+			message << "Field name: " << params.fieldName << " unknown error: " << ex.what();
+
+			document.errors.emplace_back(schema_error { message.str(),
+				params.getLocation(),
+				buildErrorPath(params.errorPath) });
+		}
+
+		co_return document;
 	}
 };
 
@@ -789,26 +840,26 @@ using ObjectResult = ModifiedResult<Object>;
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::IntType>::convert(
-	FieldResult<response::IntType>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IntType>::convert(
+	FieldResult<response::IntType> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::FloatType>::convert(
-	FieldResult<response::FloatType>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::FloatType>::convert(
+	FieldResult<response::FloatType> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::StringType>::convert(
-	FieldResult<response::StringType>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::StringType>::convert(
+	FieldResult<response::StringType> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::BooleanType>::convert(
-	FieldResult<response::BooleanType>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::BooleanType>::convert(
+	FieldResult<response::BooleanType> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::IdType>::convert(
-	FieldResult<response::IdType>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IdType>::convert(
+	FieldResult<response::IdType> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<response::Value>::convert(
-	FieldResult<response::Value>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert(
+	FieldResult<response::Value> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT std::future<ResolverResult> ModifiedResult<Object>::convert(
-	FieldResult<std::shared_ptr<Object>>&& result, ResolverParams&& params);
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
+	FieldResult<std::shared_ptr<Object>> result, ResolverParams params);
 #endif // GRAPHQL_DLLEXPORTS
 
 using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
@@ -832,8 +883,8 @@ struct SubscriptionParams
 // already tied to the registration and any pending futures passed to callbacks.
 struct OperationData : std::enable_shared_from_this<OperationData>
 {
-	explicit OperationData(std::shared_ptr<RequestState>&& state, response::Value&& variables,
-		response::Value&& directives, FragmentMap&& fragments);
+	explicit OperationData(std::shared_ptr<RequestState> state, response::Value variables,
+		response::Value directives, FragmentMap fragments);
 
 	std::shared_ptr<RequestState> state;
 	response::Value variables;
@@ -843,7 +894,7 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
-using SubscriptionCallback = std::function<void(std::future<response::Value>)>;
+using SubscriptionCallback = std::function<void(response::Value)>;
 using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
 
@@ -851,11 +902,15 @@ using SubscriptionFilterCallback = std::function<bool(response::MapType::const_r
 using SubscriptionKey = size_t;
 using SubscriptionName = std::string;
 
+using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
+using AwaitableUnsubscribe = internal::Awaitable<void>;
+using AwaitableDeliver = internal::Awaitable<void>;
+
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
-	explicit SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field,
-		response::Value&& arguments, response::Value&& fieldDirectives, peg::ast&& query,
+	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
+		response::Value arguments, response::Value fieldDirectives, peg::ast&& query,
 		std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
@@ -880,7 +935,7 @@ class Request : public std::enable_shared_from_this<Request>
 {
 protected:
 	GRAPHQLSERVICE_EXPORT explicit Request(
-		TypeMap&& operationTypes, const std::shared_ptr<schema::Schema>& schema);
+		TypeMap operationTypes, std::shared_ptr<schema::Schema> schema);
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
@@ -889,76 +944,51 @@ public:
 	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
 		peg::ast& query, std::string_view operationName) const;
 
-	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(
-		const std::shared_ptr<RequestState>& state, peg::ast& query,
-		const std::string& operationName, response::Value&& variables) const;
-	GRAPHQLSERVICE_EXPORT std::future<response::Value> resolve(std::launch launch,
-		const std::shared_ptr<RequestState>& state, peg::ast& query,
-		const std::string& operationName, response::Value&& variables) const;
+	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::shared_ptr<RequestState> state,
+		peg::ast& query, std::string_view operationName, response::Value variables) const;
+	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::launch launch,
+		std::shared_ptr<RequestState> state, peg::ast& query, std::string_view operationName,
+		response::Value variables) const;
 
 	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
 		SubscriptionParams&& params, SubscriptionCallback&& callback);
-	GRAPHQLSERVICE_EXPORT std::future<SubscriptionKey> subscribe(
+	GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 		std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-	GRAPHQLSERVICE_EXPORT std::future<void> unsubscribe(std::launch launch, SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(std::launch launch, SubscriptionKey key);
 
 	GRAPHQLSERVICE_EXPORT void deliver(
 		const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArguments& arguments,
-		const std::shared_ptr<Object>& subscriptionObject) const;
+		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
-		const std::shared_ptr<Object>& subscriptionObject) const;
+		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
-		const std::shared_ptr<Object>& subscriptionObject) const;
+		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
 		const SubscriptionFilterCallback& applyDirectives,
-		const std::shared_ptr<Object>& subscriptionObject) const;
+		std::shared_ptr<Object> subscriptionObject) const;
 
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-		const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
-		const SubscriptionArguments& arguments,
-		const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
 		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
-		const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+		std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
-		const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(std::launch launch, const SubscriptionName& name,
+		std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
 		const SubscriptionFilterCallback& applyDirectives,
-		const std::shared_ptr<Object>& subscriptionObject) const;
-
-	[[deprecated(
-		"Use the Request::findOperationDefinition overload which takes a peg::ast reference and "
-		"string_view instead.")]] GRAPHQLSERVICE_EXPORT std::pair<std::string, const peg::ast_node*>
-	findOperationDefinition(const peg::ast_node& root, const std::string& operationName) const;
-
-	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference "
-				 "instead.")]] GRAPHQLSERVICE_EXPORT std::future<response::Value>
-	resolve(const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
-		const std::string& operationName, response::Value&& variables) const;
-	[[deprecated("Use the Request::resolve overload which takes a peg::ast reference "
-				 "instead.")]] GRAPHQLSERVICE_EXPORT std::future<response::Value>
-	resolve(std::launch launch, const std::shared_ptr<RequestState>& state,
-		const peg::ast_node& root, const std::string& operationName,
-		response::Value&& variables) const;
+		std::shared_ptr<Object> subscriptionObject) const;
 
 private:
-	std::pair<std::string, const peg::ast_node*> findUnvalidatedOperationDefinition(
-		const peg::ast_node& root, const std::string& operationName) const;
-
-	std::future<response::Value> resolveUnvalidated(std::launch launch,
-		const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
-		const std::string& operationName, response::Value&& variables) const;
-
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;

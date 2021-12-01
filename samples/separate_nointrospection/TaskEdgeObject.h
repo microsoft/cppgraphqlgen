@@ -11,22 +11,140 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::TaskEdgeMethod {
+
+template <class TImpl>
+concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsNode = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getNode() } };
+};
+
+template <class TImpl>
+concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsCursor = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::Value> { impl.getCursor() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::TaskEdgeMethod
 
 class TaskEdge
 	: public service::Object
 {
-protected:
-	explicit TaskEdge();
+private:
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::WithParamsNode<T>)
+			{
+				return { _pimpl->getNode(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsNode<T>)
+			{
+				return { _pimpl->getNode() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::WithParamsCursor<T>)
+			{
+				return { _pimpl->getCursor(std::move(params)) };
+			}
+			else if constexpr (methods::TaskEdgeMethod::NoParamsCursor<T>)
+			{
+				return { _pimpl->getCursor() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::TaskEdgeMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	TaskEdge(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveNode(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveCursor(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	TaskEdge(std::shared_ptr<T> pimpl)
+		: TaskEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

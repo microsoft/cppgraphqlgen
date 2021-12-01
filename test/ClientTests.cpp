@@ -241,9 +241,9 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
+									   std::move(variables) },
+		[&result](response::Value&& response) {
+			result = std::move(response);
 		});
 	_service->deliver("nextAppointmentChange", nullptr);
 	_service->unsubscribe(key);

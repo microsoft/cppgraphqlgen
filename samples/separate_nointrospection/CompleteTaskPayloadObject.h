@@ -11,22 +11,140 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::CompleteTaskPayloadMethod {
+
+template <class TImpl>
+concept WithParamsTask = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsTask = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask() } };
+};
+
+template <class TImpl>
+concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsClientMutationId = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getClientMutationId() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::CompleteTaskPayloadMethod
 
 class CompleteTaskPayload
 	: public service::Object
 {
-protected:
-	explicit CompleteTaskPayload();
+private:
+	service::AwaitableResolver resolveTask(service::ResolverParams&& params);
+	service::AwaitableResolver resolveClientMutationId(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsTask<T>)
+			{
+				return { _pimpl->getTask(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsTask<T>)
+			{
+				return { _pimpl->getTask() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
+			{
+				return { _pimpl->getClientMutationId(std::move(params)) };
+			}
+			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsClientMutationId<T>)
+			{
+				return { _pimpl->getClientMutationId() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::CompleteTaskPayloadMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const;
-	virtual service::FieldResult<std::optional<response::StringType>> getClientMutationId(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveTask(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveClientMutationId(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	CompleteTaskPayload(std::shared_ptr<T> pimpl)
+		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

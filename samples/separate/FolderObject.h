@@ -11,25 +11,170 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
+namespace methods::FolderMethod {
+
+template <class TImpl>
+concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsId = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IdType> { impl.getId() } };
+};
+
+template <class TImpl>
+concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getName(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsName = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::optional<response::StringType>> { impl.getName() } };
+};
+
+template <class TImpl>
+concept WithParamsUnreadCount = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<response::IntType> { impl.getUnreadCount(std::move(params)) } };
+};
+
+template <class TImpl>
+concept NoParamsUnreadCount = requires (TImpl impl) 
+{
+	{ service::FieldResult<response::IntType> { impl.getUnreadCount() } };
+};
+
+template <class TImpl>
+concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.beginSelectionSet(params) };
+};
+
+template <class TImpl>
+concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+{
+	{ impl.endSelectionSet(params) };
+};
+
+} // namespace methods::FolderMethod
 
 class Folder
 	: public service::Object
-	, public Node
 {
-protected:
-	explicit Folder();
+private:
+	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params);
+	service::AwaitableResolver resolveUnreadCount(service::ResolverParams&& params);
+
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+
+	struct Concept
+		: Node
+	{
+		virtual ~Concept() = default;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
+
+		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const = 0;
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::FolderMethod::WithParamsId<T>)
+			{
+				return { _pimpl->getId(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsId<T>)
+			{
+				return { _pimpl->getId() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::FolderMethod::WithParamsName<T>)
+			{
+				return { _pimpl->getName(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsName<T>)
+			{
+				return { _pimpl->getName() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::FolderMethod::WithParamsUnreadCount<T>)
+			{
+				return { _pimpl->getUnreadCount(std::move(params)) };
+			}
+			else if constexpr (methods::FolderMethod::NoParamsUnreadCount<T>)
+			{
+				return { _pimpl->getUnreadCount() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+			}
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasBeginSelectionSet<T>)
+			{
+				_pimpl->beginSelectionSet(params);
+			}
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			if constexpr (methods::FolderMethod::HasEndSelectionSet<T>)
+			{
+				_pimpl->endSelectionSet(params);
+			}
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Folder(std::unique_ptr<Concept>&& pimpl);
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
 
 public:
-	virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const;
-	virtual service::FieldResult<response::IntType> getUnreadCount(service::FieldParams&& params) const;
-
-private:
-	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveName(service::ResolverParams&& params);
-	std::future<service::ResolverResult> resolveUnreadCount(service::ResolverParams&& params);
-
-	std::future<service::ResolverResult> resolve_typename(service::ResolverParams&& params);
+	template <class T>
+	Folder(std::shared_ptr<T> pimpl)
+		: Folder { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+	}
 };
 
 } // namespace graphql::today::object

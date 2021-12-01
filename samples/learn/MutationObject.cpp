@@ -18,34 +18,40 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Mutation::Mutation()
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Mutation"
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(createReview)gql"sv, [this](service::ResolverParams&& params) { return resolveCreateReview(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<std::shared_ptr<Review>> Mutation::applyCreateReview(service::FieldParams&&, Episode&&, ReviewInput&&) const
+void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(Mutation::applyCreateReview is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> Mutation::resolveCreateReview(service::ResolverParams&& params)
+void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params)
 {
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
+	auto result = _pimpl->applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Mutation)gql" }, std::move(params));
 }

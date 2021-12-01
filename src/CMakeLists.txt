@@ -61,10 +61,57 @@ function(add_bigobj_flag target)
   endif()
 endfunction()
 
+add_library(graphqlcoro INTERFACE)
+target_compile_features(graphqlcoro INTERFACE cxx_std_20)
+
+function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
+  set(TEST_FILE "test_${OUT_RESULT}.cpp")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)  
+
+  try_compile(TEST_RESULT
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+    CXX_STANDARD 20)
+
+  if(NOT TEST_RESULT)
+      # Retry with each of the optional libraries.
+      foreach(OPTIONAL_FLAG IN LISTS OPTIONAL_FLAGS)
+        try_compile(TEST_RESULT
+          ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+          CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${OPTIONAL_FLAG}"
+          CXX_STANDARD 20)
+  
+        if(TEST_RESULT)
+          # Looks like the optional flag was required, go ahead and add it to the compile options.
+          target_compile_options(graphqlcoro INTERFACE ${OPTIONAL_FLAG})
+          break()
+        endif()
+      endforeach(OPTIONAL_FLAG)
+  endif()
+
+  set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
+endfunction()
+
+check_coroutine_impl("coroutine" "std" "-fcoroutines" STD_COROUTINE)
+if(STD_COROUTINE)
+  message(STATUS "Using std coroutine")
+else()
+  check_coroutine_impl("experimental/coroutine" "std::experimental" "" STD_EXPERIMENTAL_COROUTINE)
+  if(STD_EXPERIMENTAL_COROUTINE)
+    message(STATUS "Using std::experimental coroutine")
+    target_compile_definitions(graphqlcoro INTERFACE USE_STD_EXPERIMENTAL_COROUTINE)
+  else()
+    message(FATAL_ERROR "Missing coroutine support")
+  endif()
+endif()
+
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
-target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_link_libraries(graphqlpeg PUBLIC
+  graphqlcoro
+  taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
@@ -91,6 +138,7 @@ add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+target_link_libraries(graphqlresponse PUBLIC graphqlcoro)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -103,7 +151,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 
   add_version_rc(graphqlresponse)
 endif()
-
 
 # Common schemagen and clientgen dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
@@ -398,6 +445,7 @@ install(TARGETS
     graphqlclient
     graphqlintrospection
     graphqlpeg
+    graphqlcoro
     graphqlresponse
     graphqlservice
   EXPORT cppgraphqlgen-targets
@@ -414,6 +462,7 @@ install(FILES
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Awaitable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h

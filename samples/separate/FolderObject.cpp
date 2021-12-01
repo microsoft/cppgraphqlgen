@@ -18,7 +18,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Folder::Folder()
+Folder::Folder(std::unique_ptr<Concept>&& pimpl)
 	: service::Object({
 		"Node",
 		"UnionType",
@@ -29,55 +29,51 @@ Folder::Folder()
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(unreadCount)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } }
 	})
+	, _pimpl(std::move(pimpl))
 {
 }
 
-service::FieldResult<response::IdType> Folder::getId(service::FieldParams&&) const
+void Folder::beginSelectionSet(const service::SelectionSetParams& params) const
 {
-	throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
+	_pimpl->beginSelectionSet(params);
 }
 
-std::future<service::ResolverResult> Folder::resolveId(service::ResolverParams&& params)
+void Folder::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Folder::getName(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Folder::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<response::IntType> Folder::getUnreadCount(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
-}
-
-std::future<service::ResolverResult> Folder::resolveUnreadCount(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
-	auto result = getUnreadCount(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getUnreadCount(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
 }
 
-std::future<service::ResolverResult> Folder::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolve_typename(service::ResolverParams&& params)
 {
 	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(Folder)gql" }, std::move(params));
 }

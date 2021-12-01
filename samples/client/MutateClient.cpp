@@ -48,7 +48,7 @@ response::Value ModifiedVariable<Variables::CompleteTaskInput>::serialize(Variab
 }
 
 template <>
-TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
+TaskState ModifiedResponse<TaskState>::parse(response::Value value)
 {
 	if (!value.maybe_enum())
 	{
@@ -66,7 +66,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value response)
 {
 	Response::completedTask_CompleteTaskPayload::completedTask_Task result;
 
@@ -98,7 +98,7 @@ Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse
 }
 
 template <>
-Response::completedTask_CompleteTaskPayload ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+Response::completedTask_CompleteTaskPayload ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value response)
 {
 	Response::completedTask_CompleteTaskPayload result;
 
@@ -170,7 +170,7 @@ response::Value serializeVariables(Variables&& variables)
 	return result;
 }
 
-Response parseResponse(response::Value&& response)
+Response parseResponse(response::Value response)
 {
 	Response result;
 

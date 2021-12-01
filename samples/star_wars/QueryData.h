@@ -13,19 +13,16 @@
 
 namespace graphql::learn {
 
-class Query : public object::Query
+class Query
 {
 public:
-	explicit Query(std::map<Episode, SharedHero> heroes,
-		std::map<response::StringType, std::shared_ptr<Human>> humans,
-		std::map<response::StringType, std::shared_ptr<Droid>> droids) noexcept;
+	explicit Query(std::map<Episode, SharedHero>&& heroes,
+		std::map<response::StringType, std::shared_ptr<Human>>&& humans,
+		std::map<response::StringType, std::shared_ptr<Droid>>&& droids) noexcept;
 
-	service::FieldResult<std::shared_ptr<service::Object>> getHero(
-		service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final;
-	service::FieldResult<std::shared_ptr<object::Human>> getHuman(
-		service::FieldParams&& params, response::StringType&& idArg) const final;
-	service::FieldResult<std::shared_ptr<object::Droid>> getDroid(
-		service::FieldParams&& params, response::StringType&& idArg) const final;
+	std::shared_ptr<service::Object> getHero(std::optional<Episode> episodeArg) const noexcept;
+	std::shared_ptr<object::Human> getHuman(const response::StringType& idArg) const noexcept;
+	std::shared_ptr<object::Droid> getDroid(const response::StringType& idArg) const noexcept;
 
 private:
 	const std::map<Episode, SharedHero> heroes_;

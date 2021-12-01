@@ -126,7 +126,7 @@ Error parseServiceError(response::Value&& error)
 	return result;
 }
 
-ServiceResponse parseServiceResponse(response::Value&& response)
+ServiceResponse parseServiceResponse(response::Value response)
 {
 	ServiceResponse result;
 
@@ -203,7 +203,7 @@ response::Value ModifiedVariable<response::IdType>::serialize(response::IdType&&
 }
 
 template <>
-response::IntType ModifiedResponse<response::IntType>::parse(response::Value&& value)
+response::IntType ModifiedResponse<response::IntType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -214,7 +214,7 @@ response::IntType ModifiedResponse<response::IntType>::parse(response::Value&& v
 }
 
 template <>
-response::FloatType ModifiedResponse<response::FloatType>::parse(response::Value&& value)
+response::FloatType ModifiedResponse<response::FloatType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
@@ -225,7 +225,7 @@ response::FloatType ModifiedResponse<response::FloatType>::parse(response::Value
 }
 
 template <>
-response::StringType ModifiedResponse<response::StringType>::parse(response::Value&& value)
+response::StringType ModifiedResponse<response::StringType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -236,7 +236,7 @@ response::StringType ModifiedResponse<response::StringType>::parse(response::Val
 }
 
 template <>
-response::BooleanType ModifiedResponse<response::BooleanType>::parse(response::Value&& value)
+response::BooleanType ModifiedResponse<response::BooleanType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -247,13 +247,13 @@ response::BooleanType ModifiedResponse<response::BooleanType>::parse(response::V
 }
 
 template <>
-response::Value ModifiedResponse<response::Value>::parse(response::Value&& value)
+response::Value ModifiedResponse<response::Value>::parse(response::Value value)
 {
-	return response::Value { std::move(value) };
+	return value;
 }
 
 template <>
-response::IdType ModifiedResponse<response::IdType>::parse(response::Value&& value)
+response::IdType ModifiedResponse<response::IdType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::String)
 	{
