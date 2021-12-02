@@ -20,8 +20,8 @@ struct GeneratorOptions
 {
 	const std::optional<GeneratorPaths> paths;
 	const bool verbose = false;
-	const bool separateFiles = false;
 	const bool stubs = false;
+	const bool mergeFiles = false;
 	const bool noIntrospection = false;
 };
 

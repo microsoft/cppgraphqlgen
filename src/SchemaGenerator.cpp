@@ -91,7 +91,7 @@ std::string Generator::getHeaderPath() const noexcept
 
 std::string Generator::getObjectHeaderPath() const noexcept
 {
-	if (_options.separateFiles)
+	if (!_options.mergeFiles)
 	{
 		fs::path fullPath { _headerDir };
 
@@ -124,7 +124,7 @@ std::vector<std::string> Generator::Build() const noexcept
 		builtFiles.push_back(_sourcePath);
 	}
 
-	if (_options.separateFiles)
+	if (!_options.mergeFiles)
 	{
 		auto separateFiles = outputSeparateFiles();
 
@@ -306,7 +306,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 	}
 
-	if (!_loader.getObjectTypes().empty() && !_options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
 	{
 		if (_loader.isIntrospection())
 		{
@@ -465,7 +465,7 @@ private:
 )cpp";
 	}
 
-	if (!_loader.getObjectTypes().empty() && _options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && !_options.mergeFiles)
 	{
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
@@ -1181,7 +1181,7 @@ service::AwaitableResolver ModifiedResult<)cpp"
 		}
 	}
 
-	if (!_loader.getObjectTypes().empty() && !_options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
 	{
 		NamespaceScope objectNamespace { sourceFile, "object" };
 
@@ -1624,7 +1624,7 @@ Operations::Operations()cpp";
 
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
-			if (_options.separateFiles)
+			if (!_options.mergeFiles)
 			{
 				sourceFile << R"cpp(	Add)cpp" << objectType.cppType << R"cpp(Details(type)cpp"
 						   << objectType.cppType << R"cpp(, schema);
@@ -2057,7 +2057,7 @@ void Generator::outputObjectIntrospection(
 
 			firstInterface = false;
 
-			if (_options.separateFiles)
+			if (!_options.mergeFiles)
 			{
 				sourceFile
 					<< R"cpp(		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql()cpp"
@@ -2654,9 +2654,9 @@ int main(int argc, char** argv)
 	bool showVersion = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
-	bool stubs = false;
 	bool verbose = false;
-	bool separateFiles = false;
+	bool stubs = false;
+	bool mergeFiles = false;
 	bool noIntrospection = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
@@ -2681,10 +2681,9 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Schema.h header file")("stubs",
 		po::bool_switch(&stubs),
-		"Unimplemented fields throw runtime exceptions instead of compiler errors")(
-		"separate-files",
-		po::bool_switch(&separateFiles),
-		"Generate separate files for each of the types")("no-introspection",
+		"Unimplemented fields throw runtime exceptions instead of compiler errors")("merge-files",
+		po::bool_switch(&mergeFiles),
+		"Generate a single header and source file for the entire schema")("no-introspection",
 		po::bool_switch(&noIntrospection),
 		"Do not generate support for Introspection");
 	positional.add("schema", 1).add("prefix", 1).add("namespace", 1);
@@ -2744,9 +2743,15 @@ int main(int argc, char** argv)
 	{
 		if (buildIntrospection)
 		{
-			const auto files =
-				graphql::generator::schema::Generator(std::nullopt, { std::nullopt, verbose })
-					.Build();
+			const auto files = graphql::generator::schema::Generator(std::nullopt,
+				{
+					std::nullopt,
+					verbose,
+					false, // stubs
+					true,  // mergeFiles
+					false, // noIntrospection
+				})
+								   .Build();
 
 			for (const auto& file : files)
 			{
@@ -2764,8 +2769,8 @@ int main(int argc, char** argv)
 					graphql::generator::schema::GeneratorPaths { std::move(headerDir),
 						std::move(sourceDir) },
 					verbose,
-					separateFiles,
 					stubs,
+					mergeFiles,
 					noIntrospection,
 				})
 								   .Build();

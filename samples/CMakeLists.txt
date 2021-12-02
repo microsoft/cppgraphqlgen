@@ -11,14 +11,14 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified/TodaySchema.h
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --stubs
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --stubs --merge-files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
       TodaySchema.h
       ${CMAKE_CURRENT_SOURCE_DIR}/unified
     DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY unified
-    COMMENT "Generating mock TodaySchema files (--stubs)")
+    COMMENT "Generating mock TodaySchema files (--stubs --merge-files)")
 
   # unifiedschema_nointrospection
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection)
@@ -27,14 +27,14 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/unified_nointrospection/TodaySchema.h
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --stubs --no-introspection
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --stubs --merge-files --no-introspection
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       TodaySchema.cpp
       TodaySchema.h
       ${CMAKE_CURRENT_SOURCE_DIR}/unified_nointrospection
     DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY unified_nointrospection
-    COMMENT "Generating mock TodaySchema files without Introspection (--stubs --no-introspection)")
+    COMMENT "Generating mock TodaySchema files without Introspection (--stubs --merge-files --no-introspection)")
 
   # validationschema
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/validation)
@@ -43,47 +43,47 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/validation/ValidationSchema.h
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation" --stubs
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.validation.graphql" --prefix="Validation" --namespace="validation" --stubs --merge-files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ValidationSchema.cpp
       ValidationSchema.h
       ${CMAKE_CURRENT_SOURCE_DIR}/validation
     DEPENDS schemagen graphqlpeg schema.validation.graphql
     WORKING_DIRECTORY validation
-    COMMENT "Generating ValidationSchema files (--stubs)")
+    COMMENT "Generating ValidationSchema files (--stubs --merge-files)")
 
   # separateschema
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate)
 
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate/today_schema_files
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --separate-files --stubs > today_schema_files
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --stubs > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate
     DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY separate
-    COMMENT "Generating mock TodaySchema (--stubs --separate-files)")
+    COMMENT "Generating mock TodaySchema (--stubs)")
 
   # separateschema_nointrospection
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection)
 
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/separate_nointrospection/today_schema_files
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection --separate-files --stubs > today_schema_files
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.today.graphql" --prefix="Today" --namespace="today" --no-introspection --stubs > today_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different today_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/separate_nointrospection
     DEPENDS schemagen graphqlpeg schema.today.graphql
     WORKING_DIRECTORY separate_nointrospection
-    COMMENT "Generating mock TodaySchema without Introspection (--stubs --separate-files --no-introspection)")
+    COMMENT "Generating mock TodaySchema without Introspection (--stubs --no-introspection)")
 
   # learn
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/learn)
 
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/learn/learn_schema_files
-    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.learn.graphql" --prefix="StarWars" --namespace="learn" --separate-files > learn_schema_files
+    COMMAND schemagen --schema="${CMAKE_CURRENT_SOURCE_DIR}/schema.learn.graphql" --prefix="StarWars" --namespace="learn" > learn_schema_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different learn_schema_files ${CMAKE_CURRENT_SOURCE_DIR}/learn
     DEPENDS schemagen graphqlpeg schema.learn.graphql
     WORKING_DIRECTORY learn
-    COMMENT "Generating mock StarWarsSchema (--separate-files)")
+    COMMENT "Generating mock StarWarsSchema")
 
   add_custom_command(
     OUTPUT updated_samples
