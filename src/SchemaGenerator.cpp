@@ -806,7 +806,7 @@ private:
 			}
 			else)cpp";
 
-			if (_options.noStubs)
+			if (!_options.stubs)
 			{
 				headerFile << R"cpp(
 			{
@@ -835,7 +835,7 @@ private:
 			headerFile << R"cpp() };
 			})cpp";
 
-			if (!_options.noStubs)
+			if (_options.stubs)
 			{
 				headerFile << R"cpp(
 			else
@@ -1505,8 +1505,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -2655,7 +2654,7 @@ int main(int argc, char** argv)
 	bool showVersion = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
-	bool noStubs = false;
+	bool stubs = false;
 	bool verbose = false;
 	bool separateFiles = false;
 	bool noIntrospection = false;
@@ -2680,9 +2679,10 @@ int main(int argc, char** argv)
 		po::value(&sourceDir),
 		"Target path for the <prefix>Schema.cpp source file")("header-dir",
 		po::value(&headerDir),
-		"Target path for the <prefix>Schema.h header file")("no-stubs",
-		po::bool_switch(&noStubs),
-		"Generate abstract classes without stub implementations")("separate-files",
+		"Target path for the <prefix>Schema.h header file")("stubs",
+		po::bool_switch(&stubs),
+		"Unimplemented fields throw runtime exceptions instead of compiler errors")(
+		"separate-files",
 		po::bool_switch(&separateFiles),
 		"Generate separate files for each of the types")("no-introspection",
 		po::bool_switch(&noIntrospection),
@@ -2765,7 +2765,7 @@ int main(int argc, char** argv)
 						std::move(sourceDir) },
 					verbose,
 					separateFiles,
-					noStubs,
+					stubs,
 					noIntrospection,
 				})
 								   .Build();
