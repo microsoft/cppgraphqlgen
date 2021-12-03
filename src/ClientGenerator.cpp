@@ -223,7 +223,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
+				   << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())
@@ -451,8 +452,8 @@ bool Generator::outputSource() const noexcept
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -512,7 +513,7 @@ response::Value ModifiedVariable<)cpp"
 {
 	response::Value result { response::Type::EnumValue };
 
-	result.set<response::StringType>(response::StringType { s_names)cpp"
+	result.set<std::string>(std::string { s_names)cpp"
 						   << cppType << R"cpp([static_cast<size_t>(value)] });
 
 	return result;
@@ -577,7 +578,7 @@ response::Value ModifiedVariable<Variables::)cpp"
 
 	const auto itr = std::find(s_names)cpp"
 				   << cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
-				   << R"cpp(.cend(), value.release<response::StringType>());
+				   << R"cpp(.cend(), value.release<std::string>());
 
 	if (itr == s_names)cpp"
 				   << cppType << R"cpp(.cend())

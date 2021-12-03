@@ -141,8 +141,7 @@ TEST_F(ClientCase, QueryEverything)
 		ASSERT_TRUE(appointmentNode->subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(appointmentNode->subject)) << "subject should match";
 		ASSERT_TRUE(appointmentNode->when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", appointmentNode->when->get<response::StringType>())
-			<< "when should match";
+		EXPECT_EQ("tomorrow", appointmentNode->when->get<std::string>()) << "when should match";
 		EXPECT_FALSE(appointmentNode->isNow) << "isNow should match";
 		EXPECT_EQ("Appointment", appointmentNode->_typename) << "__typename should match";
 
@@ -181,7 +180,7 @@ TEST_F(ClientCase, QueryEverything)
 		ASSERT_TRUE(anyType.subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(anyType.subject)) << "subject should match";
 		ASSERT_TRUE(anyType.when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", anyType.when->get<response::StringType>()) << "when should match";
+		EXPECT_EQ("tomorrow", anyType.when->get<std::string>()) << "when should match";
 		EXPECT_FALSE(anyType.isNow) << "isNow should match";
 	}
 	catch (const std::logic_error& ex)
@@ -263,8 +262,7 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 		ASSERT_TRUE(appointmentNode->subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(appointmentNode->subject)) << "subject should match";
 		ASSERT_TRUE(appointmentNode->when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", appointmentNode->when->get<response::StringType>())
-			<< "when should match";
+		EXPECT_EQ("tomorrow", appointmentNode->when->get<std::string>()) << "when should match";
 		EXPECT_TRUE(appointmentNode->isNow) << "isNow should match";
 	}
 	catch (const std::logic_error& ex)

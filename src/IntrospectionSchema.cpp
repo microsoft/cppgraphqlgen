@@ -38,7 +38,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { "not a valid __TypeKind value" } };
 	}
 
-	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
@@ -56,7 +56,7 @@ service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(serv
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_namesTypeKind[static_cast<size_t>(value)] });
+			result.set<std::string>(std::string { s_namesTypeKind[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -91,7 +91,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
 	}
 
-	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
+	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{
@@ -109,7 +109,7 @@ service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::con
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_namesDirectiveLocation[static_cast<size_t>(value)] });
+			result.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<size_t>(value)] });
 
 			return result;
 		});
@@ -193,7 +193,7 @@ service::AwaitableResolver Schema::resolveDirectives(service::ResolverParams&& p
 
 service::AwaitableResolver Schema::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Schema)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Schema)gql" }, std::move(params));
 }
 
 Type::Type(std::shared_ptr<introspection::Type> pimpl)
@@ -238,7 +238,7 @@ service::AwaitableResolver Type::resolveName(service::ResolverParams&& params)
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Type::resolveDescription(service::ResolverParams&& params)
@@ -248,7 +248,7 @@ service::AwaitableResolver Type::resolveDescription(service::ResolverParams&& pa
 	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Type::resolveFields(service::ResolverParams&& params)
@@ -264,10 +264,10 @@ service::AwaitableResolver Type::resolveFields(service::ResolverParams&& params)
 		return values;
 	}();
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getFields(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIncludeDeprecated));
@@ -309,10 +309,10 @@ service::AwaitableResolver Type::resolveEnumValues(service::ResolverParams&& par
 		return values;
 	}();
 
-	auto pairIncludeDeprecated = service::ModifiedArgument<response::BooleanType>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
+	auto pairIncludeDeprecated = service::ModifiedArgument<bool>::find<service::TypeModifier::Nullable>("includeDeprecated", params.arguments);
 	auto argIncludeDeprecated = (pairIncludeDeprecated.second
 		? std::move(pairIncludeDeprecated.first)
-		: service::ModifiedArgument<response::BooleanType>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
+		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getEnumValues(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIncludeDeprecated));
@@ -343,7 +343,7 @@ service::AwaitableResolver Type::resolveOfType(service::ResolverParams&& params)
 
 service::AwaitableResolver Type::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Type)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Type)gql" }, std::move(params));
 }
 
 Field::Field(std::shared_ptr<introspection::Field> pimpl)
@@ -375,7 +375,7 @@ service::AwaitableResolver Field::resolveName(service::ResolverParams&& params)
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Field::resolveDescription(service::ResolverParams&& params)
@@ -385,7 +385,7 @@ service::AwaitableResolver Field::resolveDescription(service::ResolverParams&& p
 	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Field::resolveArgs(service::ResolverParams&& params)
@@ -415,7 +415,7 @@ service::AwaitableResolver Field::resolveIsDeprecated(service::ResolverParams&& 
 	auto result = _pimpl->getIsDeprecated(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Field::resolveDeprecationReason(service::ResolverParams&& params)
@@ -425,12 +425,12 @@ service::AwaitableResolver Field::resolveDeprecationReason(service::ResolverPara
 	auto result = _pimpl->getDeprecationReason(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Field::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Field)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Field)gql" }, std::move(params));
 }
 
 InputValue::InputValue(std::shared_ptr<introspection::InputValue> pimpl)
@@ -460,7 +460,7 @@ service::AwaitableResolver InputValue::resolveName(service::ResolverParams&& par
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver InputValue::resolveDescription(service::ResolverParams&& params)
@@ -470,7 +470,7 @@ service::AwaitableResolver InputValue::resolveDescription(service::ResolverParam
 	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver InputValue::resolveType(service::ResolverParams&& params)
@@ -490,12 +490,12 @@ service::AwaitableResolver InputValue::resolveDefaultValue(service::ResolverPara
 	auto result = _pimpl->getDefaultValue(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver InputValue::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__InputValue)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__InputValue)gql" }, std::move(params));
 }
 
 EnumValue::EnumValue(std::shared_ptr<introspection::EnumValue> pimpl)
@@ -525,7 +525,7 @@ service::AwaitableResolver EnumValue::resolveName(service::ResolverParams&& para
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver EnumValue::resolveDescription(service::ResolverParams&& params)
@@ -535,7 +535,7 @@ service::AwaitableResolver EnumValue::resolveDescription(service::ResolverParams
 	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver EnumValue::resolveIsDeprecated(service::ResolverParams&& params)
@@ -545,7 +545,7 @@ service::AwaitableResolver EnumValue::resolveIsDeprecated(service::ResolverParam
 	auto result = _pimpl->getIsDeprecated(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::BooleanType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver EnumValue::resolveDeprecationReason(service::ResolverParams&& params)
@@ -555,12 +555,12 @@ service::AwaitableResolver EnumValue::resolveDeprecationReason(service::Resolver
 	auto result = _pimpl->getDeprecationReason(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver EnumValue::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__EnumValue)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__EnumValue)gql" }, std::move(params));
 }
 
 Directive::Directive(std::shared_ptr<introspection::Directive> pimpl)
@@ -590,7 +590,7 @@ service::AwaitableResolver Directive::resolveName(service::ResolverParams&& para
 	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Directive::resolveDescription(service::ResolverParams&& params)
@@ -600,7 +600,7 @@ service::AwaitableResolver Directive::resolveDescription(service::ResolverParams
 	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Directive::resolveLocations(service::ResolverParams&& params)
@@ -625,7 +625,7 @@ service::AwaitableResolver Directive::resolveArgs(service::ResolverParams&& para
 
 service::AwaitableResolver Directive::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql(__Directive)gql" }, std::move(params));
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Directive)gql" }, std::move(params));
 }
 
 } // namespace object

@@ -13,5 +13,5 @@ TEST(ResponseCase, ValueConstructorFromStringLiteral)
 	auto actual = response::Value(expected);
 
 	ASSERT_TRUE(response::Type::String == actual.type());
-	ASSERT_EQ(expected, actual.release<response::StringType>());
+	ASSERT_EQ(expected, actual.release<std::string>());
 }

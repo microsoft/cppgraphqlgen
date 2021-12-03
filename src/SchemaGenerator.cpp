@@ -91,7 +91,7 @@ std::string Generator::getHeaderPath() const noexcept
 
 std::string Generator::getObjectHeaderPath() const noexcept
 {
-	if (_options.separateFiles)
+	if (!_options.mergeFiles)
 	{
 		fs::path fullPath { _headerDir };
 
@@ -124,7 +124,7 @@ std::vector<std::string> Generator::Build() const noexcept
 		builtFiles.push_back(_sourcePath);
 	}
 
-	if (_options.separateFiles)
+	if (!_options.mergeFiles)
 	{
 		auto separateFiles = outputSeparateFiles();
 
@@ -306,7 +306,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 	}
 
-	if (!_loader.getObjectTypes().empty() && !_options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
 	{
 		if (_loader.isIntrospection())
 		{
@@ -465,7 +465,7 @@ private:
 )cpp";
 	}
 
-	if (!_loader.getObjectTypes().empty() && _options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && !_options.mergeFiles)
 	{
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
@@ -806,7 +806,7 @@ private:
 			}
 			else)cpp";
 
-			if (_options.noStubs)
+			if (!_options.stubs)
 			{
 				headerFile << R"cpp(
 			{
@@ -835,7 +835,7 @@ private:
 			headerFile << R"cpp() };
 			})cpp";
 
-			if (!_options.noStubs)
+			if (_options.stubs)
 			{
 				headerFile << R"cpp(
 			else
@@ -1044,7 +1044,7 @@ template <>
 
 	const auto itr = std::find(s_names)cpp"
 					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<response::StringType>());
+					   << R"cpp(.cend(), value.get<std::string>());
 
 	if (itr == s_names)cpp"
 					   << enumType.cppType << R"cpp(.cend())
@@ -1071,7 +1071,7 @@ service::AwaitableResolver ModifiedResult<)cpp"
 		{
 			response::Value result(response::Type::EnumValue);
 
-			result.set<response::StringType>(response::StringType { s_names)cpp"
+			result.set<std::string>(std::string { s_names)cpp"
 					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
 
 			return result;
@@ -1181,7 +1181,7 @@ service::AwaitableResolver ModifiedResult<)cpp"
 		}
 	}
 
-	if (!_loader.getObjectTypes().empty() && !_options.separateFiles)
+	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
 	{
 		NamespaceScope objectNamespace { sourceFile, "object" };
 
@@ -1505,8 +1505,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType
-						   << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -1625,7 +1624,7 @@ Operations::Operations()cpp";
 
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
-			if (_options.separateFiles)
+			if (!_options.mergeFiles)
 			{
 				sourceFile << R"cpp(	Add)cpp" << objectType.cppType << R"cpp(Details(type)cpp"
 						   << objectType.cppType << R"cpp(, schema);
@@ -1999,7 +1998,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			   << objectType.cppType << R"cpp(::resolve_typename(service::ResolverParams&& params)
 {
-	return service::ModifiedResult<response::StringType>::convert(response::StringType{ R"gql()cpp"
+	return service::ModifiedResult<std::string>::convert(std::string{ R"gql()cpp"
 			   << objectType.type << R"cpp()gql" }, std::move(params));
 }
 )cpp";
@@ -2021,7 +2020,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
 {
-	auto argName = service::ModifiedArgument<response::StringType>::require("name", params.arguments);
+	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
 	std::shared_ptr<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
@@ -2058,7 +2057,7 @@ void Generator::outputObjectIntrospection(
 
 			firstInterface = false;
 
-			if (_options.separateFiles)
+			if (!_options.mergeFiles)
 			{
 				sourceFile
 					<< R"cpp(		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql()cpp"
@@ -2218,7 +2217,7 @@ std::string Generator::getArgumentDefaultValue(
 		{
 			argumentDefaultValue << padding
 								 << R"cpp(		entry = response::Value(std::string(R"gql()cpp"
-								 << defaultValue.get<response::StringType>() << R"cpp()gql"));
+								 << defaultValue.get<std::string>() << R"cpp()gql"));
 )cpp";
 			break;
 		}
@@ -2233,8 +2232,7 @@ std::string Generator::getArgumentDefaultValue(
 		case response::Type::Boolean:
 		{
 			argumentDefaultValue << padding << R"cpp(		entry = response::Value()cpp"
-								 << (defaultValue.get<response::BooleanType>() ? R"cpp(true)cpp"
-																			   : R"cpp(false)cpp")
+								 << (defaultValue.get<bool>() ? R"cpp(true)cpp" : R"cpp(false)cpp")
 								 << R"cpp();
 )cpp";
 			break;
@@ -2242,20 +2240,18 @@ std::string Generator::getArgumentDefaultValue(
 
 		case response::Type::Int:
 		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::IntType>()cpp"
-				<< defaultValue.get<response::IntType>() << R"cpp());
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(static_cast<int>()cpp"
+								 << defaultValue.get<int>() << R"cpp());
 )cpp";
 			break;
 		}
 
 		case response::Type::Float:
 		{
-			argumentDefaultValue
-				<< padding
-				<< R"cpp(		entry = response::Value(static_cast<response::FloatType>()cpp"
-				<< defaultValue.get<response::FloatType>() << R"cpp());
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(static_cast<double>()cpp"
+								 << defaultValue.get<double>() << R"cpp());
 )cpp";
 			break;
 		}
@@ -2264,8 +2260,8 @@ std::string Generator::getArgumentDefaultValue(
 		{
 			argumentDefaultValue
 				<< padding << R"cpp(		entry = response::Value(response::Type::EnumValue);
-		entry.set<response::StringType>(R"gql()cpp"
-				<< defaultValue.get<response::StringType>() << R"cpp()gql");
+		entry.set<std::string>(R"gql()cpp"
+				<< defaultValue.get<std::string>() << R"cpp()gql");
 )cpp";
 			break;
 		}
@@ -2658,9 +2654,9 @@ int main(int argc, char** argv)
 	bool showVersion = false;
 	bool buildIntrospection = false;
 	bool buildCustom = false;
-	bool noStubs = false;
 	bool verbose = false;
-	bool separateFiles = false;
+	bool stubs = false;
+	bool mergeFiles = false;
 	bool noIntrospection = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
@@ -2683,11 +2679,11 @@ int main(int argc, char** argv)
 		po::value(&sourceDir),
 		"Target path for the <prefix>Schema.cpp source file")("header-dir",
 		po::value(&headerDir),
-		"Target path for the <prefix>Schema.h header file")("no-stubs",
-		po::bool_switch(&noStubs),
-		"Generate abstract classes without stub implementations")("separate-files",
-		po::bool_switch(&separateFiles),
-		"Generate separate files for each of the types")("no-introspection",
+		"Target path for the <prefix>Schema.h header file")("stubs",
+		po::bool_switch(&stubs),
+		"Unimplemented fields throw runtime exceptions instead of compiler errors")("merge-files",
+		po::bool_switch(&mergeFiles),
+		"Generate a single header and source file for the entire schema")("no-introspection",
 		po::bool_switch(&noIntrospection),
 		"Do not generate support for Introspection");
 	positional.add("schema", 1).add("prefix", 1).add("namespace", 1);
@@ -2747,9 +2743,15 @@ int main(int argc, char** argv)
 	{
 		if (buildIntrospection)
 		{
-			const auto files =
-				graphql::generator::schema::Generator(std::nullopt, { std::nullopt, verbose })
-					.Build();
+			const auto files = graphql::generator::schema::Generator(std::nullopt,
+				{
+					std::nullopt,
+					verbose,
+					false, // stubs
+					true,  // mergeFiles
+					false, // noIntrospection
+				})
+								   .Build();
 
 			for (const auto& file : files)
 			{
@@ -2767,8 +2769,8 @@ int main(int argc, char** argv)
 					graphql::generator::schema::GeneratorPaths { std::move(headerDir),
 						std::move(sourceDir) },
 					verbose,
-					separateFiles,
-					noStubs,
+					stubs,
+					mergeFiles,
 					noIntrospection,
 				})
 								   .Build();

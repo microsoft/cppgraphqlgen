@@ -473,14 +473,14 @@ std::shared_ptr<object::CompleteTaskPayload> Mutation::applyCompleteTask(
 	return std::make_shared<object::CompleteTaskPayload>(_mutateCompleteTask(std::move(input)));
 }
 
-std::optional<response::FloatType> Mutation::_setFloat = std::nullopt;
+std::optional<double> Mutation::_setFloat = std::nullopt;
 
 double Mutation::getFloat() noexcept
 {
 	return *_setFloat;
 }
 
-response::FloatType Mutation::applySetFloat(response::FloatType valueArg) noexcept
+double Mutation::applySetFloat(double valueArg) noexcept
 {
 	_setFloat = std::make_optional(valueArg);
 	return valueArg;
@@ -498,7 +498,7 @@ NestedType::NestedType(service::FieldParams&& params, int depth)
 		std::move(params.fieldDirectives) });
 }
 
-response::IntType NestedType::getDepth() const noexcept
+int NestedType::getDepth() const noexcept
 {
 	return depth;
 }
@@ -544,12 +544,11 @@ Expensive::~Expensive()
 	--instances;
 }
 
-std::future<response::IntType> Expensive::getOrder(
-	const service::FieldParams& params) const noexcept
+std::future<int> Expensive::getOrder(const service::FieldParams& params) const noexcept
 {
 	return std::async(
-		params.launch,
-		[](bool blockAsync, response::IntType instanceOrder) noexcept {
+		params.launch.await_ready() ? std::launch::deferred : std::launch::async,
+		[](bool blockAsync, int instanceOrder) noexcept {
 			if (blockAsync)
 			{
 				// Block all of the Expensive objects in async mode until the count is reached.
@@ -569,8 +568,8 @@ std::future<response::IntType> Expensive::getOrder(
 
 			return instanceOrder;
 		},
-		params.launch == std::launch::async,
-		static_cast<response::IntType>(order));
+		!params.launch.await_ready(),
+		static_cast<int>(order));
 }
 
 EmptyOperations::EmptyOperations()

@@ -176,12 +176,12 @@ private:
 		virtual ~Concept() = default;
 
 		virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<bool>&& includeDeprecatedArg) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<response::BooleanType>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<bool>&& includeDeprecatedArg) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
 	};
@@ -200,17 +200,17 @@ private:
 			return { _pimpl->getKind() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&&) const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&&, std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
 		}
@@ -225,7 +225,7 @@ private:
 			return { _pimpl->getPossibleTypes() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&&, std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
 		}
@@ -268,12 +268,12 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsDeprecated(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDeprecationReason(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -285,12 +285,12 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName(service::FieldParams&&) const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDescription() };
 		}
@@ -305,12 +305,12 @@ private:
 			return { _pimpl->getType() };
 		}
 
-		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
+		service::FieldResult<bool> getIsDeprecated(service::FieldParams&&) const final
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDeprecationReason(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDeprecationReason() };
 		}
@@ -341,10 +341,10 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDefaultValue(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -356,12 +356,12 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName(service::FieldParams&&) const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDescription() };
 		}
@@ -371,7 +371,7 @@ private:
 			return { _pimpl->getType() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDefaultValue(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDefaultValue(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDefaultValue() };
 		}
@@ -402,10 +402,10 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<bool> getIsDeprecated(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDeprecationReason(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -417,22 +417,22 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName(service::FieldParams&&) const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<response::BooleanType> getIsDeprecated(service::FieldParams&&) const final
+		service::FieldResult<bool> getIsDeprecated(service::FieldParams&&) const final
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDeprecationReason(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDeprecationReason(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDeprecationReason() };
 		}
@@ -463,8 +463,8 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<response::StringType> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
 	};
@@ -478,12 +478,12 @@ private:
 		{
 		}
 
-		service::FieldResult<response::StringType> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName(service::FieldParams&&) const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<response::StringType>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
 		{
 			return { _pimpl->getDescription() };
 		}

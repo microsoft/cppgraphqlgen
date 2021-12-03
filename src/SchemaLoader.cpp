@@ -25,10 +25,10 @@ const BuiltinTypeMap SchemaLoader::s_builtinTypes = {
 };
 
 const CppTypeMap SchemaLoader::s_builtinCppTypes = {
-	"response::IntType"sv,
-	"response::FloatType"sv,
-	"response::StringType"sv,
-	"response::BooleanType"sv,
+	"int"sv,
+	"double"sv,
+	"std::string"sv,
+	"bool"sv,
 	"response::IdType"sv,
 };
 

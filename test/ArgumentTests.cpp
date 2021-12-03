@@ -147,7 +147,7 @@ TEST(ArgumentsCase, TaskStateEnum)
 {
 	response::Value response(response::Type::Map);
 	response::Value status(response::Type::EnumValue);
-	status.set<response::StringType>("Started");
+	status.set<std::string>("Started");
 	response.emplace_back("status", std::move(status));
 	today::TaskState actual = static_cast<today::TaskState>(-1);
 
@@ -229,7 +229,7 @@ TEST(ArgumentsCase, ScalarArgumentMap)
 	values = actual.release<response::MapType>();
 	ASSERT_EQ(1, values.size()) << "should have a single key/value";
 	ASSERT_EQ("foo", values.front().first) << "should match the key";
-	ASSERT_EQ("bar", values.front().second.get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("bar", values.front().second.get<std::string>()) << "should match the value";
 }
 
 TEST(ArgumentsCase, ScalarArgumentList)
@@ -251,8 +251,8 @@ TEST(ArgumentsCase, ScalarArgumentList)
 	ASSERT_EQ(response::Type::List, actual.type()) << "should parse the array";
 	values = actual.release<response::ListType>();
 	ASSERT_EQ(2, values.size()) << "should have 2 values";
-	ASSERT_EQ("foo", values.front().get<response::StringType>()) << "should match the value";
-	ASSERT_EQ("bar", values.back().get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("foo", values.front().get<std::string>()) << "should match the value";
+	ASSERT_EQ("bar", values.back().get<std::string>()) << "should match the value";
 }
 
 TEST(ArgumentsCase, ScalarArgumentNull)
@@ -289,7 +289,7 @@ TEST(ArgumentsCase, ScalarArgumentString)
 	}
 
 	ASSERT_EQ(response::Type::String, actual.type()) << "should parse the object";
-	ASSERT_EQ("foobar", actual.get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("foobar", actual.get<std::string>()) << "should match the value";
 }
 
 TEST(ArgumentsCase, FindArgumentNoTemplateArguments)
@@ -309,7 +309,7 @@ TEST(ArgumentsCase, FindArgumentNoTemplateArguments)
 
 	ASSERT_TRUE(actual.second) << "should find the argument";
 	ASSERT_EQ(response::Type::String, actual.first.type()) << "should parse the object";
-	ASSERT_EQ("foobar", actual.first.get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("foobar", actual.first.get<std::string>()) << "should match the value";
 }
 
 TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
@@ -329,5 +329,5 @@ TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
 
 	ASSERT_TRUE(actual.second) << "should find the argument";
 	ASSERT_EQ(response::Type::String, actual.first.type()) << "should parse the object";
-	ASSERT_EQ("foobar", actual.first.get<response::StringType>()) << "should match the value";
+	ASSERT_EQ("foobar", actual.first.get<std::string>()) << "should match the value";
 }
