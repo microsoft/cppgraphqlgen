@@ -32,8 +32,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqljson
       graphqlpeg
       graphqlresponse
-      graphqlclient
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+      graphqlclient)
 
   add_custom_target(copy_client_sample_dlls DEPENDS copied_sample_dlls)
 
