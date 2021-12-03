@@ -12,4 +12,5 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}-functions.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}-update-schema-files.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}-update-client-files.cmake
   DESTINATION ${GRAPHQL_INSTALL_CMAKE_DIR}/${PROJECT_NAME})
