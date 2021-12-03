@@ -24,6 +24,8 @@ The following functions are defined to help with code generation and build targe
   update_graphql_schema_files
   add_graphql_schema_target
   add_graphql_schema_no_introspection_target
+  update_graphql_client_files
+  add_graphql_client_target
 #]=======================================================================]
 
 include(CMakeFindDependencyMacro)
