@@ -35,7 +35,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlclient
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
 
-  add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
+  add_custom_target(copy_client_sample_dlls DEPENDS copied_sample_dlls)
 
-  add_dependencies(client_benchmark copy_sample_dlls)
+  add_dependencies(client_benchmark copy_client_sample_dlls)
 endif()

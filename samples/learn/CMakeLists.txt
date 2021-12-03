@@ -36,7 +36,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlpeg
       graphqlresponse)
 
-  add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
+  add_custom_target(copy_learn_sample_dlls DEPENDS copied_sample_dlls)
 
-  add_dependencies(learn_star_wars copy_sample_dlls)
+  add_dependencies(learn_star_wars copy_learn_sample_dlls)
 endif()
