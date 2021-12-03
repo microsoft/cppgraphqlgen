@@ -547,7 +547,7 @@ Expensive::~Expensive()
 std::future<int> Expensive::getOrder(const service::FieldParams& params) const noexcept
 {
 	return std::async(
-		params.launch,
+		params.launch.await_ready() ? std::launch::deferred : std::launch::async,
 		[](bool blockAsync, int instanceOrder) noexcept {
 			if (blockAsync)
 			{
@@ -568,7 +568,7 @@ std::future<int> Expensive::getOrder(const service::FieldParams& params) const n
 
 			return instanceOrder;
 		},
-		params.launch == std::launch::async,
+		!params.launch.await_ready(),
 		static_cast<int>(order));
 }
 

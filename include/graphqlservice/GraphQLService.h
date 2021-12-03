@@ -148,6 +148,87 @@ enum class ResolverContext
 	NotifyUnsubscribe,
 };
 
+// Resume coroutine execution on a worker thread.
+struct await_worker_thread : coro::suspend_always
+{
+	void await_suspend(coro::coroutine_handle<> h) const
+	{
+		std::thread(
+			[](coro::coroutine_handle<>&& h) noexcept {
+				h.resume();
+			},
+			std::move(h))
+			.detach();
+	}
+};
+
+// Type-erased awaitable, if you want finer grain control.
+class await_async : public coro::suspend_always
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual bool await_ready() const = 0;
+		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+	};
+
+	template <class T>
+	struct Model : Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl)
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		bool await_ready() const final
+		{
+			return _pimpl->await_ready();
+		}
+
+		void await_suspend(coro::coroutine_handle<> h) const final
+		{
+			_pimpl->await_suspend(std::move(h));
+		}
+
+	private:
+		std::shared_ptr<T> _pimpl;
+	};
+
+	const std::shared_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	await_async(std::shared_ptr<T> pimpl)
+		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	await_async(std::launch launch)
+		: _pimpl { ((launch & std::launch::async) == std::launch::async)
+				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
+					std::make_shared<await_worker_thread>()))
+				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
+					std::make_shared<coro::suspend_never>())) }
+	{
+	}
+
+	bool await_ready() const
+	{
+		return _pimpl->await_ready();
+	}
+
+	void await_suspend(coro::coroutine_handle<> h) const
+	{
+		_pimpl->await_suspend(std::move(h));
+	}
+
+	constexpr void await_resume() const noexcept
+	{
+	}
+};
+
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
 struct SelectionSetParams
@@ -171,7 +252,7 @@ struct SelectionSetParams
 	std::optional<field_path> errorPath;
 
 	// Async launch policy for sub-field resolvers.
-	const std::launch launch = std::launch::deferred;
+	const await_async launch { std::launch::deferred };
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
@@ -557,24 +638,6 @@ private:
 	ResolverMap _resolvers;
 };
 
-// Resume coroutine execution on a worker thread. This is used internally to implement the APIs
-// which can take std::launch::async as a parameter.
-class await_async
-{
-public:
-	GRAPHQLSERVICE_EXPORT explicit await_async(std::launch launch) noexcept;
-
-	GRAPHQLSERVICE_EXPORT bool await_ready() const noexcept;
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
-
-	constexpr void await_resume() const noexcept
-	{
-	}
-
-private:
-	const std::launch _launch;
-};
-
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
 template <typename Type>
@@ -622,7 +685,7 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 
-		co_await await_async { params.launch };
+		co_await params.launch;
 
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
 			std::static_pointer_cast<Object>(co_await result),
@@ -650,7 +713,7 @@ struct ModifiedResult
 	convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
-		co_await await_async { params.launch };
+		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
 
@@ -677,7 +740,7 @@ struct ModifiedResult
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		co_await await_async { params.launch };
+		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
 
@@ -700,7 +763,7 @@ struct ModifiedResult
 		std::vector<AwaitableResolver> children;
 		const auto parentPath = params.errorPath;
 
-		co_await await_async { params.launch };
+		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
 
@@ -743,7 +806,7 @@ struct ModifiedResult
 		{
 			try
 			{
-				co_await await_async { params.launch };
+				co_await params.launch;
 
 				auto value = co_await std::move(child);
 
@@ -796,7 +859,7 @@ private:
 
 		try
 		{
-			co_await await_async { params.launch };
+			co_await params.launch;
 			document.data = pendingResolver(co_await result, params);
 		}
 		catch (schema_exception& scx)
@@ -943,17 +1006,17 @@ public:
 
 	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::shared_ptr<RequestState> state,
 		peg::ast& query, std::string_view operationName, response::Value variables) const;
-	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::launch launch,
+	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(await_async launch,
 		std::shared_ptr<RequestState> state, peg::ast& query, std::string_view operationName,
 		response::Value variables) const;
 
 	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
 		SubscriptionParams&& params, SubscriptionCallback&& callback);
 	GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
-		std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
+		await_async launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
 
 	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(std::launch launch, SubscriptionKey key);
+	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(await_async launch, SubscriptionKey key);
 
 	GRAPHQLSERVICE_EXPORT void deliver(
 		const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
@@ -970,17 +1033,17 @@ public:
 		const SubscriptionFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;
 
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
 		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(std::launch launch, const SubscriptionName& name,
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		const SubscriptionFilterCallback& applyArguments,
 		const SubscriptionFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;

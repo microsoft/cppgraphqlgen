@@ -589,26 +589,6 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 	return result;
 }
 
-await_async::await_async(std::launch launch) noexcept
-	: _launch { launch }
-{
-}
-
-bool await_async::await_ready() const noexcept
-{
-	return (_launch & std::launch::async) != std::launch::async;
-}
-
-void await_async::await_suspend(coro::coroutine_handle<> h) const
-{
-	std::thread(
-		[](coro::coroutine_handle<>&& h) noexcept {
-			h.resume();
-		},
-		std::move(h))
-		.detach();
-}
-
 void blockSubFields(const ResolverParams& params)
 {
 	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
@@ -716,7 +696,7 @@ AwaitableResolver ModifiedResult<Object>::convert(
 {
 	requireSubFields(params);
 
-	co_await await_async { params.launch };
+	co_await params.launch;
 
 	auto awaitedResult = co_await std::move(result);
 
@@ -766,7 +746,7 @@ private:
 	const std::shared_ptr<RequestState>& _state;
 	const response::Value& _operationDirectives;
 	const std::optional<std::reference_wrapper<const field_path>> _path;
-	const std::launch _launch;
+	const await_async _launch;
 	const FragmentMap& _fragments;
 	const response::Value& _variables;
 	const TypeNames& _typeNames;
@@ -1142,7 +1122,7 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 		try
 		{
-			co_await await_async { launch };
+			co_await launch;
 
 			auto value = co_await std::move(child.second);
 
@@ -1246,7 +1226,7 @@ void FragmentDefinitionVisitor::visit(const peg::ast_node& fragmentDefinition)
 class OperationDefinitionVisitor
 {
 public:
-	OperationDefinitionVisitor(ResolverContext resolverContext, std::launch launch,
+	OperationDefinitionVisitor(ResolverContext resolverContext, await_async launch,
 		std::shared_ptr<RequestState> state, const TypeMap& operations, response::Value&& variables,
 		FragmentMap&& fragments);
 
@@ -1256,7 +1236,7 @@ public:
 
 private:
 	const ResolverContext _resolverContext;
-	const std::launch _launch;
+	const await_async _launch;
 	std::shared_ptr<OperationData> _params;
 	const TypeMap& _operations;
 	std::optional<AwaitableResolver> _result;
@@ -1277,7 +1257,7 @@ SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, Subscrip
 }
 
 OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverContext,
-	std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations,
+	await_async launch, std::shared_ptr<RequestState> state, const TypeMap& operations,
 	response::Value&& variables, FragmentMap&& fragments)
 	: _resolverContext(resolverContext)
 	, _launch(launch)
@@ -1296,7 +1276,7 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 
 	auto result = std::move(*_result);
 
-	co_await await_async { _launch };
+	co_await _launch;
 	co_return co_await result;
 }
 
@@ -1670,7 +1650,7 @@ response::AwaitableValue Request::resolve(std::shared_ptr<RequestState> state, p
 		std::move(variables));
 }
 
-response::AwaitableValue Request::resolve(std::launch launch, std::shared_ptr<RequestState> state,
+response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<RequestState> state,
 	peg::ast& query, std::string_view operationName, response::Value variables) const
 {
 	try
@@ -1719,7 +1699,7 @@ response::AwaitableValue Request::resolve(std::launch launch, std::shared_ptr<Re
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
 		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
-		const auto operationLaunch = isMutation ? std::launch::deferred : launch;
+		const auto operationLaunch = isMutation ? await_async { std::launch::deferred } : launch;
 
 		OperationDefinitionVisitor operationVisitor(resolverContext,
 			operationLaunch,
@@ -1730,7 +1710,7 @@ response::AwaitableValue Request::resolve(std::launch launch, std::shared_ptr<Re
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		co_await await_async { launch };
+		co_await launch;
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
@@ -1826,7 +1806,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 }
 
 AwaitableSubscribe Request::subscribe(
-	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
+	await_async launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
 	const auto spThis = shared_from_this();
 	const auto key = spThis->subscribe(std::move(params), std::move(callback));
@@ -1850,7 +1830,7 @@ AwaitableSubscribe Request::subscribe(
 
 		try
 		{
-			co_await await_async { launch };
+			co_await launch;
 			co_await operation->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
@@ -1897,7 +1877,7 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-AwaitableUnsubscribe Request::unsubscribe(std::launch launch, SubscriptionKey key)
+AwaitableUnsubscribe Request::unsubscribe(await_async launch, SubscriptionKey key)
 {
 	const auto spThis = shared_from_this();
 	const auto itrOperation = spThis->_operations.find(strSubscription);
@@ -1918,7 +1898,7 @@ AwaitableUnsubscribe Request::unsubscribe(std::launch launch, SubscriptionKey ke
 			launch,
 		};
 
-		co_await await_async { launch };
+		co_await launch;
 		co_await operation->resolve(selectionSetParams,
 			registration->selection,
 			registration->data->fragments,
@@ -1969,7 +1949,7 @@ void Request::deliver(const SubscriptionName& name,
 		.get();
 }
 
-AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& name,
+AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
 	std::shared_ptr<Object> subscriptionObject) const
 {
 	return deliver(launch,
@@ -1979,7 +1959,7 @@ AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& na
 		std::move(subscriptionObject));
 }
 
-AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& name,
+AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
 	const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const
 {
 	return deliver(launch,
@@ -1989,7 +1969,7 @@ AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& na
 		std::move(subscriptionObject));
 }
 
-AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& name,
+AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
 	const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
 	std::shared_ptr<Object> subscriptionObject) const
 {
@@ -2010,7 +1990,7 @@ AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& na
 	return deliver(launch, name, argumentsMatch, directivesMatch, std::move(subscriptionObject));
 }
 
-AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& name,
+AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyArguments,
 	std::shared_ptr<Object> subscriptionObject) const
 {
@@ -2024,7 +2004,7 @@ AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& na
 		std::move(subscriptionObject));
 }
 
-AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& name,
+AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
 	const SubscriptionFilterCallback& applyArguments,
 	const SubscriptionFilterCallback& applyDirectives,
 	std::shared_ptr<Object> subscriptionObject) const
@@ -2121,7 +2101,7 @@ AwaitableDeliver Request::deliver(std::launch launch, const SubscriptionName& na
 
 		try
 		{
-			co_await await_async { launch };
+			co_await launch;
 
 			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
