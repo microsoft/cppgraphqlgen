@@ -663,10 +663,6 @@ private:
 	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params);
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
-
-	std::shared_ptr<schema::Schema> _schema;
 
 	struct Concept
 	{
