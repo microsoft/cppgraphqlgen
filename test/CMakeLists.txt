@@ -55,9 +55,8 @@ target_link_libraries(pegtl_combined_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_combined_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_combined_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_combined_tests)
 
 add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
@@ -65,9 +64,8 @@ target_link_libraries(pegtl_executable_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_executable_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_executable_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_executable_tests)
 
 add_executable(pegtl_schema_tests PegtlSchemaTests.cpp)
@@ -75,9 +73,8 @@ target_link_libraries(pegtl_schema_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_schema_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_schema_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_schema_tests)
 
 add_executable(response_tests ResponseTests.cpp)
