@@ -26,7 +26,9 @@ gtest_add_tests(TARGET today_tests)
 add_executable(client_tests ClientTests.cpp)
 target_link_libraries(client_tests PRIVATE
   unifiedgraphql
-  todayclient
+  query_client
+  mutate_client
+  subscribe_client
   GTest::GTest
   GTest::Main)
 add_bigobj_flag(client_tests)
