@@ -20,7 +20,7 @@ target_link_libraries(learn_star_wars PRIVATE
   graphqljson)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_command(OUTPUT copied_learn_dlls
+  add_custom_command(OUTPUT copied_sample_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:graphqlservice>
       $<TARGET_FILE:graphqlintrospection>
