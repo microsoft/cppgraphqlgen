@@ -254,6 +254,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		if (_loader.isIntrospection())
 		{
+			// Forward declare all of the concrete types for the Introspection schema
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(;
+)cpp";
+			}
+
+			headerFile << std::endl;
 		}
 
 		objectNamespace.enter();
@@ -308,25 +316,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
 	{
-		if (_loader.isIntrospection())
-		{
-			if (objectNamespace.exit())
-			{
-				headerFile << std::endl;
-			}
-
-			// Forward declare all of the concrete types for the Introspection schema
-			for (const auto& objectType : _loader.getObjectTypes())
-			{
-				headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(;
-)cpp";
-			}
-
-			headerFile << std::endl;
-			objectNamespace.enter();
-			headerFile << std::endl;
-		}
-		else
+		if (!_loader.isIntrospection())
 		{
 			objectNamespace.enter();
 

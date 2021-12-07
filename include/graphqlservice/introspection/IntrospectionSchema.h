@@ -67,17 +67,6 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-namespace object {
-
-class Schema;
-class Type;
-class Field;
-class InputValue;
-class EnumValue;
-class Directive;
-
-} // namespace object
-
 class Schema;
 class Type;
 class Field;
@@ -86,6 +75,13 @@ class EnumValue;
 class Directive;
 
 namespace object {
+
+class Schema;
+class Type;
+class Field;
+class InputValue;
+class EnumValue;
+class Directive;
 
 class Schema
 	: public service::Object
