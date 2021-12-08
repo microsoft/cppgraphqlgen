@@ -1376,17 +1376,17 @@ void Generator::outputObjectImplementation(
 
 	for (const auto& interfaceName : objectType.interfaces)
 	{
-		sourceFile << R"cpp(		")cpp" << interfaceName << R"cpp(",
+		sourceFile << R"cpp(		R"gql()cpp" << interfaceName << R"cpp()gql"sv,
 )cpp";
 	}
 
 	for (const auto& unionName : objectType.unions)
 	{
-		sourceFile << R"cpp(		")cpp" << unionName << R"cpp(",
+		sourceFile << R"cpp(		R"gql()cpp" << unionName << R"cpp()gql"sv,
 )cpp";
 	}
 
-	sourceFile << R"cpp(		")cpp" << objectType.type << R"cpp("
+	sourceFile << R"cpp(		R"gql()cpp" << objectType.type << R"cpp()gql"sv,
 	}, {
 )cpp";
 
