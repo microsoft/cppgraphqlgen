@@ -22,9 +22,9 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 3> s_namesEpisode = {
-	"NEW_HOPE"sv,
-	"EMPIRE"sv,
-	"JEDI"sv
+	R"gql(NEW_HOPE)gql"sv,
+	R"gql(EMPIRE)gql"sv,
+	R"gql(JEDI)gql"sv
 };
 
 template <>
@@ -32,14 +32,14 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid Episode value" } };
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
 
 	if (itr == s_namesEpisode.cend())
 	{
-		throw service::schema_exception { { "not a valid Episode value" } };
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
 	return static_cast<learn::Episode>(itr - s_namesEpisode.cbegin());

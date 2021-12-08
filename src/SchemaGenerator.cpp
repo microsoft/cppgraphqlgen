@@ -1144,7 +1144,7 @@ using namespace std::literals;
 				}
 
 				firstValue = false;
-				sourceFile << R"cpp(	")cpp" << value.value << R"cpp("sv)cpp";
+				sourceFile << R"cpp(	R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
 			}
 
 			sourceFile << R"cpp(
@@ -1158,8 +1158,8 @@ template <>
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid )cpp"
-					   << enumType.type << R"cpp( value" } };
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+					   << enumType.type << R"cpp( value)ex" } };
 	}
 
 	const auto itr = std::find(s_names)cpp"
@@ -1169,8 +1169,8 @@ template <>
 	if (itr == s_names)cpp"
 					   << enumType.cppType << R"cpp(.cend())
 	{
-		throw service::schema_exception { { "not a valid )cpp"
-					   << enumType.type << R"cpp( value" } };
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+					   << enumType.type << R"cpp( value)ex" } };
 	}
 
 	return static_cast<)cpp"

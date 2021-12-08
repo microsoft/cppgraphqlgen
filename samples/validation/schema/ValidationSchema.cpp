@@ -22,9 +22,9 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 3> s_namesDogCommand = {
-	"SIT"sv,
-	"DOWN"sv,
-	"HEEL"sv
+	R"gql(SIT)gql"sv,
+	R"gql(DOWN)gql"sv,
+	R"gql(HEEL)gql"sv
 };
 
 template <>
@@ -32,14 +32,14 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid DogCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
 
 	if (itr == s_namesDogCommand.cend())
 	{
-		throw service::schema_exception { { "not a valid DogCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
 	return static_cast<validation::DogCommand>(itr - s_namesDogCommand.cbegin());
@@ -60,7 +60,7 @@ service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(servi
 }
 
 static const std::array<std::string_view, 1> s_namesCatCommand = {
-	"JUMP"sv
+	R"gql(JUMP)gql"sv
 };
 
 template <>
@@ -68,14 +68,14 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid CatCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
 
 	if (itr == s_namesCatCommand.cend())
 	{
-		throw service::schema_exception { { "not a valid CatCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
 	return static_cast<validation::CatCommand>(itr - s_namesCatCommand.cbegin());
