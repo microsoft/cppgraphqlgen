@@ -27,7 +27,7 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames TaskConnection::getTypeNames() const noexcept
 {
 	return {
-		"TaskConnection"
+		R"gql(TaskConnection)gql"sv
 	};
 }
 

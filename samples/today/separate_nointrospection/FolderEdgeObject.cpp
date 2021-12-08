@@ -27,7 +27,7 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames FolderEdge::getTypeNames() const noexcept
 {
 	return {
-		"FolderEdge"
+		R"gql(FolderEdge)gql"sv
 	};
 }
 

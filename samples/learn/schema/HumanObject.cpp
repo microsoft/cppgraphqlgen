@@ -27,8 +27,8 @@ Human::Human(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Human::getTypeNames() const noexcept
 {
 	return {
-		"Character",
-		"Human"
+		R"gql(Character)gql"sv,
+		R"gql(Human)gql"sv
 	};
 }
 

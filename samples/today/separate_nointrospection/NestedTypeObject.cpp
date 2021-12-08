@@ -27,7 +27,7 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames NestedType::getTypeNames() const noexcept
 {
 	return {
-		"NestedType"
+		R"gql(NestedType)gql"sv
 	};
 }
 

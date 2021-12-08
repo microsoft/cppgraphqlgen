@@ -27,7 +27,7 @@ AppointmentEdge::AppointmentEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames AppointmentEdge::getTypeNames() const noexcept
 {
 	return {
-		"AppointmentEdge"
+		R"gql(AppointmentEdge)gql"sv
 	};
 }
 

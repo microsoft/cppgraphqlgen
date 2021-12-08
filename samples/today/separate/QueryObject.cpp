@@ -28,7 +28,7 @@ Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Query::getTypeNames() const noexcept
 {
 	return {
-		"Query"
+		R"gql(Query)gql"sv
 	};
 }
 

@@ -27,7 +27,7 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl) noexc
 service::TypeNames CompleteTaskPayload::getTypeNames() const noexcept
 {
 	return {
-		"CompleteTaskPayload"
+		R"gql(CompleteTaskPayload)gql"sv
 	};
 }
 

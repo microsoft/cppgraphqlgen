@@ -27,7 +27,7 @@ FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames FolderConnection::getTypeNames() const noexcept
 {
 	return {
-		"FolderConnection"
+		R"gql(FolderConnection)gql"sv
 	};
 }
 

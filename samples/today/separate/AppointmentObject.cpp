@@ -27,9 +27,9 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Appointment::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Appointment"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Appointment)gql"sv
 	};
 }
 

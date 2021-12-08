@@ -27,7 +27,7 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl) n
 service::TypeNames AppointmentConnection::getTypeNames() const noexcept
 {
 	return {
-		"AppointmentConnection"
+		R"gql(AppointmentConnection)gql"sv
 	};
 }
 

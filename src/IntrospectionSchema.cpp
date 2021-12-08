@@ -135,7 +135,7 @@ Schema::~Schema()
 service::TypeNames Schema::getTypeNames() const noexcept
 {
 	return {
-		"__Schema"
+		R"gql(__Schema)gql"sv
 	};
 }
 
@@ -221,7 +221,7 @@ Type::~Type()
 service::TypeNames Type::getTypeNames() const noexcept
 {
 	return {
-		"__Type"
+		R"gql(__Type)gql"sv
 	};
 }
 
@@ -381,7 +381,7 @@ Field::~Field()
 service::TypeNames Field::getTypeNames() const noexcept
 {
 	return {
-		"__Field"
+		R"gql(__Field)gql"sv
 	};
 }
 
@@ -478,7 +478,7 @@ InputValue::~InputValue()
 service::TypeNames InputValue::getTypeNames() const noexcept
 {
 	return {
-		"__InputValue"
+		R"gql(__InputValue)gql"sv
 	};
 }
 
@@ -553,7 +553,7 @@ EnumValue::~EnumValue()
 service::TypeNames EnumValue::getTypeNames() const noexcept
 {
 	return {
-		"__EnumValue"
+		R"gql(__EnumValue)gql"sv
 	};
 }
 
@@ -628,7 +628,7 @@ Directive::~Directive()
 service::TypeNames Directive::getTypeNames() const noexcept
 {
 	return {
-		"__Directive"
+		R"gql(__Directive)gql"sv
 	};
 }
 

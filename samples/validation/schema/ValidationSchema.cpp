@@ -153,7 +153,7 @@ Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Query::getTypeNames() const noexcept
 {
 	return {
-		"Query"
+		R"gql(Query)gql"sv
 	};
 }
 
@@ -267,10 +267,10 @@ Dog::Dog(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Dog::getTypeNames() const noexcept
 {
 	return {
-		"Pet",
-		"CatOrDog",
-		"DogOrHuman",
-		"Dog"
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(Dog)gql"sv
 	};
 }
 
@@ -373,9 +373,9 @@ Alien::Alien(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Alien::getTypeNames() const noexcept
 {
 	return {
-		"Sentient",
-		"HumanOrAlien",
-		"Alien"
+		R"gql(Sentient)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Alien)gql"sv
 	};
 }
 
@@ -432,10 +432,10 @@ Human::Human(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Human::getTypeNames() const noexcept
 {
 	return {
-		"Sentient",
-		"DogOrHuman",
-		"HumanOrAlien",
-		"Human"
+		R"gql(Sentient)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Human)gql"sv
 	};
 }
 
@@ -492,9 +492,9 @@ Cat::Cat(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Cat::getTypeNames() const noexcept
 {
 	return {
-		"Pet",
-		"CatOrDog",
-		"Cat"
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(Cat)gql"sv
 	};
 }
 
@@ -574,7 +574,7 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Mutation::getTypeNames() const noexcept
 {
 	return {
-		"Mutation"
+		R"gql(Mutation)gql"sv
 	};
 }
 
@@ -620,7 +620,7 @@ MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames MutateDogResult::getTypeNames() const noexcept
 {
 	return {
-		"MutateDogResult"
+		R"gql(MutateDogResult)gql"sv
 	};
 }
 
@@ -666,7 +666,7 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Subscription::getTypeNames() const noexcept
 {
 	return {
-		"Subscription"
+		R"gql(Subscription)gql"sv
 	};
 }
 
@@ -723,7 +723,7 @@ Message::Message(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Message::getTypeNames() const noexcept
 {
 	return {
-		"Message"
+		R"gql(Message)gql"sv
 	};
 }
 
@@ -780,7 +780,7 @@ Arguments::Arguments(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Arguments::getTypeNames() const noexcept
 {
 	return {
-		"Arguments"
+		R"gql(Arguments)gql"sv
 	};
 }
 

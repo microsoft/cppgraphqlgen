@@ -27,7 +27,7 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Mutation::getTypeNames() const noexcept
 {
 	return {
-		"Mutation"
+		R"gql(Mutation)gql"sv
 	};
 }
 

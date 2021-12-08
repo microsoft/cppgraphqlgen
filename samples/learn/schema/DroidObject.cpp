@@ -27,8 +27,8 @@ Droid::Droid(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Droid::getTypeNames() const noexcept
 {
 	return {
-		"Character",
-		"Droid"
+		R"gql(Character)gql"sv,
+		R"gql(Droid)gql"sv
 	};
 }
 

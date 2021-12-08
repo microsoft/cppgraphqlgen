@@ -27,7 +27,7 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames PageInfo::getTypeNames() const noexcept
 {
 	return {
-		"PageInfo"
+		R"gql(PageInfo)gql"sv
 	};
 }
 

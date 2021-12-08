@@ -27,7 +27,7 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames TaskEdge::getTypeNames() const noexcept
 {
 	return {
-		"TaskEdge"
+		R"gql(TaskEdge)gql"sv
 	};
 }
 

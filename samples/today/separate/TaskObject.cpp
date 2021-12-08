@@ -27,9 +27,9 @@ Task::Task(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Task::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Task"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Task)gql"sv
 	};
 }
 

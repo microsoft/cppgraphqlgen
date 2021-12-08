@@ -167,7 +167,7 @@ Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Query::getTypeNames() const noexcept
 {
 	return {
-		"Query"
+		R"gql(Query)gql"sv
 	};
 }
 
@@ -389,7 +389,7 @@ PageInfo::PageInfo(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames PageInfo::getTypeNames() const noexcept
 {
 	return {
-		"PageInfo"
+		R"gql(PageInfo)gql"sv
 	};
 }
 
@@ -446,7 +446,7 @@ AppointmentEdge::AppointmentEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames AppointmentEdge::getTypeNames() const noexcept
 {
 	return {
-		"AppointmentEdge"
+		R"gql(AppointmentEdge)gql"sv
 	};
 }
 
@@ -503,7 +503,7 @@ AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl) n
 service::TypeNames AppointmentConnection::getTypeNames() const noexcept
 {
 	return {
-		"AppointmentConnection"
+		R"gql(AppointmentConnection)gql"sv
 	};
 }
 
@@ -560,7 +560,7 @@ TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames TaskEdge::getTypeNames() const noexcept
 {
 	return {
-		"TaskEdge"
+		R"gql(TaskEdge)gql"sv
 	};
 }
 
@@ -617,7 +617,7 @@ TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames TaskConnection::getTypeNames() const noexcept
 {
 	return {
-		"TaskConnection"
+		R"gql(TaskConnection)gql"sv
 	};
 }
 
@@ -674,7 +674,7 @@ FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames FolderEdge::getTypeNames() const noexcept
 {
 	return {
-		"FolderEdge"
+		R"gql(FolderEdge)gql"sv
 	};
 }
 
@@ -731,7 +731,7 @@ FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames FolderConnection::getTypeNames() const noexcept
 {
 	return {
-		"FolderConnection"
+		R"gql(FolderConnection)gql"sv
 	};
 }
 
@@ -788,7 +788,7 @@ CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl) noexc
 service::TypeNames CompleteTaskPayload::getTypeNames() const noexcept
 {
 	return {
-		"CompleteTaskPayload"
+		R"gql(CompleteTaskPayload)gql"sv
 	};
 }
 
@@ -845,7 +845,7 @@ Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Mutation::getTypeNames() const noexcept
 {
 	return {
-		"Mutation"
+		R"gql(Mutation)gql"sv
 	};
 }
 
@@ -904,7 +904,7 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Subscription::getTypeNames() const noexcept
 {
 	return {
-		"Subscription"
+		R"gql(Subscription)gql"sv
 	};
 }
 
@@ -962,9 +962,9 @@ Appointment::Appointment(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Appointment::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Appointment"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Appointment)gql"sv
 	};
 }
 
@@ -1054,9 +1054,9 @@ Task::Task(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Task::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Task"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Task)gql"sv
 	};
 }
 
@@ -1124,9 +1124,9 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Folder::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Folder"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Folder)gql"sv
 	};
 }
 
@@ -1194,7 +1194,7 @@ NestedType::NestedType(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames NestedType::getTypeNames() const noexcept
 {
 	return {
-		"NestedType"
+		R"gql(NestedType)gql"sv
 	};
 }
 
@@ -1251,7 +1251,7 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Expensive::getTypeNames() const noexcept
 {
 	return {
-		"Expensive"
+		R"gql(Expensive)gql"sv
 	};
 }
 

@@ -27,7 +27,7 @@ Subscription::Subscription(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Subscription::getTypeNames() const noexcept
 {
 	return {
-		"Subscription"
+		R"gql(Subscription)gql"sv
 	};
 }
 

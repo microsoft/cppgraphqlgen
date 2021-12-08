@@ -27,7 +27,7 @@ Expensive::Expensive(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Expensive::getTypeNames() const noexcept
 {
 	return {
-		"Expensive"
+		R"gql(Expensive)gql"sv
 	};
 }
 

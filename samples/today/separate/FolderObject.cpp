@@ -27,9 +27,9 @@ Folder::Folder(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Folder::getTypeNames() const noexcept
 {
 	return {
-		"Node",
-		"UnionType",
-		"Folder"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Folder)gql"sv
 	};
 }
 

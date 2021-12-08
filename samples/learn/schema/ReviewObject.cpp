@@ -27,7 +27,7 @@ Review::Review(std::unique_ptr<Concept>&& pimpl) noexcept
 service::TypeNames Review::getTypeNames() const noexcept
 {
 	return {
-		"Review"
+		R"gql(Review)gql"sv
 	};
 }
 
