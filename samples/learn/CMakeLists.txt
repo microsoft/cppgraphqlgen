@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.15)
 
 add_subdirectory(schema)
 add_library(star_wars STATIC
+  HeroData.cpp
   DroidData.cpp
   HumanData.cpp
   QueryData.cpp

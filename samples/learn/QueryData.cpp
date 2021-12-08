@@ -23,22 +23,7 @@ std::shared_ptr<object::Character> Query::getHero(std::optional<Episode> episode
 
 	if (const auto itr = heroes_.find(episode); itr != heroes_.end())
 	{
-		result = std::visit(
-			[](const auto& hero) noexcept {
-				using hero_t = std::decay_t<decltype(hero)>;
-
-				if constexpr (std::is_same_v<std::shared_ptr<Human>, hero_t>)
-				{
-					return std::make_shared<object::Character>(
-						std::make_shared<object::Human>(hero));
-				}
-				else if constexpr (std::is_same_v<std::shared_ptr<Droid>, hero_t>)
-				{
-					return std::make_shared<object::Character>(
-						std::make_shared<object::Droid>(hero));
-				}
-			},
-			itr->second);
+		result = make_hero(itr->second);
 	}
 
 	return result;

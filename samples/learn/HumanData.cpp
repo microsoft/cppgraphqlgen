@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "CharacterObject.h"
-
 #include "HumanData.h"
 
 #include "DroidData.h"
@@ -54,22 +52,7 @@ std::optional<std::vector<std::shared_ptr<object::Character>>> Human::getFriends
 		friends_.end(),
 		result.begin(),
 		[](const auto& wpFriend) noexcept {
-			return std::visit(
-				[](const auto& hero) noexcept {
-					using hero_t = std::decay_t<decltype(hero)>;
-
-					if constexpr (std::is_same_v<std::weak_ptr<Human>, hero_t>)
-					{
-						return std::make_shared<object::Character>(
-							std::make_shared<object::Human>(hero.lock()));
-					}
-					else if constexpr (std::is_same_v<std::weak_ptr<Droid>, hero_t>)
-					{
-						return std::make_shared<object::Character>(
-							std::make_shared<object::Droid>(hero.lock()));
-					}
-				},
-				wpFriend);
+			return make_hero(wpFriend);
 		});
 	result.erase(std::remove_if(result.begin(),
 					 result.end(),
