@@ -111,8 +111,8 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeReviewInput->AddInputValues({
-		schema::InputValue::Make(R"gql(stars)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(commentary)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(stars)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(commentary)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
 	});
 
 	AddCharacterDetails(typeCharacter, schema);

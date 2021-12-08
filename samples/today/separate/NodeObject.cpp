@@ -7,12 +7,6 @@
 
 #include "graphqlservice/introspection/Introspection.h"
 
-#include <algorithm>
-#include <functional>
-#include <sstream>
-#include <stdexcept>
-#include <unordered_map>
-
 using namespace std::literals;
 
 namespace graphql::today {
@@ -39,7 +33,7 @@ void Node::endSelectionSet(const service::SelectionSetParams& params) const
 void AddNodeDetails(const std::shared_ptr<schema::InterfaceType>& typeNode, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeNode->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
 	});
 }
 

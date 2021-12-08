@@ -2609,7 +2609,7 @@ std::string Generator::getIntrospectionType(
 		++wrapperCount;
 	}
 
-	introspectionType << R"cpp(schema->LookupType(")cpp" << type << R"cpp("))cpp";
+	introspectionType << R"cpp(schema->LookupType(R"gql()cpp" << type << R"cpp()gql"sv))cpp";
 
 	for (size_t i = 0; i < wrapperCount; ++i)
 	{
@@ -2714,12 +2714,6 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 				   << R"cpp("
 
 #include "graphqlservice/introspection/Introspection.h"
-
-#include <algorithm>
-#include <functional>
-#include <sstream>
-#include <stdexcept>
-#include <unordered_map>
 
 using namespace std::literals;
 

@@ -80,8 +80,8 @@ service::AwaitableResolver FolderConnection::resolve_typename(service::ResolverP
 void AddFolderConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(FolderEdge)gql"sv)))
 	});
 }
 

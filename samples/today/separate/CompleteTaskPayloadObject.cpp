@@ -80,8 +80,8 @@ service::AwaitableResolver CompleteTaskPayload::resolve_typename(service::Resolv
 void AddCompleteTaskPayloadDetails(const std::shared_ptr<schema::ObjectType>& typeCompleteTaskPayload, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeCompleteTaskPayload->AddFields({
-		schema::Field::Make(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),
-		schema::Field::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
+		schema::Field::Make(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Task)gql"sv)),
+		schema::Field::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 }
 

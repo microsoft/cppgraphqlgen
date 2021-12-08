@@ -80,8 +80,8 @@ service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&
 void AddFolderEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Folder")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Folder)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 }
 

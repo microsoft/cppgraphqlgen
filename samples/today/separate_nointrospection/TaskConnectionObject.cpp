@@ -80,8 +80,8 @@ service::AwaitableResolver TaskConnection::resolve_typename(service::ResolverPar
 void AddTaskConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeTaskConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeTaskConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(TaskEdge)gql"sv)))
 	});
 }
 

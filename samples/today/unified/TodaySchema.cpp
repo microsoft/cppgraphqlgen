@@ -1363,25 +1363,25 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeCompleteTaskInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, schema->LookupType("TaskState"), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(isComplete)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql(true)gql"sv),
-		schema::InputValue::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, schema->LookupType(R"gql(TaskState)gql"sv), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(isComplete)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Boolean)gql"sv), R"gql(true)gql"sv),
+		schema::InputValue::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
 	});
 	typeThirdNestedInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 	});
 	typeFourthNestedInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 	});
 	typeSecondNestedInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ThirdNestedInput")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ThirdNestedInput)gql"sv)), R"gql()gql"sv)
 	});
 	typeFirstNestedInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(second)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("SecondNestedInput")), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ThirdNestedInput")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(second)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(SecondNestedInput)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ThirdNestedInput)gql"sv)), R"gql()gql"sv)
 	});
 
 	typeUnionType->AddPossibleTypes({
@@ -1391,126 +1391,126 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeNode->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
 	});
 
 	typeQuery->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md"sv, std::nullopt, schema->LookupType("Node"), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(node)gql"sv, R"md([Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification))md"sv, std::nullopt, schema->LookupType(R"gql(Node)gql"sv), {
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(appointments)gql"sv, R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("AppointmentConnection")), {
-			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(appointments)gql"sv, R"md(Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(AppointmentConnection)gql"sv)), {
+			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(tasks)gql"sv, R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskConnection")), {
-			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(tasks)gql"sv, R"md(Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(TaskConnection)gql"sv)), {
+			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(unreadCounts)gql"sv, R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("FolderConnection")), {
-			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType("ItemCursor"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(unreadCounts)gql"sv, R"md(Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(FolderConnection)gql"sv)), {
+			schema::InputValue::Make(R"gql(first)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(after)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(last)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(before)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ItemCursor)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(appointmentsById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Appointment"))), {
-			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql"sv)
+		schema::Field::Make(R"gql(appointmentsById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Appointment)gql"sv))), {
+			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))), R"gql(["ZmFrZUFwcG9pbnRtZW50SWQ="])gql"sv)
 		}),
-		schema::Field::Make(R"gql(tasksById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Task"))), {
-			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(tasksById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Task)gql"sv))), {
+			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(unreadCountsById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Folder"))), {
-			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(unreadCountsById)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Folder)gql"sv))), {
+			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType"))),
-		schema::Field::Make(R"gql(unimplemented)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Expensive"))))),
-		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("TaskState"))),
-		schema::Field::Make(R"gql(anyType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("UnionType"))), {
-			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(NestedType)gql"sv))),
+		schema::Field::Make(R"gql(unimplemented)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(expensive)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Expensive)gql"sv))))),
+		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(TaskState)gql"sv))),
+		schema::Field::Make(R"gql(anyType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(UnionType)gql"sv))), {
+			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))), R"gql()gql"sv)
 		})
 	});
 	typePageInfo->AddFields({
-		schema::Field::Make(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		schema::Field::Make(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		schema::Field::Make(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))),
+		schema::Field::Make(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 	typeAppointmentEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Appointment")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Appointment)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 	typeAppointmentConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(AppointmentEdge)gql"sv)))
 	});
 	typeTaskEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Task)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 	typeTaskConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(TaskEdge)gql"sv)))
 	});
 	typeFolderEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Folder")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Folder)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 	typeFolderConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("FolderEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(FolderEdge)gql"sv)))
 	});
 	typeCompleteTaskPayload->AddFields({
-		schema::Field::Make(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),
-		schema::Field::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
+		schema::Field::Make(R"gql(task)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Task)gql"sv)),
+		schema::Field::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 	typeMutation->AddFields({
-		schema::Field::Make(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")), {
-			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(CompleteTaskPayload)gql"sv)), {
+			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(CompleteTaskInput)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), {
-			schema::InputValue::Make(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Float)gql"sv)), {
+			schema::InputValue::Make(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Float)gql"sv)), R"gql()gql"sv)
 		})
 	});
 	typeSubscription->AddFields({
-		schema::Field::Make(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation))md"sv), schema->LookupType("Appointment")),
-		schema::Field::Make(R"gql(nodeChange)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Node")), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(nextAppointmentChange)gql"sv, R"md()md"sv, std::make_optional(R"md(Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation))md"sv), schema->LookupType(R"gql(Appointment)gql"sv)),
+		schema::Field::Make(R"gql(nodeChange)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Node)gql"sv)), {
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 		})
 	});
 	typeAppointment->AddInterfaces({
 		typeNode
 	});
 	typeAppointment->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		schema::Field::Make(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("DateTime")),
-		schema::Field::Make(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
+		schema::Field::Make(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(DateTime)gql"sv)),
+		schema::Field::Make(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))),
+		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 	typeTask->AddInterfaces({
 		typeNode
 	});
 	typeTask->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		schema::Field::Make(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
+		schema::Field::Make(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 	typeFolder->AddInterfaces({
 		typeNode
 	});
 	typeFolder->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(unreadCount)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(unreadCount)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)))
 	});
 	typeNestedType->AddFields({
-		schema::Field::Make(R"gql(depth)gql"sv, R"md(Depth of the nested element)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
-		schema::Field::Make(R"gql(nested)gql"sv, R"md(Link to the next level)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		schema::Field::Make(R"gql(depth)gql"sv, R"md(Depth of the nested element)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv))),
+		schema::Field::Make(R"gql(nested)gql"sv, R"md(Link to the next level)md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(NestedType)gql"sv)))
 	});
 	typeExpensive->AddFields({
-		schema::Field::Make(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+		schema::Field::Make(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)))
 	});
 
 	schema->AddDirective(schema::Directive::Make(R"gql(id)gql"sv, R"md()md"sv, {
@@ -1519,32 +1519,32 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddDirective(schema::Directive::Make(R"gql(subscriptionTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::SUBSCRIPTION
 	}, {
-		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
 	}));
 	schema->AddDirective(schema::Directive::Make(R"gql(queryTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::QUERY
 	}, {
-		schema::InputValue::Make(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}));
 	schema->AddDirective(schema::Directive::Make(R"gql(fieldTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD
 	}, {
-		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}));
 	schema->AddDirective(schema::Directive::Make(R"gql(fragmentDefinitionTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FRAGMENT_DEFINITION
 	}, {
-		schema::InputValue::Make(R"gql(fragmentDefinition)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(fragmentDefinition)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}));
 	schema->AddDirective(schema::Directive::Make(R"gql(fragmentSpreadTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FRAGMENT_SPREAD
 	}, {
-		schema::InputValue::Make(R"gql(fragmentSpread)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(fragmentSpread)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}));
 	schema->AddDirective(schema::Directive::Make(R"gql(inlineFragmentTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::INLINE_FRAGMENT
 	}, {
-		schema::InputValue::Make(R"gql(inlineFragment)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(inlineFragment)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}));
 
 	schema->AddQueryType(typeQuery);

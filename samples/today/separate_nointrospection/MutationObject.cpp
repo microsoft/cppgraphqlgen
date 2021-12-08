@@ -82,11 +82,11 @@ service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& 
 void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeMutation->AddFields({
-		schema::Field::Make(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskPayload")), {
-			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CompleteTaskInput")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(completeTask)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(CompleteTaskPayload)gql"sv)), {
+			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(CompleteTaskInput)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), {
-			schema::InputValue::Make(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Float")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(setFloat)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Float)gql"sv)), {
+			schema::InputValue::Make(R"gql(value)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Float)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

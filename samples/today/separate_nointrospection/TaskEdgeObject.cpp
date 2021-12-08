@@ -80,8 +80,8 @@ service::AwaitableResolver TaskEdge::resolve_typename(service::ResolverParams&& 
 void AddTaskEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeTaskEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Task)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 }
 

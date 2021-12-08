@@ -96,9 +96,9 @@ void AddTaskDetails(const std::shared_ptr<schema::ObjectType>& typeTask, const s
 		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
 	});
 	typeTask->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		schema::Field::Make(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
+		schema::Field::Make(R"gql(title)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(isComplete)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 }
 

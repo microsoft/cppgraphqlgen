@@ -69,7 +69,7 @@ service::AwaitableResolver Expensive::resolve_typename(service::ResolverParams&&
 void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensive, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeExpensive->AddFields({
-		schema::Field::Make(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")))
+		schema::Field::Make(R"gql(order)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)))
 	});
 }
 

@@ -80,8 +80,8 @@ service::AwaitableResolver NestedType::resolve_typename(service::ResolverParams&
 void AddNestedTypeDetails(const std::shared_ptr<schema::ObjectType>& typeNestedType, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeNestedType->AddFields({
-		schema::Field::Make(R"gql(depth)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),
-		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("NestedType")))
+		schema::Field::Make(R"gql(depth)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv))),
+		schema::Field::Make(R"gql(nested)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(NestedType)gql"sv)))
 	});
 }
 

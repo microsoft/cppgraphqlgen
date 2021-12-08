@@ -118,11 +118,11 @@ void AddAppointmentDetails(const std::shared_ptr<schema::ObjectType>& typeAppoin
 		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
 	});
 	typeAppointment->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID"))),
-		schema::Field::Make(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("DateTime")),
-		schema::Field::Make(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
+		schema::Field::Make(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(DateTime)gql"sv)),
+		schema::Field::Make(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))),
+		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 }
 

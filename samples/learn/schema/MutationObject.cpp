@@ -71,9 +71,9 @@ service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& 
 void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeMutation->AddFields({
-		schema::Field::Make(R"gql(createReview)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Review")), {
-			schema::InputValue::Make(R"gql(ep)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Episode")), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(review)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ReviewInput")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(createReview)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Review)gql"sv)), {
+			schema::InputValue::Make(R"gql(ep)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Episode)gql"sv)), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(review)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ReviewInput)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

@@ -111,14 +111,14 @@ service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeQuery->AddFields({
-		schema::Field::Make(R"gql(hero)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Character"), {
-			schema::InputValue::Make(R"gql(episode)gql"sv, R"md()md"sv, schema->LookupType("Episode"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(hero)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Character)gql"sv), {
+			schema::InputValue::Make(R"gql(episode)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Episode)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(human)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Human"), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(human)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Human)gql"sv), {
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(droid)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Droid"), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(droid)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Droid)gql"sv), {
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

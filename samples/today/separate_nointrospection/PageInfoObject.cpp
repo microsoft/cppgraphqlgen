@@ -80,8 +80,8 @@ service::AwaitableResolver PageInfo::resolve_typename(service::ResolverParams&& 
 void AddPageInfoDetails(const std::shared_ptr<schema::ObjectType>& typePageInfo, const std::shared_ptr<schema::Schema>& schema)
 {
 	typePageInfo->AddFields({
-		schema::Field::Make(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))),
-		schema::Field::Make(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		schema::Field::Make(R"gql(hasNextPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))),
+		schema::Field::Make(R"gql(hasPreviousPage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 }
 

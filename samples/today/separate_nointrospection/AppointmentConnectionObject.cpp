@@ -80,8 +80,8 @@ service::AwaitableResolver AppointmentConnection::resolve_typename(service::Reso
 void AddAppointmentConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeAppointmentConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeAppointmentConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("AppointmentEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(AppointmentEdge)gql"sv)))
 	});
 }
 
