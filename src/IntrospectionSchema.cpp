@@ -20,14 +20,14 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 8> s_namesTypeKind = {
-	"SCALAR"sv,
-	"OBJECT"sv,
-	"INTERFACE"sv,
-	"UNION"sv,
-	"ENUM"sv,
-	"INPUT_OBJECT"sv,
-	"LIST"sv,
-	"NON_NULL"sv
+	R"gql(SCALAR)gql"sv,
+	R"gql(OBJECT)gql"sv,
+	R"gql(INTERFACE)gql"sv,
+	R"gql(UNION)gql"sv,
+	R"gql(ENUM)gql"sv,
+	R"gql(INPUT_OBJECT)gql"sv,
+	R"gql(LIST)gql"sv,
+	R"gql(NON_NULL)gql"sv
 };
 
 template <>
@@ -35,14 +35,14 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid __TypeKind value" } };
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
-		throw service::schema_exception { { "not a valid __TypeKind value" } };
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
 	return static_cast<introspection::TypeKind>(itr - s_namesTypeKind.cbegin());
@@ -63,24 +63,24 @@ std::future<service::ResolverResult> ModifiedResult<introspection::TypeKind>::co
 }
 
 static const std::array<std::string_view, 18> s_namesDirectiveLocation = {
-	"QUERY"sv,
-	"MUTATION"sv,
-	"SUBSCRIPTION"sv,
-	"FIELD"sv,
-	"FRAGMENT_DEFINITION"sv,
-	"FRAGMENT_SPREAD"sv,
-	"INLINE_FRAGMENT"sv,
-	"SCHEMA"sv,
-	"SCALAR"sv,
-	"OBJECT"sv,
-	"FIELD_DEFINITION"sv,
-	"ARGUMENT_DEFINITION"sv,
-	"INTERFACE"sv,
-	"UNION"sv,
-	"ENUM"sv,
-	"ENUM_VALUE"sv,
-	"INPUT_OBJECT"sv,
-	"INPUT_FIELD_DEFINITION"sv
+	R"gql(QUERY)gql"sv,
+	R"gql(MUTATION)gql"sv,
+	R"gql(SUBSCRIPTION)gql"sv,
+	R"gql(FIELD)gql"sv,
+	R"gql(FRAGMENT_DEFINITION)gql"sv,
+	R"gql(FRAGMENT_SPREAD)gql"sv,
+	R"gql(INLINE_FRAGMENT)gql"sv,
+	R"gql(SCHEMA)gql"sv,
+	R"gql(SCALAR)gql"sv,
+	R"gql(OBJECT)gql"sv,
+	R"gql(FIELD_DEFINITION)gql"sv,
+	R"gql(ARGUMENT_DEFINITION)gql"sv,
+	R"gql(INTERFACE)gql"sv,
+	R"gql(UNION)gql"sv,
+	R"gql(ENUM)gql"sv,
+	R"gql(ENUM_VALUE)gql"sv,
+	R"gql(INPUT_OBJECT)gql"sv,
+	R"gql(INPUT_FIELD_DEFINITION)gql"sv
 };
 
 template <>
@@ -88,14 +88,14 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{
-		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
 	return static_cast<introspection::DirectiveLocation>(itr - s_namesDirectiveLocation.cbegin());

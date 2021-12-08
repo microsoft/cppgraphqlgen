@@ -22,10 +22,10 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
-	"New"sv,
-	"Started"sv,
-	"Complete"sv,
-	"Unassigned"sv
+	R"gql(New)gql"sv,
+	R"gql(Started)gql"sv,
+	R"gql(Complete)gql"sv,
+	R"gql(Unassigned)gql"sv
 };
 
 template <>
@@ -33,14 +33,14 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid TaskState value" } };
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTaskState.cend())
 	{
-		throw service::schema_exception { { "not a valid TaskState value" } };
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
 	return static_cast<today::TaskState>(itr - s_namesTaskState.cbegin());
