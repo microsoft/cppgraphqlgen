@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "CharacterObject.h"
+
 #include "DroidData.h"
 
 #include "HumanData.h"
@@ -45,9 +47,9 @@ const std::optional<std::string>& Droid::getName() const noexcept
 	return name_;
 }
 
-std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends() const noexcept
+std::optional<std::vector<std::shared_ptr<object::Character>>> Droid::getFriends() const noexcept
 {
-	std::vector<std::shared_ptr<service::Object>> result(friends_.size());
+	std::vector<std::shared_ptr<object::Character>> result(friends_.size());
 
 	std::transform(friends_.begin(),
 		friends_.end(),
@@ -59,12 +61,12 @@ std::optional<std::vector<std::shared_ptr<service::Object>>> Droid::getFriends()
 
 					if constexpr (std::is_same_v<std::weak_ptr<Human>, hero_t>)
 					{
-						return std::static_pointer_cast<service::Object>(
+						return std::make_shared<object::Character>(
 							std::make_shared<object::Human>(hero.lock()));
 					}
 					else if constexpr (std::is_same_v<std::weak_ptr<Droid>, hero_t>)
 					{
-						return std::static_pointer_cast<service::Object>(
+						return std::make_shared<object::Character>(
 							std::make_shared<object::Droid>(hero.lock()));
 					}
 				},

@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::PageInfoMethod {
+namespace methods::PageInfoHas {
 
 template <class TImpl>
-concept WithParamsHasNextPage = requires (TImpl impl, service::FieldParams params) 
+concept getHasNextPageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<bool> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsHasNextPage = requires (TImpl impl) 
+concept getHasNextPage = requires (TImpl impl) 
 {
 	{ service::FieldResult<bool> { impl.getHasNextPage() } };
 };
 
 template <class TImpl>
-concept WithParamsHasPreviousPage = requires (TImpl impl, service::FieldParams params) 
+concept getHasPreviousPageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<bool> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsHasPreviousPage = requires (TImpl impl) 
+concept getHasPreviousPage = requires (TImpl impl) 
 {
 	{ service::FieldResult<bool> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::PageInfoMethod
+} // namespace methods::PageInfoHas
 
 class PageInfo
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveHasNextPage(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHasPreviousPage(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHasNextPage(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveHasPreviousPage(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::PageInfoMethod::WithParamsHasNextPage<T>)
+			if constexpr (methods::PageInfoHas::getHasNextPageWithParams<T>)
 			{
 				return { _pimpl->getHasNextPage(std::move(params)) };
 			}
-			else if constexpr (methods::PageInfoMethod::NoParamsHasNextPage<T>)
+			else if constexpr (methods::PageInfoHas::getHasNextPage<T>)
 			{
 				return { _pimpl->getHasNextPage() };
 			}
@@ -98,11 +98,11 @@ private:
 
 		service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::PageInfoMethod::WithParamsHasPreviousPage<T>)
+			if constexpr (methods::PageInfoHas::getHasPreviousPageWithParams<T>)
 			{
 				return { _pimpl->getHasPreviousPage(std::move(params)) };
 			}
-			else if constexpr (methods::PageInfoMethod::NoParamsHasPreviousPage<T>)
+			else if constexpr (methods::PageInfoHas::getHasPreviousPage<T>)
 			{
 				return { _pimpl->getHasPreviousPage() };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::PageInfoMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::PageInfoHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::PageInfoMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::PageInfoHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	PageInfo(std::unique_ptr<Concept>&& pimpl);
+	PageInfo(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	PageInfo(std::shared_ptr<T> pimpl)
+	PageInfo(std::shared_ptr<T> pimpl) noexcept
 		: PageInfo { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

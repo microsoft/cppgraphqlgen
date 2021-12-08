@@ -11,184 +11,184 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::QueryMethod {
+namespace methods::QueryHas {
 
 template <class TImpl>
-concept WithParamsNode = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept getNodeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNode(std::move(params), std::move(idArg)) } };
+	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNode(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNode = requires (TImpl impl, response::IdType idArg) 
+concept getNode = requires (TImpl impl, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNode(std::move(idArg)) } };
+	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNode(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsAppointments = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getAppointmentsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsAppointments = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getAppointments = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsTasks = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getTasksWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsTasks = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getTasks = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsUnreadCounts = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getUnreadCountsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsUnreadCounts = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getUnreadCounts = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
 {
 	{ service::FieldResult<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsAppointmentsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getAppointmentsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsAppointmentsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getAppointmentsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsTasksById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getTasksByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsTasksById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getTasksById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsUnreadCountsById = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getUnreadCountsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsUnreadCountsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getUnreadCountsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsNested = requires (TImpl impl, service::FieldParams params) 
+concept getNestedWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNested = requires (TImpl impl) 
+concept getNested = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
-concept WithParamsUnimplemented = requires (TImpl impl, service::FieldParams params) 
+concept getUnimplementedWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getUnimplemented(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsUnimplemented = requires (TImpl impl) 
+concept getUnimplemented = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getUnimplemented() } };
 };
 
 template <class TImpl>
-concept WithParamsExpensive = requires (TImpl impl, service::FieldParams params) 
+concept getExpensiveWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsExpensive = requires (TImpl impl) 
+concept getExpensive = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive() } };
 };
 
 template <class TImpl>
-concept WithParamsTestTaskState = requires (TImpl impl, service::FieldParams params) 
+concept getTestTaskStateWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<TaskState> { impl.getTestTaskState(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsTestTaskState = requires (TImpl impl) 
+concept getTestTaskState = requires (TImpl impl) 
 {
 	{ service::FieldResult<TaskState> { impl.getTestTaskState() } };
 };
 
 template <class TImpl>
-concept WithParamsAnyType = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getAnyTypeWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
 	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::QueryMethod
+} // namespace methods::QueryHas
 
 class Query
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
-	service::AwaitableResolver resolveAppointments(service::ResolverParams&& params);
-	service::AwaitableResolver resolveTasks(service::ResolverParams&& params);
-	service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params);
-	service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params);
-	service::AwaitableResolver resolveTasksById(service::ResolverParams&& params);
-	service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
-	service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params);
-	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params);
-	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params);
-	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveAppointments(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveTasks(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveTasksById(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -197,7 +197,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
@@ -220,13 +220,13 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
+		service::FieldResult<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsNode<T>)
+			if constexpr (methods::QueryHas::getNodeWithParams<T>)
 			{
 				return { _pimpl->getNode(std::move(params), std::move(idArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsNode<T>)
+			else if constexpr (methods::QueryHas::getNode<T>)
 			{
 				return { _pimpl->getNode(std::move(idArg)) };
 			}
@@ -238,11 +238,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsAppointments<T>)
+			if constexpr (methods::QueryHas::getAppointmentsWithParams<T>)
 			{
 				return { _pimpl->getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsAppointments<T>)
+			else if constexpr (methods::QueryHas::getAppointments<T>)
 			{
 				return { _pimpl->getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -254,11 +254,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsTasks<T>)
+			if constexpr (methods::QueryHas::getTasksWithParams<T>)
 			{
 				return { _pimpl->getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsTasks<T>)
+			else if constexpr (methods::QueryHas::getTasks<T>)
 			{
 				return { _pimpl->getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -270,11 +270,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsUnreadCounts<T>)
+			if constexpr (methods::QueryHas::getUnreadCountsWithParams<T>)
 			{
 				return { _pimpl->getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsUnreadCounts<T>)
+			else if constexpr (methods::QueryHas::getUnreadCounts<T>)
 			{
 				return { _pimpl->getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) };
 			}
@@ -286,11 +286,11 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsAppointmentsById<T>)
+			if constexpr (methods::QueryHas::getAppointmentsByIdWithParams<T>)
 			{
 				return { _pimpl->getAppointmentsById(std::move(params), std::move(idsArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsAppointmentsById<T>)
+			else if constexpr (methods::QueryHas::getAppointmentsById<T>)
 			{
 				return { _pimpl->getAppointmentsById(std::move(idsArg)) };
 			}
@@ -302,11 +302,11 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsTasksById<T>)
+			if constexpr (methods::QueryHas::getTasksByIdWithParams<T>)
 			{
 				return { _pimpl->getTasksById(std::move(params), std::move(idsArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsTasksById<T>)
+			else if constexpr (methods::QueryHas::getTasksById<T>)
 			{
 				return { _pimpl->getTasksById(std::move(idsArg)) };
 			}
@@ -318,11 +318,11 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsUnreadCountsById<T>)
+			if constexpr (methods::QueryHas::getUnreadCountsByIdWithParams<T>)
 			{
 				return { _pimpl->getUnreadCountsById(std::move(params), std::move(idsArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsUnreadCountsById<T>)
+			else if constexpr (methods::QueryHas::getUnreadCountsById<T>)
 			{
 				return { _pimpl->getUnreadCountsById(std::move(idsArg)) };
 			}
@@ -334,11 +334,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsNested<T>)
+			if constexpr (methods::QueryHas::getNestedWithParams<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsNested<T>)
+			else if constexpr (methods::QueryHas::getNested<T>)
 			{
 				return { _pimpl->getNested() };
 			}
@@ -350,11 +350,11 @@ private:
 
 		service::FieldResult<std::string> getUnimplemented(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsUnimplemented<T>)
+			if constexpr (methods::QueryHas::getUnimplementedWithParams<T>)
 			{
 				return { _pimpl->getUnimplemented(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsUnimplemented<T>)
+			else if constexpr (methods::QueryHas::getUnimplemented<T>)
 			{
 				return { _pimpl->getUnimplemented() };
 			}
@@ -366,11 +366,11 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsExpensive<T>)
+			if constexpr (methods::QueryHas::getExpensiveWithParams<T>)
 			{
 				return { _pimpl->getExpensive(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsExpensive<T>)
+			else if constexpr (methods::QueryHas::getExpensive<T>)
 			{
 				return { _pimpl->getExpensive() };
 			}
@@ -382,11 +382,11 @@ private:
 
 		service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsTestTaskState<T>)
+			if constexpr (methods::QueryHas::getTestTaskStateWithParams<T>)
 			{
 				return { _pimpl->getTestTaskState(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsTestTaskState<T>)
+			else if constexpr (methods::QueryHas::getTestTaskState<T>)
 			{
 				return { _pimpl->getTestTaskState() };
 			}
@@ -398,11 +398,11 @@ private:
 
 		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsAnyType<T>)
+			if constexpr (methods::QueryHas::getAnyTypeWithParams<T>)
 			{
 				return { _pimpl->getAnyType(std::move(params), std::move(idsArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsAnyType<T>)
+			else if constexpr (methods::QueryHas::getAnyType<T>)
 			{
 				return { _pimpl->getAnyType(std::move(idsArg)) };
 			}
@@ -414,7 +414,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -422,7 +422,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -432,7 +432,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Query(std::unique_ptr<Concept>&& pimpl);
+	Query(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -441,7 +444,7 @@ private:
 
 public:
 	template <class T>
-	Query(std::shared_ptr<T> pimpl)
+	Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

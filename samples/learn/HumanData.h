@@ -22,7 +22,7 @@ public:
 
 	const std::string& getId() const noexcept;
 	const std::optional<std::string>& getName() const noexcept;
-	std::optional<std::vector<std::shared_ptr<service::Object>>> getFriends() const noexcept;
+	std::optional<std::vector<std::shared_ptr<object::Character>>> getFriends() const noexcept;
 	std::optional<std::vector<std::optional<Episode>>> getAppearsIn() const noexcept;
 	const std::optional<std::string>& getHomePlanet() const noexcept;
 

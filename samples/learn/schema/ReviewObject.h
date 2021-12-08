@@ -11,54 +11,54 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
-namespace methods::ReviewMethod {
+namespace methods::ReviewHas {
 
 template <class TImpl>
-concept WithParamsStars = requires (TImpl impl, service::FieldParams params) 
+concept getStarsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<int> { impl.getStars(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsStars = requires (TImpl impl) 
+concept getStars = requires (TImpl impl) 
 {
 	{ service::FieldResult<int> { impl.getStars() } };
 };
 
 template <class TImpl>
-concept WithParamsCommentary = requires (TImpl impl, service::FieldParams params) 
+concept getCommentaryWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsCommentary = requires (TImpl impl) 
+concept getCommentary = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::ReviewMethod
+} // namespace methods::ReviewHas
 
 class Review
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveStars(service::ResolverParams&& params);
-	service::AwaitableResolver resolveCommentary(service::ResolverParams&& params);
+	service::AwaitableResolver resolveStars(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveCommentary(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,33 +82,33 @@ private:
 
 		service::FieldResult<int> getStars(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::ReviewMethod::WithParamsStars<T>)
+			if constexpr (methods::ReviewHas::getStarsWithParams<T>)
 			{
 				return { _pimpl->getStars(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::ReviewMethod::NoParamsStars<T>, R"msg(Review::getStars is not implemented)msg");
+				static_assert(methods::ReviewHas::getStars<T>, R"msg(Review::getStars is not implemented)msg");
 				return { _pimpl->getStars() };
 			}
 		}
 
 		service::FieldResult<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::ReviewMethod::WithParamsCommentary<T>)
+			if constexpr (methods::ReviewHas::getCommentaryWithParams<T>)
 			{
 				return { _pimpl->getCommentary(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::ReviewMethod::NoParamsCommentary<T>, R"msg(Review::getCommentary is not implemented)msg");
+				static_assert(methods::ReviewHas::getCommentary<T>, R"msg(Review::getCommentary is not implemented)msg");
 				return { _pimpl->getCommentary() };
 			}
 		}
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ReviewMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::ReviewHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -116,7 +116,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ReviewMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::ReviewHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -126,7 +126,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Review(std::unique_ptr<Concept>&& pimpl);
+	Review(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -135,7 +138,7 @@ private:
 
 public:
 	template <class T>
-	Review(std::shared_ptr<T> pimpl)
+	Review(std::shared_ptr<T> pimpl) noexcept
 		: Review { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

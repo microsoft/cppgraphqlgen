@@ -1446,16 +1446,11 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 			break;
 
 		case OutputFieldType::Object:
-			if (field.interfaceField)
-			{
-				outputType << R"cpp(object::)cpp";
-			}
-
+		case OutputFieldType::Interface:
 			outputType << getSafeCppName(field.type);
 			break;
 
 		case OutputFieldType::Union:
-		case OutputFieldType::Interface:
 			outputType << R"cpp(service::Object)cpp";
 			break;
 	}

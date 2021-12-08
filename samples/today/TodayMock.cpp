@@ -166,7 +166,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 	return awaiter { delay };
 }
 
-service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
+service::FieldResult<std::shared_ptr<object::Node>> Query::getNode(
 	service::FieldParams params, response::IdType id)
 {
 	// query { node(id: "ZmFrZVRhc2tJZA==") { ...on Task { title } } }
@@ -177,21 +177,23 @@ service::FieldResult<std::shared_ptr<service::Object>> Query::getNode(
 
 	if (appointment)
 	{
-		co_return std::make_shared<object::Appointment>(std::move(appointment));
+		co_return std::make_shared<object::Node>(
+			std::make_shared<object::Appointment>(std::move(appointment)));
 	}
 
 	auto task = findTask(params, id);
 
 	if (task)
 	{
-		co_return std::make_shared<object::Task>(std::move(task));
+		co_return std::make_shared<object::Node>(std::make_shared<object::Task>(std::move(task)));
 	}
 
 	auto folder = findUnreadCount(params, id);
 
 	if (folder)
 	{
-		co_return std::make_shared<object::Folder>(std::move(folder));
+		co_return std::make_shared<object::Node>(
+			std::make_shared<object::Folder>(std::move(folder)));
 	}
 
 	co_return nullptr;

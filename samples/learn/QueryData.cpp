@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "CharacterObject.h"
+
 #include "QueryData.h"
 
 namespace graphql::learn {
@@ -14,9 +16,9 @@ Query::Query(std::map<Episode, SharedHero>&& heroes,
 {
 }
 
-std::shared_ptr<service::Object> Query::getHero(std::optional<Episode> episodeArg) const noexcept
+std::shared_ptr<object::Character> Query::getHero(std::optional<Episode> episodeArg) const noexcept
 {
-	std::shared_ptr<service::Object> result;
+	std::shared_ptr<object::Character> result;
 	const auto episode = episodeArg ? *episodeArg : Episode::NEW_HOPE;
 
 	if (const auto itr = heroes_.find(episode); itr != heroes_.end())
@@ -27,12 +29,12 @@ std::shared_ptr<service::Object> Query::getHero(std::optional<Episode> episodeAr
 
 				if constexpr (std::is_same_v<std::shared_ptr<Human>, hero_t>)
 				{
-					return std::static_pointer_cast<service::Object>(
+					return std::make_shared<object::Character>(
 						std::make_shared<object::Human>(hero));
 				}
 				else if constexpr (std::is_same_v<std::shared_ptr<Droid>, hero_t>)
 				{
-					return std::static_pointer_cast<service::Object>(
+					return std::make_shared<object::Character>(
 						std::make_shared<object::Droid>(hero));
 				}
 			},

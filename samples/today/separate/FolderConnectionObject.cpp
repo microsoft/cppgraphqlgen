@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+FolderConnection::FolderConnection(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames FolderConnection::getTypeNames() const noexcept
+{
+	return {
 		"FolderConnection"
-	}, {
+	};
+}
+
+service::ResolverMap FolderConnection::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void FolderConnection::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void FolderConnection::endSelectionSet(const service::SelectionSetParams& params
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver FolderConnection::resolvePageInfo(service::ResolverPa
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver FolderConnection::resolveEdges(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolveEdges(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,14 +70,14 @@ service::AwaitableResolver FolderConnection::resolveEdges(service::ResolverParam
 	return service::ModifiedResult<FolderEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver FolderConnection::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver FolderConnection::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(FolderConnection)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddFolderConnectionDetails(std::shared_ptr<schema::ObjectType> typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
+void AddFolderConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderConnection->AddFields({
 		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),

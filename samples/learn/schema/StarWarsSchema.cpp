@@ -115,12 +115,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(commentary)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
 	});
 
-	typeCharacter->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(friends)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Character"))),
-		schema::Field::Make(R"gql(appearsIn)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Episode")))
-	});
+	AddCharacterDetails(typeCharacter, schema);
 
 	AddHumanDetails(typeHuman, schema);
 	AddDroidDetails(typeDroid, schema);

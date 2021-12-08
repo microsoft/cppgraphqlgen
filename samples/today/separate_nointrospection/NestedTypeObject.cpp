@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-NestedType::NestedType(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+NestedType::NestedType(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames NestedType::getTypeNames() const noexcept
+{
+	return {
 		"NestedType"
-	}, {
+	};
+}
+
+service::ResolverMap NestedType::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(depth)gql"sv, [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void NestedType::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void NestedType::endSelectionSet(const service::SelectionSetParams& params) cons
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params)
+service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver NestedType::resolveDepth(service::ResolverParams&& pa
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& params)
+service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,14 +70,14 @@ service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& p
 	return service::ModifiedResult<NestedType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver NestedType::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver NestedType::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(NestedType)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddNestedTypeDetails(std::shared_ptr<schema::ObjectType> typeNestedType, const std::shared_ptr<schema::Schema>& schema)
+void AddNestedTypeDetails(const std::shared_ptr<schema::ObjectType>& typeNestedType, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeNestedType->AddFields({
 		schema::Field::Make(R"gql(depth)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int"))),

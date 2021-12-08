@@ -112,10 +112,54 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 namespace validation {
 namespace object {
 
-Query::Query(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Sentient::Sentient(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void Sentient::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Sentient::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+Pet::Pet(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void Pet::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Pet::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Query::getTypeNames() const noexcept
+{
+	return {
 		"Query"
-	}, {
+	};
+}
+
+service::ResolverMap Query::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(dog)gql"sv, [this](service::ResolverParams&& params) { return resolveDog(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
@@ -124,9 +168,7 @@ Query::Query(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Query::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -139,7 +181,7 @@ void Query::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -149,7 +191,7 @@ service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -159,17 +201,17 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getPet(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<Pet>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -179,7 +221,7 @@ service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& para
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -189,7 +231,7 @@ service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& par
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params) const
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -200,7 +242,7 @@ service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& param
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& params) const
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -211,18 +253,30 @@ service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& p
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
-Dog::Dog(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Dog::Dog(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Dog::getTypeNames() const noexcept
+{
+	return {
 		"Pet",
 		"CatOrDog",
 		"DogOrHuman",
 		"Dog"
-	}, {
+	};
+}
+
+service::ResolverMap Dog::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(owner)gql"sv, [this](service::ResolverParams&& params) { return resolveOwner(std::move(params)); } },
 		{ R"gql(nickname)gql"sv, [this](service::ResolverParams&& params) { return resolveNickname(std::move(params)); } },
@@ -230,9 +284,7 @@ Dog::Dog(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(barkVolume)gql"sv, [this](service::ResolverParams&& params) { return resolveBarkVolume(std::move(params)); } },
 		{ R"gql(isHousetrained)gql"sv, [this](service::ResolverParams&& params) { return resolveIsHousetrained(std::move(params)); } },
 		{ R"gql(doesKnowCommand)gql"sv, [this](service::ResolverParams&& params) { return resolveDoesKnowCommand(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Dog::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -245,7 +297,7 @@ void Dog::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -255,7 +307,7 @@ service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -265,7 +317,7 @@ service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -275,7 +327,7 @@ service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& para
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
 	auto argDogCommand = service::ModifiedArgument<DogCommand>::require("dogCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -286,7 +338,7 @@ service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&&
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& params) const
 {
 	auto argAtOtherHomes = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("atOtherHomes", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -297,7 +349,7 @@ service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -307,23 +359,33 @@ service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Dog)gql" }, std::move(params));
 }
 
-Alien::Alien(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Alien::Alien(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Alien::getTypeNames() const noexcept
+{
+	return {
 		"Sentient",
 		"HumanOrAlien",
 		"Alien"
-	}, {
+	};
+}
+
+service::ResolverMap Alien::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(homePlanet)gql"sv, [this](service::ResolverParams&& params) { return resolveHomePlanet(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Alien::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -336,7 +398,7 @@ void Alien::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -346,7 +408,7 @@ service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -356,24 +418,34 @@ service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& pa
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Alien::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Alien)gql" }, std::move(params));
 }
 
-Human::Human(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Human::Human(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Human::getTypeNames() const noexcept
+{
+	return {
 		"Sentient",
 		"DogOrHuman",
 		"HumanOrAlien",
 		"Human"
-	}, {
+	};
+}
+
+service::ResolverMap Human::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(pets)gql"sv, [this](service::ResolverParams&& params) { return resolvePets(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Human::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -386,7 +458,7 @@ void Human::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -396,35 +468,45 @@ service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Human::resolvePets(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolvePets(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getPets(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+	return service::ModifiedResult<Pet>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Human)gql" }, std::move(params));
 }
 
-Cat::Cat(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Cat::Cat(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Cat::getTypeNames() const noexcept
+{
+	return {
 		"Pet",
 		"CatOrDog",
 		"Cat"
-	}, {
+	};
+}
+
+service::ResolverMap Cat::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(nickname)gql"sv, [this](service::ResolverParams&& params) { return resolveNickname(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(meowVolume)gql"sv, [this](service::ResolverParams&& params) { return resolveMeowVolume(std::move(params)); } },
 		{ R"gql(doesKnowCommand)gql"sv, [this](service::ResolverParams&& params) { return resolveDoesKnowCommand(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Cat::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -437,7 +519,7 @@ void Cat::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -447,7 +529,7 @@ service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -457,7 +539,7 @@ service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
 	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -468,7 +550,7 @@ service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&&
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -478,20 +560,30 @@ service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& para
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Cat)gql" }, std::move(params));
 }
 
-Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Mutation::getTypeNames() const noexcept
+{
+	return {
 		"Mutation"
-	}, {
+	};
+}
+
+service::ResolverMap Mutation::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(mutateDog)gql"sv, [this](service::ResolverParams&& params) { return resolveMutateDog(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -504,7 +596,7 @@ void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -514,20 +606,30 @@ service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& 
 	return service::ModifiedResult<MutateDogResult>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Mutation)gql" }, std::move(params));
 }
 
-MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames MutateDogResult::getTypeNames() const noexcept
+{
+	return {
 		"MutateDogResult"
-	}, {
+	};
+}
+
+service::ResolverMap MutateDogResult::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void MutateDogResult::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -540,7 +642,7 @@ void MutateDogResult::endSelectionSet(const service::SelectionSetParams& params)
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -550,21 +652,31 @@ service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver MutateDogResult::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver MutateDogResult::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(MutateDogResult)gql" }, std::move(params));
 }
 
-Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Subscription::Subscription(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Subscription::getTypeNames() const noexcept
+{
+	return {
 		"Subscription"
-	}, {
+	};
+}
+
+service::ResolverMap Subscription::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(newMessage)gql"sv, [this](service::ResolverParams&& params) { return resolveNewMessage(std::move(params)); } },
 		{ R"gql(disallowedSecondRootField)gql"sv, [this](service::ResolverParams&& params) { return resolveDisallowedSecondRootField(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -577,7 +689,7 @@ void Subscription::endSelectionSet(const service::SelectionSetParams& params) co
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -587,7 +699,7 @@ service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverPara
 	return service::ModifiedResult<Message>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -597,21 +709,31 @@ service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(servic
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Subscription)gql" }, std::move(params));
 }
 
-Message::Message(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Message::Message(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Message::getTypeNames() const noexcept
+{
+	return {
 		"Message"
-	}, {
+	};
+}
+
+service::ResolverMap Message::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(body)gql"sv, [this](service::ResolverParams&& params) { return resolveBody(std::move(params)); } },
 		{ R"gql(sender)gql"sv, [this](service::ResolverParams&& params) { return resolveSender(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Message::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -624,7 +746,7 @@ void Message::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -634,7 +756,7 @@ service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Message::resolveSender(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolveSender(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -644,15 +766,27 @@ service::AwaitableResolver Message::resolveSender(service::ResolverParams&& para
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Message::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Message)gql" }, std::move(params));
 }
 
-Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Arguments::Arguments(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Arguments::getTypeNames() const noexcept
+{
+	return {
 		"Arguments"
-	}, {
+	};
+}
+
+service::ResolverMap Arguments::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(intArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveIntArgField(std::move(params)); } },
 		{ R"gql(multipleReqs)gql"sv, [this](service::ResolverParams&& params) { return resolveMultipleReqs(std::move(params)); } },
@@ -662,9 +796,7 @@ Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(nonNullBooleanArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveNonNullBooleanArgField(std::move(params)); } },
 		{ R"gql(nonNullBooleanListField)gql"sv, [this](service::ResolverParams&& params) { return resolveNonNullBooleanListField(std::move(params)); } },
 		{ R"gql(optionalNonNullBooleanArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveOptionalNonNullBooleanArgField(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Arguments::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -677,7 +809,7 @@ void Arguments::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParams&& params) const
 {
 	auto argX = service::ModifiedArgument<int>::require("x", params.arguments);
 	auto argY = service::ModifiedArgument<int>::require("y", params.arguments);
@@ -689,7 +821,7 @@ service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParam
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverParams&& params) const
 {
 	auto argBooleanArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -700,7 +832,7 @@ service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverPa
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverParams&& params) const
 {
 	auto argFloatArg = service::ModifiedArgument<double>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -711,7 +843,7 @@ service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverPara
 	return service::ModifiedResult<double>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams&& params) const
 {
 	auto argIntArg = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -722,7 +854,7 @@ service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params) const
 {
 	auto argNonNullBooleanArg = service::ModifiedArgument<bool>::require("nonNullBooleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -733,7 +865,7 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::Res
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params) const
 {
 	auto argNonNullBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -744,7 +876,7 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::Re
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveBooleanListArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveBooleanListArgField(service::ResolverParams&& params) const
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -755,7 +887,7 @@ service::AwaitableResolver Arguments::resolveBooleanListArgField(service::Resolv
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const
 {
 	const auto defaultArguments = []()
 	{
@@ -780,7 +912,7 @@ service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(serv
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Arguments)gql" }, std::move(params));
 }

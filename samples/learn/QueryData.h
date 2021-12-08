@@ -20,7 +20,7 @@ public:
 		std::map<std::string, std::shared_ptr<Human>>&& humans,
 		std::map<std::string, std::shared_ptr<Droid>>&& droids) noexcept;
 
-	std::shared_ptr<service::Object> getHero(std::optional<Episode> episodeArg) const noexcept;
+	std::shared_ptr<object::Character> getHero(std::optional<Episode> episodeArg) const noexcept;
 	std::shared_ptr<object::Human> getHuman(const std::string& idArg) const noexcept;
 	std::shared_ptr<object::Droid> getDroid(const std::string& idArg) const noexcept;
 

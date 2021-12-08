@@ -11,69 +11,69 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
-namespace methods::QueryMethod {
+namespace methods::QueryHas {
 
 template <class TImpl>
-concept WithParamsHero = requires (TImpl impl, service::FieldParams params, std::optional<Episode> episodeArg) 
+concept getHeroWithParams = requires (TImpl impl, service::FieldParams params, std::optional<Episode> episodeArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getHero(std::move(params), std::move(episodeArg)) } };
+	{ service::FieldResult<std::shared_ptr<Character>> { impl.getHero(std::move(params), std::move(episodeArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsHero = requires (TImpl impl, std::optional<Episode> episodeArg) 
+concept getHero = requires (TImpl impl, std::optional<Episode> episodeArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getHero(std::move(episodeArg)) } };
+	{ service::FieldResult<std::shared_ptr<Character>> { impl.getHero(std::move(episodeArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsHuman = requires (TImpl impl, service::FieldParams params, std::string idArg) 
+concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsHuman = requires (TImpl impl, std::string idArg) 
+concept getHuman = requires (TImpl impl, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsDroid = requires (TImpl impl, service::FieldParams params, std::string idArg) 
+concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsDroid = requires (TImpl impl, std::string idArg) 
+concept getDroid = requires (TImpl impl, std::string idArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::QueryMethod
+} // namespace methods::QueryHas
 
 class Query
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveHero(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDroid(service::ResolverParams&& params);
+	service::AwaitableResolver resolveHero(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDroid(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 
@@ -84,7 +84,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const = 0;
 	};
@@ -98,48 +98,48 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
+		service::FieldResult<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsHero<T>)
+			if constexpr (methods::QueryHas::getHeroWithParams<T>)
 			{
 				return { _pimpl->getHero(std::move(params), std::move(episodeArg)) };
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsHero<T>, R"msg(Query::getHero is not implemented)msg");
+				static_assert(methods::QueryHas::getHero<T>, R"msg(Query::getHero is not implemented)msg");
 				return { _pimpl->getHero(std::move(episodeArg)) };
 			}
 		}
 
 		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsHuman<T>)
+			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
 				return { _pimpl->getHuman(std::move(params), std::move(idArg)) };
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsHuman<T>, R"msg(Query::getHuman is not implemented)msg");
+				static_assert(methods::QueryHas::getHuman<T>, R"msg(Query::getHuman is not implemented)msg");
 				return { _pimpl->getHuman(std::move(idArg)) };
 			}
 		}
 
 		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsDroid<T>)
+			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{
 				return { _pimpl->getDroid(std::move(params), std::move(idArg)) };
 			}
 			else
 			{
-				static_assert(methods::QueryMethod::NoParamsDroid<T>, R"msg(Query::getDroid is not implemented)msg");
+				static_assert(methods::QueryHas::getDroid<T>, R"msg(Query::getDroid is not implemented)msg");
 				return { _pimpl->getDroid(std::move(idArg)) };
 			}
 		}
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -147,7 +147,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -157,7 +157,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Query(std::unique_ptr<Concept>&& pimpl);
+	Query(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -166,7 +169,7 @@ private:
 
 public:
 	template <class T>
-	Query(std::shared_ptr<T> pimpl)
+	Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

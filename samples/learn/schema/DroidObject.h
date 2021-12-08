@@ -10,103 +10,115 @@
 
 #include "StarWarsSchema.h"
 
+#include "CharacterObject.h"
+
 namespace graphql::learn::object {
-namespace methods::DroidMethod {
+namespace implements {
+
+template <class I>
+concept DroidIs = std::is_same_v<I, Character>;
+
+} // namespace implements
+
+namespace methods::DroidHas {
 
 template <class TImpl>
-concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsId = requires (TImpl impl) 
+concept getId = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getId() } };
 };
 
 template <class TImpl>
-concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsName = requires (TImpl impl) 
+concept getName = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
-concept WithParamsFriends = requires (TImpl impl, service::FieldParams params) 
+concept getFriendsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> { impl.getFriends(std::move(params)) } };
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsFriends = requires (TImpl impl) 
+concept getFriends = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> { impl.getFriends() } };
+	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends() } };
 };
 
 template <class TImpl>
-concept WithParamsAppearsIn = requires (TImpl impl, service::FieldParams params) 
+concept getAppearsInWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsAppearsIn = requires (TImpl impl) 
+concept getAppearsIn = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn() } };
 };
 
 template <class TImpl>
-concept WithParamsPrimaryFunction = requires (TImpl impl, service::FieldParams params) 
+concept getPrimaryFunctionWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getPrimaryFunction(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsPrimaryFunction = requires (TImpl impl) 
+concept getPrimaryFunction = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getPrimaryFunction() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::DroidMethod
+} // namespace methods::DroidHas
 
 class Droid
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveId(service::ResolverParams&& params);
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveFriends(service::ResolverParams&& params);
-	service::AwaitableResolver resolveAppearsIn(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePrimaryFunction(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveFriends(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveAppearsIn(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolvePrimaryFunction(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Character
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
+		virtual service::FieldResult<std::string> getId(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const = 0;
 	};
 
@@ -121,72 +133,72 @@ private:
 
 		service::FieldResult<std::string> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DroidMethod::WithParamsId<T>)
+			if constexpr (methods::DroidHas::getIdWithParams<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::DroidMethod::NoParamsId<T>, R"msg(Droid::getId is not implemented)msg");
+				static_assert(methods::DroidHas::getId<T>, R"msg(Droid::getId is not implemented)msg");
 				return { _pimpl->getId() };
 			}
 		}
 
 		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DroidMethod::WithParamsName<T>)
+			if constexpr (methods::DroidHas::getNameWithParams<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::DroidMethod::NoParamsName<T>, R"msg(Droid::getName is not implemented)msg");
+				static_assert(methods::DroidHas::getName<T>, R"msg(Droid::getName is not implemented)msg");
 				return { _pimpl->getName() };
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DroidMethod::WithParamsFriends<T>)
+			if constexpr (methods::DroidHas::getFriendsWithParams<T>)
 			{
 				return { _pimpl->getFriends(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::DroidMethod::NoParamsFriends<T>, R"msg(Droid::getFriends is not implemented)msg");
+				static_assert(methods::DroidHas::getFriends<T>, R"msg(Droid::getFriends is not implemented)msg");
 				return { _pimpl->getFriends() };
 			}
 		}
 
 		service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DroidMethod::WithParamsAppearsIn<T>)
+			if constexpr (methods::DroidHas::getAppearsInWithParams<T>)
 			{
 				return { _pimpl->getAppearsIn(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::DroidMethod::NoParamsAppearsIn<T>, R"msg(Droid::getAppearsIn is not implemented)msg");
+				static_assert(methods::DroidHas::getAppearsIn<T>, R"msg(Droid::getAppearsIn is not implemented)msg");
 				return { _pimpl->getAppearsIn() };
 			}
 		}
 
 		service::FieldResult<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DroidMethod::WithParamsPrimaryFunction<T>)
+			if constexpr (methods::DroidHas::getPrimaryFunctionWithParams<T>)
 			{
 				return { _pimpl->getPrimaryFunction(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::DroidMethod::NoParamsPrimaryFunction<T>, R"msg(Droid::getPrimaryFunction is not implemented)msg");
+				static_assert(methods::DroidHas::getPrimaryFunction<T>, R"msg(Droid::getPrimaryFunction is not implemented)msg");
 				return { _pimpl->getPrimaryFunction() };
 			}
 		}
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::DroidMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::DroidHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -194,7 +206,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::DroidMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::DroidHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -204,7 +216,19 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Droid(std::unique_ptr<Concept>&& pimpl);
+	Droid(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interface objects need access to these methods
+	friend Character;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::DroidIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -213,7 +237,7 @@ private:
 
 public:
 	template <class T>
-	Droid(std::shared_ptr<T> pimpl)
+	Droid(std::shared_ptr<T> pimpl) noexcept
 		: Droid { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

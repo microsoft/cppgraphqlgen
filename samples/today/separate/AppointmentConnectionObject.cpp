@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+AppointmentConnection::AppointmentConnection(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames AppointmentConnection::getTypeNames() const noexcept
+{
+	return {
 		"AppointmentConnection"
-	}, {
+	};
+}
+
+service::ResolverMap AppointmentConnection::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void AppointmentConnection::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void AppointmentConnection::endSelectionSet(const service::SelectionSetParams& p
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver AppointmentConnection::resolvePageInfo(service::Resol
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver AppointmentConnection::resolveEdges(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentConnection::resolveEdges(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,14 +70,14 @@ service::AwaitableResolver AppointmentConnection::resolveEdges(service::Resolver
 	return service::ModifiedResult<AppointmentEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver AppointmentConnection::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver AppointmentConnection::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(AppointmentConnection)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddAppointmentConnectionDetails(std::shared_ptr<schema::ObjectType> typeAppointmentConnection, const std::shared_ptr<schema::Schema>& schema)
+void AddAppointmentConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeAppointmentConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeAppointmentConnection->AddFields({
 		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),

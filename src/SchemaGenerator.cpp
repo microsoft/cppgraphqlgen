@@ -250,10 +250,30 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 	}
 
+	if (!_loader.getInterfaceTypes().empty())
+	{
+		objectNamespace.enter();
+		headerFile << std::endl;
+
+		// Forward declare all of the interface types
+		for (const auto& interfaceType : _loader.getInterfaceTypes())
+		{
+			headerFile << R"cpp(class )cpp" << interfaceType.cppType << R"cpp(;
+)cpp";
+		}
+
+		headerFile << std::endl;
+	}
+
 	if (!_loader.getObjectTypes().empty())
 	{
 		if (_loader.isIntrospection())
 		{
+			if (objectNamespace.exit())
+			{
+				headerFile << std::endl;
+			}
+
 			// Forward declare all of the concrete types for the Introspection schema
 			for (const auto& objectType : _loader.getObjectTypes())
 			{
@@ -264,8 +284,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << std::endl;
 		}
 
-		objectNamespace.enter();
-		headerFile << std::endl;
+		if (objectNamespace.enter())
+		{
+			headerFile << std::endl;
+		}
 
 		// Forward declare all of the object types
 		for (const auto& objectType : _loader.getObjectTypes())
@@ -277,78 +299,77 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		headerFile << std::endl;
 	}
 
-	if (!_loader.getInterfaceTypes().empty())
+	if (_options.mergeFiles)
 	{
-		if (objectNamespace.exit())
+		if (!_loader.getInterfaceTypes().empty())
 		{
-			headerFile << std::endl;
-		}
-
-		// Forward declare all of the interface types
-		if (_loader.getInterfaceTypes().size() > 1)
-		{
+			// Output the full declarations
 			for (const auto& interfaceType : _loader.getInterfaceTypes())
 			{
-				headerFile << R"cpp(struct )cpp" << interfaceType.cppType << R"cpp(;
-)cpp";
+				outputInterfaceDeclaration(headerFile, interfaceType);
+				headerFile << std::endl;
 			}
-
-			headerFile << std::endl;
 		}
 
-		// Output the full declarations
-		for (const auto& interfaceType : _loader.getInterfaceTypes())
+		if (!_loader.getObjectTypes().empty())
 		{
-			headerFile << R"cpp(struct )cpp" << interfaceType.cppType << R"cpp(
-{
-)cpp";
-
-			for (const auto& outputField : interfaceType.fields)
+			if (!_loader.isIntrospection())
 			{
-				headerFile << getFieldDeclaration(outputField);
-			}
+				objectNamespace.enter();
 
-			headerFile << R"cpp(};
+				NamespaceScope implementsNamespace { headerFile, R"cpp(implements)cpp", true };
 
-)cpp";
-		}
-	}
+				for (const auto& objectType : _loader.getObjectTypes())
+				{
+					if (objectType.interfaces.empty())
+					{
+						continue;
+					}
 
-	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
-	{
-		if (!_loader.isIntrospection())
-		{
-			objectNamespace.enter();
+					if (implementsNamespace.enter())
+					{
+						headerFile << std::endl;
+					}
 
-			NamespaceScope stubNamespace { headerFile, "methods", true };
+					// Output the implements concept declarations
+					outputObjectImplements(headerFile, objectType);
+				}
 
-			// Output the stub concept declarations
-			for (const auto& objectType : _loader.getObjectTypes())
-			{
-				if (!stubNamespace.enter())
+				if (implementsNamespace.exit())
 				{
 					headerFile << std::endl;
 				}
 
-				std::ostringstream ossConceptNamespace;
+				NamespaceScope stubNamespace { headerFile, "methods", true };
 
-				ossConceptNamespace << objectType.cppType << R"cpp(Method)cpp";
+				// Output the stub concept declarations
+				for (const auto& objectType : _loader.getObjectTypes())
+				{
+					if (!stubNamespace.enter())
+					{
+						headerFile << std::endl;
+					}
 
-				const auto conceptNamespace = ossConceptNamespace.str();
-				NamespaceScope conceptSubNamespace { headerFile, conceptNamespace };
+					std::ostringstream ossConceptNamespace;
 
-				outputObjectStubs(headerFile, objectType);
+					ossConceptNamespace << objectType.cppType << R"cpp(Has)cpp";
+
+					const auto conceptNamespace = ossConceptNamespace.str();
+					NamespaceScope conceptSubNamespace { headerFile, conceptNamespace };
+
+					outputObjectStubs(headerFile, objectType);
+				}
+
+				stubNamespace.exit();
+				headerFile << std::endl;
 			}
 
-			stubNamespace.exit();
-			headerFile << std::endl;
-		}
-
-		// Output the full declarations
-		for (const auto& objectType : _loader.getObjectTypes())
-		{
-			outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
-			headerFile << std::endl;
+			// Output the full declarations
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				outputObjectDeclaration(headerFile, objectType, objectType.type == queryType);
+				headerFile << std::endl;
+			}
 		}
 	}
 
@@ -455,18 +476,35 @@ private:
 )cpp";
 	}
 
-	if (!_loader.getObjectTypes().empty() && !_options.mergeFiles)
+	if (!_options.mergeFiles)
 	{
-		for (const auto& objectType : _loader.getObjectTypes())
+		if (!_loader.getInterfaceTypes().empty())
 		{
-			headerFile << R"cpp(void Add)cpp" << objectType.cppType
-					   << R"cpp(Details(std::shared_ptr<schema::ObjectType> type)cpp"
-					   << objectType.cppType
-					   << R"cpp(, const std::shared_ptr<schema::Schema>& schema);
+			for (const auto& interfaceType : _loader.getInterfaceTypes())
+			{
+				headerFile << R"cpp(void Add)cpp" << interfaceType.cppType
+						   << R"cpp(Details(const std::shared_ptr<schema::InterfaceType>& type)cpp"
+						   << interfaceType.cppType
+						   << R"cpp(, const std::shared_ptr<schema::Schema>& schema);
 )cpp";
+			}
+
+			headerFile << std::endl;
 		}
 
-		headerFile << std::endl;
+		if (!_loader.getObjectTypes().empty())
+		{
+			for (const auto& objectType : _loader.getObjectTypes())
+			{
+				headerFile << R"cpp(void Add)cpp" << objectType.cppType
+						   << R"cpp(Details(const std::shared_ptr<schema::ObjectType>& type)cpp"
+						   << objectType.cppType
+						   << R"cpp(, const std::shared_ptr<schema::Schema>& schema);
+)cpp";
+			}
+
+			headerFile << std::endl;
+		}
 	}
 
 	if (_loader.isIntrospection())
@@ -534,104 +572,194 @@ GRAPHQLINTROSPECTION_EXPORT )cpp"
 	return true;
 }
 
-void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const
+void Generator::outputInterfaceDeclaration(
+	std::ostream& headerFile, const InterfaceType& interfaceType) const
 {
-	if (!_loader.isIntrospection())
+	headerFile
+		<< R"cpp(class )cpp" << interfaceType.cppType << R"cpp(
+	: public service::Object
+{
+private:
+	struct Concept
 	{
-		for (const auto& outputField : objectType.fields)
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
 		{
-			std::string fieldName(outputField.cppName);
+		}
 
-			fieldName[0] =
-				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
 
-			std::ostringstream ossPassedArguments;
-			bool firstArgument = true;
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
 
-			for (const auto& argument : outputField.arguments)
-			{
-				if (!firstArgument)
-				{
-					ossPassedArguments << R"cpp(, )cpp";
-				}
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
 
-				ossPassedArguments << R"cpp(std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
-				firstArgument = false;
-			}
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
 
-			const auto passedArguments = ossPassedArguments.str();
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
 
-			headerFile << R"cpp(
-template <class TImpl>
-concept WithParams)cpp" << fieldName
-					   << R"cpp( = requires (TImpl impl, service::FieldParams params)cpp";
-			for (const auto& argument : outputField.arguments)
-			{
-				headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
-						   << argument.cppName << R"cpp(Arg)cpp";
-			}
+	)cpp"
+		<< interfaceType.cppType << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept;
 
-			headerFile << R"cpp() 
-{
-	{ service::FieldResult<)cpp"
-					   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
-					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-			if (!passedArguments.empty())
-			{
-				headerFile << R"cpp(, )cpp" << passedArguments;
-			}
+	const std::unique_ptr<Concept> _pimpl;
 
-			headerFile << R"cpp() } };
-};
-
-template <class TImpl>
-concept NoParams)cpp" << fieldName
-					   << R"cpp( = requires (TImpl impl)cpp";
-			for (const auto& argument : outputField.arguments)
-			{
-				headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
-						   << argument.cppName << R"cpp(Arg)cpp";
-			}
-
-			headerFile << R"cpp() 
-{
-	{ service::FieldResult<)cpp"
-					   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
-					   << outputField.accessor << fieldName << R"cpp(()cpp";
-
-			if (!passedArguments.empty())
-			{
-				headerFile << passedArguments;
-			}
-
-			headerFile << R"cpp() } };
+public:
+	template <class T>
+	)cpp"
+		<< interfaceType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
+		: )cpp"
+		<< interfaceType.cppType
+		<< R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<)cpp"
+		<< interfaceType.cppType << R"cpp(>(), ")cpp" << interfaceType.cppType
+		<< R"cpp( is not implemented");
+	}
 };
 )cpp";
+}
+
+void Generator::outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const
+{
+	headerFile << R"cpp(template <class I>
+concept )cpp" << objectType.cppType
+			   << R"cpp(Is = )cpp";
+
+	bool firstInterface = true;
+
+	for (auto interfaceName : objectType.interfaces)
+	{
+		if (!firstInterface)
+		{
+			headerFile << R"cpp( || )cpp";
 		}
+
+		headerFile << R"cpp(std::is_same_v<I, )cpp" << interfaceName << R"cpp(>)cpp";
+		firstInterface = false;
 	}
 
-	if (_loader.isIntrospection())
+	headerFile << R"cpp(;
+
+)cpp";
+}
+
+void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const
+{
+	for (const auto& outputField : objectType.fields)
 	{
-		headerFile << std::endl;
-	}
-	else
-	{
+		std::string fieldName(outputField.cppName);
+
+		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+
+		std::ostringstream ossPassedArguments;
+		bool firstArgument = true;
+
+		for (const auto& argument : outputField.arguments)
+		{
+			if (!firstArgument)
+			{
+				ossPassedArguments << R"cpp(, )cpp";
+			}
+
+			ossPassedArguments << R"cpp(std::move()cpp" << argument.cppName << R"cpp(Arg))cpp";
+			firstArgument = false;
+		}
+
+		const auto passedArguments = ossPassedArguments.str();
+
 		headerFile << R"cpp(
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept )cpp" << outputField.accessor
+				   << fieldName
+				   << R"cpp(WithParams = requires (TImpl impl, service::FieldParams params)cpp";
+		for (const auto& argument : outputField.arguments)
+		{
+			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
+					   << argument.cppName << R"cpp(Arg)cpp";
+		}
+
+		headerFile << R"cpp() 
+{
+	{ service::FieldResult<)cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+
+		if (!passedArguments.empty())
+		{
+			headerFile << R"cpp(, )cpp" << passedArguments;
+		}
+
+		headerFile << R"cpp() } };
+};
+
+template <class TImpl>
+concept )cpp" << outputField.accessor
+				   << fieldName << R"cpp( = requires (TImpl impl)cpp";
+		for (const auto& argument : outputField.arguments)
+		{
+			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
+					   << argument.cppName << R"cpp(Arg)cpp";
+		}
+
+		headerFile << R"cpp() 
+{
+	{ service::FieldResult<)cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+				   << outputField.accessor << fieldName << R"cpp(()cpp";
+
+		if (!passedArguments.empty())
+		{
+			headerFile << passedArguments;
+		}
+
+		headerFile << R"cpp() } };
+};
+)cpp";
+	}
+
+	headerFile << R"cpp(
+template <class TImpl>
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
 )cpp";
-	}
 }
 
 void Generator::outputObjectDeclaration(
@@ -649,46 +777,21 @@ private:
 	}
 
 	headerFile << R"cpp(
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 )cpp";
 
 	if (!_options.noIntrospection && isQueryType)
 	{
 		headerFile
-			<< R"cpp(	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
+			<< R"cpp(	service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 )cpp";
 	}
 
 	headerFile << R"cpp(
-	struct Concept)cpp";
-
-	if (!objectType.interfaces.empty())
-	{
-		bool firstInterface = true;
-
-		for (const auto& interfaceName : objectType.interfaces)
-		{
-			headerFile << R"cpp(
-		)cpp";
-
-			if (firstInterface)
-			{
-				headerFile << R"cpp(: )cpp";
-				firstInterface = false;
-			}
-			else
-			{
-				headerFile << R"cpp(, )cpp";
-			}
-
-			headerFile << _loader.getSafeCppName(interfaceName);
-		}
-	}
-
-	headerFile << R"cpp(
+	struct Concept
 	{
 		virtual ~Concept() = default;
 
@@ -705,11 +808,6 @@ private:
 
 	for (const auto& outputField : objectType.fields)
 	{
-		if (outputField.inheritedField)
-		{
-			continue;
-		}
-
 		headerFile << R"cpp(	)cpp" << getFieldDeclaration(outputField);
 	}
 
@@ -782,7 +880,8 @@ private:
 		else
 		{
 			headerFile << R"cpp(if constexpr (methods::)cpp" << objectType.cppType
-					   << R"cpp(Method::WithParams)cpp" << fieldName << R"cpp(<T>)
+					   << R"cpp(Has::)cpp" << outputField.accessor << fieldName
+					   << R"cpp(WithParams<T>)
 			{
 				return { _pimpl->)cpp"
 					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
@@ -801,15 +900,15 @@ private:
 				headerFile << R"cpp(
 			{
 				static_assert(methods::)cpp"
-						   << objectType.cppType << R"cpp(Method::NoParams)cpp" << fieldName
-						   << R"cpp(<T>, R"msg()cpp" << objectType.cppType << R"cpp(::)cpp"
-						   << outputField.accessor << fieldName
+						   << objectType.cppType << R"cpp(Has::)cpp" << outputField.accessor
+						   << fieldName << R"cpp(<T>, R"msg()cpp" << objectType.cppType
+						   << R"cpp(::)cpp" << outputField.accessor << fieldName
 						   << R"cpp( is not implemented)msg");)cpp";
 			}
 			else
 			{
 				headerFile << R"cpp( if constexpr (methods::)cpp" << objectType.cppType
-						   << R"cpp(Method::NoParams)cpp" << fieldName << R"cpp(<T>)
+						   << R"cpp(Has::)cpp" << outputField.accessor << fieldName << R"cpp(<T>)
 			{)cpp";
 			}
 
@@ -848,7 +947,7 @@ private:
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
-				   << objectType.cppType << R"cpp(Method::HasBeginSelectionSet<T>)
+				   << objectType.cppType << R"cpp(Has::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -857,7 +956,7 @@ private:
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
-				   << objectType.cppType << R"cpp(Method::HasEndSelectionSet<T>)
+				   << objectType.cppType << R"cpp(Has::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -870,17 +969,20 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	)cpp";
+)cpp";
 
 	if (_loader.isIntrospection())
 	{
-		headerFile << R"cpp(const std::unique_ptr<Concept> _pimpl;
+		headerFile << R"cpp(	const std::unique_ptr<Concept> _pimpl;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLINTROSPECTION_EXPORT )cpp"
 				   << objectType.cppType << R"cpp((std::shared_ptr<)cpp"
 				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
-				   << objectType.cppType << R"cpp(> pimpl);
+				   << objectType.cppType << R"cpp(> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~)cpp"
 				   << objectType.cppType << R"cpp(();
 };
@@ -888,8 +990,36 @@ public:
 	}
 	else
 	{
+		headerFile << R"cpp(	)cpp" << objectType.cppType
+				   << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept;
+
+)cpp";
+
+		if (!objectType.interfaces.empty())
+		{
+			headerFile << R"cpp(	// Interface objects need access to these methods
+)cpp";
+
+			for (auto interfaceName : objectType.interfaces)
+			{
+				headerFile << R"cpp(	friend )cpp" << interfaceName << R"cpp(;
+)cpp";
+			}
+
+			headerFile << R"cpp(
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::)cpp"
+					   << objectType.cppType << R"cpp(Is<I>;
+	}
+
+)cpp";
+		}
+
 		headerFile
-			<< objectType.cppType << R"cpp((std::unique_ptr<Concept>&& pimpl);
+			<< R"cpp(	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -899,7 +1029,7 @@ public:
 public:
 	template <class T>
 	)cpp" << objectType.cppType
-			<< R"cpp((std::shared_ptr<T> pimpl)
+			<< R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
 			<< R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
@@ -948,7 +1078,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(	service::AwaitableResolver resolve)cpp" << fieldName
-		   << R"cpp((service::ResolverParams&& params);
+		   << R"cpp((service::ResolverParams&& params) const;
 )cpp";
 
 	return output.str();
@@ -1171,14 +1301,28 @@ service::AwaitableResolver ModifiedResult<)cpp"
 		}
 	}
 
-	if (!_loader.getObjectTypes().empty() && _options.mergeFiles)
+	if (_options.mergeFiles)
 	{
-		NamespaceScope objectNamespace { sourceFile, "object" };
+		NamespaceScope objectNamespace { sourceFile, "object", true };
 
-		sourceFile << std::endl;
+		for (const auto& interfaceType : _loader.getInterfaceTypes())
+		{
+			if (objectNamespace.enter())
+			{
+				sourceFile << std::endl;
+			}
+
+			outputInterfaceImplementation(sourceFile, interfaceType);
+			sourceFile << std::endl;
+		}
 
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
+			if (objectNamespace.enter())
+			{
+				sourceFile << std::endl;
+			}
+
 			outputObjectImplementation(sourceFile, objectType, objectType.type == queryType);
 			sourceFile << std::endl;
 		}
@@ -1495,7 +1639,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << unionType.cppType << R"cpp(->AddPossibleTypes({
+				sourceFile << R"cpp(	type)cpp" << unionType.cppType
+						   << R"cpp(->AddPossibleTypes({
 )cpp";
 
 				for (const auto& unionOption : unionType.options)
@@ -1522,88 +1667,19 @@ Operations::Operations()cpp";
 	{
 		sourceFile << std::endl;
 
+		const std::vector<std::string_view> emptyInterfaces {};
+
 		for (const auto& interfaceType : _loader.getInterfaceTypes())
 		{
-			if (!interfaceType.fields.empty())
+			if (!_options.mergeFiles)
 			{
-				bool firstValue = true;
-
-				sourceFile << R"cpp(	type)cpp" << interfaceType.cppType << R"cpp(->AddFields({
+				sourceFile << R"cpp(	Add)cpp" << interfaceType.cppType << R"cpp(Details(type)cpp"
+						   << interfaceType.cppType << R"cpp(, schema);
 )cpp";
-
-				for (const auto& interfaceField : interfaceType.fields)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(		schema::Field::Make(R"gql()cpp"
-							   << interfaceField.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << interfaceField.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp";
-
-					if (interfaceField.deprecationReason)
-					{
-						sourceFile << R"cpp(std::make_optional(R"md()cpp"
-								   << *interfaceField.deprecationReason << R"cpp()md"sv))cpp";
-					}
-					else
-					{
-						sourceFile << R"cpp(std::nullopt)cpp";
-					}
-
-					sourceFile << R"cpp(, )cpp"
-							   << getIntrospectionType(interfaceField.type,
-									  interfaceField.modifiers);
-
-					if (!interfaceField.arguments.empty())
-					{
-						bool firstArgument = true;
-
-						sourceFile << R"cpp(, {
-)cpp";
-
-						for (const auto& argument : interfaceField.arguments)
-						{
-							if (!firstArgument)
-							{
-								sourceFile << R"cpp(,
-)cpp";
-							}
-
-							firstArgument = false;
-							sourceFile << R"cpp(			schema::InputValue::Make(R"gql()cpp"
-									   << argument.name << R"cpp()gql"sv, R"md()cpp";
-
-							if (!_options.noIntrospection)
-							{
-								sourceFile << argument.description;
-							}
-
-							sourceFile << R"cpp()md"sv, )cpp"
-									   << getIntrospectionType(argument.type, argument.modifiers)
-									   << R"cpp(, R"gql()cpp" << argument.defaultValueString
-									   << R"cpp()gql"sv))cpp";
-						}
-
-						sourceFile << R"cpp(
-		})cpp";
-					}
-
-					sourceFile << R"cpp())cpp";
-				}
-
-				sourceFile << R"cpp(
-	});
-)cpp";
+			}
+			else
+			{
+				outputInterfaceIntrospection(sourceFile, interfaceType);
 			}
 		}
 	}
@@ -1753,6 +1829,41 @@ Operations::Operations()cpp";
 	return true;
 }
 
+void Generator::outputInterfaceImplementation(
+	std::ostream& sourceFile, const InterfaceType& interfaceType) const
+{
+	// Output the private constructor which calls through to the service::Object constructor
+	// with arguments that declare the set of types it implements and bind the fields to the
+	// resolver methods.
+	sourceFile << interfaceType.cppType << R"cpp(::)cpp" << interfaceType.cppType
+			   << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+)cpp";
+
+	sourceFile << R"cpp(
+void )cpp" << interfaceType.cppType
+			   << R"cpp(::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void )cpp" << interfaceType.cppType
+			   << R"cpp(::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+)cpp";
+}
+
+void Generator::outputInterfaceIntrospection(
+	std::ostream& sourceFile, const InterfaceType& interfaceType) const
+{
+	outputIntrospectionFields(sourceFile, interfaceType.cppType, interfaceType.fields);
+}
+
 void Generator::outputObjectImplementation(
 	std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const
 {
@@ -1765,9 +1876,7 @@ void Generator::outputObjectImplementation(
 		// resolver methods.
 		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
 				   << R"cpp((std::shared_ptr<)cpp" << SchemaLoader::getIntrospectionNamespace()
-				   << R"cpp(::)cpp" << objectType.cppType << R"cpp(> pimpl)
-	: service::Object({
-)cpp";
+				   << R"cpp(::)cpp" << objectType.cppType << R"cpp(> pimpl))cpp";
 	}
 	else
 	{
@@ -1775,10 +1884,53 @@ void Generator::outputObjectImplementation(
 		// with arguments that declare the set of types it implements and bind the fields to the
 		// resolver methods.
 		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+				   << R"cpp((std::unique_ptr<Concept>&& pimpl))cpp";
+	}
+
+	sourceFile << R"cpp( noexcept
+	: service::Object{ getTypeNames(), getResolvers() })cpp";
+
+	if (!_options.noIntrospection && isQueryType)
+	{
+		sourceFile << R"cpp(
+	, _schema { GetSchema() })cpp";
+	}
+
+	if (_loader.isIntrospection())
+	{
+		sourceFile << R"cpp(
+	, _pimpl { std::make_unique<Model<)cpp"
+				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
+				   << objectType.cppType << R"cpp(>>(std::move(pimpl)) })cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp(
+	, _pimpl { std::move(pimpl) })cpp";
+	}
+	sourceFile << R"cpp(
+{
+}
+)cpp";
+
+	if (_loader.isIntrospection())
+	{
+		sourceFile << R"cpp(
+)cpp" << objectType.cppType
+				   << R"cpp(::~)cpp" << objectType.cppType << R"cpp(()
+{
+	// This is empty, but explicitly defined here so that it can access the un-exported destructor
+	// of the implementation type.
+}
 )cpp";
 	}
+
+	sourceFile << R"cpp(
+service::TypeNames )cpp"
+			   << objectType.cppType << R"cpp(::getTypeNames() const noexcept
+{
+	return {
+)cpp";
 
 	for (const auto& interfaceName : objectType.interfaces)
 	{
@@ -1793,7 +1945,13 @@ void Generator::outputObjectImplementation(
 	}
 
 	sourceFile << R"cpp(		")cpp" << objectType.type << R"cpp("
-	}, {
+	};
+}
+
+service::ResolverMap )cpp"
+			   << objectType.cppType << R"cpp(::getResolvers() const noexcept
+{
+	return {
 )cpp";
 
 	std::map<std::string_view, std::string, internal::shorter_or_less> resolvers;
@@ -1842,43 +2000,11 @@ void Generator::outputObjectImplementation(
 	}
 
 	sourceFile << R"cpp(
-	}))cpp";
-
-	if (!_options.noIntrospection && isQueryType)
-	{
-		sourceFile << R"cpp(
-	, _schema(GetSchema()))cpp";
-	}
-
-	if (_loader.isIntrospection())
-	{
-		sourceFile << R"cpp(
-	, _pimpl(std::make_unique<Model<)cpp"
-				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
-				   << objectType.cppType << R"cpp(>>(std::move(pimpl))))cpp";
-	}
-	else
-	{
-		sourceFile << R"cpp(
-	, _pimpl(std::move(pimpl)))cpp";
-	}
-	sourceFile << R"cpp(
-{
+	};
 }
 )cpp";
 
-	if (_loader.isIntrospection())
-	{
-		sourceFile << R"cpp(
-)cpp" << objectType.cppType
-				   << R"cpp(::~)cpp" << objectType.cppType << R"cpp(()
-{
-	// This is empty, but explicitly defined here so that it can access the un-exported destructor
-	// of the implementation type.
-}
-)cpp";
-	}
-	else
+	if (!_loader.isIntrospection())
 	{
 		sourceFile << R"cpp(
 void )cpp" << objectType.cppType
@@ -1906,7 +2032,7 @@ void )cpp" << objectType.cppType
 		sourceFile << R"cpp(
 service::AwaitableResolver )cpp"
 				   << objectType.cppType << R"cpp(::resolve)cpp" << fieldName
-				   << R"cpp((service::ResolverParams&& params)
+				   << R"cpp((service::ResolverParams&& params) const
 {
 )cpp";
 
@@ -1986,7 +2112,8 @@ service::AwaitableResolver )cpp"
 
 	sourceFile << R"cpp(
 service::AwaitableResolver )cpp"
-			   << objectType.cppType << R"cpp(::resolve_typename(service::ResolverParams&& params)
+			   << objectType.cppType
+			   << R"cpp(::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql()cpp"
 			   << objectType.type << R"cpp()gql" }, std::move(params));
@@ -1998,7 +2125,7 @@ service::AwaitableResolver )cpp"
 		sourceFile
 			<< R"cpp(
 service::AwaitableResolver )cpp"
-			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params)
+			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
@@ -2008,7 +2135,7 @@ service::AwaitableResolver )cpp"
 }
 
 service::AwaitableResolver )cpp"
-			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params)
+			<< objectType.cppType << R"cpp(::resolve_type(service::ResolverParams&& params) const
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
@@ -2064,86 +2191,94 @@ void Generator::outputObjectIntrospection(
 )cpp";
 	}
 
-	if (!objectType.fields.empty())
+	outputIntrospectionFields(sourceFile, objectType.cppType, objectType.fields);
+}
+
+void Generator::outputIntrospectionFields(
+	std::ostream& sourceFile, std::string_view cppType, const OutputFieldList& fields) const
+{
+	if (fields.empty())
 	{
-		bool firstValue = true;
+		return;
+	}
 
-		sourceFile << R"cpp(	type)cpp" << objectType.cppType << R"cpp(->AddFields({
+	bool firstValue = true;
+
+	sourceFile << R"cpp(	type)cpp" << cppType << R"cpp(->AddFields({
 )cpp";
 
-		for (const auto& objectField : objectType.fields)
+	for (const auto& objectField : fields)
+	{
+		if (!firstValue)
 		{
-			if (!firstValue)
-			{
-				sourceFile << R"cpp(,
+			sourceFile << R"cpp(,
 )cpp";
-			}
-
-			firstValue = false;
-			sourceFile << R"cpp(		schema::Field::Make(R"gql()cpp" << objectField.name
-					   << R"cpp()gql"sv, R"md()cpp";
-
-			if (!_options.noIntrospection)
-			{
-				sourceFile << objectField.description;
-			}
-
-			sourceFile << R"cpp()md"sv, )cpp";
-
-			if (objectField.deprecationReason)
-			{
-				sourceFile << R"cpp(std::make_optional(R"md()cpp" << *objectField.deprecationReason
-						   << R"cpp()md"sv))cpp";
-			}
-			else
-			{
-				sourceFile << R"cpp(std::nullopt)cpp";
-			}
-
-			sourceFile << R"cpp(, )cpp"
-					   << getIntrospectionType(objectField.type, objectField.modifiers);
-
-			if (!objectField.arguments.empty())
-			{
-				bool firstArgument = true;
-
-				sourceFile << R"cpp(, {
-)cpp";
-
-				for (const auto& argument : objectField.arguments)
-				{
-					if (!firstArgument)
-					{
-						sourceFile << R"cpp(,
-)cpp";
-					}
-
-					firstArgument = false;
-					sourceFile << R"cpp(			schema::InputValue::Make(R"gql()cpp"
-							   << argument.name << R"cpp()gql"sv, R"md()cpp";
-
-					if (!_options.noIntrospection)
-					{
-						sourceFile << argument.description;
-					}
-
-					sourceFile << R"cpp()md"sv, )cpp"
-							   << getIntrospectionType(argument.type, argument.modifiers)
-							   << R"cpp(, R"gql()cpp" << argument.defaultValueString
-							   << R"cpp()gql"sv))cpp";
-				}
-
-				sourceFile << R"cpp(
-		})cpp";
-			}
-
-			sourceFile << R"cpp())cpp";
 		}
 
-		sourceFile << R"cpp(
+		firstValue = false;
+		sourceFile << R"cpp(		schema::Field::Make(R"gql()cpp" << objectField.name
+				   << R"cpp()gql"sv, R"md()cpp";
+
+		if (!_options.noIntrospection)
+		{
+			sourceFile << objectField.description;
+		}
+
+		sourceFile << R"cpp()md"sv, )cpp";
+
+		if (objectField.deprecationReason)
+		{
+			sourceFile << R"cpp(std::make_optional(R"md()cpp" << *objectField.deprecationReason
+					   << R"cpp()md"sv))cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp(std::nullopt)cpp";
+		}
+
+		sourceFile << R"cpp(, )cpp"
+				   << getIntrospectionType(objectField.type, objectField.modifiers);
+
+		if (!objectField.arguments.empty())
+		{
+			bool firstArgument = true;
+
+			sourceFile << R"cpp(, {
+)cpp";
+
+			for (const auto& argument : objectField.arguments)
+			{
+				if (!firstArgument)
+				{
+					sourceFile << R"cpp(,
+)cpp";
+				}
+
+				firstArgument = false;
+				sourceFile << R"cpp(			schema::InputValue::Make(R"gql()cpp"
+						   << argument.name << R"cpp()gql"sv, R"md()cpp";
+
+				if (!_options.noIntrospection)
+				{
+					sourceFile << argument.description;
+				}
+
+				sourceFile << R"cpp()md"sv, )cpp"
+						   << getIntrospectionType(argument.type, argument.modifiers)
+						   << R"cpp(, R"gql()cpp" << argument.defaultValueString
+						   << R"cpp()gql"sv))cpp";
+			}
+
+			sourceFile << R"cpp(
+		})cpp";
+		}
+
+		sourceFile << R"cpp())cpp";
+	}
+
+	sourceFile << R"cpp(
 	});
 )cpp";
-	}
 }
 
 std::string Generator::getArgumentDefaultValue(
@@ -2353,6 +2488,7 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 		case OutputFieldType::Builtin:
 		case OutputFieldType::Enum:
 		case OutputFieldType::Object:
+		case OutputFieldType::Interface:
 			resultType << _loader.getCppType(result.type);
 			break;
 
@@ -2361,7 +2497,6 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 
 		case OutputFieldType::Union:
-		case OutputFieldType::Interface:
 			resultType << R"cpp(service::Object)cpp";
 			break;
 	}
@@ -2486,9 +2621,9 @@ std::string Generator::getIntrospectionType(
 
 std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 {
-	std::vector<std::string> files;
 	const fs::path headerDir(_headerDir);
 	const fs::path sourceDir(_sourceDir);
+	std::vector<std::string> files;
 	std::string_view queryType;
 
 	for (const auto& operation : _loader.getOperationTypes())
@@ -2510,6 +2645,14 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
+	for (const auto& interfaceType : _loader.getInterfaceTypes())
+	{
+		const auto headerFilename = std::string(interfaceType.cppType) + "Object.h";
+
+		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
+)cpp";
+	}
+
 	for (const auto& objectType : _loader.getObjectTypes())
 	{
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
@@ -2523,13 +2666,91 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		files.push_back({ _objectHeaderPath });
 	}
 
-	for (const auto& objectType : _loader.getObjectTypes())
+	const std::vector<std::string_view> emptyInterfacesAndUnions {};
+
+	for (const auto& interfaceType : _loader.getInterfaceTypes())
 	{
+		const auto headerFilename = std::string(interfaceType.cppType) + "Object.h";
+		auto headerPath = (headerDir / headerFilename).string();
+		std::ofstream headerFile(headerPath, std::ios_base::trunc);
+		IncludeGuardScope includeGuard { headerFile, headerFilename };
+
+		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+
+)cpp";
+
 		std::ostringstream ossNamespace;
 
 		ossNamespace << R"cpp(graphql::)cpp" << _loader.getSchemaNamespace();
 
 		const auto schemaNamespace = ossNamespace.str();
+		std::ostringstream ossInterfaceNamespace;
+
+		ossInterfaceNamespace << schemaNamespace << R"cpp(::object)cpp";
+
+		const auto objectNamespace = ossInterfaceNamespace.str();
+		NamespaceScope headerNamespace { headerFile, objectNamespace };
+
+		// Output the full declaration
+		headerFile << std::endl;
+		outputInterfaceDeclaration(headerFile, interfaceType);
+		headerFile << std::endl;
+
+		if (_options.verbose)
+		{
+			files.push_back(std::move(headerPath));
+		}
+
+		const auto sourceFilename = std::string(interfaceType.cppType) + "Object.cpp";
+		auto sourcePath = (sourceDir / sourceFilename).string();
+		std::ofstream sourceFile(sourcePath, std::ios_base::trunc);
+
+		sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+// WARNING! Do not edit this file manually, your changes will be overwritten.
+
+#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
+				   << R"cpp("
+
+#include "graphqlservice/introspection/Introspection.h"
+
+#include <algorithm>
+#include <functional>
+#include <sstream>
+#include <stdexcept>
+#include <unordered_map>
+
+using namespace std::literals;
+
+)cpp";
+
+		NamespaceScope sourceSchemaNamespace { sourceFile, schemaNamespace };
+		NamespaceScope sourceInterfaceNamespace { sourceFile, "object" };
+
+		sourceFile << std::endl;
+		outputInterfaceImplementation(sourceFile, interfaceType);
+		sourceFile << std::endl;
+
+		sourceInterfaceNamespace.exit();
+		sourceFile << std::endl;
+
+		sourceFile << R"cpp(void Add)cpp" << interfaceType.cppType
+				   << R"cpp(Details(const std::shared_ptr<schema::InterfaceType>& type)cpp"
+				   << interfaceType.cppType
+				   << R"cpp(, const std::shared_ptr<schema::Schema>& schema)
+{
+)cpp";
+		outputInterfaceIntrospection(sourceFile, interfaceType);
+		sourceFile << R"cpp(}
+
+)cpp";
+
+		files.push_back(std::move(sourcePath));
+	}
+
+	for (const auto& objectType : _loader.getObjectTypes())
+	{
 		const bool isQueryType = objectType.type == queryType;
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 		auto headerPath = (headerDir / headerFilename).string();
@@ -2540,6 +2761,22 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 )cpp";
 
+		if (!objectType.interfaces.empty())
+		{
+			for (auto interfaceName : objectType.interfaces)
+			{
+				headerFile << R"cpp(#include ")cpp" << interfaceName << R"cpp(Object.h"
+)cpp";
+			}
+
+			headerFile << std::endl;
+		}
+
+		std::ostringstream ossNamespace;
+
+		ossNamespace << R"cpp(graphql::)cpp" << _loader.getSchemaNamespace();
+
+		const auto schemaNamespace = ossNamespace.str();
 		std::ostringstream ossObjectNamespace;
 
 		ossObjectNamespace << schemaNamespace << R"cpp(::object)cpp";
@@ -2547,10 +2784,21 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		const auto objectNamespace = ossObjectNamespace.str();
 		NamespaceScope headerNamespace { headerFile, objectNamespace };
 
+		if (!objectType.interfaces.empty())
+		{
+			NamespaceScope implementsNamespace { headerFile, R"cpp(implements)cpp" };
+
+			headerFile << std::endl;
+			outputObjectImplements(headerFile, objectType);
+
+			implementsNamespace.exit();
+			headerFile << std::endl;
+		}
+
 		// Output the stub concepts
 		std::ostringstream ossConceptNamespace;
 
-		ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Method)cpp";
+		ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Has)cpp";
 
 		const auto conceptNamespace = ossConceptNamespace.str();
 		NamespaceScope stubNamespace { headerFile, conceptNamespace };
@@ -2603,7 +2851,7 @@ using namespace std::literals;
 		sourceFile << std::endl;
 
 		sourceFile << R"cpp(void Add)cpp" << objectType.cppType
-				   << R"cpp(Details(std::shared_ptr<schema::ObjectType> type)cpp"
+				   << R"cpp(Details(const std::shared_ptr<schema::ObjectType>& type)cpp"
 				   << objectType.cppType << R"cpp(, const std::shared_ptr<schema::Schema>& schema)
 {
 )cpp";

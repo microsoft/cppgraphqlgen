@@ -240,9 +240,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema->LookupType(R"gql(Folder)gql"sv)
 	});
 
-	typeNode->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
-	});
+	AddNodeDetails(typeNode, schema);
 
 	AddQueryDetails(typeQuery, schema);
 	AddPageInfoDetails(typePageInfo, schema);

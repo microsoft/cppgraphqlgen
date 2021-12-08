@@ -18,20 +18,30 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Query::Query(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _schema { GetSchema() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Query::getTypeNames() const noexcept
+{
+	return {
 		"Query"
-	}, {
+	};
+}
+
+service::ResolverMap Query::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(hero)gql"sv, [this](service::ResolverParams&& params) { return resolveHero(std::move(params)); } },
 		{ R"gql(droid)gql"sv, [this](service::ResolverParams&& params) { return resolveDroid(std::move(params)); } },
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
 		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _schema(GetSchema())
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Query::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -44,7 +54,7 @@ void Query::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params) const
 {
 	auto argEpisode = service::ModifiedArgument<learn::Episode>::require<service::TypeModifier::Nullable>("episode", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -52,10 +62,10 @@ service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params)
 	auto result = _pimpl->getHero(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEpisode));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<Character>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params) const
 {
 	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -66,7 +76,7 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params) const
 {
 	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -77,17 +87,17 @@ service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params)
 	return service::ModifiedResult<Droid>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::object::Schema>(std::make_shared<introspection::Schema>(_schema))), std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params) const
 {
 	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
 	const auto& baseType = _schema->LookupType(argName);
@@ -98,7 +108,7 @@ service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 
 } // namespace object
 
-void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::shared_ptr<schema::Schema>& schema)
+void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeQuery->AddFields({
 		schema::Field::Make(R"gql(hero)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Character"), {

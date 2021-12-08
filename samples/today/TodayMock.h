@@ -50,7 +50,7 @@ public:
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 		unreadCountsLoader&& getUnreadCounts);
 
-	service::FieldResult<std::shared_ptr<service::Object>> getNode(
+	service::FieldResult<std::shared_ptr<object::Node>> getNode(
 		service::FieldParams params, response::IdType id);
 	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(
 		const service::FieldParams& params, std::optional<int> first,
@@ -456,7 +456,7 @@ public:
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
 
-	std::shared_ptr<service::Object> getNodeChange(const response::IdType&) const
+	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const
 	{
 		throw std::runtime_error("Unexpected call to getNodeChange");
 	}
@@ -521,7 +521,7 @@ public:
 		return std::make_shared<object::Appointment>(_changeNextAppointment(params.state));
 	}
 
-	std::shared_ptr<service::Object> getNodeChange(const response::IdType&) const
+	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const
 	{
 		throw std::runtime_error("Unexpected call to getNodeChange");
 	}
@@ -537,7 +537,7 @@ private:
 class NodeChange
 {
 public:
-	using nodeChange = std::function<std::shared_ptr<service::Object>(
+	using nodeChange = std::function<std::shared_ptr<object::Node>(
 		const std::shared_ptr<service::RequestState>&, response::IdType&&)>;
 
 	explicit NodeChange(nodeChange&& changeNode)
@@ -550,11 +550,10 @@ public:
 		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
 	}
 
-	std::shared_ptr<service::Object> getNodeChange(
+	std::shared_ptr<object::Node> getNodeChange(
 		const service::FieldParams& params, response::IdType&& idArg) const
 	{
-		return std::static_pointer_cast<service::Object>(
-			_changeNode(params.state, std::move(idArg)));
+		return _changeNode(params.state, std::move(idArg));
 	}
 
 private:

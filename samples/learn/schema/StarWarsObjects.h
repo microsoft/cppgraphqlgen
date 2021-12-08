@@ -10,6 +10,7 @@
 
 #include "StarWarsSchema.h"
 
+#include "CharacterObject.h"
 #include "HumanObject.h"
 #include "DroidObject.h"
 #include "QueryObject.h"

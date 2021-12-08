@@ -10,103 +10,112 @@
 
 #include "TodaySchema.h"
 
+#include "NodeObject.h"
+
 namespace graphql::today::object {
-namespace methods::AppointmentMethod {
+namespace implements {
+
+template <class I>
+concept AppointmentIs = std::is_same_v<I, Node>;
+
+} // namespace implements
+
+namespace methods::AppointmentHas {
 
 template <class TImpl>
-concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsId = requires (TImpl impl) 
+concept getId = requires (TImpl impl) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
-concept WithParamsWhen = requires (TImpl impl, service::FieldParams params) 
+concept getWhenWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsWhen = requires (TImpl impl) 
+concept getWhen = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen() } };
 };
 
 template <class TImpl>
-concept WithParamsSubject = requires (TImpl impl, service::FieldParams params) 
+concept getSubjectWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsSubject = requires (TImpl impl) 
+concept getSubject = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getSubject() } };
 };
 
 template <class TImpl>
-concept WithParamsIsNow = requires (TImpl impl, service::FieldParams params) 
+concept getIsNowWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<bool> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsIsNow = requires (TImpl impl) 
+concept getIsNow = requires (TImpl impl) 
 {
 	{ service::FieldResult<bool> { impl.getIsNow() } };
 };
 
 template <class TImpl>
-concept WithParamsForceError = requires (TImpl impl, service::FieldParams params) 
+concept getForceErrorWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsForceError = requires (TImpl impl) 
+concept getForceError = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getForceError() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::AppointmentMethod
+} // namespace methods::AppointmentHas
 
 class Appointment
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveId(service::ResolverParams&& params);
-	service::AwaitableResolver resolveWhen(service::ResolverParams&& params);
-	service::AwaitableResolver resolveSubject(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params);
-	service::AwaitableResolver resolveForceError(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveWhen(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveSubject(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveForceError(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Node
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
+		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<bool> getIsNow(service::FieldParams&& params) const = 0;
@@ -124,11 +133,11 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::WithParamsId<T>)
+			if constexpr (methods::AppointmentHas::getIdWithParams<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentMethod::NoParamsId<T>)
+			else if constexpr (methods::AppointmentHas::getId<T>)
 			{
 				return { _pimpl->getId() };
 			}
@@ -140,11 +149,11 @@ private:
 
 		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::WithParamsWhen<T>)
+			if constexpr (methods::AppointmentHas::getWhenWithParams<T>)
 			{
 				return { _pimpl->getWhen(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentMethod::NoParamsWhen<T>)
+			else if constexpr (methods::AppointmentHas::getWhen<T>)
 			{
 				return { _pimpl->getWhen() };
 			}
@@ -156,11 +165,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::WithParamsSubject<T>)
+			if constexpr (methods::AppointmentHas::getSubjectWithParams<T>)
 			{
 				return { _pimpl->getSubject(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentMethod::NoParamsSubject<T>)
+			else if constexpr (methods::AppointmentHas::getSubject<T>)
 			{
 				return { _pimpl->getSubject() };
 			}
@@ -172,11 +181,11 @@ private:
 
 		service::FieldResult<bool> getIsNow(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::WithParamsIsNow<T>)
+			if constexpr (methods::AppointmentHas::getIsNowWithParams<T>)
 			{
 				return { _pimpl->getIsNow(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentMethod::NoParamsIsNow<T>)
+			else if constexpr (methods::AppointmentHas::getIsNow<T>)
 			{
 				return { _pimpl->getIsNow() };
 			}
@@ -188,11 +197,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::WithParamsForceError<T>)
+			if constexpr (methods::AppointmentHas::getForceErrorWithParams<T>)
 			{
 				return { _pimpl->getForceError(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentMethod::NoParamsForceError<T>)
+			else if constexpr (methods::AppointmentHas::getForceError<T>)
 			{
 				return { _pimpl->getForceError() };
 			}
@@ -204,7 +213,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::AppointmentHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -212,7 +221,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AppointmentMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::AppointmentHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -222,7 +231,19 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Appointment(std::unique_ptr<Concept>&& pimpl);
+	Appointment(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interface objects need access to these methods
+	friend Node;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::AppointmentIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -231,7 +252,7 @@ private:
 
 public:
 	template <class T>
-	Appointment(std::shared_ptr<T> pimpl)
+	Appointment(std::shared_ptr<T> pimpl) noexcept
 		: Appointment { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

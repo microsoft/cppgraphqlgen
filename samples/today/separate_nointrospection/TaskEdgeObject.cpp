@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+TaskEdge::TaskEdge(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames TaskEdge::getTypeNames() const noexcept
+{
+	return {
 		"TaskEdge"
-	}, {
+	};
+}
+
+service::ResolverMap TaskEdge::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void TaskEdge::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void TaskEdge::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& params)
+service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver TaskEdge::resolveNode(service::ResolverParams&& param
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver TaskEdge::resolveCursor(service::ResolverParams&& params)
+service::AwaitableResolver TaskEdge::resolveCursor(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,14 +70,14 @@ service::AwaitableResolver TaskEdge::resolveCursor(service::ResolverParams&& par
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver TaskEdge::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver TaskEdge::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(TaskEdge)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddTaskEdgeDetails(std::shared_ptr<schema::ObjectType> typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
+void AddTaskEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeTaskEdge->AddFields({
 		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Task")),

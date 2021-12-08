@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::AppointmentEdgeMethod {
+namespace methods::AppointmentEdgeHas {
 
 template <class TImpl>
-concept WithParamsNode = requires (TImpl impl, service::FieldParams params) 
+concept getNodeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNode = requires (TImpl impl) 
+concept getNode = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNode() } };
 };
 
 template <class TImpl>
-concept WithParamsCursor = requires (TImpl impl, service::FieldParams params) 
+concept getCursorWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsCursor = requires (TImpl impl) 
+concept getCursor = requires (TImpl impl) 
 {
 	{ service::FieldResult<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::AppointmentEdgeMethod
+} // namespace methods::AppointmentEdgeHas
 
 class AppointmentEdge
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNode(service::ResolverParams&& params);
-	service::AwaitableResolver resolveCursor(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveCursor(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Appointment>> getNode(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentEdgeMethod::WithParamsNode<T>)
+			if constexpr (methods::AppointmentEdgeHas::getNodeWithParams<T>)
 			{
 				return { _pimpl->getNode(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentEdgeMethod::NoParamsNode<T>)
+			else if constexpr (methods::AppointmentEdgeHas::getNode<T>)
 			{
 				return { _pimpl->getNode() };
 			}
@@ -98,11 +98,11 @@ private:
 
 		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AppointmentEdgeMethod::WithParamsCursor<T>)
+			if constexpr (methods::AppointmentEdgeHas::getCursorWithParams<T>)
 			{
 				return { _pimpl->getCursor(std::move(params)) };
 			}
-			else if constexpr (methods::AppointmentEdgeMethod::NoParamsCursor<T>)
+			else if constexpr (methods::AppointmentEdgeHas::getCursor<T>)
 			{
 				return { _pimpl->getCursor() };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AppointmentEdgeMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::AppointmentEdgeHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AppointmentEdgeMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::AppointmentEdgeHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	AppointmentEdge(std::unique_ptr<Concept>&& pimpl);
+	AppointmentEdge(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	AppointmentEdge(std::shared_ptr<T> pimpl)
+	AppointmentEdge(std::shared_ptr<T> pimpl) noexcept
 		: AppointmentEdge { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

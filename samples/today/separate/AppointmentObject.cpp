@@ -18,21 +18,31 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Appointment::Appointment(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Appointment::Appointment(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Appointment::getTypeNames() const noexcept
+{
+	return {
 		"Node",
 		"UnionType",
 		"Appointment"
-	}, {
+	};
+}
+
+service::ResolverMap Appointment::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
 		{ R"gql(isNow)gql"sv, [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
 		{ R"gql(subject)gql"sv, [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(forceError)gql"sv, [this](service::ResolverParams&& params) { return resolveForceError(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Appointment::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -45,7 +55,7 @@ void Appointment::endSelectionSet(const service::SelectionSetParams& params) con
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -55,7 +65,7 @@ service::AwaitableResolver Appointment::resolveId(service::ResolverParams&& para
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Appointment::resolveWhen(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolveWhen(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -65,7 +75,7 @@ service::AwaitableResolver Appointment::resolveWhen(service::ResolverParams&& pa
 	return service::ModifiedResult<response::Value>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Appointment::resolveSubject(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolveSubject(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -75,7 +85,7 @@ service::AwaitableResolver Appointment::resolveSubject(service::ResolverParams&&
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -85,7 +95,7 @@ service::AwaitableResolver Appointment::resolveIsNow(service::ResolverParams&& p
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Appointment::resolveForceError(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolveForceError(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -95,14 +105,14 @@ service::AwaitableResolver Appointment::resolveForceError(service::ResolverParam
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Appointment::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Appointment::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Appointment)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddAppointmentDetails(std::shared_ptr<schema::ObjectType> typeAppointment, const std::shared_ptr<schema::Schema>& schema)
+void AddAppointmentDetails(const std::shared_ptr<schema::ObjectType>& typeAppointment, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeAppointment->AddInterfaces({
 		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))

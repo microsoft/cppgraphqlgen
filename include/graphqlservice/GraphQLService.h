@@ -612,7 +612,7 @@ using TypeNames = internal::string_view_set;
 class Object : public std::enable_shared_from_this<Object>
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers);
+	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept;
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
 	GRAPHQLSERVICE_EXPORT AwaitableResolver resolve(const SelectionSetParams& selectionSetParams,
@@ -631,7 +631,7 @@ protected:
 	GRAPHQLSERVICE_EXPORT virtual void beginSelectionSet(const SelectionSetParams& params) const;
 	GRAPHQLSERVICE_EXPORT virtual void endSelectionSet(const SelectionSetParams& params) const;
 
-	std::mutex _resolverMutex {};
+	mutable std::mutex _resolverMutex {};
 
 private:
 	TypeNames _typeNames;

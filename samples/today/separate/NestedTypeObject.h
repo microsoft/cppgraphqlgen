@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::NestedTypeMethod {
+namespace methods::NestedTypeHas {
 
 template <class TImpl>
-concept WithParamsDepth = requires (TImpl impl, service::FieldParams params) 
+concept getDepthWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<int> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsDepth = requires (TImpl impl) 
+concept getDepth = requires (TImpl impl) 
 {
 	{ service::FieldResult<int> { impl.getDepth() } };
 };
 
 template <class TImpl>
-concept WithParamsNested = requires (TImpl impl, service::FieldParams params) 
+concept getNestedWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNested = requires (TImpl impl) 
+concept getNested = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::NestedTypeMethod
+} // namespace methods::NestedTypeHas
 
 class NestedType
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveDepth(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNested(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDepth(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<int> getDepth(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::NestedTypeMethod::WithParamsDepth<T>)
+			if constexpr (methods::NestedTypeHas::getDepthWithParams<T>)
 			{
 				return { _pimpl->getDepth(std::move(params)) };
 			}
-			else if constexpr (methods::NestedTypeMethod::NoParamsDepth<T>)
+			else if constexpr (methods::NestedTypeHas::getDepth<T>)
 			{
 				return { _pimpl->getDepth() };
 			}
@@ -98,11 +98,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::NestedTypeMethod::WithParamsNested<T>)
+			if constexpr (methods::NestedTypeHas::getNestedWithParams<T>)
 			{
 				return { _pimpl->getNested(std::move(params)) };
 			}
-			else if constexpr (methods::NestedTypeMethod::NoParamsNested<T>)
+			else if constexpr (methods::NestedTypeHas::getNested<T>)
 			{
 				return { _pimpl->getNested() };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::NestedTypeMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::NestedTypeHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::NestedTypeMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::NestedTypeHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	NestedType(std::unique_ptr<Concept>&& pimpl);
+	NestedType(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	NestedType(std::shared_ptr<T> pimpl)
+	NestedType(std::shared_ptr<T> pimpl) noexcept
 		: NestedType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

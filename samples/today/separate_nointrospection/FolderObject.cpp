@@ -18,19 +18,29 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Folder::Folder(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
+Folder::Folder(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Folder::getTypeNames() const noexcept
+{
+	return {
 		"Node",
 		"UnionType",
 		"Folder"
-	}, {
+	};
+}
+
+service::ResolverMap Folder::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(unreadCount)gql"sv, [this](service::ResolverParams&& params) { return resolveUnreadCount(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Folder::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -43,7 +53,7 @@ void Folder::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -53,7 +63,7 @@ service::AwaitableResolver Folder::resolveId(service::ResolverParams&& params)
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -63,7 +73,7 @@ service::AwaitableResolver Folder::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -73,14 +83,14 @@ service::AwaitableResolver Folder::resolveUnreadCount(service::ResolverParams&& 
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Folder::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Folder::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Folder)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddFolderDetails(std::shared_ptr<schema::ObjectType> typeFolder, const std::shared_ptr<schema::Schema>& schema)
+void AddFolderDetails(const std::shared_ptr<schema::ObjectType>& typeFolder, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolder->AddInterfaces({
 		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql(Node)gql"sv))
