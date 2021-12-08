@@ -73,7 +73,7 @@ public:
 	std::shared_ptr<object::NestedType> getNested(service::FieldParams&& params);
 	std::vector<std::shared_ptr<object::Expensive>> getExpensive();
 	TaskState getTestTaskState();
-	std::vector<std::shared_ptr<service::Object>> getAnyType(
+	std::vector<std::shared_ptr<object::UnionType>> getAnyType(
 		const service::FieldParams& params, const std::vector<response::IdType>& ids);
 
 private:

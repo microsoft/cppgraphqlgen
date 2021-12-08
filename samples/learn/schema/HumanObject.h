@@ -218,7 +218,7 @@ private:
 
 	Human(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Character;
 
 	template <class I>

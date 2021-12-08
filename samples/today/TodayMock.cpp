@@ -446,18 +446,18 @@ TaskState Query::getTestTaskState()
 	return TaskState::Unassigned;
 }
 
-std::vector<std::shared_ptr<service::Object>> Query::getAnyType(
+std::vector<std::shared_ptr<object::UnionType>> Query::getAnyType(
 	const service::FieldParams& params, const std::vector<response::IdType>&)
 {
 	loadAppointments(params.state);
 
-	std::vector<std::shared_ptr<service::Object>> result(_appointments.size());
+	std::vector<std::shared_ptr<object::UnionType>> result(_appointments.size());
 
 	std::transform(_appointments.cbegin(),
 		_appointments.cend(),
 		result.begin(),
 		[](const auto& appointment) noexcept {
-			return std::static_pointer_cast<service::Object>(
+			return std::make_shared<object::UnionType>(
 				std::make_shared<object::Appointment>(appointment));
 		});
 

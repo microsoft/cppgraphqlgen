@@ -183,19 +183,211 @@ public:
 	}
 };
 
+class CatOrDog
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	CatOrDog(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	CatOrDog(std::shared_ptr<T> pimpl) noexcept
+		: CatOrDog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<CatOrDog>(), "CatOrDog is not implemented");
+	}
+};
+
+class DogOrHuman
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	DogOrHuman(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	DogOrHuman(std::shared_ptr<T> pimpl) noexcept
+		: DogOrHuman { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<DogOrHuman>(), "DogOrHuman is not implemented");
+	}
+};
+
+class HumanOrAlien
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	HumanOrAlien(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	HumanOrAlien(std::shared_ptr<T> pimpl) noexcept
+		: HumanOrAlien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<HumanOrAlien>(), "HumanOrAlien is not implemented");
+	}
+};
+
 namespace implements {
 
 template <class I>
-concept DogIs = std::is_same_v<I, Pet>;
+concept DogIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog> || std::is_same_v<I, DogOrHuman>;
 
 template <class I>
-concept AlienIs = std::is_same_v<I, Sentient>;
+concept AlienIs = std::is_same_v<I, Sentient> || std::is_same_v<I, HumanOrAlien>;
 
 template <class I>
-concept HumanIs = std::is_same_v<I, Sentient>;
+concept HumanIs = std::is_same_v<I, Sentient> || std::is_same_v<I, DogOrHuman> || std::is_same_v<I, HumanOrAlien>;
 
 template <class I>
-concept CatIs = std::is_same_v<I, Pet>;
+concept CatIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog>;
 
 } // namespace implements
 
@@ -241,13 +433,13 @@ concept getPet = requires (TImpl impl)
 template <class TImpl>
 concept getCatOrDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getCatOrDog(std::move(params)) } };
+	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getCatOrDog = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getCatOrDog() } };
+	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog() } };
 };
 
 template <class TImpl>
@@ -805,7 +997,7 @@ private:
 		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
 		virtual service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
@@ -868,7 +1060,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
@@ -1125,8 +1317,12 @@ private:
 
 	Dog(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Pet;
+
+	// Unions which include this type
+	friend CatOrDog;
+	friend DogOrHuman;
 
 	template <class I>
 	static constexpr bool implements() noexcept
@@ -1233,8 +1429,11 @@ private:
 
 	Alien(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Sentient;
+
+	// Unions which include this type
+	friend HumanOrAlien;
 
 	template <class I>
 	static constexpr bool implements() noexcept
@@ -1341,8 +1540,12 @@ private:
 
 	Human(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Sentient;
+
+	// Unions which include this type
+	friend DogOrHuman;
+	friend HumanOrAlien;
 
 	template <class I>
 	static constexpr bool implements() noexcept
@@ -1485,8 +1688,11 @@ private:
 
 	Cat(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Pet;
+
+	// Unions which include this type
+	friend CatOrDog;
 
 	template <class I>
 	static constexpr bool implements() noexcept

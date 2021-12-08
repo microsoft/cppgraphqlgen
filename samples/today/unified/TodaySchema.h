@@ -145,16 +145,80 @@ public:
 	}
 };
 
+class UnionType
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	UnionType(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	UnionType(std::shared_ptr<T> pimpl) noexcept
+		: UnionType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<UnionType>(), "UnionType is not implemented");
+	}
+};
+
 namespace implements {
 
 template <class I>
-concept AppointmentIs = std::is_same_v<I, Node>;
+concept AppointmentIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 
 template <class I>
-concept TaskIs = std::is_same_v<I, Node>;
+concept TaskIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 
 template <class I>
-concept FolderIs = std::is_same_v<I, Node>;
+concept FolderIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 
 } // namespace implements
 
@@ -296,13 +360,13 @@ concept getTestTaskState = requires (TImpl impl)
 template <class TImpl>
 concept getAnyTypeWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
+	{ service::FieldResult<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
 concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(idsArg)) } };
+	{ service::FieldResult<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(idsArg)) } };
 };
 
 template <class TImpl>
@@ -1009,7 +1073,7 @@ private:
 		virtual service::FieldResult<std::string> getUnimplemented(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
 	};
 
 	template <class T>
@@ -1197,7 +1261,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		service::FieldResult<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getAnyTypeWithParams<T>)
 			{
@@ -2378,8 +2442,11 @@ private:
 
 	Appointment(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Node;
+
+	// Unions which include this type
+	friend UnionType;
 
 	template <class I>
 	static constexpr bool implements() noexcept
@@ -2504,8 +2571,11 @@ private:
 
 	Task(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Node;
+
+	// Unions which include this type
+	friend UnionType;
 
 	template <class I>
 	static constexpr bool implements() noexcept
@@ -2630,8 +2700,11 @@ private:
 
 	Folder(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Node;
+
+	// Unions which include this type
+	friend UnionType;
 
 	template <class I>
 	static constexpr bool implements() noexcept

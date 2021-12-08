@@ -219,7 +219,7 @@ service::AwaitableResolver Query::resolveAnyType(service::ResolverParams&& param
 	auto result = _pimpl->getAnyType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIds));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<UnionType>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const

@@ -42,8 +42,7 @@ private:
 	std::string getSourcePath() const noexcept;
 
 	bool outputHeader() const noexcept;
-	void outputInterfaceDeclaration(
-		std::ostream& headerFile, const InterfaceType& interfaceType) const;
+	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
 	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectDeclaration(
@@ -53,10 +52,10 @@ private:
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
-	void outputInterfaceImplementation(
-		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
+	void outputInterfaceImplementation(std::ostream& sourceFile, std::string_view cppType) const;
 	void outputInterfaceIntrospection(
 		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
+	void outputUnionIntrospection(std::ostream& sourceFile, const UnionType& unionType) const;
 	void outputObjectImplementation(
 		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
 	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;

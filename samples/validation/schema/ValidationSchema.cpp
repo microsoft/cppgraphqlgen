@@ -144,6 +144,54 @@ void Pet::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
+CatOrDog::CatOrDog(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void CatOrDog::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void CatOrDog::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+DogOrHuman::DogOrHuman(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void DogOrHuman::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void DogOrHuman::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+HumanOrAlien::HumanOrAlien(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void HumanOrAlien::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void HumanOrAlien::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
@@ -218,7 +266,7 @@ service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& para
 	auto result = _pimpl->getCatOrDog(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<CatOrDog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params) const
@@ -939,16 +987,16 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CatCommand)gql"sv, typeCatCommand);
 	auto typeComplexInput = schema::InputObjectType::Make(R"gql(ComplexInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(ComplexInput)gql"sv, typeComplexInput);
+	auto typeSentient = schema::InterfaceType::Make(R"gql(Sentient)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
+	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Pet)gql"sv, typePet);
 	auto typeCatOrDog = schema::UnionType::Make(R"gql(CatOrDog)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CatOrDog)gql"sv, typeCatOrDog);
 	auto typeDogOrHuman = schema::UnionType::Make(R"gql(DogOrHuman)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(DogOrHuman)gql"sv, typeDogOrHuman);
 	auto typeHumanOrAlien = schema::UnionType::Make(R"gql(HumanOrAlien)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(HumanOrAlien)gql"sv, typeHumanOrAlien);
-	auto typeSentient = schema::InterfaceType::Make(R"gql(Sentient)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
-	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(Pet)gql"sv, typePet);
 	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typeDog = schema::ObjectType::Make(R"gql(Dog)gql"sv, R"md()md");
@@ -984,6 +1032,13 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(owner)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
 	});
 
+	typeSentient->AddFields({
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
+	});
+	typePet->AddFields({
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
+	});
+
 	typeCatOrDog->AddPossibleTypes({
 		schema->LookupType(R"gql(Cat)gql"sv),
 		schema->LookupType(R"gql(Dog)gql"sv)
@@ -995,13 +1050,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	typeHumanOrAlien->AddPossibleTypes({
 		schema->LookupType(R"gql(Human)gql"sv),
 		schema->LookupType(R"gql(Alien)gql"sv)
-	});
-
-	typeSentient->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
-	});
-	typePet->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
 	});
 
 	typeQuery->AddFields({

@@ -103,6 +103,8 @@ private:
 
 void AddNodeDetails(const std::shared_ptr<schema::InterfaceType>& typeNode, const std::shared_ptr<schema::Schema>& schema);
 
+void AddUnionTypeDetails(const std::shared_ptr<schema::UnionType>& typeUnionType, const std::shared_ptr<schema::Schema>& schema);
+
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
 void AddPageInfoDetails(const std::shared_ptr<schema::ObjectType>& typePageInfo, const std::shared_ptr<schema::Schema>& schema);
 void AddAppointmentEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeAppointmentEdge, const std::shared_ptr<schema::Schema>& schema);

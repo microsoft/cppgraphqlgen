@@ -11,12 +11,13 @@
 #include "TodaySchema.h"
 
 #include "NodeObject.h"
+#include "UnionTypeObject.h"
 
 namespace graphql::today::object {
 namespace implements {
 
 template <class I>
-concept FolderIs = std::is_same_v<I, Node>;
+concept FolderIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 
 } // namespace implements
 
@@ -173,8 +174,11 @@ private:
 
 	Folder(std::unique_ptr<Concept>&& pimpl) noexcept;
 
-	// Interface objects need access to these methods
+	// Interfaces which this type implements
 	friend Node;
+
+	// Unions which include this type
+	friend UnionType;
 
 	template <class I>
 	static constexpr bool implements() noexcept

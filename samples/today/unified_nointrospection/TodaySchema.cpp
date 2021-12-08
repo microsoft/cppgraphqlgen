@@ -157,6 +157,22 @@ void Node::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
+UnionType::UnionType(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void UnionType::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void UnionType::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
 Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
@@ -355,7 +371,7 @@ service::AwaitableResolver Query::resolveAnyType(service::ResolverParams&& param
 	auto result = _pimpl->getAnyType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIds));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<UnionType>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
@@ -1301,10 +1317,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(SecondNestedInput)gql"sv, typeSecondNestedInput);
 	auto typeFirstNestedInput = schema::InputObjectType::Make(R"gql(FirstNestedInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FirstNestedInput)gql"sv, typeFirstNestedInput);
-	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
 	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
+	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
 	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md");
@@ -1367,14 +1383,14 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ThirdNestedInput)gql"sv)), R"gql()gql"sv)
 	});
 
+	typeNode->AddFields({
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
+	});
+
 	typeUnionType->AddPossibleTypes({
 		schema->LookupType(R"gql(Appointment)gql"sv),
 		schema->LookupType(R"gql(Task)gql"sv),
 		schema->LookupType(R"gql(Folder)gql"sv)
-	});
-
-	typeNode->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
 	});
 
 	typeQuery->AddFields({

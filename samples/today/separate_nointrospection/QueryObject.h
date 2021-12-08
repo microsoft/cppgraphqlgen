@@ -148,13 +148,13 @@ concept getTestTaskState = requires (TImpl impl)
 template <class TImpl>
 concept getAnyTypeWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
+	{ service::FieldResult<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
 concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getAnyType(std::move(idsArg)) } };
+	{ service::FieldResult<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(idsArg)) } };
 };
 
 template <class TImpl>
@@ -208,7 +208,7 @@ private:
 		virtual service::FieldResult<std::string> getUnimplemented(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
 	};
 
 	template <class T>
@@ -396,7 +396,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		service::FieldResult<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getAnyTypeWithParams<T>)
 			{

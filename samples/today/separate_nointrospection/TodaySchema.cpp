@@ -168,10 +168,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(SecondNestedInput)gql"sv, typeSecondNestedInput);
 	auto typeFirstNestedInput = schema::InputObjectType::Make(R"gql(FirstNestedInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FirstNestedInput)gql"sv, typeFirstNestedInput);
-	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
 	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
+	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
 	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md");
@@ -234,13 +234,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ThirdNestedInput)gql"sv)), R"gql()gql"sv)
 	});
 
-	typeUnionType->AddPossibleTypes({
-		schema->LookupType(R"gql(Appointment)gql"sv),
-		schema->LookupType(R"gql(Task)gql"sv),
-		schema->LookupType(R"gql(Folder)gql"sv)
-	});
-
 	AddNodeDetails(typeNode, schema);
+
+	AddUnionTypeDetails(typeUnionType, schema);
 
 	AddQueryDetails(typeQuery, schema);
 	AddPageInfoDetails(typePageInfo, schema);
