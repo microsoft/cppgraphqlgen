@@ -575,10 +575,24 @@ bool Generator::outputSource() const noexcept
 
 	if (!_loader.isIntrospection())
 	{
-		sourceFile << R"cpp(#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
-				   << R"cpp("
+		if (!_options.separateFiles)
+		{
+
+			sourceFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string()
+					   << R"cpp("
 
 )cpp";
+		}
+		else
+		{
+			for (const auto& operation : _loader.getOperationTypes())
+			{
+				sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+)cpp";
+			}
+
+			sourceFile << std::endl;
+		}
 	}
 
 	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
