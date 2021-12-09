@@ -47,8 +47,8 @@ using namespace std::literals;
 
 namespace graphql::generator::schema {
 
-Generator::Generator(std::optional<SchemaOptions>&& customSchema, GeneratorOptions&& options)
-	: _loader(std::move(customSchema))
+Generator::Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options)
+	: _loader(std::move(schemaOptions))
 	, _options(std::move(options))
 	, _headerDir(getHeaderDir())
 	, _sourceDir(getSourceDir())
@@ -59,9 +59,9 @@ Generator::Generator(std::optional<SchemaOptions>&& customSchema, GeneratorOptio
 
 std::string Generator::getHeaderDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.headerPath.empty())
 	{
-		return fs::path { _options.paths->headerPath }.string();
+		return fs::path { _options.paths.headerPath }.string();
 	}
 	else
 	{
@@ -71,9 +71,9 @@ std::string Generator::getHeaderDir() const noexcept
 
 std::string Generator::getSourceDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.sourcePath.empty())
 	{
-		return fs::path(_options.paths->sourcePath).string();
+		return fs::path(_options.paths.sourcePath).string();
 	}
 	else
 	{
@@ -3009,7 +3009,7 @@ int main(int argc, char** argv)
 		outputVersion(std::cout);
 		return 0;
 	}
-	else if (showUsage || (!buildIntrospection && !buildCustom))
+	else if (showUsage || !buildCustom)
 	{
 		outputUsage(std::cout, options);
 		return 0;
@@ -3017,20 +3017,15 @@ int main(int argc, char** argv)
 
 	try
 	{
-		auto schemaOptions = buildCustom
-			? std::make_optional(graphql::generator::SchemaOptions { std::move(schemaFileName),
-				std::move(filenamePrefix),
-				std::move(schemaNamespace),
-				buildIntrospection })
-			: std::nullopt;
-
-		const auto files = graphql::generator::schema::Generator(std::move(schemaOptions),
+		const auto files = graphql::generator::schema::Generator({ std::move(schemaFileName),
+																	 std::move(filenamePrefix),
+																	 std::move(schemaNamespace),
+																	 buildIntrospection },
 			{
-				graphql::generator::schema::GeneratorPaths { std::move(headerDir),
-					std::move(sourceDir) },
-				verbose,
-				stubs,			 // stubs
-				noIntrospection, // noIntrospection
+				{ std::move(headerDir), std::move(sourceDir) }, // paths
+				verbose,										// verbose
+				stubs,											// stubs
+				noIntrospection,								// noIntrospection
 			})
 							   .Build();
 

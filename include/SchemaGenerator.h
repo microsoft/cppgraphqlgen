@@ -18,7 +18,7 @@ struct GeneratorPaths
 
 struct GeneratorOptions
 {
-	const std::optional<GeneratorPaths> paths;
+	const GeneratorPaths paths;
 	const bool verbose = false;
 	const bool stubs = false;
 	const bool noIntrospection = false;
@@ -28,7 +28,7 @@ class Generator
 {
 public:
 	// Initialize the generator with the introspection schema or a custom GraphQL schema.
-	explicit Generator(std::optional<SchemaOptions>&& customSchema, GeneratorOptions&& options);
+	explicit Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	std::vector<std::string> Build() const noexcept;
