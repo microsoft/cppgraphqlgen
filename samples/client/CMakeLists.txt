@@ -12,7 +12,7 @@ add_subdirectory(benchmark)
 # client_benchmark
 add_executable(client_benchmark benchmark.cpp)
 target_link_libraries(client_benchmark PRIVATE
-  separategraphql
+  todaygraphql
   benchmark_client)
 
 if(WIN32 AND BUILD_SHARED_LIBS)

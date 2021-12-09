@@ -3,40 +3,40 @@
 
 cmake_minimum_required(VERSION 3.15)
 
-# separategraphql
-add_subdirectory(separate)
-add_library(separategraphql STATIC TodayMock.cpp)
-target_link_libraries(separategraphql PUBLIC separate_schema)
-target_include_directories(separategraphql PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# todaygraphql
+add_subdirectory(schema)
+add_library(todaygraphql STATIC TodayMock.cpp)
+target_link_libraries(todaygraphql PUBLIC today_schema)
+target_include_directories(todaygraphql PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# separategraphql_nointrospection
-add_subdirectory(separate_nointrospection)
-add_library(separategraphql_nointrospection STATIC TodayMock.cpp)
-target_link_libraries(separategraphql_nointrospection PUBLIC separate_nointrospection_schema)
-target_include_directories(separategraphql_nointrospection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# todaygraphql_nointrospection
+add_subdirectory(nointrospection)
+add_library(todaygraphql_nointrospection STATIC TodayMock.cpp)
+target_link_libraries(todaygraphql_nointrospection PUBLIC today_nointrospection_schema)
+target_include_directories(todaygraphql_nointrospection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # sample
 add_executable(sample sample.cpp)
 target_link_libraries(sample PRIVATE
-  separategraphql
+  todaygraphql
   graphqljson)
 
 # sample_nointrospection
 add_executable(sample_nointrospection sample.cpp)
 target_link_libraries(sample_nointrospection PRIVATE
-  separategraphql_nointrospection
+  todaygraphql_nointrospection
   graphqljson)
 
 # benchmark
 add_executable(benchmark benchmark.cpp)
 target_link_libraries(benchmark PRIVATE
-  separategraphql
+  todaygraphql
   graphqljson)
 
 # benchmark_nointrospection
 add_executable(benchmark_nointrospection benchmark.cpp)
 target_link_libraries(benchmark_nointrospection PRIVATE
-  separategraphql_nointrospection
+  todaygraphql_nointrospection
   graphqljson)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
