@@ -32,15 +32,15 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<TypeKind> getKind(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&& params, std::optional<bool>&& includeDeprecatedArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&& params, std::optional<bool>&& includeDeprecatedArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<TypeKind> getKind() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getName() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const = 0;
+		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getOfType() const = 0;
 	};
 
 	template <class T>
@@ -52,47 +52,47 @@ private:
 		{
 		}
 
-		service::FieldResult<TypeKind> getKind(service::FieldParams&&) const final
+		service::FieldResult<TypeKind> getKind() const final
 		{
 			return { _pimpl->getKind() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(service::FieldParams&&, std::optional<bool>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const final
 		{
 			return { _pimpl->getInterfaces() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const final
 		{
 			return { _pimpl->getPossibleTypes() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(service::FieldParams&&, std::optional<bool>&& includeDeprecatedArg) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const final
 		{
 			return { _pimpl->getInputFields() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getOfType(service::FieldParams&&) const final
+		service::FieldResult<std::shared_ptr<Type>> getOfType() const final
 		{
 			return { _pimpl->getOfType() };
 		}

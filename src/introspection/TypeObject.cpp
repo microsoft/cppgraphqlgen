@@ -60,8 +60,7 @@ service::ResolverMap Type::getResolvers() const noexcept
 service::AwaitableResolver Type::resolveKind(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getKind(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getKind();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<TypeKind>::convert(std::move(result), std::move(params));
@@ -70,8 +69,7 @@ service::AwaitableResolver Type::resolveKind(service::ResolverParams&& params) c
 service::AwaitableResolver Type::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -80,8 +78,7 @@ service::AwaitableResolver Type::resolveName(service::ResolverParams&& params) c
 service::AwaitableResolver Type::resolveDescription(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDescription();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -89,7 +86,7 @@ service::AwaitableResolver Type::resolveDescription(service::ResolverParams&& pa
 
 service::AwaitableResolver Type::resolveFields(service::ResolverParams&& params) const
 {
-	const auto defaultArguments = []()
+	static const auto defaultArguments = []()
 	{
 		response::Value values(response::Type::Map);
 		response::Value entry;
@@ -105,8 +102,7 @@ service::AwaitableResolver Type::resolveFields(service::ResolverParams&& params)
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getFields(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIncludeDeprecated));
+	auto result = _pimpl->getFields(std::move(argIncludeDeprecated));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Field>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -115,8 +111,7 @@ service::AwaitableResolver Type::resolveFields(service::ResolverParams&& params)
 service::AwaitableResolver Type::resolveInterfaces(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getInterfaces(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getInterfaces();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -125,8 +120,7 @@ service::AwaitableResolver Type::resolveInterfaces(service::ResolverParams&& par
 service::AwaitableResolver Type::resolvePossibleTypes(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getPossibleTypes(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getPossibleTypes();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -134,7 +128,7 @@ service::AwaitableResolver Type::resolvePossibleTypes(service::ResolverParams&& 
 
 service::AwaitableResolver Type::resolveEnumValues(service::ResolverParams&& params) const
 {
-	const auto defaultArguments = []()
+	static const auto defaultArguments = []()
 	{
 		response::Value values(response::Type::Map);
 		response::Value entry;
@@ -150,8 +144,7 @@ service::AwaitableResolver Type::resolveEnumValues(service::ResolverParams&& par
 		? std::move(pairIncludeDeprecated.first)
 		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("includeDeprecated", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getEnumValues(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIncludeDeprecated));
+	auto result = _pimpl->getEnumValues(std::move(argIncludeDeprecated));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<EnumValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -160,8 +153,7 @@ service::AwaitableResolver Type::resolveEnumValues(service::ResolverParams&& par
 service::AwaitableResolver Type::resolveInputFields(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getInputFields(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getInputFields();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -170,8 +162,7 @@ service::AwaitableResolver Type::resolveInputFields(service::ResolverParams&& pa
 service::AwaitableResolver Type::resolveOfType(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getOfType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getOfType();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

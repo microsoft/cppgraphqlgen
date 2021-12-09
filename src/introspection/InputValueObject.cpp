@@ -52,8 +52,7 @@ service::ResolverMap InputValue::getResolvers() const noexcept
 service::AwaitableResolver InputValue::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
@@ -62,8 +61,7 @@ service::AwaitableResolver InputValue::resolveName(service::ResolverParams&& par
 service::AwaitableResolver InputValue::resolveDescription(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDescription();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -72,8 +70,7 @@ service::AwaitableResolver InputValue::resolveDescription(service::ResolverParam
 service::AwaitableResolver InputValue::resolveType(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getType();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
@@ -82,8 +79,7 @@ service::AwaitableResolver InputValue::resolveType(service::ResolverParams&& par
 service::AwaitableResolver InputValue::resolveDefaultValue(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDefaultValue(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDefaultValue();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

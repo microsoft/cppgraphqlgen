@@ -54,8 +54,7 @@ service::ResolverMap Schema::getResolvers() const noexcept
 service::AwaitableResolver Schema::resolveTypes(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getTypes(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getTypes();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
@@ -64,8 +63,7 @@ service::AwaitableResolver Schema::resolveTypes(service::ResolverParams&& params
 service::AwaitableResolver Schema::resolveQueryType(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getQueryType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getQueryType();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert(std::move(result), std::move(params));
@@ -74,8 +72,7 @@ service::AwaitableResolver Schema::resolveQueryType(service::ResolverParams&& pa
 service::AwaitableResolver Schema::resolveMutationType(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getMutationType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getMutationType();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -84,8 +81,7 @@ service::AwaitableResolver Schema::resolveMutationType(service::ResolverParams&&
 service::AwaitableResolver Schema::resolveSubscriptionType(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getSubscriptionType(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getSubscriptionType();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -94,8 +90,7 @@ service::AwaitableResolver Schema::resolveSubscriptionType(service::ResolverPara
 service::AwaitableResolver Schema::resolveDirectives(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDirectives(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDirectives();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Directive>::convert<service::TypeModifier::List>(std::move(result), std::move(params));

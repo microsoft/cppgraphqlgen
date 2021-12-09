@@ -138,7 +138,7 @@ service::AwaitableResolver Arguments::resolveBooleanListArgField(service::Resolv
 
 service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const
 {
-	const auto defaultArguments = []()
+	static const auto defaultArguments = []()
 	{
 		response::Value values(response::Type::Map);
 		response::Value entry;

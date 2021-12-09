@@ -225,7 +225,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 )cpp";
 			for (const auto& inputField : inputType.fields)
 			{
-				headerFile << R"cpp(	)cpp" << getFieldDeclaration(inputField) << R"cpp(;
+				headerFile << getFieldDeclaration(inputField) << R"cpp(;
 )cpp";
 			}
 			headerFile << R"cpp(};
@@ -757,7 +757,7 @@ private:
 
 	for (const auto& outputField : objectType.fields)
 	{
-		headerFile << R"cpp(	)cpp" << getFieldDeclaration(outputField);
+		headerFile << getFieldDeclaration(outputField);
 	}
 
 	headerFile << R"cpp(	};
@@ -781,17 +781,25 @@ private:
 		headerFile << R"cpp(
 		service::FieldResult<)cpp"
 				   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
-				   << fieldName << R"cpp((service::FieldParams&&)cpp";
+				   << fieldName << R"cpp(()cpp";
 
-		if (!_loader.isIntrospection())
+		bool firstArgument = _loader.isIntrospection();
+
+		if (!firstArgument)
 		{
-			headerFile << R"cpp( params)cpp";
+			headerFile << R"cpp(service::FieldParams&& params)cpp";
 		}
 
 		for (const auto& argument : outputField.arguments)
 		{
-			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp(&& )cpp"
-					   << argument.cppName << R"cpp(Arg)cpp";
+			if (!firstArgument)
+			{
+				headerFile << R"cpp(, )cpp";
+			}
+
+			headerFile << _loader.getInputCppType(argument) << R"cpp(&& )cpp" << argument.cppName
+					   << R"cpp(Arg)cpp";
+			firstArgument = false;
 		}
 
 		headerFile << R"cpp() const final
@@ -799,7 +807,7 @@ private:
 			)cpp";
 
 		std::ostringstream ossPassedArguments;
-		bool firstArgument = true;
+		firstArgument = true;
 
 		for (const auto& argument : outputField.arguments)
 		{
@@ -1013,7 +1021,8 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 {
 	std::ostringstream output;
 
-	output << _loader.getInputCppType(inputField) << R"cpp( )cpp" << inputField.cppName;
+	output << R"cpp(	)cpp" << _loader.getInputCppType(inputField) << R"cpp( )cpp"
+		   << inputField.cppName;
 
 	return output.str();
 }
@@ -1024,14 +1033,26 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual service::FieldResult<)cpp" << _loader.getOutputCppType(outputField)
-		   << R"cpp(> )cpp" << outputField.accessor << fieldName
-		   << R"cpp((service::FieldParams&& params)cpp";
+	output << R"cpp(		virtual service::FieldResult<)cpp"
+		   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
+		   << fieldName << R"cpp(()cpp";
+
+	bool firstArgument = _loader.isIntrospection();
+
+	if (!firstArgument)
+	{
+		output << R"cpp(service::FieldParams&& params)cpp";
+	}
 
 	for (const auto& argument : outputField.arguments)
 	{
-		output << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp(&& )cpp"
-			   << argument.cppName << "Arg";
+		if (!firstArgument)
+		{
+			output << R"cpp(, )cpp";
+		}
+
+		output << _loader.getInputCppType(argument) << R"cpp(&& )cpp" << argument.cppName << "Arg";
+		firstArgument = false;
 	}
 
 	output << R"cpp() const = 0;
@@ -1999,7 +2020,7 @@ service::AwaitableResolver )cpp"
 					if (firstArgument)
 					{
 						firstArgument = false;
-						sourceFile << R"cpp(	const auto defaultArguments = []()
+						sourceFile << R"cpp(	static const auto defaultArguments = []()
 	{
 		response::Value values(response::Type::Map);
 		response::Value entry;
@@ -2032,12 +2053,25 @@ service::AwaitableResolver )cpp"
 			}
 		}
 
-		sourceFile
-			<< R"cpp(	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->)cpp"
-			<< outputField.accessor << fieldName
-			<< R"cpp((service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
+		sourceFile << R"cpp(	std::unique_lock resolverLock(_resolverMutex);
+)cpp";
+
+		if (!_loader.isIntrospection())
+		{
+			sourceFile << R"cpp(	auto directives = std::move(params.fieldDirectives);
+)cpp";
+		}
+
+		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << outputField.accessor << fieldName
+				   << R"cpp(()cpp";
+
+		bool firstArgument = _loader.isIntrospection();
+
+		if (!firstArgument)
+		{
+			sourceFile
+				<< R"cpp(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
+		}
 
 		if (!outputField.arguments.empty())
 		{
@@ -2047,7 +2081,14 @@ service::AwaitableResolver )cpp"
 
 				argumentName[0] =
 					static_cast<char>(std::toupper(static_cast<unsigned char>(argumentName[0])));
-				sourceFile << R"cpp(, std::move(arg)cpp" << argumentName << R"cpp())cpp";
+
+				if (!firstArgument)
+				{
+					sourceFile << R"cpp(, )cpp";
+				}
+
+				sourceFile << R"cpp(std::move(arg)cpp" << argumentName << R"cpp())cpp";
+				firstArgument = false;
 			}
 		}
 

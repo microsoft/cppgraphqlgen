@@ -127,7 +127,7 @@ service::AwaitableResolver Query::resolveUnreadCounts(service::ResolverParams&& 
 
 service::AwaitableResolver Query::resolveAppointmentsById(service::ResolverParams&& params) const
 {
-	const auto defaultArguments = []()
+	static const auto defaultArguments = []()
 	{
 		response::Value values(response::Type::Map);
 		response::Value entry;

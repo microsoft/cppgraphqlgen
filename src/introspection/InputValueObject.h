@@ -27,10 +27,10 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDefaultValue(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getType() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDefaultValue() const = 0;
 	};
 
 	template <class T>
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getType(service::FieldParams&&) const final
+		service::FieldResult<std::shared_ptr<Type>> getType() const final
 		{
 			return { _pimpl->getType() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDefaultValue(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDefaultValue() const final
 		{
 			return { _pimpl->getDefaultValue() };
 		}

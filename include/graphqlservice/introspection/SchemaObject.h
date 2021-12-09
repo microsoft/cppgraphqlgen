@@ -28,11 +28,11 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType() const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType() const = 0;
+		virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType() const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
 	};
 
 	template <class T>
@@ -44,27 +44,27 @@ private:
 		{
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes(service::FieldParams&&) const final
+		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const final
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getQueryType(service::FieldParams&&) const final
+		service::FieldResult<std::shared_ptr<Type>> getQueryType() const final
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getMutationType(service::FieldParams&&) const final
+		service::FieldResult<std::shared_ptr<Type>> getMutationType() const final
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType(service::FieldParams&&) const final
+		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType() const final
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives(service::FieldParams&&) const final
+		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
 		{
 			return { _pimpl->getDirectives() };
 		}

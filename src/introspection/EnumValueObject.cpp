@@ -51,8 +51,7 @@ service::ResolverMap EnumValue::getResolvers() const noexcept
 service::AwaitableResolver EnumValue::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
@@ -61,8 +60,7 @@ service::AwaitableResolver EnumValue::resolveName(service::ResolverParams&& para
 service::AwaitableResolver EnumValue::resolveDescription(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDescription();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -71,8 +69,7 @@ service::AwaitableResolver EnumValue::resolveDescription(service::ResolverParams
 service::AwaitableResolver EnumValue::resolveIsDeprecated(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getIsDeprecated(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getIsDeprecated();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
@@ -81,8 +78,7 @@ service::AwaitableResolver EnumValue::resolveIsDeprecated(service::ResolverParam
 service::AwaitableResolver EnumValue::resolveDeprecationReason(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDeprecationReason(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDeprecationReason();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

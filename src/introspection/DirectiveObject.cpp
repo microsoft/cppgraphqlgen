@@ -52,8 +52,7 @@ service::ResolverMap Directive::getResolvers() const noexcept
 service::AwaitableResolver Directive::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
@@ -62,8 +61,7 @@ service::AwaitableResolver Directive::resolveName(service::ResolverParams&& para
 service::AwaitableResolver Directive::resolveDescription(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDescription(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDescription();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -72,8 +70,7 @@ service::AwaitableResolver Directive::resolveDescription(service::ResolverParams
 service::AwaitableResolver Directive::resolveLocations(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getLocations(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getLocations();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<DirectiveLocation>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
@@ -82,8 +79,7 @@ service::AwaitableResolver Directive::resolveLocations(service::ResolverParams&&
 service::AwaitableResolver Directive::resolveArgs(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
-	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getArgs(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getArgs();
 	resolverLock.unlock();
 
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));

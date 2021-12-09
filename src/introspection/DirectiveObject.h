@@ -27,10 +27,10 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
+		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations() const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
 	};
 
 	template <class T>
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName(service::FieldParams&&) const final
+		service::FieldResult<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription(service::FieldParams&&) const final
+		service::FieldResult<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::vector<DirectiveLocation>> getLocations(service::FieldParams&&) const final
+		service::FieldResult<std::vector<DirectiveLocation>> getLocations() const final
 		{
 			return { _pimpl->getLocations() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs(service::FieldParams&&) const final
+		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
 		}
