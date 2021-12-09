@@ -1070,8 +1070,7 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
-						   << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
 )cpp";
 			}
 
@@ -3094,7 +3093,6 @@ int main(int argc, char** argv)
 	bool buildCustom = false;
 	bool verbose = false;
 	bool stubs = false;
-	bool mergeFiles = false;
 	bool noIntrospection = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
@@ -3119,9 +3117,8 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Schema.h header file")("stubs",
 		po::bool_switch(&stubs),
-		"Unimplemented fields throw runtime exceptions instead of compiler errors")("merge-files",
-		po::bool_switch(&mergeFiles),
-		"Generate a single header and source file for the entire schema")("no-introspection",
+		"Unimplemented fields throw runtime exceptions instead of compiler errors")(
+		"no-introspection",
 		po::bool_switch(&noIntrospection),
 		"Do not generate support for Introspection");
 	positional.add("schema", 1).add("prefix", 1).add("namespace", 1);
@@ -3208,7 +3205,7 @@ int main(int argc, char** argv)
 						std::move(sourceDir) },
 					verbose,
 					stubs,
-					mergeFiles,
+					false,
 					noIntrospection,
 				})
 								   .Build();
