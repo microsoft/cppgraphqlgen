@@ -1170,10 +1170,24 @@ bool Generator::outputSource() const noexcept
 
 	if (!_loader.isIntrospection())
 	{
-		sourceFile << R"cpp(#include ")cpp" << fs::path(_objectHeaderPath).filename().string()
-				   << R"cpp("
+		if (_options.mergeFiles)
+		{
+
+			sourceFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string()
+					   << R"cpp("
 
 )cpp";
+		}
+		else
+		{
+			for (const auto& operation : _loader.getOperationTypes())
+			{
+				sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+)cpp";
+			}
+
+			sourceFile << std::endl;
+		}
 	}
 
 	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
@@ -2932,24 +2946,6 @@ using namespace std::literals;
 		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
-
-		if (!objectType.interfaces.empty() || !objectType.unions.empty())
-		{
-			for (auto interfaceName : objectType.interfaces)
-			{
-				headerFile << R"cpp(#include ")cpp" << _loader.getSafeCppName(interfaceName)
-						   << R"cpp(Object.h"
-)cpp";
-			}
-
-			for (auto unionName : objectType.unions)
-			{
-				headerFile << R"cpp(#include ")cpp" << unionName << R"cpp(Object.h"
-)cpp";
-			}
-
-			headerFile << std::endl;
-		}
 
 		std::ostringstream ossNamespace;
 

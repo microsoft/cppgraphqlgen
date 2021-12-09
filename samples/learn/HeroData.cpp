@@ -6,6 +6,8 @@
 #include "DroidData.h"
 #include "HumanData.h"
 
+#include "CharacterObject.h"
+
 namespace graphql::learn {
 
 std::shared_ptr<object::Character> make_hero(const SharedHero& hero) noexcept
