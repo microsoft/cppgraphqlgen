@@ -272,7 +272,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << std::endl;
 		}
 
-		// Forward declare all of the interface types
+		// Forward declare all of the union types
 		for (const auto& unionType : _loader.getUnionTypes())
 		{
 			headerFile << R"cpp(class )cpp" << unionType.cppType << R"cpp(;
