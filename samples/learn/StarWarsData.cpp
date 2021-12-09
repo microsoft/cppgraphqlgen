@@ -9,8 +9,6 @@
 #include "QueryData.h"
 #include "ReviewData.h"
 
-#include "StarWarsObjects.h"
-
 using namespace std::literals;
 
 namespace graphql::star_wars {
