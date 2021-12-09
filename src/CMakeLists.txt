@@ -342,7 +342,7 @@ target_link_libraries(graphqlservice PUBLIC
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still
   # depends on IntrospectionSchema.h for some enum definitions.
-  add_dependencies(graphqlservice update_introspection_headers)
+  add_dependencies(graphqlservice copy_introspection_schema_headers)
 endif()
 
 if(GRAPHQL_UPDATE_VERSION)
