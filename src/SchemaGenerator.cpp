@@ -53,7 +53,6 @@ Generator::Generator(std::optional<SchemaOptions>&& customSchema, GeneratorOptio
 	, _headerDir(getHeaderDir())
 	, _sourceDir(getSourceDir())
 	, _headerPath(getHeaderPath())
-	, _objectHeaderPath(getObjectHeaderPath())
 	, _sourcePath(getSourcePath())
 {
 }
@@ -88,19 +87,6 @@ std::string Generator::getHeaderPath() const noexcept
 
 	fullPath /= (std::string { _loader.getFilenamePrefix() } + "Schema.h");
 	return fullPath.string();
-}
-
-std::string Generator::getObjectHeaderPath() const noexcept
-{
-	if (!_options.mergeFiles)
-	{
-		fs::path fullPath { _headerDir };
-
-		fullPath /= (std::string { _loader.getFilenamePrefix() } + "Objects.h");
-		return fullPath.string();
-	}
-
-	return _headerPath;
 }
 
 std::string Generator::getSourcePath() const noexcept
@@ -1731,8 +1717,6 @@ Operations::Operations()cpp";
 	{
 		sourceFile << std::endl;
 
-		const std::vector<std::string_view> emptyInterfaces {};
-
 		for (const auto& interfaceType : _loader.getInterfaceTypes())
 		{
 			if (!_options.mergeFiles)
@@ -2744,47 +2728,6 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 			break;
 		}
 	}
-
-	// Output a convenience header
-	std::ofstream objectHeaderFile(_objectHeaderPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { objectHeaderFile,
-		fs::path(_objectHeaderPath).filename().string() };
-
-	objectHeaderFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string()
-					 << R"cpp("
-
-)cpp";
-
-	for (const auto& interfaceType : _loader.getInterfaceTypes())
-	{
-		const auto headerFilename = std::string(interfaceType.cppType) + "Object.h";
-
-		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
-)cpp";
-	}
-
-	for (const auto& unionType : _loader.getUnionTypes())
-	{
-		const auto headerFilename = std::string(unionType.cppType) + "Object.h";
-
-		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
-)cpp";
-	}
-
-	for (const auto& objectType : _loader.getObjectTypes())
-	{
-		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
-
-		objectHeaderFile << R"cpp(#include ")cpp" << headerFilename << R"cpp("
-)cpp";
-	}
-
-	if (_options.verbose)
-	{
-		files.push_back({ _objectHeaderPath });
-	}
-
-	const std::vector<std::string_view> emptyInterfacesAndUnions {};
 
 	for (const auto& interfaceType : _loader.getInterfaceTypes())
 	{

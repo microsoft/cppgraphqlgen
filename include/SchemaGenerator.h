@@ -38,7 +38,6 @@ private:
 	std::string getHeaderDir() const noexcept;
 	std::string getSourceDir() const noexcept;
 	std::string getHeaderPath() const noexcept;
-	std::string getObjectHeaderPath() const noexcept;
 	std::string getSourcePath() const noexcept;
 
 	bool outputHeader() const noexcept;
@@ -80,7 +79,6 @@ private:
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
-	const std::string _objectHeaderPath;
 	const std::string _sourcePath;
 };
 
