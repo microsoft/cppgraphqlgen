@@ -10,9 +10,6 @@
 
 #include "TodaySchema.h"
 
-#include "NodeObject.h"
-#include "UnionTypeObject.h"
-
 namespace graphql::today::object {
 namespace implements {
 

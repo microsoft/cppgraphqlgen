@@ -44,6 +44,10 @@ namespace object {
 class Sentient;
 class Pet;
 
+class CatOrDog;
+class DogOrHuman;
+class HumanOrAlien;
+
 class Query;
 class Dog;
 class Alien;

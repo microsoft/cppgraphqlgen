@@ -10,8 +10,6 @@
 
 #include "StarWarsSchema.h"
 
-#include "CharacterObject.h"
-
 namespace graphql::learn::object {
 namespace implements {
 

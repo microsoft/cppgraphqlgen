@@ -64,6 +64,8 @@ namespace object {
 
 class Node;
 
+class UnionType;
+
 class Query;
 class PageInfo;
 class AppointmentEdge;
