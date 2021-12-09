@@ -2779,27 +2779,29 @@ using namespace std::literals;
 		const auto objectNamespace = ossObjectNamespace.str();
 		NamespaceScope headerNamespace { headerFile, objectNamespace };
 
-		if (!objectType.interfaces.empty())
+		if (!_loader.isIntrospection())
 		{
-			NamespaceScope implementsNamespace { headerFile, R"cpp(implements)cpp" };
+			if (!objectType.interfaces.empty())
+			{
+				NamespaceScope implementsNamespace { headerFile, R"cpp(implements)cpp" };
 
-			headerFile << std::endl;
-			outputObjectImplements(headerFile, objectType);
+				headerFile << std::endl;
+				outputObjectImplements(headerFile, objectType);
 
-			implementsNamespace.exit();
-			headerFile << std::endl;
+				implementsNamespace.exit();
+				headerFile << std::endl;
+			}
+
+			// Output the stub concepts
+			std::ostringstream ossConceptNamespace;
+
+			ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Has)cpp";
+
+			const auto conceptNamespace = ossConceptNamespace.str();
+			NamespaceScope stubNamespace { headerFile, conceptNamespace };
+
+			outputObjectStubs(headerFile, objectType);
 		}
-
-		// Output the stub concepts
-		std::ostringstream ossConceptNamespace;
-
-		ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Has)cpp";
-
-		const auto conceptNamespace = ossConceptNamespace.str();
-		NamespaceScope stubNamespace { headerFile, conceptNamespace };
-
-		outputObjectStubs(headerFile, objectType);
-		stubNamespace.exit();
 
 		// Output the full declaration
 		headerFile << std::endl;

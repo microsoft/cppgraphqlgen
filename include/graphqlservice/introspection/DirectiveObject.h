@@ -11,69 +11,6 @@
 #include "IntrospectionSchema.h"
 
 namespace graphql::introspection::object {
-namespace methods::DirectiveHas {
-
-template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getName = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::string> { impl.getName() } };
-};
-
-template <class TImpl>
-concept getDescriptionWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getDescription = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription() } };
-};
-
-template <class TImpl>
-concept getLocationsWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::vector<DirectiveLocation>> { impl.getLocations(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getLocations = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::vector<DirectiveLocation>> { impl.getLocations() } };
-};
-
-template <class TImpl>
-concept getArgsWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::vector<std::shared_ptr<InputValue>>> { impl.getArgs(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getArgs = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::vector<std::shared_ptr<InputValue>>> { impl.getArgs() } };
-};
-
-template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.beginSelectionSet(params) };
-};
-
-template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.endSelectionSet(params) };
-};
-
-} // namespace methods::DirectiveHas
 
 class Directive
 	: public service::Object

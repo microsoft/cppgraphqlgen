@@ -14,7 +14,7 @@ if(GRAPHQL_UPDATE_SAMPLES)
     OUTPUT copied_introspection_schema_headers
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/../../include/graphqlservice/introspection/
     COMMAND ${CMAKE_COMMAND} -E touch copied_introspection_schema_headers
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/introspection_schema_files
+    DEPENDS ${PRIVATE_HEADERS}
     COMMENT "Updating IntrospectionSchema headers")
 
   add_custom_target(copy_introspection_schema_headers ALL

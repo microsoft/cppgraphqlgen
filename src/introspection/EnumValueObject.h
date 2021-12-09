@@ -11,69 +11,6 @@
 #include "IntrospectionSchema.h"
 
 namespace graphql::introspection::object {
-namespace methods::EnumValueHas {
-
-template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getName = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::string> { impl.getName() } };
-};
-
-template <class TImpl>
-concept getDescriptionWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getDescription = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription() } };
-};
-
-template <class TImpl>
-concept getIsDeprecatedWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<bool> { impl.getIsDeprecated(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getIsDeprecated = requires (TImpl impl) 
-{
-	{ service::FieldResult<bool> { impl.getIsDeprecated() } };
-};
-
-template <class TImpl>
-concept getDeprecationReasonWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDeprecationReason(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getDeprecationReason = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDeprecationReason() } };
-};
-
-template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.beginSelectionSet(params) };
-};
-
-template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.endSelectionSet(params) };
-};
-
-} // namespace methods::EnumValueHas
 
 class EnumValue
 	: public service::Object

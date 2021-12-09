@@ -11,69 +11,6 @@
 #include "IntrospectionSchema.h"
 
 namespace graphql::introspection::object {
-namespace methods::InputValueHas {
-
-template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getName = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::string> { impl.getName() } };
-};
-
-template <class TImpl>
-concept getDescriptionWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getDescription = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDescription() } };
-};
-
-template <class TImpl>
-concept getTypeWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::shared_ptr<Type>> { impl.getType(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getType = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::shared_ptr<Type>> { impl.getType() } };
-};
-
-template <class TImpl>
-concept getDefaultValueWithParams = requires (TImpl impl, service::FieldParams params) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDefaultValue(std::move(params)) } };
-};
-
-template <class TImpl>
-concept getDefaultValue = requires (TImpl impl) 
-{
-	{ service::FieldResult<std::optional<std::string>> { impl.getDefaultValue() } };
-};
-
-template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.beginSelectionSet(params) };
-};
-
-template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
-{
-	{ impl.endSelectionSet(params) };
-};
-
-} // namespace methods::InputValueHas
 
 class InputValue
 	: public service::Object
