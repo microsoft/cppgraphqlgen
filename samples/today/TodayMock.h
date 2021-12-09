@@ -6,7 +6,19 @@
 #ifndef TODAYMOCK_H
 #define TODAYMOCK_H
 
-#include "TodayObjects.h"
+#include "TodaySchema.h"
+
+#include "QueryObject.h"
+#include "MutationObject.h"
+#include "SubscriptionObject.h"
+#include "NodeObject.h"
+#include "PageInfoObject.h"
+#include "AppointmentEdgeObject.h"
+#include "TaskEdgeObject.h"
+#include "FolderEdgeObject.h"
+#include "AppointmentObject.h"
+#include "TaskObject.h"
+#include "FolderObject.h"
 
 #include <atomic>
 #include <stack>
