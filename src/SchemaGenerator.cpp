@@ -265,6 +265,23 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		headerFile << std::endl;
 	}
 
+	if (!_loader.getUnionTypes().empty())
+	{
+		if (objectNamespace.enter())
+		{
+			headerFile << std::endl;
+		}
+
+		// Forward declare all of the interface types
+		for (const auto& unionType : _loader.getUnionTypes())
+		{
+			headerFile << R"cpp(class )cpp" << unionType.cppType << R"cpp(;
+)cpp";
+		}
+
+		headerFile << std::endl;
+	}
+
 	if (!_loader.getObjectTypes().empty())
 	{
 		if (_loader.isIntrospection())
