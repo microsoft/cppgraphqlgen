@@ -41,8 +41,10 @@ if(NOT FILE_NAMES)
   message(FATAL_ERROR "Schema generation failed!")
 endif()
 
-# Remove stale files in the source directory
+ # Support if() IN_LIST operator: https://cmake.org/cmake/help/latest/policy/CMP0057.html
 cmake_policy(SET CMP0057 NEW)
+
+# Remove stale files in the source directory
 file(GLOB OLD_FILES ${CLIENT_SOURCE_DIR}/*.h ${CLIENT_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)

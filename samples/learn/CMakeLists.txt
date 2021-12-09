@@ -1,10 +1,11 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.15)
 
 add_subdirectory(schema)
 add_library(star_wars STATIC
+  HeroData.cpp
   DroidData.cpp
   HumanData.cpp
   QueryData.cpp
@@ -20,7 +21,7 @@ target_link_libraries(learn_star_wars PRIVATE
   graphqljson)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_command(OUTPUT copied_learn_dlls
+  add_custom_command(OUTPUT copied_sample_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:graphqlservice>
       $<TARGET_FILE:graphqlintrospection>

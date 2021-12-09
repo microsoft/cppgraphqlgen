@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::CompleteTaskPayloadMethod {
+namespace methods::CompleteTaskPayloadHas {
 
 template <class TImpl>
-concept WithParamsTask = requires (TImpl impl, service::FieldParams params) 
+concept getTaskWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsTask = requires (TImpl impl) 
+concept getTask = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask() } };
 };
 
 template <class TImpl>
-concept WithParamsClientMutationId = requires (TImpl impl, service::FieldParams params) 
+concept getClientMutationIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsClientMutationId = requires (TImpl impl) 
+concept getClientMutationId = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::CompleteTaskPayloadMethod
+} // namespace methods::CompleteTaskPayloadHas
 
 class CompleteTaskPayload
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveTask(service::ResolverParams&& params);
-	service::AwaitableResolver resolveClientMutationId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTask(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveClientMutationId(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsTask<T>)
+			if constexpr (methods::CompleteTaskPayloadHas::getTaskWithParams<T>)
 			{
 				return { _pimpl->getTask(std::move(params)) };
 			}
-			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsTask<T>)
+			else if constexpr (methods::CompleteTaskPayloadHas::getTask<T>)
 			{
 				return { _pimpl->getTask() };
 			}
@@ -98,11 +98,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::CompleteTaskPayloadMethod::WithParamsClientMutationId<T>)
+			if constexpr (methods::CompleteTaskPayloadHas::getClientMutationIdWithParams<T>)
 			{
 				return { _pimpl->getClientMutationId(std::move(params)) };
 			}
-			else if constexpr (methods::CompleteTaskPayloadMethod::NoParamsClientMutationId<T>)
+			else if constexpr (methods::CompleteTaskPayloadHas::getClientMutationId<T>)
 			{
 				return { _pimpl->getClientMutationId() };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::CompleteTaskPayloadMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::CompleteTaskPayloadHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::CompleteTaskPayloadMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::CompleteTaskPayloadHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl);
+	CompleteTaskPayload(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	CompleteTaskPayload(std::shared_ptr<T> pimpl)
+	CompleteTaskPayload(std::shared_ptr<T> pimpl) noexcept
 		: CompleteTaskPayload { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

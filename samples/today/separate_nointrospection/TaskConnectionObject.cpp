@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"TaskConnection"
-	}, {
+TaskConnection::TaskConnection(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames TaskConnection::getTypeNames() const noexcept
+{
+	return {
+		R"gql(TaskConnection)gql"sv
+	};
+}
+
+service::ResolverMap TaskConnection::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void TaskConnection::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void TaskConnection::endSelectionSet(const service::SelectionSetParams& params) 
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params)
+service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver TaskConnection::resolvePageInfo(service::ResolverPara
 	return service::ModifiedResult<PageInfo>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver TaskConnection::resolveEdges(service::ResolverParams&& params)
+service::AwaitableResolver TaskConnection::resolveEdges(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,18 +70,18 @@ service::AwaitableResolver TaskConnection::resolveEdges(service::ResolverParams&
 	return service::ModifiedResult<TaskEdge>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver TaskConnection::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver TaskConnection::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(TaskConnection)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddTaskConnectionDetails(std::shared_ptr<schema::ObjectType> typeTaskConnection, const std::shared_ptr<schema::Schema>& schema)
+void AddTaskConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeTaskConnection, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeTaskConnection->AddFields({
-		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("PageInfo"))),
-		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("TaskEdge")))
+		schema::Field::Make(R"gql(pageInfo)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(PageInfo)gql"sv))),
+		schema::Field::Make(R"gql(edges)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(TaskEdge)gql"sv)))
 	});
 }
 

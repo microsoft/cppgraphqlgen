@@ -42,8 +42,9 @@ private:
 	std::string getSourcePath() const noexcept;
 
 	bool outputHeader() const noexcept;
-	void outputObjectStubs(
-		std::ostream& headerFile, const ObjectType& objectType) const;
+	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
+	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
+	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectDeclaration(
 		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
@@ -51,9 +52,15 @@ private:
 	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
 	bool outputSource() const noexcept;
+	void outputInterfaceImplementation(std::ostream& sourceFile, std::string_view cppType) const;
+	void outputInterfaceIntrospection(
+		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
+	void outputUnionIntrospection(std::ostream& sourceFile, const UnionType& unionType) const;
 	void outputObjectImplementation(
 		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
 	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
+	void outputIntrospectionFields(
+		std::ostream& sourceFile, std::string_view cppType, const OutputFieldList& fields) const;
 	std::string getArgumentDefaultValue(
 		size_t level, const response::Value& defaultValue) const noexcept;
 	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken,

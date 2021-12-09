@@ -67,17 +67,6 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-namespace object {
-
-class Schema;
-class Type;
-class Field;
-class InputValue;
-class EnumValue;
-class Directive;
-
-} // namespace object
-
 class Schema;
 class Type;
 class Field;
@@ -86,18 +75,25 @@ class EnumValue;
 class Directive;
 
 namespace object {
+
+class Schema;
+class Type;
+class Field;
+class InputValue;
+class EnumValue;
+class Directive;
 
 class Schema
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveTypes(service::ResolverParams&& params);
-	service::AwaitableResolver resolveQueryType(service::ResolverParams&& params);
-	service::AwaitableResolver resolveMutationType(service::ResolverParams&& params);
-	service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDirectives(service::ResolverParams&& params);
+	service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDirectives(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -150,8 +146,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~Schema();
 };
 
@@ -159,17 +158,17 @@ class Type
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveKind(service::ResolverParams&& params);
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
-	service::AwaitableResolver resolveFields(service::ResolverParams&& params);
-	service::AwaitableResolver resolveInterfaces(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePossibleTypes(service::ResolverParams&& params);
-	service::AwaitableResolver resolveEnumValues(service::ResolverParams&& params);
-	service::AwaitableResolver resolveInputFields(service::ResolverParams&& params);
-	service::AwaitableResolver resolveOfType(service::ResolverParams&& params);
+	service::AwaitableResolver resolveKind(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveFields(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveInterfaces(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolvePossibleTypes(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveEnumValues(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveInputFields(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveOfType(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -246,8 +245,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT Type(std::shared_ptr<introspection::Type> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT Type(std::shared_ptr<introspection::Type> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~Type();
 };
 
@@ -255,14 +257,14 @@ class Field
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
-	service::AwaitableResolver resolveArgs(service::ResolverParams&& params);
-	service::AwaitableResolver resolveType(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveArgs(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -321,8 +323,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT Field(std::shared_ptr<introspection::Field> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT Field(std::shared_ptr<introspection::Field> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~Field();
 };
 
@@ -330,12 +335,12 @@ class InputValue
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
-	service::AwaitableResolver resolveType(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -382,8 +387,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~InputValue();
 };
 
@@ -391,12 +399,12 @@ class EnumValue
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -443,8 +451,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~EnumValue();
 };
 
@@ -452,12 +463,12 @@ class Directive
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params);
-	service::AwaitableResolver resolveLocations(service::ResolverParams&& params);
-	service::AwaitableResolver resolveArgs(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveLocations(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveArgs(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -504,8 +515,11 @@ private:
 
 	const std::unique_ptr<Concept> _pimpl;
 
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
+
 public:
-	GRAPHQLINTROSPECTION_EXPORT Directive(std::shared_ptr<introspection::Directive> pimpl);
+	GRAPHQLINTROSPECTION_EXPORT Directive(std::shared_ptr<introspection::Directive> pimpl) noexcept;
 	GRAPHQLINTROSPECTION_EXPORT ~Directive();
 };
 

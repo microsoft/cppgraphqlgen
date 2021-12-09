@@ -36,6 +36,8 @@ struct ReviewInput
 
 namespace object {
 
+class Character;
+
 class Human;
 class Droid;
 class Query;
@@ -43,14 +45,6 @@ class Review;
 class Mutation;
 
 } // namespace object
-
-struct Character
-{
-	virtual service::FieldResult<std::string> getId(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const = 0;
-	virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
-};
 
 class Operations
 	: public service::Request
@@ -69,11 +63,13 @@ private:
 	std::shared_ptr<object::Mutation> _mutation;
 };
 
-void AddHumanDetails(std::shared_ptr<schema::ObjectType> typeHuman, const std::shared_ptr<schema::Schema>& schema);
-void AddDroidDetails(std::shared_ptr<schema::ObjectType> typeDroid, const std::shared_ptr<schema::Schema>& schema);
-void AddQueryDetails(std::shared_ptr<schema::ObjectType> typeQuery, const std::shared_ptr<schema::Schema>& schema);
-void AddReviewDetails(std::shared_ptr<schema::ObjectType> typeReview, const std::shared_ptr<schema::Schema>& schema);
-void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const std::shared_ptr<schema::Schema>& schema);
+void AddCharacterDetails(const std::shared_ptr<schema::InterfaceType>& typeCharacter, const std::shared_ptr<schema::Schema>& schema);
+
+void AddHumanDetails(const std::shared_ptr<schema::ObjectType>& typeHuman, const std::shared_ptr<schema::Schema>& schema);
+void AddDroidDetails(const std::shared_ptr<schema::ObjectType>& typeDroid, const std::shared_ptr<schema::Schema>& schema);
+void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
+void AddReviewDetails(const std::shared_ptr<schema::ObjectType>& typeReview, const std::shared_ptr<schema::Schema>& schema);
+void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema);
 
 std::shared_ptr<schema::Schema> GetSchema();
 

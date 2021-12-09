@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::TaskConnectionMethod {
+namespace methods::TaskConnectionHas {
 
 template <class TImpl>
-concept WithParamsPageInfo = requires (TImpl impl, service::FieldParams params) 
+concept getPageInfoWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsPageInfo = requires (TImpl impl) 
+concept getPageInfo = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
 };
 
 template <class TImpl>
-concept WithParamsEdges = requires (TImpl impl, service::FieldParams params) 
+concept getEdgesWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsEdges = requires (TImpl impl) 
+concept getEdges = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::TaskConnectionMethod
+} // namespace methods::TaskConnectionHas
 
 class TaskConnection
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolvePageInfo(service::ResolverParams&& params);
-	service::AwaitableResolver resolveEdges(service::ResolverParams&& params);
+	service::AwaitableResolver resolvePageInfo(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveEdges(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::TaskConnectionMethod::WithParamsPageInfo<T>)
+			if constexpr (methods::TaskConnectionHas::getPageInfoWithParams<T>)
 			{
 				return { _pimpl->getPageInfo(std::move(params)) };
 			}
-			else if constexpr (methods::TaskConnectionMethod::NoParamsPageInfo<T>)
+			else if constexpr (methods::TaskConnectionHas::getPageInfo<T>)
 			{
 				return { _pimpl->getPageInfo() };
 			}
@@ -98,11 +98,11 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::TaskConnectionMethod::WithParamsEdges<T>)
+			if constexpr (methods::TaskConnectionHas::getEdgesWithParams<T>)
 			{
 				return { _pimpl->getEdges(std::move(params)) };
 			}
-			else if constexpr (methods::TaskConnectionMethod::NoParamsEdges<T>)
+			else if constexpr (methods::TaskConnectionHas::getEdges<T>)
 			{
 				return { _pimpl->getEdges() };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::TaskConnectionMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::TaskConnectionHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::TaskConnectionMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::TaskConnectionHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	TaskConnection(std::unique_ptr<Concept>&& pimpl);
+	TaskConnection(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	TaskConnection(std::shared_ptr<T> pimpl)
+	TaskConnection(std::shared_ptr<T> pimpl) noexcept
 		: TaskConnection { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

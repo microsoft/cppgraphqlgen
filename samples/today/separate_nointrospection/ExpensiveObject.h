@@ -11,41 +11,41 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::ExpensiveMethod {
+namespace methods::ExpensiveHas {
 
 template <class TImpl>
-concept WithParamsOrder = requires (TImpl impl, service::FieldParams params) 
+concept getOrderWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<int> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsOrder = requires (TImpl impl) 
+concept getOrder = requires (TImpl impl) 
 {
 	{ service::FieldResult<int> { impl.getOrder() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::ExpensiveMethod
+} // namespace methods::ExpensiveHas
 
 class Expensive
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveOrder(service::ResolverParams&& params);
+	service::AwaitableResolver resolveOrder(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -68,11 +68,11 @@ private:
 
 		service::FieldResult<int> getOrder(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::ExpensiveMethod::WithParamsOrder<T>)
+			if constexpr (methods::ExpensiveHas::getOrderWithParams<T>)
 			{
 				return { _pimpl->getOrder(std::move(params)) };
 			}
-			else if constexpr (methods::ExpensiveMethod::NoParamsOrder<T>)
+			else if constexpr (methods::ExpensiveHas::getOrder<T>)
 			{
 				return { _pimpl->getOrder() };
 			}
@@ -84,7 +84,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ExpensiveMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::ExpensiveHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -92,7 +92,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ExpensiveMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::ExpensiveHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -102,7 +102,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Expensive(std::unique_ptr<Concept>&& pimpl);
+	Expensive(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -111,7 +114,7 @@ private:
 
 public:
 	template <class T>
-	Expensive(std::shared_ptr<T> pimpl)
+	Expensive(std::shared_ptr<T> pimpl) noexcept
 		: Expensive { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.15)
 
 # separategraphql
 add_subdirectory(separate)
@@ -58,12 +58,12 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqlpeg
       graphqlresponse)
 
-  add_custom_target(copy_sample_dlls DEPENDS copied_sample_dlls)
+  add_custom_target(copy_today_sample_dlls DEPENDS copied_sample_dlls)
 
-  add_dependencies(sample copy_sample_dlls)
-  add_dependencies(sample_nointrospection copy_sample_dlls)
-  add_dependencies(benchmark copy_sample_dlls)
-  add_dependencies(benchmark_nointrospection copy_sample_dlls)
+  add_dependencies(sample copy_today_sample_dlls)
+  add_dependencies(sample_nointrospection copy_today_sample_dlls)
+  add_dependencies(benchmark copy_today_sample_dlls)
+  add_dependencies(benchmark_nointrospection copy_today_sample_dlls)
 endif()
 
 if(GRAPHQL_BUILD_TESTS)

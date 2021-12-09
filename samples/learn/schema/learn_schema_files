@@ -1,4 +1,5 @@
 StarWarsSchema.cpp
+CharacterObject.cpp
 HumanObject.cpp
 DroidObject.cpp
 QueryObject.cpp

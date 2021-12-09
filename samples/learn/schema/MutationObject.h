@@ -11,41 +11,41 @@
 #include "StarWarsSchema.h"
 
 namespace graphql::learn::object {
-namespace methods::MutationMethod {
+namespace methods::MutationHas {
 
 template <class TImpl>
-concept WithParamsCreateReview = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg) 
+concept applyCreateReviewWithParams = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg) 
+concept applyCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::MutationMethod
+} // namespace methods::MutationHas
 
 class Mutation
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params);
+	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -68,20 +68,20 @@ private:
 
 		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
 		{
-			if constexpr (methods::MutationMethod::WithParamsCreateReview<T>)
+			if constexpr (methods::MutationHas::applyCreateReviewWithParams<T>)
 			{
 				return { _pimpl->applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) };
 			}
 			else
 			{
-				static_assert(methods::MutationMethod::NoParamsCreateReview<T>, R"msg(Mutation::applyCreateReview is not implemented)msg");
+				static_assert(methods::MutationHas::applyCreateReview<T>, R"msg(Mutation::applyCreateReview is not implemented)msg");
 				return { _pimpl->applyCreateReview(std::move(epArg), std::move(reviewArg)) };
 			}
 		}
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::MutationHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -89,7 +89,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::MutationHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -99,7 +99,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Mutation(std::unique_ptr<Concept>&& pimpl);
+	Mutation(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -108,7 +111,7 @@ private:
 
 public:
 	template <class T>
-	Mutation(std::shared_ptr<T> pimpl)
+	Mutation(std::shared_ptr<T> pimpl) noexcept
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

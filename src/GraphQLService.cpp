@@ -1084,7 +1084,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 	}
 }
 
-Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers)
+Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept
 	: _typeNames(std::move(typeNames))
 	, _resolvers(std::move(resolvers))
 {

@@ -18,16 +18,26 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"FolderEdge"
-	}, {
+FolderEdge::FolderEdge(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames FolderEdge::getTypeNames() const noexcept
+{
+	return {
+		R"gql(FolderEdge)gql"sv
+	};
+}
+
+service::ResolverMap FolderEdge::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void FolderEdge::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -40,7 +50,7 @@ void FolderEdge::endSelectionSet(const service::SelectionSetParams& params) cons
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -50,7 +60,7 @@ service::AwaitableResolver FolderEdge::resolveNode(service::ResolverParams&& par
 	return service::ModifiedResult<Folder>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -60,18 +70,18 @@ service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& p
 	return service::ModifiedResult<response::Value>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(FolderEdge)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddFolderEdgeDetails(std::shared_ptr<schema::ObjectType> typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
+void AddFolderEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeFolderEdge->AddFields({
-		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Folder")),
-		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ItemCursor")))
+		schema::Field::Make(R"gql(node)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Folder)gql"sv)),
+		schema::Field::Make(R"gql(cursor)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ItemCursor)gql"sv)))
 	});
 }
 

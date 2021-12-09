@@ -18,15 +18,25 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Mutation"
-	}, {
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Mutation::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Mutation)gql"sv
+	};
+}
+
+service::ResolverMap Mutation::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(createReview)gql"sv, [this](service::ResolverParams&& params) { return resolveCreateReview(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -39,7 +49,7 @@ void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams&& params) const
 {
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
@@ -51,19 +61,19 @@ service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Mutation)gql" }, std::move(params));
 }
 
 } // namespace object
 
-void AddMutationDetails(std::shared_ptr<schema::ObjectType> typeMutation, const std::shared_ptr<schema::Schema>& schema)
+void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeMutation->AddFields({
-		schema::Field::Make(R"gql(createReview)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Review")), {
-			schema::InputValue::Make(R"gql(ep)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Episode")), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(review)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ReviewInput")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(createReview)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Review)gql"sv)), {
+			schema::InputValue::Make(R"gql(ep)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Episode)gql"sv)), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(review)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ReviewInput)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

@@ -1,4 +1,6 @@
 TodaySchema.cpp
+NodeObject.cpp
+UnionTypeObject.cpp
 QueryObject.cpp
 PageInfoObject.cpp
 AppointmentEdgeObject.cpp

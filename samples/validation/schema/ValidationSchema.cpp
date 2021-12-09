@@ -22,9 +22,9 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 3> s_namesDogCommand = {
-	"SIT"sv,
-	"DOWN"sv,
-	"HEEL"sv
+	R"gql(SIT)gql"sv,
+	R"gql(DOWN)gql"sv,
+	R"gql(HEEL)gql"sv
 };
 
 template <>
@@ -32,14 +32,14 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid DogCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
 
 	if (itr == s_namesDogCommand.cend())
 	{
-		throw service::schema_exception { { "not a valid DogCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
 	return static_cast<validation::DogCommand>(itr - s_namesDogCommand.cbegin());
@@ -60,7 +60,7 @@ service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(servi
 }
 
 static const std::array<std::string_view, 1> s_namesCatCommand = {
-	"JUMP"sv
+	R"gql(JUMP)gql"sv
 };
 
 template <>
@@ -68,14 +68,14 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid CatCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
 
 	if (itr == s_namesCatCommand.cend())
 	{
-		throw service::schema_exception { { "not a valid CatCommand value" } };
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
 	return static_cast<validation::CatCommand>(itr - s_namesCatCommand.cbegin());
@@ -112,24 +112,111 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 namespace validation {
 namespace object {
 
-Query::Query(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Query"
-	}, {
+Sentient::Sentient(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void Sentient::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Sentient::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+Pet::Pet(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void Pet::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void Pet::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+CatOrDog::CatOrDog(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void CatOrDog::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void CatOrDog::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+DogOrHuman::DogOrHuman(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void DogOrHuman::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void DogOrHuman::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+HumanOrAlien::HumanOrAlien(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+void HumanOrAlien::beginSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->beginSelectionSet(params);
+}
+
+void HumanOrAlien::endSelectionSet(const service::SelectionSetParams& params) const
+{
+	_pimpl->endSelectionSet(params);
+}
+
+Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Query::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Query)gql"sv
+	};
+}
+
+service::ResolverMap Query::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(dog)gql"sv, [this](service::ResolverParams&& params) { return resolveDog(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
-		{ R"gql(__type)gql"sv, [this](service::ResolverParams&& params) { return resolve_type(std::move(params)); } },
 		{ R"gql(findDog)gql"sv, [this](service::ResolverParams&& params) { return resolveFindDog(std::move(params)); } },
-		{ R"gql(__schema)gql"sv, [this](service::ResolverParams&& params) { return resolve_schema(std::move(params)); } },
 		{ R"gql(catOrDog)gql"sv, [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } }
-	})
-	, _schema(GetSchema())
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Query::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -142,7 +229,7 @@ void Query::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -152,7 +239,7 @@ service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params)
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -162,27 +249,27 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getPet(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<Pet>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getCatOrDog(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+	return service::ModifiedResult<CatOrDog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -192,7 +279,7 @@ service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& par
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params) const
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -203,7 +290,7 @@ service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& param
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& params) const
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -214,32 +301,30 @@ service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& p
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params)
+Dog::Dog(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::object::Schema>(std::make_shared<introspection::Schema>(_schema))), std::move(params));
 }
 
-service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
+service::TypeNames Dog::getTypeNames() const noexcept
 {
-	auto argName = service::ModifiedArgument<std::string>::require("name", params.arguments);
-	const auto& baseType = _schema->LookupType(argName);
-	std::shared_ptr<introspection::object::Type> result { baseType ? std::make_shared<introspection::object::Type>(std::make_shared<introspection::Type>(baseType)) : nullptr };
-
-	return service::ModifiedResult<introspection::object::Type>::convert<service::TypeModifier::Nullable>(result, std::move(params));
+	return {
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(Dog)gql"sv
+	};
 }
 
-Dog::Dog(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Pet",
-		"CatOrDog",
-		"DogOrHuman",
-		"Dog"
-	}, {
+service::ResolverMap Dog::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(owner)gql"sv, [this](service::ResolverParams&& params) { return resolveOwner(std::move(params)); } },
 		{ R"gql(nickname)gql"sv, [this](service::ResolverParams&& params) { return resolveNickname(std::move(params)); } },
@@ -247,9 +332,7 @@ Dog::Dog(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(barkVolume)gql"sv, [this](service::ResolverParams&& params) { return resolveBarkVolume(std::move(params)); } },
 		{ R"gql(isHousetrained)gql"sv, [this](service::ResolverParams&& params) { return resolveIsHousetrained(std::move(params)); } },
 		{ R"gql(doesKnowCommand)gql"sv, [this](service::ResolverParams&& params) { return resolveDoesKnowCommand(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Dog::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -262,7 +345,7 @@ void Dog::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -272,7 +355,7 @@ service::AwaitableResolver Dog::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -282,7 +365,7 @@ service::AwaitableResolver Dog::resolveNickname(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -292,7 +375,7 @@ service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& para
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
 	auto argDogCommand = service::ModifiedArgument<DogCommand>::require("dogCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -303,7 +386,7 @@ service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&&
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& params) const
 {
 	auto argAtOtherHomes = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("atOtherHomes", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -314,7 +397,7 @@ service::AwaitableResolver Dog::resolveIsHousetrained(service::ResolverParams&& 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -324,23 +407,33 @@ service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params)
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Dog::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Dog::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Dog)gql" }, std::move(params));
 }
 
-Alien::Alien(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Sentient",
-		"HumanOrAlien",
-		"Alien"
-	}, {
+Alien::Alien(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Alien::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Sentient)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Alien)gql"sv
+	};
+}
+
+service::ResolverMap Alien::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(homePlanet)gql"sv, [this](service::ResolverParams&& params) { return resolveHomePlanet(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Alien::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -353,7 +446,7 @@ void Alien::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -363,7 +456,7 @@ service::AwaitableResolver Alien::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -373,24 +466,34 @@ service::AwaitableResolver Alien::resolveHomePlanet(service::ResolverParams&& pa
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Alien::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Alien::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Alien)gql" }, std::move(params));
 }
 
-Human::Human(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Sentient",
-		"DogOrHuman",
-		"HumanOrAlien",
-		"Human"
-	}, {
+Human::Human(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Human::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Sentient)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Human)gql"sv
+	};
+}
+
+service::ResolverMap Human::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(pets)gql"sv, [this](service::ResolverParams&& params) { return resolvePets(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Human::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -403,7 +506,7 @@ void Human::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -413,35 +516,45 @@ service::AwaitableResolver Human::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Human::resolvePets(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolvePets(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getPets(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+	return service::ModifiedResult<Pet>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Human)gql" }, std::move(params));
 }
 
-Cat::Cat(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Pet",
-		"CatOrDog",
-		"Cat"
-	}, {
+Cat::Cat(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Cat::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(Cat)gql"sv
+	};
+}
+
+service::ResolverMap Cat::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(nickname)gql"sv, [this](service::ResolverParams&& params) { return resolveNickname(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(meowVolume)gql"sv, [this](service::ResolverParams&& params) { return resolveMeowVolume(std::move(params)); } },
 		{ R"gql(doesKnowCommand)gql"sv, [this](service::ResolverParams&& params) { return resolveDoesKnowCommand(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Cat::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -454,7 +567,7 @@ void Cat::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -464,7 +577,7 @@ service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params)
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -474,7 +587,7 @@ service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
 	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -485,7 +598,7 @@ service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&&
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -495,20 +608,30 @@ service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& para
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Cat::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Cat::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Cat)gql" }, std::move(params));
 }
 
-Mutation::Mutation(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Mutation"
-	}, {
+Mutation::Mutation(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Mutation::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Mutation)gql"sv
+	};
+}
+
+service::ResolverMap Mutation::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(mutateDog)gql"sv, [this](service::ResolverParams&& params) { return resolveMutateDog(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Mutation::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -521,7 +644,7 @@ void Mutation::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -531,20 +654,30 @@ service::AwaitableResolver Mutation::resolveMutateDog(service::ResolverParams&& 
 	return service::ModifiedResult<MutateDogResult>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Mutation::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Mutation)gql" }, std::move(params));
 }
 
-MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"MutateDogResult"
-	}, {
+MutateDogResult::MutateDogResult(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames MutateDogResult::getTypeNames() const noexcept
+{
+	return {
+		R"gql(MutateDogResult)gql"sv
+	};
+}
+
+service::ResolverMap MutateDogResult::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void MutateDogResult::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -557,7 +690,7 @@ void MutateDogResult::endSelectionSet(const service::SelectionSetParams& params)
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& params)
+service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -567,21 +700,31 @@ service::AwaitableResolver MutateDogResult::resolveId(service::ResolverParams&& 
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver MutateDogResult::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver MutateDogResult::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(MutateDogResult)gql" }, std::move(params));
 }
 
-Subscription::Subscription(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Subscription"
-	}, {
+Subscription::Subscription(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Subscription::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Subscription)gql"sv
+	};
+}
+
+service::ResolverMap Subscription::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(newMessage)gql"sv, [this](service::ResolverParams&& params) { return resolveNewMessage(std::move(params)); } },
 		{ R"gql(disallowedSecondRootField)gql"sv, [this](service::ResolverParams&& params) { return resolveDisallowedSecondRootField(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Subscription::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -594,7 +737,7 @@ void Subscription::endSelectionSet(const service::SelectionSetParams& params) co
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -604,7 +747,7 @@ service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverPara
 	return service::ModifiedResult<Message>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -614,21 +757,31 @@ service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(servic
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Subscription::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Subscription)gql" }, std::move(params));
 }
 
-Message::Message(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Message"
-	}, {
+Message::Message(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Message::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Message)gql"sv
+	};
+}
+
+service::ResolverMap Message::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(body)gql"sv, [this](service::ResolverParams&& params) { return resolveBody(std::move(params)); } },
 		{ R"gql(sender)gql"sv, [this](service::ResolverParams&& params) { return resolveSender(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Message::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -641,7 +794,7 @@ void Message::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -651,7 +804,7 @@ service::AwaitableResolver Message::resolveBody(service::ResolverParams&& params
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Message::resolveSender(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolveSender(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
@@ -661,15 +814,27 @@ service::AwaitableResolver Message::resolveSender(service::ResolverParams&& para
 	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Message::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Message::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Message)gql" }, std::move(params));
 }
 
-Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
-	: service::Object({
-		"Arguments"
-	}, {
+Arguments::Arguments(std::unique_ptr<Concept>&& pimpl) noexcept
+	: service::Object{ getTypeNames(), getResolvers() }
+	, _pimpl { std::move(pimpl) }
+{
+}
+
+service::TypeNames Arguments::getTypeNames() const noexcept
+{
+	return {
+		R"gql(Arguments)gql"sv
+	};
+}
+
+service::ResolverMap Arguments::getResolvers() const noexcept
+{
+	return {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(intArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveIntArgField(std::move(params)); } },
 		{ R"gql(multipleReqs)gql"sv, [this](service::ResolverParams&& params) { return resolveMultipleReqs(std::move(params)); } },
@@ -679,9 +844,7 @@ Arguments::Arguments(std::unique_ptr<Concept>&& pimpl)
 		{ R"gql(nonNullBooleanArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveNonNullBooleanArgField(std::move(params)); } },
 		{ R"gql(nonNullBooleanListField)gql"sv, [this](service::ResolverParams&& params) { return resolveNonNullBooleanListField(std::move(params)); } },
 		{ R"gql(optionalNonNullBooleanArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveOptionalNonNullBooleanArgField(std::move(params)); } }
-	})
-	, _pimpl(std::move(pimpl))
-{
+	};
 }
 
 void Arguments::beginSelectionSet(const service::SelectionSetParams& params) const
@@ -694,7 +857,7 @@ void Arguments::endSelectionSet(const service::SelectionSetParams& params) const
 	_pimpl->endSelectionSet(params);
 }
 
-service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParams&& params) const
 {
 	auto argX = service::ModifiedArgument<int>::require("x", params.arguments);
 	auto argY = service::ModifiedArgument<int>::require("y", params.arguments);
@@ -706,7 +869,7 @@ service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParam
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverParams&& params) const
 {
 	auto argBooleanArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -717,7 +880,7 @@ service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverPa
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverParams&& params) const
 {
 	auto argFloatArg = service::ModifiedArgument<double>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -728,7 +891,7 @@ service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverPara
 	return service::ModifiedResult<double>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams&& params) const
 {
 	auto argIntArg = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -739,7 +902,7 @@ service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::ResolverParams&& params) const
 {
 	auto argNonNullBooleanArg = service::ModifiedArgument<bool>::require("nonNullBooleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -750,7 +913,7 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::Res
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::ResolverParams&& params) const
 {
 	auto argNonNullBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -761,7 +924,7 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::Re
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveBooleanListArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveBooleanListArgField(service::ResolverParams&& params) const
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
@@ -772,7 +935,7 @@ service::AwaitableResolver Arguments::resolveBooleanListArgField(service::Resolv
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const
 {
 	const auto defaultArguments = []()
 	{
@@ -797,7 +960,7 @@ service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(serv
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
 }
 
-service::AwaitableResolver Arguments::resolve_typename(service::ResolverParams&& params)
+service::AwaitableResolver Arguments::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Arguments)gql" }, std::move(params));
 }
@@ -822,19 +985,19 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(DogCommand)gql"sv, typeDogCommand);
 	auto typeCatCommand = schema::EnumType::Make(R"gql(CatCommand)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CatCommand)gql"sv, typeCatCommand);
-	auto typeComplexInput = schema::InputObjectType::Make(R"gql(ComplexInput)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv);
+	auto typeComplexInput = schema::InputObjectType::Make(R"gql(ComplexInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(ComplexInput)gql"sv, typeComplexInput);
+	auto typeSentient = schema::InterfaceType::Make(R"gql(Sentient)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
+	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Pet)gql"sv, typePet);
 	auto typeCatOrDog = schema::UnionType::Make(R"gql(CatOrDog)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CatOrDog)gql"sv, typeCatOrDog);
 	auto typeDogOrHuman = schema::UnionType::Make(R"gql(DogOrHuman)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(DogOrHuman)gql"sv, typeDogOrHuman);
 	auto typeHumanOrAlien = schema::UnionType::Make(R"gql(HumanOrAlien)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(HumanOrAlien)gql"sv, typeHumanOrAlien);
-	auto typeSentient = schema::InterfaceType::Make(R"gql(Sentient)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
-	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
-	schema->AddType(R"gql(Pet)gql"sv, typePet);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md(GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d))md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
 	auto typeDog = schema::ObjectType::Make(R"gql(Dog)gql"sv, R"md()md");
 	schema->AddType(R"gql(Dog)gql"sv, typeDog);
@@ -844,15 +1007,15 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Human)gql"sv, typeHuman);
 	auto typeCat = schema::ObjectType::Make(R"gql(Cat)gql"sv, R"md()md");
 	schema->AddType(R"gql(Cat)gql"sv, typeCat);
-	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
+	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md");
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
-	auto typeMutateDogResult = schema::ObjectType::Make(R"gql(MutateDogResult)gql"sv, R"md(Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e))md");
+	auto typeMutateDogResult = schema::ObjectType::Make(R"gql(MutateDogResult)gql"sv, R"md()md");
 	schema->AddType(R"gql(MutateDogResult)gql"sv, typeMutateDogResult);
-	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md");
 	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
-	auto typeMessage = schema::ObjectType::Make(R"gql(Message)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md");
+	auto typeMessage = schema::ObjectType::Make(R"gql(Message)gql"sv, R"md()md");
 	schema->AddType(R"gql(Message)gql"sv, typeMessage);
-	auto typeArguments = schema::ObjectType::Make(R"gql(Arguments)gql"sv, R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md");
+	auto typeArguments = schema::ObjectType::Make(R"gql(Arguments)gql"sv, R"md()md");
 	schema->AddType(R"gql(Arguments)gql"sv, typeArguments);
 
 	typeDogCommand->AddEnumValues({
@@ -865,8 +1028,15 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	});
 
 	typeComplexInput->AddInputValues({
-		schema::InputValue::Make(R"gql(name)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv),
-		schema::InputValue::Make(R"gql(owner)gql"sv, R"md()md"sv, schema->LookupType("String"), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(name)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(owner)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
+	});
+
+	typeSentient->AddFields({
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
+	});
+	typePet->AddFields({
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)))
 	});
 
 	typeCatOrDog->AddPossibleTypes({
@@ -882,105 +1052,98 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema->LookupType(R"gql(Alien)gql"sv)
 	});
 
-	typeSentient->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
-	});
-	typePet->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String")))
-	});
-
 	typeQuery->AddFields({
-		schema::Field::Make(R"gql(dog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Dog")),
-		schema::Field::Make(R"gql(human)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, schema->LookupType("Human")),
-		schema::Field::Make(R"gql(pet)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, schema->LookupType("Pet")),
-		schema::Field::Make(R"gql(catOrDog)gql"sv, R"md(Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e))md"sv, std::nullopt, schema->LookupType("CatOrDog")),
-		schema::Field::Make(R"gql(arguments)gql"sv, R"md(Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c))md"sv, std::nullopt, schema->LookupType("Arguments")),
-		schema::Field::Make(R"gql(findDog)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv, std::nullopt, schema->LookupType("Dog"), {
-			schema::InputValue::Make(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType("ComplexInput"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(dog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Dog)gql"sv)),
+		schema::Field::Make(R"gql(human)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Human)gql"sv)),
+		schema::Field::Make(R"gql(pet)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Pet)gql"sv)),
+		schema::Field::Make(R"gql(catOrDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(CatOrDog)gql"sv)),
+		schema::Field::Make(R"gql(arguments)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Arguments)gql"sv)),
+		schema::Field::Make(R"gql(findDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Dog)gql"sv), {
+			schema::InputValue::Make(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ComplexInput)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(booleanList)gql"sv, R"md([Example 155](http://spec.graphql.org/June2018/#example-f3185))md"sv, std::nullopt, schema->LookupType("Boolean"), {
-			schema::InputValue::Make(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(booleanList)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Boolean)gql"sv), {
+			schema::InputValue::Make(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))), R"gql()gql"sv)
 		})
 	});
 	typeDog->AddInterfaces({
 		typePet
 	});
 	typeDog->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(barkVolume)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Int")),
-		schema::Field::Make(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(dogCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("DogCommand")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(barkVolume)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Int)gql"sv)),
+		schema::Field::Make(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(dogCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(DogCommand)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(isHousetrained)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(atOtherHomes)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(isHousetrained)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(atOtherHomes)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Boolean)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(owner)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Human"))
+		schema::Field::Make(R"gql(owner)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Human)gql"sv))
 	});
 	typeAlien->AddInterfaces({
 		typeSentient
 	});
 	typeAlien->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(homePlanet)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String"))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(homePlanet)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 	typeHuman->AddInterfaces({
 		typeSentient
 	});
 	typeHuman->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(pets)gql"sv, R"md(Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Pet")))))
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(pets)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Pet)gql"sv)))))
 	});
 	typeCat->AddInterfaces({
 		typePet
 	});
 	typeCat->AddFields({
-		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("String"))),
-		schema::Field::Make(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(catCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("CatCommand")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(nickname)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(doesKnowCommand)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(catCommand)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(CatCommand)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(meowVolume)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Int"))
+		schema::Field::Make(R"gql(meowVolume)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Int)gql"sv))
 	});
 	typeMutation->AddFields({
-		schema::Field::Make(R"gql(mutateDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("MutateDogResult"))
+		schema::Field::Make(R"gql(mutateDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(MutateDogResult)gql"sv))
 	});
 	typeMutateDogResult->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
 	});
 	typeSubscription->AddFields({
-		schema::Field::Make(R"gql(newMessage)gql"sv, R"md(Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Message"))),
-		schema::Field::Make(R"gql(disallowedSecondRootField)gql"sv, R"md(Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")))
+		schema::Field::Make(R"gql(newMessage)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Message)gql"sv))),
+		schema::Field::Make(R"gql(disallowedSecondRootField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 	typeMessage->AddFields({
-		schema::Field::Make(R"gql(body)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("String")),
-		schema::Field::Make(R"gql(sender)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("ID")))
+		schema::Field::Make(R"gql(body)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(sender)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))
 	});
 	typeArguments->AddFields({
-		schema::Field::Make(R"gql(multipleReqs)gql"sv, R"md(Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab))md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), {
-			schema::InputValue::Make(R"gql(x)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"sv),
-			schema::InputValue::Make(R"gql(y)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Int")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(multipleReqs)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)), {
+			schema::InputValue::Make(R"gql(x)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)), R"gql()gql"sv),
+			schema::InputValue::Make(R"gql(y)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(booleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Boolean"), {
-			schema::InputValue::Make(R"gql(booleanArg)gql"sv, R"md()md"sv, schema->LookupType("Boolean"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(booleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Boolean)gql"sv), {
+			schema::InputValue::Make(R"gql(booleanArg)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Boolean)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(floatArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Float"), {
-			schema::InputValue::Make(R"gql(floatArg)gql"sv, R"md()md"sv, schema->LookupType("Float"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(floatArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Float)gql"sv), {
+			schema::InputValue::Make(R"gql(floatArg)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Float)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(intArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType("Int"), {
-			schema::InputValue::Make(R"gql(intArg)gql"sv, R"md()md"sv, schema->LookupType("Int"), R"gql()gql"sv)
+		schema::Field::Make(R"gql(intArgField)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Int)gql"sv), {
+			schema::InputValue::Make(R"gql(intArg)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(nonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(nonNullBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql()gql"sv)
+		schema::Field::Make(R"gql(nonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(nonNullBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(nonNullBooleanListField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), {
-			schema::InputValue::Make(R"gql(nonNullBooleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean"))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(nonNullBooleanListField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))), {
+			schema::InputValue::Make(R"gql(nonNullBooleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(booleanListArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType("Boolean"))), R"gql()gql"sv)
+		schema::Field::Make(R"gql(booleanListArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Boolean)gql"sv))), R"gql()gql"sv)
 		}),
-		schema::Field::Make(R"gql(optionalNonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), {
-			schema::InputValue::Make(R"gql(optionalBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType("Boolean")), R"gql(false)gql"sv)
+		schema::Field::Make(R"gql(optionalNonNullBooleanArgField)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), {
+			schema::InputValue::Make(R"gql(optionalBooleanArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), R"gql(false)gql"sv)
 		})
 	});
 
@@ -996,7 +1159,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false);
+		schema = std::make_shared<schema::Schema>(true);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

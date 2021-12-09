@@ -41,6 +41,9 @@ struct ComplexInput
 
 namespace object {
 
+class Sentient;
+class Pet;
+
 class Query;
 class Dog;
 class Alien;
@@ -52,621 +55,937 @@ class Subscription;
 class Message;
 class Arguments;
 
-} // namespace object
-
-struct Sentient;
-struct Pet;
-
-struct Sentient
+class Sentient
+	: public service::Object
 {
-	virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Sentient(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Sentient(std::shared_ptr<T> pimpl) noexcept
+		: Sentient { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<Sentient>(), "Sentient is not implemented");
+	}
 };
 
-struct Pet
+class Pet
+	: public service::Object
 {
-	virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	Pet(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	Pet(std::shared_ptr<T> pimpl) noexcept
+		: Pet { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<Pet>(), "Pet is not implemented");
+	}
 };
 
-namespace object {
+class CatOrDog
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	CatOrDog(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	CatOrDog(std::shared_ptr<T> pimpl) noexcept
+		: CatOrDog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<CatOrDog>(), "CatOrDog is not implemented");
+	}
+};
+
+class DogOrHuman
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	DogOrHuman(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	DogOrHuman(std::shared_ptr<T> pimpl) noexcept
+		: DogOrHuman { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<DogOrHuman>(), "DogOrHuman is not implemented");
+	}
+};
+
+class HumanOrAlien
+	: public service::Object
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual service::TypeNames getTypeNames() const noexcept = 0;
+		virtual service::ResolverMap getResolvers() const noexcept = 0;
+
+		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+	};
+
+	template <class T>
+	struct Model
+		: Concept
+	{
+		Model(std::shared_ptr<T>&& pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		service::TypeNames getTypeNames() const noexcept final
+		{
+			return _pimpl->getTypeNames();
+		}
+
+		service::ResolverMap getResolvers() const noexcept final
+		{
+			return _pimpl->getResolvers();
+		}
+
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->beginSelectionSet(params);
+		}
+
+		void endSelectionSet(const service::SelectionSetParams& params) const final
+		{
+			_pimpl->endSelectionSet(params);
+		}
+
+	private:
+		const std::shared_ptr<T> _pimpl;
+	};
+
+	HumanOrAlien(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	void beginSelectionSet(const service::SelectionSetParams& params) const final;
+	void endSelectionSet(const service::SelectionSetParams& params) const final;
+
+	const std::unique_ptr<Concept> _pimpl;
+
+public:
+	template <class T>
+	HumanOrAlien(std::shared_ptr<T> pimpl) noexcept
+		: HumanOrAlien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	{
+		static_assert(T::template implements<HumanOrAlien>(), "HumanOrAlien is not implemented");
+	}
+};
+
+namespace implements {
+
+template <class I>
+concept DogIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog> || std::is_same_v<I, DogOrHuman>;
+
+template <class I>
+concept AlienIs = std::is_same_v<I, Sentient> || std::is_same_v<I, HumanOrAlien>;
+
+template <class I>
+concept HumanIs = std::is_same_v<I, Sentient> || std::is_same_v<I, DogOrHuman> || std::is_same_v<I, HumanOrAlien>;
+
+template <class I>
+concept CatIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog>;
+
+} // namespace implements
+
 namespace methods {
-namespace QueryMethod {
+namespace QueryHas {
 
 template <class TImpl>
-concept WithParamsDog = requires (TImpl impl, service::FieldParams params) 
+concept getDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getDog(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsDog = requires (TImpl impl) 
+concept getDog = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getDog() } };
 };
 
 template <class TImpl>
-concept WithParamsHuman = requires (TImpl impl, service::FieldParams params) 
+concept getHumanWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsHuman = requires (TImpl impl) 
+concept getHuman = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman() } };
 };
 
 template <class TImpl>
-concept WithParamsPet = requires (TImpl impl, service::FieldParams params) 
+concept getPetWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getPet(std::move(params)) } };
+	{ service::FieldResult<std::shared_ptr<Pet>> { impl.getPet(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsPet = requires (TImpl impl) 
+concept getPet = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getPet() } };
+	{ service::FieldResult<std::shared_ptr<Pet>> { impl.getPet() } };
 };
 
 template <class TImpl>
-concept WithParamsCatOrDog = requires (TImpl impl, service::FieldParams params) 
+concept getCatOrDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getCatOrDog(std::move(params)) } };
+	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsCatOrDog = requires (TImpl impl) 
+concept getCatOrDog = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getCatOrDog() } };
+	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog() } };
 };
 
 template <class TImpl>
-concept WithParamsArguments = requires (TImpl impl, service::FieldParams params) 
+concept getArgumentsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Arguments>> { impl.getArguments(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsArguments = requires (TImpl impl) 
+concept getArguments = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Arguments>> { impl.getArguments() } };
 };
 
 template <class TImpl>
-concept WithParamsFindDog = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
+concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg) 
+concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsBooleanList = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg) 
+concept getBooleanListWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg) 
+concept getBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace QueryMethod
+} // namespace QueryHas
 
-namespace DogMethod {
+namespace DogHas {
 
 template <class TImpl>
-concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsName = requires (TImpl impl) 
+concept getName = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept WithParamsNickname = requires (TImpl impl, service::FieldParams params) 
+concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNickname = requires (TImpl impl) 
+concept getNickname = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
-concept WithParamsBarkVolume = requires (TImpl impl, service::FieldParams params) 
+concept getBarkVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsBarkVolume = requires (TImpl impl) 
+concept getBarkVolume = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume() } };
 };
 
 template <class TImpl>
-concept WithParamsDoesKnowCommand = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
+concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
 {
 	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg) 
+concept getDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg) 
 {
 	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsIsHousetrained = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg) 
+concept getIsHousetrainedWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg) 
 {
 	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg) 
+concept getIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg) 
 {
 	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsOwner = requires (TImpl impl, service::FieldParams params) 
+concept getOwnerWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsOwner = requires (TImpl impl) 
+concept getOwner = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace DogMethod
+} // namespace DogHas
 
-namespace AlienMethod {
+namespace AlienHas {
 
 template <class TImpl>
-concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsName = requires (TImpl impl) 
+concept getName = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept WithParamsHomePlanet = requires (TImpl impl, service::FieldParams params) 
+concept getHomePlanetWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsHomePlanet = requires (TImpl impl) 
+concept getHomePlanet = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getHomePlanet() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace AlienMethod
+} // namespace AlienHas
 
-namespace HumanMethod {
+namespace HumanHas {
 
 template <class TImpl>
-concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsName = requires (TImpl impl) 
+concept getName = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept WithParamsPets = requires (TImpl impl, service::FieldParams params) 
+concept getPetsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getPets(std::move(params)) } };
+	{ service::FieldResult<std::vector<std::shared_ptr<Pet>>> { impl.getPets(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsPets = requires (TImpl impl) 
+concept getPets = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<service::Object>>> { impl.getPets() } };
+	{ service::FieldResult<std::vector<std::shared_ptr<Pet>>> { impl.getPets() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace HumanMethod
+} // namespace HumanHas
 
-namespace CatMethod {
+namespace CatHas {
 
 template <class TImpl>
-concept WithParamsName = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsName = requires (TImpl impl) 
+concept getName = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept WithParamsNickname = requires (TImpl impl, service::FieldParams params) 
+concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNickname = requires (TImpl impl) 
+concept getNickname = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
-concept WithParamsDoesKnowCommand = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
+concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
 {
 	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg) 
+concept getDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg) 
 {
 	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsMeowVolume = requires (TImpl impl, service::FieldParams params) 
+concept getMeowVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsMeowVolume = requires (TImpl impl) 
+concept getMeowVolume = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace CatMethod
+} // namespace CatHas
 
-namespace MutationMethod {
+namespace MutationHas {
 
 template <class TImpl>
-concept WithParamsMutateDog = requires (TImpl impl, service::FieldParams params) 
+concept applyMutateDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsMutateDog = requires (TImpl impl) 
+concept applyMutateDog = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace MutationMethod
+} // namespace MutationHas
 
-namespace MutateDogResultMethod {
+namespace MutateDogResultHas {
 
 template <class TImpl>
-concept WithParamsId = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsId = requires (TImpl impl) 
+concept getId = requires (TImpl impl) 
 {
 	{ service::FieldResult<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace MutateDogResultMethod
+} // namespace MutateDogResultHas
 
-namespace SubscriptionMethod {
+namespace SubscriptionHas {
 
 template <class TImpl>
-concept WithParamsNewMessage = requires (TImpl impl, service::FieldParams params) 
+concept getNewMessageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Message>> { impl.getNewMessage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNewMessage = requires (TImpl impl) 
+concept getNewMessage = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Message>> { impl.getNewMessage() } };
 };
 
 template <class TImpl>
-concept WithParamsDisallowedSecondRootField = requires (TImpl impl, service::FieldParams params) 
+concept getDisallowedSecondRootFieldWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsDisallowedSecondRootField = requires (TImpl impl) 
+concept getDisallowedSecondRootField = requires (TImpl impl) 
 {
 	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace SubscriptionMethod
+} // namespace SubscriptionHas
 
-namespace MessageMethod {
+namespace MessageHas {
 
 template <class TImpl>
-concept WithParamsBody = requires (TImpl impl, service::FieldParams params) 
+concept getBodyWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getBody(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsBody = requires (TImpl impl) 
+concept getBody = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::optional<std::string>> { impl.getBody() } };
 };
 
 template <class TImpl>
-concept WithParamsSender = requires (TImpl impl, service::FieldParams params) 
+concept getSenderWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<response::IdType> { impl.getSender(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsSender = requires (TImpl impl) 
+concept getSender = requires (TImpl impl) 
 {
 	{ service::FieldResult<response::IdType> { impl.getSender() } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace MessageMethod
+} // namespace MessageHas
 
-namespace ArgumentsMethod {
+namespace ArgumentsHas {
 
 template <class TImpl>
-concept WithParamsMultipleReqs = requires (TImpl impl, service::FieldParams params, int xArg, int yArg) 
+concept getMultipleReqsWithParams = requires (TImpl impl, service::FieldParams params, int xArg, int yArg) 
 {
 	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsMultipleReqs = requires (TImpl impl, int xArg, int yArg) 
+concept getMultipleReqs = requires (TImpl impl, int xArg, int yArg) 
 {
 	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsBooleanArgField = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg) 
+concept getBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg) 
 {
 	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg) 
+concept getBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg) 
 {
 	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsFloatArgField = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg) 
+concept getFloatArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg) 
 {
 	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg) 
+concept getFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg) 
 {
 	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsIntArgField = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg) 
+concept getIntArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsIntArgField = requires (TImpl impl, std::optional<int> intArgArg) 
+concept getIntArgField = requires (TImpl impl, std::optional<int> intArgArg) 
 {
 	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg) 
+concept getNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg) 
 {
 	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg) 
+concept getNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg) 
 {
 	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsNonNullBooleanListField = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
+concept getNonNullBooleanListFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
+concept getNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsBooleanListArgField = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg) 
+concept getBooleanListArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg) 
+concept getBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg) 
 {
 	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept WithParamsOptionalNonNullBooleanArgField = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg) 
+concept getOptionalNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg) 
 {
 	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg) 
+concept getOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg) 
 {
 	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace ArgumentsMethod
+} // namespace ArgumentsHas
 } // namespace methods
 
 class Query
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHuman(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePet(service::ResolverParams&& params);
-	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveArguments(service::ResolverParams&& params);
-	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params);
+	service::AwaitableResolver resolveDog(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_schema(service::ResolverParams&& params);
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params);
-
-	std::shared_ptr<schema::Schema> _schema;
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -677,8 +996,8 @@ private:
 
 		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
 		virtual service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
@@ -695,11 +1014,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsDog<T>)
+			if constexpr (methods::QueryHas::getDogWithParams<T>)
 			{
 				return { _pimpl->getDog(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsDog<T>)
+			else if constexpr (methods::QueryHas::getDog<T>)
 			{
 				return { _pimpl->getDog() };
 			}
@@ -711,11 +1030,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsHuman<T>)
+			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
 				return { _pimpl->getHuman(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsHuman<T>)
+			else if constexpr (methods::QueryHas::getHuman<T>)
 			{
 				return { _pimpl->getHuman() };
 			}
@@ -725,13 +1044,13 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getPet(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsPet<T>)
+			if constexpr (methods::QueryHas::getPetWithParams<T>)
 			{
 				return { _pimpl->getPet(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsPet<T>)
+			else if constexpr (methods::QueryHas::getPet<T>)
 			{
 				return { _pimpl->getPet() };
 			}
@@ -741,13 +1060,13 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getCatOrDog(service::FieldParams&& params) const final
+		service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsCatOrDog<T>)
+			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
 				return { _pimpl->getCatOrDog(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsCatOrDog<T>)
+			else if constexpr (methods::QueryHas::getCatOrDog<T>)
 			{
 				return { _pimpl->getCatOrDog() };
 			}
@@ -759,11 +1078,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsArguments<T>)
+			if constexpr (methods::QueryHas::getArgumentsWithParams<T>)
 			{
 				return { _pimpl->getArguments(std::move(params)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsArguments<T>)
+			else if constexpr (methods::QueryHas::getArguments<T>)
 			{
 				return { _pimpl->getArguments() };
 			}
@@ -775,11 +1094,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsFindDog<T>)
+			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
 				return { _pimpl->getFindDog(std::move(params), std::move(complexArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsFindDog<T>)
+			else if constexpr (methods::QueryHas::getFindDog<T>)
 			{
 				return { _pimpl->getFindDog(std::move(complexArg)) };
 			}
@@ -791,11 +1110,11 @@ private:
 
 		service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
 		{
-			if constexpr (methods::QueryMethod::WithParamsBooleanList<T>)
+			if constexpr (methods::QueryHas::getBooleanListWithParams<T>)
 			{
 				return { _pimpl->getBooleanList(std::move(params), std::move(booleanListArgArg)) };
 			}
-			else if constexpr (methods::QueryMethod::NoParamsBooleanList<T>)
+			else if constexpr (methods::QueryHas::getBooleanList<T>)
 			{
 				return { _pimpl->getBooleanList(std::move(booleanListArgArg)) };
 			}
@@ -807,7 +1126,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -815,7 +1134,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::QueryMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -825,7 +1144,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Query(std::unique_ptr<Concept>&& pimpl);
+	Query(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -834,7 +1156,7 @@ private:
 
 public:
 	template <class T>
-	Query(std::shared_ptr<T> pimpl)
+	Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -844,23 +1166,23 @@ class Dog
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params);
-	service::AwaitableResolver resolveOwner(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveOwner(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Pet
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
@@ -879,11 +1201,11 @@ private:
 
 		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsName<T>)
+			if constexpr (methods::DogHas::getNameWithParams<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsName<T>)
+			else if constexpr (methods::DogHas::getName<T>)
 			{
 				return { _pimpl->getName() };
 			}
@@ -895,11 +1217,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsNickname<T>)
+			if constexpr (methods::DogHas::getNicknameWithParams<T>)
 			{
 				return { _pimpl->getNickname(std::move(params)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsNickname<T>)
+			else if constexpr (methods::DogHas::getNickname<T>)
 			{
 				return { _pimpl->getNickname() };
 			}
@@ -911,11 +1233,11 @@ private:
 
 		service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsBarkVolume<T>)
+			if constexpr (methods::DogHas::getBarkVolumeWithParams<T>)
 			{
 				return { _pimpl->getBarkVolume(std::move(params)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsBarkVolume<T>)
+			else if constexpr (methods::DogHas::getBarkVolume<T>)
 			{
 				return { _pimpl->getBarkVolume() };
 			}
@@ -927,11 +1249,11 @@ private:
 
 		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsDoesKnowCommand<T>)
+			if constexpr (methods::DogHas::getDoesKnowCommandWithParams<T>)
 			{
 				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsDoesKnowCommand<T>)
+			else if constexpr (methods::DogHas::getDoesKnowCommand<T>)
 			{
 				return { _pimpl->getDoesKnowCommand(std::move(dogCommandArg)) };
 			}
@@ -943,11 +1265,11 @@ private:
 
 		service::FieldResult<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsIsHousetrained<T>)
+			if constexpr (methods::DogHas::getIsHousetrainedWithParams<T>)
 			{
 				return { _pimpl->getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsIsHousetrained<T>)
+			else if constexpr (methods::DogHas::getIsHousetrained<T>)
 			{
 				return { _pimpl->getIsHousetrained(std::move(atOtherHomesArg)) };
 			}
@@ -959,11 +1281,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::DogMethod::WithParamsOwner<T>)
+			if constexpr (methods::DogHas::getOwnerWithParams<T>)
 			{
 				return { _pimpl->getOwner(std::move(params)) };
 			}
-			else if constexpr (methods::DogMethod::NoParamsOwner<T>)
+			else if constexpr (methods::DogHas::getOwner<T>)
 			{
 				return { _pimpl->getOwner() };
 			}
@@ -975,7 +1297,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::DogMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::DogHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -983,7 +1305,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::DogMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::DogHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -993,7 +1315,23 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Dog(std::unique_ptr<Concept>&& pimpl);
+	Dog(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interfaces which this type implements
+	friend Pet;
+
+	// Unions which include this type
+	friend CatOrDog;
+	friend DogOrHuman;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::DogIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1002,7 +1340,7 @@ private:
 
 public:
 	template <class T>
-	Dog(std::shared_ptr<T> pimpl)
+	Dog(std::shared_ptr<T> pimpl) noexcept
 		: Dog { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1012,19 +1350,19 @@ class Alien
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveHomePlanet(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveHomePlanet(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Sentient
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const = 0;
 	};
 
@@ -1039,11 +1377,11 @@ private:
 
 		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AlienMethod::WithParamsName<T>)
+			if constexpr (methods::AlienHas::getNameWithParams<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::AlienMethod::NoParamsName<T>)
+			else if constexpr (methods::AlienHas::getName<T>)
 			{
 				return { _pimpl->getName() };
 			}
@@ -1055,11 +1393,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::AlienMethod::WithParamsHomePlanet<T>)
+			if constexpr (methods::AlienHas::getHomePlanetWithParams<T>)
 			{
 				return { _pimpl->getHomePlanet(std::move(params)) };
 			}
-			else if constexpr (methods::AlienMethod::NoParamsHomePlanet<T>)
+			else if constexpr (methods::AlienHas::getHomePlanet<T>)
 			{
 				return { _pimpl->getHomePlanet() };
 			}
@@ -1071,7 +1409,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AlienMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::AlienHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1079,7 +1417,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::AlienMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::AlienHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1089,7 +1427,22 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Alien(std::unique_ptr<Concept>&& pimpl);
+	Alien(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interfaces which this type implements
+	friend Sentient;
+
+	// Unions which include this type
+	friend HumanOrAlien;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::AlienIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1098,7 +1451,7 @@ private:
 
 public:
 	template <class T>
-	Alien(std::shared_ptr<T> pimpl)
+	Alien(std::shared_ptr<T> pimpl) noexcept
 		: Alien { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1108,20 +1461,20 @@ class Human
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolvePets(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolvePets(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Sentient
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -1135,11 +1488,11 @@ private:
 
 		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::HumanMethod::WithParamsName<T>)
+			if constexpr (methods::HumanHas::getNameWithParams<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsName<T>)
+			else if constexpr (methods::HumanHas::getName<T>)
 			{
 				return { _pimpl->getName() };
 			}
@@ -1149,13 +1502,13 @@ private:
 			}
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<service::Object>>> getPets(service::FieldParams&& params) const final
+		service::FieldResult<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::HumanMethod::WithParamsPets<T>)
+			if constexpr (methods::HumanHas::getPetsWithParams<T>)
 			{
 				return { _pimpl->getPets(std::move(params)) };
 			}
-			else if constexpr (methods::HumanMethod::NoParamsPets<T>)
+			else if constexpr (methods::HumanHas::getPets<T>)
 			{
 				return { _pimpl->getPets() };
 			}
@@ -1167,7 +1520,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::HumanMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::HumanHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1175,7 +1528,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::HumanMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::HumanHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1185,7 +1538,23 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Human(std::unique_ptr<Concept>&& pimpl);
+	Human(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interfaces which this type implements
+	friend Sentient;
+
+	// Unions which include this type
+	friend DogOrHuman;
+	friend HumanOrAlien;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::HumanIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1194,7 +1563,7 @@ private:
 
 public:
 	template <class T>
-	Human(std::shared_ptr<T> pimpl)
+	Human(std::shared_ptr<T> pimpl) noexcept
 		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1204,21 +1573,21 @@ class Cat
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNickname(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params);
-	service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params);
+	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
-		: Pet
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
+		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
 		virtual service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
@@ -1235,11 +1604,11 @@ private:
 
 		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::CatMethod::WithParamsName<T>)
+			if constexpr (methods::CatHas::getNameWithParams<T>)
 			{
 				return { _pimpl->getName(std::move(params)) };
 			}
-			else if constexpr (methods::CatMethod::NoParamsName<T>)
+			else if constexpr (methods::CatHas::getName<T>)
 			{
 				return { _pimpl->getName() };
 			}
@@ -1251,11 +1620,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::CatMethod::WithParamsNickname<T>)
+			if constexpr (methods::CatHas::getNicknameWithParams<T>)
 			{
 				return { _pimpl->getNickname(std::move(params)) };
 			}
-			else if constexpr (methods::CatMethod::NoParamsNickname<T>)
+			else if constexpr (methods::CatHas::getNickname<T>)
 			{
 				return { _pimpl->getNickname() };
 			}
@@ -1267,11 +1636,11 @@ private:
 
 		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
-			if constexpr (methods::CatMethod::WithParamsDoesKnowCommand<T>)
+			if constexpr (methods::CatHas::getDoesKnowCommandWithParams<T>)
 			{
 				return { _pimpl->getDoesKnowCommand(std::move(params), std::move(catCommandArg)) };
 			}
-			else if constexpr (methods::CatMethod::NoParamsDoesKnowCommand<T>)
+			else if constexpr (methods::CatHas::getDoesKnowCommand<T>)
 			{
 				return { _pimpl->getDoesKnowCommand(std::move(catCommandArg)) };
 			}
@@ -1283,11 +1652,11 @@ private:
 
 		service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::CatMethod::WithParamsMeowVolume<T>)
+			if constexpr (methods::CatHas::getMeowVolumeWithParams<T>)
 			{
 				return { _pimpl->getMeowVolume(std::move(params)) };
 			}
-			else if constexpr (methods::CatMethod::NoParamsMeowVolume<T>)
+			else if constexpr (methods::CatHas::getMeowVolume<T>)
 			{
 				return { _pimpl->getMeowVolume() };
 			}
@@ -1299,7 +1668,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::CatMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::CatHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1307,7 +1676,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::CatMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::CatHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1317,7 +1686,22 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Cat(std::unique_ptr<Concept>&& pimpl);
+	Cat(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	// Interfaces which this type implements
+	friend Pet;
+
+	// Unions which include this type
+	friend CatOrDog;
+
+	template <class I>
+	static constexpr bool implements() noexcept
+	{
+		return implements::CatIs<I>;
+	}
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1326,7 +1710,7 @@ private:
 
 public:
 	template <class T>
-	Cat(std::shared_ptr<T> pimpl)
+	Cat(std::shared_ptr<T> pimpl) noexcept
 		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1336,9 +1720,9 @@ class Mutation
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveMutateDog(service::ResolverParams&& params);
+	service::AwaitableResolver resolveMutateDog(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -1361,11 +1745,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::MutationMethod::WithParamsMutateDog<T>)
+			if constexpr (methods::MutationHas::applyMutateDogWithParams<T>)
 			{
 				return { _pimpl->applyMutateDog(std::move(params)) };
 			}
-			else if constexpr (methods::MutationMethod::NoParamsMutateDog<T>)
+			else if constexpr (methods::MutationHas::applyMutateDog<T>)
 			{
 				return { _pimpl->applyMutateDog() };
 			}
@@ -1377,7 +1761,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutationMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::MutationHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1385,7 +1769,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutationMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::MutationHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1395,7 +1779,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Mutation(std::unique_ptr<Concept>&& pimpl);
+	Mutation(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1404,7 +1791,7 @@ private:
 
 public:
 	template <class T>
-	Mutation(std::shared_ptr<T> pimpl)
+	Mutation(std::shared_ptr<T> pimpl) noexcept
 		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1414,9 +1801,9 @@ class MutateDogResult
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveId(service::ResolverParams&& params);
+	service::AwaitableResolver resolveId(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -1439,11 +1826,11 @@ private:
 
 		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::MutateDogResultMethod::WithParamsId<T>)
+			if constexpr (methods::MutateDogResultHas::getIdWithParams<T>)
 			{
 				return { _pimpl->getId(std::move(params)) };
 			}
-			else if constexpr (methods::MutateDogResultMethod::NoParamsId<T>)
+			else if constexpr (methods::MutateDogResultHas::getId<T>)
 			{
 				return { _pimpl->getId() };
 			}
@@ -1455,7 +1842,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutateDogResultMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::MutateDogResultHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1463,7 +1850,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MutateDogResultMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::MutateDogResultHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1473,7 +1860,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	MutateDogResult(std::unique_ptr<Concept>&& pimpl);
+	MutateDogResult(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1482,7 +1872,7 @@ private:
 
 public:
 	template <class T>
-	MutateDogResult(std::shared_ptr<T> pimpl)
+	MutateDogResult(std::shared_ptr<T> pimpl) noexcept
 		: MutateDogResult { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1492,10 +1882,10 @@ class Subscription
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNewMessage(service::ResolverParams&& params);
-	service::AwaitableResolver resolveDisallowedSecondRootField(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNewMessage(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDisallowedSecondRootField(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -1519,11 +1909,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::WithParamsNewMessage<T>)
+			if constexpr (methods::SubscriptionHas::getNewMessageWithParams<T>)
 			{
 				return { _pimpl->getNewMessage(std::move(params)) };
 			}
-			else if constexpr (methods::SubscriptionMethod::NoParamsNewMessage<T>)
+			else if constexpr (methods::SubscriptionHas::getNewMessage<T>)
 			{
 				return { _pimpl->getNewMessage() };
 			}
@@ -1535,11 +1925,11 @@ private:
 
 		service::FieldResult<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::WithParamsDisallowedSecondRootField<T>)
+			if constexpr (methods::SubscriptionHas::getDisallowedSecondRootFieldWithParams<T>)
 			{
 				return { _pimpl->getDisallowedSecondRootField(std::move(params)) };
 			}
-			else if constexpr (methods::SubscriptionMethod::NoParamsDisallowedSecondRootField<T>)
+			else if constexpr (methods::SubscriptionHas::getDisallowedSecondRootField<T>)
 			{
 				return { _pimpl->getDisallowedSecondRootField() };
 			}
@@ -1551,7 +1941,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::SubscriptionHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1559,7 +1949,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::SubscriptionHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1569,7 +1959,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Subscription(std::unique_ptr<Concept>&& pimpl);
+	Subscription(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1578,7 +1971,7 @@ private:
 
 public:
 	template <class T>
-	Subscription(std::shared_ptr<T> pimpl)
+	Subscription(std::shared_ptr<T> pimpl) noexcept
 		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1588,10 +1981,10 @@ class Message
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveBody(service::ResolverParams&& params);
-	service::AwaitableResolver resolveSender(service::ResolverParams&& params);
+	service::AwaitableResolver resolveBody(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveSender(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -1615,11 +2008,11 @@ private:
 
 		service::FieldResult<std::optional<std::string>> getBody(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::MessageMethod::WithParamsBody<T>)
+			if constexpr (methods::MessageHas::getBodyWithParams<T>)
 			{
 				return { _pimpl->getBody(std::move(params)) };
 			}
-			else if constexpr (methods::MessageMethod::NoParamsBody<T>)
+			else if constexpr (methods::MessageHas::getBody<T>)
 			{
 				return { _pimpl->getBody() };
 			}
@@ -1631,11 +2024,11 @@ private:
 
 		service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::MessageMethod::WithParamsSender<T>)
+			if constexpr (methods::MessageHas::getSenderWithParams<T>)
 			{
 				return { _pimpl->getSender(std::move(params)) };
 			}
-			else if constexpr (methods::MessageMethod::NoParamsSender<T>)
+			else if constexpr (methods::MessageHas::getSender<T>)
 			{
 				return { _pimpl->getSender() };
 			}
@@ -1647,7 +2040,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MessageMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::MessageHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1655,7 +2048,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::MessageMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::MessageHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1665,7 +2058,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Message(std::unique_ptr<Concept>&& pimpl);
+	Message(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1674,7 +2070,7 @@ private:
 
 public:
 	template <class T>
-	Message(std::shared_ptr<T> pimpl)
+	Message(std::shared_ptr<T> pimpl) noexcept
 		: Message { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
@@ -1684,16 +2080,16 @@ class Arguments
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveMultipleReqs(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBooleanArgField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveFloatArgField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveIntArgField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNonNullBooleanArgField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNonNullBooleanListField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveBooleanListArgField(service::ResolverParams&& params);
-	service::AwaitableResolver resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params);
+	service::AwaitableResolver resolveMultipleReqs(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveBooleanArgField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveFloatArgField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIntArgField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNonNullBooleanArgField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNonNullBooleanListField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveBooleanListArgField(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -1723,11 +2119,11 @@ private:
 
 		service::FieldResult<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsMultipleReqs<T>)
+			if constexpr (methods::ArgumentsHas::getMultipleReqsWithParams<T>)
 			{
 				return { _pimpl->getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsMultipleReqs<T>)
+			else if constexpr (methods::ArgumentsHas::getMultipleReqs<T>)
 			{
 				return { _pimpl->getMultipleReqs(std::move(xArg), std::move(yArg)) };
 			}
@@ -1739,11 +2135,11 @@ private:
 
 		service::FieldResult<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsBooleanArgField<T>)
+			if constexpr (methods::ArgumentsHas::getBooleanArgFieldWithParams<T>)
 			{
 				return { _pimpl->getBooleanArgField(std::move(params), std::move(booleanArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsBooleanArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getBooleanArgField<T>)
 			{
 				return { _pimpl->getBooleanArgField(std::move(booleanArgArg)) };
 			}
@@ -1755,11 +2151,11 @@ private:
 
 		service::FieldResult<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsFloatArgField<T>)
+			if constexpr (methods::ArgumentsHas::getFloatArgFieldWithParams<T>)
 			{
 				return { _pimpl->getFloatArgField(std::move(params), std::move(floatArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsFloatArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getFloatArgField<T>)
 			{
 				return { _pimpl->getFloatArgField(std::move(floatArgArg)) };
 			}
@@ -1771,11 +2167,11 @@ private:
 
 		service::FieldResult<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsIntArgField<T>)
+			if constexpr (methods::ArgumentsHas::getIntArgFieldWithParams<T>)
 			{
 				return { _pimpl->getIntArgField(std::move(params), std::move(intArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsIntArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getIntArgField<T>)
 			{
 				return { _pimpl->getIntArgField(std::move(intArgArg)) };
 			}
@@ -1787,11 +2183,11 @@ private:
 
 		service::FieldResult<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsNonNullBooleanArgField<T>)
+			if constexpr (methods::ArgumentsHas::getNonNullBooleanArgFieldWithParams<T>)
 			{
 				return { _pimpl->getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsNonNullBooleanArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getNonNullBooleanArgField<T>)
 			{
 				return { _pimpl->getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) };
 			}
@@ -1803,11 +2199,11 @@ private:
 
 		service::FieldResult<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsNonNullBooleanListField<T>)
+			if constexpr (methods::ArgumentsHas::getNonNullBooleanListFieldWithParams<T>)
 			{
 				return { _pimpl->getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsNonNullBooleanListField<T>)
+			else if constexpr (methods::ArgumentsHas::getNonNullBooleanListField<T>)
 			{
 				return { _pimpl->getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) };
 			}
@@ -1819,11 +2215,11 @@ private:
 
 		service::FieldResult<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsBooleanListArgField<T>)
+			if constexpr (methods::ArgumentsHas::getBooleanListArgFieldWithParams<T>)
 			{
 				return { _pimpl->getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsBooleanListArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getBooleanListArgField<T>)
 			{
 				return { _pimpl->getBooleanListArgField(std::move(booleanListArgArg)) };
 			}
@@ -1835,11 +2231,11 @@ private:
 
 		service::FieldResult<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
 		{
-			if constexpr (methods::ArgumentsMethod::WithParamsOptionalNonNullBooleanArgField<T>)
+			if constexpr (methods::ArgumentsHas::getOptionalNonNullBooleanArgFieldWithParams<T>)
 			{
 				return { _pimpl->getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) };
 			}
-			else if constexpr (methods::ArgumentsMethod::NoParamsOptionalNonNullBooleanArgField<T>)
+			else if constexpr (methods::ArgumentsHas::getOptionalNonNullBooleanArgField<T>)
 			{
 				return { _pimpl->getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) };
 			}
@@ -1851,7 +2247,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ArgumentsMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::ArgumentsHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -1859,7 +2255,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::ArgumentsMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::ArgumentsHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -1869,7 +2265,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Arguments(std::unique_ptr<Concept>&& pimpl);
+	Arguments(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1878,7 +2277,7 @@ private:
 
 public:
 	template <class T>
-	Arguments(std::shared_ptr<T> pimpl)
+	Arguments(std::shared_ptr<T> pimpl) noexcept
 		: Arguments { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

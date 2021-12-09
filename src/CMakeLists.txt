@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.15)
 
 if(GRAPHQL_UPDATE_VERSION)
   # internal/Version.h
@@ -74,7 +74,7 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAG
     CXX_STANDARD 20)
 
   if(NOT TEST_RESULT)
-      # Retry with each of the optional libraries.
+      # Retry with each of the optional flags.
       foreach(OPTIONAL_FLAG IN LISTS OPTIONAL_FLAGS)
         try_compile(TEST_RESULT
           ${CMAKE_CURRENT_BINARY_DIR}
@@ -347,9 +347,9 @@ add_library(graphqlservice
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
-    graphqlpeg
-    graphqlresponse
-    Threads::Threads)
+  graphqlpeg
+  graphqlresponse
+  Threads::Threads)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still
@@ -396,8 +396,8 @@ endif()
 add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
 target_link_libraries(graphqlclient PUBLIC
-    graphqlpeg
-    graphqlresponse)
+  graphqlpeg
+  graphqlresponse)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlclient)

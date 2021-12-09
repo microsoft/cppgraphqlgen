@@ -11,54 +11,54 @@
 #include "TodaySchema.h"
 
 namespace graphql::today::object {
-namespace methods::SubscriptionMethod {
+namespace methods::SubscriptionHas {
 
 template <class TImpl>
-concept WithParamsNextAppointmentChange = requires (TImpl impl, service::FieldParams params) 
+concept getNextAppointmentChangeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
-concept NoParamsNextAppointmentChange = requires (TImpl impl) 
+concept getNextAppointmentChange = requires (TImpl impl) 
 {
 	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
 };
 
 template <class TImpl>
-concept WithParamsNodeChange = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept getNodeChangeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
+	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept NoParamsNodeChange = requires (TImpl impl, response::IdType idArg) 
+concept getNodeChange = requires (TImpl impl, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<service::Object>> { impl.getNodeChange(std::move(idArg)) } };
+	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNodeChange(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept HasBeginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept HasEndSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
 {
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::SubscriptionMethod
+} // namespace methods::SubscriptionHas
 
 class Subscription
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNextAppointmentChange(service::ResolverParams&& params);
-	service::AwaitableResolver resolveNodeChange(service::ResolverParams&& params);
+	service::AwaitableResolver resolveNextAppointmentChange(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveNodeChange(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params);
+	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
 	struct Concept
 	{
@@ -68,7 +68,7 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
 
 	template <class T>
@@ -82,11 +82,11 @@ private:
 
 		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::WithParamsNextAppointmentChange<T>)
+			if constexpr (methods::SubscriptionHas::getNextAppointmentChangeWithParams<T>)
 			{
 				return { _pimpl->getNextAppointmentChange(std::move(params)) };
 			}
-			else if constexpr (methods::SubscriptionMethod::NoParamsNextAppointmentChange<T>)
+			else if constexpr (methods::SubscriptionHas::getNextAppointmentChange<T>)
 			{
 				return { _pimpl->getNextAppointmentChange() };
 			}
@@ -96,13 +96,13 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<service::Object>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
+		service::FieldResult<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
-			if constexpr (methods::SubscriptionMethod::WithParamsNodeChange<T>)
+			if constexpr (methods::SubscriptionHas::getNodeChangeWithParams<T>)
 			{
 				return { _pimpl->getNodeChange(std::move(params), std::move(idArg)) };
 			}
-			else if constexpr (methods::SubscriptionMethod::NoParamsNodeChange<T>)
+			else if constexpr (methods::SubscriptionHas::getNodeChange<T>)
 			{
 				return { _pimpl->getNodeChange(std::move(idArg)) };
 			}
@@ -114,7 +114,7 @@ private:
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::HasBeginSelectionSet<T>)
+			if constexpr (methods::SubscriptionHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -122,7 +122,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
-			if constexpr (methods::SubscriptionMethod::HasEndSelectionSet<T>)
+			if constexpr (methods::SubscriptionHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -132,7 +132,10 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Subscription(std::unique_ptr<Concept>&& pimpl);
+	Subscription(std::unique_ptr<Concept>&& pimpl) noexcept;
+
+	service::TypeNames getTypeNames() const noexcept;
+	service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -141,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	Subscription(std::shared_ptr<T> pimpl)
+	Subscription(std::shared_ptr<T> pimpl) noexcept
 		: Subscription { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

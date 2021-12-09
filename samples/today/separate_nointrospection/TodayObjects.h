@@ -10,6 +10,8 @@
 
 #include "TodaySchema.h"
 
+#include "NodeObject.h"
+#include "UnionTypeObject.h"
 #include "QueryObject.h"
 #include "PageInfoObject.h"
 #include "AppointmentEdgeObject.h"
