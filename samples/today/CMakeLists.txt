@@ -8,14 +8,12 @@ add_subdirectory(separate)
 add_library(separategraphql STATIC TodayMock.cpp)
 target_link_libraries(separategraphql PUBLIC separate_schema)
 target_include_directories(separategraphql PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(separategraphql PUBLIC IMPL_SEPARATE_TODAY)
 
 # separategraphql_nointrospection
 add_subdirectory(separate_nointrospection)
 add_library(separategraphql_nointrospection STATIC TodayMock.cpp)
 target_link_libraries(separategraphql_nointrospection PUBLIC separate_nointrospection_schema)
 target_include_directories(separategraphql_nointrospection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(separategraphql_nointrospection PUBLIC IMPL_SEPARATE_TODAY)
 
 # sample
 add_executable(sample sample.cpp)
@@ -64,19 +62,4 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_dependencies(sample_nointrospection copy_today_sample_dlls)
   add_dependencies(benchmark copy_today_sample_dlls)
   add_dependencies(benchmark_nointrospection copy_today_sample_dlls)
-endif()
-
-if(GRAPHQL_BUILD_TESTS)
-  # tests
-  add_subdirectory(unified)
-  add_library(unifiedgraphql STATIC TodayMock.cpp)
-  target_link_libraries(unifiedgraphql PUBLIC unified_schema)
-  target_include_directories(unifiedgraphql PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-  add_bigobj_flag(unifiedgraphql)
-
-  add_subdirectory(unified_nointrospection)
-  add_library(unifiedgraphql_nointrospection STATIC TodayMock.cpp)
-  target_link_libraries(unifiedgraphql_nointrospection PUBLIC unified_nointrospection_schema)
-  target_include_directories(unifiedgraphql_nointrospection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-  add_bigobj_flag(unifiedgraphql_nointrospection)
 endif()

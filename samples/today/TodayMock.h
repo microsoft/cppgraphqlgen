@@ -6,11 +6,7 @@
 #ifndef TODAYMOCK_H
 #define TODAYMOCK_H
 
-#ifdef IMPL_SEPARATE_TODAY
 #include "TodayObjects.h"
-#else
-#include "TodaySchema.h"
-#endif
 
 #include <atomic>
 #include <stack>
