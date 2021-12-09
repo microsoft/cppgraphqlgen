@@ -6,9 +6,9 @@
 #ifndef INTROSPECTION_H
 #define INTROSPECTION_H
 
-#include "graphqlservice/internal/Schema.h"
-
 #include "graphqlservice/introspection/IntrospectionSchema.h"
+
+#include "graphqlservice/internal/Schema.h"
 
 namespace graphql::introspection {
 

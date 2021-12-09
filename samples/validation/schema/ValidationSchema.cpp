@@ -7,7 +7,10 @@
 #include "MutationObject.h"
 #include "SubscriptionObject.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+
+#include "graphqlservice/internal/Schema.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <array>

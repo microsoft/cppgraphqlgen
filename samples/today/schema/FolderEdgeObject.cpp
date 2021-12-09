@@ -6,7 +6,9 @@
 #include "FolderEdgeObject.h"
 #include "FolderObject.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/internal/Schema.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <functional>

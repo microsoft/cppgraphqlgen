@@ -15,7 +15,10 @@
 #include "ExpensiveObject.h"
 #include "UnionTypeObject.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/internal/Introspection.h"
+
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
 
 #include <algorithm>
 #include <functional>

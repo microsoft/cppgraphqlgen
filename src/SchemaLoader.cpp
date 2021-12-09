@@ -36,10 +36,10 @@ const std::string_view SchemaLoader::s_scalarCppType = R"cpp(response::Value)cpp
 
 SchemaLoader::SchemaLoader(std::optional<SchemaOptions>&& customSchema)
 	: _customSchema(std::move(customSchema))
-	, _isIntrospection(!_customSchema)
-	, _schemaNamespace(_isIntrospection ? s_introspectionNamespace : _customSchema->schemaNamespace)
+	, _isIntrospection(!_customSchema || _customSchema->isIntrospection)
+	, _schemaNamespace(_customSchema ? _customSchema->schemaNamespace : s_introspectionNamespace)
 {
-	if (_isIntrospection)
+	if (!_customSchema)
 	{
 		// Introspection Schema:
 		// http://spec.graphql.org/June2018/#sec-Schema-Introspection

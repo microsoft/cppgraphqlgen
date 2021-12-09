@@ -209,6 +209,7 @@ struct SchemaOptions
 	const std::string schemaFilename;
 	const std::string filenamePrefix;
 	const std::string schemaNamespace;
+	const bool isIntrospection = false;
 };
 
 class SchemaLoader

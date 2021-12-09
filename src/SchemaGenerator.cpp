@@ -1176,8 +1176,22 @@ bool Generator::outputSource() const noexcept
 		}
 	}
 
-	sourceFile << R"cpp(#include "graphqlservice/introspection/Introspection.h"
+	if (_loader.isIntrospection())
+	{
+		sourceFile << R"cpp(
+#include "graphqlservice/internal/Introspection.h"
+)cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp(
+#include "graphqlservice/internal/Schema.h"
 
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+)cpp";
+	}
+
+	sourceFile << R"cpp(
 #include <algorithm>
 #include <array>
 #include <functional>
@@ -2773,9 +2787,24 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 #include ")cpp" << headerFilename
 				   << R"cpp("
+)cpp";
 
-#include "graphqlservice/introspection/Introspection.h"
+		if (_loader.isIntrospection())
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Introspection.h"
+)cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Schema.h"
 
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+)cpp";
+		}
+
+		sourceFile << R"cpp(
 using namespace std::literals;
 
 )cpp";
@@ -2848,9 +2877,24 @@ using namespace std::literals;
 
 #include ")cpp" << headerFilename
 				   << R"cpp("
+)cpp";
 
-#include "graphqlservice/introspection/Introspection.h"
+		if (_loader.isIntrospection())
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Introspection.h"
+)cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Schema.h"
 
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+)cpp";
+		}
+
+		sourceFile << R"cpp(
 using namespace std::literals;
 
 )cpp";
@@ -2969,9 +3013,30 @@ using namespace std::literals;
 			}
 		}
 
-		sourceFile << R"cpp(
-#include "graphqlservice/introspection/Introspection.h"
+		if (_loader.isIntrospection() || (isQueryType && !_options.noIntrospection))
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Introspection.h"
+)cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/internal/Schema.h"
 
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+)cpp";
+		}
+
+		if (isQueryType && !_options.noIntrospection)
+		{
+			sourceFile << R"cpp(
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
+)cpp";
+		}
+
+		sourceFile << R"cpp(
 #include <algorithm>
 #include <functional>
 #include <sstream>
@@ -3119,44 +3184,27 @@ int main(int argc, char** argv)
 
 	try
 	{
-		if (buildIntrospection)
-		{
-			const auto files = graphql::generator::schema::Generator(std::nullopt,
-				{
-					std::nullopt,
-					verbose,
-					false, // stubs
-					true,  // mergeFiles
-					false, // noIntrospection
-				})
-								   .Build();
+		auto schemaOptions = buildCustom
+			? std::make_optional(graphql::generator::SchemaOptions { std::move(schemaFileName),
+				std::move(filenamePrefix),
+				std::move(schemaNamespace),
+				buildIntrospection })
+			: std::nullopt;
 
-			for (const auto& file : files)
+		const auto files = graphql::generator::schema::Generator(std::move(schemaOptions),
 			{
-				std::cout << file << std::endl;
-			}
-		}
+				graphql::generator::schema::GeneratorPaths { std::move(headerDir),
+					std::move(sourceDir) },
+				verbose,
+				stubs,			 // stubs
+				!buildCustom,	 // mergeFiles
+				noIntrospection, // noIntrospection
+			})
+							   .Build();
 
-		if (buildCustom)
+		for (const auto& file : files)
 		{
-			const auto files = graphql::generator::schema::Generator(
-				std::make_optional(graphql::generator::SchemaOptions { std::move(schemaFileName),
-					std::move(filenamePrefix),
-					std::move(schemaNamespace) }),
-				{
-					graphql::generator::schema::GeneratorPaths { std::move(headerDir),
-						std::move(sourceDir) },
-					verbose,
-					stubs,
-					false,
-					noIntrospection,
-				})
-								   .Build();
-
-			for (const auto& file : files)
-			{
-				std::cout << file << std::endl;
-			}
+			std::cout << file << std::endl;
 		}
 	}
 	catch (const graphql::peg::parse_error& pe)
