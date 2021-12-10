@@ -1098,14 +1098,12 @@ bool Generator::outputSource() const noexcept
 
 	if (_loader.isIntrospection())
 	{
-		sourceFile << R"cpp(
-#include "graphqlservice/internal/Introspection.h"
+		sourceFile << R"cpp(#include "graphqlservice/internal/Introspection.h"
 )cpp";
 	}
 	else
 	{
-		sourceFile << R"cpp(
-#include "graphqlservice/internal/Schema.h"
+		sourceFile << R"cpp(#include "graphqlservice/internal/Schema.h"
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 )cpp";
