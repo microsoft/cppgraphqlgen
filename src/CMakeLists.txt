@@ -326,19 +326,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
 endif()
 
 # introspection
-if(GRAPHQL_UPDATE_SAMPLES)
-  add_custom_command(
-    OUTPUT updated_introspection
-    COMMAND schemagen --introspection
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection
-    COMMAND ${CMAKE_COMMAND} -E touch updated_introspection
-    DEPENDS schemagen
-    COMMENT "Updating IntrospectionSchema files")
-
-  add_custom_target(update_introspection ALL
-    DEPENDS updated_introspection)
-endif()
+add_subdirectory(introspection)
 
 # graphqlservice
 add_library(graphqlservice
@@ -354,7 +342,7 @@ target_link_libraries(graphqlservice PUBLIC
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still
   # depends on IntrospectionSchema.h for some enum definitions.
-  add_dependencies(graphqlservice update_introspection)
+  add_dependencies(graphqlservice copy_introspection_schema_headers)
 endif()
 
 if(GRAPHQL_UPDATE_VERSION)
@@ -370,9 +358,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # graphqlintrospection
-add_library(graphqlintrospection
-  Introspection.cpp
-  IntrospectionSchema.cpp)
+file(GLOB INTROSPECTION_SCHEMA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/introspection/*.cpp)
+add_library(graphqlintrospection Introspection.cpp ${INTROSPECTION_SCHEMA_FILES})
 add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
 target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
 
@@ -471,12 +458,6 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)

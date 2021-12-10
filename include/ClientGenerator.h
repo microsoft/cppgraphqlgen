@@ -19,7 +19,7 @@ struct GeneratorPaths
 
 struct GeneratorOptions
 {
-	const std::optional<GeneratorPaths> paths;
+	const GeneratorPaths paths;
 	const bool verbose = false;
 };
 

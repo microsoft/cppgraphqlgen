@@ -16,7 +16,7 @@ gtest_add_tests(TARGET validation_tests)
 
 add_executable(today_tests TodayTests.cpp)
 target_link_libraries(today_tests PRIVATE
-  unifiedgraphql
+  todaygraphql
   graphqljson
   GTest::GTest
   GTest::Main)
@@ -25,7 +25,7 @@ gtest_add_tests(TARGET today_tests)
 
 add_executable(client_tests ClientTests.cpp)
 target_link_libraries(client_tests PRIVATE
-  unifiedgraphql
+  todaygraphql
   query_client
   mutate_client
   subscribe_client
@@ -36,7 +36,7 @@ gtest_add_tests(TARGET client_tests)
 
 add_executable(nointrospection_tests NoIntrospectionTests.cpp)
 target_link_libraries(nointrospection_tests PRIVATE
-  unifiedgraphql_nointrospection
+  todaygraphql_nointrospection
   graphqljson
   GTest::GTest
   GTest::Main)
@@ -45,7 +45,7 @@ gtest_add_tests(TARGET nointrospection_tests)
 
 add_executable(argument_tests ArgumentTests.cpp)
 target_link_libraries(argument_tests PRIVATE
-  unifiedgraphql
+  todaygraphql
   graphqljson
   GTest::GTest
   GTest::Main)

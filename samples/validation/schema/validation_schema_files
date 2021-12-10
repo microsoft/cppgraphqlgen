@@ -1,1 +1,16 @@
 ValidationSchema.cpp
+SentientObject.cpp
+PetObject.cpp
+CatOrDogObject.cpp
+DogOrHumanObject.cpp
+HumanOrAlienObject.cpp
+QueryObject.cpp
+DogObject.cpp
+AlienObject.cpp
+HumanObject.cpp
+CatObject.cpp
+MutationObject.cpp
+MutateDogResultObject.cpp
+SubscriptionObject.cpp
+MessageObject.cpp
+ArgumentsObject.cpp

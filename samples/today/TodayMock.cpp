@@ -3,6 +3,14 @@
 
 #include "TodayMock.h"
 
+#include "AppointmentConnectionObject.h"
+#include "TaskConnectionObject.h"
+#include "FolderConnectionObject.h"
+#include "UnionTypeObject.h"
+#include "NestedTypeObject.h"
+#include "ExpensiveObject.h"
+#include "CompleteTaskPayloadObject.h"
+
 #include <algorithm>
 #include <chrono>
 #include <future>

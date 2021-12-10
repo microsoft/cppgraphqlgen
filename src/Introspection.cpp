@@ -1,7 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/internal/Introspection.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
+#include "graphqlservice/introspection/FieldObject.h"
+#include "graphqlservice/introspection/InputValueObject.h"
+#include "graphqlservice/introspection/EnumValueObject.h"
+#include "graphqlservice/introspection/DirectiveObject.h"
 
 namespace graphql::introspection {
 

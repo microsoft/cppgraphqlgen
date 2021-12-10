@@ -8,6 +8,10 @@
 
 #include "ValidationSchema.h"
 
+#include "QueryObject.h"
+#include "MutationObject.h"
+#include "SubscriptionObject.h"
+
 namespace graphql::validation {
 
 class Query

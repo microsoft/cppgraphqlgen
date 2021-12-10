@@ -52,7 +52,7 @@ namespace graphql::generator::client {
 
 Generator::Generator(
 	SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options)
-	: _schemaLoader(std::make_optional(std::move(schemaOptions)))
+	: _schemaLoader(std::move(schemaOptions))
 	, _requestLoader(std::move(requestOptions), _schemaLoader)
 	, _options(std::move(options))
 	, _headerDir(getHeaderDir())
@@ -64,9 +64,9 @@ Generator::Generator(
 
 std::string Generator::getHeaderDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.headerPath.empty())
 	{
-		return fs::path { _options.paths->headerPath }.string();
+		return fs::path { _options.paths.headerPath }.string();
 	}
 	else
 	{
@@ -76,9 +76,9 @@ std::string Generator::getHeaderDir() const noexcept
 
 std::string Generator::getSourceDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.sourcePath.empty())
 	{
-		return fs::path(_options.paths->sourcePath).string();
+		return fs::path(_options.paths.sourcePath).string();
 	}
 	else
 	{
@@ -223,8 +223,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
-				   << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())
@@ -972,8 +971,7 @@ int main(int argc, char** argv)
 				noIntrospection,
 			},
 			graphql::generator::client::GeneratorOptions {
-				graphql::generator::client::GeneratorPaths { std::move(headerDir),
-					std::move(sourceDir) },
+				{ std::move(headerDir), std::move(sourceDir) },
 				verbose,
 			})
 							   .Build();

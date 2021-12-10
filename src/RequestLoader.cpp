@@ -7,7 +7,7 @@
 
 #include "graphqlservice/internal/Grammar.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <array>

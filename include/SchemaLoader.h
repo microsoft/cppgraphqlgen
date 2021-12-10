@@ -209,13 +209,14 @@ struct SchemaOptions
 	const std::string schemaFilename;
 	const std::string filenamePrefix;
 	const std::string schemaNamespace;
+	const bool isIntrospection = false;
 };
 
 class SchemaLoader
 {
 public:
 	// Initialize the loader with the introspection schema or a custom GraphQL schema.
-	explicit SchemaLoader(std::optional<SchemaOptions>&& customSchema);
+	explicit SchemaLoader(SchemaOptions&& schemaOptions);
 
 	bool isIntrospection() const noexcept;
 	std::string_view getFilenamePrefix() const noexcept;
@@ -291,7 +292,7 @@ private:
 	static const CppTypeMap s_builtinCppTypes;
 	static const std::string_view s_scalarCppType;
 
-	const std::optional<SchemaOptions> _customSchema;
+	const SchemaOptions _schemaOptions;
 	const bool _isIntrospection;
 	std::string_view _schemaNamespace;
 	peg::ast _ast;
