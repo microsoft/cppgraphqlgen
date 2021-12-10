@@ -1220,7 +1220,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CompleteTaskPayload)gql"sv, typeCompleteTaskPayload);
 	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md");
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
-	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md");
+	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md(Subscription type:
+
+2nd line...
+    3rd line goes here!)md");
 	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
 	auto typeAppointment = schema::ObjectType::Make(R"gql(Appointment)gql"sv, R"md()md");
 	schema->AddType(R"gql(Appointment)gql"sv, typeAppointment);

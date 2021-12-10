@@ -9,9 +9,12 @@
 #include <tao/pegtl/contrib/unescape.hpp>
 
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <tuple>
+#include <utility>
 
 using namespace std::literals;
 
@@ -47,7 +50,90 @@ std::string_view ast_node::unescaped_view() const
 {
 	if (!_unescaped)
 	{
-		if (children.size() > 1)
+		if (is_type<block_quote_content_lines>())
+		{
+			// Trim leading and trailing empty lines
+			const auto isNonEmptyLine = [](const std::unique_ptr<ast_node>& child) noexcept {
+				return child->is_type<block_quote_line>();
+			};
+			const auto itrEndRev = std::make_reverse_iterator(
+				std::find_if(children.cbegin(), children.cend(), isNonEmptyLine));
+			const auto itrRev = std::find_if(children.crbegin(), itrEndRev, isNonEmptyLine);
+			std::vector<std::optional<std::pair<std::string_view, std::string_view>>> lines(
+				std::distance(itrRev, itrEndRev));
+
+			std::transform(itrRev,
+				itrEndRev,
+				lines.rbegin(),
+				[](const std::unique_ptr<ast_node>& child) noexcept {
+					return (child->is_type<block_quote_line>() && !child->children.empty()
+							   && child->children.front()->is_type<block_quote_empty_line>()
+							   && child->children.back()->is_type<block_quote_line_content>())
+						? std::make_optional(std::make_pair(child->children.front()->string_view(),
+							child->children.back()->unescaped_view()))
+						: std::nullopt;
+				});
+
+			// Calculate the common indent
+			const auto commonIndent = std::accumulate(lines.cbegin(),
+				lines.cend(),
+				std::optional<size_t> {},
+				[](auto value, const auto& line) noexcept {
+					if (line)
+					{
+						const auto indent = line->first.size();
+
+						if (!value || indent < *value)
+						{
+							value = indent;
+						}
+					}
+
+					return value;
+				});
+
+			const auto trimIndent = commonIndent ? *commonIndent : 0;
+			std::string joined;
+
+			if (!lines.empty())
+			{
+				joined.reserve(std::accumulate(lines.cbegin(),
+								   lines.cend(),
+								   size_t {},
+								   [trimIndent](auto value, const auto& line) noexcept {
+									   if (line)
+									   {
+										   value += line->first.size() - trimIndent;
+										   value += line->second.size();
+									   }
+
+									   return value;
+								   })
+					+ lines.size() - 1);
+
+				bool firstLine = true;
+
+				for (const auto& line : lines)
+				{
+					if (!firstLine)
+					{
+						joined.append(1, '\n');
+					}
+
+					if (line)
+					{
+						joined.append(line->first.substr(trimIndent));
+						joined.append(line->second);
+					}
+
+					firstLine = false;
+				}
+			}
+
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(std::move(joined));
+		}
+		else if (children.size() > 1)
 		{
 			std::string joined;
 
@@ -222,6 +308,26 @@ struct ast_selector<block_escape_sequence> : std::true_type
 	{
 		n->unescaped_view(R"bq(""")bq"sv);
 	}
+};
+
+template <>
+struct ast_selector<block_quote_content_lines> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_empty_line> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_line> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_line_content> : std::true_type
+{
 };
 
 template <>

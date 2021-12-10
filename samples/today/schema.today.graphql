@@ -95,6 +95,14 @@ type Mutation {
     setFloat(value: Float!): Float!
 }
 
+    """
+
+        Subscription type:
+        
+        2nd line...
+            3rd line goes here!
+                
+    """
 type Subscription {
     nextAppointmentChange : Appointment @deprecated(
         reason:"""Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation)"""
