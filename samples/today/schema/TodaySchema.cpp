@@ -159,8 +159,8 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
-	schema->AddType(R"gql(ItemCursor)gql"sv, schema::ScalarType::Make(R"gql(ItemCursor)gql"sv, R"md()md"));
-	schema->AddType(R"gql(DateTime)gql"sv, schema::ScalarType::Make(R"gql(DateTime)gql"sv, R"md()md"));
+	schema->AddType(R"gql(ItemCursor)gql"sv, schema::ScalarType::Make(R"gql(ItemCursor)gql"sv, R"md()md", R"url()url"sv));
+	schema->AddType(R"gql(DateTime)gql"sv, schema::ScalarType::Make(R"gql(DateTime)gql"sv, R"md()md", R"url()url"sv));
 	auto typeTaskState = schema::EnumType::Make(R"gql(TaskState)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(TaskState)gql"sv, typeTaskState);
 	auto typeCompleteTaskInput = schema::InputObjectType::Make(R"gql(CompleteTaskInput)gql"sv, R"md()md"sv);
@@ -177,37 +177,37 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Node)gql"sv, typeNode);
 	auto typeUnionType = schema::UnionType::Make(R"gql(UnionType)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(UnionType)gql"sv, typeUnionType);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md(Root Query type)md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md(Root Query type)md"sv);
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
-	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md");
+	auto typePageInfo = schema::ObjectType::Make(R"gql(PageInfo)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(PageInfo)gql"sv, typePageInfo);
-	auto typeAppointmentEdge = schema::ObjectType::Make(R"gql(AppointmentEdge)gql"sv, R"md()md");
+	auto typeAppointmentEdge = schema::ObjectType::Make(R"gql(AppointmentEdge)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(AppointmentEdge)gql"sv, typeAppointmentEdge);
-	auto typeAppointmentConnection = schema::ObjectType::Make(R"gql(AppointmentConnection)gql"sv, R"md()md");
+	auto typeAppointmentConnection = schema::ObjectType::Make(R"gql(AppointmentConnection)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(AppointmentConnection)gql"sv, typeAppointmentConnection);
-	auto typeTaskEdge = schema::ObjectType::Make(R"gql(TaskEdge)gql"sv, R"md()md");
+	auto typeTaskEdge = schema::ObjectType::Make(R"gql(TaskEdge)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(TaskEdge)gql"sv, typeTaskEdge);
-	auto typeTaskConnection = schema::ObjectType::Make(R"gql(TaskConnection)gql"sv, R"md()md");
+	auto typeTaskConnection = schema::ObjectType::Make(R"gql(TaskConnection)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(TaskConnection)gql"sv, typeTaskConnection);
-	auto typeFolderEdge = schema::ObjectType::Make(R"gql(FolderEdge)gql"sv, R"md()md");
+	auto typeFolderEdge = schema::ObjectType::Make(R"gql(FolderEdge)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FolderEdge)gql"sv, typeFolderEdge);
-	auto typeFolderConnection = schema::ObjectType::Make(R"gql(FolderConnection)gql"sv, R"md()md");
+	auto typeFolderConnection = schema::ObjectType::Make(R"gql(FolderConnection)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FolderConnection)gql"sv, typeFolderConnection);
-	auto typeCompleteTaskPayload = schema::ObjectType::Make(R"gql(CompleteTaskPayload)gql"sv, R"md()md");
+	auto typeCompleteTaskPayload = schema::ObjectType::Make(R"gql(CompleteTaskPayload)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CompleteTaskPayload)gql"sv, typeCompleteTaskPayload);
-	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md");
+	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
-	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md");
+	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
-	auto typeAppointment = schema::ObjectType::Make(R"gql(Appointment)gql"sv, R"md()md");
+	auto typeAppointment = schema::ObjectType::Make(R"gql(Appointment)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Appointment)gql"sv, typeAppointment);
-	auto typeTask = schema::ObjectType::Make(R"gql(Task)gql"sv, R"md()md");
+	auto typeTask = schema::ObjectType::Make(R"gql(Task)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Task)gql"sv, typeTask);
-	auto typeFolder = schema::ObjectType::Make(R"gql(Folder)gql"sv, R"md()md");
+	auto typeFolder = schema::ObjectType::Make(R"gql(Folder)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Folder)gql"sv, typeFolder);
-	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md");
+	auto typeNestedType = schema::ObjectType::Make(R"gql(NestedType)gql"sv, R"md(Infinitely nestable type which can be used with nested fragments to test directive handling)md"sv);
 	schema->AddType(R"gql(NestedType)gql"sv, typeNestedType);
-	auto typeExpensive = schema::ObjectType::Make(R"gql(Expensive)gql"sv, R"md()md");
+	auto typeExpensive = schema::ObjectType::Make(R"gql(Expensive)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
 
 	typeTaskState->AddEnumValues({
@@ -262,37 +262,37 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 
 	schema->AddDirective(schema::Directive::Make(R"gql(id)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD_DEFINITION
-	}));
+	}, {}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(subscriptionTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::SUBSCRIPTION
 	}, {
 		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(queryTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::QUERY
 	}, {
 		schema::InputValue::Make(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(fieldTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD
 	}, {
 		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(fragmentDefinitionTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FRAGMENT_DEFINITION
 	}, {
 		schema::InputValue::Make(R"gql(fragmentDefinition)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(fragmentSpreadTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FRAGMENT_SPREAD
 	}, {
 		schema::InputValue::Make(R"gql(fragmentSpread)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(inlineFragmentTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::INLINE_FRAGMENT
 	}, {
 		schema::InputValue::Make(R"gql(inlineFragment)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 
 	schema->AddQueryType(typeQuery);
 	schema->AddMutationType(typeMutation);
@@ -306,7 +306,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false);
+		schema = std::make_shared<schema::Schema>(false, R"md()md"sv);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

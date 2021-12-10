@@ -146,25 +146,25 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(DogOrHuman)gql"sv, typeDogOrHuman);
 	auto typeHumanOrAlien = schema::UnionType::Make(R"gql(HumanOrAlien)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(HumanOrAlien)gql"sv, typeHumanOrAlien);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
-	auto typeDog = schema::ObjectType::Make(R"gql(Dog)gql"sv, R"md()md");
+	auto typeDog = schema::ObjectType::Make(R"gql(Dog)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Dog)gql"sv, typeDog);
-	auto typeAlien = schema::ObjectType::Make(R"gql(Alien)gql"sv, R"md()md");
+	auto typeAlien = schema::ObjectType::Make(R"gql(Alien)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Alien)gql"sv, typeAlien);
-	auto typeHuman = schema::ObjectType::Make(R"gql(Human)gql"sv, R"md()md");
+	auto typeHuman = schema::ObjectType::Make(R"gql(Human)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Human)gql"sv, typeHuman);
-	auto typeCat = schema::ObjectType::Make(R"gql(Cat)gql"sv, R"md()md");
+	auto typeCat = schema::ObjectType::Make(R"gql(Cat)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Cat)gql"sv, typeCat);
-	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md");
+	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
-	auto typeMutateDogResult = schema::ObjectType::Make(R"gql(MutateDogResult)gql"sv, R"md()md");
+	auto typeMutateDogResult = schema::ObjectType::Make(R"gql(MutateDogResult)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(MutateDogResult)gql"sv, typeMutateDogResult);
-	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md");
+	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
-	auto typeMessage = schema::ObjectType::Make(R"gql(Message)gql"sv, R"md()md");
+	auto typeMessage = schema::ObjectType::Make(R"gql(Message)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Message)gql"sv, typeMessage);
-	auto typeArguments = schema::ObjectType::Make(R"gql(Arguments)gql"sv, R"md()md");
+	auto typeArguments = schema::ObjectType::Make(R"gql(Arguments)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Arguments)gql"sv, typeArguments);
 
 	typeDogCommand->AddEnumValues({
@@ -211,7 +211,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(true);
+		schema = std::make_shared<schema::Schema>(true, R"md()md"sv);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

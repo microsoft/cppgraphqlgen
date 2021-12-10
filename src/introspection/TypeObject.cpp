@@ -53,7 +53,8 @@ service::ResolverMap Type::getResolvers() const noexcept
 		{ R"gql(interfaces)gql"sv, [this](service::ResolverParams&& params) { return resolveInterfaces(std::move(params)); } },
 		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
 		{ R"gql(inputFields)gql"sv, [this](service::ResolverParams&& params) { return resolveInputFields(std::move(params)); } },
-		{ R"gql(possibleTypes)gql"sv, [this](service::ResolverParams&& params) { return resolvePossibleTypes(std::move(params)); } }
+		{ R"gql(possibleTypes)gql"sv, [this](service::ResolverParams&& params) { return resolvePossibleTypes(std::move(params)); } },
+		{ R"gql(specifiedByURL)gql"sv, [this](service::ResolverParams&& params) { return resolveSpecifiedByURL(std::move(params)); } }
 	};
 }
 
@@ -168,6 +169,15 @@ service::AwaitableResolver Type::resolveOfType(service::ResolverParams&& params)
 	return service::ModifiedResult<Type>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Type::resolveSpecifiedByURL(service::ResolverParams&& params) const
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = _pimpl->getSpecifiedByURL();
+	resolverLock.unlock();
+
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Type::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Type)gql" }, std::move(params));
@@ -190,7 +200,8 @@ void AddTypeDetails(const std::shared_ptr<schema::ObjectType>& typeType, const s
 			schema::InputValue::Make(R"gql(includeDeprecated)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Boolean)gql"sv), R"gql(false)gql"sv)
 		}),
 		schema::Field::Make(R"gql(inputFields)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(__InputValue)gql"sv)))),
-		schema::Field::Make(R"gql(ofType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(__Type)gql"sv))
+		schema::Field::Make(R"gql(ofType)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(__Type)gql"sv)),
+		schema::Field::Make(R"gql(specifiedByURL)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 }
 

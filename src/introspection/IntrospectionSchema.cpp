@@ -63,7 +63,7 @@ service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(serv
 		});
 }
 
-static const std::array<std::string_view, 18> s_namesDirectiveLocation = {
+static const std::array<std::string_view, 19> s_namesDirectiveLocation = {
 	R"gql(QUERY)gql"sv,
 	R"gql(MUTATION)gql"sv,
 	R"gql(SUBSCRIPTION)gql"sv,
@@ -71,6 +71,7 @@ static const std::array<std::string_view, 18> s_namesDirectiveLocation = {
 	R"gql(FRAGMENT_DEFINITION)gql"sv,
 	R"gql(FRAGMENT_SPREAD)gql"sv,
 	R"gql(INLINE_FRAGMENT)gql"sv,
+	R"gql(VARIABLE_DEFINITION)gql"sv,
 	R"gql(SCHEMA)gql"sv,
 	R"gql(SCALAR)gql"sv,
 	R"gql(OBJECT)gql"sv,
@@ -122,26 +123,26 @@ namespace introspection {
 
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
-	schema->AddType(R"gql(Boolean)gql"sv, schema::ScalarType::Make(R"gql(Boolean)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(Float)gql"sv, schema::ScalarType::Make(R"gql(Float)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(ID)gql"sv, schema::ScalarType::Make(R"gql(ID)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(Int)gql"sv, schema::ScalarType::Make(R"gql(Int)gql"sv, R"md(Built-in type)md"));
-	schema->AddType(R"gql(String)gql"sv, schema::ScalarType::Make(R"gql(String)gql"sv, R"md(Built-in type)md"));
+	schema->AddType(R"gql(Boolean)gql"sv, schema::ScalarType::Make(R"gql(Boolean)gql"sv, R"md(Built-in type)md"sv, R"url(https://spec.graphql.org/October2021/#sec-Boolean)url"sv));
+	schema->AddType(R"gql(Float)gql"sv, schema::ScalarType::Make(R"gql(Float)gql"sv, R"md(Built-in type)md"sv, R"url(https://spec.graphql.org/October2021/#sec-Float)url"sv));
+	schema->AddType(R"gql(ID)gql"sv, schema::ScalarType::Make(R"gql(ID)gql"sv, R"md(Built-in type)md"sv, R"url(https://spec.graphql.org/October2021/#sec-ID)url"sv));
+	schema->AddType(R"gql(Int)gql"sv, schema::ScalarType::Make(R"gql(Int)gql"sv, R"md(Built-in type)md"sv, R"url(https://spec.graphql.org/October2021/#sec-Int)url"sv));
+	schema->AddType(R"gql(String)gql"sv, schema::ScalarType::Make(R"gql(String)gql"sv, R"md(Built-in type)md"sv, R"url(https://spec.graphql.org/October2021/#sec-String)url"sv));
 	auto typeTypeKind = schema::EnumType::Make(R"gql(__TypeKind)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__TypeKind)gql"sv, typeTypeKind);
 	auto typeDirectiveLocation = schema::EnumType::Make(R"gql(__DirectiveLocation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__DirectiveLocation)gql"sv, typeDirectiveLocation);
-	auto typeSchema = schema::ObjectType::Make(R"gql(__Schema)gql"sv, R"md()md");
+	auto typeSchema = schema::ObjectType::Make(R"gql(__Schema)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__Schema)gql"sv, typeSchema);
-	auto typeType = schema::ObjectType::Make(R"gql(__Type)gql"sv, R"md()md");
+	auto typeType = schema::ObjectType::Make(R"gql(__Type)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__Type)gql"sv, typeType);
-	auto typeField = schema::ObjectType::Make(R"gql(__Field)gql"sv, R"md()md");
+	auto typeField = schema::ObjectType::Make(R"gql(__Field)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__Field)gql"sv, typeField);
-	auto typeInputValue = schema::ObjectType::Make(R"gql(__InputValue)gql"sv, R"md()md");
+	auto typeInputValue = schema::ObjectType::Make(R"gql(__InputValue)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__InputValue)gql"sv, typeInputValue);
-	auto typeEnumValue = schema::ObjectType::Make(R"gql(__EnumValue)gql"sv, R"md()md");
+	auto typeEnumValue = schema::ObjectType::Make(R"gql(__EnumValue)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__EnumValue)gql"sv, typeEnumValue);
-	auto typeDirective = schema::ObjectType::Make(R"gql(__Directive)gql"sv, R"md()md");
+	auto typeDirective = schema::ObjectType::Make(R"gql(__Directive)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__Directive)gql"sv, typeDirective);
 
 	typeTypeKind->AddEnumValues({
@@ -162,6 +163,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_DEFINITION)], R"md()md"sv, std::nullopt },
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_SPREAD)], R"md()md"sv, std::nullopt },
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INLINE_FRAGMENT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::VARIABLE_DEFINITION)], R"md()md"sv, std::nullopt },
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCHEMA)], R"md()md"sv, std::nullopt },
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCALAR)], R"md()md"sv, std::nullopt },
 		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::OBJECT)], R"md()md"sv, std::nullopt },
@@ -188,20 +190,25 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		introspection::DirectiveLocation::INLINE_FRAGMENT
 	}, {
 		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(include)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD,
 		introspection::DirectiveLocation::FRAGMENT_SPREAD,
 		introspection::DirectiveLocation::INLINE_FRAGMENT
 	}, {
 		schema::InputValue::Make(R"gql(if)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)), R"gql()gql"sv)
-	}));
+	}, false));
 	schema->AddDirective(schema::Directive::Make(R"gql(deprecated)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD_DEFINITION,
 		introspection::DirectiveLocation::ENUM_VALUE
 	}, {
 		schema::InputValue::Make(R"gql(reason)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql("No longer supported")gql"sv)
-	}));
+	}, false));
+	schema->AddDirective(schema::Directive::Make(R"gql(specifiedBy)gql"sv, R"md()md"sv, {
+		introspection::DirectiveLocation::SCALAR
+	}, {
+		schema::InputValue::Make(R"gql(url)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
+	}, false));
 }
 
 } // namespace introspection

@@ -484,6 +484,11 @@ struct schema_selector<enum_value_definition> : std::true_type
 };
 
 template <>
+struct schema_selector<repeatable_keyword> : std::true_type
+{
+};
+
+template <>
 struct schema_selector<directive_location> : std::true_type
 {
 };

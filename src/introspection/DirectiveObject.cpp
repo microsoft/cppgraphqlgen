@@ -45,7 +45,8 @@ service::ResolverMap Directive::getResolvers() const noexcept
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(locations)gql"sv, [this](service::ResolverParams&& params) { return resolveLocations(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } }
+		{ R"gql(description)gql"sv, [this](service::ResolverParams&& params) { return resolveDescription(std::move(params)); } },
+		{ R"gql(isRepeatable)gql"sv, [this](service::ResolverParams&& params) { return resolveIsRepeatable(std::move(params)); } }
 	};
 }
 
@@ -85,6 +86,15 @@ service::AwaitableResolver Directive::resolveArgs(service::ResolverParams&& para
 	return service::ModifiedResult<InputValue>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Directive::resolveIsRepeatable(service::ResolverParams&& params) const
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto result = _pimpl->getIsRepeatable();
+	resolverLock.unlock();
+
+	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Directive::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Directive)gql" }, std::move(params));
@@ -98,7 +108,8 @@ void AddDirectiveDetails(const std::shared_ptr<schema::ObjectType>& typeDirectiv
 		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
 		schema::Field::Make(R"gql(description)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
 		schema::Field::Make(R"gql(locations)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(__DirectiveLocation)gql"sv))))),
-		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(__InputValue)gql"sv)))))
+		schema::Field::Make(R"gql(args)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(__InputValue)gql"sv))))),
+		schema::Field::Make(R"gql(isRepeatable)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv)))
 	});
 }
 

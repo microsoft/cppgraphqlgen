@@ -1385,7 +1385,15 @@ Operations::Operations()cpp";
 				sourceFile << R"cpp(Built-in type)cpp";
 			}
 
-			sourceFile << R"cpp()md"));
+			sourceFile << R"cpp()md"sv, R"url()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << R"cpp(https://spec.graphql.org/October2021/#sec-)cpp"
+						   << builtinType.first;
+			}
+
+			sourceFile << R"cpp()url"sv));
 )cpp";
 		}
 	}
@@ -1403,7 +1411,14 @@ Operations::Operations()cpp";
 				sourceFile << scalarType.description;
 			}
 
-			sourceFile << R"cpp()md"));
+			sourceFile << R"cpp()md", R"url()cpp";
+
+			if (!_options.noIntrospection)
+			{
+				sourceFile << scalarType.specifiedByURL;
+			}
+
+			sourceFile << R"cpp()url"sv));
 )cpp";
 		}
 	}
@@ -1504,7 +1519,7 @@ Operations::Operations()cpp";
 				sourceFile << objectType.description;
 			}
 
-			sourceFile << R"cpp()md");
+			sourceFile << R"cpp()md"sv);
 	schema->AddType(R"gql()cpp"
 					   << objectType.type << R"cpp()gql"sv, type)cpp" << objectType.cppType
 					   << R"cpp();
@@ -1685,14 +1700,13 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 
-			sourceFile << R"cpp(})cpp";
+			sourceFile << R"cpp(}, {)cpp";
 
 			if (!directive.arguments.empty())
 			{
 				bool firstArgument = true;
 
-				sourceFile << R"cpp(, {
-)cpp";
+				sourceFile << std::endl;
 
 				for (const auto& argument : directive.arguments)
 				{
@@ -1718,9 +1732,10 @@ Operations::Operations()cpp";
 				}
 
 				sourceFile << R"cpp(
-	})cpp";
+	)cpp";
 			}
-			sourceFile << R"cpp());
+			sourceFile << R"cpp(}, )cpp"
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}
@@ -1755,7 +1770,8 @@ Operations::Operations()cpp";
 	if (!schema)
 	{
 		schema = std::make_shared<schema::Schema>()cpp"
-				   << (_options.noIntrospection ? "true" : "false") << R"cpp();
+				   << (_options.noIntrospection ? R"cpp(true)cpp" : R"cpp(false)cpp")
+				   << R"cpp(, R"md()cpp" << _loader.getSchemaDescription() << R"cpp()md"sv);
 		)cpp" << SchemaLoader::getIntrospectionNamespace()
 				   << R"cpp(::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);

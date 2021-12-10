@@ -9,8 +9,9 @@ using namespace std::literals;
 
 namespace graphql::schema {
 
-Schema::Schema(bool noIntrospection)
+Schema::Schema(bool noIntrospection, std::string_view description)
 	: _noIntrospection(noIntrospection)
+	, _description(description)
 {
 }
 
@@ -86,6 +87,11 @@ std::shared_ptr<const BaseType> Schema::WrapType(
 void Schema::AddDirective(std::shared_ptr<Directive> directive)
 {
 	_directives.emplace_back(std::move(directive));
+}
+
+std::string_view Schema::description() const noexcept
+{
+	return _description;
 }
 
 const std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>>& Schema::types()
@@ -171,26 +177,39 @@ const std::weak_ptr<const BaseType>& BaseType::ofType() const noexcept
 	return defaultValue;
 }
 
+std::string_view BaseType::specifiedByURL() const noexcept
+{
+	return ""sv;
+}
+
 struct ScalarType::init
 {
 	std::string_view name;
 	std::string_view description;
+	std::string_view specifiedByURL;
 };
 
-std::shared_ptr<ScalarType> ScalarType::Make(std::string_view name, std::string_view description)
+std::shared_ptr<ScalarType> ScalarType::Make(
+	std::string_view name, std::string_view description, std::string_view specifiedByURL)
 {
-	return std::make_shared<ScalarType>(init { name, description });
+	return std::make_shared<ScalarType>(init { name, description, specifiedByURL });
 }
 
 ScalarType::ScalarType(init&& params)
 	: BaseType(introspection::TypeKind::SCALAR, params.description)
 	, _name(params.name)
+	, _specifiedByURL(params.specifiedByURL)
 {
 }
 
 std::string_view ScalarType::name() const noexcept
 {
 	return _name;
+}
+
+std::string_view ScalarType::specifiedByURL() const noexcept
+{
+	return _specifiedByURL;
 }
 
 struct ObjectType::init
@@ -545,13 +564,14 @@ struct Directive::init
 	std::string_view description;
 	std::vector<introspection::DirectiveLocation> locations;
 	std::vector<std::shared_ptr<const InputValue>> args;
+	bool isRepeatable;
 };
 
 std::shared_ptr<Directive> Directive::Make(std::string_view name, std::string_view description,
 	std::vector<introspection::DirectiveLocation>&& locations,
-	std::vector<std::shared_ptr<const InputValue>>&& args)
+	std::vector<std::shared_ptr<const InputValue>>&& args, bool isRepeatable)
 {
-	init params { name, description, std::move(locations), std::move(args) };
+	init params { name, description, std::move(locations), std::move(args), isRepeatable };
 
 	return std::make_shared<Directive>(std::move(params));
 }
@@ -561,6 +581,7 @@ Directive::Directive(init&& params)
 	, _description(params.description)
 	, _locations(std::move(params.locations))
 	, _args(std::move(params.args))
+	, _isRepeatable(params.isRepeatable)
 {
 }
 
@@ -582,6 +603,11 @@ const std::vector<introspection::DirectiveLocation>& Directive::locations() cons
 const std::vector<std::shared_ptr<const InputValue>>& Directive::args() const noexcept
 {
 	return _args;
+}
+
+bool Directive::isRepeatable() const noexcept
+{
+	return _isRepeatable;
 }
 
 } // namespace graphql::schema

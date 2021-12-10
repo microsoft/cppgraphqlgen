@@ -505,6 +505,21 @@ void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 
 void SchemaLoader::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 {
+	std::string_view description;
+
+	peg::on_first_child<peg::description>(schemaDefinition,
+		[&description](const peg::ast_node& child) {
+			if (!child.children.empty())
+			{
+				description = child.children.front()->unescaped_view();
+			}
+		});
+
+	if (!_schemaDescription.empty())
+	{
+		_schemaDescription = description;
+	}
+
 	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
 		[this](const peg::ast_node& child) {
 			const auto operation(child.children.front()->string_view());
@@ -771,7 +786,7 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 								directiveName = name.string_view();
 							});
 
-						if (directiveName == "deprecated")
+						if (directiveName == "deprecated"sv)
 						{
 							std::string_view reason;
 
@@ -786,7 +801,7 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 													argumentName = name.string_view();
 												});
 
-											if (argumentName == "reason")
+											if (argumentName == "reason"sv)
 											{
 												peg::on_first_child<peg::string_value>(argument,
 													[&value](const peg::ast_node& argumentValue) {
@@ -828,6 +843,65 @@ void SchemaLoader::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefi
 	_typePositions.emplace(name, scalarTypeDefinition.begin());
 	_scalarNames[name] = _scalarTypes.size();
 	_scalarTypes.push_back({ name, description });
+
+	visitScalarTypeExtension(scalarTypeDefinition);
+}
+
+void SchemaLoader::visitScalarTypeExtension(const peg::ast_node& scalarTypeExtension)
+{
+	std::string_view name;
+
+	peg::on_first_child<peg::scalar_name>(scalarTypeExtension, [&name](const peg::ast_node& child) {
+		name = child.string_view();
+	});
+
+	const auto itrType = _scalarNames.find(name);
+
+	if (itrType != _scalarNames.cend())
+	{
+		auto& scalarType = _scalarTypes[itrType->second];
+
+		peg::on_first_child<peg::directives>(scalarTypeExtension,
+			[&scalarType](const peg::ast_node& directives) {
+				peg::for_each_child<peg::directive>(directives,
+					[&scalarType](const peg::ast_node& directive) {
+						std::string_view directiveName;
+
+						peg::on_first_child<peg::directive_name>(directive,
+							[&directiveName](const peg::ast_node& name) {
+								directiveName = name.string_view();
+							});
+
+						if (directiveName == "specifiedBy"sv)
+						{
+							std::string_view specifiedByURL;
+
+							peg::on_first_child<peg::arguments>(directive,
+								[&specifiedByURL](const peg::ast_node& arguments) {
+									peg::on_first_child<peg::argument>(arguments,
+										[&specifiedByURL](const peg::ast_node& argument) {
+											std::string_view argumentName;
+
+											peg::on_first_child<peg::argument_name>(argument,
+												[&argumentName](const peg::ast_node& name) {
+													argumentName = name.string_view();
+												});
+
+											if (argumentName == "url"sv)
+											{
+												peg::on_first_child<peg::string_value>(argument,
+													[&specifiedByURL](const peg::ast_node& url) {
+														specifiedByURL = url.unescaped_view();
+													});
+											}
+										});
+								});
+
+							scalarType.specifiedByURL = std::move(specifiedByURL);
+						}
+					});
+			});
+	}
 }
 
 void SchemaLoader::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
@@ -894,6 +968,11 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 			{
 				directive.description = child.children.front()->unescaped_view();
 			}
+		});
+
+	peg::on_first_child<peg::repeatable_keyword>(directiveDefinition,
+		[&directive](const peg::ast_node& child) {
+			directive.isRepeatable = true;
 		});
 
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
@@ -991,7 +1070,7 @@ OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& f
 								directiveName = name.string_view();
 							});
 
-						if (directiveName == "deprecated")
+						if (directiveName == "deprecated"sv)
 						{
 							std::string_view deprecationReason;
 
@@ -1006,7 +1085,7 @@ OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& f
 													argumentName = name.string_view();
 												});
 
-											if (argumentName == "reason")
+											if (argumentName == "reason"sv)
 											{
 												peg::on_first_child<peg::string_value>(argument,
 													[&deprecationReason](
@@ -1095,6 +1174,11 @@ InputFieldList SchemaLoader::getInputFields(const peg::ast_node::children_t& fie
 bool SchemaLoader::isIntrospection() const noexcept
 {
 	return _isIntrospection;
+}
+
+std::string_view SchemaLoader::getSchemaDescription() const noexcept
+{
+	return _schemaDescription;
 }
 
 std::string_view SchemaLoader::getFilenamePrefix() const noexcept

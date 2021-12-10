@@ -25,6 +25,7 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
 
 	// Accessors
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
 	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::Type>> getTypes() const;
 	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getQueryType() const;
 	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getMutationType() const;
@@ -56,6 +57,7 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::InputValue>>>
 	getInputFields() const;
 	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getOfType() const;
+	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getSpecifiedByURL() const;
 
 private:
 	const std::shared_ptr<const schema::BaseType> _type;
@@ -121,6 +123,7 @@ public:
 	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
 	GRAPHQLINTROSPECTION_EXPORT std::vector<DirectiveLocation> getLocations() const;
 	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
+	GRAPHQLINTROSPECTION_EXPORT bool getIsRepeatable() const;
 
 private:
 	const std::shared_ptr<const schema::Directive> _directive;

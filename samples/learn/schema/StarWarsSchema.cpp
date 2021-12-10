@@ -97,15 +97,15 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(ReviewInput)gql"sv, typeReviewInput);
 	auto typeCharacter = schema::InterfaceType::Make(R"gql(Character)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Character)gql"sv, typeCharacter);
-	auto typeHuman = schema::ObjectType::Make(R"gql(Human)gql"sv, R"md()md");
+	auto typeHuman = schema::ObjectType::Make(R"gql(Human)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Human)gql"sv, typeHuman);
-	auto typeDroid = schema::ObjectType::Make(R"gql(Droid)gql"sv, R"md()md");
+	auto typeDroid = schema::ObjectType::Make(R"gql(Droid)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Droid)gql"sv, typeDroid);
-	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md");
+	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
-	auto typeReview = schema::ObjectType::Make(R"gql(Review)gql"sv, R"md()md");
+	auto typeReview = schema::ObjectType::Make(R"gql(Review)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Review)gql"sv, typeReview);
-	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md");
+	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
 
 	typeEpisode->AddEnumValues({
@@ -138,7 +138,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false);
+		schema = std::make_shared<schema::Schema>(false, R"md()md"sv);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

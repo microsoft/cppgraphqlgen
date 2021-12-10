@@ -37,7 +37,8 @@ class EnumValue;
 class Schema : public std::enable_shared_from_this<Schema>
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Schema(bool noIntrospection = false);
+	GRAPHQLSERVICE_EXPORT explicit Schema(
+		bool noIntrospection = false, std::string_view description = "");
 
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
 	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
@@ -51,6 +52,7 @@ public:
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT bool supportsIntrospection() const noexcept;
+	GRAPHQLSERVICE_EXPORT std::string_view description() const noexcept;
 	GRAPHQLSERVICE_EXPORT const std::vector<
 		std::pair<std::string_view, std::shared_ptr<const BaseType>>>&
 	types() const noexcept;
@@ -63,6 +65,7 @@ public:
 
 private:
 	const bool _noIntrospection = false;
+	const std::string_view _description;
 
 	std::shared_ptr<const ObjectType> _query;
 	std::shared_ptr<const ObjectType> _mutation;
@@ -98,6 +101,7 @@ public:
 	GRAPHQLSERVICE_EXPORT virtual const std::vector<std::shared_ptr<const InputValue>>&
 	inputFields() const noexcept;
 	GRAPHQLSERVICE_EXPORT virtual const std::weak_ptr<const BaseType>& ofType() const noexcept;
+	GRAPHQLSERVICE_EXPORT virtual std::string_view specifiedByURL() const noexcept;
 
 protected:
 	BaseType(introspection::TypeKind kind, std::string_view description);
@@ -118,13 +122,15 @@ public:
 	explicit ScalarType(init&& params);
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<ScalarType> Make(
-		std::string_view name, std::string_view description);
+		std::string_view name, std::string_view description, std::string_view specifiedByURL);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept final;
+	GRAPHQLSERVICE_EXPORT std::string_view specifiedByURL() const noexcept final;
 
 private:
 	const std::string_view _name;
+	const std::string_view _specifiedByURL;
 };
 
 class ObjectType : public BaseType
@@ -389,7 +395,7 @@ public:
 
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<Directive> Make(std::string_view name,
 		std::string_view description, std::vector<introspection::DirectiveLocation>&& locations,
-		std::vector<std::shared_ptr<const InputValue>>&& args = {});
+		std::vector<std::shared_ptr<const InputValue>>&& args, bool isRepeatable);
 
 	// Accessors
 	GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
@@ -398,12 +404,14 @@ public:
 		const noexcept;
 	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<const InputValue>>& args()
 		const noexcept;
+	GRAPHQLSERVICE_EXPORT bool isRepeatable() const noexcept;
 
 private:
 	const std::string_view _name;
 	const std::string_view _description;
 	const std::vector<introspection::DirectiveLocation> _locations;
 	const std::vector<std::shared_ptr<const InputValue>> _args;
+	const bool _isRepeatable;
 };
 
 } // namespace schema

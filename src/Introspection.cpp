@@ -19,6 +19,13 @@ Schema::Schema(const std::shared_ptr<schema::Schema>& schema)
 {
 }
 
+std::optional<std::string> Schema::getDescription() const
+{
+	const auto description = _schema->description();
+
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
+}
+
 std::vector<std::shared_ptr<object::Type>> Schema::getTypes() const
 {
 	const auto& types = _schema->types();
@@ -235,6 +242,13 @@ std::shared_ptr<object::Type> Type::getOfType() const
 	return ofType ? std::make_shared<object::Type>(std::make_shared<Type>(ofType)) : nullptr;
 }
 
+std::optional<std::string> Type::getSpecifiedByURL() const
+{
+	const auto specifiedByURL = _type->specifiedByURL();
+
+	return { specifiedByURL.empty() ? std::nullopt : std::make_optional<std::string>(specifiedByURL) };
+}
+
 Field::Field(const std::shared_ptr<const schema::Field>& field)
 	: _field(field)
 {
@@ -364,7 +378,7 @@ std::optional<std::string> Directive::getDescription() const
 
 std::vector<DirectiveLocation> Directive::getLocations() const
 {
-	return { _directive->locations() };
+	return _directive->locations();
 }
 
 std::vector<std::shared_ptr<object::InputValue>> Directive::getArgs() const
@@ -377,6 +391,11 @@ std::vector<std::shared_ptr<object::InputValue>> Directive::getArgs() const
 	});
 
 	return result;
+}
+
+bool Directive::getIsRepeatable() const
+{
+	return _directive->isRepeatable();
 }
 
 } // namespace graphql::introspection
