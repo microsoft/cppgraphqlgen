@@ -515,7 +515,7 @@ void SchemaLoader::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 			}
 		});
 
-	if (!_schemaDescription.empty())
+	if (_schemaDescription.empty())
 	{
 		_schemaDescription = description;
 	}

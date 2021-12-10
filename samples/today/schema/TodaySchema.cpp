@@ -160,7 +160,7 @@ Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<obj
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
 	schema->AddType(R"gql(ItemCursor)gql"sv, schema::ScalarType::Make(R"gql(ItemCursor)gql"sv, R"md()md", R"url()url"sv));
-	schema->AddType(R"gql(DateTime)gql"sv, schema::ScalarType::Make(R"gql(DateTime)gql"sv, R"md()md", R"url()url"sv));
+	schema->AddType(R"gql(DateTime)gql"sv, schema::ScalarType::Make(R"gql(DateTime)gql"sv, R"md()md", R"url(https://en.wikipedia.org/wiki/ISO_8601)url"sv));
 	auto typeTaskState = schema::EnumType::Make(R"gql(TaskState)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(TaskState)gql"sv, typeTaskState);
 	auto typeCompleteTaskInput = schema::InputObjectType::Make(R"gql(CompleteTaskInput)gql"sv, R"md()md"sv);
@@ -267,7 +267,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		introspection::DirectiveLocation::SUBSCRIPTION
 	}, {
 		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
-	}, false));
+	}, true));
 	schema->AddDirective(schema::Directive::Make(R"gql(queryTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::QUERY
 	}, {
@@ -306,7 +306,7 @@ std::shared_ptr<schema::Schema> GetSchema()
 
 	if (!schema)
 	{
-		schema = std::make_shared<schema::Schema>(false, R"md()md"sv);
+		schema = std::make_shared<schema::Schema>(false, R"md(Test Schema based on a dashboard showing daily appointments, tasks, and email folders with unread counts.)md"sv);
 		introspection::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);
 		s_wpSchema = schema;

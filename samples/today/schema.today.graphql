@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+"Test Schema based on a dashboard showing daily appointments, tasks, and email folders with unread counts."
 schema {
     query: Query
     mutation: Mutation
@@ -102,9 +103,9 @@ type Subscription {
     nodeChange(id: ID!): Node!
 }
 
-directive @subscriptionTag(field: String) on SUBSCRIPTION
+directive @subscriptionTag(field: String) repeatable on SUBSCRIPTION
 
-scalar DateTime
+scalar DateTime @specifiedBy(url: "https://en.wikipedia.org/wiki/ISO_8601")
 
 enum TaskState {
     New

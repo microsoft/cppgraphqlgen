@@ -1771,7 +1771,14 @@ Operations::Operations()cpp";
 	{
 		schema = std::make_shared<schema::Schema>()cpp"
 				   << (_options.noIntrospection ? R"cpp(true)cpp" : R"cpp(false)cpp")
-				   << R"cpp(, R"md()cpp" << _loader.getSchemaDescription() << R"cpp()md"sv);
+				   << R"cpp(, R"md()cpp";
+
+		if (!_options.noIntrospection)
+		{
+			sourceFile << _loader.getSchemaDescription();
+		}
+
+		sourceFile << R"cpp()md"sv);
 		)cpp" << SchemaLoader::getIntrospectionNamespace()
 				   << R"cpp(::AddTypesToSchema(schema);
 		AddTypesToSchema(schema);

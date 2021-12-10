@@ -267,7 +267,7 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		introspection::DirectiveLocation::SUBSCRIPTION
 	}, {
 		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
-	}, false));
+	}, true));
 	schema->AddDirective(schema::Directive::Make(R"gql(queryTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::QUERY
 	}, {
