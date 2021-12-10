@@ -276,6 +276,8 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
+	static void blockReservedName(
+		std::string_view name, std::optional<tao::graphqlpeg::position> position = std::nullopt);
 	static OutputFieldList getOutputFields(const peg::ast_node::children_t& fields);
 	static InputFieldList getInputFields(const peg::ast_node::children_t& fields);
 
