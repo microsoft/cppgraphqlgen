@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 
@@ -85,6 +86,9 @@ void SchemaLoader::validateSchema()
 
 	// Handle nested input types by fully declaring the dependencies first.
 	reorderInputTypeDependencies();
+
+	// Validate the interface dependencies and that all of the interface fields are implemented.
+	validateImplementedInterfaces();
 
 	for (auto& entry : _interfaceTypes)
 	{
@@ -184,30 +188,6 @@ void SchemaLoader::validateSchema()
 		}
 
 		fixupOutputFieldList(entry.fields, interfaceFields, accessor);
-	}
-
-	// Validate the interfaces implemented by the object types.
-	for (const auto& entry : _objectTypes)
-	{
-		for (const auto& interfaceName : entry.interfaces)
-		{
-			if (_interfaceNames.find(interfaceName) == _interfaceNames.cend())
-			{
-				std::ostringstream error;
-				auto itrPosition = _typePositions.find(entry.type);
-
-				error << "Unknown interface: " << interfaceName
-					  << " implemented by: " << entry.type;
-
-				if (itrPosition != _typePositions.cend())
-				{
-					error << " line: " << itrPosition->second.line
-						  << " column: " << itrPosition->second.column;
-				}
-
-				throw std::runtime_error(error.str());
-			}
-		}
 	}
 
 	// Validate the objects that are possible types for unions and add the unions to
@@ -430,6 +410,29 @@ void SchemaLoader::reorderInputTypeDependencies()
 		}
 
 		itr = itrDependent;
+	}
+}
+
+void SchemaLoader::validateImplementedInterfaces() const
+{
+	for (const auto& interfaceType : _interfaceTypes)
+	{
+		validateTransitiveInterfaces(interfaceType.type, interfaceType.interfaces);
+
+		for (auto interfaceName : interfaceType.interfaces)
+		{
+			validateInterfaceFields(interfaceType.type, interfaceType.fields, interfaceName);
+		}
+	}
+
+	for (const auto& objectType : _objectTypes)
+	{
+		validateTransitiveInterfaces(objectType.type, objectType.interfaces);
+
+		for (auto interfaceName : objectType.interfaces)
+		{
+			validateInterfaceFields(objectType.type, objectType.fields, interfaceName);
+		}
 	}
 }
 
@@ -1142,6 +1145,154 @@ void SchemaLoader::blockReservedName(
 		if (position)
 		{
 			error << " line: " << position->line << " column: " << position->column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+}
+
+void SchemaLoader::validateInterfaceFields(std::string_view typeName,
+	const OutputFieldList& typeFields, std::string_view interfaceName) const
+{
+	const auto itrType = _interfaceNames.find(interfaceName);
+
+	if (itrType == _interfaceNames.cend())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Unknown interface: " << interfaceName << " implemented by: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+
+	const auto& interfaceType = _interfaceTypes[itrType->second];
+	std::set<std::string_view> unimplemented;
+
+	for (const auto& entry : interfaceType.fields)
+	{
+		unimplemented.insert(entry.name);
+	}
+
+	for (const auto& entry : typeFields)
+	{
+		unimplemented.erase(entry.name);
+	}
+
+	if (!unimplemented.empty())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Missing interface fields type: " << typeName
+			  << " interface: " << interfaceType.type;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		for (auto fieldName : unimplemented)
+		{
+			error << " field: " << fieldName;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+}
+
+void SchemaLoader::validateTransitiveInterfaces(
+	std::string_view typeName, const std::vector<std::string_view>& interfaces) const
+{
+	std::set<std::string_view> unimplemented;
+
+	for (auto entry : interfaces)
+	{
+		const auto itrType = _interfaceNames.find(entry);
+
+		if (itrType == _interfaceNames.cend())
+		{
+			std::ostringstream error;
+			const auto itrPosition = _typePositions.find(typeName);
+
+			error << "Unknown interface: " << entry << " implemented by: " << typeName;
+
+			if (itrPosition != _typePositions.cend())
+			{
+				error << " line: " << itrPosition->second.line
+					  << " column: " << itrPosition->second.column;
+			}
+
+			throw std::runtime_error(error.str());
+		}
+
+		if (typeName == entry || !unimplemented.insert(entry).second)
+		{
+			std::ostringstream error;
+			const auto itrPosition = _typePositions.find(typeName);
+
+			error << "Interface cycle interface: " << entry << " implemented by: " << typeName;
+
+			if (itrPosition != _typePositions.cend())
+			{
+				error << " line: " << itrPosition->second.line
+					  << " column: " << itrPosition->second.column;
+			}
+
+			throw std::runtime_error(error.str());
+		}
+
+		const auto& interfaceType = _interfaceTypes[itrType->second];
+
+		for (auto interfaceName : interfaceType.interfaces)
+		{
+			if (!unimplemented.insert(interfaceName).second)
+			{
+				std::ostringstream error;
+				const auto itrPosition = _typePositions.find(typeName);
+
+				error << "Interface cycle interface: " << interfaceName
+					  << " implemented by: " << typeName;
+
+				if (itrPosition != _typePositions.cend())
+				{
+					error << " line: " << itrPosition->second.line
+						  << " column: " << itrPosition->second.column;
+				}
+
+				throw std::runtime_error(error.str());
+			}
+		}
+	}
+
+	for (auto entry : interfaces)
+	{
+		unimplemented.erase(entry);
+	}
+
+	if (!unimplemented.empty())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Missing transitive interface type: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		for (auto interfaceName : unimplemented)
+		{
+			error << " interface: " << interfaceName;
 		}
 
 		throw std::runtime_error(error.str());

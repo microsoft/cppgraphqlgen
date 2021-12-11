@@ -293,6 +293,11 @@ private:
 		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
 	void reorderInputTypeDependencies();
+	void validateImplementedInterfaces() const;
+	void validateInterfaceFields(std::string_view typeName, const OutputFieldList& typeFields,
+		std::string_view interfaceName) const;
+	void validateTransitiveInterfaces(
+		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 
 	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
