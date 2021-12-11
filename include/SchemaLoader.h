@@ -294,8 +294,10 @@ private:
 	void fixupInputFieldList(InputFieldList& fields);
 	void reorderInputTypeDependencies();
 	void validateImplementedInterfaces() const;
-	void validateInterfaceFields(std::string_view typeName, const OutputFieldList& typeFields,
-		std::string_view interfaceName) const;
+	const InterfaceType& findInterfaceType(
+		std::string_view typeName, std::string_view interfaceName) const;
+	void validateInterfaceFields(std::string_view typeName,
+		std::string_view interfaceName, const OutputFieldList& typeFields) const;
 	void validateTransitiveInterfaces(
 		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 

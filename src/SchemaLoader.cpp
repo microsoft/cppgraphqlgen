@@ -421,7 +421,7 @@ void SchemaLoader::validateImplementedInterfaces() const
 
 		for (auto interfaceName : interfaceType.interfaces)
 		{
-			validateInterfaceFields(interfaceType.type, interfaceType.fields, interfaceName);
+			validateInterfaceFields(interfaceType.type, interfaceName, interfaceType.fields);
 		}
 	}
 
@@ -431,7 +431,7 @@ void SchemaLoader::validateImplementedInterfaces() const
 
 		for (auto interfaceName : objectType.interfaces)
 		{
-			validateInterfaceFields(objectType.type, objectType.fields, interfaceName);
+			validateInterfaceFields(objectType.type, interfaceName, objectType.fields);
 		}
 	}
 }
@@ -1151,8 +1151,8 @@ void SchemaLoader::blockReservedName(
 	}
 }
 
-void SchemaLoader::validateInterfaceFields(std::string_view typeName,
-	const OutputFieldList& typeFields, std::string_view interfaceName) const
+const InterfaceType& SchemaLoader::findInterfaceType(
+	std::string_view typeName, std::string_view interfaceName) const
 {
 	const auto itrType = _interfaceNames.find(interfaceName);
 
@@ -1172,7 +1172,13 @@ void SchemaLoader::validateInterfaceFields(std::string_view typeName,
 		throw std::runtime_error(error.str());
 	}
 
-	const auto& interfaceType = _interfaceTypes[itrType->second];
+	return _interfaceTypes[itrType->second];
+}
+
+void SchemaLoader::validateInterfaceFields(std::string_view typeName,
+	std::string_view interfaceName, const OutputFieldList& typeFields) const
+{
+	const auto& interfaceType = findInterfaceType(typeName, interfaceName);
 	std::set<std::string_view> unimplemented;
 
 	for (const auto& entry : interfaceType.fields)
@@ -1215,61 +1221,30 @@ void SchemaLoader::validateTransitiveInterfaces(
 
 	for (auto entry : interfaces)
 	{
-		const auto itrType = _interfaceNames.find(entry);
+		const auto& interfaceType = findInterfaceType(typeName, entry);
 
-		if (itrType == _interfaceNames.cend())
-		{
-			std::ostringstream error;
-			const auto itrPosition = _typePositions.find(typeName);
-
-			error << "Unknown interface: " << entry << " implemented by: " << typeName;
-
-			if (itrPosition != _typePositions.cend())
-			{
-				error << " line: " << itrPosition->second.line
-					  << " column: " << itrPosition->second.column;
-			}
-
-			throw std::runtime_error(error.str());
-		}
-
-		if (typeName == entry || !unimplemented.insert(entry).second)
-		{
-			std::ostringstream error;
-			const auto itrPosition = _typePositions.find(typeName);
-
-			error << "Interface cycle interface: " << entry << " implemented by: " << typeName;
-
-			if (itrPosition != _typePositions.cend())
-			{
-				error << " line: " << itrPosition->second.line
-					  << " column: " << itrPosition->second.column;
-			}
-
-			throw std::runtime_error(error.str());
-		}
-
-		const auto& interfaceType = _interfaceTypes[itrType->second];
+		unimplemented.insert(entry);
 
 		for (auto interfaceName : interfaceType.interfaces)
 		{
-			if (!unimplemented.insert(interfaceName).second)
-			{
-				std::ostringstream error;
-				const auto itrPosition = _typePositions.find(typeName);
-
-				error << "Interface cycle interface: " << interfaceName
-					  << " implemented by: " << typeName;
-
-				if (itrPosition != _typePositions.cend())
-				{
-					error << " line: " << itrPosition->second.line
-						  << " column: " << itrPosition->second.column;
-				}
-
-				throw std::runtime_error(error.str());
-			}
+			unimplemented.insert(interfaceName);
 		}
+	}
+
+	if (unimplemented.find(typeName) != unimplemented.cend())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Interface cycle interface: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		throw std::runtime_error(error.str());
 	}
 
 	for (auto entry : interfaces)
