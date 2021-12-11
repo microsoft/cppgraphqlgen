@@ -178,6 +178,8 @@ public:
 		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
+	GRAPHQLSERVICE_EXPORT void AddInterfaces(
+		std::vector<std::shared_ptr<const InterfaceType>>&& interfaces);
 	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
 
 	// Accessors
@@ -190,6 +192,7 @@ public:
 private:
 	const std::string_view _name;
 
+	std::vector<std::shared_ptr<const InterfaceType>> _interfaces;
 	std::vector<std::shared_ptr<const Field>> _fields;
 	std::vector<std::weak_ptr<const BaseType>> _possibleTypes;
 };

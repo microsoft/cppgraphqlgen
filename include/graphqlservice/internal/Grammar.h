@@ -151,7 +151,8 @@ struct block_escape_sequence : seq<backslash_token, block_quote_token>
 };
 
 struct block_quote_character
-	: plus<not_at<ascii::eol>, not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
+	: plus<not_at<ascii::eol>, not_at<block_quote_token>, not_at<block_escape_sequence>,
+		  source_character>
 {
 };
 
@@ -159,8 +160,7 @@ struct block_quote_empty_line : star<not_at<eol>, space>
 {
 };
 
-struct block_quote_line_content
-	: plus<sor<block_escape_sequence, block_quote_character>>
+struct block_quote_line_content : plus<sor<block_escape_sequence, block_quote_character>>
 {
 };
 
@@ -168,12 +168,11 @@ struct block_quote_line : seq<block_quote_empty_line, block_quote_line_content>
 {
 };
 
-struct block_quote_content_lines: opt<list<sor<block_quote_line, block_quote_empty_line>, eol>>
+struct block_quote_content_lines : opt<list<sor<block_quote_line, block_quote_empty_line>, eol>>
 {
 };
 
-struct block_quote_content
-	: seq<block_quote_content_lines, must<block_quote_token>>
+struct block_quote_content : seq<block_quote_content_lines, must<block_quote_token>>
 {
 };
 
@@ -732,7 +731,11 @@ struct interface_type_definition_interface_name : seq<plus<ignored>, interface_n
 {
 };
 
-struct interface_type_definition_directives : opt<star<ignored>, directives>
+struct interface_type_definition_implements_interfaces : opt<plus<ignored>, implements_interfaces>
+{
+};
+
+struct interface_type_definition_directives : seq<star<ignored>, directives>
 {
 };
 
@@ -742,9 +745,13 @@ struct interface_type_definition_fields_definition : seq<star<ignored>, fields_d
 
 struct interface_type_definition_content
 	: seq<interface_type_definition_interface_name,
-		  sor<seq<interface_type_definition_directives,
+		  sor<seq<interface_type_definition_implements_interfaces,
+				  opt<interface_type_definition_directives>,
 				  interface_type_definition_fields_definition>,
-			  interface_type_definition_directives>>
+			  seq<interface_type_definition_implements_interfaces,
+				  interface_type_definition_directives,
+				  interface_type_definition_fields_definition>,
+			  interface_type_definition_implements_interfaces>>
 {
 };
 
@@ -1085,9 +1092,26 @@ struct interface_type_extension_start : seq<extend_keyword, plus<ignored>, inter
 {
 };
 
+struct interface_type_extension_implements_interfaces : seq<plus<ignored>, implements_interfaces>
+{
+};
+
+struct interface_type_extension_directives : seq<star<ignored>, directives>
+{
+};
+
+struct interface_type_extension_fields_definition : seq<star<ignored>, fields_definition>
+{
+};
+
 struct interface_type_extension_content
 	: seq<plus<ignored>, interface_name, star<ignored>,
-		  sor<seq<opt<directives, star<ignored>>, fields_definition>, directives>>
+		  sor<seq<opt<interface_type_extension_implements_interfaces>,
+				  opt<interface_type_extension_directives>,
+				  interface_type_extension_fields_definition>,
+			  seq<opt<interface_type_extension_implements_interfaces>,
+				  interface_type_extension_directives>,
+			  interface_type_extension_implements_interfaces>>
 {
 };
 

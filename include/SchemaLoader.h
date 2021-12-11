@@ -176,6 +176,7 @@ struct InterfaceType
 {
 	std::string_view type;
 	std::string_view cppType;
+	std::vector<std::string_view> interfaces;
 	OutputFieldList fields;
 	std::string_view description;
 };

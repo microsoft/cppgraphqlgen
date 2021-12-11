@@ -283,6 +283,11 @@ void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
 	_possibleTypes.push_back(possibleType);
 }
 
+void InterfaceType::AddInterfaces(std::vector<std::shared_ptr<const InterfaceType>>&& interfaces)
+{
+	_interfaces = std::move(interfaces);
+}
+
 void InterfaceType::AddFields(std::vector<std::shared_ptr<const Field>>&& fields)
 {
 	_fields = std::move(fields);

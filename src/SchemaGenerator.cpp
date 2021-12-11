@@ -1824,6 +1824,7 @@ void )cpp" << cppType
 void Generator::outputInterfaceIntrospection(
 	std::ostream& sourceFile, const InterfaceType& interfaceType) const
 {
+	outputIntrospectionInterfaces(sourceFile, interfaceType.cppType, interfaceType.interfaces);
 	outputIntrospectionFields(sourceFile, interfaceType.cppType, interfaceType.fields);
 }
 
@@ -2170,14 +2171,21 @@ service::AwaitableResolver )cpp"
 void Generator::outputObjectIntrospection(
 	std::ostream& sourceFile, const ObjectType& objectType) const
 {
-	if (!objectType.interfaces.empty())
+	outputIntrospectionInterfaces(sourceFile, objectType.cppType, objectType.interfaces);
+	outputIntrospectionFields(sourceFile, objectType.cppType, objectType.fields);
+}
+
+void Generator::outputIntrospectionInterfaces(std::ostream& sourceFile, std::string_view cppType,
+	const std::vector<std::string_view>& interfaces) const
+{
+	if (!interfaces.empty())
 	{
 		bool firstInterface = true;
 
-		sourceFile << R"cpp(	type)cpp" << objectType.cppType << R"cpp(->AddInterfaces({
+		sourceFile << R"cpp(	type)cpp" << cppType << R"cpp(->AddInterfaces({
 )cpp";
 
-		for (const auto& interfaceName : objectType.interfaces)
+		for (const auto& interfaceName : interfaces)
 		{
 			if (!firstInterface)
 			{
@@ -2196,8 +2204,6 @@ void Generator::outputObjectIntrospection(
 	});
 )cpp";
 	}
-
-	outputIntrospectionFields(sourceFile, objectType.cppType, objectType.fields);
 }
 
 void Generator::outputIntrospectionFields(

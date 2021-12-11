@@ -609,6 +609,18 @@ void SchemaLoader::visitObjectTypeExtension(const peg::ast_node& objectTypeExten
 					objectType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : objectType.fields)
+			{
+				blockReservedName(field.name, field.position);
+				for (const auto& argument : field.arguments)
+				{
+					blockReservedName(argument.name, argument.position);
+				}
+			}
+		}
 	}
 }
 
@@ -640,7 +652,7 @@ void SchemaLoader::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTy
 
 	auto cppName = getSafeCppName(name);
 
-	_interfaceTypes.push_back({ name, cppName, {}, description });
+	_interfaceTypes.push_back({ name, cppName, {}, {}, description });
 
 	visitInterfaceTypeExtension(interfaceTypeDefinition);
 }
@@ -664,6 +676,11 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 	{
 		auto& interfaceType = _interfaceTypes[itrType->second];
 
+		peg::for_each_child<peg::interface_type>(interfaceTypeExtension,
+			[&interfaceType](const peg::ast_node& child) {
+				interfaceType.interfaces.push_back(child.string_view());
+			});
+
 		peg::on_first_child<peg::fields_definition>(interfaceTypeExtension,
 			[&interfaceType](const peg::ast_node& child) {
 				auto fields = getOutputFields(child.children);
@@ -674,6 +691,18 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 					interfaceType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : interfaceType.fields)
+			{
+				blockReservedName(field.name, field.position);
+				for (const auto& argument : field.arguments)
+				{
+					blockReservedName(argument.name, argument.position);
+				}
+			}
+		}
 	}
 }
 
@@ -739,6 +768,14 @@ void SchemaLoader::visitInputObjectTypeExtension(const peg::ast_node& inputObjec
 					inputType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : inputType.fields)
+			{
+				blockReservedName(field.name, field.position);
+			}
+		}
 	}
 }
 
@@ -1039,12 +1076,16 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 		});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &directive](const peg::ast_node& child) {
 			auto fields = getInputFields(child.children);
 
 			directive.arguments.reserve(directive.arguments.size() + fields.size());
 			for (auto& field : fields)
 			{
+				if (!isIntrospection)
+				{
+					blockReservedName(field.name, field.position);
+				}
 				directive.arguments.push_back(std::move(field));
 			}
 		});
