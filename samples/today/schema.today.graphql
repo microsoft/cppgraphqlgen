@@ -106,7 +106,7 @@ type Mutation {
     """
 type Subscription {
     nextAppointmentChange : Appointment @deprecated(
-        reason:"""Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+        reason:"""Need to deprecate a [field](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation)"""
     )
     nodeChange(id: ID!): Node!
 }
@@ -120,7 +120,7 @@ enum TaskState {
     Started
     Complete
     Unassigned @deprecated(
-        reason:"""Need to deprecate an [enum value](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+        reason:"""Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation)"""
     )
 }
 

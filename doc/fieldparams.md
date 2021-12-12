@@ -120,7 +120,7 @@ implementation detail by client code. It automatically propagates through the
 field resolvers, and if there is a schema exception or one of the `getField`
 accessors throws another exception derived from `std::exception`, the
 `graphqlservice` library will automatically add the resulting path to the error
-report, accoring to the [spec](http://spec.graphql.org/June2018/#sec-Errors).
+report, accoring to the [spec](https://spec.graphql.org/October2021/#sec-Errors).
 
 ### Launch Policy
 

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-"GraphQL validation [sample](http://spec.graphql.org/October2021/#example-19f2a)"
+"GraphQL validation [sample](https://spec.graphql.org/October2021/#example-19f2a)"
 type Query {
   dog: Dog
 }

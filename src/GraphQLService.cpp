@@ -591,7 +591,7 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 
 void blockSubFields(const ResolverParams& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+	// https://spec.graphql.org/October2021/#sec-Leaf-Field-Selections
 	if (params.selection != nullptr)
 	{
 		auto position = params.selection->begin();
@@ -676,7 +676,7 @@ AwaitableResolver ModifiedResult<response::IdType>::convert(
 
 void requireSubFields(const ResolverParams& params)
 {
-	// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+	// https://spec.graphql.org/October2021/#sec-Leaf-Field-Selections
 	if (params.selection == nullptr)
 	{
 		auto position = params.field.begin();
@@ -1455,7 +1455,7 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 		name = child.string_view();
 	});
 
-	// http://spec.graphql.org/June2018/#sec-Single-root-field
+	// https://spec.graphql.org/October2021/#sec-Single-root-field
 	if (!_field.empty())
 	{
 		auto position = field.begin();
@@ -1698,7 +1698,7 @@ response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<Re
 		const bool isMutation = (operationDefinition.first == strMutation);
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
-		// http://spec.graphql.org/June2018/#sec-Normal-and-Serial-Execution
+		// https://spec.graphql.org/October2021/#sec-Normal-and-Serial-Execution
 		const auto operationLaunch = isMutation ? await_async { std::launch::deferred } : launch;
 
 		OperationDefinitionVisitor operationVisitor(resolverContext,
