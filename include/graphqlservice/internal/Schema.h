@@ -177,7 +177,7 @@ public:
 	GRAPHQLSERVICE_EXPORT static std::shared_ptr<InterfaceType> Make(
 		std::string_view name, std::string_view description);
 
-	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<ObjectType> possibleType);
+	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<BaseType> possibleType);
 	GRAPHQLSERVICE_EXPORT void AddInterfaces(
 		std::vector<std::shared_ptr<const InterfaceType>>&& interfaces);
 	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
@@ -187,6 +187,8 @@ public:
 	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<const Field>>& fields()
 		const noexcept final;
 	GRAPHQLSERVICE_EXPORT const std::vector<std::weak_ptr<const BaseType>>& possibleTypes()
+		const noexcept final;
+	GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<const InterfaceType>>& interfaces()
 		const noexcept final;
 
 private:

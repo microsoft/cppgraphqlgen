@@ -268,7 +268,7 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 
 	ASSERT_EQ(errors.size(), 1);
 	EXPECT_EQ(
-		R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js",
+		R"js({"message":"Subscription with Introspection root field name: sub","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
 		<< "error should match";
 }

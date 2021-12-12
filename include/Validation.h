@@ -250,6 +250,7 @@ private:
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
+	size_t _introspectionFieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
 	ValidateType _scopedType;

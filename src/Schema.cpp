@@ -235,8 +235,7 @@ void ObjectType::AddInterfaces(std::vector<std::shared_ptr<const InterfaceType>>
 
 	for (const auto& interface : _interfaces)
 	{
-		std::const_pointer_cast<InterfaceType>(interface)->AddPossibleType(
-			std::static_pointer_cast<ObjectType>(shared_from_this()));
+		std::const_pointer_cast<InterfaceType>(interface)->AddPossibleType(shared_from_this());
 	}
 }
 
@@ -278,7 +277,7 @@ InterfaceType::InterfaceType(init&& params)
 {
 }
 
-void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
+void InterfaceType::AddPossibleType(std::weak_ptr<BaseType> possibleType)
 {
 	_possibleTypes.push_back(possibleType);
 }
@@ -286,6 +285,11 @@ void InterfaceType::AddPossibleType(std::weak_ptr<ObjectType> possibleType)
 void InterfaceType::AddInterfaces(std::vector<std::shared_ptr<const InterfaceType>>&& interfaces)
 {
 	_interfaces = std::move(interfaces);
+
+	for (const auto& interface : _interfaces)
+	{
+		std::const_pointer_cast<InterfaceType>(interface)->AddPossibleType(shared_from_this());
+	}
 }
 
 void InterfaceType::AddFields(std::vector<std::shared_ptr<const Field>>&& fields)
@@ -306,6 +310,11 @@ const std::vector<std::shared_ptr<const Field>>& InterfaceType::fields() const n
 const std::vector<std::weak_ptr<const BaseType>>& InterfaceType::possibleTypes() const noexcept
 {
 	return _possibleTypes;
+}
+
+const std::vector<std::shared_ptr<const InterfaceType>>& InterfaceType::interfaces() const noexcept
+{
+	return _interfaces;
 }
 
 struct UnionType::init

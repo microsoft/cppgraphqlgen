@@ -403,7 +403,15 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(std::shared_ptr<schema::Sch
 			{
 				const auto& possibleTypes = entry.second->possibleTypes();
 
-				matchingTypes.reserve(possibleTypes.size());
+				if (kind == introspection::TypeKind::INTERFACE)
+				{
+					matchingTypes.reserve(possibleTypes.size() + 1);
+					matchingTypes.emplace(name);
+				}
+				else
+				{
+					matchingTypes.reserve(possibleTypes.size());
+				}
 
 				for (const auto& possibleType : possibleTypes)
 				{
@@ -773,26 +781,46 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	}
 
 	_scopedType = itrType->second;
+	_introspectionFieldCount = 0;
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
 
 	visitSelection(selection);
 
-	if (_fieldCount > 1 && operationType == strSubscription)
+	if (operationType == strSubscription)
 	{
-		// https://spec.graphql.org/October2021/#sec-Single-root-field
-		auto position = operationDefinition.begin();
-		std::ostringstream error;
-
-		error << "Subscription with more than one root field";
-
-		if (!operationName.empty())
+		if (_fieldCount > 1)
 		{
-			error << " name: " << operationName;
+			// https://spec.graphql.org/October2021/#sec-Single-root-field
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Subscription with more than one root field";
+
+			if (!operationName.empty())
+			{
+				error << " name: " << operationName;
+			}
+
+			_errors.push_back({ error.str(), { position.line, position.column } });
 		}
 
-		_errors.push_back({ error.str(), { position.line, position.column } });
+		if (_introspectionFieldCount != 0)
+		{
+			// https://spec.graphql.org/October2021/#sec-Single-root-field
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Subscription with Introspection root field";
+
+			if (!operationName.empty())
+			{
+				error << " name: " << operationName;
+			}
+
+			_errors.push_back({ error.str(), { position.line, position.column } });
+		}
 	}
 
 	_scopedType.reset();
@@ -1622,7 +1650,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	std::list<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
+		[this, name, &validateArguments, &argumentLocations, &argumentNames](
 			const peg::ast_node& child) {
 			for (auto& argument : child.children)
 			{
@@ -1760,8 +1788,10 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		auto outerType = std::move(_scopedType);
 		auto outerFields = std::move(_selectionFields);
 		auto outerFieldCount = _fieldCount;
+		auto outerIntrospectionFieldCount = _introspectionFieldCount;
 
 		_fieldCount = 0;
+		_introspectionFieldCount = 0;
 		_selectionFields.clear();
 		_scopedType = std::move(innerType);
 
@@ -1771,6 +1801,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		_scopedType = std::move(outerType);
 		_selectionFields = std::move(outerFields);
 		subFieldCount = _fieldCount;
+		_introspectionFieldCount = outerIntrospectionFieldCount;
 		_fieldCount = outerFieldCount;
 	}
 
@@ -1787,6 +1818,14 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	++_fieldCount;
+
+	constexpr auto c_introspectionFieldPrefix = R"gql(__)gql"sv;
+
+	if (name.size() >= c_introspectionFieldPrefix.size()
+		&& name.substr(0, c_introspectionFieldPrefix.size()) == c_introspectionFieldPrefix)
+	{
+		++_introspectionFieldCount;
+	}
 }
 
 void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)

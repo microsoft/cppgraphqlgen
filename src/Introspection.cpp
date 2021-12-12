@@ -5,12 +5,12 @@
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
-#include "graphqlservice/introspection/SchemaObject.h"
-#include "graphqlservice/introspection/TypeObject.h"
+#include "graphqlservice/introspection/DirectiveObject.h"
+#include "graphqlservice/introspection/EnumValueObject.h"
 #include "graphqlservice/introspection/FieldObject.h"
 #include "graphqlservice/introspection/InputValueObject.h"
-#include "graphqlservice/introspection/EnumValueObject.h"
-#include "graphqlservice/introspection/DirectiveObject.h"
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
 
 namespace graphql::introspection {
 
@@ -168,8 +168,19 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes
 		possibleTypes.end(),
 		result->begin(),
 		[](const auto& entry) {
-			return std::make_shared<object::Type>(std::make_shared<Type>(entry.lock()));
+			auto typeEntry = entry.lock();
+
+			return typeEntry && typeEntry->kind() == introspection::TypeKind::OBJECT
+				? std::make_shared<object::Type>(std::make_shared<Type>(std::move(typeEntry)))
+				: std::shared_ptr<object::Type> {};
 		});
+
+	result->erase(std::remove_if(result->begin(),
+					  result->end(),
+					  [](const auto& entry) noexcept {
+						  return entry != nullptr;
+					  }),
+		result->cend());
 
 	return result;
 }
@@ -246,7 +257,8 @@ std::optional<std::string> Type::getSpecifiedByURL() const
 {
 	const auto specifiedByURL = _type->specifiedByURL();
 
-	return { specifiedByURL.empty() ? std::nullopt : std::make_optional<std::string>(specifiedByURL) };
+	return { specifiedByURL.empty() ? std::nullopt
+									: std::make_optional<std::string>(specifiedByURL) };
 }
 
 Field::Field(const std::shared_ptr<const schema::Field>& field)
