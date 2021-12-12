@@ -139,6 +139,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
 	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Pet)gql"sv, typePet);
+	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Node)gql"sv, typeNode);
+	auto typeResource = schema::InterfaceType::Make(R"gql(Resource)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Resource)gql"sv, typeResource);
 	auto typeCatOrDog = schema::UnionType::Make(R"gql(CatOrDog)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(CatOrDog)gql"sv, typeCatOrDog);
 	auto typeDogOrHuman = schema::UnionType::Make(R"gql(DogOrHuman)gql"sv, R"md()md"sv);
@@ -182,6 +186,8 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 
 	AddSentientDetails(typeSentient, schema);
 	AddPetDetails(typePet, schema);
+	AddNodeDetails(typeNode, schema);
+	AddResourceDetails(typeResource, schema);
 
 	AddCatOrDogDetails(typeCatOrDog, schema);
 	AddDogOrHumanDetails(typeDogOrHuman, schema);

@@ -1,6 +1,8 @@
 ValidationSchema.cpp
 SentientObject.cpp
 PetObject.cpp
+NodeObject.cpp
+ResourceObject.cpp
 CatOrDogObject.cpp
 DogOrHumanObject.cpp
 HumanOrAlienObject.cpp

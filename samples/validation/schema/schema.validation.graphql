@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-"GraphQL validation [sample](http://spec.graphql.org/June2018/#example-26a9d)"
+"GraphQL validation [sample](http://spec.graphql.org/October2021/#example-19f2a)"
 type Query {
   dog: Dog
 }
@@ -32,6 +32,7 @@ type Alien implements Sentient {
 
 type Human implements Sentient {
   name: String!
+  pets: [Pet!]!
 }
 
 enum CatCommand { JUMP }
@@ -47,43 +48,43 @@ union CatOrDog = Cat | Dog
 union DogOrHuman = Dog | Human
 union HumanOrAlien = Human | Alien
 
-"Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e)"
+"Support for [Counter Example 105](https://spec.graphql.org/October2021/#example-77c2e)"
 type Mutation {
   mutateDog: MutateDogResult
 }
 
-"Support for [Counter Example 94](http://spec.graphql.org/June2018/#example-77c2e)"
+"Support for [Counter Example 105](https://spec.graphql.org/October2021/#example-77c2e)"
 type MutateDogResult {
   id: ID!
 }
 
-"Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+"Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
 type Subscription {
-  "Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+  "Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
   newMessage: Message!
-  "Support for [Counter Example 99](http://spec.graphql.org/June2018/#example-3997d) - [Counter Example 100](http://spec.graphql.org/June2018/#example-18466)"
+  "Support for [Counter Example 110](https://spec.graphql.org/October2021/#example-3997d) - [Counter Example 111](https://spec.graphql.org/October2021/#example-18466)"
   disallowedSecondRootField: Boolean!
 }
 
-"Support for [Example 97](http://spec.graphql.org/June2018/#example-5bbc3) - [Counter Example 101](http://spec.graphql.org/June2018/#example-2353b)"
+"Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
 type Message {
   body: String
   sender: ID!
 }
 
-# http://spec.graphql.org/June2018/#example-9bada
+# https://spec.graphql.org/October2021/#example-9bada
 extend type Query {
-  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
   human: Human
-  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
   pet: Pet
-  "Support for [Counter Example 116](http://spec.graphql.org/June2018/#example-77c2e)"
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
   catOrDog: CatOrDog
 }
 
-"Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c)"
+"Support for [Example 131](https://spec.graphql.org/October2021/#example-73706)"
 type Arguments {
-  "Support for [Example 121](http://spec.graphql.org/June2018/#example-18fab)"
+  "Support for [Example 132](https://spec.graphql.org/October2021/#example-bda7e)"
   multipleReqs(x: Int!, y: Int!): Int!
   booleanArgField(booleanArg: Boolean): Boolean
   floatArgField(floatArg: Float): Float
@@ -94,27 +95,38 @@ type Arguments {
   optionalNonNullBooleanArgField(optionalBooleanArg: Boolean! = false): Boolean!
 }
 
-# http://spec.graphql.org/June2018/#example-1891c
+# https://spec.graphql.org/October2021/#example-73706
 extend type Query {
-  "Support for [Example 120](http://spec.graphql.org/June2018/#example-1891c)"
+  "Support for [Example 131](https://spec.graphql.org/October2021/#example-73706)"
   arguments: Arguments
 }
 
-# http://spec.graphql.org/June2018/#example-6bbad
-extend type Human {
-  "Support for [Counter Example 136](http://spec.graphql.org/June2018/#example-6bbad)"
-  pets: [Pet!]!
+# https://spec.graphql.org/October2021/#example-bc12a
+extend type Query {
+  "Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+  resource: Resource
 }
 
-"[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
+"Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+interface Node {
+  id: ID!
+}
+
+"Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+interface Resource implements Node {
+  id: ID!
+  url: String
+}
+
+"[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
 input ComplexInput {
   name: String
   owner: String
 }
 
 extend type Query {
-  "[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
+  "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
   findDog(complex: ComplexInput): Dog
-  "[Example 155](http://spec.graphql.org/June2018/#example-f3185)"
+  "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
   booleanList(booleanListArg: [Boolean!]): Boolean
 }
