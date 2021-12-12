@@ -55,11 +55,7 @@ std::optional<std::vector<std::shared_ptr<object::Character>>> Droid::getFriends
 		[](const auto& wpFriend) noexcept {
 			return make_hero(wpFriend);
 		});
-	result.erase(std::remove_if(result.begin(),
-					 result.end(),
-					 [](const auto& entry) noexcept {
-						 return !entry;
-					 }),
+	result.erase(std::remove(result.begin(), result.end(), std::shared_ptr<object::Character> {}),
 		result.end());
 
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
