@@ -178,7 +178,7 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes
 	result->erase(std::remove_if(result->begin(),
 					  result->end(),
 					  [](const auto& entry) noexcept {
-						  return entry != nullptr;
+						  return entry == nullptr;
 					  }),
 		result->cend());
 
