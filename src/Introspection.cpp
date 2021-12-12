@@ -175,11 +175,7 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes
 				: std::shared_ptr<object::Type> {};
 		});
 
-	result->erase(std::remove_if(result->begin(),
-					  result->end(),
-					  [](const auto& entry) noexcept {
-						  return entry == nullptr;
-					  }),
+	result->erase(std::remove(result->begin(), result->end(), std::shared_ptr<object::Type> {}),
 		result->cend());
 
 	return result;
