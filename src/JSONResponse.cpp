@@ -16,94 +16,74 @@
 
 namespace graphql::response {
 
-void writeResponse(rapidjson::Writer<rapidjson::StringBuffer>& writer, Value&& response)
+class StringWriter
 {
-	switch (response.type())
+public:
+	StringWriter(rapidjson::StringBuffer& buffer)
+		: _writer { buffer }
 	{
-		case Type::Map:
-		{
-			auto members = response.release<MapType>();
-
-			writer.StartObject();
-
-			for (auto& entry : members)
-			{
-				writer.Key(entry.first.c_str());
-				writeResponse(writer, std::move(entry.second));
-			}
-
-			writer.EndObject();
-			break;
-		}
-
-		case Type::List:
-		{
-			auto elements = response.release<ListType>();
-
-			writer.StartArray();
-
-			for (auto& entry : elements)
-			{
-				writeResponse(writer, std::move(entry));
-			}
-
-			writer.EndArray();
-			break;
-		}
-
-		case Type::String:
-		case Type::EnumValue:
-		{
-			auto value = response.release<StringType>();
-
-			writer.String(value.c_str());
-			break;
-		}
-
-		case Type::Null:
-		{
-			writer.Null();
-			break;
-		}
-
-		case Type::Boolean:
-		{
-			writer.Bool(response.get<BooleanType>());
-			break;
-		}
-
-		case Type::Int:
-		{
-			writer.Int(response.get<IntType>());
-			break;
-		}
-
-		case Type::Float:
-		{
-			writer.Double(response.get<FloatType>());
-			break;
-		}
-
-		case Type::Scalar:
-		{
-			writeResponse(writer, response.release<ScalarType>());
-			break;
-		}
-
-		default:
-		{
-			writer.Null();
-			break;
-		}
 	}
-}
+
+	void start_object()
+	{
+		_writer.StartObject();
+	}
+
+	void add_member(const std::string& key)
+	{
+		_writer.Key(key.c_str());
+	}
+
+	void end_object()
+	{
+		_writer.EndObject();
+	}
+
+	void start_array()
+	{
+		_writer.StartArray();
+	}
+
+	void end_arrary()
+	{
+		_writer.EndArray();
+	}
+
+	void write_null()
+	{
+		_writer.Null();
+	}
+
+	void write_string(const std::string& value)
+	{
+		_writer.String(value.c_str());
+	}
+
+	void write_bool(bool value)
+	{
+		_writer.Bool(value);
+	}
+
+	void write_int(int value)
+	{
+		_writer.Int(value);
+	}
+
+	void write_float(double value)
+	{
+		_writer.Double(value);
+	}
+
+private:
+	rapidjson::Writer<rapidjson::StringBuffer> _writer;
+};
 
 std::string toJSON(Value&& response)
 {
 	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	Writer writer { std::make_unique<StringWriter>(buffer) };
 
-	writeResponse(writer, std::move(response));
+	writer.write(std::move(response));
 	return buffer.GetString();
 }
 
