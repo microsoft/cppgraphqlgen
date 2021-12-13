@@ -468,6 +468,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(std::shared_ptr<schema::Sch
 		const auto& args = directive->args();
 		ValidateDirective validateDirective;
 
+		validateDirective.isRepeatable = directive->isRepeatable();
+
 		for (const auto location : locations)
 		{
 			validateDirective.locations.emplace(location);
@@ -1977,19 +1979,7 @@ void ValidateExecutableVisitor::visitDirectives(
 				directiveName = child.string_view();
 			});
 
-		if (!uniqueDirectives.emplace(directiveName).second)
-		{
-			// https://spec.graphql.org/October2021/#sec-Directives-Are-Unique-Per-Location
-			auto position = directive->begin();
-			std::ostringstream message;
-
-			message << "Conflicting directive name: " << directiveName;
-
-			_errors.push_back({ message.str(), { position.line, position.column } });
-			continue;
-		}
-
-		auto itrDirective = _directives.find(directiveName);
+		const auto itrDirective = _directives.find(directiveName);
 
 		if (itrDirective == _directives.end())
 		{
@@ -1998,6 +1988,18 @@ void ValidateExecutableVisitor::visitDirectives(
 			std::ostringstream message;
 
 			message << "Undefined directive name: " << directiveName;
+
+			_errors.push_back({ message.str(), { position.line, position.column } });
+			continue;
+		}
+
+		if (!itrDirective->second.isRepeatable && !uniqueDirectives.emplace(directiveName).second)
+		{
+			// https://spec.graphql.org/October2021/#sec-Directives-Are-Unique-Per-Location
+			auto position = directive->begin();
+			std::ostringstream message;
+
+			message << "Conflicting directive name: " << directiveName;
 
 			_errors.push_back({ message.str(), { position.line, position.column } });
 			continue;

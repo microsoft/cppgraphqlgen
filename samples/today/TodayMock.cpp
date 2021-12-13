@@ -4,12 +4,12 @@
 #include "TodayMock.h"
 
 #include "AppointmentConnectionObject.h"
-#include "TaskConnectionObject.h"
-#include "FolderConnectionObject.h"
-#include "UnionTypeObject.h"
-#include "NestedTypeObject.h"
-#include "ExpensiveObject.h"
 #include "CompleteTaskPayloadObject.h"
+#include "ExpensiveObject.h"
+#include "FolderConnectionObject.h"
+#include "NestedTypeObject.h"
+#include "TaskConnectionObject.h"
+#include "UnionTypeObject.h"
 
 #include <algorithm>
 #include <chrono>
@@ -501,10 +501,16 @@ std::stack<CapturedParams> NestedType::_capturedParams;
 NestedType::NestedType(service::FieldParams&& params, int depth)
 	: depth(depth)
 {
-	_capturedParams.push({ response::Value(params.operationDirectives),
-		response::Value(params.fragmentDefinitionDirectives),
-		response::Value(params.fragmentSpreadDirectives),
-		response::Value(params.inlineFragmentDirectives),
+	_capturedParams.push({ { params.operationDirectives },
+		params.fragmentDefinitionDirectives->empty()
+			? service::Directives {}
+			: service::Directives { params.fragmentDefinitionDirectives->front().get() },
+		params.fragmentSpreadDirectives->empty()
+			? service::Directives {}
+			: service::Directives { params.fragmentSpreadDirectives->front() },
+		params.inlineFragmentDirectives->empty()
+			? service::Directives {}
+			: service::Directives { params.inlineFragmentDirectives->front() },
 		std::move(params.fieldDirectives) });
 }
 

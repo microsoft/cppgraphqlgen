@@ -265,11 +265,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddDirective(schema::Directive::Make(R"gql(id)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::FIELD_DEFINITION
 	}, {}, false));
-	schema->AddDirective(schema::Directive::Make(R"gql(subscriptionTag)gql"sv, R"md()md"sv, {
-		introspection::DirectiveLocation::SUBSCRIPTION
-	}, {
-		schema::InputValue::Make(R"gql(field)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
-	}, true));
 	schema->AddDirective(schema::Directive::Make(R"gql(queryTag)gql"sv, R"md()md"sv, {
 		introspection::DirectiveLocation::QUERY
 	}, {
@@ -295,6 +290,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	}, {
 		schema::InputValue::Make(R"gql(inlineFragment)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
 	}, false));
+	schema->AddDirective(schema::Directive::Make(R"gql(repeatableOnField)gql"sv, R"md()md"sv, {
+		introspection::DirectiveLocation::FIELD
+	}, {}, true));
 
 	schema->AddQueryType(typeQuery);
 	schema->AddMutationType(typeMutation);

@@ -229,6 +229,15 @@ public:
 	}
 };
 
+// Directive order matters, and some of them are repeatable. So rather than passing them in a
+// response::Value, pass directives in something like the underlying response::MapType which
+// preserves the order of the elements without complete uniqueness.
+using Directives = std::vector<std::pair<std::string_view, response::Value>>;
+
+// Traversing a fragment spread adds a new set of directives.
+using FragmentDefinitionDirectiveStack = std::list<std::reference_wrapper<const Directives>>;
+using FragmentSpreadDirectiveStack = std::list<Directives>;
+
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
 struct SelectionSetParams
@@ -239,14 +248,14 @@ struct SelectionSetParams
 	// The lifetime of each of these borrowed references is guaranteed until the future returned
 	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer.
 	const std::shared_ptr<RequestState>& state;
-	const response::Value& operationDirectives;
-	const response::Value& fragmentDefinitionDirectives;
+	const Directives& operationDirectives;
+	const std::shared_ptr<FragmentDefinitionDirectiveStack> fragmentDefinitionDirectives;
 
 	// Fragment directives are shared for all fields in that fragment, but they aren't kept alive
 	// after the call to the last accessor in the fragment. If you need to keep them alive longer,
-	// you'll need to explicitly copy them into other instances of response::Value.
-	const response::Value& fragmentSpreadDirectives;
-	const response::Value& inlineFragmentDirectives;
+	// you'll need to explicitly copy them into other instances of Directives.
+	const std::shared_ptr<FragmentSpreadDirectiveStack> fragmentSpreadDirectives;
+	const std::shared_ptr<FragmentSpreadDirectiveStack> inlineFragmentDirectives;
 
 	// Field error path to this selection set.
 	std::optional<field_path> errorPath;
@@ -259,12 +268,12 @@ struct SelectionSetParams
 struct FieldParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		SelectionSetParams&& selectionSetParams, response::Value directives);
+		SelectionSetParams&& selectionSetParams, Directives directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive
 	// longer.
-	response::Value fieldDirectives;
+	Directives fieldDirectives;
 };
 
 // Field accessors may return either a result of T, an awaitable of T, or a std::future<T>, so at
@@ -379,11 +388,11 @@ public:
 
 	std::string_view getType() const;
 	const peg::ast_node& getSelection() const;
-	const response::Value& getDirectives() const;
+	const Directives& getDirectives() const;
 
 private:
 	std::string_view _type;
-	response::Value _directives;
+	Directives _directives;
 
 	std::reference_wrapper<const peg::ast_node> _selection;
 };
@@ -399,8 +408,8 @@ struct ResolverParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams,
 		const peg::ast_node& field, std::string&& fieldName, response::Value arguments,
-		response::Value fieldDirectives, const peg::ast_node* selection,
-		const FragmentMap& fragments, const response::Value& variables);
+		Directives fieldDirectives, const peg::ast_node* selection, const FragmentMap& fragments,
+		const response::Value& variables);
 
 	GRAPHQLSERVICE_EXPORT schema_location getLocation() const;
 
@@ -408,7 +417,7 @@ struct ResolverParams : SelectionSetParams
 	const peg::ast_node& field;
 	std::string fieldName;
 	response::Value arguments { response::Type::Map };
-	response::Value fieldDirectives { response::Type::Map };
+	Directives fieldDirectives;
 	const peg::ast_node* selection;
 
 	// These values remain unchanged for the entire operation, but they're passed to each of the
@@ -944,11 +953,11 @@ struct SubscriptionParams
 struct OperationData : std::enable_shared_from_this<OperationData>
 {
 	explicit OperationData(std::shared_ptr<RequestState> state, response::Value variables,
-		response::Value directives, FragmentMap fragments);
+		Directives directives, FragmentMap fragments);
 
 	std::shared_ptr<RequestState> state;
 	response::Value variables;
-	response::Value directives;
+	Directives directives;
 	FragmentMap fragments;
 };
 
@@ -956,7 +965,8 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(response::Value)>;
 using SubscriptionArguments = std::map<std::string_view, response::Value>;
-using SubscriptionFilterCallback = std::function<bool(response::MapType::const_reference)>;
+using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
+using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
 
 // Subscriptions are stored in maps using these keys.
 using SubscriptionKey = size_t;
@@ -970,7 +980,7 @@ using AwaitableDeliver = internal::Awaitable<void>;
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
-		response::Value arguments, response::Value fieldDirectives, peg::ast&& query,
+		response::Value arguments, Directives fieldDirectives, peg::ast&& query,
 		std::string&& operationName, SubscriptionCallback&& callback,
 		const peg::ast_node& selection);
 
@@ -978,7 +988,7 @@ struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
 
 	SubscriptionName field;
 	response::Value arguments;
-	response::Value fieldDirectives;
+	Directives fieldDirectives;
 	peg::ast query;
 	std::string operationName;
 	SubscriptionCallback callback;
@@ -1023,14 +1033,14 @@ public:
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
 		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+		const SubscriptionArguments& arguments, const Directives& directives,
 		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionFilterCallback& applyArguments,
+		const SubscriptionArgumentFilterCallback& applyArguments,
 		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionFilterCallback& applyArguments,
-		const SubscriptionFilterCallback& applyDirectives,
+		const SubscriptionArgumentFilterCallback& applyArguments,
+		const SubscriptionDirectiveFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;
 
 	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
@@ -1038,14 +1048,14 @@ public:
 	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
 		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionArguments& arguments, const SubscriptionArguments& directives,
+		const SubscriptionArguments& arguments, const Directives& directives,
 		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionFilterCallback& applyArguments,
+		const SubscriptionArgumentFilterCallback& applyArguments,
 		std::shared_ptr<Object> subscriptionObject) const;
 	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionFilterCallback& applyArguments,
-		const SubscriptionFilterCallback& applyDirectives,
+		const SubscriptionArgumentFilterCallback& applyArguments,
+		const SubscriptionDirectiveFilterCallback& applyDirectives,
 		std::shared_ptr<Object> subscriptionObject) const;
 
 private:

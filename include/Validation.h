@@ -37,6 +37,7 @@ using ValidateDirectiveArguments = internal::string_view_map<ValidateArgument>;
 
 struct ValidateDirective
 {
+	bool isRepeatable = false;
 	internal::sorted_set<introspection::DirectiveLocation> locations;
 	ValidateDirectiveArguments arguments;
 };
