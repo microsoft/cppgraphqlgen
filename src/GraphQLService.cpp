@@ -1316,8 +1316,8 @@ void OperationDefinitionVisitor::visit(
 class SubscriptionDefinitionVisitor
 {
 public:
-	SubscriptionDefinitionVisitor(SubscriptionParams&& params, SubscriptionCallback&& callback,
-		FragmentMap&& fragments, const std::shared_ptr<Object>& subscriptionObject);
+	SubscriptionDefinitionVisitor(RequestSubscribeParams&& params, FragmentMap&& fragments,
+		const std::shared_ptr<Object>& subscriptionObject);
 
 	const peg::ast_node& getRoot() const;
 	std::shared_ptr<SubscriptionData> getRegistration();
@@ -1329,8 +1329,7 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	SubscriptionParams _params;
-	SubscriptionCallback _callback;
+	RequestSubscribeParams _params;
 	FragmentMap _fragments;
 	const std::shared_ptr<Object>& _subscriptionObject;
 	SubscriptionName _field;
@@ -1339,11 +1338,9 @@ private:
 	std::shared_ptr<SubscriptionData> _result;
 };
 
-SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(SubscriptionParams&& params,
-	SubscriptionCallback&& callback, FragmentMap&& fragments,
-	const std::shared_ptr<Object>& subscriptionObject)
+SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(RequestSubscribeParams&& params,
+	FragmentMap&& fragments, const std::shared_ptr<Object>& subscriptionObject)
 	: _params(std::move(params))
-	, _callback(std::move(callback))
 	, _fragments(std::move(fragments))
 	, _subscriptionObject(subscriptionObject)
 {
@@ -1403,7 +1400,7 @@ void SubscriptionDefinitionVisitor::visit(const peg::ast_node& operationDefiniti
 			std::move(_fieldDirectives),
 			std::move(_params.query),
 			std::move(_params.operationName),
-			std::move(_callback),
+			std::move(_params.callback),
 			selection);
 }
 
@@ -1600,30 +1597,19 @@ std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefiniti
 	return result;
 }
 
-response::AwaitableValue Request::resolve(std::shared_ptr<RequestState> state, peg::ast& query,
-	std::string_view operationName, response::Value variables) const
-{
-	return resolve(std::launch::deferred,
-		std::move(state),
-		query,
-		operationName,
-		std::move(variables));
-}
-
-response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<RequestState> state,
-	peg::ast& query, std::string_view operationName, response::Value variables) const
+response::AwaitableValue Request::resolve(RequestResolveParams params) const
 {
 	try
 	{
-		FragmentDefinitionVisitor fragmentVisitor(variables);
+		FragmentDefinitionVisitor fragmentVisitor(params.variables);
 
-		peg::for_each_child<peg::fragment_definition>(*query.root,
+		peg::for_each_child<peg::fragment_definition>(*params.query.root,
 			[&fragmentVisitor](const peg::ast_node& child) {
 				fragmentVisitor.visit(child);
 			});
 
 		auto fragments = fragmentVisitor.getFragments();
-		auto operationDefinition = findOperationDefinition(query, operationName);
+		auto operationDefinition = findOperationDefinition(params.query, params.operationName);
 
 		if (!operationDefinition.second)
 		{
@@ -1631,9 +1617,9 @@ response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<Re
 
 			message << "Missing operation";
 
-			if (!operationName.empty())
+			if (!params.operationName.empty())
 			{
-				message << " name: " << operationName;
+				message << " name: " << params.operationName;
 			}
 
 			throw schema_exception { { message.str() } };
@@ -1645,9 +1631,9 @@ response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<Re
 
 			message << "Unexpected subscription";
 
-			if (!operationName.empty())
+			if (!params.operationName.empty())
 			{
-				message << " name: " << operationName;
+				message << " name: " << params.operationName;
 			}
 
 			throw schema_exception {
@@ -1659,18 +1645,18 @@ response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<Re
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
 		// https://spec.graphql.org/October2021/#sec-Normal-and-Serial-Execution
-		const auto operationLaunch = isMutation ? await_async { std::launch::deferred } : launch;
+		const auto operationLaunch = isMutation ? await_async {} : params.launch;
 
 		OperationDefinitionVisitor operationVisitor(resolverContext,
-			operationLaunch,
-			state,
+			std::move(operationLaunch),
+			std::move(params.state),
 			_operations,
-			std::move(variables),
+			std::move(params.variables),
 			std::move(fragments));
 
 		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
-		co_await launch;
+		co_await params.launch;
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
@@ -1696,7 +1682,152 @@ response::AwaitableValue Request::resolve(await_async launch, std::shared_ptr<Re
 	}
 }
 
-SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
+AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
+{
+	const auto spThis = shared_from_this();
+	auto launch = params.launch;
+	const auto key = spThis->addSubscription(std::move(params));
+	const auto itrOperation = spThis->_operations.find(strSubscription);
+
+	if (itrOperation != spThis->_operations.end())
+	{
+		const auto& operation = itrOperation->second;
+		const auto& registration = spThis->_subscriptions.at(key);
+		const SelectionSetParams selectionSetParams {
+			ResolverContext::NotifySubscribe,
+			registration->data->state,
+			registration->data->directives,
+			std::make_shared<FragmentDefinitionDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			{},
+			launch,
+		};
+
+		try
+		{
+			co_await launch;
+			co_await operation->resolve(selectionSetParams,
+				registration->selection,
+				registration->data->fragments,
+				registration->data->variables);
+		}
+		catch (const std::exception& ex)
+		{
+			// Rethrow the exception, but don't leave it subscribed if the resolver failed.
+			spThis->removeSubscription(key);
+			throw ex;
+		}
+	}
+
+	co_return key;
+}
+
+AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
+{
+	const auto spThis = shared_from_this();
+	const auto itrOperation = spThis->_operations.find(strSubscription);
+
+	if (itrOperation != spThis->_operations.end())
+	{
+		const auto& operation = itrOperation->second;
+		const auto& registration = spThis->_subscriptions.at(params.key);
+		const SelectionSetParams selectionSetParams {
+			ResolverContext::NotifyUnsubscribe,
+			registration->data->state,
+			registration->data->directives,
+			std::make_shared<FragmentDefinitionDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			{},
+			params.launch,
+		};
+
+		co_await params.launch;
+		co_await operation->resolve(selectionSetParams,
+			registration->selection,
+			registration->data->fragments,
+			registration->data->variables);
+	}
+
+	spThis->removeSubscription(params.key);
+
+	co_return;
+}
+
+AwaitableDeliver Request::deliver(RequestDeliverParams params) const
+{
+	const auto itrOperation = _operations.find(strSubscription);
+
+	if (itrOperation == _operations.end())
+	{
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
+	const auto optionalOrDefaultSubscription =
+		params.subscriptionObject ? std::move(params.subscriptionObject) : itrOperation->second;
+
+	if (!optionalOrDefaultSubscription)
+	{
+		// If there is no default in the operations map, you must pass a non-empty
+		// subscriptionObject parameter to deliver.
+		throw std::invalid_argument("Missing subscriptionObject");
+	}
+
+	const auto registrations = collectRegistrations(std::move(params.filter));
+
+	if (registrations.empty())
+	{
+		co_return;
+	}
+
+	for (const auto& registration : registrations)
+	{
+		const SelectionSetParams selectionSetParams {
+			ResolverContext::Subscription,
+			registration->data->state,
+			registration->data->directives,
+			std::make_shared<FragmentDefinitionDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::nullopt,
+			params.launch,
+		};
+
+		response::Value document { response::Type::Map };
+
+		try
+		{
+			co_await params.launch;
+
+			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+				registration->selection,
+				registration->data->fragments,
+				registration->data->variables);
+
+			document.emplace_back(std::string { strData }, std::move(result.data));
+
+			if (!result.errors.empty())
+			{
+				document.emplace_back(std::string { strErrors },
+					buildErrorValues(std::move(result.errors)));
+			}
+		}
+		catch (schema_exception& ex)
+		{
+			document.emplace_back(std::string { strData }, response::Value());
+			document.emplace_back(std::string { strErrors }, ex.getErrors());
+		}
+
+		registration->callback(std::move(document));
+	}
+
+	co_return;
+}
+
+SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 {
 	auto errors = validate(params.query);
 
@@ -1747,7 +1878,6 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 
 	auto itr = _operations.find(strSubscription);
 	SubscriptionDefinitionVisitor subscriptionVisitor(std::move(params),
-		std::move(callback),
 		std::move(fragments),
 		itr->second);
 
@@ -1765,48 +1895,7 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	return key;
 }
 
-AwaitableSubscribe Request::subscribe(
-	await_async launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
-{
-	const auto spThis = shared_from_this();
-	const auto key = spThis->subscribe(std::move(params), std::move(callback));
-	const auto itrOperation = spThis->_operations.find(strSubscription);
-
-	if (itrOperation != spThis->_operations.end())
-	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = spThis->_subscriptions.at(key);
-		const SelectionSetParams selectionSetParams {
-			ResolverContext::NotifySubscribe,
-			registration->data->state,
-			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
-			launch,
-		};
-
-		try
-		{
-			co_await launch;
-			co_await operation->resolve(selectionSetParams,
-				registration->selection,
-				registration->data->fragments,
-				registration->data->variables);
-		}
-		catch (const std::exception& ex)
-		{
-			// Rethrow the exception, but don't leave it subscribed if the resolver failed.
-			spThis->unsubscribe(key);
-			throw ex;
-		}
-	}
-
-	co_return key;
-}
-
-void Request::unsubscribe(SubscriptionKey key)
+void Request::removeSubscription(SubscriptionKey key)
 {
 	auto itrSubscription = _subscriptions.find(key);
 
@@ -1836,253 +1925,146 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
-AwaitableUnsubscribe Request::unsubscribe(await_async launch, SubscriptionKey key)
+std::vector<std::shared_ptr<SubscriptionData>> Request::collectRegistrations(
+	RequestDeliverFilter&& filter) const noexcept
 {
-	const auto spThis = shared_from_this();
-	const auto itrOperation = spThis->_operations.find(strSubscription);
-
-	if (itrOperation != spThis->_operations.end())
-	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = spThis->_subscriptions.at(key);
-		const SelectionSetParams selectionSetParams {
-			ResolverContext::NotifyUnsubscribe,
-			registration->data->state,
-			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
-			launch,
-		};
-
-		co_await launch;
-		co_await operation->resolve(selectionSetParams,
-			registration->selection,
-			registration->data->fragments,
-			registration->data->variables);
-	}
-
-	spThis->unsubscribe(key);
-
-	co_return;
-}
-
-void Request::deliver(
-	const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const
-{
-	deliver(std::launch::deferred, name, subscriptionObject).get();
-}
-
-void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	deliver(std::launch::deferred, name, arguments, std::move(subscriptionObject)).get();
-}
-
-void Request::deliver(const SubscriptionName& name, const SubscriptionArguments& arguments,
-	const Directives& directives, std::shared_ptr<Object> subscriptionObject) const
-{
-	deliver(std::launch::deferred, name, arguments, directives, std::move(subscriptionObject))
-		.get();
-}
-
-void Request::deliver(const SubscriptionName& name,
-	const SubscriptionArgumentFilterCallback& applyArguments,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	deliver(std::launch::deferred, name, applyArguments, std::move(subscriptionObject)).get();
-}
-
-void Request::deliver(const SubscriptionName& name,
-	const SubscriptionArgumentFilterCallback& applyArguments,
-	const SubscriptionDirectiveFilterCallback& applyDirectives,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	deliver(std::launch::deferred,
-		name,
-		applyArguments,
-		applyDirectives,
-		std::move(subscriptionObject))
-		.get();
-}
-
-AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	return deliver(launch,
-		name,
-		SubscriptionArguments {},
-		Directives {},
-		std::move(subscriptionObject));
-}
-
-AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
-	const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const
-{
-	return deliver(launch, name, arguments, Directives {}, std::move(subscriptionObject));
-}
-
-AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
-	const SubscriptionArguments& arguments, const Directives& directives,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	SubscriptionArgumentFilterCallback argumentsMatch =
-		[&arguments](response::MapType::const_reference required) noexcept -> bool {
-		auto itrArgument = arguments.find(required.first);
-
-		return (itrArgument != arguments.end() && itrArgument->second == required.second);
-	};
-
-	SubscriptionDirectiveFilterCallback directivesMatch =
-		[&directives](Directives::const_reference required) noexcept -> bool {
-		auto itrDirective = std::find_if(directives.cbegin(),
-			directives.cend(),
-			[directiveName = required.first](const auto& directive) noexcept {
-				return directive.first == directiveName;
-			});
-
-		return (itrDirective != directives.end() && itrDirective->second == required.second);
-	};
-
-	return deliver(launch, name, argumentsMatch, directivesMatch, std::move(subscriptionObject));
-}
-
-AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
-	const SubscriptionArgumentFilterCallback& applyArguments,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	return deliver(
-		launch,
-		name,
-		applyArguments,
-		[](Directives::const_reference) noexcept {
-			return true;
-		},
-		std::move(subscriptionObject));
-}
-
-AwaitableDeliver Request::deliver(await_async launch, const SubscriptionName& name,
-	const SubscriptionArgumentFilterCallback& applyArguments,
-	const SubscriptionDirectiveFilterCallback& applyDirectives,
-	std::shared_ptr<Object> subscriptionObject) const
-{
-	const auto itrOperation = _operations.find(strSubscription);
-
-	if (itrOperation == _operations.end())
-	{
-		// There may be an empty entry in the operations map, but if it's completely missing then
-		// that means the schema doesn't support subscriptions at all.
-		throw std::logic_error("Subscriptions not supported");
-	}
-
-	const auto optionalOrDefaultSubscription =
-		subscriptionObject ? std::move(subscriptionObject) : itrOperation->second;
-
-	if (!optionalOrDefaultSubscription)
-	{
-		// If there is no default in the operations map, you must pass a non-empty
-		// subscriptionObject parameter to deliver.
-		throw std::invalid_argument("Missing subscriptionObject");
-	}
-
-	auto itrListeners = _listeners.find(name);
-
-	if (itrListeners == _listeners.end())
-	{
-		co_return;
-	}
-
 	std::vector<std::shared_ptr<SubscriptionData>> registrations;
 
-	registrations.reserve(itrListeners->second.size());
-	for (const auto& key : itrListeners->second)
+	if (!filter)
 	{
-		auto itrSubscription = _subscriptions.find(key);
-		auto registration = itrSubscription->second;
-		const auto& subscriptionArguments = registration->arguments;
-		bool matchedArguments = true;
+		// Return all of the registered subscriptions.
+		registrations.reserve(_subscriptions.size());
+		std::transform(_subscriptions.begin(),
+			_subscriptions.end(),
+			std::back_inserter(registrations),
+			[](const auto& entry) noexcept {
+				return entry.second;
+			});
+	}
+	else if (std::holds_alternative<SubscriptionKey>(*filter))
+	{
+		// Return the specific subscription for this key.
+		const auto itr = _subscriptions.find(std::get<SubscriptionKey>(*filter));
 
-		// If the field in this subscription had arguments that did not match what was provided
-		// in this event, don't deliver the event to this subscription
-		for (const auto& required : subscriptionArguments)
+		if (itr != _subscriptions.end())
 		{
-			if (!applyArguments(required))
+			registrations.push_back(itr->second);
+		}
+	}
+	else if (std::holds_alternative<SubscriptionFilter>(*filter))
+	{
+		auto& subscriptionFilter = std::get<SubscriptionFilter>(*filter);
+		const auto itrListeners = _listeners.find(subscriptionFilter.field);
+
+		if (itrListeners != _listeners.end())
+		{
+			registrations.reserve(itrListeners->second.size());
+
+			std::optional<SubscriptionArgumentFilterCallback> argumentsMatch;
+
+			if (subscriptionFilter.arguments)
 			{
-				matchedArguments = false;
-				break;
+				if (std::holds_alternative<SubscriptionArguments>(*subscriptionFilter.arguments))
+				{
+					argumentsMatch = [arguments = std::move(std::get<SubscriptionArguments>(
+										  *subscriptionFilter.arguments))](
+										 response::MapType::const_reference required) noexcept {
+						auto itrArgument = arguments.find(required.first);
+
+						return (itrArgument != arguments.end()
+							&& itrArgument->second == required.second);
+					};
+				}
+				else if (std::holds_alternative<SubscriptionArgumentFilterCallback>(
+							 *subscriptionFilter.arguments))
+				{
+					argumentsMatch = std::move(std::get<SubscriptionArgumentFilterCallback>(
+						*subscriptionFilter.arguments));
+				}
+			}
+
+			std::optional<SubscriptionDirectiveFilterCallback> directivesMatch;
+
+			if (subscriptionFilter.directives)
+			{
+				if (std::holds_alternative<Directives>(*subscriptionFilter.directives))
+				{
+					directivesMatch = [directives = std::move(
+										   std::get<Directives>(*subscriptionFilter.directives))](
+										  Directives::const_reference required) noexcept {
+						auto itrDirective = std::find_if(directives.cbegin(),
+							directives.cend(),
+							[directiveName = required.first](const auto& directive) noexcept {
+								return directive.first == directiveName;
+							});
+
+						return (itrDirective != directives.end()
+							&& itrDirective->second == required.second);
+					};
+				}
+				else if (std::holds_alternative<SubscriptionDirectiveFilterCallback>(
+							 *subscriptionFilter.directives))
+				{
+					directivesMatch = std::move(std::get<SubscriptionDirectiveFilterCallback>(
+						*subscriptionFilter.directives));
+				}
+			}
+
+			for (const auto& key : itrListeners->second)
+			{
+				auto itrSubscription = _subscriptions.find(key);
+				auto registration = itrSubscription->second;
+
+				if (argumentsMatch)
+				{
+					const auto& subscriptionArguments = registration->arguments;
+					bool matchedArguments = true;
+
+					// If the field in this subscription had arguments that did not match what was
+					// provided in this event, don't deliver the event to this subscription
+					for (const auto& required : subscriptionArguments)
+					{
+						if (!(*argumentsMatch)(required))
+						{
+							matchedArguments = false;
+							break;
+						}
+					}
+
+					if (!matchedArguments)
+					{
+						continue;
+					}
+				}
+
+				if (directivesMatch)
+				{
+					// If the field in this subscription had field directives that did not match
+					// what was provided in this event, don't deliver the event to this subscription
+					const auto& subscriptionFieldDirectives = registration->fieldDirectives;
+					bool matchedFieldDirectives = true;
+
+					for (const auto& required : subscriptionFieldDirectives)
+					{
+						if (!(*directivesMatch)(required))
+						{
+							matchedFieldDirectives = false;
+							break;
+						}
+					}
+
+					if (!matchedFieldDirectives)
+					{
+						continue;
+					}
+				}
+
+				registrations.push_back(std::move(registration));
 			}
 		}
-
-		if (!matchedArguments)
-		{
-			continue;
-		}
-
-		// If the field in this subscription had field directives that did not match what was
-		// provided in this event, don't deliver the event to this subscription
-		const auto& subscriptionFieldDirectives = registration->fieldDirectives;
-		bool matchedFieldDirectives = true;
-
-		for (const auto& required : subscriptionFieldDirectives)
-		{
-			if (!applyDirectives(required))
-			{
-				matchedFieldDirectives = false;
-				break;
-			}
-		}
-
-		if (!matchedFieldDirectives)
-		{
-			continue;
-		}
-
-		registrations.push_back(std::move(registration));
 	}
 
-	for (const auto& registration : registrations)
-	{
-		const SelectionSetParams selectionSetParams {
-			ResolverContext::Subscription,
-			registration->data->state,
-			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::nullopt,
-			launch,
-		};
-
-		response::Value document { response::Type::Map };
-
-		try
-		{
-			co_await launch;
-
-			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
-				registration->selection,
-				registration->data->fragments,
-				registration->data->variables);
-
-			document.emplace_back(std::string { strData }, std::move(result.data));
-
-			if (!result.errors.empty())
-			{
-				document.emplace_back(std::string { strErrors },
-					buildErrorValues(std::move(result.errors)));
-			}
-		}
-		catch (schema_exception& ex)
-		{
-			document.emplace_back(std::string { strData }, response::Value());
-			document.emplace_back(std::string { strErrors }, ex.getErrors());
-		}
-
-		registration->callback(std::move(document));
-	}
-
-	co_return;
+	return registrations;
 }
 
 } // namespace graphql::service

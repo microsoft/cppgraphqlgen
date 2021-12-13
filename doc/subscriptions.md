@@ -14,20 +14,20 @@ Subscriptions are created or removed by calling the `Request::subscribe`
 and `Request::unsubscribe` methods in [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
 GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
-	SubscriptionParams&& params, SubscriptionCallback&& callback);
+	RequestSubscribeParams&& params, SubscriptionCallback&& callback);
 GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
-	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
+	std::launch launch, RequestSubscribeParams&& params, SubscriptionCallback&& callback);
 
 GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
 GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(std::launch launch, SubscriptionKey key);
 ```
-You need to fill in a `SubscriptionParams` struct with the [parsed](./parsing.md)
+You need to fill in a `RequestSubscribeParams` struct with the [parsed](./parsing.md)
 query and any other relevant operation parameters:
 ```cpp
 // You can still sub-class RequestState and use that in the state parameter to Request::subscribe
 // to add your own state to the service callbacks that you receive while executing the subscription
 // query.
-struct SubscriptionParams
+struct RequestSubscribeParams
 {
 	std::shared_ptr<RequestState> state;
 	peg::ast query;

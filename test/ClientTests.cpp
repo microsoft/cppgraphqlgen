@@ -108,7 +108,7 @@ TEST_F(ClientCase, QueryEverything)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result =
-		_service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
+		_service->resolve({ query, {}, std::move(variables), std::launch::async, state }).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount)
@@ -200,7 +200,7 @@ TEST_F(ClientCase, MutateCompleteTask)
 		std::make_optional("Hi There!"s) } });
 
 	auto state = std::make_shared<today::RequestState>(5);
-	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -237,15 +237,18 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state,
-									   std::move(query),
-									   "TestSubscription",
-									   std::move(variables) },
-		[&result](response::Value&& response) {
-			result = std::move(response);
-		});
-	_service->deliver("nextAppointmentChange", nullptr);
-	_service->unsubscribe(key);
+	auto key = _service
+				   ->subscribe({ [&result](response::Value&& response) {
+									result = std::move(response);
+								},
+					   std::move(query),
+					   "TestSubscription"s,
+					   std::move(variables),
+					   {},
+					   state })
+				   .get();
+	_service->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } } }).get();
+	_service->unsubscribe({ key }).get();
 
 	try
 	{
