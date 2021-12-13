@@ -43,6 +43,8 @@ namespace object {
 
 class Sentient;
 class Pet;
+class Node;
+class Resource;
 
 class CatOrDog;
 class DogOrHuman;
@@ -81,6 +83,8 @@ private:
 
 void AddSentientDetails(const std::shared_ptr<schema::InterfaceType>& typeSentient, const std::shared_ptr<schema::Schema>& schema);
 void AddPetDetails(const std::shared_ptr<schema::InterfaceType>& typePet, const std::shared_ptr<schema::Schema>& schema);
+void AddNodeDetails(const std::shared_ptr<schema::InterfaceType>& typeNode, const std::shared_ptr<schema::Schema>& schema);
+void AddResourceDetails(const std::shared_ptr<schema::InterfaceType>& typeResource, const std::shared_ptr<schema::Schema>& schema);
 
 void AddCatOrDogDetails(const std::shared_ptr<schema::UnionType>& typeCatOrDog, const std::shared_ptr<schema::Schema>& schema);
 void AddDogOrHumanDetails(const std::shared_ptr<schema::UnionType>& typeDogOrHuman, const std::shared_ptr<schema::Schema>& schema);

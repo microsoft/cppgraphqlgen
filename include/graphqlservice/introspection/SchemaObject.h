@@ -16,6 +16,7 @@ class Schema
 	: public service::Object
 {
 private:
+	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
@@ -28,6 +29,7 @@ private:
 	{
 		virtual ~Concept() = default;
 
+		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType() const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType() const = 0;
@@ -42,6 +44,11 @@ private:
 		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
+		}
+
+		service::FieldResult<std::optional<std::string>> getDescription() const final
+		{
+			return { _pimpl->getDescription() };
 		}
 
 		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const final

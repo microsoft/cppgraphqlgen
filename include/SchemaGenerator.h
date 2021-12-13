@@ -57,6 +57,8 @@ private:
 	void outputObjectImplementation(
 		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
 	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
+	void outputIntrospectionInterfaces(std::ostream& sourceFile, std::string_view cppType,
+		const std::vector<std::string_view>& interfaces) const;
 	void outputIntrospectionFields(
 		std::ostream& sourceFile, std::string_view cppType, const OutputFieldList& fields) const;
 	std::string getArgumentDefaultValue(

@@ -571,13 +571,13 @@ private:
 struct CapturedParams
 {
 	// Copied in the constructor
-	const response::Value operationDirectives;
-	const response::Value fragmentDefinitionDirectives;
-	const response::Value fragmentSpreadDirectives;
-	const response::Value inlineFragmentDirectives;
+	const service::Directives operationDirectives;
+	const service::Directives fragmentDefinitionDirectives;
+	const service::Directives fragmentSpreadDirectives;
+	const service::Directives inlineFragmentDirectives;
 
 	// Moved in the constructor
-	const response::Value fieldDirectives;
+	const service::Directives fieldDirectives;
 };
 
 class NestedType

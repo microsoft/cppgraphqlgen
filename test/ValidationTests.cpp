@@ -34,9 +34,9 @@ protected:
 
 std::shared_ptr<validation::Operations> ValidationExamplesCase::_service;
 
-TEST_F(ValidationExamplesCase, CounterExample91)
+TEST_F(ValidationExamplesCase, CounterExample102)
 {
-	// http://spec.graphql.org/June2018/#example-12752
+	// https://spec.graphql.org/October2021/#example-12752
 	auto query = R"(query getDogName {
 			dog {
 				name
@@ -61,9 +61,9 @@ TEST_F(ValidationExamplesCase, CounterExample91)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example92)
+TEST_F(ValidationExamplesCase, Example103)
 {
-	// http://spec.graphql.org/June2018/#example-069e1
+	// https://spec.graphql.org/October2021/#example-069e1
 	auto query = R"(query getDogName {
 			dog {
 				name
@@ -83,9 +83,9 @@ TEST_F(ValidationExamplesCase, Example92)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample93)
+TEST_F(ValidationExamplesCase, CounterExample104)
 {
-	// http://spec.graphql.org/June2018/#example-5e409
+	// https://spec.graphql.org/October2021/#example-5e409
 	auto query = R"(query getName {
 			dog {
 				name
@@ -110,9 +110,9 @@ TEST_F(ValidationExamplesCase, CounterExample93)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample94)
+TEST_F(ValidationExamplesCase, CounterExample105)
 {
-	// http://spec.graphql.org/June2018/#example-77c2e
+	// https://spec.graphql.org/October2021/#example-77c2e
 	auto query = R"(query dogOperation {
 			dog {
 				name
@@ -135,9 +135,9 @@ TEST_F(ValidationExamplesCase, CounterExample94)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example95)
+TEST_F(ValidationExamplesCase, Example106)
 {
-	// http://spec.graphql.org/June2018/#example-be853
+	// https://spec.graphql.org/October2021/#example-be853
 	auto query = R"({
 			dog {
 				name
@@ -149,9 +149,9 @@ TEST_F(ValidationExamplesCase, Example95)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample96)
+TEST_F(ValidationExamplesCase, CounterExample107)
 {
-	// http://spec.graphql.org/June2018/#example-44b85
+	// https://spec.graphql.org/October2021/#example-44b85
 	auto query = R"({
 			dog {
 				name
@@ -176,9 +176,9 @@ TEST_F(ValidationExamplesCase, CounterExample96)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example97)
+TEST_F(ValidationExamplesCase, Example108)
 {
-	// http://spec.graphql.org/June2018/#example-5bbc3
+	// https://spec.graphql.org/October2021/#example-5bbc3
 	auto query = R"(subscription sub {
 			newMessage {
 				body
@@ -191,9 +191,9 @@ TEST_F(ValidationExamplesCase, Example97)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example98)
+TEST_F(ValidationExamplesCase, Example109)
 {
-	// http://spec.graphql.org/June2018/#example-13061
+	// https://spec.graphql.org/October2021/#example-13061
 	auto query = R"(subscription sub {
 			...newMessageFields
 		}
@@ -210,9 +210,9 @@ TEST_F(ValidationExamplesCase, Example98)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample99)
+TEST_F(ValidationExamplesCase, CounterExample110)
 {
-	// http://spec.graphql.org/June2018/#example-3997d
+	// https://spec.graphql.org/October2021/#example-3997d
 	auto query = R"(subscription sub {
 			newMessage {
 				body
@@ -231,9 +231,9 @@ TEST_F(ValidationExamplesCase, CounterExample99)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample100)
+TEST_F(ValidationExamplesCase, CounterExample111)
 {
-	// http://spec.graphql.org/June2018/#example-18466
+	// https://spec.graphql.org/October2021/#example-18466
 	auto query = R"(subscription sub {
 			...multipleSubscriptions
 		}
@@ -256,14 +256,10 @@ TEST_F(ValidationExamplesCase, CounterExample100)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample101)
+TEST_F(ValidationExamplesCase, CounterExample112)
 {
-	// http://spec.graphql.org/June2018/#example-2353b
+	// https://spec.graphql.org/October2021/#example-a8fa1
 	auto query = R"(subscription sub {
-			newMessage {
-				body
-				sender
-			}
 			__typename
 		})"_graphql;
 
@@ -272,14 +268,14 @@ TEST_F(ValidationExamplesCase, CounterExample101)
 
 	ASSERT_EQ(errors.size(), 1);
 	EXPECT_EQ(
-		R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js",
+		R"js({"message":"Subscription with Introspection root field name: sub","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample102)
+TEST_F(ValidationExamplesCase, CounterExample113)
 {
-	// http://spec.graphql.org/June2018/#example-48706
+	// https://spec.graphql.org/October2021/#example-48706
 	auto query = R"(fragment fieldNotDefined on Dog {
 			meowVolume
 		}
@@ -303,9 +299,9 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example103)
+TEST_F(ValidationExamplesCase, Example114)
 {
-	// http://spec.graphql.org/June2018/#example-d34e0
+	// https://spec.graphql.org/October2021/#example-d34e0
 	auto query = R"(fragment interfaceFieldSelection on Pet {
 			name
 		}
@@ -321,9 +317,9 @@ TEST_F(ValidationExamplesCase, Example103)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample104)
+TEST_F(ValidationExamplesCase, CounterExample115)
 {
-	// http://spec.graphql.org/June2018/#example-db33b
+	// https://spec.graphql.org/October2021/#example-db33b
 	auto query = R"(fragment definedOnImplementorsButNotInterface on Pet {
 			nickname
 		})"_graphql;
@@ -339,9 +335,9 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example105)
+TEST_F(ValidationExamplesCase, Example116)
 {
-	// http://spec.graphql.org/June2018/#example-245fa
+	// https://spec.graphql.org/October2021/#example-245fa
 	auto query = R"(fragment inDirectFieldSelectionOnUnion on CatOrDog {
 			__typename
 			... on Pet {
@@ -363,9 +359,9 @@ TEST_F(ValidationExamplesCase, Example105)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample106)
+TEST_F(ValidationExamplesCase, CounterExample117)
 {
-	// http://spec.graphql.org/June2018/#example-252ad
+	// https://spec.graphql.org/October2021/#example-252ad
 	auto query = R"(fragment directFieldSelectionOnUnion on CatOrDog {
 			name
 			barkVolume
@@ -386,9 +382,9 @@ TEST_F(ValidationExamplesCase, CounterExample106)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example107)
+TEST_F(ValidationExamplesCase, Example118)
 {
-	// http://spec.graphql.org/June2018/#example-4e10c
+	// https://spec.graphql.org/October2021/#example-4e10c
 	auto query = R"(fragment mergeIdenticalFields on Dog {
 			name
 			name
@@ -411,9 +407,9 @@ TEST_F(ValidationExamplesCase, Example107)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample108)
+TEST_F(ValidationExamplesCase, CounterExample119)
 {
-	// http://spec.graphql.org/June2018/#example-a2230
+	// https://spec.graphql.org/October2021/#example-a2230
 	auto query = R"(fragment conflictingBecauseAlias on Dog {
 			name: nickname
 			name
@@ -430,9 +426,9 @@ TEST_F(ValidationExamplesCase, CounterExample108)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example109)
+TEST_F(ValidationExamplesCase, Example120)
 {
-	// http://spec.graphql.org/June2018/#example-b6369
+	// https://spec.graphql.org/October2021/#example-b6369
 	auto query = R"(fragment mergeIdenticalFieldsWithIdenticalArgs on Dog {
 			doesKnowCommand(dogCommand: SIT)
 			doesKnowCommand(dogCommand: SIT)
@@ -460,9 +456,9 @@ TEST_F(ValidationExamplesCase, Example109)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample110)
+TEST_F(ValidationExamplesCase, CounterExample121)
 {
-	// http://spec.graphql.org/June2018/#example-00fbf
+	// https://spec.graphql.org/October2021/#example-00fbf
 	auto query = R"(fragment conflictingArgsOnValues on Dog {
 			doesKnowCommand(dogCommand: SIT)
 			doesKnowCommand(dogCommand: HEEL)
@@ -506,9 +502,9 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example111)
+TEST_F(ValidationExamplesCase, Example122)
 {
-	// http://spec.graphql.org/June2018/#example-a8406
+	// https://spec.graphql.org/October2021/#example-a8406
 	auto query = R"(fragment safeDifferingFields on Pet {
 			... on Dog {
 				volume: barkVolume
@@ -539,9 +535,9 @@ TEST_F(ValidationExamplesCase, Example111)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample112)
+TEST_F(ValidationExamplesCase, CounterExample123)
 {
-	// http://spec.graphql.org/June2018/#example-54e3d
+	// https://spec.graphql.org/October2021/#example-54e3d
 	auto query = R"(fragment conflictingDifferingResponses on Pet {
 			... on Dog {
 				someValue: nickname
@@ -562,9 +558,9 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example113)
+TEST_F(ValidationExamplesCase, Example124)
 {
-	// http://spec.graphql.org/June2018/#example-e23c5
+	// https://spec.graphql.org/October2021/#example-e23c5
 	auto query = R"(fragment scalarSelection on Dog {
 			barkVolume
 		}
@@ -580,9 +576,9 @@ TEST_F(ValidationExamplesCase, Example113)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample114)
+TEST_F(ValidationExamplesCase, CounterExample125)
 {
-	// http://spec.graphql.org/June2018/#example-13b69
+	// https://spec.graphql.org/October2021/#example-13b69
 	auto query = R"(fragment scalarSelectionsNotAllowedOnInt on Dog {
 			barkVolume {
 				sinceWhen
@@ -600,9 +596,9 @@ TEST_F(ValidationExamplesCase, CounterExample114)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example115)
+TEST_F(ValidationExamplesCase, Example126)
 {
-	// http://spec.graphql.org/June2018/#example-9bada
+	// https://spec.graphql.org/October2021/#example-9bada
 	auto query = R"(query {
 			human {
 				name
@@ -625,9 +621,9 @@ TEST_F(ValidationExamplesCase, Example115)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample116)
+TEST_F(ValidationExamplesCase, CounterExample127)
 {
-	// http://spec.graphql.org/June2018/#example-d68ee
+	// https://spec.graphql.org/October2021/#example-d68ee
 	auto query = R"(query directQueryOnObjectWithoutSubFields {
 			human
 		}
@@ -658,9 +654,9 @@ TEST_F(ValidationExamplesCase, CounterExample116)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example117)
+TEST_F(ValidationExamplesCase, Example128)
 {
-	// http://spec.graphql.org/June2018/#example-760cb
+	// https://spec.graphql.org/October2021/#example-dfd15
 	auto query = R"(fragment argOnRequiredArg on Dog {
 			doesKnowCommand(dogCommand: SIT)
 		}
@@ -681,9 +677,9 @@ TEST_F(ValidationExamplesCase, Example117)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample118)
+TEST_F(ValidationExamplesCase, CounterExample129)
 {
-	// http://spec.graphql.org/June2018/#example-d5639
+	// https://spec.graphql.org/October2021/#example-d5639
 	auto query = R"(fragment invalidArgName on Dog {
 			doesKnowCommand(command: CLEAN_UP_HOUSE)
 		})"_graphql;
@@ -699,9 +695,9 @@ TEST_F(ValidationExamplesCase, CounterExample118)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample119)
+TEST_F(ValidationExamplesCase, CounterExample130)
 {
-	// http://spec.graphql.org/June2018/#example-4feee
+	// https://spec.graphql.org/October2021/#example-df41e
 	auto query = R"(fragment invalidArgName on Dog {
 			isHousetrained(atOtherHomes: true) @include(unless: false)
 		})"_graphql;
@@ -717,9 +713,9 @@ TEST_F(ValidationExamplesCase, CounterExample119)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example120)
+TEST_F(ValidationExamplesCase, Example131)
 {
-	// http://spec.graphql.org/June2018/#example-1891c
+	// https://spec.graphql.org/October2021/#example-73706
 	auto query = R"(query {
 			arguments {
 				multipleReqs(x: 1, y: 2)
@@ -731,9 +727,9 @@ TEST_F(ValidationExamplesCase, Example120)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example121)
+TEST_F(ValidationExamplesCase, Example132)
 {
-	// http://spec.graphql.org/June2018/#example-18fab
+	// https://spec.graphql.org/October2021/#example-bda7e
 	auto query = R"(fragment multipleArgs on Arguments {
 			multipleReqs(x: 1, y: 2)
 		}
@@ -759,9 +755,9 @@ TEST_F(ValidationExamplesCase, Example121)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example122)
+TEST_F(ValidationExamplesCase, Example133)
 {
-	// http://spec.graphql.org/June2018/#example-503bd
+	// https://spec.graphql.org/October2021/#example-503bd
 	auto query = R"(fragment goodBooleanArg on Arguments {
 			booleanArgField(booleanArg: true)
 		}
@@ -782,9 +778,9 @@ TEST_F(ValidationExamplesCase, Example122)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example123)
+TEST_F(ValidationExamplesCase, Example134)
 {
-	// http://spec.graphql.org/June2018/#example-1f1d2
+	// https://spec.graphql.org/October2021/#example-1f1d2
 	auto query = R"(fragment goodBooleanArgDefault on Arguments {
 			booleanArgField
 		}
@@ -800,9 +796,9 @@ TEST_F(ValidationExamplesCase, Example123)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample124)
+TEST_F(ValidationExamplesCase, CounterExample135)
 {
-	// http://spec.graphql.org/June2018/#example-f12a1
+	// https://spec.graphql.org/October2021/#example-f12a1
 	auto query = R"(fragment missingRequiredArg on Arguments {
 			nonNullBooleanArgField
 		})"_graphql;
@@ -818,9 +814,9 @@ TEST_F(ValidationExamplesCase, CounterExample124)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample125)
+TEST_F(ValidationExamplesCase, CounterExample136)
 {
-	// http://spec.graphql.org/June2018/#example-0bc81
+	// https://spec.graphql.org/October2021/#example-0bc81
 	auto query = R"(fragment missingRequiredArg on Arguments {
 			nonNullBooleanArgField(nonNullBooleanArg: null)
 		})"_graphql;
@@ -836,9 +832,9 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example126)
+TEST_F(ValidationExamplesCase, Example137)
 {
-	// http://spec.graphql.org/June2018/#example-3703b
+	// https://spec.graphql.org/October2021/#example-3703b
 	auto query = R"({
 			dog {
 				...fragmentOne
@@ -861,9 +857,9 @@ TEST_F(ValidationExamplesCase, Example126)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample127)
+TEST_F(ValidationExamplesCase, CounterExample138)
 {
-	// http://spec.graphql.org/June2018/#example-2c3e3
+	// https://spec.graphql.org/October2021/#example-2c3e3
 	auto query = R"({
 			dog {
 				...fragmentOne
@@ -891,9 +887,9 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example128)
+TEST_F(ValidationExamplesCase, Example139)
 {
-	// http://spec.graphql.org/June2018/#example-1b2da
+	// https://spec.graphql.org/October2021/#example-1b2da
 	auto query = R"(fragment correctType on Dog {
 			name
 		}
@@ -923,9 +919,9 @@ TEST_F(ValidationExamplesCase, Example128)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample129)
+TEST_F(ValidationExamplesCase, CounterExample140)
 {
-	// http://spec.graphql.org/June2018/#example-463f6
+	// https://spec.graphql.org/October2021/#example-463f6
 	auto query = R"(fragment notOnExistingType on NotInSchema {
 			name
 		}
@@ -951,9 +947,9 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example130)
+TEST_F(ValidationExamplesCase, Example141)
 {
-	// http://spec.graphql.org/June2018/#example-3c8d4
+	// https://spec.graphql.org/October2021/#example-3c8d4
 	auto query = R"(fragment fragOnObject on Dog {
 			name
 		}
@@ -981,9 +977,9 @@ TEST_F(ValidationExamplesCase, Example130)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample131)
+TEST_F(ValidationExamplesCase, CounterExample142)
 {
-	// http://spec.graphql.org/June2018/#example-4d5e5
+	// https://spec.graphql.org/October2021/#example-4d5e5
 	auto query = R"(fragment fragOnScalar on Int {
 			something
 		}
@@ -1009,9 +1005,9 @@ TEST_F(ValidationExamplesCase, CounterExample131)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample132)
+TEST_F(ValidationExamplesCase, CounterExample143)
 {
-	// http://spec.graphql.org/June2018/#example-9e1e3
+	// https://spec.graphql.org/October2021/#example-9e1e3
 	auto query = R"(fragment nameFragment on Dog { # unused
 			name
 		}
@@ -1033,9 +1029,9 @@ TEST_F(ValidationExamplesCase, CounterExample132)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample133)
+TEST_F(ValidationExamplesCase, CounterExample144)
 {
-	// http://spec.graphql.org/June2018/#example-28421
+	// https://spec.graphql.org/October2021/#example-28421
 	auto query = R"({
 			dog {
 				...undefinedFragment
@@ -1053,9 +1049,9 @@ TEST_F(ValidationExamplesCase, CounterExample133)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample134)
+TEST_F(ValidationExamplesCase, CounterExample145)
 {
-	// http://spec.graphql.org/June2018/#example-9ceb4
+	// https://spec.graphql.org/October2021/#example-9ceb4
 	auto query = R"({
 			dog {
 				...nameFragment
@@ -1087,9 +1083,9 @@ TEST_F(ValidationExamplesCase, CounterExample134)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example135)
+TEST_F(ValidationExamplesCase, Example146)
 {
-	// http://spec.graphql.org/June2018/#example-08734
+	// https://spec.graphql.org/October2021/#example-08734
 	auto query = R"({
 			dog {
 				name
@@ -1108,9 +1104,9 @@ TEST_F(ValidationExamplesCase, Example135)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample136)
+TEST_F(ValidationExamplesCase, CounterExample147)
 {
-	// http://spec.graphql.org/June2018/#example-6bbad
+	// https://spec.graphql.org/October2021/#example-cd11c
 	auto query = R"({
 			dog {
 				...dogFragment
@@ -1148,9 +1144,9 @@ TEST_F(ValidationExamplesCase, CounterExample136)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example137)
+TEST_F(ValidationExamplesCase, Example148)
 {
-	// http://spec.graphql.org/June2018/#example-0fc38
+	// https://spec.graphql.org/October2021/#example-0fc38
 	auto query = R"(fragment dogFragment on Dog {
 			... on Dog {
 				barkVolume
@@ -1168,9 +1164,9 @@ TEST_F(ValidationExamplesCase, Example137)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample138)
+TEST_F(ValidationExamplesCase, CounterExample149)
 {
-	// http://spec.graphql.org/June2018/#example-4d411
+	// https://spec.graphql.org/October2021/#example-4d411
 	auto query = R"(fragment catInDogFragmentInvalid on Dog {
 			... on Cat {
 				meowVolume
@@ -1188,9 +1184,9 @@ TEST_F(ValidationExamplesCase, CounterExample138)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example139)
+TEST_F(ValidationExamplesCase, Example150)
 {
-	// http://spec.graphql.org/June2018/#example-2c8d0
+	// https://spec.graphql.org/October2021/#example-2c8d0
 	auto query = R"(fragment petNameFragment on Pet {
 			name
 		}
@@ -1210,9 +1206,9 @@ TEST_F(ValidationExamplesCase, Example139)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example140)
+TEST_F(ValidationExamplesCase, Example151)
 {
-	// http://spec.graphql.org/June2018/#example-41843
+	// https://spec.graphql.org/October2021/#example-41843
 	auto query = R"(fragment catOrDogNameFragment on CatOrDog {
 			... on Cat {
 				meowVolume
@@ -1234,9 +1230,9 @@ TEST_F(ValidationExamplesCase, Example140)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example141)
+TEST_F(ValidationExamplesCase, Example152)
 {
-	// http://spec.graphql.org/June2018/#example-85110
+	// https://spec.graphql.org/October2021/#example-85110
 	auto query = R"(fragment petFragment on Pet {
 			name
 			... on Dog {
@@ -1262,9 +1258,9 @@ TEST_F(ValidationExamplesCase, Example141)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample142)
+TEST_F(ValidationExamplesCase, CounterExample153)
 {
-	// http://spec.graphql.org/June2018/#example-a8dcc
+	// https://spec.graphql.org/October2021/#example-a8dcc
 	auto query = R"(fragment sentientFragment on Sentient {
 			... on Dog {
 				barkVolume
@@ -1292,9 +1288,9 @@ TEST_F(ValidationExamplesCase, CounterExample142)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example143)
+TEST_F(ValidationExamplesCase, Example154)
 {
-	// http://spec.graphql.org/June2018/#example-dc875
+	// https://spec.graphql.org/October2021/#example-dc875
 	auto query = R"(fragment unionWithInterface on Pet {
 			...dogOrHumanFragment
 		}
@@ -1316,9 +1312,9 @@ TEST_F(ValidationExamplesCase, Example143)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample144)
+TEST_F(ValidationExamplesCase, CounterExample155)
 {
-	// http://spec.graphql.org/June2018/#example-c9c63
+	// https://spec.graphql.org/October2021/#example-c9c63
 	auto query = R"(fragment nonIntersectingInterfaces on Pet {
 			...sentientFragment
 		}
@@ -1338,9 +1334,31 @@ TEST_F(ValidationExamplesCase, CounterExample144)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example145)
+TEST_F(ValidationExamplesCase, Example156)
 {
-	// http://spec.graphql.org/June2018/#example-7ee0e
+	// https://spec.graphql.org/October2021/#example-bc12a
+	auto query = R"(fragment interfaceWithInterface on Node {
+			...resourceFragment
+		}
+
+		fragment resourceFragment on Resource {
+			url
+		}
+
+		query {
+			resource {
+				...interfaceWithInterface
+			}
+		})"_graphql;
+
+	auto errors = _service->validate(query);
+
+	ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ValidationExamplesCase, Example157)
+{
+	// https://spec.graphql.org/October2021/#example-7ee0e
 	auto query = R"(fragment goodBooleanArg on Arguments {
 			booleanArgField(booleanArg: true)
 		}
@@ -1366,9 +1384,9 @@ TEST_F(ValidationExamplesCase, Example145)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample146)
+TEST_F(ValidationExamplesCase, CounterExample158)
 {
-	// http://spec.graphql.org/June2018/#example-3a7c1
+	// https://spec.graphql.org/October2021/#example-3a7c1
 	auto query = R"(fragment stringIntoInt on Arguments {
 			intArgField(intArg: "123")
 		}
@@ -1401,9 +1419,9 @@ TEST_F(ValidationExamplesCase, CounterExample146)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example147)
+TEST_F(ValidationExamplesCase, Example159)
 {
-	// http://spec.graphql.org/June2018/#example-a940b
+	// https://spec.graphql.org/October2021/#example-a940b
 	auto query = R"({
 			findDog(complex: { name: "Fido" }) {
 				name
@@ -1415,9 +1433,9 @@ TEST_F(ValidationExamplesCase, Example147)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample148)
+TEST_F(ValidationExamplesCase, CounterExample160)
 {
-	// http://spec.graphql.org/June2018/#example-1a5f6
+	// https://spec.graphql.org/October2021/#example-1a5f6
 	auto query = R"({
 			findDog(complex: { favoriteCookieFlavor: "Bacon" }) {
 				name
@@ -1439,9 +1457,9 @@ TEST_F(ValidationExamplesCase, CounterExample148)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample149)
+TEST_F(ValidationExamplesCase, CounterExample161)
 {
-	// http://spec.graphql.org/June2018/#example-5d541
+	// https://spec.graphql.org/October2021/#example-5d541
 	auto query = R"({
 			findDog(complex: { name: "Fido", name: "Fido" }) {
 				name
@@ -1459,9 +1477,9 @@ TEST_F(ValidationExamplesCase, CounterExample149)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample150)
+TEST_F(ValidationExamplesCase, CounterExample162)
 {
-	// http://spec.graphql.org/June2018/#example-55f3f
+	// https://spec.graphql.org/October2021/#example-55f3f
 	auto query = R"(query @skip(if: $foo) {
 			dog {
 				name
@@ -1479,9 +1497,9 @@ TEST_F(ValidationExamplesCase, CounterExample150)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample151)
+TEST_F(ValidationExamplesCase, CounterExample163)
 {
-	// http://spec.graphql.org/June2018/#example-b2e6c
+	// https://spec.graphql.org/October2021/#example-b2e6c
 	auto query = R"(query ($foo: Boolean = true, $bar: Boolean = false) {
 			dog @skip(if: $foo) @skip(if: $bar) {
 				name
@@ -1499,9 +1517,9 @@ TEST_F(ValidationExamplesCase, CounterExample151)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example152)
+TEST_F(ValidationExamplesCase, Example164)
 {
-	// http://spec.graphql.org/June2018/#example-c5ee9
+	// https://spec.graphql.org/October2021/#example-c5ee9
 	auto query = R"(query ($foo: Boolean = true, $bar: Boolean = false) {
 			dog @skip(if: $foo) {
 				name
@@ -1516,9 +1534,9 @@ TEST_F(ValidationExamplesCase, Example152)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample153)
+TEST_F(ValidationExamplesCase, CounterExample165)
 {
-	// http://spec.graphql.org/June2018/#example-b767a
+	// https://spec.graphql.org/October2021/#example-abc9c
 	auto query = R"(query houseTrainedQuery($atOtherHomes: Boolean, $atOtherHomes: Boolean) {
 			dog {
 				isHousetrained(atOtherHomes: $atOtherHomes)
@@ -1536,9 +1554,9 @@ TEST_F(ValidationExamplesCase, CounterExample153)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example154)
+TEST_F(ValidationExamplesCase, Example166)
 {
-	// http://spec.graphql.org/June2018/#example-6f6b9
+	// https://spec.graphql.org/October2021/#example-54c93
 	auto query = R"(query A($atOtherHomes: Boolean) {
 			...HouseTrainedFragment
 		}
@@ -1558,9 +1576,9 @@ TEST_F(ValidationExamplesCase, Example154)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example155)
+TEST_F(ValidationExamplesCase, Example167)
 {
-	// http://spec.graphql.org/June2018/#example-f3185
+	// https://spec.graphql.org/October2021/#example-ce150
 	auto query = R"(query takesComplexInput($complexInput: ComplexInput) {
 			findDog(complex: $complexInput) {
 				name
@@ -1572,9 +1590,9 @@ TEST_F(ValidationExamplesCase, Example155)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example156)
+TEST_F(ValidationExamplesCase, Example168)
 {
-	// http://spec.graphql.org/June2018/#example-77f18
+	// https://spec.graphql.org/October2021/#example-a4255
 	auto query = R"(query takesBoolean($atOtherHomes: Boolean) {
 			dog {
 				isHousetrained(atOtherHomes: $atOtherHomes)
@@ -1596,9 +1614,9 @@ TEST_F(ValidationExamplesCase, Example156)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample157)
+TEST_F(ValidationExamplesCase, CounterExample169)
 {
-	// http://spec.graphql.org/June2018/#example-aeba9
+	// https://spec.graphql.org/October2021/#example-aeba9
 	auto query = R"(query takesCat($cat: Cat) {
 			dog {
 				name
@@ -1646,9 +1664,9 @@ TEST_F(ValidationExamplesCase, CounterExample157)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example158)
+TEST_F(ValidationExamplesCase, Example170)
 {
-	// http://spec.graphql.org/June2018/#example-a5099
+	// https://spec.graphql.org/October2021/#example-38119
 	auto query = R"(query variableIsDefined($atOtherHomes: Boolean) {
 			dog {
 				isHousetrained(atOtherHomes: $atOtherHomes)
@@ -1660,9 +1678,9 @@ TEST_F(ValidationExamplesCase, Example158)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample159)
+TEST_F(ValidationExamplesCase, CounterExample171)
 {
-	// http://spec.graphql.org/June2018/#example-c8425
+	// https://spec.graphql.org/October2021/#example-5ba94
 	auto query = R"(query variableIsNotDefined {
 			dog {
 				isHousetrained(atOtherHomes: $atOtherHomes)
@@ -1680,9 +1698,9 @@ TEST_F(ValidationExamplesCase, CounterExample159)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example160)
+TEST_F(ValidationExamplesCase, Example172)
 {
-	// http://spec.graphql.org/June2018/#example-f4a77
+	// https://spec.graphql.org/October2021/#example-559c2
 	auto query = R"(query variableIsDefinedUsedInSingleFragment($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedFragment
@@ -1698,9 +1716,9 @@ TEST_F(ValidationExamplesCase, Example160)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample161)
+TEST_F(ValidationExamplesCase, CounterExample173)
 {
-	// http://spec.graphql.org/June2018/#example-8c8db
+	// https://spec.graphql.org/October2021/#example-93d3e
 	auto query = R"(query variableIsNotDefinedUsedInSingleFragment {
 			dog {
 				...isHousetrainedFragment
@@ -1722,9 +1740,9 @@ TEST_F(ValidationExamplesCase, CounterExample161)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample162)
+TEST_F(ValidationExamplesCase, CounterExample174)
 {
-	// http://spec.graphql.org/June2018/#example-7b65c
+	// https://spec.graphql.org/October2021/#example-ee7be
 	auto query = R"(query variableIsNotDefinedUsedInNestedFragment {
 			dog {
 				...outerHousetrainedFragment
@@ -1750,9 +1768,9 @@ TEST_F(ValidationExamplesCase, CounterExample162)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example163)
+TEST_F(ValidationExamplesCase, Example175)
 {
-	// http://spec.graphql.org/June2018/#example-84129
+	// https://spec.graphql.org/October2021/#example-d601e
 	auto query = R"(query housetrainedQueryOne($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedFragment
@@ -1774,9 +1792,9 @@ TEST_F(ValidationExamplesCase, Example163)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample164)
+TEST_F(ValidationExamplesCase, CounterExample176)
 {
-	// http://spec.graphql.org/June2018/#example-ef68a
+	// https://spec.graphql.org/October2021/#example-2b284
 	auto query = R"(query housetrainedQueryOne($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedFragment
@@ -1804,9 +1822,9 @@ TEST_F(ValidationExamplesCase, CounterExample164)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample165)
+TEST_F(ValidationExamplesCase, CounterExample177)
 {
-	// http://spec.graphql.org/June2018/#example-516af
+	// https://spec.graphql.org/October2021/#example-464b6
 	auto query = R"(query variableUnused($atOtherHomes: Boolean) {
 			dog {
 				isHousetrained
@@ -1824,9 +1842,9 @@ TEST_F(ValidationExamplesCase, CounterExample165)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example166)
+TEST_F(ValidationExamplesCase, Example178)
 {
-	// http://spec.graphql.org/June2018/#example-ed1fa
+	// https://spec.graphql.org/October2021/#example-6d4bb
 	auto query = R"(query variableUsedInFragment($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedFragment
@@ -1842,9 +1860,9 @@ TEST_F(ValidationExamplesCase, Example166)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample167)
+TEST_F(ValidationExamplesCase, CounterExample179)
 {
-	// http://spec.graphql.org/June2018/#example-f6c72
+	// https://spec.graphql.org/October2021/#example-a30e2
 	auto query = R"(query variableNotUsedWithinFragment($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedWithoutVariableFragment
@@ -1866,9 +1884,9 @@ TEST_F(ValidationExamplesCase, CounterExample167)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample168)
+TEST_F(ValidationExamplesCase, CounterExample180)
 {
-	// http://spec.graphql.org/June2018/#example-5593f
+	// https://spec.graphql.org/October2021/#example-e647f
 	auto query = R"(query queryWithUsedVar($atOtherHomes: Boolean) {
 			dog {
 				...isHousetrainedFragment
@@ -1896,9 +1914,9 @@ TEST_F(ValidationExamplesCase, CounterExample168)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample169)
+TEST_F(ValidationExamplesCase, CounterExample181)
 {
-	// http://spec.graphql.org/June2018/#example-2028e
+	// https://spec.graphql.org/October2021/#example-2028e
 	auto query = R"(query intCannotGoIntoBoolean($intArg: Int) {
 			arguments {
 				booleanArgField(booleanArg: $intArg)
@@ -1916,9 +1934,9 @@ TEST_F(ValidationExamplesCase, CounterExample169)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample170)
+TEST_F(ValidationExamplesCase, CounterExample182)
 {
-	// http://spec.graphql.org/June2018/#example-8d369
+	// https://spec.graphql.org/October2021/#example-8d369
 	auto query = R"(query booleanListCannotGoIntoBoolean($booleanListArg: [Boolean]) {
 			arguments {
 				booleanArgField(booleanArg: $booleanListArg)
@@ -1936,9 +1954,9 @@ TEST_F(ValidationExamplesCase, CounterExample170)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, CounterExample171)
+TEST_F(ValidationExamplesCase, CounterExample183)
 {
-	// http://spec.graphql.org/June2018/#example-ed727
+	// https://spec.graphql.org/October2021/#example-ed727
 	auto query = R"(query booleanArgQuery($booleanArg: Boolean) {
 			arguments {
 				nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
@@ -1956,9 +1974,9 @@ TEST_F(ValidationExamplesCase, CounterExample171)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example172)
+TEST_F(ValidationExamplesCase, Example184)
 {
-	// http://spec.graphql.org/June2018/#example-c5959
+	// https://spec.graphql.org/October2021/#example-c5959
 	auto query = R"(query nonNullListToList($nonNullBooleanList: [Boolean]!) {
 			arguments {
 				booleanListArgField(booleanListArg: $nonNullBooleanList)
@@ -1970,9 +1988,9 @@ TEST_F(ValidationExamplesCase, Example172)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, CounterExample173)
+TEST_F(ValidationExamplesCase, CounterExample185)
 {
-	// http://spec.graphql.org/June2018/#example-64255
+	// https://spec.graphql.org/October2021/#example-64255
 	auto query = R"(query listToNonNullList($booleanList: [Boolean]) {
 			arguments {
 				nonNullBooleanListField(nonNullBooleanListArg: $booleanList)
@@ -1990,9 +2008,9 @@ TEST_F(ValidationExamplesCase, CounterExample173)
 		<< "error should match";
 }
 
-TEST_F(ValidationExamplesCase, Example174)
+TEST_F(ValidationExamplesCase, Example186)
 {
-	// http://spec.graphql.org/June2018/#example-0877c
+	// https://spec.graphql.org/October2021/#example-0877c
 	auto query = R"(query booleanArgQueryWithDefault($booleanArg: Boolean) {
 			arguments {
 				optionalNonNullBooleanArgField(optionalBooleanArg: $booleanArg)
@@ -2004,9 +2022,9 @@ TEST_F(ValidationExamplesCase, Example174)
 	ASSERT_TRUE(errors.empty());
 }
 
-TEST_F(ValidationExamplesCase, Example175)
+TEST_F(ValidationExamplesCase, Example187)
 {
-	// http://spec.graphql.org/June2018/#example-d24d9
+	// https://spec.graphql.org/October2021/#example-d24d9
 	auto query = R"(query booleanArgQueryWithDefault($booleanArg: Boolean = true) {
 			arguments {
 				nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)

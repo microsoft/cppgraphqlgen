@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+"Test Schema based on a dashboard showing daily appointments, tasks, and email folders with unread counts."
 schema {
     query: Query
     mutation: Mutation
@@ -95,23 +96,29 @@ type Mutation {
     setFloat(value: Float!): Float!
 }
 
+    """
+
+        Subscription type:
+        
+        2nd line...
+            3rd line goes here!
+                
+    """
 type Subscription {
     nextAppointmentChange : Appointment @deprecated(
-        reason:"""Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+        reason:"""Need to deprecate a [field](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation)"""
     )
     nodeChange(id: ID!): Node!
 }
 
-directive @subscriptionTag(field: String) on SUBSCRIPTION
-
-scalar DateTime
+scalar DateTime @specifiedBy(url: "https://en.wikipedia.org/wiki/ISO_8601")
 
 enum TaskState {
     New
     Started
     Complete
     Unassigned @deprecated(
-        reason:"""Need to deprecate an [enum value](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+        reason:"""Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation)"""
     )
 }
 
@@ -142,6 +149,7 @@ directive @fieldTag(field: String!) on FIELD
 directive @fragmentDefinitionTag(fragmentDefinition: String!) on FRAGMENT_DEFINITION
 directive @fragmentSpreadTag(fragmentSpread: String!) on FRAGMENT_SPREAD
 directive @inlineFragmentTag(inlineFragment: String!) on INLINE_FRAGMENT
+directive @repeatableOnField repeatable on FIELD
 
 "Infinitely nestable type which can be used with nested fragments to test directive handling"
 type NestedType {

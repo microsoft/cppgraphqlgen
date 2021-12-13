@@ -9,6 +9,7 @@
 #include "PetObject.h"
 #include "CatOrDogObject.h"
 #include "ArgumentsObject.h"
+#include "ResourceObject.h"
 
 #include "graphqlservice/internal/Schema.h"
 
@@ -46,6 +47,7 @@ service::ResolverMap Query::getResolvers() const noexcept
 		{ R"gql(human)gql"sv, [this](service::ResolverParams&& params) { return resolveHuman(std::move(params)); } },
 		{ R"gql(findDog)gql"sv, [this](service::ResolverParams&& params) { return resolveFindDog(std::move(params)); } },
 		{ R"gql(catOrDog)gql"sv, [this](service::ResolverParams&& params) { return resolveCatOrDog(std::move(params)); } },
+		{ R"gql(resource)gql"sv, [this](service::ResolverParams&& params) { return resolveResource(std::move(params)); } },
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } }
@@ -112,6 +114,16 @@ service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& par
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Query::resolveResource(service::ResolverParams&& params) const
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
+	auto result = _pimpl->getResource(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<Resource>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params) const
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
@@ -149,6 +161,7 @@ void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const
 		schema::Field::Make(R"gql(pet)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Pet)gql"sv)),
 		schema::Field::Make(R"gql(catOrDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(CatOrDog)gql"sv)),
 		schema::Field::Make(R"gql(arguments)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Arguments)gql"sv)),
+		schema::Field::Make(R"gql(resource)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Resource)gql"sv)),
 		schema::Field::Make(R"gql(findDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Dog)gql"sv), {
 			schema::InputValue::Make(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ComplexInput)gql"sv), R"gql()gql"sv)
 		}),

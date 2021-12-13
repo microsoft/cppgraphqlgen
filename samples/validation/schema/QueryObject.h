@@ -74,6 +74,18 @@ concept getArguments = requires (TImpl impl)
 };
 
 template <class TImpl>
+concept getResourceWithParams = requires (TImpl impl, service::FieldParams params) 
+{
+	{ service::FieldResult<std::shared_ptr<Resource>> { impl.getResource(std::move(params)) } };
+};
+
+template <class TImpl>
+concept getResource = requires (TImpl impl) 
+{
+	{ service::FieldResult<std::shared_ptr<Resource>> { impl.getResource() } };
+};
+
+template <class TImpl>
 concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
 {
 	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
@@ -120,6 +132,7 @@ private:
 	service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
 
@@ -137,6 +150,7 @@ private:
 		virtual service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
+		virtual service::FieldResult<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
 		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
 		virtual service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
@@ -227,6 +241,22 @@ private:
 			else
 			{
 				throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
+			}
+		}
+
+		service::FieldResult<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::QueryHas::getResourceWithParams<T>)
+			{
+				return { _pimpl->getResource(std::move(params)) };
+			}
+			else if constexpr (methods::QueryHas::getResource<T>)
+			{
+				return { _pimpl->getResource() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getResource is not implemented)ex");
 			}
 		}
 

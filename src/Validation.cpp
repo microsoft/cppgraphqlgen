@@ -243,7 +243,7 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 
 		if (value.values.find(name) != value.values.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Uniqueness
+			// https://spec.graphql.org/October2021/#sec-Input-Object-Field-Uniqueness
 			auto position = field->begin();
 			std::ostringstream message;
 
@@ -403,7 +403,15 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(std::shared_ptr<schema::Sch
 			{
 				const auto& possibleTypes = entry.second->possibleTypes();
 
-				matchingTypes.reserve(possibleTypes.size());
+				if (kind == introspection::TypeKind::INTERFACE)
+				{
+					matchingTypes.reserve(possibleTypes.size() + 1);
+					matchingTypes.emplace(name);
+				}
+				else
+				{
+					matchingTypes.reserve(possibleTypes.size());
+				}
 
 				for (const auto& possibleType : possibleTypes)
 				{
@@ -460,6 +468,8 @@ ValidateExecutableVisitor::ValidateExecutableVisitor(std::shared_ptr<schema::Sch
 		const auto& args = directive->args();
 		ValidateDirective validateDirective;
 
+		validateDirective.isRepeatable = directive->isRepeatable();
+
 		for (const auto location : locations)
 		{
 			validateDirective.locations.emplace(location);
@@ -481,7 +491,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			if (!inserted.second)
 			{
-				// http://spec.graphql.org/June2018/#sec-Fragment-Name-Uniqueness
+				// https://spec.graphql.org/October2021/#sec-Fragment-Name-Uniqueness
 				auto position = fragmentDefinition.begin();
 				std::ostringstream error;
 
@@ -505,7 +515,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 			if (!inserted.second)
 			{
-				// http://spec.graphql.org/June2018/#sec-Operation-Name-Uniqueness
+				// https://spec.graphql.org/October2021/#sec-Operation-Name-Uniqueness
 				auto position = operationDefinition.begin();
 				std::ostringstream error;
 
@@ -526,7 +536,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 		if (itr != _operationDefinitions.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-Lone-Anonymous-Operation
+			// https://spec.graphql.org/October2021/#sec-Lone-Anonymous-Operation
 			auto position = itr->second.get().begin();
 
 			_errors.push_back(
@@ -547,7 +557,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 		}
 		else
 		{
-			// http://spec.graphql.org/June2018/#sec-Executable-Definitions
+			// https://spec.graphql.org/October2021/#sec-Executable-Definitions
 			auto position = child->begin();
 
 			_errors.push_back({ "Unexpected type definition", { position.line, position.column } });
@@ -556,7 +566,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 
 	if (!_fragmentDefinitions.empty())
 	{
-		// http://spec.graphql.org/June2018/#sec-Fragments-Must-Be-Used
+		// https://spec.graphql.org/October2021/#sec-Fragments-Must-Be-Used
 		const size_t originalSize = _errors.size();
 		auto unreferencedFragments = std::move(_fragmentDefinitions);
 
@@ -607,8 +617,8 @@ void ValidateExecutableVisitor::visitFragmentDefinition(const peg::ast_node& fra
 
 	if (itrType == _types.end() || isScalarType(itrType->second->get().kind()))
 	{
-		// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
-		// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
+		// https://spec.graphql.org/October2021/#sec-Fragment-Spread-Type-Existence
+		// https://spec.graphql.org/October2021/#sec-Fragments-On-Composite-Types
 		auto position = typeCondition->begin();
 		std::ostringstream message;
 
@@ -662,7 +672,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					if (_operationVariables->find(variableName) != _operationVariables->end())
 					{
-						// http://spec.graphql.org/June2018/#sec-Variable-Uniqueness
+						// https://spec.graphql.org/October2021/#sec-Variable-Uniqueness
 						auto position = child->begin();
 						std::ostringstream message;
 
@@ -688,7 +698,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					if (!visitor.isInputType())
 					{
-						// http://spec.graphql.org/June2018/#sec-Variables-Are-Input-Types
+						// https://spec.graphql.org/October2021/#sec-Variables-Are-Input-Types
 						auto position = child->begin();
 						std::ostringstream message;
 
@@ -717,7 +727,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 
 					if (!validateInputValue(false, argument, variableArgument.type))
 					{
-						// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+						// https://spec.graphql.org/October2021/#sec-Values-of-Correct-Type
 						auto position = child->begin();
 						std::ostringstream message;
 
@@ -773,26 +783,46 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	}
 
 	_scopedType = itrType->second;
+	_introspectionFieldCount = 0;
 	_fieldCount = 0;
 
 	const auto& selection = *operationDefinition.children.back();
 
 	visitSelection(selection);
 
-	if (_fieldCount > 1 && operationType == strSubscription)
+	if (operationType == strSubscription)
 	{
-		// http://spec.graphql.org/June2018/#sec-Single-root-field
-		auto position = operationDefinition.begin();
-		std::ostringstream error;
-
-		error << "Subscription with more than one root field";
-
-		if (!operationName.empty())
+		if (_fieldCount > 1)
 		{
-			error << " name: " << operationName;
+			// https://spec.graphql.org/October2021/#sec-Single-root-field
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Subscription with more than one root field";
+
+			if (!operationName.empty())
+			{
+				error << " name: " << operationName;
+			}
+
+			_errors.push_back({ error.str(), { position.line, position.column } });
 		}
 
-		_errors.push_back({ error.str(), { position.line, position.column } });
+		if (_introspectionFieldCount != 0)
+		{
+			// https://spec.graphql.org/October2021/#sec-Single-root-field
+			auto position = operationDefinition.begin();
+			std::ostringstream error;
+
+			error << "Subscription with Introspection root field";
+
+			if (!operationName.empty())
+			{
+				error << " name: " << operationName;
+			}
+
+			_errors.push_back({ error.str(), { position.line, position.column } });
+		}
 	}
 
 	_scopedType.reset();
@@ -803,7 +833,7 @@ void ValidateExecutableVisitor::visitOperationDefinition(const peg::ast_node& op
 	{
 		if (_referencedVariables.find(variable.first) == _referencedVariables.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-All-Variables-Used
+			// https://spec.graphql.org/October2021/#sec-All-Variables-Used
 			auto position = variable.second.get().begin();
 			std::ostringstream error;
 
@@ -918,7 +948,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 			if (itrVariable == _operationVariables->end())
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Uses-Defined
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Uses-Defined
 				std::ostringstream message;
 
 				message << "Undefined variable name: " << variable.name;
@@ -1046,7 +1076,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 				if (itrField == itrFields->second.end())
 				{
-					// http://spec.graphql.org/June2018/#sec-Input-Object-Field-Names
+					// https://spec.graphql.org/October2021/#sec-Input-Object-Field-Names
 					std::ostringstream message;
 
 					message << "Undefined Input Object field type: " << name
@@ -1097,7 +1127,7 @@ bool ValidateExecutableVisitor::validateInputValue(
 
 				if (fieldKind == introspection::TypeKind::NON_NULL)
 				{
-					// http://spec.graphql.org/June2018/#sec-Input-Object-Required-Fields
+					// https://spec.graphql.org/October2021/#sec-Input-Object-Required-Fields
 					std::ostringstream message;
 
 					message << "Missing Input Object field type: " << name
@@ -1272,7 +1302,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		{
 			if (!isNonNull)
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 				_errors.push_back({ "Expected Non-Null variable type", position });
 				return false;
 			}
@@ -1293,7 +1323,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		{
 			if (variableKind != inputKind)
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 				_errors.push_back({ "Expected List variable type", position });
 				return false;
 			}
@@ -1322,7 +1352,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		{
 			if (variableKind != inputKind)
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 				_errors.push_back({ "Expected Input Object variable type", position });
 				return false;
 			}
@@ -1334,7 +1364,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		{
 			if (variableKind != inputKind)
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 				_errors.push_back({ "Expected Enum variable type", position });
 				return false;
 			}
@@ -1346,7 +1376,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 		{
 			if (variableKind != inputKind)
 			{
-				// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+				// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 				_errors.push_back({ "Expected Scalar variable type", position });
 				return false;
 			}
@@ -1356,7 +1386,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 
 		default:
 		{
-			// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+			// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 			_errors.push_back({ "Unexpected input type", position });
 			return false;
 		}
@@ -1380,7 +1410,7 @@ bool ValidateExecutableVisitor::validateVariableType(bool isNonNull,
 
 	if (variableName != inputName)
 	{
-		// http://spec.graphql.org/June2018/#sec-All-Variable-Usages-are-Allowed
+		// https://spec.graphql.org/October2021/#sec-All-Variable-Usages-are-Allowed
 		std::ostringstream message;
 
 		message << "Incompatible variable type: " << variableName << " name: " << inputName;
@@ -1544,7 +1574,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	if (itrType == _typeFields.end())
 	{
-		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		// https://spec.graphql.org/October2021/#sec-Leaf-Field-Selections
 		auto position = field.begin();
 		std::ostringstream message;
 
@@ -1562,7 +1592,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		case introspection::TypeKind::OBJECT:
 		case introspection::TypeKind::INTERFACE:
 		{
-			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+			// https://spec.graphql.org/October2021/#sec-Field-Selections
 			innerType = getFieldType(itrType->second, name);
 			wrappedType = getWrappedFieldType(itrType->second, name);
 			break;
@@ -1572,7 +1602,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		{
 			if (name != R"gql(__typename)gql"sv)
 			{
-				// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+				// https://spec.graphql.org/October2021/#sec-Leaf-Field-Selections
 				auto position = field.begin();
 				std::ostringstream message;
 
@@ -1583,7 +1613,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 				return;
 			}
 
-			// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+			// https://spec.graphql.org/October2021/#sec-Field-Selections
 			innerType = getValidateType(_schema->LookupType("String"sv));
 			wrappedType = getValidateType(
 				_schema->WrapType(introspection::TypeKind::NON_NULL, getSharedType(innerType)));
@@ -1596,7 +1626,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 	if (!innerType)
 	{
-		// http://spec.graphql.org/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types
+		// https://spec.graphql.org/October2021/#sec-Field-Selections
 		auto position = field.begin();
 		std::ostringstream message;
 
@@ -1622,7 +1652,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	std::list<std::string_view> argumentNames;
 
 	peg::on_first_child<peg::arguments>(field,
-		[this, &name, &validateArguments, &argumentLocations, &argumentNames](
+		[this, name, &validateArguments, &argumentLocations, &argumentNames](
 			const peg::ast_node& child) {
 			for (auto& argument : child.children)
 			{
@@ -1631,7 +1661,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 				if (validateArguments.find(argumentName) != validateArguments.end())
 				{
-					// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
+					// https://spec.graphql.org/October2021/#sec-Argument-Uniqueness
 					std::ostringstream message;
 
 					message << "Conflicting argument type: " << _scopedType->get().name()
@@ -1668,7 +1698,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		}
 		else
 		{
-			// http://spec.graphql.org/June2018/#sec-Field-Selection-Merging
+			// https://spec.graphql.org/October2021/#sec-Field-Selection-Merging
 			auto position = field.begin();
 			std::ostringstream message;
 
@@ -1688,7 +1718,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 
 			if (itrArgument == itrField->second.arguments.end())
 			{
-				// http://spec.graphql.org/June2018/#sec-Argument-Names
+				// https://spec.graphql.org/October2021/#sec-Argument-Names
 				std::ostringstream message;
 
 				message << "Undefined argument type: " << _scopedType->get().name()
@@ -1710,7 +1740,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 						itrArgument->second,
 						argument.second.type))
 				{
-					// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+					// https://spec.graphql.org/October2021/#sec-Values-of-Correct-Type
 					std::ostringstream message;
 
 					message << "Incompatible argument type: " << _scopedType->get().name()
@@ -1731,7 +1761,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 			if (argument.second.type
 				&& introspection::TypeKind::NON_NULL == argument.second.type->get().kind())
 			{
-				// http://spec.graphql.org/June2018/#sec-Required-Arguments
+				// https://spec.graphql.org/October2021/#sec-Required-Arguments
 				auto position = field.begin();
 				std::ostringstream message;
 
@@ -1760,8 +1790,10 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		auto outerType = std::move(_scopedType);
 		auto outerFields = std::move(_selectionFields);
 		auto outerFieldCount = _fieldCount;
+		auto outerIntrospectionFieldCount = _introspectionFieldCount;
 
 		_fieldCount = 0;
+		_introspectionFieldCount = 0;
 		_selectionFields.clear();
 		_scopedType = std::move(innerType);
 
@@ -1771,12 +1803,13 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		_scopedType = std::move(outerType);
 		_selectionFields = std::move(outerFields);
 		subFieldCount = _fieldCount;
+		_introspectionFieldCount = outerIntrospectionFieldCount;
 		_fieldCount = outerFieldCount;
 	}
 
 	if (subFieldCount == 0 && !isScalarType(innerType->get().kind()))
 	{
-		// http://spec.graphql.org/June2018/#sec-Leaf-Field-Selections
+		// https://spec.graphql.org/October2021/#sec-Leaf-Field-Selections
 		auto position = field.begin();
 		std::ostringstream message;
 
@@ -1787,6 +1820,14 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 	}
 
 	++_fieldCount;
+
+	constexpr auto c_introspectionFieldPrefix = R"gql(__)gql"sv;
+
+	if (name.size() >= c_introspectionFieldPrefix.size()
+		&& name.substr(0, c_introspectionFieldPrefix.size()) == c_introspectionFieldPrefix)
+	{
+		++_introspectionFieldCount;
+	}
 }
 
 void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
@@ -1800,7 +1841,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	if (itr == _fragmentDefinitions.end())
 	{
-		// http://spec.graphql.org/June2018/#sec-Fragment-spread-target-defined
+		// https://spec.graphql.org/October2021/#sec-Fragment-spread-target-defined
 		auto position = fragmentSpread.begin();
 		std::ostringstream message;
 
@@ -1814,7 +1855,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 	{
 		if (_fragmentCycles.emplace(name).second)
 		{
-			// http://spec.graphql.org/June2018/#sec-Fragment-spreads-must-not-form-cycles
+			// https://spec.graphql.org/October2021/#sec-Fragment-spreads-must-not-form-cycles
 			auto position = fragmentSpread.begin();
 			std::ostringstream message;
 
@@ -1833,7 +1874,7 @@ void ValidateExecutableVisitor::visitFragmentSpread(const peg::ast_node& fragmen
 
 	if (itrInner == _types.end() || !matchesScopedType(innerType))
 	{
-		// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
+		// https://spec.graphql.org/October2021/#sec-Fragment-spread-is-possible
 		auto position = fragmentSpread.begin();
 		std::ostringstream message;
 
@@ -1885,7 +1926,7 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 
 		if (itrInner == _types.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-Fragment-Spread-Type-Existence
+			// https://spec.graphql.org/October2021/#sec-Fragment-Spread-Type-Existence
 			std::ostringstream message;
 
 			message << "Undefined target type on inline fragment name: " << innerType;
@@ -1898,8 +1939,8 @@ void ValidateExecutableVisitor::visitInlineFragment(const peg::ast_node& inlineF
 
 		if (isScalarType(fragmentType->get().kind()) || !matchesScopedType(innerType))
 		{
-			// http://spec.graphql.org/June2018/#sec-Fragments-On-Composite-Types
-			// http://spec.graphql.org/June2018/#sec-Fragment-spread-is-possible
+			// https://spec.graphql.org/October2021/#sec-Fragments-On-Composite-Types
+			// https://spec.graphql.org/October2021/#sec-Fragment-spread-is-possible
 			std::ostringstream message;
 
 			message << (isScalarType(fragmentType->get().kind())
@@ -1938,23 +1979,11 @@ void ValidateExecutableVisitor::visitDirectives(
 				directiveName = child.string_view();
 			});
 
-		if (!uniqueDirectives.emplace(directiveName).second)
-		{
-			// http://spec.graphql.org/June2018/#sec-Directives-Are-Unique-Per-Location
-			auto position = directive->begin();
-			std::ostringstream message;
-
-			message << "Conflicting directive name: " << directiveName;
-
-			_errors.push_back({ message.str(), { position.line, position.column } });
-			continue;
-		}
-
-		auto itrDirective = _directives.find(directiveName);
+		const auto itrDirective = _directives.find(directiveName);
 
 		if (itrDirective == _directives.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-Directives-Are-Defined
+			// https://spec.graphql.org/October2021/#sec-Directives-Are-Defined
 			auto position = directive->begin();
 			std::ostringstream message;
 
@@ -1964,9 +1993,21 @@ void ValidateExecutableVisitor::visitDirectives(
 			continue;
 		}
 
+		if (!itrDirective->second.isRepeatable && !uniqueDirectives.emplace(directiveName).second)
+		{
+			// https://spec.graphql.org/October2021/#sec-Directives-Are-Unique-Per-Location
+			auto position = directive->begin();
+			std::ostringstream message;
+
+			message << "Conflicting directive name: " << directiveName;
+
+			_errors.push_back({ message.str(), { position.line, position.column } });
+			continue;
+		}
+
 		if (itrDirective->second.locations.find(location) == itrDirective->second.locations.end())
 		{
-			// http://spec.graphql.org/June2018/#sec-Directives-Are-In-Valid-Locations
+			// https://spec.graphql.org/October2021/#sec-Directives-Are-In-Valid-Locations
 			auto position = directive->begin();
 			std::ostringstream message;
 
@@ -2023,7 +2064,7 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					if (validateArguments.find(argumentName) != validateArguments.end())
 					{
-						// http://spec.graphql.org/June2018/#sec-Argument-Uniqueness
+						// https://spec.graphql.org/October2021/#sec-Argument-Uniqueness
 						std::ostringstream message;
 
 						message << "Conflicting argument directive: " << directiveName
@@ -2047,7 +2088,7 @@ void ValidateExecutableVisitor::visitDirectives(
 
 					if (itrArgument == itrDirective->second.arguments.end())
 					{
-						// http://spec.graphql.org/June2018/#sec-Argument-Names
+						// https://spec.graphql.org/October2021/#sec-Argument-Names
 						std::ostringstream message;
 
 						message << "Undefined argument directive: " << directiveName
@@ -2069,7 +2110,7 @@ void ValidateExecutableVisitor::visitDirectives(
 								itrArgument->second,
 								argument.second.type))
 						{
-							// http://spec.graphql.org/June2018/#sec-Values-of-Correct-Type
+							// https://spec.graphql.org/October2021/#sec-Values-of-Correct-Type
 							std::ostringstream message;
 
 							message << "Incompatible argument directive: " << directiveName
@@ -2090,7 +2131,7 @@ void ValidateExecutableVisitor::visitDirectives(
 					if (argument.second.type
 						&& introspection::TypeKind::NON_NULL == argument.second.type->get().kind())
 					{
-						// http://spec.graphql.org/June2018/#sec-Required-Arguments
+						// https://spec.graphql.org/October2021/#sec-Required-Arguments
 						auto position = directive->begin();
 						std::ostringstream message;
 

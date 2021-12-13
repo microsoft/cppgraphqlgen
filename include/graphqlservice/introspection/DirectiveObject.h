@@ -20,6 +20,7 @@ private:
 	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveLocations(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveArgs(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveIsRepeatable(service::ResolverParams&& params) const;
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
@@ -31,6 +32,7 @@ private:
 		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
 		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations() const = 0;
 		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
+		virtual service::FieldResult<bool> getIsRepeatable() const = 0;
 	};
 
 	template <class T>
@@ -60,6 +62,11 @@ private:
 		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
+		}
+
+		service::FieldResult<bool> getIsRepeatable() const final
+		{
+			return { _pimpl->getIsRepeatable() };
 		}
 
 	private:

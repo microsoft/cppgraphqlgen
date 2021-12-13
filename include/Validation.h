@@ -37,6 +37,7 @@ using ValidateDirectiveArguments = internal::string_view_map<ValidateArgument>;
 
 struct ValidateDirective
 {
+	bool isRepeatable = false;
 	internal::sorted_set<introspection::DirectiveLocation> locations;
 	ValidateDirectiveArguments arguments;
 };
@@ -250,6 +251,7 @@ private:
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
+	size_t _introspectionFieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
 	ValidateType _scopedType;

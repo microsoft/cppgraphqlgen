@@ -276,7 +276,9 @@ void RequestLoader::addTypesToSchema()
 		for (const auto& scalarType : _schemaLoader.getScalarTypes())
 		{
 			_schema->AddType(scalarType.type,
-				schema::ScalarType::Make(scalarType.type, scalarType.description));
+				schema::ScalarType::Make(scalarType.type,
+					scalarType.description,
+					scalarType.specifiedByURL));
 		}
 	}
 
@@ -542,7 +544,8 @@ void RequestLoader::addTypesToSchema()
 		_schema->AddDirective(schema::Directive::Make(directive.name,
 			directive.description,
 			std::move(locations),
-			std::move(arguments)));
+			std::move(arguments),
+			directive.isRepeatable));
 	}
 
 	for (const auto& operationType : _schemaLoader.getOperationTypes())

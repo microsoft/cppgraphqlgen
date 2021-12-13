@@ -25,6 +25,7 @@ private:
 	service::AwaitableResolver resolveEnumValues(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveInputFields(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveOfType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveSpecifiedByURL(service::ResolverParams&& params) const;
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
@@ -41,6 +42,7 @@ private:
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const = 0;
 		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const = 0;
 		virtual service::FieldResult<std::shared_ptr<Type>> getOfType() const = 0;
+		virtual service::FieldResult<std::optional<std::string>> getSpecifiedByURL() const = 0;
 	};
 
 	template <class T>
@@ -95,6 +97,11 @@ private:
 		service::FieldResult<std::shared_ptr<Type>> getOfType() const final
 		{
 			return { _pimpl->getOfType() };
+		}
+
+		service::FieldResult<std::optional<std::string>> getSpecifiedByURL() const final
+		{
+			return { _pimpl->getSpecifiedByURL() };
 		}
 
 	private:

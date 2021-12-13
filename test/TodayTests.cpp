@@ -955,7 +955,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 				inlineFragmentNested: nested @fieldTag(field: "nested3") {
 					...on NestedType @inlineFragmentTag(inlineFragment: "inlineFragment4") {
 						...on NestedType @inlineFragmentTag(inlineFragment: "inlineFragment5") {
-							inlineFragmentNested: nested @fieldTag(field: "nested4") {
+							inlineFragmentNested: nested @repeatableOnField @fieldTag(field: "nested4") @repeatableOnField {
 								depth @fieldTag(field: "depth4")
 							}
 						}
@@ -995,61 +995,107 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		capturedParams.pop();
 		const auto params1 = std::move(capturedParams.top());
 		capturedParams.pop();
-		const auto queryTag1 =
-			service::ScalarArgument::require("queryTag", params1.operationDirectives);
+		ASSERT_EQ(size_t(1), params1.operationDirectives.size()) << "missing operation directive";
+		const auto itrQueryTag1 = params1.operationDirectives.cbegin();
+		ASSERT_TRUE(itrQueryTag1->first == "queryTag"sv) << "missing required directive";
+		const auto& queryTag1 = itrQueryTag1->second;
 		const auto query1 = service::StringArgument::require("query", queryTag1);
 		const auto fragmentDefinitionCount1 = params1.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount1 = params1.fragmentSpreadDirectives.size();
 		const auto inlineFragmentCount1 = params1.inlineFragmentDirectives.size();
-		const auto fieldTag1 =
-			service::ScalarArgument::require("fieldTag", params1.fieldDirectives);
+		ASSERT_EQ(size_t(1), params1.fieldDirectives.size()) << "missing operation directive";
+		const auto itrFieldTag1 = params1.fieldDirectives.cbegin();
+		ASSERT_TRUE(itrFieldTag1->first == "fieldTag"sv) << "missing required directive";
+		const auto& fieldTag1 = itrFieldTag1->second;
 		const auto field1 = service::StringArgument::require("field", fieldTag1);
-		const auto queryTag2 =
-			service::ScalarArgument::require("queryTag", params2.operationDirectives);
+		ASSERT_EQ(size_t(1), params2.operationDirectives.size()) << "missing operation directive";
+		const auto itrQueryTag2 = params2.operationDirectives.cbegin();
+		ASSERT_TRUE(itrQueryTag2->first == "queryTag"sv) << "missing required directive";
+		const auto& queryTag2 = itrQueryTag2->second;
 		const auto query2 = service::StringArgument::require("query", queryTag2);
-		const auto fragmentDefinitionTag2 =
-			service::ScalarArgument::require("fragmentDefinitionTag",
-				params2.fragmentDefinitionDirectives);
+		ASSERT_EQ(size_t(1), params2.fragmentDefinitionDirectives.size())
+			<< "missing fragment definition directive";
+		const auto itrFragmentDefinitionTag2 = params2.fragmentDefinitionDirectives.cbegin();
+		ASSERT_TRUE(itrFragmentDefinitionTag2->first == "fragmentDefinitionTag"sv)
+			<< "missing fragment definition directive";
+		const auto& fragmentDefinitionTag2 = itrFragmentDefinitionTag2->second;
 		const auto fragmentDefinition2 =
 			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag2);
-		const auto fragmentSpreadTag2 =
-			service::ScalarArgument::require("fragmentSpreadTag", params2.fragmentSpreadDirectives);
+		ASSERT_EQ(size_t(1), params2.fragmentSpreadDirectives.size())
+			<< "missing fragment spread directive";
+		const auto itrFragmentSpreadTag2 = params2.fragmentSpreadDirectives.cbegin();
+		ASSERT_TRUE(itrFragmentSpreadTag2->first == "fragmentSpreadTag"sv)
+			<< "missing fragment spread directive";
+		const auto& fragmentSpreadTag2 = itrFragmentSpreadTag2->second;
 		const auto fragmentSpread2 =
 			service::StringArgument::require("fragmentSpread", fragmentSpreadTag2);
 		const auto inlineFragmentCount2 = params2.inlineFragmentDirectives.size();
-		const auto fieldTag2 =
-			service::ScalarArgument::require("fieldTag", params2.fieldDirectives);
+		ASSERT_EQ(size_t(1), params2.fieldDirectives.size()) << "missing field directive";
+		const auto itrFieldTag2 = params2.fieldDirectives.cbegin();
+		ASSERT_TRUE(itrFieldTag2->first == "fieldTag"sv) << "missing field directive";
+		const auto& fieldTag2 = itrFieldTag2->second;
 		const auto field2 = service::StringArgument::require("field", fieldTag2);
-		const auto queryTag3 =
-			service::ScalarArgument::require("queryTag", params3.operationDirectives);
+		ASSERT_EQ(size_t(1), params3.operationDirectives.size()) << "missing operation directive";
+		const auto itrQueryTag3 = params3.operationDirectives.cbegin();
+		ASSERT_TRUE(itrQueryTag3->first == "queryTag"sv) << "missing required directive";
+		const auto& queryTag3 = itrQueryTag3->second;
 		const auto query3 = service::StringArgument::require("query", queryTag3);
-		const auto fragmentDefinitionTag3 =
-			service::ScalarArgument::require("fragmentDefinitionTag",
-				params3.fragmentDefinitionDirectives);
+		ASSERT_EQ(size_t(1), params3.fragmentDefinitionDirectives.size())
+			<< "missing fragment definition directive";
+		const auto itrFragmentDefinitionTag3 = params3.fragmentDefinitionDirectives.cbegin();
+		ASSERT_TRUE(itrFragmentDefinitionTag3->first == "fragmentDefinitionTag"sv)
+			<< "missing fragment definition directive";
+		const auto& fragmentDefinitionTag3 = itrFragmentDefinitionTag3->second;
 		const auto fragmentDefinition3 =
 			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag3);
-		const auto fragmentSpreadTag3 =
-			service::ScalarArgument::require("fragmentSpreadTag", params3.fragmentSpreadDirectives);
+		ASSERT_EQ(size_t(1), params3.fragmentSpreadDirectives.size())
+			<< "missing fragment spread directive";
+		const auto itrFragmentSpreadTag3 = params3.fragmentSpreadDirectives.cbegin();
+		ASSERT_TRUE(itrFragmentSpreadTag3->first == "fragmentSpreadTag"sv)
+			<< "missing fragment spread directive";
+		const auto& fragmentSpreadTag3 = itrFragmentSpreadTag3->second;
 		const auto fragmentSpread3 =
 			service::StringArgument::require("fragmentSpread", fragmentSpreadTag3);
-		const auto inlineFragmentTag3 =
-			service::ScalarArgument::require("inlineFragmentTag", params3.inlineFragmentDirectives);
+		ASSERT_EQ(size_t(1), params3.inlineFragmentDirectives.size())
+			<< "missing inline fragment directive";
+		const auto itrInlineFragmentTag3 = params3.inlineFragmentDirectives.cbegin();
+		ASSERT_TRUE(itrInlineFragmentTag3->first == "inlineFragmentTag"sv);
+		const auto& inlineFragmentTag3 = itrInlineFragmentTag3->second;
 		const auto inlineFragment3 =
 			service::StringArgument::require("inlineFragment", inlineFragmentTag3);
-		const auto fieldTag3 =
-			service::ScalarArgument::require("fieldTag", params3.fieldDirectives);
+		ASSERT_EQ(size_t(1), params3.fieldDirectives.size()) << "missing field directive";
+		const auto itrFieldTag3 = params3.fieldDirectives.cbegin();
+		ASSERT_TRUE(itrFieldTag3->first == "fieldTag"sv) << "missing field directive";
+		const auto& fieldTag3 = itrFieldTag3->second;
 		const auto field3 = service::StringArgument::require("field", fieldTag3);
-		const auto queryTag4 =
-			service::ScalarArgument::require("queryTag", params4.operationDirectives);
+		ASSERT_EQ(size_t(1), params4.operationDirectives.size()) << "missing operation directive";
+		const auto itrQueryTag4 = params4.operationDirectives.cbegin();
+		ASSERT_TRUE(itrQueryTag4->first == "queryTag"sv) << "missing required directive";
+		const auto& queryTag4 = itrQueryTag4->second;
 		const auto query4 = service::StringArgument::require("query", queryTag4);
 		const auto fragmentDefinitionCount4 = params4.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount4 = params4.fragmentSpreadDirectives.size();
-		const auto inlineFragmentTag4 =
-			service::ScalarArgument::require("inlineFragmentTag", params4.inlineFragmentDirectives);
+		ASSERT_EQ(size_t(1), params4.inlineFragmentDirectives.size())
+			<< "missing inline fragment directive";
+		const auto itrInlineFragmentTag4 = params4.inlineFragmentDirectives.cbegin();
+		ASSERT_TRUE(itrInlineFragmentTag4->first == "inlineFragmentTag"sv);
+		const auto& inlineFragmentTag4 = itrInlineFragmentTag4->second;
 		const auto inlineFragment4 =
 			service::StringArgument::require("inlineFragment", inlineFragmentTag4);
-		const auto fieldTag4 =
-			service::ScalarArgument::require("fieldTag", params4.fieldDirectives);
+		ASSERT_EQ(size_t(3), params4.fieldDirectives.size()) << "missing field directive";
+		const auto itrRepeatable1 = params4.fieldDirectives.cbegin();
+		ASSERT_TRUE(itrRepeatable1->first == "repeatableOnField"sv) << "missing field directive";
+		EXPECT_TRUE(response::Type::Map == itrRepeatable1->second.type())
+			<< "unexpected arguments type directive";
+		EXPECT_EQ(size_t(0), itrRepeatable1->second.size()) << "extra arguments on directive";
+		const auto itrFieldTag4 = itrRepeatable1 + 1;
+		ASSERT_TRUE(itrFieldTag4->first == "fieldTag"sv) << "missing field directive";
+		const auto& fieldTag4 = itrFieldTag4->second;
+		const auto itrRepeatable2 = itrFieldTag4 + 1;
+		ASSERT_TRUE(itrRepeatable2->first == "repeatableOnField"sv) << "missing field directive";
+		EXPECT_TRUE(response::Type::Map == itrRepeatable2->second.type())
+			<< "unexpected arguments type directive";
+		EXPECT_EQ(size_t(0), itrRepeatable2->second.size()) << "extra arguments on directive";
 		const auto field4 = service::StringArgument::require("field", fieldTag4);
 
 		ASSERT_EQ(1, depth1);
@@ -1079,9 +1125,11 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_EQ("nested3", field3) << "remember the field directives";
 		ASSERT_EQ("nested", query4) << "remember the operation directives";
 		ASSERT_EQ(size_t(0), fragmentDefinitionCount4)
-			<< "traversing a field to a nested object SelectionSet resets the fragment directives";
+			<< "traversing a field to a nested object SelectionSet resets the fragment "
+			   "directives";
 		ASSERT_EQ(size_t(0), fragmentSpreadCount4)
-			<< "traversing a field to a nested object SelectionSet resets the fragment directives";
+			<< "traversing a field to a nested object SelectionSet resets the fragment "
+			   "directives";
 		ASSERT_EQ("inlineFragment5", inlineFragment4)
 			<< "nested inline fragments don't reset, but do overwrite on collision";
 		ASSERT_EQ("nested4", field4) << "remember the field directives";

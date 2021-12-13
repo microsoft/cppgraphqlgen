@@ -30,7 +30,7 @@ namespace graphql::response {
 
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
-// of the [June 2018 spec](http://spec.graphql.org/June2018/#sec-Serialization-Format).
+// of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
 enum class Type : uint8_t
 {
 	Map,	   // JSON Object
