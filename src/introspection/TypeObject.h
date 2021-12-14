@@ -33,16 +33,16 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<TypeKind> getKind() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getName() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getOfType() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getSpecifiedByURL() const = 0;
+		virtual service::AwaitableScalar<TypeKind> getKind() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getName() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Type>> getOfType() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getSpecifiedByURL() const = 0;
 	};
 
 	template <class T>
@@ -54,52 +54,52 @@ private:
 		{
 		}
 
-		service::FieldResult<TypeKind> getKind() const final
+		service::AwaitableScalar<TypeKind> getKind() const final
 		{
 			return { _pimpl->getKind() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getName() const final
+		service::AwaitableScalar<std::optional<std::string>> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription() const final
+		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const final
 		{
 			return { _pimpl->getInterfaces() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const final
 		{
 			return { _pimpl->getPossibleTypes() };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const final
 		{
 			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const final
 		{
 			return { _pimpl->getInputFields() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getOfType() const final
+		service::AwaitableObject<std::shared_ptr<Type>> getOfType() const final
 		{
 			return { _pimpl->getOfType() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getSpecifiedByURL() const final
+		service::AwaitableScalar<std::optional<std::string>> getSpecifiedByURL() const final
 		{
 			return { _pimpl->getSpecifiedByURL() };
 		}

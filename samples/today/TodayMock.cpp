@@ -174,7 +174,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 	return awaiter { delay };
 }
 
-service::FieldResult<std::shared_ptr<object::Node>> Query::getNode(
+service::AwaitableObject<std::shared_ptr<object::Node>> Query::getNode(
 	service::FieldParams params, response::IdType id)
 {
 	// query { node(id: "ZmFrZVRhc2tJZA==") { ...on Task { title } } }

@@ -50,7 +50,7 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(service::FieldResult<validation::DogCommand> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
@@ -86,7 +86,7 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(service::FieldResult<validation::CatCommand> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)

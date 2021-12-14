@@ -16,25 +16,25 @@ namespace methods::MutationHas {
 template <class TImpl>
 concept applyCompleteTaskWithParams = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
 {
-	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
 concept applyCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg) 
 {
-	{ service::FieldResult<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
 };
 
 template <class TImpl>
 concept applySetFloatWithParams = requires (TImpl impl, service::FieldParams params, double valueArg) 
 {
-	{ service::FieldResult<double> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
+	{ service::AwaitableScalar<double> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 template <class TImpl>
 concept applySetFloat = requires (TImpl impl, double valueArg) 
 {
-	{ service::FieldResult<double> { impl.applySetFloat(std::move(valueArg)) } };
+	{ service::AwaitableScalar<double> { impl.applySetFloat(std::move(valueArg)) } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
-		virtual service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const = 0;
+		virtual service::AwaitableScalar<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
+		service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> applyCompleteTask(service::FieldParams&& params, CompleteTaskInput&& inputArg) const final
 		{
 			if constexpr (methods::MutationHas::applyCompleteTaskWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const final
+		service::AwaitableScalar<double> applySetFloat(service::FieldParams&& params, double&& valueArg) const final
 		{
 			if constexpr (methods::MutationHas::applySetFloatWithParams<T>)
 			{

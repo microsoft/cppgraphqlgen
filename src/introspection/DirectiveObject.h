@@ -28,11 +28,11 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::string> getName() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
-		virtual service::FieldResult<std::vector<DirectiveLocation>> getLocations() const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
-		virtual service::FieldResult<bool> getIsRepeatable() const = 0;
+		virtual service::AwaitableScalar<std::string> getName() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		virtual service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const = 0;
+		virtual service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
+		virtual service::AwaitableScalar<bool> getIsRepeatable() const = 0;
 	};
 
 	template <class T>
@@ -44,27 +44,27 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName() const final
+		service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription() const final
+		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::vector<DirectiveLocation>> getLocations() const final
+		service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
 		{
 			return { _pimpl->getLocations() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
+		service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
 		}
 
-		service::FieldResult<bool> getIsRepeatable() const final
+		service::AwaitableScalar<bool> getIsRepeatable() const final
 		{
 			return { _pimpl->getIsRepeatable() };
 		}

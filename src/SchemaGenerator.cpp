@@ -478,7 +478,7 @@ template <>
 GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
-	FieldResult<)cpp" << _loader.getSchemaNamespace()
+	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(> result, ResolverParams params);
 )cpp";
@@ -658,8 +658,8 @@ concept )cpp" << outputField.accessor
 
 		headerFile << R"cpp() 
 {
-	{ service::FieldResult<)cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+	{ )cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp( { impl.)cpp"
 				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
 
 		if (!passedArguments.empty())
@@ -681,8 +681,8 @@ concept )cpp" << outputField.accessor
 
 		headerFile << R"cpp() 
 {
-	{ service::FieldResult<)cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp(> { impl.)cpp"
+	{ )cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp( { impl.)cpp"
 				   << outputField.accessor << fieldName << R"cpp(()cpp";
 
 		if (!passedArguments.empty())
@@ -779,8 +779,8 @@ private:
 		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 
 		headerFile << R"cpp(
-		service::FieldResult<)cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
+		)cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << outputField.accessor
 				   << fieldName << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
@@ -1033,8 +1033,8 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(		virtual service::FieldResult<)cpp"
-		   << _loader.getOutputCppType(outputField) << R"cpp(> )cpp" << outputField.accessor
+	output << R"cpp(		virtual )cpp"
+		   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << outputField.accessor
 		   << fieldName << R"cpp(()cpp";
 
 	bool firstArgument = _loader.isIntrospection();
@@ -1186,7 +1186,7 @@ template <>
 template <>
 service::AwaitableResolver ModifiedResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>::convert(service::FieldResult<)cpp"
+					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(> result, ResolverParams params)
 {

@@ -16,25 +16,25 @@ namespace methods::MessageHas {
 template <class TImpl>
 concept getBodyWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getBody(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getBody(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getBody = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getBody() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getBody() } };
 };
 
 template <class TImpl>
 concept getSenderWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IdType> { impl.getSender(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getSender(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getSender = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IdType> { impl.getSender() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getSender() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::optional<std::string>> getBody(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getBody(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getSender(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::optional<std::string>> getBody(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getBody(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MessageHas::getBodyWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::IdType> getSender(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getSender(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MessageHas::getSenderWithParams<T>)
 			{

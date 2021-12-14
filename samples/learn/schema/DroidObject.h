@@ -23,61 +23,61 @@ namespace methods::DroidHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::string> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<std::string> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::string> { impl.getId() } };
+	{ service::AwaitableScalar<std::string> { impl.getId() } };
 };
 
 template <class TImpl>
 concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
 concept getFriendsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends(std::move(params)) } };
+	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getFriends = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends() } };
+	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends() } };
 };
 
 template <class TImpl>
 concept getAppearsInWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getAppearsIn = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn() } };
+	{ service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn() } };
 };
 
 template <class TImpl>
 concept getPrimaryFunctionWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getPrimaryFunction(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getPrimaryFunction(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getPrimaryFunction = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getPrimaryFunction() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getPrimaryFunction() } };
 };
 
 template <class TImpl>
@@ -113,11 +113,11 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::string> getId(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::string> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -129,7 +129,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::string> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getIdWithParams<T>)
 			{
@@ -142,7 +142,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getNameWithParams<T>)
 			{
@@ -155,7 +155,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getFriendsWithParams<T>)
 			{
@@ -168,7 +168,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getAppearsInWithParams<T>)
 			{
@@ -181,7 +181,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getPrimaryFunction(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getPrimaryFunctionWithParams<T>)
 			{

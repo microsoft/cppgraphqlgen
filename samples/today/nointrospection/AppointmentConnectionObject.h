@@ -16,25 +16,25 @@ namespace methods::AppointmentConnectionHas {
 template <class TImpl>
 concept getPageInfoWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getPageInfo = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
+	{ service::AwaitableObject<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
 };
 
 template <class TImpl>
 concept getEdgesWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges(std::move(params)) } };
+	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getEdges = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges() } };
+	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> { impl.getEdges() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<PageInfo>> getPageInfo(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentConnectionHas::getPageInfoWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
+		service::AwaitableObject<std::optional<std::vector<std::shared_ptr<AppointmentEdge>>>> getEdges(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentConnectionHas::getEdgesWithParams<T>)
 			{

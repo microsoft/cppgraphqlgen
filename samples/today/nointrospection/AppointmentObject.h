@@ -23,61 +23,61 @@ namespace methods::AppointmentHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
 concept getWhenWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getWhen = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<response::Value>> { impl.getWhen() } };
+	{ service::AwaitableScalar<std::optional<response::Value>> { impl.getWhen() } };
 };
 
 template <class TImpl>
 concept getSubjectWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getSubject = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getSubject() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getSubject() } };
 };
 
 template <class TImpl>
 concept getIsNowWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<bool> { impl.getIsNow(std::move(params)) } };
+	{ service::AwaitableScalar<bool> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getIsNow = requires (TImpl impl) 
 {
-	{ service::FieldResult<bool> { impl.getIsNow() } };
+	{ service::AwaitableScalar<bool> { impl.getIsNow() } };
 };
 
 template <class TImpl>
 concept getForceErrorWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getForceError = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getForceError() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getForceError() } };
 };
 
 template <class TImpl>
@@ -113,11 +113,11 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getIsNow(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -129,7 +129,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIdWithParams<T>)
 			{
@@ -145,7 +145,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getWhenWithParams<T>)
 			{
@@ -161,7 +161,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getSubjectWithParams<T>)
 			{
@@ -177,7 +177,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getIsNow(service::FieldParams&& params) const final
+		service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIsNowWithParams<T>)
 			{
@@ -193,7 +193,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getForceErrorWithParams<T>)
 			{

@@ -16,25 +16,25 @@ namespace methods::SubscriptionHas {
 template <class TImpl>
 concept getNewMessageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Message>> { impl.getNewMessage(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Message>> { impl.getNewMessage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNewMessage = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Message>> { impl.getNewMessage() } };
+	{ service::AwaitableObject<std::shared_ptr<Message>> { impl.getNewMessage() } };
 };
 
 template <class TImpl>
 concept getDisallowedSecondRootFieldWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField(std::move(params)) } };
+	{ service::AwaitableScalar<bool> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getDisallowedSecondRootField = requires (TImpl impl) 
 {
-	{ service::FieldResult<bool> { impl.getDisallowedSecondRootField() } };
+	{ service::AwaitableScalar<bool> { impl.getDisallowedSecondRootField() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getDisallowedSecondRootField(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::getNewMessageWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
+		service::AwaitableScalar<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::getDisallowedSecondRootFieldWithParams<T>)
 			{

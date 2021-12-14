@@ -49,7 +49,7 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::FieldResult<learn::Episode> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)

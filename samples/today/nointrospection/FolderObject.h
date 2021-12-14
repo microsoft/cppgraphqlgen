@@ -23,37 +23,37 @@ namespace methods::FolderHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
 concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getName(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getName() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
 concept getUnreadCountWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<int> { impl.getUnreadCount(std::move(params)) } };
+	{ service::AwaitableScalar<int> { impl.getUnreadCount(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getUnreadCount = requires (TImpl impl) 
 {
-	{ service::FieldResult<int> { impl.getUnreadCount() } };
+	{ service::AwaitableScalar<int> { impl.getUnreadCount() } };
 };
 
 template <class TImpl>
@@ -87,9 +87,9 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<int> getUnreadCount(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -101,7 +101,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderHas::getIdWithParams<T>)
 			{
@@ -117,7 +117,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getName(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderHas::getNameWithParams<T>)
 			{
@@ -133,7 +133,7 @@ private:
 			}
 		}
 
-		service::FieldResult<int> getUnreadCount(service::FieldParams&& params) const final
+		service::AwaitableScalar<int> getUnreadCount(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderHas::getUnreadCountWithParams<T>)
 			{

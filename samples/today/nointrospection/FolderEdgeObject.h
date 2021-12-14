@@ -16,25 +16,25 @@ namespace methods::FolderEdgeHas {
 template <class TImpl>
 concept getNodeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Folder>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNode = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Folder>> { impl.getNode() } };
+	{ service::AwaitableObject<std::shared_ptr<Folder>> { impl.getNode() } };
 };
 
 template <class TImpl>
 concept getCursorWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::Value> { impl.getCursor(std::move(params)) } };
+	{ service::AwaitableScalar<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getCursor = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::Value> { impl.getCursor() } };
+	{ service::AwaitableScalar<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderEdgeHas::getNodeWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<response::Value> getCursor(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderEdgeHas::getCursorWithParams<T>)
 			{

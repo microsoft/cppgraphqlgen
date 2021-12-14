@@ -16,97 +16,97 @@ namespace methods::ArgumentsHas {
 template <class TImpl>
 concept getMultipleReqsWithParams = requires (TImpl impl, service::FieldParams params, int xArg, int yArg) 
 {
-	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
+	{ service::AwaitableScalar<int> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
 concept getMultipleReqs = requires (TImpl impl, int xArg, int yArg) 
 {
-	{ service::FieldResult<int> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
+	{ service::AwaitableScalar<int> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg) 
 {
-	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
+	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg) 
 {
-	{ service::FieldResult<std::optional<bool>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
+	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
 concept getFloatArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg) 
 {
-	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
+	{ service::AwaitableScalar<std::optional<double>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
 concept getFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg) 
 {
-	{ service::FieldResult<std::optional<double>> { impl.getFloatArgField(std::move(floatArgArg)) } };
+	{ service::AwaitableScalar<std::optional<double>> { impl.getFloatArgField(std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
 concept getIntArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
 };
 
 template <class TImpl>
 concept getIntArgField = requires (TImpl impl, std::optional<int> intArgArg) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getIntArgField(std::move(intArgArg)) } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getIntArgField(std::move(intArgArg)) } };
 };
 
 template <class TImpl>
 concept getNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg) 
 {
-	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
 concept getNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg) 
 {
-	{ service::FieldResult<bool> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
 concept getNonNullBooleanListFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept getNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanListArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept getOptionalNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg) 
 {
-	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
 concept getOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg) 
 {
-	{ service::FieldResult<bool> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
@@ -145,14 +145,14 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const = 0;
-		virtual service::FieldResult<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const = 0;
-		virtual service::FieldResult<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const = 0;
-		virtual service::FieldResult<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const = 0;
-		virtual service::FieldResult<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const = 0;
-		virtual service::FieldResult<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const = 0;
-		virtual service::FieldResult<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const = 0;
+		virtual service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const = 0;
+		virtual service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const = 0;
+		virtual service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const = 0;
 	};
 
 	template <class T>
@@ -164,7 +164,7 @@ private:
 		{
 		}
 
-		service::FieldResult<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
+		service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getMultipleReqsWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
+		service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanArgFieldWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
+		service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getFloatArgFieldWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
+		service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getIntArgFieldWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
+		service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanArgFieldWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
+		service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanListFieldWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
+		service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanListArgFieldWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
+		service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getOptionalNonNullBooleanArgFieldWithParams<T>)
 			{

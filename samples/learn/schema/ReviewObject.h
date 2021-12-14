@@ -16,25 +16,25 @@ namespace methods::ReviewHas {
 template <class TImpl>
 concept getStarsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<int> { impl.getStars(std::move(params)) } };
+	{ service::AwaitableScalar<int> { impl.getStars(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getStars = requires (TImpl impl) 
 {
-	{ service::FieldResult<int> { impl.getStars() } };
+	{ service::AwaitableScalar<int> { impl.getStars() } };
 };
 
 template <class TImpl>
 concept getCommentaryWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getCommentary(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getCommentary = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getCommentary() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getCommentary() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<int> getStars(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getCommentary(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<int> getStars(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<int> getStars(service::FieldParams&& params) const final
+		service::AwaitableScalar<int> getStars(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewHas::getStarsWithParams<T>)
 			{
@@ -93,7 +93,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewHas::getCommentaryWithParams<T>)
 			{

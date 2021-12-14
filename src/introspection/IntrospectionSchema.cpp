@@ -49,7 +49,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
@@ -103,7 +103,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)

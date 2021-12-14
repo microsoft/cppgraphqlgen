@@ -27,10 +27,10 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::string> getName() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
-		virtual service::FieldResult<bool> getIsDeprecated() const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getDeprecationReason() const = 0;
+		virtual service::AwaitableScalar<std::string> getName() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		virtual service::AwaitableScalar<bool> getIsDeprecated() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const = 0;
 	};
 
 	template <class T>
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName() const final
+		service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription() const final
+		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<bool> getIsDeprecated() const final
+		service::AwaitableScalar<bool> getIsDeprecated() const final
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::FieldResult<std::optional<std::string>> getDeprecationReason() const final
+		service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
 		{
 			return { _pimpl->getDeprecationReason() };
 		}

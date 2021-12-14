@@ -608,7 +608,7 @@ void blockSubFields(const ResolverParams& params)
 }
 
 template <>
-AwaitableResolver ModifiedResult<int>::convert(FieldResult<int> result, ResolverParams params)
+AwaitableResolver ModifiedResult<int>::convert(AwaitableScalar<int> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -618,7 +618,8 @@ AwaitableResolver ModifiedResult<int>::convert(FieldResult<int> result, Resolver
 }
 
 template <>
-AwaitableResolver ModifiedResult<double>::convert(FieldResult<double> result, ResolverParams params)
+AwaitableResolver ModifiedResult<double>::convert(
+	AwaitableScalar<double> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -629,7 +630,7 @@ AwaitableResolver ModifiedResult<double>::convert(FieldResult<double> result, Re
 
 template <>
 AwaitableResolver ModifiedResult<std::string>::convert(
-	FieldResult<std::string> result, ResolverParams params)
+	AwaitableScalar<std::string> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -641,7 +642,7 @@ AwaitableResolver ModifiedResult<std::string>::convert(
 }
 
 template <>
-AwaitableResolver ModifiedResult<bool>::convert(FieldResult<bool> result, ResolverParams params)
+AwaitableResolver ModifiedResult<bool>::convert(AwaitableScalar<bool> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -652,7 +653,7 @@ AwaitableResolver ModifiedResult<bool>::convert(FieldResult<bool> result, Resolv
 
 template <>
 AwaitableResolver ModifiedResult<response::Value>::convert(
-	FieldResult<response::Value> result, ResolverParams params)
+	AwaitableScalar<response::Value> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -665,7 +666,7 @@ AwaitableResolver ModifiedResult<response::Value>::convert(
 
 template <>
 AwaitableResolver ModifiedResult<response::IdType>::convert(
-	FieldResult<response::IdType> result, ResolverParams params)
+	AwaitableScalar<response::IdType> result, ResolverParams params)
 {
 	blockSubFields(params);
 
@@ -694,15 +695,8 @@ void requireSubFields(const ResolverParams& params)
 
 template <>
 AwaitableResolver ModifiedResult<Object>::convert(
-	FieldResult<std::shared_ptr<Object>> result, ResolverParams params)
+	AwaitableObject<std::shared_ptr<Object>> result, ResolverParams params)
 {
-	auto value = result.get_value();
-
-	if (value)
-	{
-		co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
-	}
-
 	requireSubFields(params);
 
 	co_await params.launch;

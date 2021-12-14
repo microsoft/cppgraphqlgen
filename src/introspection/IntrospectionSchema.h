@@ -106,13 +106,13 @@ GRAPHQLINTROSPECTION_EXPORT introspection::TypeKind ModifiedArgument<introspecti
 	const response::Value& value);
 template <>
 GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(
-	FieldResult<introspection::TypeKind> result, ResolverParams params);
+	AwaitableScalar<introspection::TypeKind> result, ResolverParams params);
 template <>
 GRAPHQLINTROSPECTION_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
 	const response::Value& value);
 template <>
 GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(
-	FieldResult<introspection::DirectiveLocation> result, ResolverParams params);
+	AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params);
 #endif // GRAPHQL_DLLEXPORTS
 
 } // namespace service

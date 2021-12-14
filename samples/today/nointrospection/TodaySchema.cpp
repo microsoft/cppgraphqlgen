@@ -51,7 +51,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::FieldResult<today::TaskState> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)

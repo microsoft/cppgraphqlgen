@@ -73,7 +73,7 @@ service::AwaitableResolver resolveId(service::ResolverParams&& params);
 ```
 In this example, the `resolveId` method invokes `getId`:
 ```cpp
-virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const override;
+virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const override;
 ```
 
 There are a couple of interesting quirks in this example:

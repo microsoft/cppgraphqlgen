@@ -23,25 +23,25 @@ namespace methods::HumanHas {
 template <class TImpl>
 concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
+	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::string> { impl.getName() } };
+	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept getPetsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<Pet>>> { impl.getPets(std::move(params)) } };
+	{ service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> { impl.getPets(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getPets = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::vector<std::shared_ptr<Pet>>> { impl.getPets() } };
+	{ service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> { impl.getPets() } };
 };
 
 template <class TImpl>
@@ -74,8 +74,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -87,7 +87,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getNameWithParams<T>)
 			{
@@ -103,7 +103,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const final
+		service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getPetsWithParams<T>)
 			{
