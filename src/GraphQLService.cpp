@@ -696,6 +696,13 @@ template <>
 AwaitableResolver ModifiedResult<Object>::convert(
 	FieldResult<std::shared_ptr<Object>> result, ResolverParams params)
 {
+	auto value = result.get_value();
+
+	if (value)
+	{
+		co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+	}
+
 	requireSubFields(params);
 
 	co_await params.launch;

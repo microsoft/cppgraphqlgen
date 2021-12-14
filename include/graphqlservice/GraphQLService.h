@@ -357,6 +357,11 @@ public:
 
 					return value.wait_for(0s) != std::future_status::timeout;
 				}
+				else if constexpr (std::is_same_v<value_type,
+									   std::shared_ptr<const response::Value>>)
+				{
+					return true;
+				}
 			},
 			_value);
 	}
@@ -375,7 +380,7 @@ public:
 	T await_resume()
 	{
 		return std::visit(
-			[](auto&& value) {
+			[](auto&& value) -> T {
 				using value_type = std::decay_t<decltype(value)>;
 
 				if constexpr (std::is_same_v<value_type, T>)
@@ -386,12 +391,34 @@ public:
 				{
 					return value.get();
 				}
+				else if constexpr (std::is_same_v<value_type,
+									   std::shared_ptr<const response::Value>>)
+				{
+					throw std::logic_error("Cannot await std::shared_ptr<const response::Value>");
+				}
+			},
+			std::move(_value));
+	}
+
+	std::shared_ptr<const response::Value> get_value() noexcept
+	{
+		return std::visit(
+			[](auto&& value) noexcept {
+				using value_type = std::decay_t<decltype(value)>;
+				std::shared_ptr<const response::Value> result;
+
+				if constexpr (std::is_same_v<value_type, std::shared_ptr<const response::Value>>)
+				{
+					result = std::move(value);
+				}
+
+				return result;
 			},
 			std::move(_value));
 	}
 
 private:
-	std::variant<T, std::future<T>> _value;
+	std::variant<T, std::future<T>, std::shared_ptr<const response::Value>> _value;
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
@@ -710,6 +737,13 @@ struct ModifiedResult
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 
+		auto value = result.get_value();
+
+		if (value)
+		{
+			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+		}
+
 		co_await params.launch;
 
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
@@ -738,6 +772,13 @@ struct ModifiedResult
 	convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
+		auto value = result.get_value();
+
+		if (value)
+		{
+			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+		}
+
 		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
@@ -765,6 +806,13 @@ struct ModifiedResult
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
+		auto value = result.get_value();
+
+		if (value)
+		{
+			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+		}
+
 		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
@@ -785,6 +833,13 @@ struct ModifiedResult
 	static typename std::enable_if_t<TypeModifier::List == Modifier, AwaitableResolver> convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
 	{
+		auto value = result.get_value();
+
+		if (value)
+		{
+			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+		}
+
 		std::vector<AwaitableResolver> children;
 		const auto parentPath = params.errorPath;
 
@@ -878,6 +933,13 @@ private:
 	{
 		static_assert(!std::is_base_of_v<Object, Type>,
 			"ModfiedResult<Object> needs special handling");
+
+		auto value = result.get_value();
+
+		if (value)
+		{
+			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+		}
 
 		auto pendingResolver = std::move(resolver);
 		ResolverResult document;
