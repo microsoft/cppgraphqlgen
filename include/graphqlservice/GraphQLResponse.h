@@ -131,6 +131,8 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
 
+	GRAPHQLRESPONSE_EXPORT Value(std::shared_ptr<const Value> other) noexcept;
+
 	GRAPHQLRESPONSE_EXPORT Value& operator=(Value&& rhs) noexcept;
 	Value& operator=(const Value& rhs) = delete;
 
@@ -213,8 +215,12 @@ private:
 		std::unique_ptr<ScalarType> scalar;
 	};
 
+	using SharedData = std::shared_ptr<const Value>;
+
 	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
-		FloatType, EnumData, ScalarData>;
+		FloatType, EnumData, ScalarData, SharedData>;
+
+	const TypeData& data() const noexcept;
 
 	TypeData _data;
 };
