@@ -162,7 +162,7 @@ struct await_worker_thread : coro::suspend_always
 	}
 };
 
-// Type-erased awaitable, if you want finer grain control.
+// Type-erased awaitable.
 class await_async : public coro::suspend_always
 {
 private:
@@ -172,6 +172,7 @@ private:
 
 		virtual bool await_ready() const = 0;
 		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+		virtual void await_resume() const = 0;
 	};
 
 	template <class T>
@@ -192,6 +193,11 @@ private:
 			_pimpl->await_suspend(std::move(h));
 		}
 
+		void await_resume() const final
+		{
+			_pimpl->await_resume();
+		}
+
 	private:
 		std::shared_ptr<T> _pimpl;
 	};
@@ -199,12 +205,21 @@ private:
 	const std::shared_ptr<Concept> _pimpl;
 
 public:
+	// Type-erased explicit constructor for a custom awaitable.
 	template <class T>
-	await_async(std::shared_ptr<T> pimpl)
+	explicit await_async(std::shared_ptr<T> pimpl)
 		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
 	{
 	}
 
+	// Default to immediate synchronous execution.
+	await_async()
+		: _pimpl { std::static_pointer_cast<Concept>(
+			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+	{
+	}
+
+	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
 	await_async(std::launch launch)
 		: _pimpl { ((launch & std::launch::async) == std::launch::async)
 				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
@@ -224,8 +239,9 @@ public:
 		_pimpl->await_suspend(std::move(h));
 	}
 
-	constexpr void await_resume() const noexcept
+	void await_resume() const
 	{
+		_pimpl->await_resume();
 	}
 };
 
@@ -261,7 +277,7 @@ struct SelectionSetParams
 	std::optional<field_path> errorPath;
 
 	// Async launch policy for sub-field resolvers.
-	const await_async launch { std::launch::deferred };
+	const await_async launch {};
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
@@ -931,18 +947,95 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
 	FieldResult<std::shared_ptr<Object>> result, ResolverParams params);
 #endif // GRAPHQL_DLLEXPORTS
 
-using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
+// Subscription callbacks receive the response::Value representing the result of evaluating the
+// SelectionSet against the payload.
+using SubscriptionCallback = std::function<void(response::Value)>;
 
-// You can still sub-class RequestState and use that in the state parameter to Request::subscribe
-// to add your own state to the service callbacks that you receive while executing the subscription
-// query.
-struct SubscriptionParams
+// Subscriptions are stored in maps using these keys.
+using SubscriptionKey = size_t;
+using SubscriptionName = std::string;
+
+using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
+using AwaitableUnsubscribe = internal::Awaitable<void>;
+using AwaitableDeliver = internal::Awaitable<void>;
+
+struct RequestResolveParams
 {
+	// Required query information.
+	peg::ast& query;
+	std::string_view operationName {};
+	response::Value variables { response::Type::Map };
+
+	// Optional async execution awaitable.
+	await_async launch;
+
+	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
 	std::shared_ptr<RequestState> state;
-	peg::ast query;
-	std::string operationName;
-	response::Value variables;
 };
+
+struct RequestSubscribeParams
+{
+	// Callback which receives the event data.
+	SubscriptionCallback callback;
+
+	// Required query information.
+	peg::ast query;
+	std::string operationName {};
+	response::Value variables { response::Type::Map };
+
+	// Optional async execution awaitable.
+	await_async launch;
+
+	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
+	std::shared_ptr<RequestState> state;
+};
+
+struct RequestUnsubscribeParams
+{
+	// Key returned by a previous call to subscribe.
+	SubscriptionKey key;
+
+	// Optional async execution awaitable.
+	await_async launch;
+};
+
+using SubscriptionArguments = std::map<std::string_view, response::Value>;
+using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
+using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
+
+struct SubscriptionFilter
+{
+	// Deliver to subscriptions on this field.
+	std::string_view field;
+
+	// Optional field argument filter, which can either be a set of required arguments, or a
+	// callback which returns true if the arguments match custom criteria.
+	std::optional<std::variant<SubscriptionArguments, SubscriptionArgumentFilterCallback>>
+		arguments;
+
+	// Optional field directives filter, which can either be a set of required directives and
+	// arguments, or a callback which returns true if the directives match custom criteria.
+	std::optional<std::variant<Directives, SubscriptionDirectiveFilterCallback>> directives;
+};
+
+// Deliver to a specific subscription key, or apply custom criteria for the field name, arguments,
+// and directives in the Subscription query.
+using RequestDeliverFilter = std::optional<std::variant<SubscriptionKey, SubscriptionFilter>>;
+
+struct RequestDeliverParams
+{
+	// Optional filter to control which subscriptions will receive the event. If not specified,
+	// every subscription will receive the event and evaluate their queries against it.
+	RequestDeliverFilter filter;
+
+	// Optional async execution awaitable.
+	await_async launch;
+
+	// Optional override for the default Subscription operation object.
+	std::shared_ptr<Object> subscriptionObject;
+};
+
+using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
 
 // State which is captured and kept alive until all pending futures have been resolved for an
 // operation. Note: SelectionSet is the other parameter that gets passed to the top level Object,
@@ -960,21 +1053,6 @@ struct OperationData : std::enable_shared_from_this<OperationData>
 	Directives directives;
 	FragmentMap fragments;
 };
-
-// Subscription callbacks receive the response::Value representing the result of evaluating the
-// SelectionSet against the payload.
-using SubscriptionCallback = std::function<void(response::Value)>;
-using SubscriptionArguments = std::map<std::string_view, response::Value>;
-using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
-using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
-
-// Subscriptions are stored in maps using these keys.
-using SubscriptionKey = size_t;
-using SubscriptionName = std::string;
-
-using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
-using AwaitableUnsubscribe = internal::Awaitable<void>;
-using AwaitableDeliver = internal::Awaitable<void>;
 
 // Registration information for subscription, cached in the Request::subscribe call.
 struct SubscriptionData : std::enable_shared_from_this<SubscriptionData>
@@ -1014,51 +1092,17 @@ public:
 	GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
 		peg::ast& query, std::string_view operationName) const;
 
-	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(std::shared_ptr<RequestState> state,
-		peg::ast& query, std::string_view operationName, response::Value variables) const;
-	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(await_async launch,
-		std::shared_ptr<RequestState> state, peg::ast& query, std::string_view operationName,
-		response::Value variables) const;
-
-	GRAPHQLSERVICE_EXPORT SubscriptionKey subscribe(
-		SubscriptionParams&& params, SubscriptionCallback&& callback);
-	GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
-		await_async launch, SubscriptionParams&& params, SubscriptionCallback&& callback);
-
-	GRAPHQLSERVICE_EXPORT void unsubscribe(SubscriptionKey key);
-	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(await_async launch, SubscriptionKey key);
-
-	GRAPHQLSERVICE_EXPORT void deliver(
-		const SubscriptionName& name, const std::shared_ptr<Object>& subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArguments& arguments, const Directives& directives,
-		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArgumentFilterCallback& applyArguments,
-		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT void deliver(const SubscriptionName& name,
-		const SubscriptionArgumentFilterCallback& applyArguments,
-		const SubscriptionDirectiveFilterCallback& applyDirectives,
-		std::shared_ptr<Object> subscriptionObject) const;
-
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionArguments& arguments, std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionArguments& arguments, const Directives& directives,
-		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionArgumentFilterCallback& applyArguments,
-		std::shared_ptr<Object> subscriptionObject) const;
-	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(await_async launch, const SubscriptionName& name,
-		const SubscriptionArgumentFilterCallback& applyArguments,
-		const SubscriptionDirectiveFilterCallback& applyDirectives,
-		std::shared_ptr<Object> subscriptionObject) const;
+	GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(RequestResolveParams params) const;
+	GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(RequestSubscribeParams params);
+	GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
+	GRAPHQLSERVICE_EXPORT AwaitableDeliver deliver(RequestDeliverParams params) const;
 
 private:
+	SubscriptionKey addSubscription(RequestSubscribeParams&& params);
+	void removeSubscription(SubscriptionKey key);
+	std::vector<std::shared_ptr<SubscriptionData>> collectRegistrations(
+		RequestDeliverFilter&& filter) const noexcept;
+
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;

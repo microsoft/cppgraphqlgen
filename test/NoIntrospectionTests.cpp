@@ -143,7 +143,8 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result =
-		_service->resolve(std::launch::async, state, query, "Everything", std::move(variables))
+		_service->resolve(
+					{ query, "Everything"sv, std::move(variables), std::launch::async, state })
 			.get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
@@ -232,9 +233,7 @@ TEST_F(NoIntrospectionServiceCase, NoSchema)
 				queryType { name }
 			}
 		})"_graphql;
-	response::Value variables(response::Type::Map);
-	auto result =
-		_service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables)).get();
+	auto result = _service->resolve({ query }).get();
 
 	try
 	{
@@ -260,9 +259,7 @@ TEST_F(NoIntrospectionServiceCase, NoType)
 				description
 			}
 		})"_graphql;
-	response::Value variables(response::Type::Map);
-	auto result =
-		_service->resolve(std::launch::deferred, nullptr, query, "", std::move(variables)).get();
+	auto result = _service->resolve({ query }).get();
 
 	try
 	{

@@ -157,8 +157,7 @@ int main(int argc, char** argv)
 			service->validate(query);
 
 			const auto startResolve = std::chrono::steady_clock::now();
-			auto response =
-				service->resolve(nullptr, query, "", response::Value(response::Type::Map)).get();
+			auto response = service->resolve({ query }).get();
 			const auto startToJson = std::chrono::steady_clock::now();
 
 			response::toJSON(std::move(response));

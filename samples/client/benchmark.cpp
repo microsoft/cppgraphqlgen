@@ -141,8 +141,7 @@ int main(int argc, char** argv)
 			auto query = GetRequestObject();
 
 			const auto startResolve = std::chrono::steady_clock::now();
-			auto response =
-				service->resolve(nullptr, query, "", response::Value(response::Type::Map)).get();
+			auto response = service->resolve({ query }).get();
 			const auto startParseServiceResponse = std::chrono::steady_clock::now();
 			auto serviceResponse = client::parseServiceResponse(std::move(response));
 			const auto startParseResponse = std::chrono::steady_clock::now();
