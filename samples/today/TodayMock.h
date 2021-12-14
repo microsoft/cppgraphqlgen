@@ -8,19 +8,20 @@
 
 #include "TodaySchema.h"
 
-#include "QueryObject.h"
+#include "AppointmentEdgeObject.h"
+#include "AppointmentObject.h"
+#include "FolderEdgeObject.h"
+#include "FolderObject.h"
 #include "MutationObject.h"
-#include "SubscriptionObject.h"
 #include "NodeObject.h"
 #include "PageInfoObject.h"
-#include "AppointmentEdgeObject.h"
+#include "QueryObject.h"
+#include "SubscriptionObject.h"
 #include "TaskEdgeObject.h"
-#include "FolderEdgeObject.h"
-#include "AppointmentObject.h"
 #include "TaskObject.h"
-#include "FolderObject.h"
 
 #include <atomic>
+#include <memory>
 #include <stack>
 
 namespace graphql::today {
@@ -146,14 +147,14 @@ public:
 		return _id;
 	}
 
-	std::optional<response::Value> getWhen() const noexcept
+	std::shared_ptr<const response::Value> getWhen() const noexcept
 	{
-		return std::make_optional<response::Value>(std::string(_when));
+		return _when;
 	}
 
-	std::optional<std::string> getSubject() const noexcept
+	std::shared_ptr<const response::Value> getSubject() const noexcept
 	{
-		return std::make_optional<std::string>(_subject);
+		return _subject;
 	}
 
 	bool getIsNow() const noexcept
@@ -168,8 +169,8 @@ public:
 
 private:
 	response::IdType _id;
-	std::string _when;
-	std::string _subject;
+	std::shared_ptr<const response::Value> _when;
+	std::shared_ptr<const response::Value> _subject;
 	bool _isNow;
 };
 
@@ -247,9 +248,9 @@ public:
 		return _id;
 	}
 
-	std::optional<std::string> getTitle() const noexcept
+	std::shared_ptr<const response::Value> getTitle() const noexcept
 	{
-		return std::make_optional<std::string>(_title);
+		return _title;
 	}
 
 	bool getIsComplete() const noexcept
@@ -259,7 +260,7 @@ public:
 
 private:
 	response::IdType _id;
-	std::string _title;
+	std::shared_ptr<const response::Value> _title;
 	bool _isComplete;
 	TaskState _state = TaskState::New;
 };
@@ -337,9 +338,9 @@ public:
 		return _id;
 	}
 
-	std::optional<std::string> getName() const noexcept
+	std::shared_ptr<const response::Value> getName() const noexcept
 	{
-		return std::make_optional<std::string>(_name);
+		return _name;
 	}
 
 	int getUnreadCount() const noexcept
@@ -349,7 +350,7 @@ public:
 
 private:
 	response::IdType _id;
-	std::string _name;
+	std::shared_ptr<const response::Value> _name;
 	int _unreadCount;
 };
 
