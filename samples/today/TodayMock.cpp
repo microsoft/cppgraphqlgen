@@ -21,22 +21,22 @@ namespace graphql::today {
 Appointment::Appointment(
 	response::IdType&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
-	, _when(std::move(when))
-	, _subject(std::move(subject))
+	, _when(std::make_shared<response::Value>(std::move(when)))
+	, _subject(std::make_shared<response::Value>(std::move(subject)))
 	, _isNow(isNow)
 {
 }
 
 Task::Task(response::IdType&& id, std::string&& title, bool isComplete)
 	: _id(std::move(id))
-	, _title(std::move(title))
+	, _title(std::make_shared<response::Value>(std::move(title)))
 	, _isComplete(isComplete)
 {
 }
 
 Folder::Folder(response::IdType&& id, std::string&& name, int unreadCount)
 	: _id(std::move(id))
-	, _name(std::move(name))
+	, _name(std::make_shared<response::Value>(std::move(name)))
 	, _unreadCount(unreadCount)
 {
 }
