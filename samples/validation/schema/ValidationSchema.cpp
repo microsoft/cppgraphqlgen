@@ -63,6 +63,22 @@ service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(servi
 		});
 }
 
+template <>
+void ModifiedResult<validation::DogCommand>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+
+	if (itr == s_namesDogCommand.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
+	}
+}
+
 static const std::array<std::string_view, 1> s_namesCatCommand = {
 	R"gql(JUMP)gql"sv
 };
@@ -97,6 +113,22 @@ service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(servi
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<validation::CatCommand>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+
+	if (itr == s_namesCatCommand.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
+	}
 }
 
 template <>

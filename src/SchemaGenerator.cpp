@@ -481,6 +481,11 @@ GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<)cpp"
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(> result, ResolverParams params);
+template <>
+GRAPHQLINTROSPECTION_EXPORT void ModifiedResult<)cpp"
+						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+						   << R"cpp(>::validateScalar(
+	const response::Value& value);
 )cpp";
 			}
 
@@ -658,9 +663,9 @@ concept )cpp" << outputField.accessor
 
 		headerFile << R"cpp() 
 {
-	{ )cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp( { impl.)cpp"
-				   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+	{ )cpp" << _loader.getOutputCppType(outputField)
+				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName
+				   << R"cpp((std::move(params))cpp";
 
 		if (!passedArguments.empty())
 		{
@@ -681,9 +686,8 @@ concept )cpp" << outputField.accessor
 
 		headerFile << R"cpp() 
 {
-	{ )cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp( { impl.)cpp"
-				   << outputField.accessor << fieldName << R"cpp(()cpp";
+	{ )cpp" << _loader.getOutputCppType(outputField)
+				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName << R"cpp(()cpp";
 
 		if (!passedArguments.empty())
 		{
@@ -779,9 +783,8 @@ private:
 		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 
 		headerFile << R"cpp(
-		)cpp"
-				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << outputField.accessor
-				   << fieldName << R"cpp(()cpp";
+		)cpp" << _loader.getOutputCppType(outputField)
+				   << R"cpp( )cpp" << outputField.accessor << fieldName << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
 
@@ -1033,9 +1036,8 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName { outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(		virtual )cpp"
-		   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << outputField.accessor
-		   << fieldName << R"cpp(()cpp";
+	output << R"cpp(		virtual )cpp" << _loader.getOutputCppType(outputField) << R"cpp( )cpp"
+		   << outputField.accessor << fieldName << R"cpp(()cpp";
 
 	bool firstArgument = _loader.isIntrospection();
 
@@ -1201,6 +1203,29 @@ service::AwaitableResolver ModifiedResult<)cpp"
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+					   << enumType.type << R"cpp( value)ex" } };
+	}
+
+	const auto itr = std::find(s_names)cpp"
+					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
+					   << R"cpp(.cend(), value.get<std::string>());
+
+	if (itr == s_names)cpp"
+					   << enumType.cppType << R"cpp(.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+					   << enumType.type << R"cpp( value)ex" } };
+	}
 }
 
 )cpp";

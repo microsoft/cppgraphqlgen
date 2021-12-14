@@ -62,6 +62,22 @@ service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(serv
 		});
 }
 
+template <>
+void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+
+	if (itr == s_namesTypeKind.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
+	}
+}
+
 static const std::array<std::string_view, 19> s_namesDirectiveLocation = {
 	R"gql(QUERY)gql"sv,
 	R"gql(MUTATION)gql"sv,
@@ -114,6 +130,22 @@ service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::con
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+
+	if (itr == s_namesDirectiveLocation.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
+	}
 }
 
 } // namespace service

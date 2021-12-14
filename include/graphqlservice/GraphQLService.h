@@ -297,10 +297,7 @@ struct FieldParams : SelectionSetParams
 // by returning an async future or an awaitable coroutine.
 //
 // If the overhead of conversion to response::Value is too expensive, scalar type field accessors
-// can store and return a std::shared_ptr<const response::Value> directly. However, be careful using
-// this mechanism, because there's no validation that the response::Value you return matches the
-// GraphQL type of this field. It will be inserted directly into the response document without
-// modification.
+// can store and return a std::shared_ptr<const response::Value> directly.
 template <typename T>
 class AwaitableScalar
 {
@@ -836,13 +833,14 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
+	static typename std::enable_if_t<TypeModifier::None == Modifier
 			&& !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
 		AwaitableResolver>
 	convert(AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params)
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
+		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
 
@@ -857,11 +855,13 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0
+	static typename std::enable_if_t<TypeModifier::None == Modifier
 			&& (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
 		AwaitableResolver>
 	convert(typename ResultTraits<Type>::future_type result, ResolverParams params)
 	{
+		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
+
 		// Just call through to the partial specialization without the modifier.
 		return convert(std::move(result), std::move(params));
 	}
@@ -907,6 +907,7 @@ struct ModifiedResult
 
 			if (value)
 			{
+				ModifiedResult::validateScalar<Modifier, Other...>(*value);
 				co_return ResolverResult { response::Value {
 					std::shared_ptr { std::move(value) } } };
 			}
@@ -938,6 +939,7 @@ struct ModifiedResult
 
 			if (value)
 			{
+				ModifiedResult::validateScalar<Modifier, Other...>(*value);
 				co_return ResolverResult { response::Value {
 					std::shared_ptr { std::move(value) } } };
 			}
@@ -1028,6 +1030,47 @@ struct ModifiedResult
 	}
 
 private:
+	// Validate a single scalar value is the expected type.
+	static void validateScalar(const response::Value& value);
+
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	static void validateScalar(
+		typename std::enable_if_t<TypeModifier::None == Modifier, const response::Value&> value)
+	{
+		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
+
+		// Just call through to the partial specialization without the modifier.
+		validateScalar(value);
+	}
+
+	// Peel off nullable modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static void validateScalar(
+		typename std::enable_if_t<TypeModifier::Nullable == Modifier, const response::Value&> value)
+	{
+		if (value.type() != response::Type::Null)
+		{
+			ModifiedResult::validateScalar<Other...>(value);
+		}
+	}
+
+	// Peel off list modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	static void validateScalar(
+		typename std::enable_if_t<TypeModifier::List == Modifier, const response::Value&> value)
+	{
+		if (value.type() != response::Type::List)
+		{
+			throw schema_exception { { R"ex(not a valid List value)ex" } };
+		}
+
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ModifiedResult::validateScalar<Other...>(value[i]);
+		}
+	}
+
 	using ResolverCallback =
 		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
@@ -1041,6 +1084,7 @@ private:
 
 		if (value)
 		{
+			ModifiedResult::validateScalar(*value);
 			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
 		}
 
@@ -1110,6 +1154,23 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
 	AwaitableObject<std::shared_ptr<Object>> result, ResolverParams params);
+
+// Export all of the scalar value validation methods
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<int>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<double>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<std::string>::validateScalar(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<bool>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<response::IdType>::validateScalar(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void ModifiedResult<response::Value>::validateScalar(
+	const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the

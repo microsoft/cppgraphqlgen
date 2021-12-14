@@ -65,6 +65,22 @@ service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::Aw
 }
 
 template <>
+void ModifiedResult<today::TaskState>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<std::string>());
+
+	if (itr == s_namesTaskState.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
+	}
+}
+
+template <>
 today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const response::Value& value)
 {
 	const auto defaultValue = []()

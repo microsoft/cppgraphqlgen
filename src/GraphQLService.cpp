@@ -716,6 +716,66 @@ AwaitableResolver ModifiedResult<Object>::convert(
 	co_return std::move(document);
 }
 
+template <>
+void ModifiedResult<int>::validateScalar(const response::Value& value)
+{
+	if (value.type() != response::Type::Int)
+	{
+		throw schema_exception { { R"ex(not a valid Int value)ex" } };
+	}
+}
+
+template <>
+void ModifiedResult<double>::validateScalar(const response::Value& value)
+{
+	if (value.type() != response::Type::Float)
+	{
+		throw schema_exception { { R"ex(not a valid Float value)ex" } };
+	}
+}
+
+template <>
+void ModifiedResult<std::string>::validateScalar(const response::Value& value)
+{
+	if (value.type() != response::Type::String)
+	{
+		throw schema_exception { { R"ex(not a valid String value)ex" } };
+	}
+}
+
+template <>
+void ModifiedResult<bool>::validateScalar(const response::Value& value)
+{
+	if (value.type() != response::Type::Boolean)
+	{
+		throw schema_exception { { R"ex(not a valid Boolean value)ex" } };
+	}
+}
+
+template <>
+void ModifiedResult<response::IdType>::validateScalar(const response::Value& value)
+{
+	if (value.type() != response::Type::String)
+	{
+		throw schema_exception { { R"ex(not a valid String value)ex" } };
+	}
+
+	try
+	{
+		const auto result = value.get<response::IdType>();
+	}
+	catch (const std::logic_error& ex)
+	{
+		throw schema_exception { { ex.what() } };
+	}
+}
+
+template <>
+void ModifiedResult<response::Value>::validateScalar(const response::Value&)
+{
+	// Any response::Value is valid for a custom scalar type.
+}
+
 // SelectionVisitor visits the AST and resolves a field or fragment, unless it's skipped by
 // a directive or type condition.
 class SelectionVisitor

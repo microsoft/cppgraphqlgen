@@ -63,6 +63,22 @@ service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::Awai
 }
 
 template <>
+void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+
+	if (itr == s_namesEpisode.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
+	}
+}
+
+template <>
 learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response::Value& value)
 {
 	auto valueStars = service::ModifiedArgument<int>::require("stars", value);
