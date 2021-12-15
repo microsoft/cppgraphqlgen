@@ -50,7 +50,7 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(service::FieldResult<validation::DogCommand> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
@@ -61,6 +61,22 @@ service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(servi
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<validation::DogCommand>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+
+	if (itr == s_namesDogCommand.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
+	}
 }
 
 static const std::array<std::string_view, 1> s_namesCatCommand = {
@@ -86,7 +102,7 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(service::FieldResult<validation::CatCommand> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
@@ -97,6 +113,22 @@ service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(servi
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<validation::CatCommand>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+
+	if (itr == s_namesCatCommand.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
+	}
 }
 
 template <>

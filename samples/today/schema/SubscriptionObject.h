@@ -16,25 +16,25 @@ namespace methods::SubscriptionHas {
 template <class TImpl>
 concept getNextAppointmentChangeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNextAppointmentChange = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
+	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
 };
 
 template <class TImpl>
 concept getNodeChangeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
 concept getNodeChange = requires (TImpl impl, response::IdType idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Node>> { impl.getNodeChange(std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNodeChange(std::move(idArg)) } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Appointment>> getNextAppointmentChange(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::getNextAppointmentChangeWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
+		service::AwaitableObject<std::shared_ptr<Node>> getNodeChange(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::SubscriptionHas::getNodeChangeWithParams<T>)
 			{

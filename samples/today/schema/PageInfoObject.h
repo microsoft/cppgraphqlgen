@@ -16,25 +16,25 @@ namespace methods::PageInfoHas {
 template <class TImpl>
 concept getHasNextPageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<bool> { impl.getHasNextPage(std::move(params)) } };
+	{ service::AwaitableScalar<bool> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getHasNextPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<bool> { impl.getHasNextPage() } };
+	{ service::AwaitableScalar<bool> { impl.getHasNextPage() } };
 };
 
 template <class TImpl>
 concept getHasPreviousPageWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<bool> { impl.getHasPreviousPage(std::move(params)) } };
+	{ service::AwaitableScalar<bool> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getHasPreviousPage = requires (TImpl impl) 
 {
-	{ service::FieldResult<bool> { impl.getHasPreviousPage() } };
+	{ service::AwaitableScalar<bool> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getHasNextPage(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getHasPreviousPage(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<bool> getHasNextPage(service::FieldParams&& params) const final
+		service::AwaitableScalar<bool> getHasNextPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoHas::getHasNextPageWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getHasPreviousPage(service::FieldParams&& params) const final
+		service::AwaitableScalar<bool> getHasPreviousPage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::PageInfoHas::getHasPreviousPageWithParams<T>)
 			{

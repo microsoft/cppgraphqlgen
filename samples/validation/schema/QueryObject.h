@@ -16,97 +16,97 @@ namespace methods::QueryHas {
 template <class TImpl>
 concept getDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getDog(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getDog = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getDog() } };
+	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getDog() } };
 };
 
 template <class TImpl>
 concept getHumanWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getHuman = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman() } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman() } };
 };
 
 template <class TImpl>
 concept getPetWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Pet>> { impl.getPet(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Pet>> { impl.getPet(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getPet = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Pet>> { impl.getPet() } };
+	{ service::AwaitableObject<std::shared_ptr<Pet>> { impl.getPet() } };
 };
 
 template <class TImpl>
 concept getCatOrDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<CatOrDog>> { impl.getCatOrDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getCatOrDog = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<CatOrDog>> { impl.getCatOrDog() } };
+	{ service::AwaitableObject<std::shared_ptr<CatOrDog>> { impl.getCatOrDog() } };
 };
 
 template <class TImpl>
 concept getArgumentsWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Arguments>> { impl.getArguments(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Arguments>> { impl.getArguments(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getArguments = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Arguments>> { impl.getArguments() } };
+	{ service::AwaitableObject<std::shared_ptr<Arguments>> { impl.getArguments() } };
 };
 
 template <class TImpl>
 concept getResourceWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Resource>> { impl.getResource(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Resource>> { impl.getResource(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getResource = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Resource>> { impl.getResource() } };
+	{ service::AwaitableObject<std::shared_ptr<Resource>> { impl.getResource() } };
 };
 
 template <class TImpl>
 concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
 concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanListWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
 concept getBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg) 
 {
-	{ service::FieldResult<std::optional<bool>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
+	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
@@ -145,14 +145,14 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
-		virtual service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
 	template <class T>
@@ -164,7 +164,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getDogWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getPetWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getArgumentsWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getResourceWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
+		service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
+		service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::QueryHas::getBooleanListWithParams<T>)
 			{

@@ -16,25 +16,25 @@ namespace methods::NestedTypeHas {
 template <class TImpl>
 concept getDepthWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<int> { impl.getDepth(std::move(params)) } };
+	{ service::AwaitableScalar<int> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getDepth = requires (TImpl impl) 
 {
-	{ service::FieldResult<int> { impl.getDepth() } };
+	{ service::AwaitableScalar<int> { impl.getDepth() } };
 };
 
 template <class TImpl>
 concept getNestedWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNested = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<NestedType>> { impl.getNested() } };
+	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<int> getDepth(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<int> getDepth(service::FieldParams&& params) const final
+		service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::getDepthWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::getNestedWithParams<T>)
 			{

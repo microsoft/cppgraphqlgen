@@ -23,37 +23,37 @@ namespace methods::TaskHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
 concept getTitleWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getTitle(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getTitle = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getTitle() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getTitle() } };
 };
 
 template <class TImpl>
 concept getIsCompleteWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<bool> { impl.getIsComplete(std::move(params)) } };
+	{ service::AwaitableScalar<bool> { impl.getIsComplete(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getIsComplete = requires (TImpl impl) 
 {
-	{ service::FieldResult<bool> { impl.getIsComplete() } };
+	{ service::AwaitableScalar<bool> { impl.getIsComplete() } };
 };
 
 template <class TImpl>
@@ -87,9 +87,9 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getTitle(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getIsComplete(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -101,7 +101,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskHas::getIdWithParams<T>)
 			{
@@ -117,7 +117,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getTitle(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getTitle(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskHas::getTitleWithParams<T>)
 			{
@@ -133,7 +133,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getIsComplete(service::FieldParams&& params) const final
+		service::AwaitableScalar<bool> getIsComplete(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskHas::getIsCompleteWithParams<T>)
 			{

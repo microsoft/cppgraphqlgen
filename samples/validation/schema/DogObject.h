@@ -23,73 +23,73 @@ namespace methods::DogHas {
 template <class TImpl>
 concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
+	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::string> { impl.getName() } };
+	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNickname = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
 concept getBarkVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getBarkVolume(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getBarkVolume = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getBarkVolume() } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getBarkVolume() } };
 };
 
 template <class TImpl>
 concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
 {
-	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
 concept getDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg) 
 {
-	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
 concept getIsHousetrainedWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg) 
 {
-	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
 concept getIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg) 
 {
-	{ service::FieldResult<bool> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
 concept getOwnerWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getOwner = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getOwner() } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getOwner() } };
 };
 
 template <class TImpl>
@@ -126,12 +126,12 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
-		virtual service::FieldResult<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
+		virtual service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -143,7 +143,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getNameWithParams<T>)
 			{
@@ -159,7 +159,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getNicknameWithParams<T>)
 			{
@@ -175,7 +175,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getBarkVolumeWithParams<T>)
 			{
@@ -191,7 +191,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
+		service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
 		{
 			if constexpr (methods::DogHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -207,7 +207,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
+		service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
 		{
 			if constexpr (methods::DogHas::getIsHousetrainedWithParams<T>)
 			{
@@ -223,7 +223,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getOwnerWithParams<T>)
 			{

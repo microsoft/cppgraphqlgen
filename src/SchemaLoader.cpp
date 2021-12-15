@@ -1604,6 +1604,22 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 	size_t templateCount = 0;
 	std::ostringstream outputType;
 
+	switch (field.fieldType)
+	{
+		case OutputFieldType::Object:
+		case OutputFieldType::Union:
+		case OutputFieldType::Interface:
+			// Even if it's non-nullable, we still want to return a shared_ptr for complex types
+			outputType << R"cpp(service::AwaitableObject<)cpp";
+			++templateCount;
+			break;
+
+		default:
+			outputType << R"cpp(service::AwaitableScalar<)cpp";
+			++templateCount;
+			break;
+	}
+
 	for (auto modifier : field.modifiers)
 	{
 		if (!nonNull)

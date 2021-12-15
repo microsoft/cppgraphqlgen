@@ -49,7 +49,7 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::FieldResult<learn::Episode> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
@@ -60,6 +60,22 @@ service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::Fiel
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+
+	if (itr == s_namesEpisode.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
+	}
 }
 
 template <>

@@ -49,7 +49,7 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(service::FieldResult<introspection::TypeKind> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
@@ -60,6 +60,22 @@ service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(serv
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+
+	if (itr == s_namesTypeKind.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
+	}
 }
 
 static const std::array<std::string_view, 19> s_namesDirectiveLocation = {
@@ -103,7 +119,7 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(service::FieldResult<introspection::DirectiveLocation> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
@@ -114,6 +130,22 @@ service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::con
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+
+	if (itr == s_namesDirectiveLocation.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
+	}
 }
 
 } // namespace service

@@ -16,25 +16,25 @@ namespace methods::CompleteTaskPayloadHas {
 template <class TImpl>
 concept getTaskWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getTask = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<Task>> { impl.getTask() } };
+	{ service::AwaitableObject<std::shared_ptr<Task>> { impl.getTask() } };
 };
 
 template <class TImpl>
 concept getClientMutationIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getClientMutationId = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getClientMutationId() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
@@ -67,8 +67,8 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::getTaskWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::getClientMutationIdWithParams<T>)
 			{

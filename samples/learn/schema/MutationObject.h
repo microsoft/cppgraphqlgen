@@ -16,13 +16,13 @@ namespace methods::MutationHas {
 template <class TImpl>
 concept applyCreateReviewWithParams = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
 concept applyCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(epArg), std::move(reviewArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
@@ -54,7 +54,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
 	};
 
 	template <class T>
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
+		service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
 		{
 			if constexpr (methods::MutationHas::applyCreateReviewWithParams<T>)
 			{

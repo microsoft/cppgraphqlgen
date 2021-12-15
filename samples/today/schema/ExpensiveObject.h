@@ -16,13 +16,13 @@ namespace methods::ExpensiveHas {
 template <class TImpl>
 concept getOrderWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<int> { impl.getOrder(std::move(params)) } };
+	{ service::AwaitableScalar<int> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getOrder = requires (TImpl impl) 
 {
-	{ service::FieldResult<int> { impl.getOrder() } };
+	{ service::AwaitableScalar<int> { impl.getOrder() } };
 };
 
 template <class TImpl>
@@ -54,7 +54,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<int> getOrder(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<int> getOrder(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::FieldResult<int> getOrder(service::FieldParams&& params) const final
+		service::AwaitableScalar<int> getOrder(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ExpensiveHas::getOrderWithParams<T>)
 			{

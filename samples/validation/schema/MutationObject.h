@@ -16,13 +16,13 @@ namespace methods::MutationHas {
 template <class TImpl>
 concept applyMutateDogWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog(std::move(params)) } };
+	{ service::AwaitableObject<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog(std::move(params)) } };
 };
 
 template <class TImpl>
 concept applyMutateDog = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog() } };
+	{ service::AwaitableObject<std::shared_ptr<MutateDogResult>> { impl.applyMutateDog() } };
 };
 
 template <class TImpl>
@@ -54,7 +54,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
+		service::AwaitableObject<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MutationHas::applyMutateDogWithParams<T>)
 			{

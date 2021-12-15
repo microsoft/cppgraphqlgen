@@ -16,13 +16,13 @@ namespace methods::MutateDogResultHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl) 
 {
-	{ service::FieldResult<response::IdType> { impl.getId() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
@@ -54,7 +54,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<response::IdType> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::FieldResult<response::IdType> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MutateDogResultHas::getIdWithParams<T>)
 			{

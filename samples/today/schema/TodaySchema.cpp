@@ -51,7 +51,7 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::FieldResult<today::TaskState> result, ResolverParams params)
+service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
 {
 	return resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
@@ -62,6 +62,22 @@ service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::Fi
 
 			return result;
 		});
+}
+
+template <>
+void ModifiedResult<today::TaskState>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
+	}
+
+	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<std::string>());
+
+	if (itr == s_namesTaskState.cend())
+	{
+		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
+	}
 }
 
 template <>

@@ -23,49 +23,49 @@ namespace methods::CatHas {
 template <class TImpl>
 concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::string> { impl.getName(std::move(params)) } };
+	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getName = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::string> { impl.getName() } };
+	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
 concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getNickname = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<std::string>> { impl.getNickname() } };
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
 concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
 {
-	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
 concept getDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg) 
 {
-	{ service::FieldResult<bool> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
+	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
 concept getMeowVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume(std::move(params)) } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getMeowVolume(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getMeowVolume = requires (TImpl impl) 
 {
-	{ service::FieldResult<std::optional<int>> { impl.getMeowVolume() } };
+	{ service::AwaitableScalar<std::optional<int>> { impl.getMeowVolume() } };
 };
 
 template <class TImpl>
@@ -100,10 +100,10 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
-		virtual service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -115,7 +115,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::string> getName(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNameWithParams<T>)
 			{
@@ -131,7 +131,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNicknameWithParams<T>)
 			{
@@ -147,7 +147,7 @@ private:
 			}
 		}
 
-		service::FieldResult<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
+		service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
 			if constexpr (methods::CatHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -163,7 +163,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
+		service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getMeowVolumeWithParams<T>)
 			{

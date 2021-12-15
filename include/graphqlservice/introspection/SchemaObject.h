@@ -29,12 +29,12 @@ private:
 	{
 		virtual ~Concept() = default;
 
-		virtual service::FieldResult<std::optional<std::string>> getDescription() const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getQueryType() const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getMutationType() const = 0;
-		virtual service::FieldResult<std::shared_ptr<Type>> getSubscriptionType() const = 0;
-		virtual service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		virtual service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const = 0;
+		virtual service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
 	};
 
 	template <class T>
@@ -46,32 +46,32 @@ private:
 		{
 		}
 
-		service::FieldResult<std::optional<std::string>> getDescription() const final
+		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Type>>> getTypes() const final
+		service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getQueryType() const final
+		service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getMutationType() const final
+		service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		service::FieldResult<std::shared_ptr<Type>> getSubscriptionType() const final
+		service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		service::FieldResult<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
+		service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
 		{
 			return { _pimpl->getDirectives() };
 		}

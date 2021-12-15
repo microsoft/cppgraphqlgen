@@ -16,37 +16,37 @@ namespace methods::QueryHas {
 template <class TImpl>
 concept getHeroWithParams = requires (TImpl impl, service::FieldParams params, std::optional<Episode> episodeArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Character>> { impl.getHero(std::move(params), std::move(episodeArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Character>> { impl.getHero(std::move(params), std::move(episodeArg)) } };
 };
 
 template <class TImpl>
 concept getHero = requires (TImpl impl, std::optional<Episode> episodeArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Character>> { impl.getHero(std::move(episodeArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Character>> { impl.getHero(std::move(episodeArg)) } };
 };
 
 template <class TImpl>
 concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
 concept getHuman = requires (TImpl impl, std::string idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
 };
 
 template <class TImpl>
 concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
 concept getDroid = requires (TImpl impl, std::string idArg) 
 {
-	{ service::FieldResult<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
 };
 
 template <class TImpl>
@@ -84,9 +84,9 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::FieldResult<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const = 0;
-		virtual service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const = 0;
 	};
 
 	template <class T>
@@ -98,7 +98,7 @@ private:
 		{
 		}
 
-		service::FieldResult<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
+		service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
 		{
 			if constexpr (methods::QueryHas::getHeroWithParams<T>)
 			{
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const final
+		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		service::FieldResult<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const final
+		service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{

@@ -59,7 +59,7 @@ public:
 	explicit Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 		unreadCountsLoader&& getUnreadCounts);
 
-	service::FieldResult<std::shared_ptr<object::Node>> getNode(
+	service::AwaitableObject<std::shared_ptr<object::Node>> getNode(
 		service::FieldParams params, response::IdType id);
 	std::future<std::shared_ptr<object::AppointmentConnection>> getAppointments(
 		const service::FieldParams& params, std::optional<int> first,
@@ -142,7 +142,7 @@ public:
 		return _id;
 	}
 
-	service::FieldResult<response::IdType> getId() const noexcept
+	service::AwaitableScalar<response::IdType> getId() const noexcept
 	{
 		return _id;
 	}
@@ -187,7 +187,7 @@ public:
 		return std::make_shared<object::Appointment>(_appointment);
 	}
 
-	service::FieldResult<response::Value> getCursor() const
+	service::AwaitableScalar<response::Value> getCursor() const
 	{
 		co_return response::Value(co_await _appointment->getId());
 	}
@@ -243,7 +243,7 @@ public:
 		return _id;
 	}
 
-	service::FieldResult<response::IdType> getId() const noexcept
+	service::AwaitableScalar<response::IdType> getId() const noexcept
 	{
 		return _id;
 	}
@@ -278,7 +278,7 @@ public:
 		return std::make_shared<object::Task>(_task);
 	}
 
-	service::FieldResult<response::Value> getCursor() const noexcept
+	service::AwaitableScalar<response::Value> getCursor() const noexcept
 	{
 		co_return response::Value(co_await _task->getId());
 	}
@@ -333,7 +333,7 @@ public:
 		return _id;
 	}
 
-	service::FieldResult<response::IdType> getId() const noexcept
+	service::AwaitableScalar<response::IdType> getId() const noexcept
 	{
 		return _id;
 	}
@@ -367,7 +367,7 @@ public:
 		return std::make_shared<object::Folder>(_folder);
 	}
 
-	service::FieldResult<response::Value> getCursor() const noexcept
+	service::AwaitableScalar<response::Value> getCursor() const noexcept
 	{
 		co_return response::Value(co_await _folder->getId());
 	}
