@@ -2874,7 +2874,7 @@ using namespace std::literals;
 
 		if (!_loader.isIntrospection())
 		{
-			if (!objectType.interfaces.empty())
+			if (!objectType.interfaces.empty() || !objectType.unions.empty())
 			{
 				NamespaceScope implementsNamespace { headerFile, R"cpp(implements)cpp" };
 
