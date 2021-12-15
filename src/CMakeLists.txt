@@ -452,6 +452,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Awaitable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Introspection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SyntaxTree.h

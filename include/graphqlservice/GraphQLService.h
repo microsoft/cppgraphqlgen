@@ -663,9 +663,11 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
-	require(std::string_view name, const response::Value& arguments)
+	static typename std::enable_if_t<TypeModifier::None == Modifier, Type> require(
+		std::string_view name, const response::Value& arguments)
 	{
+		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
+
 		// Just call through to the non-template method without the modifiers.
 		return require(name, arguments);
 	}
