@@ -36,15 +36,37 @@ any variables to the service and parse its responses into a `graphql::response::
 
 ## Related projects
 
-I created a couple of sample projects that work with the latest version to demonstrate integrating the
-[schema.today.graphql](./samples/schema.today.graphql) service into an Electron app. They're available under
-my personal account, feel free to use either or both of these as a starting point to integrate your own generated
-service with Node or Electron. PRs with links to your own samples are always welcome.
+The most complete examples I've built are related to [GqlMAPI](https://github.com/microsoft/gqlmapi):
+
+- [eMAPI](https://github.com/microsoft/eMAPI): Windows-only Electron app which lets you access
+the [MAPI](https://en.wikipedia.org/wiki/MAPI) interface used by
+[Microsoft Outlook](https://en.wikipedia.org/wiki/Microsoft_Outlook). Its goal is to be a spiritual
+successor to a debugging and diagnostic tool called
+[MFCMAPI](https://github.com/stephenegriffin/mfcmapi).
+- [electron-gqlmapi](https://github.com/microsoft/electron-gqlmapi): Native module for Electron
+which hosts `GqlMAPI` in `eMAPI`. It includes JS libraries for calling the native module across the
+Electron IPC channel.
+- [Tauri-GqlMAPI](https://github.com/wravery/tauri-gqlmapi): Reimplementation of `eMAPI` built
+in [Rust](https://www.rust-lang.org/) and [TypeScript](https://www.typescriptlang.org/) on top of
+[Tauri](https://tauri.studio/en).
+- [gqlmapi-rs](https://github.com/wravery/gqlmapi-rs): `Rust` crate I built to expose safe
+bindings for `GqlMAPI`. It is loosely based on `electron-gqlmapi`, and it is used by
+`Tauri-GqlMAPI`.
+
+I created a couple of sample projects that worked with earlier versions of `cppgraphqlgen` to
+demonstrate integrating the [schema.today.graphql](./samples/schema.today.graphql) service into an
+Electron app. They're still available under my personal account, but I haven't updated them
+recently:
 
 - [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
-against the version of the Node headers included in Electron.
+against the version of the Node headers included in Electron. This was the starting point for
+`electron-gqlmapi`, and it is still useful as a sample because it does not depend on a platform-specific
+API like `MAPI`, so it works cross-platform.
 - [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
 exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of it.
+
+Feel free to use either or both of these as a starting point to integrate your own generated
+service with `Node`, `Electron`, or `Tauri`. PRs with links to your own samples are always welcome.
 
 ## Installation process
 
