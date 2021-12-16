@@ -144,80 +144,13 @@ report, accoring to the [spec](https://spec.graphql.org/October2021/#sec-Errors)
 
 ### Launch Policy
 
-The `graphqlservice` library uses the `SelectionSetParams::launch` parameter to
-determine how it should handle async resolvers in the same selection set or
-elements in the same list. It is passed from the top-most `resolve`, `deliver`,
-or async `subscribe`/`unsubscribe` call. The `getField` accessors get a copy of
-this member in their `FieldParams` argument, and they may change their own
-behavior based on that, but they cannot alter the launch policy which
-`graphqlservice` uses for the resolvers themselves.
-
-In previous versions, this was a `std::launch` enum value used with the
-`std::async` standard library function. In the latest version, this is a C++20
-`Awaitable`, specifically a type-erased type defined in `graphql::service::await_async`:
-```cpp
-// Type-erased awaitable.
-class await_async : public coro::suspend_always
-{
-private:
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual bool await_ready() const = 0;
-		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
-		virtual void await_resume() const = 0;
-	};
-...
-
-public:
-	// Type-erased explicit constructor for a custom awaitable.
-	template <class T>
-	explicit await_async(std::shared_ptr<T> pimpl)
-		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
-	{
-	}
-
-	// Default to immediate synchronous execution.
-	await_async()
-		: _pimpl { std::static_pointer_cast<Concept>(
-			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
-	{
-	}
-
-	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
-	await_async(std::launch launch)
-		: _pimpl { ((launch & std::launch::async) == std::launch::async)
-				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
-					std::make_shared<await_worker_thread>()))
-				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
-					std::make_shared<coro::suspend_never>())) }
-	{
-	}
-...
-};
-```
-For convenience, it will use `graphql::service::await_worker_thread` if you specify `std::launch::async`,
-which should have the same behavior as calling `std::async(std::launch::async, ...)` did before.
-
-If you specify any other flags for `std::launch`, it does not honor them. It will use `coro::suspend_never`
-(an alias for `std::suspend_never` or `std::experimental::suspend_never`), which as the name suggests,
-continues executing the coroutine without suspending. In other words, `std::launch::deferred` will no
-longer defer execution as in previous versions, it will execute immediately.
-
-There is also a default constructor which also uses `coro::suspend_never`, so that is the default
-behavior anywhere that `await_async` is default-initialized with `{}`.
-
-Other than simplification, the big advantage this brings is in the type-erased template constructor.
-If you are using another C++20 library or thread/task pool with coroutine support, you can implement
-your own `Awaitable` for it and wrap that in `graphql::service::await_async`. It should automatically
-start parallelizing all of its resolvers using your custom scheduler, which can pause and resume the
-coroutine when and where it likes.
+See the [Awaitable](./awaitable.md) document for more information about
+`service::await_async`.
 
 ## Related Documents
 
 1. The `getField` methods are discussed in more detail in [resolvers.md](./resolvers.md).
-2. Built-in and custom `directives` are discussed in [directives.md](./directives.md).
-3. Subscription resolvers get called up to 3 times depending on which
-`subscribe`/`unsubscribe` overrides you call. See [subscriptions.md](./subscriptions.md)
-for more details.
+2. Awaitable types are covered in [awaitable.md](./awaitable.md).
+3. Built-in and custom `directives` are discussed in [directives.md](./directives.md).
+4. Subscription resolvers may be called 2 extra times, inside of subscribe` and `unsubscribe`.
+See [subscriptions.md](./subscriptions.md) for more details.
