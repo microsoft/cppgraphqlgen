@@ -31,33 +31,33 @@ enum class TaskState
 
 struct CompleteTaskInput
 {
-	response::IdType id;
-	std::optional<TaskState> testTaskState;
-	std::optional<bool> isComplete;
-	std::optional<std::string> clientMutationId;
+	response::IdType id {};
+	std::optional<TaskState> testTaskState {};
+	std::optional<bool> isComplete {};
+	std::optional<std::string> clientMutationId {};
 };
 
 struct ThirdNestedInput
 {
-	response::IdType id;
+	response::IdType id {};
 };
 
 struct FourthNestedInput
 {
-	response::IdType id;
+	response::IdType id {};
 };
 
 struct SecondNestedInput
 {
-	response::IdType id;
-	ThirdNestedInput third;
+	response::IdType id {};
+	ThirdNestedInput third {};
 };
 
 struct FirstNestedInput
 {
-	response::IdType id;
-	SecondNestedInput second;
-	ThirdNestedInput third;
+	response::IdType id {};
+	SecondNestedInput second {};
+	ThirdNestedInput third {};
 };
 
 namespace object {
