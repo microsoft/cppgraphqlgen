@@ -247,7 +247,7 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 					   {},
 					   state })
 				   .get();
-	_service->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } } }).get();
+	_service->deliver({ "nextAppointmentChange"sv }).get();
 	_service->unsubscribe({ key }).get();
 
 	try

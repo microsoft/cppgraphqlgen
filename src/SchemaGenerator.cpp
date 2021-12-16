@@ -16,26 +16,8 @@
 #pragma warning(pop)
 #endif // _MSC_VER
 
-// clang-format off
-#ifdef USE_STD_FILESYSTEM
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#else
-	#ifdef USE_STD_EXPERIMENTAL_FILESYSTEM
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#else
-		#ifdef USE_BOOST_FILESYSTEM
-			#include <boost/filesystem.hpp>
-			namespace fs = boost::filesystem;
-		#else
-			#error "No std::filesystem implementation defined"
-		#endif
-	#endif
-#endif
-// clang-format on
-
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -61,7 +43,7 @@ std::string Generator::getHeaderDir() const noexcept
 {
 	if (!_options.paths.headerPath.empty())
 	{
-		return fs::path { _options.paths.headerPath }.string();
+		return std::filesystem::path { _options.paths.headerPath }.string();
 	}
 	else
 	{
@@ -73,7 +55,7 @@ std::string Generator::getSourceDir() const noexcept
 {
 	if (!_options.paths.sourcePath.empty())
 	{
-		return fs::path(_options.paths.sourcePath).string();
+		return std::filesystem::path(_options.paths.sourcePath).string();
 	}
 	else
 	{
@@ -83,7 +65,7 @@ std::string Generator::getSourceDir() const noexcept
 
 std::string Generator::getHeaderPath() const noexcept
 {
-	fs::path fullPath { _headerDir };
+	std::filesystem::path fullPath { _headerDir };
 
 	fullPath /= (std::string { _loader.getFilenamePrefix() } + "Schema.h");
 	return fullPath.string();
@@ -91,7 +73,7 @@ std::string Generator::getHeaderPath() const noexcept
 
 std::string Generator::getSourcePath() const noexcept
 {
-	fs::path fullPath { _sourceDir };
+	std::filesystem::path fullPath { _sourceDir };
 
 	fullPath /= (std::string { _loader.getFilenamePrefix() } + "Schema.cpp");
 	return fullPath.string();
@@ -124,7 +106,8 @@ std::vector<std::string> Generator::Build() const noexcept
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
+	IncludeGuardScope includeGuard { headerFile,
+		std::filesystem::path(_headerPath).filename().string() };
 
 	headerFile << R"cpp(#include "graphqlservice/internal/Schema.h"
 
@@ -977,7 +960,8 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -1758,7 +1742,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -2655,8 +2640,8 @@ std::string Generator::getIntrospectionType(
 
 std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 {
-	const fs::path headerDir(_headerDir);
-	const fs::path sourceDir(_sourceDir);
+	const std::filesystem::path headerDir(_headerDir);
+	const std::filesystem::path sourceDir(_sourceDir);
 	std::vector<std::string> files;
 	std::string_view queryType;
 
@@ -2676,7 +2661,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
 		IncludeGuardScope includeGuard { headerFile, headerFilename };
 
-		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+		headerFile << R"cpp(#include ")cpp"
+				   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -2766,7 +2752,8 @@ using namespace std::literals;
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
 		IncludeGuardScope includeGuard { headerFile, headerFilename };
 
-		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+		headerFile << R"cpp(#include ")cpp"
+				   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -2856,7 +2843,8 @@ using namespace std::literals;
 		std::ofstream headerFile(headerPath, std::ios_base::trunc);
 		IncludeGuardScope includeGuard { headerFile, headerFilename };
 
-		headerFile << R"cpp(#include ")cpp" << fs::path(_headerPath).filename().string() << R"cpp("
+		headerFile << R"cpp(#include ")cpp"
+				   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -3053,8 +3041,8 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Schema.h header file")("stubs",
 		po::bool_switch(&stubs),
-		"Unimplemented fields throw runtime exceptions instead of compiler errors")(
-		"no-introspection",
+		"Unimplemented fields throw runtime exceptions instead of compiler errors")("no-"
+																					"introspection",
 		po::bool_switch(&noIntrospection),
 		"Do not generate support for Introspection");
 	positional.add("schema", 1).add("prefix", 1).add("namespace", 1);

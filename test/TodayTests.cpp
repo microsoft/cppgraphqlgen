@@ -618,7 +618,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 					   {},
 					   state })
 				   .get();
-	_service->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } } }).get();
+	_service->deliver({ "nextAppointmentChange"sv }).get();
 	_service->unsubscribe({ key }).get();
 
 	try
@@ -682,8 +682,9 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 					   state })
 				   .get();
 	_service
-		->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } },
-			{},
+		->deliver({ "nextAppointmentChange"sv,
+			{}, // filter
+			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
@@ -722,7 +723,7 @@ TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionObject)
 
 	try
 	{
-		service->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } } }).get();
+		service->deliver({ "nextAppointmentChange"sv }).get();
 	}
 	catch (const std::invalid_argument& ex)
 	{
@@ -740,7 +741,7 @@ TEST_F(TodayServiceCase, DeliverNextAppointmentChangeNoSubscriptionSupport)
 
 	try
 	{
-		service->deliver({ { service::SubscriptionFilter { "nextAppointmentChange"sv } } }).get();
+		service->deliver({ "nextAppointmentChange"sv }).get();
 	}
 	catch (const std::logic_error& ex)
 	{
@@ -1269,10 +1270,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 					   state })
 				   .get();
 	_service
-		->deliver({ { service::SubscriptionFilter { "nodeChange"sv,
-						{ service::SubscriptionArguments {
-							{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
-			{},
+		->deliver({ "nodeChange"sv,
+			{ service::SubscriptionFilter { { service::SubscriptionArguments {
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
@@ -1330,10 +1331,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 					   std::move(variables) })
 				   .get();
 	_service
-		->deliver({ { service::SubscriptionFilter { "nodeChange"sv,
-						{ service::SubscriptionArguments {
-							{ "id", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s) } } } } },
-			{},
+		->deliver({ "nodeChange"sv,
+			{ service::SubscriptionFilter { { service::SubscriptionArguments {
+				{ "id", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s) } } } } },
+			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
@@ -1396,11 +1397,11 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 					   state })
 				   .get();
 	_service
-		->deliver(
-			{ { service::SubscriptionFilter { "nodeChange"sv,
-				  { service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
-				{},
-				std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+		->deliver({ "nodeChange"sv,
+			{ service::SubscriptionFilter {
+				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
+			{}, // launch
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
 
@@ -1467,11 +1468,11 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 					   std::move(variables) })
 				   .get();
 	_service
-		->deliver(
-			{ { service::SubscriptionFilter { "nodeChange"sv,
-				  { service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
-				{},
-				std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+		->deliver({ "nodeChange"sv,
+			{ service::SubscriptionFilter {
+				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
+			{}, // launch
+			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
 
@@ -1524,10 +1525,10 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 					   state })
 				   .get();
 	_service
-		->deliver({ { service::SubscriptionFilter { "nodeChange"sv,
-						{ service::SubscriptionArguments {
-							{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
-			{},
+		->deliver({ "nodeChange"sv,
+			{ service::SubscriptionFilter { { service::SubscriptionArguments {
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
 	_service->unsubscribe({ key }).get();
@@ -1722,10 +1723,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 					   {},
 					   state })
 				   .get();
-	_service
-		->deliver(
-			{ { service::SubscriptionFilter { "nextAppointmentChange"sv } }, std::launch::async })
-		.get();
+	_service->deliver({ "nextAppointmentChange"sv, {}, std::launch::async }).get();
 	_service->unsubscribe({ key }).get();
 
 	try

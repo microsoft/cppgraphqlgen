@@ -245,18 +245,12 @@ endif()
 
 # Common schemagen and clientgen filesystem and Boost dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
-  set(BOOST_COMPONENTS program_options)
-  set(BOOST_LIBRARIES Boost::program_options)
-
   # Try compiling a test program with std::filesystem or one of its alternatives.
-  function(check_filesystem_impl FILESYSTEM_HEADER FILESYSTEM_NAMESPACE OPTIONAL_LIBS OUT_RESULT)
-    set(TEST_FILE "test_${OUT_RESULT}.cpp")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp.in ${TEST_FILE} @ONLY)
-
+  function(check_filesystem_impl OPTIONAL_LIBS)
     try_compile(TEST_RESULT
       ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-      CXX_STANDARD 17)
+      ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp
+      CXX_STANDARD 20)
 
     if(NOT TEST_RESULT)
       # Retry with each of the optional libraries.
@@ -265,7 +259,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
           ${CMAKE_CURRENT_BINARY_DIR}
           ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
           LINK_LIBRARIES ${OPTIONAL_LIB}
-          CXX_STANDARD 17)
+          CXX_STANDARD 20)
 
         if(TEST_RESULT)
           # Looks like the optional library was required, go ahead and add it to the link options.
@@ -279,49 +273,19 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
         endif()
       endforeach(OPTIONAL_LIB)
     endif()
-
-    set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
   endfunction(check_filesystem_impl)
 
-  # Try compiling a minimal program with each header/namespace, in order of preference:
-  #   C++17: #include <filesystem> // std::filesystem
-  #   Experimental C++17: #include <experimental/filesystem> // std::experimental::filesystem
-  #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
-  check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
-  if(STD_FILESYTEM)
-    if(GRAPHQL_BUILD_SCHEMAGEN)
-      target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
-    endif()
-    if(GRAPHQL_BUILD_CLIENTGEN)
-      target_compile_definitions(clientgen PRIVATE USE_STD_FILESYSTEM)
-    endif()
-  else()
-    check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
-    if(STD_EXPERIMENTAL_FILESYTEM)
-      if(GRAPHQL_BUILD_SCHEMAGEN)
-        target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
-      endif()
-      if(GRAPHQL_BUILD_CLIENTGEN)
-        target_compile_definitions(clientgen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
-      endif()
-    else()
-      set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-      set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-      if(GRAPHQL_BUILD_SCHEMAGEN)
-        target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
-      endif()
-      if(GRAPHQL_BUILD_CLIENTGEN)
-        target_compile_definitions(clientgen PRIVATE USE_BOOST_FILESYSTEM)
-      endif()
-    endif()
-  endif()
+  # Try compiling a minimal program without any extra libraries, then with each optional library until it succeeded:
+  #   stdc++fs
+  #   c++fs
+  check_filesystem_impl("stdc++fs;c++fs" STD_FILESYTEM)
 
-  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  find_package(Boost REQUIRED COMPONENTS program_options)
   if(GRAPHQL_BUILD_SCHEMAGEN)
-    target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
+    target_link_libraries(schemagen PRIVATE Boost::program_options)
   endif()
   if(GRAPHQL_BUILD_CLIENTGEN)
-    target_link_libraries(clientgen PRIVATE ${BOOST_LIBRARIES})
+    target_link_libraries(clientgen PRIVATE Boost::program_options)
   endif()
 endif()
 

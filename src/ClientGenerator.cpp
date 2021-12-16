@@ -20,26 +20,8 @@
 #pragma warning(pop)
 #endif // _MSC_VER
 
-// clang-format off
-#ifdef USE_STD_FILESYSTEM
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#else
-	#ifdef USE_STD_EXPERIMENTAL_FILESYSTEM
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#else
-		#ifdef USE_BOOST_FILESYSTEM
-			#include <boost/filesystem.hpp>
-			namespace fs = boost::filesystem;
-		#else
-			#error "No std::filesystem implementation defined"
-		#endif
-	#endif
-#endif
-// clang-format on
-
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -66,7 +48,7 @@ std::string Generator::getHeaderDir() const noexcept
 {
 	if (!_options.paths.headerPath.empty())
 	{
-		return fs::path { _options.paths.headerPath }.string();
+		return std::filesystem::path { _options.paths.headerPath }.string();
 	}
 	else
 	{
@@ -78,7 +60,7 @@ std::string Generator::getSourceDir() const noexcept
 {
 	if (!_options.paths.sourcePath.empty())
 	{
-		return fs::path(_options.paths.sourcePath).string();
+		return std::filesystem::path(_options.paths.sourcePath).string();
 	}
 	else
 	{
@@ -88,7 +70,7 @@ std::string Generator::getSourceDir() const noexcept
 
 std::string Generator::getHeaderPath() const noexcept
 {
-	fs::path fullPath { _headerDir };
+	std::filesystem::path fullPath { _headerDir };
 
 	fullPath /= (std::string { _schemaLoader.getFilenamePrefix() } + "Client.h");
 
@@ -97,7 +79,7 @@ std::string Generator::getHeaderPath() const noexcept
 
 std::string Generator::getSourcePath() const noexcept
 {
-	fs::path fullPath { _sourceDir };
+	std::filesystem::path fullPath { _sourceDir };
 
 	fullPath /= (std::string { _schemaLoader.getFilenamePrefix() } + "Client.cpp");
 
@@ -188,7 +170,8 @@ std::vector<std::string> Generator::Build() const noexcept
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
+	IncludeGuardScope includeGuard { headerFile,
+		std::filesystem::path(_headerPath).filename().string() };
 
 	headerFile << R"cpp(#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -223,7 +206,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
+				   << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())

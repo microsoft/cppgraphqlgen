@@ -1837,7 +1837,7 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 		throw std::invalid_argument("Missing subscriptionObject");
 	}
 
-	const auto registrations = collectRegistrations(std::move(params.filter));
+	const auto registrations = collectRegistrations(params.field, std::move(params.filter));
 
 	if (registrations.empty())
 	{
@@ -1987,38 +1987,41 @@ void Request::removeSubscription(SubscriptionKey key)
 }
 
 std::vector<std::shared_ptr<SubscriptionData>> Request::collectRegistrations(
-	RequestDeliverFilter&& filter) const noexcept
+	std::string_view field, RequestDeliverFilter&& filter) const noexcept
 {
 	std::vector<std::shared_ptr<SubscriptionData>> registrations;
+	const auto itrListeners = _listeners.find(field);
 
-	if (!filter)
+	if (itrListeners != _listeners.end())
 	{
-		// Return all of the registered subscriptions.
-		registrations.reserve(_subscriptions.size());
-		std::transform(_subscriptions.begin(),
-			_subscriptions.end(),
-			std::back_inserter(registrations),
-			[](const auto& entry) noexcept {
-				return entry.second;
-			});
-	}
-	else if (std::holds_alternative<SubscriptionKey>(*filter))
-	{
-		// Return the specific subscription for this key.
-		const auto itr = _subscriptions.find(std::get<SubscriptionKey>(*filter));
-
-		if (itr != _subscriptions.end())
+		if (!filter)
 		{
-			registrations.push_back(itr->second);
+			// Return all of the registered subscriptions for this field.
+			registrations.reserve(itrListeners->second.size());
+			std::transform(itrListeners->second.begin(),
+				itrListeners->second.end(),
+				std::back_inserter(registrations),
+				[this](const auto& key) noexcept {
+					const auto itr = _subscriptions.find(key);
+
+					return itr == _subscriptions.end() ? std::shared_ptr<SubscriptionData> {}
+													   : itr->second;
+				});
 		}
-	}
-	else if (std::holds_alternative<SubscriptionFilter>(*filter))
-	{
-		auto& subscriptionFilter = std::get<SubscriptionFilter>(*filter);
-		const auto itrListeners = _listeners.find(subscriptionFilter.field);
-
-		if (itrListeners != _listeners.end())
+		else if (std::holds_alternative<SubscriptionKey>(*filter))
 		{
+			// Return the specific subscription for this key.
+			const auto itr = _subscriptions.find(std::get<SubscriptionKey>(*filter));
+
+			if (itr != _subscriptions.end() && itr->second->field == field)
+			{
+				registrations.push_back(itr->second);
+			}
+		}
+		else if (std::holds_alternative<SubscriptionFilter>(*filter))
+		{
+			auto& subscriptionFilter = std::get<SubscriptionFilter>(*filter);
+
 			registrations.reserve(itrListeners->second.size());
 
 			std::optional<SubscriptionArgumentFilterCallback> argumentsMatch;

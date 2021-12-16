@@ -1233,9 +1233,6 @@ using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const
 
 struct SubscriptionFilter
 {
-	// Deliver to subscriptions on this field.
-	std::string_view field;
-
 	// Optional field argument filter, which can either be a set of required arguments, or a
 	// callback which returns true if the arguments match custom criteria.
 	std::optional<std::variant<SubscriptionArguments, SubscriptionArgumentFilterCallback>>
@@ -1252,8 +1249,11 @@ using RequestDeliverFilter = std::optional<std::variant<SubscriptionKey, Subscri
 
 struct RequestDeliverParams
 {
+	// Deliver to subscriptions on this field.
+	std::string_view field;
+
 	// Optional filter to control which subscriptions will receive the event. If not specified,
-	// every subscription will receive the event and evaluate their queries against it.
+	// every subscription on this field will receive the event and evaluate their queries.
 	RequestDeliverFilter filter;
 
 	// Optional async execution awaitable.
@@ -1329,7 +1329,7 @@ private:
 	SubscriptionKey addSubscription(RequestSubscribeParams&& params);
 	void removeSubscription(SubscriptionKey key);
 	std::vector<std::shared_ptr<SubscriptionData>> collectRegistrations(
-		RequestDeliverFilter&& filter) const noexcept;
+		std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
 	std::unique_ptr<ValidateExecutableVisitor> _validation;
