@@ -30,8 +30,8 @@ enum class Episode
 
 struct ReviewInput
 {
-	response::IntType stars;
-	std::optional<response::StringType> commentary;
+	response::IntType stars {};
+	std::optional<response::StringType> commentary {};
 };
 
 namespace object {

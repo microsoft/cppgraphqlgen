@@ -35,8 +35,8 @@ enum class CatCommand
 
 struct ComplexInput
 {
-	std::optional<response::StringType> name;
-	std::optional<response::StringType> owner;
+	std::optional<response::StringType> name {};
+	std::optional<response::StringType> owner {};
 };
 
 namespace object {

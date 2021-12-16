@@ -242,7 +242,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 )cpp";
 			for (const auto& inputField : inputType.fields)
 			{
-				headerFile << R"cpp(	)cpp" << getFieldDeclaration(inputField) << R"cpp(;
+				headerFile << R"cpp(	)cpp" << getFieldDeclaration(inputField) << R"cpp( {};
 )cpp";
 			}
 			headerFile << R"cpp(};
