@@ -7,9 +7,61 @@ shared state or `directives` from the `query`, so the `resolveField` method
 also packs that information into a `graphql::service::FieldParams` struct and
 passes it to every `getField` method as the first parameter.
 
+This parameter is optional. The type-erased implementation of `graphql::service::Object`
+for each `Object` type in the schema declares a pair of `methods::ObjectHas::getFieldWithParams`
+and `methods::ObjectHas::getField` concepts for each field getter. If the implementation
+type supports passing the `graphql::service::FieldParams` struct as the first parameter,
+the type-erased `object::Object` invokes the `getFieldWithParams` version, otherwise it
+drops the parameter and calls the `getField` version with whatever other field
+arguments the schema specified.
+
 ## Details of Field Parameters
 
 The `graphql::service::FieldParams` struct is declared in [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
+```cpp
+// Pass a common bundle of parameters to all of the generated Object::getField accessors in a
+// SelectionSet
+struct SelectionSetParams
+{
+	// Context for this selection set.
+	const ResolverContext resolverContext;
+
+	// The lifetime of each of these borrowed references is guaranteed until the future returned
+	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer.
+	const std::shared_ptr<RequestState>& state;
+	const Directives& operationDirectives;
+	const std::shared_ptr<FragmentDefinitionDirectiveStack> fragmentDefinitionDirectives;
+
+	// Fragment directives are shared for all fields in that fragment, but they aren't kept alive
+	// after the call to the last accessor in the fragment. If you need to keep them alive longer,
+	// you'll need to explicitly copy them into other instances of Directives.
+	const std::shared_ptr<FragmentSpreadDirectiveStack> fragmentSpreadDirectives;
+	const std::shared_ptr<FragmentSpreadDirectiveStack> inlineFragmentDirectives;
+
+	// Field error path to this selection set.
+	std::optional<field_path> errorPath;
+
+	// Async launch policy for sub-field resolvers.
+	const await_async launch {};
+};
+
+// Pass a common bundle of parameters to all of the generated Object::getField accessors.
+struct FieldParams : SelectionSetParams
+{
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(
+		SelectionSetParams&& selectionSetParams, Directives directives);
+
+	// Each field owns its own field-specific directives. Once the accessor returns it will be
+	// destroyed, but you can move it into another instance of response::Value to keep it alive
+	// longer.
+	Directives fieldDirectives;
+};
+```
+
+### Resolver Context
+
+The `SelectionSetParams::resolverContext` enum member informs the `getField`
+accessors about what type of operation is being resolved:
 ```cpp
 // Resolvers may be called in multiple different Operation contexts.
 enum class ResolverContext
@@ -31,50 +83,7 @@ enum class ResolverContext
 	// opportunity to release resources which are no longer needed.
 	NotifyUnsubscribe,
 };
-
-// Pass a common bundle of parameters to all of the generated Object::getField accessors in a
-// SelectionSet
-struct SelectionSetParams
-{
-	// Context for this selection set.
-	const ResolverContext resolverContext;
-
-	// The lifetime of each of these borrowed references is guaranteed until the future returned
-	// by the accessor is resolved or destroyed. They are owned by the OperationData shared pointer.
-	const std::shared_ptr<RequestState>& state;
-	const response::Value& operationDirectives;
-	const response::Value& fragmentDefinitionDirectives;
-
-	// Fragment directives are shared for all fields in that fragment, but they aren't kept alive
-	// after the call to the last accessor in the fragment. If you need to keep them alive longer,
-	// you'll need to explicitly copy them into other instances of response::Value.
-	const response::Value& fragmentSpreadDirectives;
-	const response::Value& inlineFragmentDirectives;
-
-	// Field error path to this selection set.
-	std::optional<field_path> errorPath;
-
-	// Async launch policy for sub-field resolvers.
-	const std::launch launch = std::launch::deferred;
-};
-
-// Pass a common bundle of parameters to all of the generated Object::getField accessors.
-struct FieldParams : SelectionSetParams
-{
-	GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		SelectionSetParams&& selectionSetParams, response::Value&& directives);
-
-	// Each field owns its own field-specific directives. Once the accessor returns it will be
-	// destroyed, but you can move it into another instance of response::Value to keep it alive
-	// longer.
-	response::Value fieldDirectives;
-};
 ```
-
-### Resolver Context
-
-The `SelectionSetParams::resolverContext` enum member informs the `getField`
-accessors about what type of operation is being resolved.
 
 ### Request State
 
@@ -82,10 +91,10 @@ The `SelectionSetParams::state` member is a reference to the
 `std::shared_ptr<graphql::service::RequestState>` parameter passed to
 `Request::resolve` (see [resolvers.md](./resolvers.md) for more info):
 ```cpp
-// The RequestState is nullable, but if you have multiple threads processing requests and there's any
-// per-request state that you want to maintain throughout the request (e.g. optimizing or batching
-// backend requests), you can inherit from RequestState and pass it to Request::resolve to correlate the
-// asynchronous/recursive callbacks and accumulate state in it.
+// The RequestState is nullable, but if you have multiple threads processing requests and there's
+// any per-request state that you want to maintain throughout the request (e.g. optimizing or
+// batching backend requests), you can inherit from RequestState and pass it to Request::resolve to
+// correlate the asynchronous/recursive callbacks and accumulate state in it.
 struct RequestState : std::enable_shared_from_this<RequestState>
 {
 };
@@ -96,16 +105,27 @@ struct RequestState : std::enable_shared_from_this<RequestState>
 Each of the `directives` members contains the values of the `directives` and
 any of their arguments which were in effect at that scope of the `query`.
 Implementers may inspect those values in the call to `getField` and alter their
-behavior based on those custom `directives`.
+behavior based on those custom `directives`:
+```cpp
+// Directive order matters, and some of them are repeatable. So rather than passing them in a
+// response::Value, pass directives in something like the underlying response::MapType which
+// preserves the order of the elements without complete uniqueness.
+using Directives = std::vector<std::pair<std::string_view, response::Value>>;
+
+// Traversing a fragment spread adds a new set of directives.
+using FragmentDefinitionDirectiveStack = std::list<std::reference_wrapper<const Directives>>;
+using FragmentSpreadDirectiveStack = std::list<Directives>;
+```
 
 As noted in the comments, the `fragmentSpreadDirectives` and
-`inlineFragmentDirectives` are borrowed `const` references, shared accross
-calls to multiple `getField` methods, but they will not be kept alive after
-the relevant `SelectionSet` has been resolved. The `fieldDirectives` member is
-passed by value and is not shared with other `getField` method calls, but it
-will not be kept alive after that call returns. It's up to the implementer to
-capture the values in these `directives` which they might need for asynchronous
-evaulation after the call to the current `getField` method has returned.
+`inlineFragmentDirectives` are stacks of directives passed down through nested
+inline fragments and fragment spreads. The `Directives` object for each frame of
+the stack is shared accross calls to multiple `getField` methods in a single fragment,
+but they will be popped from the stack when the last field has been visited. The
+`fieldDirectives` member is passed by value and is not shared with other `getField`
+method calls. It's up to the implementer to capture the values in these `directives`
+which they might need for asynchronous evaulation after the call to the current
+`getField` method has returned.
 
 The implementer does not need to capture the values of `operationDirectives`
 or `fragmentDefinitionDirectives` because those are kept alive until the
@@ -131,6 +151,68 @@ or async `subscribe`/`unsubscribe` call. The `getField` accessors get a copy of
 this member in their `FieldParams` argument, and they may change their own
 behavior based on that, but they cannot alter the launch policy which
 `graphqlservice` uses for the resolvers themselves.
+
+In previous versions, this was a `std::launch` enum value used with the
+`std::async` standard library function. In the latest version, this is a C++20
+`Awaitable`, specifically a type-erased type defined in `graphql::service::await_async`:
+```cpp
+// Type-erased awaitable.
+class await_async : public coro::suspend_always
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual bool await_ready() const = 0;
+		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+		virtual void await_resume() const = 0;
+	};
+...
+
+public:
+	// Type-erased explicit constructor for a custom awaitable.
+	template <class T>
+	explicit await_async(std::shared_ptr<T> pimpl)
+		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
+	{
+	}
+
+	// Default to immediate synchronous execution.
+	await_async()
+		: _pimpl { std::static_pointer_cast<Concept>(
+			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+	{
+	}
+
+	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
+	await_async(std::launch launch)
+		: _pimpl { ((launch & std::launch::async) == std::launch::async)
+				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
+					std::make_shared<await_worker_thread>()))
+				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
+					std::make_shared<coro::suspend_never>())) }
+	{
+	}
+...
+};
+```
+For convenience, it will use `graphql::service::await_worker_thread` if you specify `std::launch::async`,
+which should have the same behavior as calling `std::async(std::launch::async, ...)` did before.
+
+If you specify any other flags for `std::launch`, it does not honor them. It will use `coro::suspend_never`
+(an alias for `std::suspend_never` or `std::experimental::suspend_never`), which as the name suggests,
+continues executing the coroutine without suspending. In other words, `std::launch::deferred` will no
+longer defer execution as in previous versions, it will execute immediately.
+
+There is also a default constructor which also uses `coro::suspend_never`, so that is the default
+behavior anywhere that `await_async` is default-initialized with `{}`.
+
+Other than simplification, the big advantage this brings is in the type-erased template constructor.
+If you are using another C++20 library or thread/task pool with coroutine support, you can implement
+your own `Awaitable` for it and wrap that in `graphql::service::await_async`. It should automatically
+start parallelizing all of its resolvers using your custom scheduler, which can pause and resume the
+coroutine when and where it likes.
 
 ## Related Documents
 
