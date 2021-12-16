@@ -220,6 +220,7 @@ the files in your source directory.
 
 There are some more targeted documents in the [doc](./doc) directory:
 
+* [Awaitable Types](./doc/awaitable.md)
 * [Parsing GraphQL](./doc/parsing.md)
 * [Query Responses](./doc/responses.md)
 * [JSON Representation](./doc/json.md)
