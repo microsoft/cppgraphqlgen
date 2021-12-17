@@ -649,8 +649,12 @@ void SchemaLoader::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefi
 	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
@@ -676,9 +680,14 @@ void SchemaLoader::visitObjectTypeExtension(const peg::ast_node& objectTypeExten
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::object_name>(objectTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::object_name>(objectTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _objectNames.find(name);
 
@@ -710,8 +719,12 @@ void SchemaLoader::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTy
 	std::string_view description;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
@@ -738,8 +751,12 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 	std::string_view name;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	const auto itrType = _interfaceNames.find(name);
@@ -767,8 +784,12 @@ void SchemaLoader::visitInputObjectTypeDefinition(const peg::ast_node& inputObje
 	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
@@ -795,8 +816,12 @@ void SchemaLoader::visitInputObjectTypeExtension(const peg::ast_node& inputObjec
 	std::string_view name;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	const auto itrType = _inputNames.find(name);
@@ -823,9 +848,14 @@ void SchemaLoader::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefiniti
 	std::string_view name;
 	std::string_view description;
 
-	peg::on_first_child<peg::enum_name>(enumTypeDefinition, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
 		[&description](const peg::ast_node& child) {
@@ -850,9 +880,14 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::enum_name>(enumTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::enum_name>(enumTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _enumNames.find(name);
 
@@ -928,8 +963,12 @@ void SchemaLoader::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefi
 	std::string_view description;
 
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
@@ -951,9 +990,14 @@ void SchemaLoader::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefini
 	std::string_view name;
 	std::string_view description;
 
-	peg::on_first_child<peg::union_name>(unionTypeDefinition, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::union_name>(unionTypeDefinition,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
 		[&description](const peg::ast_node& child) {
@@ -978,9 +1022,14 @@ void SchemaLoader::visitUnionTypeExtension(const peg::ast_node& unionTypeExtensi
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::union_name>(unionTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::union_name>(unionTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _unionNames.find(name);
 
@@ -1000,8 +1049,12 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 	Directive directive;
 
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &directive](const peg::ast_node& child) {
 			directive.name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(directive.name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
@@ -1065,6 +1118,25 @@ std::string_view SchemaLoader::getSafeCppName(std::string_view type) noexcept
 	}
 
 	return (safeNames.cend() == itr) ? type : itr->second->second;
+}
+
+void SchemaLoader::blockReservedName(
+	std::string_view name, std::optional<tao::graphqlpeg::position> position)
+{
+	// https://spec.graphql.org/June2018/#sec-Reserved-Names
+	if (name.size() > 1 && name.substr(0, 2) == R"gql(__)gql"sv)
+	{
+		std::ostringstream error;
+
+		error << "Names starting with __ are reserved: " << name;
+
+		if (position)
+		{
+			error << " line: " << position->line << " column: " << position->column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
 }
 
 OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& fields)

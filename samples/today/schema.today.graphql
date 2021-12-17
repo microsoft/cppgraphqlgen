@@ -1,0 +1,183 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+scalar ItemCursor
+
+directive @id on FIELD_DEFINITION
+
+"Root Query type"
+type Query {
+    """[Object Identification](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#object-identification)"""
+    node(id: ID!) : Node
+
+    """Appointments [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    appointments(first: Int, after: ItemCursor, last: Int, before: ItemCursor): AppointmentConnection!
+    """Tasks [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    tasks(first: Int, after: ItemCursor, last: Int, before: ItemCursor): TaskConnection!
+    """Folder unread counts [Connection](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#connections)"""
+    unreadCounts(first: Int, after: ItemCursor, last: Int, before: ItemCursor): FolderConnection!
+
+    appointmentsById(ids: [ID!]! = ["ZmFrZUFwcG9pbnRtZW50SWQ="]) : [Appointment]!
+    tasksById(ids: [ID!]!): [Task]!
+    unreadCountsById(ids: [ID!]!): [Folder]!
+
+    nested: NestedType!
+
+    unimplemented: String!
+
+    expensive: [Expensive!]!
+
+    testTaskState: TaskState!
+
+    anyType(ids: [ID!]!): [UnionType]!
+}
+
+"Node interface for Relay support"
+interface Node {
+    id: ID!
+}
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+}
+
+type AppointmentEdge {
+    node: Appointment
+    cursor: ItemCursor!
+}
+
+type AppointmentConnection {
+    pageInfo: PageInfo!
+    edges: [AppointmentEdge]
+}
+
+type TaskEdge {
+    node: Task
+    cursor: ItemCursor!
+}
+
+type TaskConnection {
+    pageInfo: PageInfo!
+    edges: [TaskEdge]
+}
+
+type FolderEdge {
+    node: Folder
+    cursor: ItemCursor!
+}
+
+type FolderConnection {
+    pageInfo: PageInfo!
+    edges: [FolderEdge]
+}
+
+input CompleteTaskInput {
+    id: ID!
+    testTaskState: TaskState
+    isComplete: Boolean = true
+    clientMutationId: String
+}
+
+type CompleteTaskPayload {
+    task: Task
+    clientMutationId: String
+}
+
+type Mutation {
+    completeTask(input: CompleteTaskInput!) : CompleteTaskPayload!
+    setFloat(value: Float!): Float!
+}
+
+    """
+
+        Subscription type:
+        
+        2nd line...
+            3rd line goes here!
+                
+    """
+type Subscription {
+    nextAppointmentChange : Appointment @deprecated(
+        reason:"""Need to deprecate a [field](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+    )
+    nodeChange(id: ID!): Node!
+}
+
+directive @subscriptionTag(field: String) on SUBSCRIPTION
+
+scalar DateTime
+
+enum TaskState {
+    New
+    Started
+    Complete
+    Unassigned @deprecated(
+        reason:"""Need to deprecate an [enum value](http://spec.graphql.org/June2018/#sec-Deprecation)"""
+    )
+}
+
+type Appointment implements Node {
+    id: ID!
+    when: DateTime
+    subject: String
+    isNow: Boolean!
+    forceError: String
+}
+
+type Task implements Node {
+    id: ID!
+    title: String
+    isComplete: Boolean!
+}
+
+type Folder implements Node {
+    id: ID!
+    name: String
+    unreadCount: Int!
+}
+
+union UnionType = Appointment | Task | Folder
+
+directive @queryTag(query: String!) on QUERY
+directive @fieldTag(field: String!) on FIELD
+directive @fragmentDefinitionTag(fragmentDefinition: String!) on FRAGMENT_DEFINITION
+directive @fragmentSpreadTag(fragmentSpread: String!) on FRAGMENT_SPREAD
+directive @inlineFragmentTag(inlineFragment: String!) on INLINE_FRAGMENT
+
+"Infinitely nestable type which can be used with nested fragments to test directive handling"
+type NestedType {
+    "Depth of the nested element"
+    depth: Int!
+    "Link to the next level"
+    nested: NestedType!
+}
+
+type Expensive {
+    order: Int!
+}
+
+input FirstNestedInput {
+    id: ID!
+    second: SecondNestedInput!
+    third: ThirdNestedInput!
+}
+
+input SecondNestedInput {
+    id: ID!
+    third: ThirdNestedInput!
+}
+
+input ThirdNestedInput {
+    id: ID!
+}
+
+input FourthNestedInput {
+    id: ID!
+}

@@ -151,12 +151,29 @@ struct block_escape_sequence : seq<backslash_token, block_quote_token>
 };
 
 struct block_quote_character
-	: plus<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
+	: plus<not_at<ascii::eol>, not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
+{
+};
+
+struct block_quote_empty_line : star<not_at<eol>, space>
+{
+};
+
+struct block_quote_line_content
+	: plus<sor<block_escape_sequence, block_quote_character>>
+{
+};
+
+struct block_quote_line : seq<block_quote_empty_line, block_quote_line_content>
+{
+};
+
+struct block_quote_content_lines: opt<list<sor<block_quote_line, block_quote_empty_line>, eol>>
 {
 };
 
 struct block_quote_content
-	: seq<star<sor<block_escape_sequence, block_quote_character>>, must<block_quote_token>>
+	: seq<block_quote_content_lines, must<block_quote_token>>
 {
 };
 

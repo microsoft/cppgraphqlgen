@@ -49,7 +49,7 @@ mix of executable and schema definitions.
 There are `parseSchemaString` and `parseSchemaFile` functions which do the
 opposite, but unless you are building additional tooling on top of the
 `graphqlpeg` library, you will probably not need them. They have only been used
-by `schemagen` in this project.
+by `schemagen` and `clientgen` in this project.
 
 ## Encoding
 

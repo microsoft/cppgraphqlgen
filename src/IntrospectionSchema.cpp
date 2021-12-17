@@ -20,14 +20,14 @@ namespace graphql {
 namespace service {
 
 static const std::array<std::string_view, 8> s_namesTypeKind = {
-	"SCALAR"sv,
-	"OBJECT"sv,
-	"INTERFACE"sv,
-	"UNION"sv,
-	"ENUM"sv,
-	"INPUT_OBJECT"sv,
-	"LIST"sv,
-	"NON_NULL"sv
+	R"gql(SCALAR)gql"sv,
+	R"gql(OBJECT)gql"sv,
+	R"gql(INTERFACE)gql"sv,
+	R"gql(UNION)gql"sv,
+	R"gql(ENUM)gql"sv,
+	R"gql(INPUT_OBJECT)gql"sv,
+	R"gql(LIST)gql"sv,
+	R"gql(NON_NULL)gql"sv
 };
 
 template <>
@@ -35,14 +35,14 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid __TypeKind value" } };
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesTypeKind.cend())
 	{
-		throw service::schema_exception { { "not a valid __TypeKind value" } };
+		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
 	return static_cast<introspection::TypeKind>(itr - s_namesTypeKind.cbegin());
@@ -63,24 +63,24 @@ std::future<service::ResolverResult> ModifiedResult<introspection::TypeKind>::co
 }
 
 static const std::array<std::string_view, 18> s_namesDirectiveLocation = {
-	"QUERY"sv,
-	"MUTATION"sv,
-	"SUBSCRIPTION"sv,
-	"FIELD"sv,
-	"FRAGMENT_DEFINITION"sv,
-	"FRAGMENT_SPREAD"sv,
-	"INLINE_FRAGMENT"sv,
-	"SCHEMA"sv,
-	"SCALAR"sv,
-	"OBJECT"sv,
-	"FIELD_DEFINITION"sv,
-	"ARGUMENT_DEFINITION"sv,
-	"INTERFACE"sv,
-	"UNION"sv,
-	"ENUM"sv,
-	"ENUM_VALUE"sv,
-	"INPUT_OBJECT"sv,
-	"INPUT_FIELD_DEFINITION"sv
+	R"gql(QUERY)gql"sv,
+	R"gql(MUTATION)gql"sv,
+	R"gql(SUBSCRIPTION)gql"sv,
+	R"gql(FIELD)gql"sv,
+	R"gql(FRAGMENT_DEFINITION)gql"sv,
+	R"gql(FRAGMENT_SPREAD)gql"sv,
+	R"gql(INLINE_FRAGMENT)gql"sv,
+	R"gql(SCHEMA)gql"sv,
+	R"gql(SCALAR)gql"sv,
+	R"gql(OBJECT)gql"sv,
+	R"gql(FIELD_DEFINITION)gql"sv,
+	R"gql(ARGUMENT_DEFINITION)gql"sv,
+	R"gql(INTERFACE)gql"sv,
+	R"gql(UNION)gql"sv,
+	R"gql(ENUM)gql"sv,
+	R"gql(ENUM_VALUE)gql"sv,
+	R"gql(INPUT_OBJECT)gql"sv,
+	R"gql(INPUT_FIELD_DEFINITION)gql"sv
 };
 
 template <>
@@ -88,14 +88,14 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 {
 	if (!value.maybe_enum())
 	{
-		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
 	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<response::StringType>());
 
 	if (itr == s_namesDirectiveLocation.cend())
 	{
-		throw service::schema_exception { { "not a valid __DirectiveLocation value" } };
+		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
 	return static_cast<introspection::DirectiveLocation>(itr - s_namesDirectiveLocation.cbegin());
@@ -122,7 +122,7 @@ namespace object {
 
 Schema::Schema()
 	: service::Object({
-		"__Schema"
+		R"gql(__Schema)gql"sv,
 	}, {
 		{ R"gql(types)gql"sv, [this](service::ResolverParams&& params) { return resolveTypes(std::move(params)); } },
 		{ R"gql(queryType)gql"sv, [this](service::ResolverParams&& params) { return resolveQueryType(std::move(params)); } },
@@ -191,7 +191,7 @@ std::future<service::ResolverResult> Schema::resolve_typename(service::ResolverP
 
 Type::Type()
 	: service::Object({
-		"__Type"
+		R"gql(__Type)gql"sv,
 	}, {
 		{ R"gql(kind)gql"sv, [this](service::ResolverParams&& params) { return resolveKind(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -334,7 +334,7 @@ std::future<service::ResolverResult> Type::resolve_typename(service::ResolverPar
 
 Field::Field()
 	: service::Object({
-		"__Field"
+		R"gql(__Field)gql"sv,
 	}, {
 		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -414,7 +414,7 @@ std::future<service::ResolverResult> Field::resolve_typename(service::ResolverPa
 
 InputValue::InputValue()
 	: service::Object({
-		"__InputValue"
+		R"gql(__InputValue)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(type)gql"sv, [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } },
@@ -472,7 +472,7 @@ std::future<service::ResolverResult> InputValue::resolve_typename(service::Resol
 
 EnumValue::EnumValue()
 	: service::Object({
-		"__EnumValue"
+		R"gql(__EnumValue)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -530,7 +530,7 @@ std::future<service::ResolverResult> EnumValue::resolve_typename(service::Resolv
 
 Directive::Directive()
 	: service::Object({
-		"__Directive"
+		R"gql(__Directive)gql"sv,
 	}, {
 		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },

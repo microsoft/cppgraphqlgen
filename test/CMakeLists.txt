@@ -26,7 +26,9 @@ gtest_add_tests(TARGET today_tests)
 add_executable(client_tests ClientTests.cpp)
 target_link_libraries(client_tests PRIVATE
   unifiedgraphql
-  todayclient
+  query_client
+  mutate_client
+  subscribe_client
   GTest::GTest
   GTest::Main)
 add_bigobj_flag(client_tests)
@@ -55,9 +57,8 @@ target_link_libraries(pegtl_combined_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_combined_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_combined_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_combined_tests)
 
 add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
@@ -65,9 +66,8 @@ target_link_libraries(pegtl_executable_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_executable_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_executable_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_executable_tests)
 
 add_executable(pegtl_schema_tests PegtlSchemaTests.cpp)
@@ -75,9 +75,8 @@ target_link_libraries(pegtl_schema_tests PRIVATE
   taocpp::pegtl
   GTest::GTest
   GTest::Main)
-target_include_directories(pegtl_schema_tests PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include)
+target_include_directories(pegtl_schema_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET pegtl_schema_tests)
 
 add_executable(response_tests ResponseTests.cpp)
@@ -106,8 +105,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       graphqljson
       graphqlpeg
       graphqlresponse
-      graphqlclient
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../src)
+      graphqlclient)
 
   add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
 

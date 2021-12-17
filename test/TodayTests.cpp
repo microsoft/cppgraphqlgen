@@ -610,7 +610,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -670,7 +670,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -1203,7 +1203,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -1259,7 +1259,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&calledGet](std::future<response::Value>) {
 			calledGet = true;
 		});
@@ -1316,7 +1316,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -1382,7 +1382,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	auto key = _service->subscribe(service::SubscriptionParams { nullptr,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&calledGet](std::future<response::Value>) {
 			calledGet = true;
 		});
@@ -1430,7 +1430,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -1636,7 +1636,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	auto key = _service->subscribe(service::SubscriptionParams { state,
 									   std::move(query),
 									   "TestSubscription",
-									   std::move(std::move(variables)) },
+									   std::move(variables) },
 		[&result](std::future<response::Value> response) {
 			result = response.get();
 		});
@@ -1837,7 +1837,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 		service::SubscriptionParams { state,
 			std::move(query),
 			"TestSubscription",
-			std::move(std::move(variables)) },
+			std::move(variables) },
 		[&calledCallback](std::future<response::Value> response) {
 			calledCallback = true;
 		});
@@ -1887,7 +1887,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 		service::SubscriptionParams { state,
 			std::move(query),
 			"TestSubscription",
-			std::move(std::move(variables)) },
+			std::move(variables) },
 		[&calledCallback](std::future<response::Value> response) {
 			calledCallback = true;
 		});

@@ -695,4 +695,86 @@ const Value& Value::operator[](size_t index) const
 	return std::get<ListType>(_data).at(index);
 }
 
+void Writer::write(Value response) const
+{
+	switch (response.type())
+	{
+		case Type::Map:
+		{
+			auto members = response.release<MapType>();
+
+			_concept->start_object();
+
+			for (auto& entry : members)
+			{
+				_concept->add_member(entry.first);
+				write(std::move(entry.second));
+			}
+
+			_concept->end_object();
+			break;
+		}
+
+		case Type::List:
+		{
+			auto elements = response.release<ListType>();
+
+			_concept->start_array();
+
+			for (auto& entry : elements)
+			{
+				write(std::move(entry));
+			}
+
+			_concept->end_arrary();
+			break;
+		}
+
+		case Type::String:
+		case Type::EnumValue:
+		{
+			auto value = response.release<StringType>();
+
+			_concept->write_string(value);
+			break;
+		}
+
+		case Type::Null:
+		{
+			_concept->write_null();
+			break;
+		}
+
+		case Type::Boolean:
+		{
+			_concept->write_bool(response.get<BooleanType>());
+			break;
+		}
+
+		case Type::Int:
+		{
+			_concept->write_int(response.get<IntType>());
+			break;
+		}
+
+		case Type::Float:
+		{
+			_concept->write_float(response.get<FloatType>());
+			break;
+		}
+
+		case Type::Scalar:
+		{
+			write(response.release<ScalarType>());
+			break;
+		}
+
+		default:
+		{
+			_concept->write_null();
+			break;
+		}
+	}
+}
+
 } // namespace graphql::response

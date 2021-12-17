@@ -38,3 +38,48 @@ comment in that file for more information:
 # about your version of graphqljson.
 option(GRAPHQL_USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
 ```
+
+## response::Writer
+
+You can plug-in a type-erased streaming `response::Writer` to serialize a `response::Value`
+to some other output mechanism, without building a single string buffer for the entire
+document in memory. For example, you might use this to write directly to a buffered IPC pipe
+or network connection:
+```cpp
+class Writer
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void start_object() const = 0;
+		virtual void add_member(const std::string& key) const = 0;
+		virtual void end_object() const = 0;
+
+		virtual void start_array() const = 0;
+		virtual void end_arrary() const = 0;
+
+		virtual void write_null() const = 0;
+		virtual void write_string(const std::string& value) const = 0;
+		virtual void write_bool(bool value) const = 0;
+		virtual void write_int(int value) const = 0;
+		virtual void write_float(double value) const = 0;
+	};
+...
+
+public:
+	template <class T>
+	Writer(std::unique_ptr<T> writer)
+		: _concept { std::static_pointer_cast<Concept>(
+			std::make_shared<Model<T>>(std::move(writer))) }
+	{
+	}
+
+	GRAPHQLRESPONSE_EXPORT void write(Value value) const;
+};
+```
+
+Internally, this is what `graphqljson` uses to implement `response::toJSON` with RapidJSON.
+It wraps a `rapidjson::Writer` in `response::Writer` and then writes into a
+`rapidjson::StringBuffer` through that.
