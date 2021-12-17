@@ -3,8 +3,8 @@
 
 #include <winver.h>
 
-#define SCHEMAGEN_RC_VERSION     @SCHEMAGEN_RC_VERSION@
-#define SCHEMAGEN_RC_VERSION_STR "@SCHEMAGEN_RC_VERSION_STR@"
+#define GRAPHQL_RC_VERSION     @GRAPHQL_RC_VERSION@
+#define GRAPHQL_RC_VERSION_STR "@GRAPHQL_RC_VERSION_STR@"
 
 #ifndef DEBUG
 #define VER_DEBUG   0
@@ -13,8 +13,8 @@
 #endif
 
 VS_VERSION_INFO	VERSIONINFO
-FILEVERSION     SCHEMAGEN_RC_VERSION
-PRODUCTVERSION  SCHEMAGEN_RC_VERSION
+FILEVERSION     GRAPHQL_RC_VERSION
+PRODUCTVERSION  GRAPHQL_RC_VERSION
 FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 FILEFLAGS       VER_DEBUG
 FILEOS          VOS__WINDOWS32
@@ -27,12 +27,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",        "Microsoft Corporation"
             VALUE "FileDescription",    "Code generator for https://github.com/microsoft/cppgraphqlgen"
-            VALUE "FileVersion",        SCHEMAGEN_RC_VERSION_STR
-            VALUE "InternalName",       "schemagen"
+            VALUE "FileVersion",        GRAPHQL_RC_VERSION_STR
+            VALUE "InternalName",       "@GRAPHQL_RC_FILENAME@"
             VALUE "LegalCopyright",     "Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License."
-            VALUE "OriginalFilename",   "schemagen.exe"
+            VALUE "OriginalFilename",   "@GRAPHQL_RC_FILENAME@.exe"
             VALUE "ProductName",        "CppGraphQLGen"
-            VALUE "ProductVersion",     SCHEMAGEN_RC_VERSION_STR
+            VALUE "ProductVersion",     GRAPHQL_RC_VERSION_STR
         END
     END
 

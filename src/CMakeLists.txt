@@ -26,7 +26,7 @@ if(GRAPHQL_UPDATE_VERSION)
 
     set(GRAPHQL_RC_FILENAME "${target}")
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.rc.in 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Library.rc.in 
       ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
       @ONLY)
 
@@ -176,10 +176,9 @@ if(GRAPHQL_BUILD_CLIENTGEN)
   if(GRAPHQL_UPDATE_VERSION)
     add_dependencies(clientgen update_version_h)
   
-    set(CLIENTGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
-    set(CLIENTGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+    set(GRAPHQL_RC_FILENAME "clientgen")
   
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ClientGen.rc.in 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in 
       ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc
       @ONLY)
   
@@ -215,10 +214,9 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   if(GRAPHQL_UPDATE_VERSION)
     add_dependencies(schemagen update_version_h)
 
-    set(SCHEMAGEN_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
-    set(SCHEMAGEN_RC_VERSION_STR "${PROJECT_VERSION}")
+    set(GRAPHQL_RC_FILENAME "schemagen")
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/SchemaGen.rc.in 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in 
       ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
       @ONLY)
 
