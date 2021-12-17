@@ -1,0 +1,132 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+"GraphQL validation [sample](https://spec.graphql.org/October2021/#example-19f2a)"
+type Query {
+  dog: Dog
+}
+
+enum DogCommand { SIT, DOWN, HEEL }
+
+type Dog implements Pet {
+  name: String!
+  nickname: String
+  barkVolume: Int
+  doesKnowCommand(dogCommand: DogCommand!): Boolean!
+  isHousetrained(atOtherHomes: Boolean): Boolean!
+  owner: Human
+}
+
+interface Sentient {
+  name: String!
+}
+
+interface Pet {
+  name: String!
+}
+
+type Alien implements Sentient {
+  name: String!
+  homePlanet: String
+}
+
+type Human implements Sentient {
+  name: String!
+  pets: [Pet!]!
+}
+
+enum CatCommand { JUMP }
+
+type Cat implements Pet {
+  name: String!
+  nickname: String
+  doesKnowCommand(catCommand: CatCommand!): Boolean!
+  meowVolume: Int
+}
+
+union CatOrDog = Cat | Dog
+union DogOrHuman = Dog | Human
+union HumanOrAlien = Human | Alien
+
+"Support for [Counter Example 105](https://spec.graphql.org/October2021/#example-77c2e)"
+type Mutation {
+  mutateDog: MutateDogResult
+}
+
+"Support for [Counter Example 105](https://spec.graphql.org/October2021/#example-77c2e)"
+type MutateDogResult {
+  id: ID!
+}
+
+"Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
+type Subscription {
+  "Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
+  newMessage: Message!
+  "Support for [Counter Example 110](https://spec.graphql.org/October2021/#example-3997d) - [Counter Example 111](https://spec.graphql.org/October2021/#example-18466)"
+  disallowedSecondRootField: Boolean!
+}
+
+"Support for [Example 108](https://spec.graphql.org/October2021/#example-5bbc3) - [Counter Example 112](https://spec.graphql.org/October2021/#example-a8fa1)"
+type Message {
+  body: String
+  sender: ID!
+}
+
+# https://spec.graphql.org/October2021/#example-9bada
+extend type Query {
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
+  human: Human
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
+  pet: Pet
+  "Support for [Counter Example 127](https://spec.graphql.org/October2021/#example-77c2e)"
+  catOrDog: CatOrDog
+}
+
+"Support for [Example 131](https://spec.graphql.org/October2021/#example-73706)"
+type Arguments {
+  "Support for [Example 132](https://spec.graphql.org/October2021/#example-bda7e)"
+  multipleReqs(x: Int!, y: Int!): Int!
+  booleanArgField(booleanArg: Boolean): Boolean
+  floatArgField(floatArg: Float): Float
+  intArgField(intArg: Int): Int
+  nonNullBooleanArgField(nonNullBooleanArg: Boolean!): Boolean!
+  nonNullBooleanListField(nonNullBooleanListArg: [Boolean!]): [Boolean!]
+  booleanListArgField(booleanListArg: [Boolean]!): [Boolean]
+  optionalNonNullBooleanArgField(optionalBooleanArg: Boolean! = false): Boolean!
+}
+
+# https://spec.graphql.org/October2021/#example-73706
+extend type Query {
+  "Support for [Example 131](https://spec.graphql.org/October2021/#example-73706)"
+  arguments: Arguments
+}
+
+# https://spec.graphql.org/October2021/#example-bc12a
+extend type Query {
+  "Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+  resource: Resource
+}
+
+"Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+interface Node {
+  id: ID!
+}
+
+"Support for [Example 156](https://spec.graphql.org/October2021/#example-bc12a)"
+interface Resource implements Node {
+  id: ID!
+  url: String
+}
+
+"[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
+input ComplexInput {
+  name: String
+  owner: String
+}
+
+extend type Query {
+  "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
+  findDog(complex: ComplexInput): Dog
+  "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
+  booleanList(booleanListArg: [Boolean!]): Boolean
+}

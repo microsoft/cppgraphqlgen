@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.15)
 
 if(GRAPHQL_UPDATE_VERSION)
   # internal/Version.h
@@ -61,10 +61,57 @@ function(add_bigobj_flag target)
   endif()
 endfunction()
 
+add_library(graphqlcoro INTERFACE)
+target_compile_features(graphqlcoro INTERFACE cxx_std_20)
+
+function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
+  set(TEST_FILE "test_${OUT_RESULT}.cpp")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)  
+
+  try_compile(TEST_RESULT
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+    CXX_STANDARD 20)
+
+  if(NOT TEST_RESULT)
+      # Retry with each of the optional flags.
+      foreach(OPTIONAL_FLAG IN LISTS OPTIONAL_FLAGS)
+        try_compile(TEST_RESULT
+          ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
+          CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${OPTIONAL_FLAG}"
+          CXX_STANDARD 20)
+  
+        if(TEST_RESULT)
+          # Looks like the optional flag was required, go ahead and add it to the compile options.
+          target_compile_options(graphqlcoro INTERFACE ${OPTIONAL_FLAG})
+          break()
+        endif()
+      endforeach(OPTIONAL_FLAG)
+  endif()
+
+  set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
+endfunction()
+
+check_coroutine_impl("coroutine" "std" "-fcoroutines" STD_COROUTINE)
+if(STD_COROUTINE)
+  message(STATUS "Using std coroutine")
+else()
+  check_coroutine_impl("experimental/coroutine" "std::experimental" "" STD_EXPERIMENTAL_COROUTINE)
+  if(STD_EXPERIMENTAL_COROUTINE)
+    message(STATUS "Using std::experimental coroutine")
+    target_compile_definitions(graphqlcoro INTERFACE USE_STD_EXPERIMENTAL_COROUTINE)
+  else()
+    message(FATAL_ERROR "Missing coroutine support")
+  endif()
+endif()
+
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
-target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_link_libraries(graphqlpeg PUBLIC
+  graphqlcoro
+  taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
@@ -91,6 +138,7 @@ add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+target_link_libraries(graphqlresponse PUBLIC graphqlcoro)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -103,7 +151,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 
   add_version_rc(graphqlresponse)
 endif()
-
 
 # Common schemagen and clientgen dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
@@ -198,18 +245,12 @@ endif()
 
 # Common schemagen and clientgen filesystem and Boost dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
-  set(BOOST_COMPONENTS program_options)
-  set(BOOST_LIBRARIES Boost::program_options)
-
   # Try compiling a test program with std::filesystem or one of its alternatives.
-  function(check_filesystem_impl FILESYSTEM_HEADER FILESYSTEM_NAMESPACE OPTIONAL_LIBS OUT_RESULT)
-    set(TEST_FILE "test_${OUT_RESULT}.cpp")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp.in ${TEST_FILE} @ONLY)
-
+  function(check_filesystem_impl OPTIONAL_LIBS)
     try_compile(TEST_RESULT
       ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-      CXX_STANDARD 17)
+      ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp
+      CXX_STANDARD 20)
 
     if(NOT TEST_RESULT)
       # Retry with each of the optional libraries.
@@ -218,7 +259,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
           ${CMAKE_CURRENT_BINARY_DIR}
           ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
           LINK_LIBRARIES ${OPTIONAL_LIB}
-          CXX_STANDARD 17)
+          CXX_STANDARD 20)
 
         if(TEST_RESULT)
           # Looks like the optional library was required, go ahead and add it to the link options.
@@ -232,66 +273,24 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
         endif()
       endforeach(OPTIONAL_LIB)
     endif()
-
-    set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
   endfunction(check_filesystem_impl)
 
-  # Try compiling a minimal program with each header/namespace, in order of preference:
-  #   C++17: #include <filesystem> // std::filesystem
-  #   Experimental C++17: #include <experimental/filesystem> // std::experimental::filesystem
-  #   Boost.Filesystem: #include <boost/filesystem.hpp> // boost::filesystem
-  check_filesystem_impl("filesystem" "std::filesystem" "stdc++fs;c++fs" STD_FILESYTEM)
-  if(STD_FILESYTEM)
-    if(GRAPHQL_BUILD_SCHEMAGEN)
-      target_compile_definitions(schemagen PRIVATE USE_STD_FILESYSTEM)
-    endif()
-    if(GRAPHQL_BUILD_CLIENTGEN)
-      target_compile_definitions(clientgen PRIVATE USE_STD_FILESYSTEM)
-    endif()
-  else()
-    check_filesystem_impl("experimental/filesystem" "std::experimental::filesystem" "stdc++fs;c++fs" STD_EXPERIMENTAL_FILESYTEM)
-    if(STD_EXPERIMENTAL_FILESYTEM)
-      if(GRAPHQL_BUILD_SCHEMAGEN)
-        target_compile_definitions(schemagen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
-      endif()
-      if(GRAPHQL_BUILD_CLIENTGEN)
-        target_compile_definitions(clientgen PRIVATE USE_STD_EXPERIMENTAL_FILESYSTEM)
-      endif()
-    else()
-      set(BOOST_COMPONENTS ${BOOST_COMPONENTS} filesystem)
-      set(BOOST_LIBRARIES ${BOOST_LIBRARIES} Boost::filesystem)
-      if(GRAPHQL_BUILD_SCHEMAGEN)
-        target_compile_definitions(schemagen PRIVATE USE_BOOST_FILESYSTEM)
-      endif()
-      if(GRAPHQL_BUILD_CLIENTGEN)
-        target_compile_definitions(clientgen PRIVATE USE_BOOST_FILESYSTEM)
-      endif()
-    endif()
-  endif()
+  # Try compiling a minimal program without any extra libraries, then with each optional library until it succeeded:
+  #   stdc++fs
+  #   c++fs
+  check_filesystem_impl("stdc++fs;c++fs" STD_FILESYTEM)
 
-  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  find_package(Boost REQUIRED COMPONENTS program_options)
   if(GRAPHQL_BUILD_SCHEMAGEN)
-    target_link_libraries(schemagen PRIVATE ${BOOST_LIBRARIES})
+    target_link_libraries(schemagen PRIVATE Boost::program_options)
   endif()
   if(GRAPHQL_BUILD_CLIENTGEN)
-    target_link_libraries(clientgen PRIVATE ${BOOST_LIBRARIES})
+    target_link_libraries(clientgen PRIVATE Boost::program_options)
   endif()
 endif()
 
 # introspection
-if(GRAPHQL_UPDATE_SAMPLES)
-  add_custom_command(
-    OUTPUT updated_introspection
-    COMMAND schemagen --introspection
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.cpp ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different IntrospectionSchema.h ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection
-    COMMAND ${CMAKE_COMMAND} -E touch updated_introspection
-    DEPENDS schemagen
-    COMMENT "Updating IntrospectionSchema files")
-
-  add_custom_target(update_introspection ALL
-    DEPENDS updated_introspection)
-endif()
+add_subdirectory(introspection)
 
 # graphqlservice
 add_library(graphqlservice
@@ -300,14 +299,14 @@ add_library(graphqlservice
   Validation.cpp)
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
-    graphqlpeg
-    graphqlresponse
-    Threads::Threads)
+  graphqlpeg
+  graphqlresponse
+  Threads::Threads)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   # Even though this target doesn't build IntrospectionSchema.cpp, it still
   # depends on IntrospectionSchema.h for some enum definitions.
-  add_dependencies(graphqlservice update_introspection)
+  add_dependencies(graphqlservice copy_introspection_schema_headers)
 endif()
 
 if(GRAPHQL_UPDATE_VERSION)
@@ -323,9 +322,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 # graphqlintrospection
-add_library(graphqlintrospection
-  Introspection.cpp
-  IntrospectionSchema.cpp)
+file(GLOB INTROSPECTION_SCHEMA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/introspection/*.cpp)
+add_library(graphqlintrospection Introspection.cpp ${INTROSPECTION_SCHEMA_FILES})
 add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
 target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
 
@@ -349,8 +347,8 @@ endif()
 add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
 target_link_libraries(graphqlclient PUBLIC
-    graphqlpeg
-    graphqlresponse)
+  graphqlpeg
+  graphqlresponse)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlclient)
@@ -398,6 +396,7 @@ install(TARGETS
     graphqlclient
     graphqlintrospection
     graphqlpeg
+    graphqlcoro
     graphqlresponse
     graphqlservice
   EXPORT cppgraphqlgen-targets
@@ -414,20 +413,16 @@ install(FILES
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Awaitable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Introspection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SyntaxTree.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/Introspection.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/introspection/IntrospectionSchema.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)

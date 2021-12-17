@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 //
-// This grammar is based on the June 2018 Edition of the GraphQL spec:
-// http://spec.graphql.org/June2018/
+// This grammar is based on the October 2021 Edition of the GraphQL spec:
+// https://spec.graphql.org/October2021/
 
 #pragma once
 
@@ -59,22 +59,22 @@ void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 	}
 }
 
-// http://spec.graphql.org/June2018/#sec-Source-Text
+// https://spec.graphql.org/October2021/#sec-Source-Text
 struct source_character : sor<one<0x0009, 0x000A, 0x000D>, utf8::range<0x0020, 0xFFFF>>
 {
 };
 
-// http://spec.graphql.org/June2018/#sec-Comments
+// https://spec.graphql.org/October2021/#sec-Comments
 struct comment : seq<one<'#'>, until<eolf>>
 {
 };
 
-// http://spec.graphql.org/June2018/#sec-Source-Text.Ignored-Tokens
+// https://spec.graphql.org/October2021/#sec-Source-Text.Ignored-Tokens
 struct ignored : sor<space, one<','>, comment>
 {
 };
 
-// http://spec.graphql.org/June2018/#sec-Names
+// https://spec.graphql.org/October2021/#sec-Names
 struct name : identifier
 {
 };
@@ -83,12 +83,12 @@ struct variable_name_content : name
 {
 };
 
-// http://spec.graphql.org/June2018/#Variable
+// https://spec.graphql.org/October2021/#Variable
 struct variable_name : if_must<one<'$'>, variable_name_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#sec-Null-Value
+// https://spec.graphql.org/October2021/#sec-Null-Value
 struct null_keyword : TAO_PEGTL_KEYWORD("null")
 {
 };
@@ -109,12 +109,12 @@ struct escaped_unicode_content : list<escaped_unicode_codepoint, seq<backslash_t
 {
 };
 
-// http://spec.graphql.org/June2018/#EscapedUnicode
+// https://spec.graphql.org/October2021/#EscapedUnicode
 struct escaped_unicode : if_must<one<'u'>, escaped_unicode_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#EscapedCharacter
+// https://spec.graphql.org/October2021/#EscapedCharacter
 struct escaped_char : one<'"', '\\', '/', 'b', 'f', 'n', 'r', 't'>
 {
 };
@@ -137,7 +137,7 @@ struct string_quote_content
 {
 };
 
-// http://spec.graphql.org/June2018/#StringCharacter
+// https://spec.graphql.org/October2021/#StringCharacter
 struct string_quote : if_must<quote_token, string_quote_content>
 {
 };
@@ -151,26 +151,42 @@ struct block_escape_sequence : seq<backslash_token, block_quote_token>
 };
 
 struct block_quote_character
-	: plus<not_at<block_quote_token>, not_at<block_escape_sequence>, source_character>
+	: plus<not_at<ascii::eol>, not_at<block_quote_token>, not_at<block_escape_sequence>,
+		  source_character>
 {
 };
 
-struct block_quote_content
-	: seq<star<sor<block_escape_sequence, block_quote_character>>, must<block_quote_token>>
+struct block_quote_empty_line : star<not_at<eol>, space>
 {
 };
 
-// http://spec.graphql.org/June2018/#BlockStringCharacter
+struct block_quote_line_content : plus<sor<block_escape_sequence, block_quote_character>>
+{
+};
+
+struct block_quote_line : seq<block_quote_empty_line, block_quote_line_content>
+{
+};
+
+struct block_quote_content_lines : opt<list<sor<block_quote_line, block_quote_empty_line>, eol>>
+{
+};
+
+struct block_quote_content : seq<block_quote_content_lines, must<block_quote_token>>
+{
+};
+
+// https://spec.graphql.org/October2021/#BlockStringCharacter
 struct block_quote : if_must<block_quote_token, block_quote_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#StringValue
+// https://spec.graphql.org/October2021/#StringValue
 struct string_value : sor<block_quote, string_quote>
 {
 };
 
-// http://spec.graphql.org/June2018/#NonZeroDigit
+// https://spec.graphql.org/October2021/#NonZeroDigit
 struct nonzero_digit : range<'1', '9'>
 {
 };
@@ -179,17 +195,17 @@ struct zero_digit : one<'0'>
 {
 };
 
-// http://spec.graphql.org/June2018/#NegativeSign
+// https://spec.graphql.org/October2021/#NegativeSign
 struct negative_sign : one<'-'>
 {
 };
 
-// http://spec.graphql.org/June2018/#IntegerPart
+// https://spec.graphql.org/October2021/#IntegerPart
 struct integer_part : seq<opt<negative_sign>, sor<zero_digit, seq<nonzero_digit, star<digit>>>>
 {
 };
 
-// http://spec.graphql.org/June2018/#IntValue
+// https://spec.graphql.org/October2021/#IntValue
 struct integer_value : integer_part
 {
 };
@@ -198,17 +214,17 @@ struct fractional_part_content : plus<digit>
 {
 };
 
-// http://spec.graphql.org/June2018/#FractionalPart
+// https://spec.graphql.org/October2021/#FractionalPart
 struct fractional_part : if_must<one<'.'>, fractional_part_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#ExponentIndicator
+// https://spec.graphql.org/October2021/#ExponentIndicator
 struct exponent_indicator : one<'e', 'E'>
 {
 };
 
-// http://spec.graphql.org/June2018/#Sign
+// https://spec.graphql.org/October2021/#Sign
 struct sign : one<'+', '-'>
 {
 };
@@ -217,12 +233,12 @@ struct exponent_part_content : seq<opt<sign>, plus<digit>>
 {
 };
 
-// http://spec.graphql.org/June2018/#ExponentPart
+// https://spec.graphql.org/October2021/#ExponentPart
 struct exponent_part : if_must<exponent_indicator, exponent_part_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#FloatValue
+// https://spec.graphql.org/October2021/#FloatValue
 struct float_value
 	: seq<integer_part, sor<fractional_part, exponent_part, seq<fractional_part, exponent_part>>>
 {
@@ -236,17 +252,17 @@ struct false_keyword : TAO_PEGTL_KEYWORD("false")
 {
 };
 
-// http://spec.graphql.org/June2018/#BooleanValue
+// https://spec.graphql.org/October2021/#BooleanValue
 struct bool_value : sor<true_keyword, false_keyword>
 {
 };
 
-// http://spec.graphql.org/June2018/#EnumValue
+// https://spec.graphql.org/October2021/#EnumValue
 struct enum_value : seq<not_at<true_keyword, false_keyword, null_keyword>, name>
 {
 };
 
-// http://spec.graphql.org/June2018/#OperationType
+// https://spec.graphql.org/October2021/#OperationType
 struct operation_type
 	: sor<TAO_PEGTL_KEYWORD("query"), TAO_PEGTL_KEYWORD("mutation"),
 		  TAO_PEGTL_KEYWORD("subscription")>
@@ -257,7 +273,7 @@ struct alias_name : name
 {
 };
 
-// http://spec.graphql.org/June2018/#Alias
+// https://spec.graphql.org/October2021/#Alias
 struct alias : seq<alias_name, star<ignored>, one<':'>>
 {
 };
@@ -272,7 +288,7 @@ struct argument_content : seq<star<ignored>, one<':'>, star<ignored>, input_valu
 {
 };
 
-// http://spec.graphql.org/June2018/#Argument
+// https://spec.graphql.org/October2021/#Argument
 struct argument : if_must<argument_name, argument_content>
 {
 };
@@ -282,7 +298,7 @@ struct arguments_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Arguments
+// https://spec.graphql.org/October2021/#Arguments
 struct arguments : if_must<one<'('>, arguments_content>
 {
 };
@@ -294,7 +310,7 @@ struct list_value_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ListValue
+// https://spec.graphql.org/October2021/#ListValue
 struct list_value : if_must<one<'['>, list_value_content>
 {
 };
@@ -307,7 +323,7 @@ struct object_field_content : seq<star<ignored>, one<':'>, star<ignored>, input_
 {
 };
 
-// http://spec.graphql.org/June2018/#ObjectField
+// https://spec.graphql.org/October2021/#ObjectField
 struct object_field : if_must<object_field_name, object_field_content>
 {
 };
@@ -317,7 +333,7 @@ struct object_value_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ObjectValue
+// https://spec.graphql.org/October2021/#ObjectValue
 struct object_value : if_must<one<'{'>, object_value_content>
 {
 };
@@ -332,7 +348,7 @@ struct input_value_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Value
+// https://spec.graphql.org/October2021/#Value
 struct input_value : must<input_value_content>
 {
 };
@@ -345,12 +361,12 @@ struct default_value_content : seq<star<ignored>, input_value>
 {
 };
 
-// http://spec.graphql.org/June2018/#DefaultValue
+// https://spec.graphql.org/October2021/#DefaultValue
 struct default_value : if_must<one<'='>, default_value_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#NamedType
+// https://spec.graphql.org/October2021/#NamedType
 struct named_type : name
 {
 };
@@ -363,12 +379,12 @@ struct list_type_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ListType
+// https://spec.graphql.org/October2021/#ListType
 struct list_type : if_must<one<'['>, list_type_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#NonNullType
+// https://spec.graphql.org/October2021/#NonNullType
 struct nonnull_type : seq<sor<list_type, named_type>, star<ignored>, one<'!'>>
 {
 };
@@ -377,7 +393,7 @@ struct type_name_content : sor<nonnull_type, list_type, named_type>
 {
 };
 
-// http://spec.graphql.org/June2018/#Type
+// https://spec.graphql.org/October2021/#Type
 struct type_name : must<type_name_content>
 {
 };
@@ -387,7 +403,7 @@ struct variable_content
 {
 };
 
-// http://spec.graphql.org/June2018/#VariableDefinition
+// https://spec.graphql.org/October2021/#VariableDefinition
 struct variable : if_must<variable_name, variable_content>
 {
 };
@@ -397,7 +413,7 @@ struct variable_definitions_content
 {
 };
 
-// http://spec.graphql.org/June2018/#VariableDefinitions
+// https://spec.graphql.org/October2021/#VariableDefinitions
 struct variable_definitions : if_must<one<'('>, variable_definitions_content>
 {
 };
@@ -410,12 +426,12 @@ struct directive_content : seq<directive_name, opt<star<ignored>, arguments>>
 {
 };
 
-// http://spec.graphql.org/June2018/#Directive
+// https://spec.graphql.org/October2021/#Directive
 struct directive : if_must<one<'@'>, directive_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#Directives
+// https://spec.graphql.org/October2021/#Directives
 struct directives : list<directive, plus<ignored>>
 {
 };
@@ -448,7 +464,7 @@ struct field_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Field
+// https://spec.graphql.org/October2021/#Field
 struct field : if_must<field_start, field_content>
 {
 };
@@ -457,7 +473,7 @@ struct on_keyword : TAO_PEGTL_KEYWORD("on")
 {
 };
 
-// http://spec.graphql.org/June2018/#FragmentName
+// https://spec.graphql.org/October2021/#FragmentName
 struct fragment_name : seq<not_at<on_keyword>, name>
 {
 };
@@ -466,7 +482,7 @@ struct fragment_token : ellipsis
 {
 };
 
-// http://spec.graphql.org/June2018/#FragmentSpread
+// https://spec.graphql.org/October2021/#FragmentSpread
 struct fragment_spread : seq<star<ignored>, fragment_name, opt<star<ignored>, directives>>
 {
 };
@@ -475,12 +491,12 @@ struct type_condition_content : seq<plus<ignored>, named_type>
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeCondition
+// https://spec.graphql.org/October2021/#TypeCondition
 struct type_condition : if_must<on_keyword, type_condition_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#InlineFragment
+// https://spec.graphql.org/October2021/#InlineFragment
 struct inline_fragment
 	: seq<opt<star<ignored>, type_condition>, opt<star<ignored>, directives>, star<ignored>,
 		  selection_set>
@@ -496,7 +512,7 @@ struct fragement_spread_or_inline_fragment
 {
 };
 
-// http://spec.graphql.org/June2018/#Selection
+// https://spec.graphql.org/October2021/#Selection
 struct selection : sor<field, fragement_spread_or_inline_fragment>
 {
 };
@@ -506,7 +522,7 @@ struct selection_set_content
 {
 };
 
-// http://spec.graphql.org/June2018/#SelectionSet
+// https://spec.graphql.org/October2021/#SelectionSet
 struct selection_set : if_must<one<'{'>, selection_set_content>
 {
 };
@@ -521,7 +537,7 @@ struct operation_definition_operation_type_content
 {
 };
 
-// http://spec.graphql.org/June2018/#OperationDefinition
+// https://spec.graphql.org/October2021/#OperationDefinition
 struct operation_definition
 	: sor<if_must<operation_type, operation_definition_operation_type_content>, selection_set>
 {
@@ -533,13 +549,18 @@ struct fragment_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#FragmentDefinition
+// https://spec.graphql.org/October2021/#FragmentDefinition
 struct fragment_definition : if_must<TAO_PEGTL_KEYWORD("fragment"), fragment_definition_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#ExecutableDefinition
+// https://spec.graphql.org/October2021/#ExecutableDefinition
 struct executable_definition : sor<fragment_definition, operation_definition>
+{
+};
+
+// https://spec.graphql.org/October2021/#Description
+struct description : string_value
 {
 };
 
@@ -551,8 +572,12 @@ struct root_operation_definition_content : seq<star<ignored>, one<':'>, star<ign
 {
 };
 
-// http://spec.graphql.org/June2018/#RootOperationTypeDefinition
+// https://spec.graphql.org/October2021/#RootOperationTypeDefinition
 struct root_operation_definition : if_must<operation_type, root_operation_definition_content>
+{
+};
+
+struct schema_definition_start : seq<opt<description, star<ignored>>, schema_keyword>
 {
 };
 
@@ -562,17 +587,12 @@ struct schema_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#SchemaDefinition
-struct schema_definition : if_must<schema_keyword, schema_definition_content>
+// https://spec.graphql.org/October2021/#SchemaDefinition
+struct schema_definition : if_must<schema_definition_start, schema_definition_content>
 {
 };
 
 struct scalar_keyword : TAO_PEGTL_KEYWORD("scalar")
-{
-};
-
-// http://spec.graphql.org/June2018/#Description
-struct description : string_value
 {
 };
 
@@ -589,7 +609,7 @@ struct scalar_type_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ScalarTypeDefinition
+// https://spec.graphql.org/October2021/#ScalarTypeDefinition
 struct scalar_type_definition
 	: if_must<scalar_type_definition_start, scalar_type_definition_content>
 {
@@ -610,7 +630,7 @@ struct arguments_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ArgumentsDefinition
+// https://spec.graphql.org/October2021/#ArgumentsDefinition
 struct arguments_definition : if_must<arguments_definition_start, arguments_definition_content>
 {
 };
@@ -625,7 +645,7 @@ struct field_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#FieldDefinition
+// https://spec.graphql.org/October2021/#FieldDefinition
 struct field_definition : if_must<field_definition_start, field_definition_content>
 {
 };
@@ -635,7 +655,7 @@ struct fields_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#FieldsDefinition
+// https://spec.graphql.org/October2021/#FieldsDefinition
 struct fields_definition : if_must<one<'{'>, fields_definition_content>
 {
 };
@@ -650,7 +670,7 @@ struct implements_interfaces_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ImplementsInterfaces
+// https://spec.graphql.org/October2021/#ImplementsInterfaces
 struct implements_interfaces
 	: if_must<TAO_PEGTL_KEYWORD("implements"), implements_interfaces_content>
 {
@@ -689,7 +709,7 @@ struct object_type_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ObjectTypeDefinition
+// https://spec.graphql.org/October2021/#ObjectTypeDefinition
 struct object_type_definition
 	: if_must<object_type_definition_start, object_type_definition_content>
 {
@@ -711,7 +731,11 @@ struct interface_type_definition_interface_name : seq<plus<ignored>, interface_n
 {
 };
 
-struct interface_type_definition_directives : opt<star<ignored>, directives>
+struct interface_type_definition_implements_interfaces : opt<plus<ignored>, implements_interfaces>
+{
+};
+
+struct interface_type_definition_directives : seq<star<ignored>, directives>
 {
 };
 
@@ -721,13 +745,17 @@ struct interface_type_definition_fields_definition : seq<star<ignored>, fields_d
 
 struct interface_type_definition_content
 	: seq<interface_type_definition_interface_name,
-		  sor<seq<interface_type_definition_directives,
+		  sor<seq<interface_type_definition_implements_interfaces,
+				  opt<interface_type_definition_directives>,
 				  interface_type_definition_fields_definition>,
-			  interface_type_definition_directives>>
+			  seq<interface_type_definition_implements_interfaces,
+				  interface_type_definition_directives,
+				  interface_type_definition_fields_definition>,
+			  interface_type_definition_implements_interfaces>>
 {
 };
 
-// http://spec.graphql.org/June2018/#InterfaceTypeDefinition
+// https://spec.graphql.org/October2021/#InterfaceTypeDefinition
 struct interface_type_definition
 	: if_must<interface_type_definition_start, interface_type_definition_content>
 {
@@ -755,7 +783,7 @@ struct union_member_types_content
 {
 };
 
-// http://spec.graphql.org/June2018/#UnionMemberTypes
+// https://spec.graphql.org/October2021/#UnionMemberTypes
 struct union_member_types : if_must<union_member_types_start, union_member_types_content>
 {
 };
@@ -775,7 +803,7 @@ struct union_type_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#UnionTypeDefinition
+// https://spec.graphql.org/October2021/#UnionTypeDefinition
 struct union_type_definition : if_must<union_type_definition_start, union_type_definition_content>
 {
 };
@@ -796,7 +824,7 @@ struct enum_value_definition_content : opt<star<ignored>, directives>
 {
 };
 
-// http://spec.graphql.org/June2018/#EnumValueDefinition
+// https://spec.graphql.org/October2021/#EnumValueDefinition
 struct enum_value_definition : if_must<enum_value_definition_start, enum_value_definition_content>
 {
 };
@@ -810,7 +838,7 @@ struct enum_values_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#EnumValuesDefinition
+// https://spec.graphql.org/October2021/#EnumValuesDefinition
 struct enum_values_definition
 	: if_must<enum_values_definition_start, enum_values_definition_content>
 {
@@ -839,7 +867,7 @@ struct enum_type_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#EnumTypeDefinition
+// https://spec.graphql.org/October2021/#EnumTypeDefinition
 struct enum_type_definition : if_must<enum_type_definition_start, enum_type_definition_content>
 {
 };
@@ -871,7 +899,7 @@ struct input_field_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#InputValueDefinition
+// https://spec.graphql.org/October2021/#InputValueDefinition
 struct input_field_definition
 	: if_must<input_field_definition_start, input_field_definition_content>
 {
@@ -886,7 +914,7 @@ struct input_fields_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#InputFieldsDefinition
+// https://spec.graphql.org/October2021/#InputFieldsDefinition
 struct input_fields_definition
 	: if_must<input_fields_definition_start, input_fields_definition_content>
 {
@@ -916,20 +944,20 @@ struct input_object_type_definition_content
 {
 };
 
-// http://spec.graphql.org/June2018/#InputObjectTypeDefinition
+// https://spec.graphql.org/October2021/#InputObjectTypeDefinition
 struct input_object_type_definition
 	: if_must<input_object_type_definition_start, input_object_type_definition_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeDefinition
+// https://spec.graphql.org/October2021/#TypeDefinition
 struct type_definition
 	: sor<scalar_type_definition, object_type_definition, interface_type_definition,
 		  union_type_definition, enum_type_definition, input_object_type_definition>
 {
 };
 
-// http://spec.graphql.org/June2018/#ExecutableDirectiveLocation
+// https://spec.graphql.org/October2021/#ExecutableDirectiveLocation
 struct executable_directive_location
 	: sor<TAO_PEGTL_KEYWORD("QUERY"), TAO_PEGTL_KEYWORD("MUTATION"),
 		  TAO_PEGTL_KEYWORD("SUBSCRIPTION"), TAO_PEGTL_KEYWORD("FIELD"),
@@ -938,7 +966,7 @@ struct executable_directive_location
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeSystemDirectiveLocation
+// https://spec.graphql.org/October2021/#TypeSystemDirectiveLocation
 struct type_system_directive_location
 	: sor<TAO_PEGTL_KEYWORD("SCHEMA"), TAO_PEGTL_KEYWORD("SCALAR"), TAO_PEGTL_KEYWORD("OBJECT"),
 		  TAO_PEGTL_KEYWORD("FIELD_DEFINITION"), TAO_PEGTL_KEYWORD("ARGUMENT_DEFINITION"),
@@ -948,12 +976,12 @@ struct type_system_directive_location
 {
 };
 
-// http://spec.graphql.org/June2018/#DirectiveLocation
+// https://spec.graphql.org/October2021/#DirectiveLocation
 struct directive_location : sor<executable_directive_location, type_system_directive_location>
 {
 };
 
-// http://spec.graphql.org/June2018/#DirectiveLocations
+// https://spec.graphql.org/October2021/#DirectiveLocations
 struct directive_locations
 	: seq<opt<one<'|'>, star<ignored>>,
 		  list<directive_location, seq<star<ignored>, one<'|'>, star<ignored>>>>
@@ -965,18 +993,23 @@ struct directive_definition_start
 {
 };
 
-struct directive_definition_content
-	: seq<star<ignored>, one<'@'>, directive_name, opt<star<ignored>, arguments_definition>,
-		  plus<ignored>, on_keyword, plus<ignored>, directive_locations>
+struct repeatable_keyword : TAO_PEGTL_KEYWORD("repeatable")
 {
 };
 
-// http://spec.graphql.org/June2018/#DirectiveDefinition
+struct directive_definition_content
+	: seq<star<ignored>, one<'@'>, directive_name, opt<star<ignored>, arguments_definition>,
+		  opt<plus<ignored>, repeatable_keyword>, plus<ignored>, on_keyword, plus<ignored>,
+		  directive_locations>
+{
+};
+
+// https://spec.graphql.org/October2021/#DirectiveDefinition
 struct directive_definition : if_must<directive_definition_start, directive_definition_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeSystemDefinition
+// https://spec.graphql.org/October2021/#TypeSystemDefinition
 struct type_system_definition : sor<schema_definition, type_definition, directive_definition>
 {
 };
@@ -985,7 +1018,7 @@ struct extend_keyword : TAO_PEGTL_KEYWORD("extend")
 {
 };
 
-// http://spec.graphql.org/June2018/#OperationTypeDefinition
+// https://spec.graphql.org/October2021/#OperationTypeDefinition
 struct operation_type_definition : root_operation_definition
 {
 };
@@ -1006,7 +1039,7 @@ struct schema_extension_content
 {
 };
 
-// http://spec.graphql.org/June2018/#SchemaExtension
+// https://spec.graphql.org/October2021/#SchemaExtension
 struct schema_extension : if_must<schema_extension_start, schema_extension_content>
 {
 };
@@ -1019,7 +1052,7 @@ struct scalar_type_extension_content : seq<star<ignored>, scalar_name, star<igno
 {
 };
 
-// http://spec.graphql.org/June2018/#ScalarTypeExtension
+// https://spec.graphql.org/October2021/#ScalarTypeExtension
 struct scalar_type_extension : if_must<scalar_type_extension_start, scalar_type_extension_content>
 {
 };
@@ -1050,7 +1083,7 @@ struct object_type_extension_content
 {
 };
 
-// http://spec.graphql.org/June2018/#ObjectTypeExtension
+// https://spec.graphql.org/October2021/#ObjectTypeExtension
 struct object_type_extension : if_must<object_type_extension_start, object_type_extension_content>
 {
 };
@@ -1059,13 +1092,30 @@ struct interface_type_extension_start : seq<extend_keyword, plus<ignored>, inter
 {
 };
 
-struct interface_type_extension_content
-	: seq<plus<ignored>, interface_name, star<ignored>,
-		  sor<seq<opt<directives, star<ignored>>, fields_definition>, directives>>
+struct interface_type_extension_implements_interfaces : seq<plus<ignored>, implements_interfaces>
 {
 };
 
-// http://spec.graphql.org/June2018/#InterfaceTypeExtension
+struct interface_type_extension_directives : seq<star<ignored>, directives>
+{
+};
+
+struct interface_type_extension_fields_definition : seq<star<ignored>, fields_definition>
+{
+};
+
+struct interface_type_extension_content
+	: seq<plus<ignored>, interface_name, star<ignored>,
+		  sor<seq<opt<interface_type_extension_implements_interfaces>,
+				  opt<interface_type_extension_directives>,
+				  interface_type_extension_fields_definition>,
+			  seq<opt<interface_type_extension_implements_interfaces>,
+				  interface_type_extension_directives>,
+			  interface_type_extension_implements_interfaces>>
+{
+};
+
+// https://spec.graphql.org/October2021/#InterfaceTypeExtension
 struct interface_type_extension
 	: if_must<interface_type_extension_start, interface_type_extension_content>
 {
@@ -1081,7 +1131,7 @@ struct union_type_extension_content
 {
 };
 
-// http://spec.graphql.org/June2018/#UnionTypeExtension
+// https://spec.graphql.org/October2021/#UnionTypeExtension
 struct union_type_extension : if_must<union_type_extension_start, union_type_extension_content>
 {
 };
@@ -1096,7 +1146,7 @@ struct enum_type_extension_content
 {
 };
 
-// http://spec.graphql.org/June2018/#EnumTypeExtension
+// https://spec.graphql.org/October2021/#EnumTypeExtension
 struct enum_type_extension : if_must<enum_type_extension_start, enum_type_extension_content>
 {
 };
@@ -1111,25 +1161,25 @@ struct input_object_type_extension_content
 {
 };
 
-// http://spec.graphql.org/June2018/#InputObjectTypeExtension
+// https://spec.graphql.org/October2021/#InputObjectTypeExtension
 struct input_object_type_extension
 	: if_must<input_object_type_extension_start, input_object_type_extension_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeExtension
+// https://spec.graphql.org/October2021/#TypeExtension
 struct type_extension
 	: sor<scalar_type_extension, object_type_extension, interface_type_extension,
 		  union_type_extension, enum_type_extension, input_object_type_extension>
 {
 };
 
-// http://spec.graphql.org/June2018/#TypeSystemExtension
+// https://spec.graphql.org/October2021/#TypeSystemExtension
 struct type_system_extension : sor<schema_extension, type_extension>
 {
 };
 
-// http://spec.graphql.org/June2018/#Definition
+// https://spec.graphql.org/October2021/#Definition
 struct mixed_definition : sor<executable_definition, type_system_definition, type_system_extension>
 {
 };
@@ -1141,7 +1191,7 @@ struct mixed_document_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Document
+// https://spec.graphql.org/October2021/#Document
 struct mixed_document : must<mixed_document_content>
 {
 };
@@ -1153,12 +1203,12 @@ struct executable_document_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Document
+// https://spec.graphql.org/October2021/#Document
 struct executable_document : must<executable_document_content>
 {
 };
 
-// http://spec.graphql.org/June2018/#Definition
+// https://spec.graphql.org/October2021/#Definition
 struct schema_type_definition : sor<type_system_definition, type_system_extension>
 {
 };
@@ -1170,7 +1220,7 @@ struct schema_document_content
 {
 };
 
-// http://spec.graphql.org/June2018/#Document
+// https://spec.graphql.org/October2021/#Document
 struct schema_document : must<schema_document_content>
 {
 };

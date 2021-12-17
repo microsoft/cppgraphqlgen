@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 
@@ -25,142 +26,26 @@ const BuiltinTypeMap SchemaLoader::s_builtinTypes = {
 };
 
 const CppTypeMap SchemaLoader::s_builtinCppTypes = {
-	"response::IntType"sv,
-	"response::FloatType"sv,
-	"response::StringType"sv,
-	"response::BooleanType"sv,
+	"int"sv,
+	"double"sv,
+	"std::string"sv,
+	"bool"sv,
 	"response::IdType"sv,
 };
 
 const std::string_view SchemaLoader::s_scalarCppType = R"cpp(response::Value)cpp"sv;
 
-SchemaLoader::SchemaLoader(std::optional<SchemaOptions>&& customSchema)
-	: _customSchema(std::move(customSchema))
-	, _isIntrospection(!_customSchema)
-	, _schemaNamespace(_isIntrospection ? s_introspectionNamespace : _customSchema->schemaNamespace)
+SchemaLoader::SchemaLoader(SchemaOptions&& schemaOptions)
+	: _schemaOptions(std::move(schemaOptions))
+	, _isIntrospection(_schemaOptions.isIntrospection)
+	, _schemaNamespace(_schemaOptions.schemaNamespace)
 {
-	if (_isIntrospection)
+	_ast = peg::parseSchemaFile(_schemaOptions.schemaFilename);
+
+	if (!_ast.root)
 	{
-		// Introspection Schema:
-		// http://spec.graphql.org/June2018/#sec-Schema-Introspection
-		_ast = peg::parseSchemaString(R"gql(
-			type __Schema {
-				types: [__Type!]!
-				queryType: __Type!
-				mutationType: __Type
-				subscriptionType: __Type
-				directives: [__Directive!]!
-			}
-
-			type __Type {
-				kind: __TypeKind!
-				name: String
-				description: String
-
-				# OBJECT and INTERFACE only
-				fields(includeDeprecated: Boolean = false): [__Field!]
-
-				# OBJECT only
-				interfaces: [__Type!]
-
-				# INTERFACE and UNION only
-				possibleTypes: [__Type!]
-
-				# ENUM only
-				enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-
-				# INPUT_OBJECT only
-				inputFields: [__InputValue!]
-
-				# NON_NULL and LIST only
-				ofType: __Type
-			}
-
-			type __Field {
-				name: String!
-				description: String
-				args: [__InputValue!]!
-				type: __Type!
-				isDeprecated: Boolean!
-				deprecationReason: String
-			}
-
-			type __InputValue {
-				name: String!
-				description: String
-				type: __Type!
-				defaultValue: String
-			}
-
-			type __EnumValue {
-				name: String!
-				description: String
-				isDeprecated: Boolean!
-				deprecationReason: String
-			}
-
-			enum __TypeKind {
-				SCALAR
-				OBJECT
-				INTERFACE
-				UNION
-				ENUM
-				INPUT_OBJECT
-				LIST
-				NON_NULL
-			}
-
-			type __Directive {
-				name: String!
-				description: String
-				locations: [__DirectiveLocation!]!
-				args: [__InputValue!]!
-			}
-
-			enum __DirectiveLocation {
-				QUERY
-				MUTATION
-				SUBSCRIPTION
-				FIELD
-				FRAGMENT_DEFINITION
-				FRAGMENT_SPREAD
-				INLINE_FRAGMENT
-				SCHEMA
-				SCALAR
-				OBJECT
-				FIELD_DEFINITION
-				ARGUMENT_DEFINITION
-				INTERFACE
-				UNION
-				ENUM
-				ENUM_VALUE
-				INPUT_OBJECT
-				INPUT_FIELD_DEFINITION
-			}
-
-			# These directives are always defined and should be included in the Introspection schema.
-			directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
-			directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
-			directive @deprecated(
-				reason: String = "No longer supported"
-			) on FIELD_DEFINITION | ENUM_VALUE
-		)gql"sv);
-
-		if (!_ast.root)
-		{
-			throw std::logic_error("Unable to parse the introspection schema, but there was no "
-								   "error message from the parser!");
-		}
-	}
-	else
-	{
-		_ast = peg::parseSchemaFile(_customSchema->schemaFilename);
-
-		if (!_ast.root)
-		{
-			throw std::logic_error("Unable to parse the service schema, but there was no error "
-								   "message from the parser!");
-		}
+		throw std::logic_error("Unable to parse the service schema, but there was no error "
+							   "message from the parser!");
 	}
 
 	for (const auto& child : _ast.root->children)
@@ -201,6 +86,9 @@ void SchemaLoader::validateSchema()
 
 	// Handle nested input types by fully declaring the dependencies first.
 	reorderInputTypeDependencies();
+
+	// Validate the interface dependencies and that all of the interface fields are implemented.
+	validateImplementedInterfaces();
 
 	for (auto& entry : _interfaceTypes)
 	{
@@ -300,30 +188,6 @@ void SchemaLoader::validateSchema()
 		}
 
 		fixupOutputFieldList(entry.fields, interfaceFields, accessor);
-	}
-
-	// Validate the interfaces implemented by the object types.
-	for (const auto& entry : _objectTypes)
-	{
-		for (const auto& interfaceName : entry.interfaces)
-		{
-			if (_interfaceNames.find(interfaceName) == _interfaceNames.cend())
-			{
-				std::ostringstream error;
-				auto itrPosition = _typePositions.find(entry.type);
-
-				error << "Unknown interface: " << interfaceName
-					  << " implemented by: " << entry.type;
-
-				if (itrPosition != _typePositions.cend())
-				{
-					error << " line: " << itrPosition->second.line
-						  << " column: " << itrPosition->second.column;
-				}
-
-				throw std::runtime_error(error.str());
-			}
-		}
 	}
 
 	// Validate the objects that are possible types for unions and add the unions to
@@ -549,6 +413,29 @@ void SchemaLoader::reorderInputTypeDependencies()
 	}
 }
 
+void SchemaLoader::validateImplementedInterfaces() const
+{
+	for (const auto& interfaceType : _interfaceTypes)
+	{
+		validateTransitiveInterfaces(interfaceType.type, interfaceType.interfaces);
+
+		for (auto interfaceName : interfaceType.interfaces)
+		{
+			validateInterfaceFields(interfaceType.type, interfaceName, interfaceType.fields);
+		}
+	}
+
+	for (const auto& objectType : _objectTypes)
+	{
+		validateTransitiveInterfaces(objectType.type, objectType.interfaces);
+
+		for (auto interfaceName : objectType.interfaces)
+		{
+			validateInterfaceFields(objectType.type, interfaceName, objectType.fields);
+		}
+	}
+}
+
 void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 {
 	if (definition.is_type<peg::schema_definition>())
@@ -621,6 +508,21 @@ void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 
 void SchemaLoader::visitSchemaDefinition(const peg::ast_node& schemaDefinition)
 {
+	std::string_view description;
+
+	peg::on_first_child<peg::description>(schemaDefinition,
+		[&description](const peg::ast_node& child) {
+			if (!child.children.empty())
+			{
+				description = child.children.front()->unescaped_view();
+			}
+		});
+
+	if (_schemaDescription.empty())
+	{
+		_schemaDescription = description;
+	}
+
 	peg::for_each_child<peg::root_operation_definition>(schemaDefinition,
 		[this](const peg::ast_node& child) {
 			const auto operation(child.children.front()->string_view());
@@ -649,8 +551,12 @@ void SchemaLoader::visitObjectTypeDefinition(const peg::ast_node& objectTypeDefi
 	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(objectTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(objectTypeDefinition,
@@ -676,9 +582,14 @@ void SchemaLoader::visitObjectTypeExtension(const peg::ast_node& objectTypeExten
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::object_name>(objectTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::object_name>(objectTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _objectNames.find(name);
 
@@ -701,6 +612,18 @@ void SchemaLoader::visitObjectTypeExtension(const peg::ast_node& objectTypeExten
 					objectType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : objectType.fields)
+			{
+				blockReservedName(field.name, field.position);
+				for (const auto& argument : field.arguments)
+				{
+					blockReservedName(argument.name, argument.position);
+				}
+			}
+		}
 	}
 }
 
@@ -710,8 +633,12 @@ void SchemaLoader::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTy
 	std::string_view description;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(interfaceTypeDefinition,
@@ -728,7 +655,7 @@ void SchemaLoader::visitInterfaceTypeDefinition(const peg::ast_node& interfaceTy
 
 	auto cppName = getSafeCppName(name);
 
-	_interfaceTypes.push_back({ name, cppName, {}, description });
+	_interfaceTypes.push_back({ name, cppName, {}, {}, description });
 
 	visitInterfaceTypeExtension(interfaceTypeDefinition);
 }
@@ -738,8 +665,12 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 	std::string_view name;
 
 	peg::on_first_child<peg::interface_name>(interfaceTypeExtension,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	const auto itrType = _interfaceNames.find(name);
@@ -747,6 +678,11 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 	if (itrType != _interfaceNames.cend())
 	{
 		auto& interfaceType = _interfaceTypes[itrType->second];
+
+		peg::for_each_child<peg::interface_type>(interfaceTypeExtension,
+			[&interfaceType](const peg::ast_node& child) {
+				interfaceType.interfaces.push_back(child.string_view());
+			});
 
 		peg::on_first_child<peg::fields_definition>(interfaceTypeExtension,
 			[&interfaceType](const peg::ast_node& child) {
@@ -758,6 +694,18 @@ void SchemaLoader::visitInterfaceTypeExtension(const peg::ast_node& interfaceTyp
 					interfaceType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : interfaceType.fields)
+			{
+				blockReservedName(field.name, field.position);
+				for (const auto& argument : field.arguments)
+				{
+					blockReservedName(argument.name, argument.position);
+				}
+			}
+		}
 	}
 }
 
@@ -767,8 +715,12 @@ void SchemaLoader::visitInputObjectTypeDefinition(const peg::ast_node& inputObje
 	std::string_view description;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(inputObjectTypeDefinition,
@@ -795,8 +747,12 @@ void SchemaLoader::visitInputObjectTypeExtension(const peg::ast_node& inputObjec
 	std::string_view name;
 
 	peg::on_first_child<peg::object_name>(inputObjectTypeExtension,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	const auto itrType = _inputNames.find(name);
@@ -815,6 +771,14 @@ void SchemaLoader::visitInputObjectTypeExtension(const peg::ast_node& inputObjec
 					inputType.fields.push_back(std::move(field));
 				}
 			});
+
+		if (!_isIntrospection)
+		{
+			for (const auto& field : inputType.fields)
+			{
+				blockReservedName(field.name, field.position);
+			}
+		}
 	}
 }
 
@@ -823,9 +787,14 @@ void SchemaLoader::visitEnumTypeDefinition(const peg::ast_node& enumTypeDefiniti
 	std::string_view name;
 	std::string_view description;
 
-	peg::on_first_child<peg::enum_name>(enumTypeDefinition, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::enum_name>(enumTypeDefinition,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	peg::on_first_child<peg::description>(enumTypeDefinition,
 		[&description](const peg::ast_node& child) {
@@ -850,9 +819,14 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::enum_name>(enumTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::enum_name>(enumTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _enumNames.find(name);
 
@@ -887,7 +861,7 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 								directiveName = name.string_view();
 							});
 
-						if (directiveName == "deprecated")
+						if (directiveName == "deprecated"sv)
 						{
 							std::string_view reason;
 
@@ -902,7 +876,7 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 													argumentName = name.string_view();
 												});
 
-											if (argumentName == "reason")
+											if (argumentName == "reason"sv)
 											{
 												peg::on_first_child<peg::string_value>(argument,
 													[&value](const peg::ast_node& argumentValue) {
@@ -928,8 +902,12 @@ void SchemaLoader::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefi
 	std::string_view description;
 
 	peg::on_first_child<peg::scalar_name>(scalarTypeDefinition,
-		[&name](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
 			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(scalarTypeDefinition,
@@ -944,6 +922,70 @@ void SchemaLoader::visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefi
 	_typePositions.emplace(name, scalarTypeDefinition.begin());
 	_scalarNames[name] = _scalarTypes.size();
 	_scalarTypes.push_back({ name, description });
+
+	visitScalarTypeExtension(scalarTypeDefinition);
+}
+
+void SchemaLoader::visitScalarTypeExtension(const peg::ast_node& scalarTypeExtension)
+{
+	std::string_view name;
+
+	peg::on_first_child<peg::scalar_name>(scalarTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
+
+	const auto itrType = _scalarNames.find(name);
+
+	if (itrType != _scalarNames.cend())
+	{
+		auto& scalarType = _scalarTypes[itrType->second];
+
+		peg::on_first_child<peg::directives>(scalarTypeExtension,
+			[&scalarType](const peg::ast_node& directives) {
+				peg::for_each_child<peg::directive>(directives,
+					[&scalarType](const peg::ast_node& directive) {
+						std::string_view directiveName;
+
+						peg::on_first_child<peg::directive_name>(directive,
+							[&directiveName](const peg::ast_node& name) {
+								directiveName = name.string_view();
+							});
+
+						if (directiveName == "specifiedBy"sv)
+						{
+							std::string_view specifiedByURL;
+
+							peg::on_first_child<peg::arguments>(directive,
+								[&specifiedByURL](const peg::ast_node& arguments) {
+									peg::on_first_child<peg::argument>(arguments,
+										[&specifiedByURL](const peg::ast_node& argument) {
+											std::string_view argumentName;
+
+											peg::on_first_child<peg::argument_name>(argument,
+												[&argumentName](const peg::ast_node& name) {
+													argumentName = name.string_view();
+												});
+
+											if (argumentName == "url"sv)
+											{
+												peg::on_first_child<peg::string_value>(argument,
+													[&specifiedByURL](const peg::ast_node& url) {
+														specifiedByURL = url.unescaped_view();
+													});
+											}
+										});
+								});
+
+							scalarType.specifiedByURL = std::move(specifiedByURL);
+						}
+					});
+			});
+	}
 }
 
 void SchemaLoader::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefinition)
@@ -951,9 +993,14 @@ void SchemaLoader::visitUnionTypeDefinition(const peg::ast_node& unionTypeDefini
 	std::string_view name;
 	std::string_view description;
 
-	peg::on_first_child<peg::union_name>(unionTypeDefinition, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::union_name>(unionTypeDefinition,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	peg::on_first_child<peg::description>(unionTypeDefinition,
 		[&description](const peg::ast_node& child) {
@@ -978,9 +1025,14 @@ void SchemaLoader::visitUnionTypeExtension(const peg::ast_node& unionTypeExtensi
 {
 	std::string_view name;
 
-	peg::on_first_child<peg::union_name>(unionTypeExtension, [&name](const peg::ast_node& child) {
-		name = child.string_view();
-	});
+	peg::on_first_child<peg::union_name>(unionTypeExtension,
+		[isIntrospection = _isIntrospection, &name](const peg::ast_node& child) {
+			name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(name, child.begin());
+			}
+		});
 
 	const auto itrType = _unionNames.find(name);
 
@@ -1000,8 +1052,12 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 	Directive directive;
 
 	peg::on_first_child<peg::directive_name>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &directive](const peg::ast_node& child) {
 			directive.name = child.string_view();
+			if (!isIntrospection)
+			{
+				blockReservedName(directive.name, child.begin());
+			}
 		});
 
 	peg::on_first_child<peg::description>(directiveDefinition,
@@ -1012,18 +1068,27 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 			}
 		});
 
+	peg::on_first_child<peg::repeatable_keyword>(directiveDefinition,
+		[&directive](const peg::ast_node& child) {
+			directive.isRepeatable = true;
+		});
+
 	peg::for_each_child<peg::directive_location>(directiveDefinition,
 		[&directive](const peg::ast_node& child) {
 			directive.locations.push_back(child.string_view());
 		});
 
 	peg::on_first_child<peg::arguments_definition>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[isIntrospection = _isIntrospection, &directive](const peg::ast_node& child) {
 			auto fields = getInputFields(child.children);
 
 			directive.arguments.reserve(directive.arguments.size() + fields.size());
 			for (auto& field : fields)
 			{
+				if (!isIntrospection)
+				{
+					blockReservedName(field.name, field.position);
+				}
 				directive.arguments.push_back(std::move(field));
 			}
 		});
@@ -1067,6 +1132,148 @@ std::string_view SchemaLoader::getSafeCppName(std::string_view type) noexcept
 	return (safeNames.cend() == itr) ? type : itr->second->second;
 }
 
+void SchemaLoader::blockReservedName(
+	std::string_view name, std::optional<tao::graphqlpeg::position> position)
+{
+	// https://spec.graphql.org/October2021/#sec-Names.Reserved-Names
+	if (name.size() > 1 && name.substr(0, 2) == R"gql(__)gql"sv)
+	{
+		std::ostringstream error;
+
+		error << "Names starting with __ are reserved: " << name;
+
+		if (position)
+		{
+			error << " line: " << position->line << " column: " << position->column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+}
+
+const InterfaceType& SchemaLoader::findInterfaceType(
+	std::string_view typeName, std::string_view interfaceName) const
+{
+	const auto itrType = _interfaceNames.find(interfaceName);
+
+	if (itrType == _interfaceNames.cend())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Unknown interface: " << interfaceName << " implemented by: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+
+	return _interfaceTypes[itrType->second];
+}
+
+void SchemaLoader::validateInterfaceFields(std::string_view typeName,
+	std::string_view interfaceName, const OutputFieldList& typeFields) const
+{
+	const auto& interfaceType = findInterfaceType(typeName, interfaceName);
+	std::set<std::string_view> unimplemented;
+
+	for (const auto& entry : interfaceType.fields)
+	{
+		unimplemented.insert(entry.name);
+	}
+
+	for (const auto& entry : typeFields)
+	{
+		unimplemented.erase(entry.name);
+	}
+
+	if (!unimplemented.empty())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Missing interface fields type: " << typeName
+			  << " interface: " << interfaceType.type;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		for (auto fieldName : unimplemented)
+		{
+			error << " field: " << fieldName;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+}
+
+void SchemaLoader::validateTransitiveInterfaces(
+	std::string_view typeName, const std::vector<std::string_view>& interfaces) const
+{
+	std::set<std::string_view> unimplemented;
+
+	for (auto entry : interfaces)
+	{
+		const auto& interfaceType = findInterfaceType(typeName, entry);
+
+		unimplemented.insert(entry);
+
+		for (auto interfaceName : interfaceType.interfaces)
+		{
+			unimplemented.insert(interfaceName);
+		}
+	}
+
+	if (unimplemented.find(typeName) != unimplemented.cend())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Interface cycle interface: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+
+	for (auto entry : interfaces)
+	{
+		unimplemented.erase(entry);
+	}
+
+	if (!unimplemented.empty())
+	{
+		std::ostringstream error;
+		const auto itrPosition = _typePositions.find(typeName);
+
+		error << "Missing transitive interface type: " << typeName;
+
+		if (itrPosition != _typePositions.cend())
+		{
+			error << " line: " << itrPosition->second.line
+				  << " column: " << itrPosition->second.column;
+		}
+
+		for (auto interfaceName : unimplemented)
+		{
+			error << " interface: " << interfaceName;
+		}
+
+		throw std::runtime_error(error.str());
+	}
+}
+
 OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& fields)
 {
 	OutputFieldList outputFields;
@@ -1107,7 +1314,7 @@ OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& f
 								directiveName = name.string_view();
 							});
 
-						if (directiveName == "deprecated")
+						if (directiveName == "deprecated"sv)
 						{
 							std::string_view deprecationReason;
 
@@ -1122,7 +1329,7 @@ OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& f
 													argumentName = name.string_view();
 												});
 
-											if (argumentName == "reason")
+											if (argumentName == "reason"sv)
 											{
 												peg::on_first_child<peg::string_value>(argument,
 													[&deprecationReason](
@@ -1213,9 +1420,14 @@ bool SchemaLoader::isIntrospection() const noexcept
 	return _isIntrospection;
 }
 
+std::string_view SchemaLoader::getSchemaDescription() const noexcept
+{
+	return _schemaDescription;
+}
+
 std::string_view SchemaLoader::getFilenamePrefix() const noexcept
 {
-	return _customSchema ? _customSchema->filenamePrefix : "Introspection"sv;
+	return _schemaOptions.filenamePrefix;
 }
 
 std::string_view SchemaLoader::getSchemaNamespace() const noexcept
@@ -1392,6 +1604,22 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 	size_t templateCount = 0;
 	std::ostringstream outputType;
 
+	switch (field.fieldType)
+	{
+		case OutputFieldType::Object:
+		case OutputFieldType::Union:
+		case OutputFieldType::Interface:
+			// Even if it's non-nullable, we still want to return a shared_ptr for complex types
+			outputType << R"cpp(service::AwaitableObject<)cpp";
+			++templateCount;
+			break;
+
+		default:
+			outputType << R"cpp(service::AwaitableScalar<)cpp";
+			++templateCount;
+			break;
+	}
+
 	for (auto modifier : field.modifiers)
 	{
 		if (!nonNull)
@@ -1445,18 +1673,10 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 			outputType << getCppType(field.type);
 			break;
 
-		case OutputFieldType::Object:
-			if (field.interfaceField)
-			{
-				outputType << R"cpp(object::)cpp";
-			}
-
-			outputType << getSafeCppName(field.type);
-			break;
-
-		case OutputFieldType::Union:
 		case OutputFieldType::Interface:
-			outputType << R"cpp(service::Object)cpp";
+		case OutputFieldType::Union:
+		case OutputFieldType::Object:
+			outputType << getSafeCppName(field.type);
 			break;
 	}
 

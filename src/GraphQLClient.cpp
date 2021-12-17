@@ -21,7 +21,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.line = static_cast<size_t>(member.second.get<response::IntType>());
+					result.line = static_cast<size_t>(member.second.get<int>());
 				}
 
 				continue;
@@ -31,7 +31,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.column = static_cast<size_t>(member.second.get<response::IntType>());
+					result.column = static_cast<size_t>(member.second.get<int>());
 				}
 
 				continue;
@@ -44,16 +44,16 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 
 ErrorPathSegment parseServiceErrorPathSegment(response::Value&& segment)
 {
-	ErrorPathSegment result { response::IntType {} };
+	ErrorPathSegment result { int {} };
 
 	switch (segment.type())
 	{
 		case response::Type::Int:
-			result = segment.get<response::IntType>();
+			result = segment.get<int>();
 			break;
 
 		case response::Type::String:
-			result = segment.release<response::StringType>();
+			result = segment.release<std::string>();
 			break;
 
 		default:
@@ -77,7 +77,7 @@ Error parseServiceError(response::Value&& error)
 			{
 				if (member.second.type() == response::Type::String)
 				{
-					result.message = member.second.release<response::StringType>();
+					result.message = member.second.release<std::string>();
 				}
 
 				continue;
@@ -93,10 +93,9 @@ Error parseServiceError(response::Value&& error)
 					std::transform(locations.begin(),
 						locations.end(),
 						std::back_inserter(result.locations),
-						[](response::Value& location)
-					{
-						return parseServiceErrorLocation(std::move(location));
-					});
+						[](response::Value& location) {
+							return parseServiceErrorLocation(std::move(location));
+						});
 				}
 
 				continue;
@@ -112,10 +111,9 @@ Error parseServiceError(response::Value&& error)
 					std::transform(segments.begin(),
 						segments.end(),
 						std::back_inserter(result.path),
-						[](response::Value& segment)
-					{
-						return parseServiceErrorPathSegment(std::move(segment));
-					});
+						[](response::Value& segment) {
+							return parseServiceErrorPathSegment(std::move(segment));
+						});
 				}
 
 				continue;
@@ -126,7 +124,7 @@ Error parseServiceError(response::Value&& error)
 	return result;
 }
 
-ServiceResponse parseServiceResponse(response::Value&& response)
+ServiceResponse parseServiceResponse(response::Value response)
 {
 	ServiceResponse result;
 
@@ -167,25 +165,25 @@ ServiceResponse parseServiceResponse(response::Value&& response)
 }
 
 template <>
-response::Value ModifiedVariable<response::IntType>::serialize(response::IntType&& value)
+response::Value ModifiedVariable<int>::serialize(int&& value)
 {
 	return response::Value { value };
 }
 
 template <>
-response::Value ModifiedVariable<response::FloatType>::serialize(response::FloatType&& value)
+response::Value ModifiedVariable<double>::serialize(double&& value)
 {
 	return response::Value { value };
 }
 
 template <>
-response::Value ModifiedVariable<response::StringType>::serialize(response::StringType&& value)
+response::Value ModifiedVariable<std::string>::serialize(std::string&& value)
 {
 	return response::Value { std::move(value) };
 }
 
 template <>
-response::Value ModifiedVariable<response::BooleanType>::serialize(response::BooleanType&& value)
+response::Value ModifiedVariable<bool>::serialize(bool&& value)
 {
 	return response::Value { value };
 }
@@ -203,57 +201,57 @@ response::Value ModifiedVariable<response::IdType>::serialize(response::IdType&&
 }
 
 template <>
-response::IntType ModifiedResponse<response::IntType>::parse(response::Value&& value)
+int ModifiedResponse<int>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Int)
 	{
 		throw std::logic_error { "not an integer" };
 	}
 
-	return value.get<response::IntType>();
+	return value.get<int>();
 }
 
 template <>
-response::FloatType ModifiedResponse<response::FloatType>::parse(response::Value&& value)
+double ModifiedResponse<double>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
 		throw std::logic_error { "not a float" };
 	}
 
-	return value.get<response::FloatType>();
+	return value.get<double>();
 }
 
 template <>
-response::StringType ModifiedResponse<response::StringType>::parse(response::Value&& value)
+std::string ModifiedResponse<std::string>::parse(response::Value value)
 {
 	if (value.type() != response::Type::String)
 	{
 		throw std::logic_error { "not a string" };
 	}
 
-	return value.release<response::StringType>();
+	return value.release<std::string>();
 }
 
 template <>
-response::BooleanType ModifiedResponse<response::BooleanType>::parse(response::Value&& value)
+bool ModifiedResponse<bool>::parse(response::Value value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
 		throw std::logic_error { "not a boolean" };
 	}
 
-	return value.get<response::BooleanType>();
+	return value.get<bool>();
 }
 
 template <>
-response::Value ModifiedResponse<response::Value>::parse(response::Value&& value)
+response::Value ModifiedResponse<response::Value>::parse(response::Value value)
 {
-	return response::Value { std::move(value) };
+	return value;
 }
 
 template <>
-response::IdType ModifiedResponse<response::IdType>::parse(response::Value&& value)
+response::IdType ModifiedResponse<response::IdType>::parse(response::Value value)
 {
 	if (value.type() != response::Type::String)
 	{

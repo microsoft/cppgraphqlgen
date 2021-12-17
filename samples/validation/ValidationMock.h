@@ -8,21 +8,25 @@
 
 #include "ValidationSchema.h"
 
+#include "QueryObject.h"
+#include "MutationObject.h"
+#include "SubscriptionObject.h"
+
 namespace graphql::validation {
 
-class Query : public object::Query
+class Query
 {
 public:
 	explicit Query() = default;
 };
 
-class Mutation : public object::Mutation
+class Mutation
 {
 public:
 	explicit Mutation() = default;
 };
 
-class Subscription : public object::Subscription
+class Subscription
 {
 public:
 	explicit Subscription() = default;

@@ -20,26 +20,8 @@
 #pragma warning(pop)
 #endif // _MSC_VER
 
-// clang-format off
-#ifdef USE_STD_FILESYSTEM
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#else
-	#ifdef USE_STD_EXPERIMENTAL_FILESYSTEM
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#else
-		#ifdef USE_BOOST_FILESYSTEM
-			#include <boost/filesystem.hpp>
-			namespace fs = boost::filesystem;
-		#else
-			#error "No std::filesystem implementation defined"
-		#endif
-	#endif
-#endif
-// clang-format on
-
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -52,7 +34,7 @@ namespace graphql::generator::client {
 
 Generator::Generator(
 	SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options)
-	: _schemaLoader(std::make_optional(std::move(schemaOptions)))
+	: _schemaLoader(std::move(schemaOptions))
 	, _requestLoader(std::move(requestOptions), _schemaLoader)
 	, _options(std::move(options))
 	, _headerDir(getHeaderDir())
@@ -64,9 +46,9 @@ Generator::Generator(
 
 std::string Generator::getHeaderDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.headerPath.empty())
 	{
-		return fs::path { _options.paths->headerPath }.string();
+		return std::filesystem::path { _options.paths.headerPath }.string();
 	}
 	else
 	{
@@ -76,9 +58,9 @@ std::string Generator::getHeaderDir() const noexcept
 
 std::string Generator::getSourceDir() const noexcept
 {
-	if (_options.paths)
+	if (!_options.paths.sourcePath.empty())
 	{
-		return fs::path(_options.paths->sourcePath).string();
+		return std::filesystem::path(_options.paths.sourcePath).string();
 	}
 	else
 	{
@@ -88,7 +70,7 @@ std::string Generator::getSourceDir() const noexcept
 
 std::string Generator::getHeaderPath() const noexcept
 {
-	fs::path fullPath { _headerDir };
+	std::filesystem::path fullPath { _headerDir };
 
 	fullPath /= (std::string { _schemaLoader.getFilenamePrefix() } + "Client.h");
 
@@ -97,7 +79,7 @@ std::string Generator::getHeaderPath() const noexcept
 
 std::string Generator::getSourcePath() const noexcept
 {
-	fs::path fullPath { _sourceDir };
+	std::filesystem::path fullPath { _sourceDir };
 
 	fullPath /= (std::string { _schemaLoader.getFilenamePrefix() } + "Client.cpp");
 
@@ -188,7 +170,8 @@ std::vector<std::string> Generator::Build() const noexcept
 bool Generator::outputHeader() const noexcept
 {
 	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
-	IncludeGuardScope includeGuard { headerFile, fs::path(_headerPath).filename().string() };
+	IncludeGuardScope includeGuard { headerFile,
+		std::filesystem::path(_headerPath).filename().string() };
 
 	headerFile << R"cpp(#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -223,7 +206,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
+				   << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())
@@ -324,7 +308,7 @@ response::Value serializeVariables(Variables&& variables);
 
 	headerFile << R"cpp(};
 
-Response parseResponse(response::Value&& response);
+Response parseResponse(response::Value response);
 )cpp";
 
 	pendingSeparator.add();
@@ -451,8 +435,8 @@ bool Generator::outputSource() const noexcept
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -512,7 +496,7 @@ response::Value ModifiedVariable<)cpp"
 {
 	response::Value result { response::Type::EnumValue };
 
-	result.set<response::StringType>(response::StringType { s_names)cpp"
+	result.set<std::string>(std::string { s_names)cpp"
 						   << cppType << R"cpp([static_cast<size_t>(value)] });
 
 	return result;
@@ -567,7 +551,7 @@ response::Value ModifiedVariable<Variables::)cpp"
 
 		sourceFile << R"cpp(template <>
 )cpp" << cppType << R"cpp( ModifiedResponse<)cpp"
-				   << cppType << R"cpp(>::parse(response::Value&& value)
+				   << cppType << R"cpp(>::parse(response::Value value)
 {
 	if (!value.maybe_enum())
 	{
@@ -577,7 +561,7 @@ response::Value ModifiedVariable<Variables::)cpp"
 
 	const auto itr = std::find(s_names)cpp"
 				   << cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
-				   << R"cpp(.cend(), value.release<response::StringType>());
+				   << R"cpp(.cend(), value.release<std::string>());
 
 	if (itr == s_names)cpp"
 				   << cppType << R"cpp(.cend())
@@ -639,7 +623,7 @@ response::Value serializeVariables(Variables&& variables)
 	}
 
 	sourceFile << R"cpp(
-Response parseResponse(response::Value&& response)
+Response parseResponse(response::Value response)
 {
 	Response result;
 
@@ -757,7 +741,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 template <>
 )cpp" << cppType
 			   << R"cpp( ModifiedResponse<)cpp" << cppType
-			   << R"cpp(>::parse(response::Value&& response)
+			   << R"cpp(>::parse(response::Value response)
 {
 	)cpp" << cppType
 			   << R"cpp( result;
@@ -971,8 +955,7 @@ int main(int argc, char** argv)
 				noIntrospection,
 			},
 			graphql::generator::client::GeneratorOptions {
-				graphql::generator::client::GeneratorPaths { std::move(headerDir),
-					std::move(sourceDir) },
+				{ std::move(headerDir), std::move(sourceDir) },
 				verbose,
 			})
 							   .Build();

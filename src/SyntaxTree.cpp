@@ -9,9 +9,12 @@
 #include <tao/pegtl/contrib/unescape.hpp>
 
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <tuple>
+#include <utility>
 
 using namespace std::literals;
 
@@ -47,7 +50,90 @@ std::string_view ast_node::unescaped_view() const
 {
 	if (!_unescaped)
 	{
-		if (children.size() > 1)
+		if (is_type<block_quote_content_lines>())
+		{
+			// Trim leading and trailing empty lines
+			const auto isNonEmptyLine = [](const std::unique_ptr<ast_node>& child) noexcept {
+				return child->is_type<block_quote_line>();
+			};
+			const auto itrEndRev = std::make_reverse_iterator(
+				std::find_if(children.cbegin(), children.cend(), isNonEmptyLine));
+			const auto itrRev = std::find_if(children.crbegin(), itrEndRev, isNonEmptyLine);
+			std::vector<std::optional<std::pair<std::string_view, std::string_view>>> lines(
+				std::distance(itrRev, itrEndRev));
+
+			std::transform(itrRev,
+				itrEndRev,
+				lines.rbegin(),
+				[](const std::unique_ptr<ast_node>& child) noexcept {
+					return (child->is_type<block_quote_line>() && !child->children.empty()
+							   && child->children.front()->is_type<block_quote_empty_line>()
+							   && child->children.back()->is_type<block_quote_line_content>())
+						? std::make_optional(std::make_pair(child->children.front()->string_view(),
+							child->children.back()->unescaped_view()))
+						: std::nullopt;
+				});
+
+			// Calculate the common indent
+			const auto commonIndent = std::accumulate(lines.cbegin(),
+				lines.cend(),
+				std::optional<size_t> {},
+				[](auto value, const auto& line) noexcept {
+					if (line)
+					{
+						const auto indent = line->first.size();
+
+						if (!value || indent < *value)
+						{
+							value = indent;
+						}
+					}
+
+					return value;
+				});
+
+			const auto trimIndent = commonIndent ? *commonIndent : 0;
+			std::string joined;
+
+			if (!lines.empty())
+			{
+				joined.reserve(std::accumulate(lines.cbegin(),
+								   lines.cend(),
+								   size_t {},
+								   [trimIndent](auto value, const auto& line) noexcept {
+									   if (line)
+									   {
+										   value += line->first.size() - trimIndent;
+										   value += line->second.size();
+									   }
+
+									   return value;
+								   })
+					+ lines.size() - 1);
+
+				bool firstLine = true;
+
+				for (const auto& line : lines)
+				{
+					if (!firstLine)
+					{
+						joined.append(1, '\n');
+					}
+
+					if (line)
+					{
+						joined.append(line->first.substr(trimIndent));
+						joined.append(line->second);
+					}
+
+					firstLine = false;
+				}
+			}
+
+			const_cast<ast_node*>(this)->_unescaped =
+				std::make_unique<unescaped_t>(std::move(joined));
+		}
+		else if (children.size() > 1)
 		{
 			std::string joined;
 
@@ -222,6 +308,26 @@ struct ast_selector<block_escape_sequence> : std::true_type
 	{
 		n->unescaped_view(R"bq(""")bq"sv);
 	}
+};
+
+template <>
+struct ast_selector<block_quote_content_lines> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_empty_line> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_line> : std::true_type
+{
+};
+
+template <>
+struct ast_selector<block_quote_line_content> : std::true_type
+{
 };
 
 template <>
@@ -484,6 +590,11 @@ struct schema_selector<enum_value_definition> : std::true_type
 };
 
 template <>
+struct schema_selector<repeatable_keyword> : std::true_type
+{
+};
+
+template <>
 struct schema_selector<directive_location> : std::true_type
 {
 };
@@ -573,164 +684,164 @@ const std::string ast_control<block_quote_token>::error_message = "Expected \"\"
 
 template <>
 const std::string ast_control<variable_name_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Variable";
+	"Expected https://spec.graphql.org/October2021/#Variable";
 template <>
 const std::string ast_control<escaped_unicode_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EscapedUnicode";
+	"Expected https://spec.graphql.org/October2021/#EscapedUnicode";
 template <>
 const std::string ast_control<string_escape_sequence_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EscapedCharacter";
+	"Expected https://spec.graphql.org/October2021/#EscapedCharacter";
 template <>
 const std::string ast_control<string_quote_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#StringCharacter";
+	"Expected https://spec.graphql.org/October2021/#StringCharacter";
 template <>
 const std::string ast_control<block_quote_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#BlockStringCharacter";
+	"Expected https://spec.graphql.org/October2021/#BlockStringCharacter";
 template <>
 const std::string ast_control<fractional_part_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#FractionalPart";
+	"Expected https://spec.graphql.org/October2021/#FractionalPart";
 template <>
 const std::string ast_control<exponent_part_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ExponentPart";
+	"Expected https://spec.graphql.org/October2021/#ExponentPart";
 template <>
 const std::string ast_control<argument_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Argument";
+	"Expected https://spec.graphql.org/October2021/#Argument";
 template <>
 const std::string ast_control<arguments_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Arguments";
+	"Expected https://spec.graphql.org/October2021/#Arguments";
 template <>
 const std::string ast_control<list_value_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ListValue";
+	"Expected https://spec.graphql.org/October2021/#ListValue";
 template <>
 const std::string ast_control<object_field_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ObjectField";
+	"Expected https://spec.graphql.org/October2021/#ObjectField";
 template <>
 const std::string ast_control<object_value_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ObjectValue";
+	"Expected https://spec.graphql.org/October2021/#ObjectValue";
 template <>
 const std::string ast_control<input_value_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Value";
+	"Expected https://spec.graphql.org/October2021/#Value";
 template <>
 const std::string ast_control<default_value_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#DefaultValue";
+	"Expected https://spec.graphql.org/October2021/#DefaultValue";
 template <>
 const std::string ast_control<list_type_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ListType";
+	"Expected https://spec.graphql.org/October2021/#ListType";
 template <>
 const std::string ast_control<type_name_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Type";
+	"Expected https://spec.graphql.org/October2021/#Type";
 template <>
 const std::string ast_control<variable_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#VariableDefinition";
+	"Expected https://spec.graphql.org/October2021/#VariableDefinition";
 template <>
 const std::string ast_control<variable_definitions_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#VariableDefinitions";
+	"Expected https://spec.graphql.org/October2021/#VariableDefinitions";
 template <>
 const std::string ast_control<directive_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Directive";
+	"Expected https://spec.graphql.org/October2021/#Directive";
 template <>
 const std::string ast_control<field_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Field";
+	"Expected https://spec.graphql.org/October2021/#Field";
 template <>
 const std::string ast_control<type_condition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#TypeCondition";
+	"Expected https://spec.graphql.org/October2021/#TypeCondition";
 template <>
 const std::string ast_control<fragement_spread_or_inline_fragment_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#FragmentSpread or "
-	"http://spec.graphql.org/June2018/#InlineFragment";
+	"Expected https://spec.graphql.org/October2021/#FragmentSpread or "
+	"https://spec.graphql.org/October2021/#InlineFragment";
 template <>
 const std::string ast_control<selection_set_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#SelectionSet";
+	"Expected https://spec.graphql.org/October2021/#SelectionSet";
 template <>
 const std::string ast_control<operation_definition_operation_type_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#OperationDefinition";
+	"Expected https://spec.graphql.org/October2021/#OperationDefinition";
 template <>
 const std::string ast_control<fragment_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#FragmentDefinition";
+	"Expected https://spec.graphql.org/October2021/#FragmentDefinition";
 template <>
 const std::string ast_control<root_operation_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#RootOperationTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#RootOperationTypeDefinition";
 template <>
 const std::string ast_control<schema_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#SchemaDefinition";
+	"Expected https://spec.graphql.org/October2021/#SchemaDefinition";
 template <>
 const std::string ast_control<scalar_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ScalarTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#ScalarTypeDefinition";
 template <>
 const std::string ast_control<arguments_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ArgumentsDefinition";
+	"Expected https://spec.graphql.org/October2021/#ArgumentsDefinition";
 template <>
 const std::string ast_control<field_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#FieldDefinition";
+	"Expected https://spec.graphql.org/October2021/#FieldDefinition";
 template <>
 const std::string ast_control<fields_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#FieldsDefinition";
+	"Expected https://spec.graphql.org/October2021/#FieldsDefinition";
 template <>
 const std::string ast_control<implements_interfaces_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ImplementsInterfaces";
+	"Expected https://spec.graphql.org/October2021/#ImplementsInterfaces";
 template <>
 const std::string ast_control<object_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ObjectTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#ObjectTypeDefinition";
 template <>
 const std::string ast_control<interface_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InterfaceTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#InterfaceTypeDefinition";
 template <>
 const std::string ast_control<union_member_types_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#UnionMemberTypes";
+	"Expected https://spec.graphql.org/October2021/#UnionMemberTypes";
 template <>
 const std::string ast_control<union_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#UnionTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#UnionTypeDefinition";
 template <>
 const std::string ast_control<enum_value_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EnumValueDefinition";
+	"Expected https://spec.graphql.org/October2021/#EnumValueDefinition";
 template <>
 const std::string ast_control<enum_values_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EnumValuesDefinition";
+	"Expected https://spec.graphql.org/October2021/#EnumValuesDefinition";
 template <>
 const std::string ast_control<enum_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EnumTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#EnumTypeDefinition";
 template <>
 const std::string ast_control<input_field_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InputValueDefinition";
+	"Expected https://spec.graphql.org/October2021/#InputValueDefinition";
 template <>
 const std::string ast_control<input_fields_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InputFieldsDefinition";
+	"Expected https://spec.graphql.org/October2021/#InputFieldsDefinition";
 template <>
 const std::string ast_control<input_object_type_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InputObjectTypeDefinition";
+	"Expected https://spec.graphql.org/October2021/#InputObjectTypeDefinition";
 template <>
 const std::string ast_control<directive_definition_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#DirectiveDefinition";
+	"Expected https://spec.graphql.org/October2021/#DirectiveDefinition";
 template <>
 const std::string ast_control<schema_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#SchemaExtension";
+	"Expected https://spec.graphql.org/October2021/#SchemaExtension";
 template <>
 const std::string ast_control<scalar_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ScalarTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#ScalarTypeExtension";
 template <>
 const std::string ast_control<object_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#ObjectTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#ObjectTypeExtension";
 template <>
 const std::string ast_control<interface_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InterfaceTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#InterfaceTypeExtension";
 template <>
 const std::string ast_control<union_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#UnionTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#UnionTypeExtension";
 template <>
 const std::string ast_control<enum_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#EnumTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#EnumTypeExtension";
 template <>
 const std::string ast_control<input_object_type_extension_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#InputObjectTypeExtension";
+	"Expected https://spec.graphql.org/October2021/#InputObjectTypeExtension";
 template <>
 const std::string ast_control<mixed_document_content>::error_message =
-	"Expected http://spec.graphql.org/June2018/#Document";
+	"Expected https://spec.graphql.org/October2021/#Document";
 template <>
 const std::string ast_control<executable_document_content>::error_message =
-	"Expected executable http://spec.graphql.org/June2018/#Document";
+	"Expected executable https://spec.graphql.org/October2021/#Document";
 template <>
 const std::string ast_control<schema_document_content>::error_message =
-	"Expected schema type http://spec.graphql.org/June2018/#Document";
+	"Expected schema type https://spec.graphql.org/October2021/#Document";
 
 ast parseSchemaString(std::string_view input)
 {

@@ -37,6 +37,7 @@ using ValidateDirectiveArguments = internal::string_view_map<ValidateArgument>;
 
 struct ValidateDirective
 {
+	bool isRepeatable = false;
 	internal::sorted_set<introspection::DirectiveLocation> locations;
 	ValidateDirectiveArguments arguments;
 };
@@ -79,17 +80,16 @@ struct ValidateArgumentMap
 	internal::string_view_map<ValidateArgumentValuePtr> values;
 };
 
-using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, response::IntType,
-	response::FloatType, std::string_view, response::BooleanType, ValidateArgumentEnumValue,
-	ValidateArgumentList, ValidateArgumentMap>;
+using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, int, double,
+	std::string_view, bool, ValidateArgumentEnumValue, ValidateArgumentList, ValidateArgumentMap>;
 
 struct ValidateArgumentValue
 {
 	ValidateArgumentValue(ValidateArgumentVariable&& value);
-	ValidateArgumentValue(response::IntType value);
-	ValidateArgumentValue(response::FloatType value);
+	ValidateArgumentValue(int value);
+	ValidateArgumentValue(double value);
 	ValidateArgumentValue(std::string_view value);
-	ValidateArgumentValue(response::BooleanType value);
+	ValidateArgumentValue(bool value);
 	ValidateArgumentValue(ValidateArgumentEnumValue&& value);
 	ValidateArgumentValue(ValidateArgumentList&& value);
 	ValidateArgumentValue(ValidateArgumentMap&& value);
@@ -170,7 +170,7 @@ private:
 class ValidateExecutableVisitor
 {
 public:
-	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(const std::shared_ptr<schema::Schema>& schema);
+	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(std::shared_ptr<schema::Schema> schema);
 
 	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& root);
 
@@ -251,6 +251,7 @@ private:
 	VariableSet _referencedVariables;
 	FragmentSet _fragmentStack;
 	size_t _fieldCount = 0;
+	size_t _introspectionFieldCount = 0;
 	TypeFields _typeFields;
 	InputTypeFields _inputTypeFields;
 	ValidateType _scopedType;

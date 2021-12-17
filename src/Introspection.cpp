@@ -1,7 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/internal/Introspection.h"
+
+#include "graphqlservice/introspection/IntrospectionSchema.h"
+
+#include "graphqlservice/introspection/DirectiveObject.h"
+#include "graphqlservice/introspection/EnumValueObject.h"
+#include "graphqlservice/introspection/FieldObject.h"
+#include "graphqlservice/introspection/InputValueObject.h"
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
 
 namespace graphql::introspection {
 
@@ -10,51 +19,56 @@ Schema::Schema(const std::shared_ptr<schema::Schema>& schema)
 {
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Type>>> Schema::getTypes(
-	service::FieldParams&&) const
+std::optional<std::string> Schema::getDescription() const
+{
+	const auto description = _schema->description();
+
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
+}
+
+std::vector<std::shared_ptr<object::Type>> Schema::getTypes() const
 {
 	const auto& types = _schema->types();
 	std::vector<std::shared_ptr<object::Type>> result(types.size());
 
 	std::transform(types.begin(), types.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<Type>(entry.second);
+		return std::make_shared<object::Type>(std::make_shared<Type>(entry.second));
 	});
 
 	return result;
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> Schema::getQueryType(
-	service::FieldParams&&) const
+std::shared_ptr<object::Type> Schema::getQueryType() const
 {
 	const auto& queryType = _schema->queryType();
 
-	return queryType ? std::make_shared<Type>(queryType) : nullptr;
+	return queryType ? std::make_shared<object::Type>(std::make_shared<Type>(queryType)) : nullptr;
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> Schema::getMutationType(
-	service::FieldParams&&) const
+std::shared_ptr<object::Type> Schema::getMutationType() const
 {
 	const auto& mutationType = _schema->mutationType();
 
-	return mutationType ? std::make_shared<Type>(mutationType) : nullptr;
+	return mutationType ? std::make_shared<object::Type>(std::make_shared<Type>(mutationType))
+						: nullptr;
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> Schema::getSubscriptionType(
-	service::FieldParams&&) const
+std::shared_ptr<object::Type> Schema::getSubscriptionType() const
 {
 	const auto& subscriptionType = _schema->subscriptionType();
 
-	return subscriptionType ? std::make_shared<Type>(subscriptionType) : nullptr;
+	return subscriptionType
+		? std::make_shared<object::Type>(std::make_shared<Type>(subscriptionType))
+		: nullptr;
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::Directive>>> Schema::getDirectives(
-	service::FieldParams&&) const
+std::vector<std::shared_ptr<object::Directive>> Schema::getDirectives() const
 {
 	const auto& directives = _schema->directives();
 	std::vector<std::shared_ptr<object::Directive>> result(directives.size());
 
 	std::transform(directives.begin(), directives.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<Directive>(entry);
+		return std::make_shared<object::Directive>(std::make_shared<Directive>(entry));
 	});
 
 	return result;
@@ -65,30 +79,27 @@ Type::Type(const std::shared_ptr<const schema::BaseType>& type)
 {
 }
 
-service::FieldResult<TypeKind> Type::getKind(service::FieldParams&&) const
+TypeKind Type::getKind() const
 {
 	return _type->kind();
 }
 
-service::FieldResult<std::optional<response::StringType>> Type::getName(
-	service::FieldParams&&) const
+std::optional<std::string> Type::getName() const
 {
 	const auto name = _type->name();
 
-	return { name.empty() ? std::nullopt : std::make_optional<response::StringType>(name) };
+	return { name.empty() ? std::nullopt : std::make_optional<std::string>(name) };
 }
 
-service::FieldResult<std::optional<response::StringType>> Type::getDescription(
-	service::FieldParams&&) const
+std::optional<std::string> Type::getDescription() const
 {
 	const auto description = _type->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>> Type::getFields(
-	service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const
+std::optional<std::vector<std::shared_ptr<object::Field>>> Type::getFields(
+	std::optional<bool>&& includeDeprecatedArg) const
 {
 	switch (_type->kind())
 	{
@@ -109,15 +120,14 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Field>>>>
 	{
 		if (deprecated || !field->deprecationReason())
 		{
-			result->push_back(std::make_shared<Field>(field));
+			result->push_back(std::make_shared<object::Field>(std::make_shared<Field>(field)));
 		}
 	}
 
 	return result;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> Type::getInterfaces(
-	service::FieldParams&&) const
+std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getInterfaces() const
 {
 	switch (_type->kind())
 	{
@@ -132,14 +142,13 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(interfaces.size());
 
 	std::transform(interfaces.begin(), interfaces.end(), result->begin(), [](const auto& entry) {
-		return std::make_shared<Type>(entry);
+		return std::make_shared<object::Type>(std::make_shared<Type>(entry));
 	});
 
 	return result;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> Type::
-	getPossibleTypes(service::FieldParams&&) const
+std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes() const
 {
 	switch (_type->kind())
 	{
@@ -159,15 +168,21 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::Type>>>> 
 		possibleTypes.end(),
 		result->begin(),
 		[](const auto& entry) {
-			return std::make_shared<Type>(entry.lock());
+			auto typeEntry = entry.lock();
+
+			return typeEntry && typeEntry->kind() == introspection::TypeKind::OBJECT
+				? std::make_shared<object::Type>(std::make_shared<Type>(std::move(typeEntry)))
+				: std::shared_ptr<object::Type> {};
 		});
+
+	result->erase(std::remove(result->begin(), result->end(), std::shared_ptr<object::Type> {}),
+		result->cend());
 
 	return result;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue>>>> Type::
-	getEnumValues(
-		service::FieldParams&&, std::optional<response::BooleanType>&& includeDeprecatedArg) const
+std::optional<std::vector<std::shared_ptr<object::EnumValue>>> Type::getEnumValues(
+	std::optional<bool>&& includeDeprecatedArg) const
 {
 	switch (_type->kind())
 	{
@@ -187,15 +202,15 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::EnumValue
 	{
 		if (deprecated || !value->deprecationReason())
 		{
-			result->push_back(std::make_shared<EnumValue>(value));
+			result->push_back(
+				std::make_shared<object::EnumValue>(std::make_shared<EnumValue>(value)));
 		}
 	}
 
 	return result;
 }
 
-service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValue>>>> Type::
-	getInputFields(service::FieldParams&&) const
+std::optional<std::vector<std::shared_ptr<object::InputValue>>> Type::getInputFields() const
 {
 	switch (_type->kind())
 	{
@@ -211,13 +226,13 @@ service::FieldResult<std::optional<std::vector<std::shared_ptr<object::InputValu
 		std::make_optional<std::vector<std::shared_ptr<object::InputValue>>>(inputFields.size());
 
 	std::transform(inputFields.begin(), inputFields.end(), result->begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> Type::getOfType(service::FieldParams&&) const
+std::shared_ptr<object::Type> Type::getOfType() const
 {
 	switch (_type->kind())
 	{
@@ -231,7 +246,15 @@ service::FieldResult<std::shared_ptr<object::Type>> Type::getOfType(service::Fie
 
 	const auto ofType = _type->ofType().lock();
 
-	return ofType ? std::make_shared<Type>(ofType) : nullptr;
+	return ofType ? std::make_shared<object::Type>(std::make_shared<Type>(ofType)) : nullptr;
+}
+
+std::optional<std::string> Type::getSpecifiedByURL() const
+{
+	const auto specifiedByURL = _type->specifiedByURL();
+
+	return { specifiedByURL.empty() ? std::nullopt
+									: std::make_optional<std::string>(specifiedByURL) };
 }
 
 Field::Field(const std::shared_ptr<const schema::Field>& field)
@@ -239,51 +262,47 @@ Field::Field(const std::shared_ptr<const schema::Field>& field)
 {
 }
 
-service::FieldResult<response::StringType> Field::getName(service::FieldParams&&) const
+std::string Field::getName() const
 {
-	return response::StringType { _field->name() };
+	return std::string { _field->name() };
 }
 
-service::FieldResult<std::optional<response::StringType>> Field::getDescription(
-	service::FieldParams&&) const
+std::optional<std::string> Field::getDescription() const
 {
 	const auto description = _field->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Field::getArgs(
-	service::FieldParams&&) const
+std::vector<std::shared_ptr<object::InputValue>> Field::getArgs() const
 {
 	const auto& args = _field->args();
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
 	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> Field::getType(service::FieldParams&&) const
+std::shared_ptr<object::Type> Field::getType() const
 {
 	const auto type = _field->type().lock();
 
-	return type ? std::make_shared<Type>(type) : nullptr;
+	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
-service::FieldResult<response::BooleanType> Field::getIsDeprecated(service::FieldParams&&) const
+bool Field::getIsDeprecated() const
 {
 	return _field->deprecationReason().has_value();
 }
 
-service::FieldResult<std::optional<response::StringType>> Field::getDeprecationReason(
-	service::FieldParams&&) const
+std::optional<std::string> Field::getDeprecationReason() const
 {
 	const auto& deprecationReason = _field->deprecationReason();
 
-	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+	return { deprecationReason ? std::make_optional<std::string>(*deprecationReason)
 							   : std::nullopt };
 }
 
@@ -292,35 +311,30 @@ InputValue::InputValue(const std::shared_ptr<const schema::InputValue>& inputVal
 {
 }
 
-service::FieldResult<response::StringType> InputValue::getName(service::FieldParams&&) const
+std::string InputValue::getName() const
 {
-	return response::StringType { _inputValue->name() };
+	return std::string { _inputValue->name() };
 }
 
-service::FieldResult<std::optional<response::StringType>> InputValue::getDescription(
-	service::FieldParams&&) const
+std::optional<std::string> InputValue::getDescription() const
 {
 	const auto description = _inputValue->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-service::FieldResult<std::shared_ptr<object::Type>> InputValue::getType(
-	service::FieldParams&&) const
+std::shared_ptr<object::Type> InputValue::getType() const
 {
 	const auto type = _inputValue->type().lock();
 
-	return type ? std::make_shared<Type>(type) : nullptr;
+	return type ? std::make_shared<object::Type>(std::make_shared<Type>(type)) : nullptr;
 }
 
-service::FieldResult<std::optional<response::StringType>> InputValue::getDefaultValue(
-	service::FieldParams&&) const
+std::optional<std::string> InputValue::getDefaultValue() const
 {
 	const auto defaultValue = _inputValue->defaultValue();
 
-	return { defaultValue.empty() ? std::nullopt
-								  : std::make_optional<response::StringType>(defaultValue) };
+	return { defaultValue.empty() ? std::nullopt : std::make_optional<std::string>(defaultValue) };
 }
 
 EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
@@ -328,31 +342,28 @@ EnumValue::EnumValue(const std::shared_ptr<const schema::EnumValue>& enumValue)
 {
 }
 
-service::FieldResult<response::StringType> EnumValue::getName(service::FieldParams&&) const
+std::string EnumValue::getName() const
 {
-	return response::StringType { _enumValue->name() };
+	return std::string { _enumValue->name() };
 }
 
-service::FieldResult<std::optional<response::StringType>> EnumValue::getDescription(
-	service::FieldParams&&) const
+std::optional<std::string> EnumValue::getDescription() const
 {
 	const auto description = _enumValue->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-service::FieldResult<response::BooleanType> EnumValue::getIsDeprecated(service::FieldParams&&) const
+bool EnumValue::getIsDeprecated() const
 {
 	return _enumValue->deprecationReason().has_value();
 }
 
-service::FieldResult<std::optional<response::StringType>> EnumValue::getDeprecationReason(
-	service::FieldParams&&) const
+std::optional<std::string> EnumValue::getDeprecationReason() const
 {
 	const auto& deprecationReason = _enumValue->deprecationReason();
 
-	return { deprecationReason ? std::make_optional<response::StringType>(*deprecationReason)
+	return { deprecationReason ? std::make_optional<std::string>(*deprecationReason)
 							   : std::nullopt };
 }
 
@@ -361,37 +372,38 @@ Directive::Directive(const std::shared_ptr<const schema::Directive>& directive)
 {
 }
 
-service::FieldResult<response::StringType> Directive::getName(service::FieldParams&&) const
+std::string Directive::getName() const
 {
-	return response::StringType { _directive->name() };
+	return std::string { _directive->name() };
 }
 
-service::FieldResult<std::optional<response::StringType>> Directive::getDescription(
-	service::FieldParams&&) const
+std::optional<std::string> Directive::getDescription() const
 {
 	const auto description = _directive->description();
 
-	return { description.empty() ? std::nullopt
-								 : std::make_optional<response::StringType>(description) };
+	return { description.empty() ? std::nullopt : std::make_optional<std::string>(description) };
 }
 
-service::FieldResult<std::vector<DirectiveLocation>> Directive::getLocations(
-	service::FieldParams&&) const
+std::vector<DirectiveLocation> Directive::getLocations() const
 {
-	return { _directive->locations() };
+	return _directive->locations();
 }
 
-service::FieldResult<std::vector<std::shared_ptr<object::InputValue>>> Directive::getArgs(
-	service::FieldParams&&) const
+std::vector<std::shared_ptr<object::InputValue>> Directive::getArgs() const
 {
 	const auto& args = _directive->args();
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
 	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
-		return std::make_shared<InputValue>(entry);
+		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
 	return result;
+}
+
+bool Directive::getIsRepeatable() const
+{
+	return _directive->isRepeatable();
 }
 
 } // namespace graphql::introspection

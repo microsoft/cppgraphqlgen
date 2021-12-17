@@ -108,7 +108,7 @@ TEST_F(ClientCase, QueryEverything)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result =
-		_service->resolve(std::launch::async, state, query, "", std::move(variables)).get();
+		_service->resolve({ query, {}, std::move(variables), std::launch::async, state }).get();
 	EXPECT_EQ(size_t(1), _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
 	EXPECT_EQ(size_t(1), _getTasksCount)
@@ -141,8 +141,7 @@ TEST_F(ClientCase, QueryEverything)
 		ASSERT_TRUE(appointmentNode->subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(appointmentNode->subject)) << "subject should match";
 		ASSERT_TRUE(appointmentNode->when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", appointmentNode->when->get<response::StringType>())
-			<< "when should match";
+		EXPECT_EQ("tomorrow", appointmentNode->when->get<std::string>()) << "when should match";
 		EXPECT_FALSE(appointmentNode->isNow) << "isNow should match";
 		EXPECT_EQ("Appointment", appointmentNode->_typename) << "__typename should match";
 
@@ -181,7 +180,7 @@ TEST_F(ClientCase, QueryEverything)
 		ASSERT_TRUE(anyType.subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(anyType.subject)) << "subject should match";
 		ASSERT_TRUE(anyType.when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", anyType.when->get<response::StringType>()) << "when should match";
+		EXPECT_EQ("tomorrow", anyType.when->get<std::string>()) << "when should match";
 		EXPECT_FALSE(anyType.isNow) << "isNow should match";
 	}
 	catch (const std::logic_error& ex)
@@ -201,7 +200,7 @@ TEST_F(ClientCase, MutateCompleteTask)
 		std::make_optional("Hi There!"s) } });
 
 	auto state = std::make_shared<today::RequestState>(5);
-	auto result = _service->resolve(state, query, "", std::move(variables)).get();
+	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -238,15 +237,18 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service->subscribe(service::SubscriptionParams { state,
-									   std::move(query),
-									   "TestSubscription",
-									   std::move(std::move(variables)) },
-		[&result](std::future<response::Value> response) {
-			result = response.get();
-		});
-	_service->deliver("nextAppointmentChange", nullptr);
-	_service->unsubscribe(key);
+	auto key = _service
+				   ->subscribe({ [&result](response::Value&& response) {
+									result = std::move(response);
+								},
+					   std::move(query),
+					   "TestSubscription"s,
+					   std::move(variables),
+					   {},
+					   state })
+				   .get();
+	_service->deliver({ "nextAppointmentChange"sv }).get();
+	_service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -263,8 +265,7 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 		ASSERT_TRUE(appointmentNode->subject.has_value()) << "subject should be set";
 		EXPECT_EQ("Lunch?", *(appointmentNode->subject)) << "subject should match";
 		ASSERT_TRUE(appointmentNode->when.has_value()) << "when should be set";
-		EXPECT_EQ("tomorrow", appointmentNode->when->get<response::StringType>())
-			<< "when should match";
+		EXPECT_EQ("tomorrow", appointmentNode->when->get<std::string>()) << "when should match";
 		EXPECT_TRUE(appointmentNode->isNow) << "isNow should match";
 	}
 	catch (const std::logic_error& ex)

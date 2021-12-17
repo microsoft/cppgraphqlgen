@@ -48,6 +48,7 @@ struct ScalarType
 {
 	std::string_view type;
 	std::string_view description;
+	std::string_view specifiedByURL;
 };
 
 using ScalarTypeList = std::vector<ScalarType>;
@@ -113,6 +114,7 @@ using InputTypeList = std::vector<InputType>;
 struct Directive
 {
 	std::string_view name;
+	bool isRepeatable = false;
 	std::vector<std::string_view> locations;
 	InputFieldList arguments;
 	std::string_view description;
@@ -174,6 +176,7 @@ struct InterfaceType
 {
 	std::string_view type;
 	std::string_view cppType;
+	std::vector<std::string_view> interfaces;
 	OutputFieldList fields;
 	std::string_view description;
 };
@@ -209,15 +212,17 @@ struct SchemaOptions
 	const std::string schemaFilename;
 	const std::string filenamePrefix;
 	const std::string schemaNamespace;
+	const bool isIntrospection = false;
 };
 
 class SchemaLoader
 {
 public:
 	// Initialize the loader with the introspection schema or a custom GraphQL schema.
-	explicit SchemaLoader(std::optional<SchemaOptions>&& customSchema);
+	explicit SchemaLoader(SchemaOptions&& schemaOptions);
 
 	bool isIntrospection() const noexcept;
+	std::string_view getSchemaDescription() const noexcept;
 	std::string_view getFilenamePrefix() const noexcept;
 	std::string_view getSchemaNamespace() const noexcept;
 
@@ -264,6 +269,7 @@ private:
 	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);
 	void visitSchemaExtension(const peg::ast_node& schemaExtension);
 	void visitScalarTypeDefinition(const peg::ast_node& scalarTypeDefinition);
+	void visitScalarTypeExtension(const peg::ast_node& scalarTypeExtension);
 	void visitEnumTypeDefinition(const peg::ast_node& enumTypeDefinition);
 	void visitEnumTypeExtension(const peg::ast_node& enumTypeExtension);
 	void visitInputObjectTypeDefinition(const peg::ast_node& inputObjectTypeDefinition);
@@ -276,6 +282,8 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
+	static void blockReservedName(
+		std::string_view name, std::optional<tao::graphqlpeg::position> position = std::nullopt);
 	static OutputFieldList getOutputFields(const peg::ast_node::children_t& fields);
 	static InputFieldList getInputFields(const peg::ast_node::children_t& fields);
 
@@ -285,14 +293,22 @@ private:
 		const std::optional<std::string_view>& accessor);
 	void fixupInputFieldList(InputFieldList& fields);
 	void reorderInputTypeDependencies();
+	void validateImplementedInterfaces() const;
+	const InterfaceType& findInterfaceType(
+		std::string_view typeName, std::string_view interfaceName) const;
+	void validateInterfaceFields(std::string_view typeName,
+		std::string_view interfaceName, const OutputFieldList& typeFields) const;
+	void validateTransitiveInterfaces(
+		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 
 	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;
 	static const CppTypeMap s_builtinCppTypes;
 	static const std::string_view s_scalarCppType;
 
-	const std::optional<SchemaOptions> _customSchema;
+	const SchemaOptions _schemaOptions;
 	const bool _isIntrospection;
+	std::string_view _schemaDescription;
 	std::string_view _schemaNamespace;
 	peg::ast _ast;
 

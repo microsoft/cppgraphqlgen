@@ -42,6 +42,11 @@ bool Value::ScalarData::operator==(const ScalarData& rhs) const
 template <>
 void Value::set<StringType>(StringType&& value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (std::holds_alternative<EnumData>(_data))
 	{
 		std::get<EnumData>(_data) = std::move(value);
@@ -59,6 +64,11 @@ void Value::set<StringType>(StringType&& value)
 template <>
 void Value::set<BooleanType>(BooleanType value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<BooleanType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for BooleanType");
@@ -70,6 +80,11 @@ void Value::set<BooleanType>(BooleanType value)
 template <>
 void Value::set<IntType>(IntType value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (std::holds_alternative<FloatType>(_data))
 	{
 		// Coerce IntType to FloatType
@@ -88,6 +103,11 @@ void Value::set<IntType>(IntType value)
 template <>
 void Value::set<FloatType>(FloatType value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<FloatType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for FloatType");
@@ -99,6 +119,11 @@ void Value::set<FloatType>(FloatType value)
 template <>
 void Value::set<ScalarType>(ScalarType&& value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<ScalarData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for ScalarType");
@@ -110,6 +135,11 @@ void Value::set<ScalarType>(ScalarType&& value)
 template <>
 void Value::set<IdType>(const IdType& value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<StringData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for IdType");
@@ -121,35 +151,41 @@ void Value::set<IdType>(const IdType& value)
 template <>
 const MapType& Value::get<MapType>() const
 {
-	if (!std::holds_alternative<MapData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<MapData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for MapType");
 	}
 
-	return std::get<MapData>(_data).map;
+	return std::get<MapData>(typeData).map;
 }
 
 template <>
 const ListType& Value::get<ListType>() const
 {
-	if (!std::holds_alternative<ListType>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<ListType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for ListType");
 	}
 
-	return std::get<ListType>(_data);
+	return std::get<ListType>(typeData);
 }
 
 template <>
 const StringType& Value::get<StringType>() const
 {
-	if (std::holds_alternative<EnumData>(_data))
+	const auto& typeData = data();
+
+	if (std::holds_alternative<EnumData>(typeData))
 	{
-		return std::get<EnumData>(_data);
+		return std::get<EnumData>(typeData);
 	}
-	else if (std::holds_alternative<StringData>(_data))
+	else if (std::holds_alternative<StringData>(typeData))
 	{
-		return std::get<StringData>(_data).string;
+		return std::get<StringData>(typeData).string;
 	}
 
 	throw std::logic_error("Invalid call to Value::get for StringType");
@@ -158,51 +194,59 @@ const StringType& Value::get<StringType>() const
 template <>
 BooleanType Value::get<BooleanType>() const
 {
-	if (!std::holds_alternative<BooleanType>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<BooleanType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for BooleanType");
 	}
 
-	return std::get<BooleanType>(_data);
+	return std::get<BooleanType>(typeData);
 }
 
 template <>
 IntType Value::get<IntType>() const
 {
-	if (!std::holds_alternative<IntType>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<IntType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for IntType");
 	}
 
-	return std::get<IntType>(_data);
+	return std::get<IntType>(typeData);
 }
 
 template <>
 FloatType Value::get<FloatType>() const
 {
-	if (std::holds_alternative<IntType>(_data))
+	const auto& typeData = data();
+
+	if (std::holds_alternative<IntType>(typeData))
 	{
 		// Coerce IntType to FloatType
-		return static_cast<FloatType>(std::get<IntType>(_data));
+		return static_cast<FloatType>(std::get<IntType>(typeData));
 	}
 
-	if (!std::holds_alternative<FloatType>(_data))
+	if (!std::holds_alternative<FloatType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for FloatType");
 	}
 
-	return std::get<FloatType>(_data);
+	return std::get<FloatType>(typeData);
 }
 
 template <>
 const ScalarType& Value::get<ScalarType>() const
 {
-	if (!std::holds_alternative<ScalarData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<ScalarData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for ScalarType");
 	}
 
-	const auto& scalar = std::get<ScalarData>(_data).scalar;
+	const auto& scalar = std::get<ScalarData>(typeData).scalar;
 
 	if (!scalar)
 	{
@@ -215,17 +259,24 @@ const ScalarType& Value::get<ScalarType>() const
 template <>
 IdType Value::get<IdType>() const
 {
-	if (!std::holds_alternative<StringData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<StringData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for IdType");
 	}
 
-	return internal::Base64::fromBase64(std::get<StringData>(_data).string);
+	return internal::Base64::fromBase64(std::get<StringData>(typeData).string);
 }
 
 template <>
 MapType Value::release<MapType>()
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<MapData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::release for MapType");
@@ -242,6 +293,11 @@ MapType Value::release<MapType>()
 template <>
 ListType Value::release<ListType>()
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<ListType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::release for ListType");
@@ -255,6 +311,11 @@ ListType Value::release<ListType>()
 template <>
 StringType Value::release<StringType>()
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	StringType result;
 
 	if (std::holds_alternative<EnumData>(_data))
@@ -279,6 +340,11 @@ StringType Value::release<StringType>()
 template <>
 ScalarType Value::release<ScalarType>()
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<ScalarData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::release for ScalarType");
@@ -299,6 +365,11 @@ ScalarType Value::release<ScalarType>()
 template <>
 IdType Value::release<IdType>()
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<StringData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::release for IdType");
@@ -396,6 +467,12 @@ Value::Value(Value&& other) noexcept
 
 Value::Value(const Value& other)
 {
+	if (std::holds_alternative<SharedData>(other._data))
+	{
+		_data = std::get<SharedData>(other._data);
+		return;
+	}
+
 	switch (other.type())
 	{
 		case Type::Map:
@@ -471,6 +548,16 @@ Value::Value(const Value& other)
 	}
 }
 
+Value::Value(std::shared_ptr<const Value> value) noexcept
+	: _data(TypeData { value })
+{
+}
+
+const Value::TypeData& Value::data() const noexcept
+{
+	return std::holds_alternative<SharedData>(_data) ? std::get<SharedData>(_data)->data() : _data;
+}
+
 Value& Value::operator=(Value&& rhs) noexcept
 {
 	if (&rhs != this)
@@ -483,7 +570,7 @@ Value& Value::operator=(Value&& rhs) noexcept
 
 bool Value::operator==(const Value& rhs) const noexcept
 {
-	return _data == rhs._data;
+	return data() == rhs.data();
 }
 
 bool Value::operator!=(const Value& rhs) const noexcept
@@ -493,6 +580,11 @@ bool Value::operator!=(const Value& rhs) const noexcept
 
 Type Value::type() const noexcept
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		return std::get<SharedData>(_data)->type();
+	}
+
 	// As long as the order of the variant alternatives matches the Type enum, we can cast the index
 	// to the Type in one step.
 	static_assert(
@@ -533,7 +625,11 @@ Type Value::type() const noexcept
 
 Value&& Value::from_json() noexcept
 {
-	if (std::holds_alternative<StringData>(_data))
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		_data = StringData { { get<StringType>() }, true };
+	}
+	else if (std::holds_alternative<StringData>(_data))
 	{
 		std::get<StringData>(_data).from_json = true;
 	}
@@ -543,12 +639,20 @@ Value&& Value::from_json() noexcept
 
 bool Value::maybe_enum() const noexcept
 {
-	return std::holds_alternative<EnumData>(_data)
-		|| (std::holds_alternative<StringData>(_data) && std::get<StringData>(_data).from_json);
+	const auto& typeData = data();
+
+	return std::holds_alternative<EnumData>(typeData)
+		|| (std::holds_alternative<StringData>(typeData)
+			&& std::get<StringData>(typeData).from_json);
 }
 
 void Value::reserve(size_t count)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	switch (type())
 	{
 		case Type::Map:
@@ -577,12 +681,12 @@ size_t Value::size() const
 	{
 		case Type::Map:
 		{
-			return std::get<MapData>(_data).map.size();
+			return std::get<MapData>(data()).map.size();
 		}
 
 		case Type::List:
 		{
-			return std::get<ListType>(_data).size();
+			return std::get<ListType>(data()).size();
 		}
 
 		default:
@@ -592,6 +696,11 @@ size_t Value::size() const
 
 bool Value::emplace_back(std::string&& name, Value&& value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<MapData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::emplace_back for MapType");
@@ -620,12 +729,14 @@ bool Value::emplace_back(std::string&& name, Value&& value)
 
 MapType::const_iterator Value::find(std::string_view name) const
 {
-	if (!std::holds_alternative<MapData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<MapData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::find for MapType");
 	}
 
-	const auto& mapData = std::get<MapData>(_data);
+	const auto& mapData = std::get<MapData>(typeData);
 	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
 		mapData.members.cend(),
 		std::nullopt,
@@ -645,22 +756,26 @@ MapType::const_iterator Value::find(std::string_view name) const
 
 MapType::const_iterator Value::begin() const
 {
-	if (!std::holds_alternative<MapData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<MapData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::begin for MapType");
 	}
 
-	return std::get<MapData>(_data).map.cbegin();
+	return std::get<MapData>(typeData).map.cbegin();
 }
 
 MapType::const_iterator Value::end() const
 {
-	if (!std::holds_alternative<MapData>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<MapData>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::end for MapType");
 	}
 
-	return std::get<MapData>(_data).map.cend();
+	return std::get<MapData>(typeData).map.cend();
 }
 
 const Value& Value::operator[](std::string_view name) const
@@ -677,6 +792,11 @@ const Value& Value::operator[](std::string_view name) const
 
 void Value::emplace_back(Value&& value)
 {
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
 	if (!std::holds_alternative<ListType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
@@ -687,12 +807,96 @@ void Value::emplace_back(Value&& value)
 
 const Value& Value::operator[](size_t index) const
 {
-	if (!std::holds_alternative<ListType>(_data))
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<ListType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::operator[] for ListType");
 	}
 
-	return std::get<ListType>(_data).at(index);
+	return std::get<ListType>(typeData).at(index);
+}
+
+void Writer::write(Value response) const
+{
+	switch (response.type())
+	{
+		case Type::Map:
+		{
+			auto members = response.release<MapType>();
+
+			_concept->start_object();
+
+			for (auto& entry : members)
+			{
+				_concept->add_member(entry.first);
+				write(std::move(entry.second));
+			}
+
+			_concept->end_object();
+			break;
+		}
+
+		case Type::List:
+		{
+			auto elements = response.release<ListType>();
+
+			_concept->start_array();
+
+			for (auto& entry : elements)
+			{
+				write(std::move(entry));
+			}
+
+			_concept->end_arrary();
+			break;
+		}
+
+		case Type::String:
+		case Type::EnumValue:
+		{
+			auto value = response.release<StringType>();
+
+			_concept->write_string(value);
+			break;
+		}
+
+		case Type::Null:
+		{
+			_concept->write_null();
+			break;
+		}
+
+		case Type::Boolean:
+		{
+			_concept->write_bool(response.get<BooleanType>());
+			break;
+		}
+
+		case Type::Int:
+		{
+			_concept->write_int(response.get<IntType>());
+			break;
+		}
+
+		case Type::Float:
+		{
+			_concept->write_float(response.get<FloatType>());
+			break;
+		}
+
+		case Type::Scalar:
+		{
+			write(response.release<ScalarType>());
+			break;
+		}
+
+		default:
+		{
+			_concept->write_null();
+			break;
+		}
+	}
 }
 
 } // namespace graphql::response

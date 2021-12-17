@@ -1,13 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.15)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.15")
-  # Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows.
-  set(MSVC_MATCH_VCPKG_TRIPLET ON)
-  cmake_policy(SET CMP0091 NEW)
-endif()
+# Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows: https://cmake.org/cmake/help/latest/policy/CMP0091.html
+cmake_policy(SET CMP0091 NEW)
 
 # Default to the last updated version from version.txt.
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.txt" VERSION_FILE)
@@ -33,8 +30,6 @@ endif()
 
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
-set(CMAKE_CXX_STANDARD 17)
-
 set(GRAPHQL_INSTALL_INCLUDE_DIR include CACHE PATH "Header file install directory")
 set(GRAPHQL_INSTALL_TOOLS_DIR bin CACHE PATH "schemagen install directory")
 set(GRAPHQL_INSTALL_CMAKE_DIR lib/cmake CACHE PATH "CMake config files install directory")
@@ -45,7 +40,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries instead of static libs" OFF)
 if(VCPKG_TARGET_TRIPLET)
   message(STATUS "Using ${VCPKG_TARGET_TRIPLET} triplet with vcpkg")
 
-  if(MSVC AND MSVC_MATCH_VCPKG_TRIPLET)
+  if(MSVC)
     # Match the MSVC runtime if we're using VCPKG with static libraries.
     if(VCPKG_TARGET_TRIPLET MATCHES [[^.+-static$]])
       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

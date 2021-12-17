@@ -7,7 +7,7 @@
 
 #include "graphqlservice/internal/Grammar.h"
 
-#include "graphqlservice/introspection/Introspection.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
 #include <array>
@@ -276,7 +276,9 @@ void RequestLoader::addTypesToSchema()
 		for (const auto& scalarType : _schemaLoader.getScalarTypes())
 		{
 			_schema->AddType(scalarType.type,
-				schema::ScalarType::Make(scalarType.type, scalarType.description));
+				schema::ScalarType::Make(scalarType.type,
+					scalarType.description,
+					scalarType.specifiedByURL));
 		}
 	}
 
@@ -520,7 +522,7 @@ void RequestLoader::addTypesToSchema()
 			[](std::string_view locationName) noexcept {
 				response::Value locationValue(response::Type::EnumValue);
 
-				locationValue.set<response::StringType>(response::StringType { locationName });
+				locationValue.set<std::string>(std::string { locationName });
 
 				return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
 					locationValue);
@@ -542,7 +544,8 @@ void RequestLoader::addTypesToSchema()
 		_schema->AddDirective(schema::Directive::Make(directive.name,
 			directive.description,
 			std::move(locations),
-			std::move(arguments)));
+			std::move(arguments),
+			directive.isRepeatable));
 	}
 
 	for (const auto& operationType : _schemaLoader.getOperationTypes())

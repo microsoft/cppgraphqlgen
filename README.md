@@ -23,8 +23,7 @@ service, you can use the same GraphQL client code to access your native data sou
 service online. You might even be able to share some more of that code between a progressive web
 app and your native/hybrid app.
 
-If what you're after is a way to consume a GraphQL service from C++, as of
-[v3.6.0](https://github.com/microsoft/cppgraphqlgen/releases/tag/v3.6.0) this project also includes
+If what you're after is a way to consume a GraphQL service from C++, this project also includes
 a `graphqlclient` library and a `clientgen` utility to generate types matching a GraphQL request
 document, its variables, and all of the serialization code you need to talk to a `graphqlservice`
 implementation. If you want to consume another service, you will need access to the schema definition
@@ -32,53 +31,85 @@ implementation. If you want to consume another service, you will need access to 
 any variables to the service and parse its responses into a `graphql::response::Value` (e.g. with the
 `graphqljson` library) in your code.
 
-# Getting Started
-
 ## Related projects
 
-I created a couple of sample projects that work with the latest version to demonstrate integrating the
-[schema.today.graphql](./samples/schema.today.graphql) service into an Electron app. They're available under
-my personal account, feel free to use either or both of these as a starting point to integrate your own generated
-service with Node or Electron. PRs with links to your own samples are always welcome.
+The most complete examples I've built are related to [GqlMAPI](https://github.com/microsoft/gqlmapi):
+- [eMAPI](https://github.com/microsoft/eMAPI): Windows-only Electron app which lets you access
+the [MAPI](https://en.wikipedia.org/wiki/MAPI) interface used by
+[Microsoft Outlook](https://en.wikipedia.org/wiki/Microsoft_Outlook). Its goal is to be a spiritual
+successor to a debugging and diagnostic tool called
+[MFCMAPI](https://github.com/stephenegriffin/mfcmapi).
+- [electron-gqlmapi](https://github.com/microsoft/electron-gqlmapi): Native module for Electron
+which hosts `GqlMAPI` in `eMAPI`. It includes JS libraries for calling the native module across the
+Electron IPC channel.
+- [Tauri-GqlMAPI](https://github.com/wravery/tauri-gqlmapi): Reimplementation of `eMAPI` built
+in [Rust](https://www.rust-lang.org/) and [TypeScript](https://www.typescriptlang.org/) on top of
+[Tauri](https://tauri.studio/en).
+- [gqlmapi-rs](https://github.com/wravery/gqlmapi-rs): `Rust` crate I built to expose safe
+bindings for `GqlMAPI`. It is loosely based on `electron-gqlmapi`, and it is used by
+`Tauri-GqlMAPI`.
 
+I created a couple of sample projects that worked with earlier versions of `cppgraphqlgen` to
+demonstrate integrating the [schema.today.graphql](./samples/schema.today.graphql) service into an
+Electron app. They're still available under my personal account, but I haven't updated them
+recently:
 - [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
-against the version of the Node headers included in Electron.
+against the version of the Node headers included in Electron. This was the starting point for
+`electron-gqlmapi`, and it is still useful as a sample because it does not depend on a platform-specific
+API like `MAPI`, so it works cross-platform.
 - [cppgraphiql](https://github.com/wravery/cppgraphiql): Electron app which consumes `electron-cppgraphql` and
 exposes an instance of [GraphiQL](https://github.com/graphql/graphiql) on top of it.
 
+Feel free to use either or both of these as a starting point to integrate your own generated
+service with `Node`, `Electron`, or `Tauri`. PRs with links to your own samples are always welcome.
+
+# Getting Started
+
 ## Installation process
 
-I've tested this on Windows with both Visual Studio 2017 and 2019, and on Linux using an Ubuntu 20.04 LTS instance running in
-WSL with both gcc 9.3.0 and clang 10.0.0. The key compiler requirement is support for C++17 including std::filesystem, earlier
-versions of gcc and clang may not have enough support for that.
+The minimum OS and toolchain versions I've tested with this version of `cppgraphqlgen` are:
+- Microsoft Windows: Visual Studio 2019
+- Linux: Ubuntu 20.04 LTS with gcc 10.3.0
+- macOS: 11 (Big Sur) with AppleClang 13.0.0.
 
-The easiest way to get all of these and to build `cppgraphqlgen` in one step is to use
-[microsoft/vcpkg](https://github.com/microsoft/vcpkg). To install with vcpkg, make sure you've pulled the latest version
-and then run `vcpkg install cppgraphqlgen` (or `cppgraphqlgen:x64-windows`, `cppgraphqlgen:x86-windows-static`, etc.
-depending on your platform). To install just the dependencies and work in a clone of this repo, you'll need some subset
-of `vcpkg install pegtl boost-program-options rapidjson gtest`. It works for Windows, Linux, and Mac,
-but if you want to try building for another platform (e.g. Android or iOS), you'll need to do more of this manually.
+The key compiler requirement is support for C++20 including coroutines and concepts. Some of these compiler
+versions still treat coroutine support as experimental, and the CMake configuration can auto-detect that,
+but earlier versions of gcc and clang do not seem to have enough support for C++20.
 
-Manual installation will work best if you clone the GitHub repos for each of the dependencies and follow the installation
-instructions for each project. You might also be able to find pre-built packages depending on your platform, but the
-versions need to match.
+The easiest way to build and install `cppgraphqlgen` is to use [microsoft/vcpkg](https://github.com/microsoft/vcpkg).
+See the [Getting Started](https://github.com/microsoft/vcpkg#getting-started) section of the `vcpkg` README
+for details. Once you have that configured, run `vcpkg install cppgraphqlgen` (or `cppgraphqlgen:x64-windows`,
+`cppgraphqlgen:x86-windows-static`, etc. depending on your platform). That will build and install all of the
+dependencies for `cppgraphqlgen`, and then build `cppgraphqlgen` itself without any other setup. The `cppgraphqlgen`
+package (and its dependencies) are advertised to the `CMake` `find_package` function through the
+`-DCMAKE_TOOLCHAIN_FILE=<...>/scripts/buildsystems/vcpkg.cmake` parameter/variable. There are more details about
+this in the `vcpkg` documentation.
+
+If you want to build `cppgraphqlgen` yourself, you can do that with `CMake` from a clone or archive of this repo.
+See the [Build and Test](#build-and-test) section below for instructions. You will need to install the dependencies
+first where `find_package` can find them. If `vcpkg` works otherwise, you can do that with `vcpkg install pegtl
+boost-program-options rapidjson gtest`. Some of these are optional, if for example you do not build the tests. If
+`vcpkg` does not work, please see the documentation for each of those dependencies, as well as your
+platform/toolchain documentation for perferred installation mechanisms. You may need to build some or all of them
+separately from source.
 
 ## Software dependencies
 
 The build system for this project uses [CMake](http://www.cmake.org/). You will need to have CMake (at least version
-3.8.0) installed, and the library dependencies need to be where CMake can find them. Otherwise you need to disable the
+3.15.0) installed, and the library dependencies need to be where CMake can find them. Otherwise you need to disable the
 options which depend on them.
 
-I also picked a few other projects as dependencies, most of which are optional when consuming this project. If you
-redistribute any binaries built from these libraries, you should still follow the terms of their individual licenses. As
-of this writing, this library and all of its redistributable dependencies are available under the MIT license, which
-means you need to include an acknowledgement along with the license text.
+Besides the MIT license for this project, if you redistribute any source code or binaries built from these library
+dependencies, you should still follow the terms of their individual licenses. As of this writing, this library and
+all of its dependencies are available under either the MIT License or the Boost Software License (BSL). Both
+licenses roughly mean that you may redistribute them freely as long as you include an acknowledgement along with
+the license text. Please see the license or copyright notice which comes with each project for more details.
 
 ### graphqlpeg
 
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.2.0,
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.2.2,
 which is part of [The Art of C++](https://taocpp.github.io/) library collection. I've added this as a sub-module, so you
-do not need to install this separately. If you already have 3.2.0 installed where CMake can find it, it will use that
+do not need to install this separately. If you already have 3.2.2 installed where CMake can find it, it will use that
 instead of the sub-module and avoid installing another copy of PEGTL.
 
 ### graphqlservice
@@ -157,7 +188,7 @@ The generated code depends on the `graphqlclient` library for serialization of b
 code, you'll also need to link `graphqlclient`, `graphqlpeg` for the pre-parsed, pre-validated request AST, and
 `graphqlresponse` for the `graphql::response::Value` implementation.
 
-Sample output for `clientgen` is in the [samples/client](samples/client) directory, and each sample is consumed by
+Sample output for `clientgen` is in the sub-directories of [samples/client](samples/client), and each sample is consumed by
 a unit test in [test/ClientTests.cpp](test/ClientTests.cpp).
 
 ### tests (`GRAPHQL_BUILD_TESTS=ON`)
@@ -169,14 +200,27 @@ configuration.
 ## API references
 
 See [GraphQLService.h](include/graphqlservice/GraphQLService.h) for the base types implemented in
-the `graphql::service` namespace. Take a look at [TodayMock.h](samples/today/TodayMock.h) and
-[TodayMock.cpp](samples/today/TodayMock.cpp) to see a sample implementation of a custom schema defined
-in [schema.today.graphql](samples/schema.today.graphql) for testing purposes.
+the `graphql::service` namespace.
+
+Take a look at the [samples/learn](samples/learn) directory, starting with
+[StarWarsData.cpp](samples/learn/StarWarsData.cpp) to see a sample implementation of a custom schema defined in
+[schema.learn.graphql](samples/learn/schema/schema.learn.graphql). This is the same schema and sample data used in the
+GraphQL tutorial on https://graphql.org/learn/. This directory builds an interactive command line application which
+can execute query and mutation operations against the sample data in memory.
+
+There are several helper functions for `CMake` declared in
+[cmake/cppgraphqlgen-functions.cmake](cmake/cppgraphqlgen-functions.cmake), which is automatically included if you use
+`find_package(cppgraphqlgen)` in your own `CMake` project. See
+[samples/learn/schema/CMakeLists.txt](samples/learn/schema/CMakeLists.txt) and
+[samples/learn/CMakeLists.txt](samples/learn/CMakeLists.txt), or the `CMakeLists.txt` files in some of the
+other samples sub-directories for examples of how to use them to automatically rerun the code generators and update
+the files in your source directory.
 
 ### Additional Documentation
 
 There are some more targeted documents in the [doc](./doc) directory:
 
+* [Awaitable Types](./doc/awaitable.md)
 * [Parsing GraphQL](./doc/parsing.md)
 * [Query Responses](./doc/responses.md)
 * [JSON Representation](./doc/json.md)
@@ -187,14 +231,28 @@ There are some more targeted documents in the [doc](./doc) directory:
 
 ### Samples
 
-All of the generated files are in the [samples](samples/) directory. There are two different versions of
-the generated code, one which creates a single pair of files (`samples/unified/`), and one which uses the
-`--separate-files` flag with `schemagen` to generate individual header and source files (`samples/separate/`)
-for each of the object types which need to be implemeneted. The only difference between
-[TodayMock.h](samples/today/TodayMock.h) with and without `IMPL_SEPARATE_TODAY` defined should be that the
-`--separate-files` option generates a [TodayObjects.h](samples/separate/TodayObjects.h) convenience header
-which includes all of the inidividual object header along with the rest of the schema in
-[TodaySchema.h](samples/separate/TodaySchema.h).
+All of the samples are under [samples](samples/), with nested sub-directories for generated files:
+- [samples/today](samples/today/): There are two different samples generated from
+[schema.today.graphql](samples/today/schema.today.graphql) in this directory. The default
+[schema](samples/today/schema/) target includes Introspection support (which is the default), while the
+[nointrospection](samples/today/nointrospection/) target demonstrates how to disable Introspection support
+with the `schemagen --no-introspection` parameter. The mock implementation of the service for both schemas is in
+[samples/today/TodayMock.h](samples/today/TodayMock.h) and [samples/today/TodayMock.cpp](samples/today/TodayMock.cpp).
+It builds an interactive `sample`/`sample_nointrospection` and `benchmark`/`benchmark_nointrospection` target for
+each version, and it uses each of them in several unit tests.
+- [samples/client](samples/client/): Several sample queries built with `clientgen` against the
+[schema.today.graphql](samples/today/schema.today.graphql) schema shared with [samples/today](samples/today/). It
+includes a `client_benchmark` executable for comparison with benchmark executables using the same hardcoded query
+in [samples/today/]. The benchmark links with the default [schema](samples/today/schema/) target in
+[samples/today](samples/today/) to handle the benchmark query.
+- [samples/learn](samples/learn/): Simpler standalone which builds a `learn_star_wars` executable that follows
+the tutorial examples on https://graphql.org/learn/.
+- [samples/validation](samples/validation/): This schema is based on the examples and counter-examples from the
+[Validation](https://spec.graphql.org/October2021/#sec-Validation) section of the October 2021 GraphQL spec. There
+is no implementation of this schema, it relies entirely generated stubs (created with `schemagen --stubs`) to build
+successfully without defining more than placeholder objects fo the Query, Mutation, and Subscription operations in
+[samples/validation/ValidationMock.h](samples/validation/ValidationMock.h). It is used to test the validation logic
+with every example or counter-example in the spec in [test/ValidationTests.cpp](test/ValidationTests.cpp).
 
 # Build and Test
 
@@ -211,7 +269,7 @@ can run all of them from there.
 
 Your experience will vary depending on your build toolchain. The same instructions should work for any platform that
 CMake supports. These basic steps will build and run the tests. You can add options to build in another target directory,
-change the config from `Debug` (default) to `Release`, use another build tool like `Ninja`, etc. If you are using vcpkg
+change the config from `Debug` (default) to `Release`, use another build tool like `Ninja`, etc. If you are using `vcpkg`
 to install the dependencies, remember to specify the `-DCMAKE_TOOLCHAIN_FILE=...` option when you run the initial build
 configuration.
 
@@ -226,8 +284,8 @@ You can then optionally install the public outputs by configuring it with `Relea
 
 ## Interactive tests
 
-If you want to try an interactive version, you can run `samples/sample` and paste in queries against
-the same mock service or load a query from a file on the command line.
+If you want to try an interactive version, you can run `samples/today/sample` or `samples/today/sample_nointrospection`
+and paste in queries against the same mock service or load a query from a file on the command line.
 
 ## Reporting Security Issues
 
