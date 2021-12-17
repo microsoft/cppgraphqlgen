@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.8.2)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/cppgraphqlgen-functions.cmake)
 
 if(GRAPHQL_UPDATE_SAMPLES)
-  update_graphql_schema_files(separate ../schema.today.graphql Today today --stubs)
+  update_graphql_schema_files(separate ../schema.today.graphql Today today --separate-files)
 endif()
 
 add_graphql_schema_target(separate)
