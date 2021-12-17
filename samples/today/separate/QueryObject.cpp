@@ -20,7 +20,7 @@ namespace object {
 
 Query::Query()
 	: service::Object({
-		"Query"
+		R"gql(Query)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(tasks)gql"sv, [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },

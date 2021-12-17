@@ -20,11 +20,7 @@ protected:
 	explicit Droid();
 
 public:
-	virtual service::FieldResult<response::StringType> getId(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getName(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> getFriends(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const override;
-	virtual service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const;
+	virtual service::FieldResult<std::optional<response::StringType>> getPrimaryFunction(service::FieldParams&& params) const = 0;
 
 private:
 	std::future<service::ResolverResult> resolveId(service::ResolverParams&& params);

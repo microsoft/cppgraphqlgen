@@ -20,7 +20,7 @@ namespace object {
 
 FolderConnection::FolderConnection()
 	: service::Object({
-		"FolderConnection"
+		R"gql(FolderConnection)gql"sv,
 	}, {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },

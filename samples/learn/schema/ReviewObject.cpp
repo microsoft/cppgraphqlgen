@@ -20,18 +20,13 @@ namespace object {
 
 Review::Review()
 	: service::Object({
-		"Review"
+		R"gql(Review)gql"sv,
 	}, {
 		{ R"gql(stars)gql"sv, [this](service::ResolverParams&& params) { return resolveStars(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(commentary)gql"sv, [this](service::ResolverParams&& params) { return resolveCommentary(std::move(params)); } }
 	})
 {
-}
-
-service::FieldResult<response::IntType> Review::getStars(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Review::getStars is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Review::resolveStars(service::ResolverParams&& params)
@@ -42,11 +37,6 @@ std::future<service::ResolverResult> Review::resolveStars(service::ResolverParam
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::IntType>::convert(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Review::getCommentary(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Review::getCommentary is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Review::resolveCommentary(service::ResolverParams&& params)

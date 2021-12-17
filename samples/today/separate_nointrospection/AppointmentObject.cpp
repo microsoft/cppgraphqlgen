@@ -20,9 +20,9 @@ namespace object {
 
 Appointment::Appointment()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Appointment"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Appointment)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },

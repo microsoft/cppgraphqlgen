@@ -20,7 +20,7 @@ namespace object {
 
 TaskConnection::TaskConnection()
 	: service::Object({
-		"TaskConnection"
+		R"gql(TaskConnection)gql"sv,
 	}, {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },

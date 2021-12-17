@@ -20,7 +20,7 @@ namespace object {
 
 PageInfo::PageInfo()
 	: service::Object({
-		"PageInfo"
+		R"gql(PageInfo)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(hasNextPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },

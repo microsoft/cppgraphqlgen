@@ -20,9 +20,9 @@ namespace object {
 
 Task::Task()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Task"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Task)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(title)gql"sv, [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } },

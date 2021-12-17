@@ -20,17 +20,12 @@ namespace object {
 
 Mutation::Mutation()
 	: service::Object({
-		"Mutation"
+		R"gql(Mutation)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(createReview)gql"sv, [this](service::ResolverParams&& params) { return resolveCreateReview(std::move(params)); } }
 	})
 {
-}
-
-service::FieldResult<std::shared_ptr<Review>> Mutation::applyCreateReview(service::FieldParams&&, Episode&&, ReviewInput&&) const
-{
-	throw std::runtime_error(R"ex(Mutation::applyCreateReview is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Mutation::resolveCreateReview(service::ResolverParams&& params)

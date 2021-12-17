@@ -20,7 +20,7 @@ namespace object {
 
 Query::Query()
 	: service::Object({
-		"Query"
+		R"gql(Query)gql"sv,
 	}, {
 		{ R"gql(hero)gql"sv, [this](service::ResolverParams&& params) { return resolveHero(std::move(params)); } },
 		{ R"gql(droid)gql"sv, [this](service::ResolverParams&& params) { return resolveDroid(std::move(params)); } },
@@ -31,11 +31,6 @@ Query::Query()
 	})
 	, _schema(GetSchema())
 {
-}
-
-service::FieldResult<std::shared_ptr<service::Object>> Query::getHero(service::FieldParams&&, std::optional<Episode>&&) const
-{
-	throw std::runtime_error(R"ex(Query::getHero is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Query::resolveHero(service::ResolverParams&& params)
@@ -49,11 +44,6 @@ std::future<service::ResolverResult> Query::resolveHero(service::ResolverParams&
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::shared_ptr<Human>> Query::getHuman(service::FieldParams&&, response::StringType&&) const
-{
-	throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
-}
-
 std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams&& params)
 {
 	auto argId = service::ModifiedArgument<response::StringType>::require("id", params.arguments);
@@ -63,11 +53,6 @@ std::future<service::ResolverResult> Query::resolveHuman(service::ResolverParams
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::shared_ptr<Droid>> Query::getDroid(service::FieldParams&&, response::StringType&&) const
-{
-	throw std::runtime_error(R"ex(Query::getDroid is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Query::resolveDroid(service::ResolverParams&& params)

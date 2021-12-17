@@ -20,7 +20,7 @@ namespace object {
 
 Mutation::Mutation()
 	: service::Object({
-		"Mutation"
+		R"gql(Mutation)gql"sv,
 	}, {
 		{ R"gql(setFloat)gql"sv, [this](service::ResolverParams&& params) { return resolveSetFloat(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },

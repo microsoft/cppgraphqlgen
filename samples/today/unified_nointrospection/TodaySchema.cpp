@@ -143,7 +143,7 @@ namespace object {
 
 Query::Query()
 	: service::Object({
-		"Query"
+		R"gql(Query)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(tasks)gql"sv, [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
@@ -388,7 +388,7 @@ std::future<service::ResolverResult> Query::resolve_typename(service::ResolverPa
 
 PageInfo::PageInfo()
 	: service::Object({
-		"PageInfo"
+		R"gql(PageInfo)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(hasNextPage)gql"sv, [this](service::ResolverParams&& params) { return resolveHasNextPage(std::move(params)); } },
@@ -434,7 +434,7 @@ std::future<service::ResolverResult> PageInfo::resolve_typename(service::Resolve
 
 AppointmentEdge::AppointmentEdge()
 	: service::Object({
-		"AppointmentEdge"
+		R"gql(AppointmentEdge)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
@@ -480,7 +480,7 @@ std::future<service::ResolverResult> AppointmentEdge::resolve_typename(service::
 
 AppointmentConnection::AppointmentConnection()
 	: service::Object({
-		"AppointmentConnection"
+		R"gql(AppointmentConnection)gql"sv,
 	}, {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
@@ -526,7 +526,7 @@ std::future<service::ResolverResult> AppointmentConnection::resolve_typename(ser
 
 TaskEdge::TaskEdge()
 	: service::Object({
-		"TaskEdge"
+		R"gql(TaskEdge)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
@@ -572,7 +572,7 @@ std::future<service::ResolverResult> TaskEdge::resolve_typename(service::Resolve
 
 TaskConnection::TaskConnection()
 	: service::Object({
-		"TaskConnection"
+		R"gql(TaskConnection)gql"sv,
 	}, {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
@@ -618,7 +618,7 @@ std::future<service::ResolverResult> TaskConnection::resolve_typename(service::R
 
 FolderEdge::FolderEdge()
 	: service::Object({
-		"FolderEdge"
+		R"gql(FolderEdge)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
@@ -664,7 +664,7 @@ std::future<service::ResolverResult> FolderEdge::resolve_typename(service::Resol
 
 FolderConnection::FolderConnection()
 	: service::Object({
-		"FolderConnection"
+		R"gql(FolderConnection)gql"sv,
 	}, {
 		{ R"gql(edges)gql"sv, [this](service::ResolverParams&& params) { return resolveEdges(std::move(params)); } },
 		{ R"gql(pageInfo)gql"sv, [this](service::ResolverParams&& params) { return resolvePageInfo(std::move(params)); } },
@@ -710,7 +710,7 @@ std::future<service::ResolverResult> FolderConnection::resolve_typename(service:
 
 CompleteTaskPayload::CompleteTaskPayload()
 	: service::Object({
-		"CompleteTaskPayload"
+		R"gql(CompleteTaskPayload)gql"sv,
 	}, {
 		{ R"gql(task)gql"sv, [this](service::ResolverParams&& params) { return resolveTask(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -756,7 +756,7 @@ std::future<service::ResolverResult> CompleteTaskPayload::resolve_typename(servi
 
 Mutation::Mutation()
 	: service::Object({
-		"Mutation"
+		R"gql(Mutation)gql"sv,
 	}, {
 		{ R"gql(setFloat)gql"sv, [this](service::ResolverParams&& params) { return resolveSetFloat(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -804,7 +804,7 @@ std::future<service::ResolverResult> Mutation::resolve_typename(service::Resolve
 
 Subscription::Subscription()
 	: service::Object({
-		"Subscription"
+		R"gql(Subscription)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(nodeChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },
@@ -851,9 +851,9 @@ std::future<service::ResolverResult> Subscription::resolve_typename(service::Res
 
 Appointment::Appointment()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Appointment"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Appointment)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
@@ -947,9 +947,9 @@ std::future<service::ResolverResult> Appointment::resolve_typename(service::Reso
 
 Task::Task()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Task"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Task)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(title)gql"sv, [this](service::ResolverParams&& params) { return resolveTitle(std::move(params)); } },
@@ -1011,9 +1011,9 @@ std::future<service::ResolverResult> Task::resolve_typename(service::ResolverPar
 
 Folder::Folder()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Folder"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Folder)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -1075,7 +1075,7 @@ std::future<service::ResolverResult> Folder::resolve_typename(service::ResolverP
 
 NestedType::NestedType()
 	: service::Object({
-		"NestedType"
+		R"gql(NestedType)gql"sv,
 	}, {
 		{ R"gql(depth)gql"sv, [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
@@ -1121,7 +1121,7 @@ std::future<service::ResolverResult> NestedType::resolve_typename(service::Resol
 
 Expensive::Expensive()
 	: service::Object({
-		"Expensive"
+		R"gql(Expensive)gql"sv,
 	}, {
 		{ R"gql(order)gql"sv, [this](service::ResolverParams&& params) { return resolveOrder(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }

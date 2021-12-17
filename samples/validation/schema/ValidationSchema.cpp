@@ -114,7 +114,7 @@ namespace object {
 
 Query::Query()
 	: service::Object({
-		"Query"
+		R"gql(Query)gql"sv,
 	}, {
 		{ R"gql(dog)gql"sv, [this](service::ResolverParams&& params) { return resolveDog(std::move(params)); } },
 		{ R"gql(pet)gql"sv, [this](service::ResolverParams&& params) { return resolvePet(std::move(params)); } },
@@ -259,10 +259,10 @@ std::future<service::ResolverResult> Query::resolve_type(service::ResolverParams
 
 Dog::Dog()
 	: service::Object({
-		"Pet",
-		"CatOrDog",
-		"DogOrHuman",
-		"Dog"
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(Dog)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(owner)gql"sv, [this](service::ResolverParams&& params) { return resolveOwner(std::move(params)); } },
@@ -374,9 +374,9 @@ std::future<service::ResolverResult> Dog::resolve_typename(service::ResolverPara
 
 Alien::Alien()
 	: service::Object({
-		"Sentient",
-		"HumanOrAlien",
-		"Alien"
+		R"gql(Sentient)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Alien)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -422,10 +422,10 @@ std::future<service::ResolverResult> Alien::resolve_typename(service::ResolverPa
 
 Human::Human()
 	: service::Object({
-		"Sentient",
-		"DogOrHuman",
-		"HumanOrAlien",
-		"Human"
+		R"gql(Sentient)gql"sv,
+		R"gql(DogOrHuman)gql"sv,
+		R"gql(HumanOrAlien)gql"sv,
+		R"gql(Human)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(pets)gql"sv, [this](service::ResolverParams&& params) { return resolvePets(std::move(params)); } },
@@ -471,9 +471,9 @@ std::future<service::ResolverResult> Human::resolve_typename(service::ResolverPa
 
 Cat::Cat()
 	: service::Object({
-		"Pet",
-		"CatOrDog",
-		"Cat"
+		R"gql(Pet)gql"sv,
+		R"gql(CatOrDog)gql"sv,
+		R"gql(Cat)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(nickname)gql"sv, [this](service::ResolverParams&& params) { return resolveNickname(std::move(params)); } },
@@ -552,7 +552,7 @@ std::future<service::ResolverResult> Cat::resolve_typename(service::ResolverPara
 
 Mutation::Mutation()
 	: service::Object({
-		"Mutation"
+		R"gql(Mutation)gql"sv,
 	}, {
 		{ R"gql(mutateDog)gql"sv, [this](service::ResolverParams&& params) { return resolveMutateDog(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
@@ -582,7 +582,7 @@ std::future<service::ResolverResult> Mutation::resolve_typename(service::Resolve
 
 MutateDogResult::MutateDogResult()
 	: service::Object({
-		"MutateDogResult"
+		R"gql(MutateDogResult)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } }
@@ -612,7 +612,7 @@ std::future<service::ResolverResult> MutateDogResult::resolve_typename(service::
 
 Subscription::Subscription()
 	: service::Object({
-		"Subscription"
+		R"gql(Subscription)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(newMessage)gql"sv, [this](service::ResolverParams&& params) { return resolveNewMessage(std::move(params)); } },
@@ -658,7 +658,7 @@ std::future<service::ResolverResult> Subscription::resolve_typename(service::Res
 
 Message::Message()
 	: service::Object({
-		"Message"
+		R"gql(Message)gql"sv,
 	}, {
 		{ R"gql(body)gql"sv, [this](service::ResolverParams&& params) { return resolveBody(std::move(params)); } },
 		{ R"gql(sender)gql"sv, [this](service::ResolverParams&& params) { return resolveSender(std::move(params)); } },
@@ -704,7 +704,7 @@ std::future<service::ResolverResult> Message::resolve_typename(service::Resolver
 
 Arguments::Arguments()
 	: service::Object({
-		"Arguments"
+		R"gql(Arguments)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(intArgField)gql"sv, [this](service::ResolverParams&& params) { return resolveIntArgField(std::move(params)); } },

@@ -20,7 +20,7 @@ namespace object {
 
 Subscription::Subscription()
 	: service::Object({
-		"Subscription"
+		R"gql(Subscription)gql"sv,
 	}, {
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
 		{ R"gql(nodeChange)gql"sv, [this](service::ResolverParams&& params) { return resolveNodeChange(std::move(params)); } },

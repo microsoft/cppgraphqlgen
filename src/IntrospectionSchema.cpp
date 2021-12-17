@@ -122,7 +122,7 @@ namespace object {
 
 Schema::Schema()
 	: service::Object({
-		"__Schema"
+		R"gql(__Schema)gql"sv,
 	}, {
 		{ R"gql(types)gql"sv, [this](service::ResolverParams&& params) { return resolveTypes(std::move(params)); } },
 		{ R"gql(queryType)gql"sv, [this](service::ResolverParams&& params) { return resolveQueryType(std::move(params)); } },
@@ -191,7 +191,7 @@ std::future<service::ResolverResult> Schema::resolve_typename(service::ResolverP
 
 Type::Type()
 	: service::Object({
-		"__Type"
+		R"gql(__Type)gql"sv,
 	}, {
 		{ R"gql(kind)gql"sv, [this](service::ResolverParams&& params) { return resolveKind(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -334,7 +334,7 @@ std::future<service::ResolverResult> Type::resolve_typename(service::ResolverPar
 
 Field::Field()
 	: service::Object({
-		"__Field"
+		R"gql(__Field)gql"sv,
 	}, {
 		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -414,7 +414,7 @@ std::future<service::ResolverResult> Field::resolve_typename(service::ResolverPa
 
 InputValue::InputValue()
 	: service::Object({
-		"__InputValue"
+		R"gql(__InputValue)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(type)gql"sv, [this](service::ResolverParams&& params) { return resolveType(std::move(params)); } },
@@ -472,7 +472,7 @@ std::future<service::ResolverResult> InputValue::resolve_typename(service::Resol
 
 EnumValue::EnumValue()
 	: service::Object({
-		"__EnumValue"
+		R"gql(__EnumValue)gql"sv,
 	}, {
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -530,7 +530,7 @@ std::future<service::ResolverResult> EnumValue::resolve_typename(service::Resolv
 
 Directive::Directive()
 	: service::Object({
-		"__Directive"
+		R"gql(__Directive)gql"sv,
 	}, {
 		{ R"gql(args)gql"sv, [this](service::ResolverParams&& params) { return resolveArgs(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },

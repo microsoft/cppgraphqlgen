@@ -20,8 +20,8 @@ namespace object {
 
 Human::Human()
 	: service::Object({
-		"Character",
-		"Human"
+		R"gql(Character)gql"sv,
+		R"gql(Human)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },
@@ -31,11 +31,6 @@ Human::Human()
 		{ R"gql(homePlanet)gql"sv, [this](service::ResolverParams&& params) { return resolveHomePlanet(std::move(params)); } }
 	})
 {
-}
-
-service::FieldResult<response::StringType> Human::getId(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getId is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Human::resolveId(service::ResolverParams&& params)
@@ -48,11 +43,6 @@ std::future<service::ResolverResult> Human::resolveId(service::ResolverParams&& 
 	return service::ModifiedResult<response::StringType>::convert(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<response::StringType>> Human::getName(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
-}
-
 std::future<service::ResolverResult> Human::resolveName(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -61,11 +51,6 @@ std::future<service::ResolverResult> Human::resolveName(service::ResolverParams&
 	resolverLock.unlock();
 
 	return service::ModifiedResult<response::StringType>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<std::vector<std::shared_ptr<service::Object>>>> Human::getFriends(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getFriends is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Human::resolveFriends(service::ResolverParams&& params)
@@ -78,11 +63,6 @@ std::future<service::ResolverResult> Human::resolveFriends(service::ResolverPara
 	return service::ModifiedResult<service::Object>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
-service::FieldResult<std::optional<std::vector<std::optional<Episode>>>> Human::getAppearsIn(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getAppearsIn is not implemented)ex");
-}
-
 std::future<service::ResolverResult> Human::resolveAppearsIn(service::ResolverParams&& params)
 {
 	std::unique_lock resolverLock(_resolverMutex);
@@ -91,11 +71,6 @@ std::future<service::ResolverResult> Human::resolveAppearsIn(service::ResolverPa
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Episode>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
-}
-
-service::FieldResult<std::optional<response::StringType>> Human::getHomePlanet(service::FieldParams&&) const
-{
-	throw std::runtime_error(R"ex(Human::getHomePlanet is not implemented)ex");
 }
 
 std::future<service::ResolverResult> Human::resolveHomePlanet(service::ResolverParams&& params)

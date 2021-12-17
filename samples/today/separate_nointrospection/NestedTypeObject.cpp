@@ -20,7 +20,7 @@ namespace object {
 
 NestedType::NestedType()
 	: service::Object({
-		"NestedType"
+		R"gql(NestedType)gql"sv,
 	}, {
 		{ R"gql(depth)gql"sv, [this](service::ResolverParams&& params) { return resolveDepth(std::move(params)); } },
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },

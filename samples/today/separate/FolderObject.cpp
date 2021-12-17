@@ -20,9 +20,9 @@ namespace object {
 
 Folder::Folder()
 	: service::Object({
-		"Node",
-		"UnionType",
-		"Folder"
+		R"gql(Node)gql"sv,
+		R"gql(UnionType)gql"sv,
+		R"gql(Folder)gql"sv,
 	}, {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(name)gql"sv, [this](service::ResolverParams&& params) { return resolveName(std::move(params)); } },

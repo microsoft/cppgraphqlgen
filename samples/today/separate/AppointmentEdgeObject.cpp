@@ -20,7 +20,7 @@ namespace object {
 
 AppointmentEdge::AppointmentEdge()
 	: service::Object({
-		"AppointmentEdge"
+		R"gql(AppointmentEdge)gql"sv,
 	}, {
 		{ R"gql(node)gql"sv, [this](service::ResolverParams&& params) { return resolveNode(std::move(params)); } },
 		{ R"gql(cursor)gql"sv, [this](service::ResolverParams&& params) { return resolveCursor(std::move(params)); } },
