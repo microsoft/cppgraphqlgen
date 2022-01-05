@@ -49,10 +49,12 @@ in [Rust](https://www.rust-lang.org/) and [TypeScript](https://www.typescriptlan
 bindings for `GqlMAPI`. It is loosely based on `electron-gqlmapi`, and it is used by
 `Tauri-GqlMAPI`.
 
-I created a couple of sample projects that worked with earlier versions of `cppgraphqlgen` to
-demonstrate integrating the [schema.today.graphql](./samples/schema.today.graphql) service into an
-Electron app. They're still available under my personal account, but I haven't updated them
-recently:
+I created a couple of sample projects to demonstrate integrating the
+[schema.today.graphql](./samples/schema.today.graphql) service into an Electron app. The
+`schema.today.graphql` schema and service implementation in `TodayMock.*` are focused on testing,
+so the specific bootstrapping used in these projects should not be re-used, but you can use them
+as a scaffold to start your own integration with Electron or Node.js. They're available under
+my personal account, and I recently updated them to match the latest release of `cppgraphqlgen`:
 - [electron-cppgraphql](https://github.com/wravery/electron-cppgraphql): Node Native Module which compiles
 against the version of the Node headers included in Electron. This was the starting point for
 `electron-gqlmapi`, and it is still useful as a sample because it does not depend on a platform-specific
