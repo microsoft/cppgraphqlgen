@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::PageInfoHas {
 
 template <class TImpl>
-concept getHasNextPageWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getHasNextPageWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<bool> { impl.getHasNextPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getHasNextPage = requires (TImpl impl) 
+concept getHasNextPage = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<bool> { impl.getHasNextPage() } };
 };
 
 template <class TImpl>
-concept getHasPreviousPageWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getHasPreviousPageWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<bool> { impl.getHasPreviousPage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getHasPreviousPage = requires (TImpl impl) 
+concept getHasPreviousPage = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<bool> { impl.getHasPreviousPage() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

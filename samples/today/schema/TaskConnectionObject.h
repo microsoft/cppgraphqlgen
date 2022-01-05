@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::TaskConnectionHas {
 
 template <class TImpl>
-concept getPageInfoWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getPageInfoWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<PageInfo>> { impl.getPageInfo(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getPageInfo = requires (TImpl impl) 
+concept getPageInfo = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<PageInfo>> { impl.getPageInfo() } };
 };
 
 template <class TImpl>
-concept getEdgesWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getEdgesWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getEdges = requires (TImpl impl) 
+concept getEdges = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<TaskEdge>>>> { impl.getEdges() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

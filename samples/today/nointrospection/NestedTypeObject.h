@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::NestedTypeHas {
 
 template <class TImpl>
-concept getDepthWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getDepthWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<int> { impl.getDepth(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getDepth = requires (TImpl impl) 
+concept getDepth = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<int> { impl.getDepth() } };
 };
 
 template <class TImpl>
-concept getNestedWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNestedWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNested = requires (TImpl impl) 
+concept getNested = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

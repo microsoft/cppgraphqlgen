@@ -14,25 +14,25 @@ namespace graphql::today::object {
 namespace methods::ExpensiveHas {
 
 template <class TImpl>
-concept getOrderWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getOrderWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<int> { impl.getOrder(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getOrder = requires (TImpl impl) 
+concept getOrder = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<int> { impl.getOrder() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

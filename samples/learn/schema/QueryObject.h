@@ -14,49 +14,49 @@ namespace graphql::learn::object {
 namespace methods::QueryHas {
 
 template <class TImpl>
-concept getHeroWithParams = requires (TImpl impl, service::FieldParams params, std::optional<Episode> episodeArg) 
+concept getHeroWithParams = requires (TImpl impl, service::FieldParams params, std::optional<Episode> episodeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Character>> { impl.getHero(std::move(params), std::move(episodeArg)) } };
 };
 
 template <class TImpl>
-concept getHero = requires (TImpl impl, std::optional<Episode> episodeArg) 
+concept getHero = requires (TImpl impl, std::optional<Episode> episodeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Character>> { impl.getHero(std::move(episodeArg)) } };
 };
 
 template <class TImpl>
-concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
+concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getHuman = requires (TImpl impl, std::string idArg) 
+concept getHuman = requires (TImpl impl, std::string idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg) 
+concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getDroid = requires (TImpl impl, std::string idArg) 
+concept getDroid = requires (TImpl impl, std::string idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

@@ -170,7 +170,7 @@ public:
 		}
 
 		...
-		
+
 		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
@@ -226,7 +226,7 @@ public:
 		}
 
 		...
-		
+
 		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);

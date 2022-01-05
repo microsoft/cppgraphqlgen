@@ -21,85 +21,85 @@ concept DogIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog> || std::is
 namespace methods::DogHas {
 
 template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getName = requires (TImpl impl) 
+concept getName = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNickname = requires (TImpl impl) 
+concept getNickname = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
-concept getBarkVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getBarkVolumeWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getBarkVolume(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getBarkVolume = requires (TImpl impl) 
+concept getBarkVolume = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getBarkVolume() } };
 };
 
 template <class TImpl>
-concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg) 
+concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, DogCommand dogCommandArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(params), std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
-concept getDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg) 
+concept getDoesKnowCommand = requires (TImpl impl, DogCommand dogCommandArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(dogCommandArg)) } };
 };
 
 template <class TImpl>
-concept getIsHousetrainedWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg) 
+concept getIsHousetrainedWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> atOtherHomesArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsHousetrained(std::move(params), std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
-concept getIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg) 
+concept getIsHousetrained = requires (TImpl impl, std::optional<bool> atOtherHomesArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsHousetrained(std::move(atOtherHomesArg)) } };
 };
 
 template <class TImpl>
-concept getOwnerWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getOwnerWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getOwner(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getOwner = requires (TImpl impl) 
+concept getOwner = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getOwner() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

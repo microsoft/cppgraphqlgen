@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::AppointmentEdgeHas {
 
 template <class TImpl>
-concept getNodeWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNodeWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNode(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNode = requires (TImpl impl) 
+concept getNode = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNode() } };
 };
 
 template <class TImpl>
-concept getCursorWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getCursorWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<response::Value> { impl.getCursor(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getCursor = requires (TImpl impl) 
+concept getCursor = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<response::Value> { impl.getCursor() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

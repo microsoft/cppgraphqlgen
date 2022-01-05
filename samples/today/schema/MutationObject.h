@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::MutationHas {
 
 template <class TImpl>
-concept applyCompleteTaskWithParams = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg) 
+concept applyCompleteTaskWithParams = requires (TImpl impl, service::FieldParams params, CompleteTaskInput inputArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
-concept applyCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg) 
+concept applyCompleteTask = requires (TImpl impl, CompleteTaskInput inputArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<CompleteTaskPayload>> { impl.applyCompleteTask(std::move(inputArg)) } };
 };
 
 template <class TImpl>
-concept applySetFloatWithParams = requires (TImpl impl, service::FieldParams params, double valueArg) 
+concept applySetFloatWithParams = requires (TImpl impl, service::FieldParams params, double valueArg)
 {
 	{ service::AwaitableScalar<double> { impl.applySetFloat(std::move(params), std::move(valueArg)) } };
 };
 
 template <class TImpl>
-concept applySetFloat = requires (TImpl impl, double valueArg) 
+concept applySetFloat = requires (TImpl impl, double valueArg)
 {
 	{ service::AwaitableScalar<double> { impl.applySetFloat(std::move(valueArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

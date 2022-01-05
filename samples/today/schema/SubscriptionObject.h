@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::SubscriptionHas {
 
 template <class TImpl>
-concept getNextAppointmentChangeWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNextAppointmentChangeWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNextAppointmentChange = requires (TImpl impl) 
+concept getNextAppointmentChange = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Appointment>> { impl.getNextAppointmentChange() } };
 };
 
 template <class TImpl>
-concept getNodeChangeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept getNodeChangeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNodeChange(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getNodeChange = requires (TImpl impl, response::IdType idArg) 
+concept getNodeChange = requires (TImpl impl, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNodeChange(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

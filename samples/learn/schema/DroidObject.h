@@ -21,73 +21,73 @@ concept DroidIs = std::is_same_v<I, Character>;
 namespace methods::DroidHas {
 
 template <class TImpl>
-concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::string> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getId = requires (TImpl impl) 
+concept getId = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::string> { impl.getId() } };
 };
 
 template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getName = requires (TImpl impl) 
+concept getName = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getName() } };
 };
 
 template <class TImpl>
-concept getFriendsWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getFriendsWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getFriends = requires (TImpl impl) 
+concept getFriends = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> { impl.getFriends() } };
 };
 
 template <class TImpl>
-concept getAppearsInWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getAppearsInWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getAppearsIn = requires (TImpl impl) 
+concept getAppearsIn = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> { impl.getAppearsIn() } };
 };
 
 template <class TImpl>
-concept getPrimaryFunctionWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getPrimaryFunctionWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getPrimaryFunction(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getPrimaryFunction = requires (TImpl impl) 
+concept getPrimaryFunction = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getPrimaryFunction() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

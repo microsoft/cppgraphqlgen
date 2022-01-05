@@ -14,109 +14,109 @@ namespace graphql::validation::object {
 namespace methods::QueryHas {
 
 template <class TImpl>
-concept getDogWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getDogWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getDog(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getDog = requires (TImpl impl) 
+concept getDog = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getDog() } };
 };
 
 template <class TImpl>
-concept getHumanWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getHumanWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getHuman = requires (TImpl impl) 
+concept getHuman = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman() } };
 };
 
 template <class TImpl>
-concept getPetWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getPetWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Pet>> { impl.getPet(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getPet = requires (TImpl impl) 
+concept getPet = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Pet>> { impl.getPet() } };
 };
 
 template <class TImpl>
-concept getCatOrDogWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getCatOrDogWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<CatOrDog>> { impl.getCatOrDog(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getCatOrDog = requires (TImpl impl) 
+concept getCatOrDog = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<CatOrDog>> { impl.getCatOrDog() } };
 };
 
 template <class TImpl>
-concept getArgumentsWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getArgumentsWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Arguments>> { impl.getArguments(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getArguments = requires (TImpl impl) 
+concept getArguments = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Arguments>> { impl.getArguments() } };
 };
 
 template <class TImpl>
-concept getResourceWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getResourceWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Resource>> { impl.getResource(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getResource = requires (TImpl impl) 
+concept getResource = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Resource>> { impl.getResource() } };
 };
 
 template <class TImpl>
-concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg) 
+concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg) 
+concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanListWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg) 
+concept getBooleanListWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> booleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanList(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg) 
+concept getBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> booleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanList(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

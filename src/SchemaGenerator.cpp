@@ -513,7 +513,7 @@ private:
 		virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
-		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>
@@ -644,7 +644,7 @@ concept )cpp" << outputField.accessor
 					   << argument.cppName << R"cpp(Arg)cpp";
 		}
 
-		headerFile << R"cpp() 
+		headerFile << R"cpp()
 {
 	{ )cpp" << _loader.getOutputCppType(outputField)
 				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName
@@ -667,7 +667,7 @@ concept )cpp" << outputField.accessor
 					   << argument.cppName << R"cpp(Arg)cpp";
 		}
 
-		headerFile << R"cpp() 
+		headerFile << R"cpp()
 {
 	{ )cpp" << _loader.getOutputCppType(outputField)
 				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName << R"cpp(()cpp";
@@ -684,13 +684,13 @@ concept )cpp" << outputField.accessor
 
 	headerFile << R"cpp(
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };
