@@ -48,9 +48,22 @@ SchemaLoader::SchemaLoader(SchemaOptions&& schemaOptions)
 							   "message from the parser!");
 	}
 
+	// Visit all of the definitions in the first pass.
 	for (const auto& child : _ast.root->children)
 	{
-		visitDefinition(*child);
+		if (!isExtension(*child))
+		{
+			visitDefinition(*child);
+		}
+	}
+
+	// Visit all of the extensions in a second pass.
+	for (const auto& child : _ast.root->children)
+	{
+		if (isExtension(*child))
+		{
+			visitDefinition(*child);
+		}
 	}
 
 	validateSchema();
@@ -436,6 +449,17 @@ void SchemaLoader::validateImplementedInterfaces() const
 	}
 }
 
+bool SchemaLoader::isExtension(const peg::ast_node& definition) noexcept
+{
+	return definition.is_type<peg::schema_extension>()
+		|| definition.is_type<peg::scalar_type_extension>()
+		|| definition.is_type<peg::enum_type_extension>()
+		|| definition.is_type<peg::input_object_type_extension>()
+		|| definition.is_type<peg::union_type_extension>()
+		|| definition.is_type<peg::interface_type_extension>()
+		|| definition.is_type<peg::object_type_extension>();
+}
+
 void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 {
 	if (definition.is_type<peg::schema_definition>())
@@ -449,6 +473,10 @@ void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 	else if (definition.is_type<peg::scalar_type_definition>())
 	{
 		visitScalarTypeDefinition(definition);
+	}
+	else if (definition.is_type<peg::scalar_type_extension>())
+	{
+		visitScalarTypeExtension(definition);
 	}
 	else if (definition.is_type<peg::enum_type_definition>())
 	{
