@@ -14,109 +14,109 @@ namespace graphql::validation::object {
 namespace methods::ArgumentsHas {
 
 template <class TImpl>
-concept getMultipleReqsWithParams = requires (TImpl impl, service::FieldParams params, int xArg, int yArg) 
+concept getMultipleReqsWithParams = requires (TImpl impl, service::FieldParams params, int xArg, int yArg)
 {
 	{ service::AwaitableScalar<int> { impl.getMultipleReqs(std::move(params), std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept getMultipleReqs = requires (TImpl impl, int xArg, int yArg) 
+concept getMultipleReqs = requires (TImpl impl, int xArg, int yArg)
 {
 	{ service::AwaitableScalar<int> { impl.getMultipleReqs(std::move(xArg), std::move(yArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg) 
+concept getBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<bool> booleanArgArg)
 {
 	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanArgField(std::move(params), std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg) 
+concept getBooleanArgField = requires (TImpl impl, std::optional<bool> booleanArgArg)
 {
 	{ service::AwaitableScalar<std::optional<bool>> { impl.getBooleanArgField(std::move(booleanArgArg)) } };
 };
 
 template <class TImpl>
-concept getFloatArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg) 
+concept getFloatArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<double> floatArgArg)
 {
 	{ service::AwaitableScalar<std::optional<double>> { impl.getFloatArgField(std::move(params), std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept getFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg) 
+concept getFloatArgField = requires (TImpl impl, std::optional<double> floatArgArg)
 {
 	{ service::AwaitableScalar<std::optional<double>> { impl.getFloatArgField(std::move(floatArgArg)) } };
 };
 
 template <class TImpl>
-concept getIntArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg) 
+concept getIntArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> intArgArg)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getIntArgField(std::move(params), std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept getIntArgField = requires (TImpl impl, std::optional<int> intArgArg) 
+concept getIntArgField = requires (TImpl impl, std::optional<int> intArgArg)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getIntArgField(std::move(intArgArg)) } };
 };
 
 template <class TImpl>
-concept getNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg) 
+concept getNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool nonNullBooleanArgArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getNonNullBooleanArgField(std::move(params), std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept getNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg) 
+concept getNonNullBooleanArgField = requires (TImpl impl, bool nonNullBooleanArgArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getNonNullBooleanArgField(std::move(nonNullBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept getNonNullBooleanListFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
+concept getNonNullBooleanListFieldWithParams = requires (TImpl impl, service::FieldParams params, std::optional<std::vector<bool>> nonNullBooleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(params), std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept getNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg) 
+concept getNonNullBooleanListField = requires (TImpl impl, std::optional<std::vector<bool>> nonNullBooleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<bool>>> { impl.getNonNullBooleanListField(std::move(nonNullBooleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanListArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg) 
+concept getBooleanListArgFieldWithParams = requires (TImpl impl, service::FieldParams params, std::vector<std::optional<bool>> booleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(params), std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept getBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg) 
+concept getBooleanListArgField = requires (TImpl impl, std::vector<std::optional<bool>> booleanListArgArg)
 {
 	{ service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> { impl.getBooleanListArgField(std::move(booleanListArgArg)) } };
 };
 
 template <class TImpl>
-concept getOptionalNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg) 
+concept getOptionalNonNullBooleanArgFieldWithParams = requires (TImpl impl, service::FieldParams params, bool optionalBooleanArgArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getOptionalNonNullBooleanArgField(std::move(params), std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept getOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg) 
+concept getOptionalNonNullBooleanArgField = requires (TImpl impl, bool optionalBooleanArgArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getOptionalNonNullBooleanArgField(std::move(optionalBooleanArgArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

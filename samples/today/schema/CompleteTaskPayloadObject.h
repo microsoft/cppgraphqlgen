@@ -14,37 +14,37 @@ namespace graphql::today::object {
 namespace methods::CompleteTaskPayloadHas {
 
 template <class TImpl>
-concept getTaskWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getTaskWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Task>> { impl.getTask(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getTask = requires (TImpl impl) 
+concept getTask = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Task>> { impl.getTask() } };
 };
 
 template <class TImpl>
-concept getClientMutationIdWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getClientMutationIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getClientMutationId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getClientMutationId = requires (TImpl impl) 
+concept getClientMutationId = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getClientMutationId() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

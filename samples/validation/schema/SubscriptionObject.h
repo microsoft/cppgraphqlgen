@@ -14,37 +14,37 @@ namespace graphql::validation::object {
 namespace methods::SubscriptionHas {
 
 template <class TImpl>
-concept getNewMessageWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNewMessageWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<Message>> { impl.getNewMessage(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNewMessage = requires (TImpl impl) 
+concept getNewMessage = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<Message>> { impl.getNewMessage() } };
 };
 
 template <class TImpl>
-concept getDisallowedSecondRootFieldWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getDisallowedSecondRootFieldWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<bool> { impl.getDisallowedSecondRootField(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getDisallowedSecondRootField = requires (TImpl impl) 
+concept getDisallowedSecondRootField = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<bool> { impl.getDisallowedSecondRootField() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

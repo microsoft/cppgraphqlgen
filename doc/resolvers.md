@@ -54,7 +54,7 @@ struct RequestResolveParams
 };
 ```
 
-The only parameter which cannot be default initialized is `query`. 
+The only parameter which cannot be default initialized is `query`.
 
 The `service::await_async` launch policy is described in [awaitable.md](./awaitable.md).
 By default, the resolvers will run on the same thread synchronously.
@@ -126,13 +126,13 @@ on whether or not `T` matches those concepts:
 namespace methods::AppointmentHas {
 
 template <class TImpl>
-concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getId = requires (TImpl impl) 
+concept getId = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };

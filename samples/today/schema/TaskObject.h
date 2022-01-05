@@ -21,49 +21,49 @@ concept TaskIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 namespace methods::TaskHas {
 
 template <class TImpl>
-concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getId = requires (TImpl impl) 
+concept getId = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
-concept getTitleWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getTitleWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getTitle(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getTitle = requires (TImpl impl) 
+concept getTitle = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getTitle() } };
 };
 
 template <class TImpl>
-concept getIsCompleteWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIsCompleteWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsComplete(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getIsComplete = requires (TImpl impl) 
+concept getIsComplete = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsComplete() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

@@ -21,73 +21,73 @@ concept AppointmentIs = std::is_same_v<I, Node> || std::is_same_v<I, UnionType>;
 namespace methods::AppointmentHas {
 
 template <class TImpl>
-concept getIdWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getId = requires (TImpl impl) 
+concept getId = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
-concept getWhenWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getWhenWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<response::Value>> { impl.getWhen(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getWhen = requires (TImpl impl) 
+concept getWhen = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<response::Value>> { impl.getWhen() } };
 };
 
 template <class TImpl>
-concept getSubjectWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getSubjectWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getSubject(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getSubject = requires (TImpl impl) 
+concept getSubject = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getSubject() } };
 };
 
 template <class TImpl>
-concept getIsNowWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getIsNowWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsNow(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getIsNow = requires (TImpl impl) 
+concept getIsNow = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<bool> { impl.getIsNow() } };
 };
 
 template <class TImpl>
-concept getForceErrorWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getForceErrorWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getForceError(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getForceError = requires (TImpl impl) 
+concept getForceError = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getForceError() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

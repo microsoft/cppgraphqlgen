@@ -21,61 +21,61 @@ concept CatIs = std::is_same_v<I, Pet> || std::is_same_v<I, CatOrDog>;
 namespace methods::CatHas {
 
 template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getName = requires (TImpl impl) 
+concept getName = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNicknameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNickname = requires (TImpl impl) 
+concept getNickname = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getNickname() } };
 };
 
 template <class TImpl>
-concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg) 
+concept getDoesKnowCommandWithParams = requires (TImpl impl, service::FieldParams params, CatCommand catCommandArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(params), std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
-concept getDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg) 
+concept getDoesKnowCommand = requires (TImpl impl, CatCommand catCommandArg)
 {
 	{ service::AwaitableScalar<bool> { impl.getDoesKnowCommand(std::move(catCommandArg)) } };
 };
 
 template <class TImpl>
-concept getMeowVolumeWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getMeowVolumeWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getMeowVolume(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getMeowVolume = requires (TImpl impl) 
+concept getMeowVolume = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<int>> { impl.getMeowVolume() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

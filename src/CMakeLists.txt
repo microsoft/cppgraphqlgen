@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.15)
 
 if(GRAPHQL_UPDATE_VERSION)
   # internal/Version.h
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.h.in 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Version.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/Version.h
     @ONLY)
 
@@ -26,7 +26,7 @@ if(GRAPHQL_UPDATE_VERSION)
 
     set(GRAPHQL_RC_FILENAME "${target}")
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Library.rc.in 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Library.rc.in
       ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc
       @ONLY)
 
@@ -66,7 +66,7 @@ target_compile_features(graphqlcoro INTERFACE cxx_std_20)
 
 function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_${OUT_RESULT}.cpp")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)
 
   try_compile(TEST_RESULT
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -81,7 +81,7 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAG
           ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
           CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${OPTIONAL_FLAG}"
           CXX_STANDARD 20)
-  
+
         if(TEST_RESULT)
           # Looks like the optional flag was required, go ahead and add it to the compile options.
           target_compile_options(graphqlcoro INTERFACE ${OPTIONAL_FLAG})
@@ -175,18 +175,18 @@ if(GRAPHQL_BUILD_CLIENTGEN)
   # ClientGen.rc
   if(GRAPHQL_UPDATE_VERSION)
     add_dependencies(clientgen update_version_h)
-  
+
     set(GRAPHQL_RC_FILENAME "clientgen")
-  
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in 
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in
       ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc
       @ONLY)
-  
+
     add_custom_command(OUTPUT updated_clientgen_rc
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ClientGen.rc ${CMAKE_CURRENT_SOURCE_DIR}/../res
       COMMAND ${CMAKE_COMMAND} -E touch updated_clientgen_rc
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc)
-  
+
     add_custom_target(update_clientgen_rc ALL
       DEPENDS updated_clientgen_rc)
     add_dependencies(clientgen update_clientgen_rc)
@@ -196,7 +196,7 @@ if(GRAPHQL_BUILD_CLIENTGEN)
     add_library(clientgen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
     target_link_libraries(clientgen PRIVATE clientgen_version)
   endif()
-  
+
   install(TARGETS clientgen
     EXPORT cppgraphqlgen-targets
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
@@ -216,7 +216,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
 
     set(GRAPHQL_RC_FILENAME "schemagen")
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Generator.rc.in
       ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc
       @ONLY)
 
@@ -234,7 +234,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
     add_library(schemagen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
     target_link_libraries(schemagen PRIVATE schemagen_version)
   endif()
-  
+
   install(TARGETS schemagen
     EXPORT cppgraphqlgen-targets
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}

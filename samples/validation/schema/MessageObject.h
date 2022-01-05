@@ -14,37 +14,37 @@ namespace graphql::validation::object {
 namespace methods::MessageHas {
 
 template <class TImpl>
-concept getBodyWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getBodyWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getBody(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getBody = requires (TImpl impl) 
+concept getBody = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getBody() } };
 };
 
 template <class TImpl>
-concept getSenderWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getSenderWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getSender(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getSender = requires (TImpl impl) 
+concept getSender = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<response::IdType> { impl.getSender() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

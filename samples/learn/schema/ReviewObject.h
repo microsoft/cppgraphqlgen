@@ -14,37 +14,37 @@ namespace graphql::learn::object {
 namespace methods::ReviewHas {
 
 template <class TImpl>
-concept getStarsWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getStarsWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<int> { impl.getStars(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getStars = requires (TImpl impl) 
+concept getStars = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<int> { impl.getStars() } };
 };
 
 template <class TImpl>
-concept getCommentaryWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getCommentaryWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getCommentary(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getCommentary = requires (TImpl impl) 
+concept getCommentary = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getCommentary() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

@@ -21,37 +21,37 @@ concept AlienIs = std::is_same_v<I, Sentient> || std::is_same_v<I, HumanOrAlien>
 namespace methods::AlienHas {
 
 template <class TImpl>
-concept getNameWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNameWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getName = requires (TImpl impl) 
+concept getName = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::string> { impl.getName() } };
 };
 
 template <class TImpl>
-concept getHomePlanetWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getHomePlanetWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getHomePlanet(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getHomePlanet = requires (TImpl impl) 
+concept getHomePlanet = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::optional<std::string>> { impl.getHomePlanet() } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

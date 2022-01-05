@@ -88,7 +88,7 @@ add_subdirectory(src)
 
 if(GRAPHQL_BUILD_TESTS OR GRAPHQL_UPDATE_SAMPLES)
   add_subdirectory(samples)
-  
+
   if(GRAPHQL_BUILD_TESTS)
     include(CTest)
     add_subdirectory(test)

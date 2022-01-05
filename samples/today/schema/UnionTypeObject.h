@@ -24,7 +24,7 @@ private:
 		virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
-		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;		
+		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>

@@ -264,6 +264,8 @@ public:
 	std::string getOutputCppType(const OutputField& field) const noexcept;
 
 private:
+	static bool isExtension(const peg::ast_node& definition) noexcept;
+
 	void visitDefinition(const peg::ast_node& definition);
 
 	void visitSchemaDefinition(const peg::ast_node& schemaDefinition);

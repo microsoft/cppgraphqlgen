@@ -1,4 +1,4 @@
-# Introduction 
+# Introduction
 
 ![Windows](https://github.com/microsoft/cppgraphqlgen/workflows/Windows/badge.svg)
 ![macOS](https://github.com/microsoft/cppgraphqlgen/workflows/macOS/badge.svg)

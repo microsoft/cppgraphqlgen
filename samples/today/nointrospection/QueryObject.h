@@ -14,157 +14,157 @@ namespace graphql::today::object {
 namespace methods::QueryHas {
 
 template <class TImpl>
-concept getNodeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg) 
+concept getNodeWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNode(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getNode = requires (TImpl impl, response::IdType idArg) 
+concept getNode = requires (TImpl impl, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Node>> { impl.getNode(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getAppointmentsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getAppointmentsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getAppointments = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getAppointments = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<AppointmentConnection>> { impl.getAppointments(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getTasksWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getTasksWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getTasks = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getTasks = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<TaskConnection>> { impl.getTasks(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getUnreadCountsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getUnreadCountsWithParams = requires (TImpl impl, service::FieldParams params, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(params), std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getUnreadCounts = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg) 
+concept getUnreadCounts = requires (TImpl impl, std::optional<int> firstArg, std::optional<response::Value> afterArg, std::optional<int> lastArg, std::optional<response::Value> beforeArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<FolderConnection>> { impl.getUnreadCounts(std::move(firstArg), std::move(afterArg), std::move(lastArg), std::move(beforeArg)) } };
 };
 
 template <class TImpl>
-concept getAppointmentsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getAppointmentsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getAppointmentsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getAppointmentsById = requires (TImpl impl, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> { impl.getAppointmentsById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getTasksByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getTasksByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getTasksById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getTasksById = requires (TImpl impl, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Task>>> { impl.getTasksById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getUnreadCountsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getUnreadCountsByIdWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getUnreadCountsById = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getUnreadCountsById = requires (TImpl impl, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> { impl.getUnreadCountsById(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getNestedWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getNestedWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getNested = requires (TImpl impl) 
+concept getNested = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::shared_ptr<NestedType>> { impl.getNested() } };
 };
 
 template <class TImpl>
-concept getUnimplementedWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getUnimplementedWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<std::string> { impl.getUnimplemented(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getUnimplemented = requires (TImpl impl) 
+concept getUnimplemented = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<std::string> { impl.getUnimplemented() } };
 };
 
 template <class TImpl>
-concept getExpensiveWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getExpensiveWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getExpensive = requires (TImpl impl) 
+concept getExpensive = requires (TImpl impl)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> { impl.getExpensive() } };
 };
 
 template <class TImpl>
-concept getTestTaskStateWithParams = requires (TImpl impl, service::FieldParams params) 
+concept getTestTaskStateWithParams = requires (TImpl impl, service::FieldParams params)
 {
 	{ service::AwaitableScalar<TaskState> { impl.getTestTaskState(std::move(params)) } };
 };
 
 template <class TImpl>
-concept getTestTaskState = requires (TImpl impl) 
+concept getTestTaskState = requires (TImpl impl)
 {
 	{ service::AwaitableScalar<TaskState> { impl.getTestTaskState() } };
 };
 
 template <class TImpl>
-concept getAnyTypeWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg) 
+concept getAnyTypeWithParams = requires (TImpl impl, service::FieldParams params, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(params), std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg) 
+concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg)
 {
 	{ service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> { impl.getAnyType(std::move(idsArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };

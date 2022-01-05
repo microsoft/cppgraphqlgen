@@ -14,25 +14,25 @@ namespace graphql::learn::object {
 namespace methods::MutationHas {
 
 template <class TImpl>
-concept applyCreateReviewWithParams = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg) 
+concept applyCreateReviewWithParams = requires (TImpl impl, service::FieldParams params, Episode epArg, ReviewInput reviewArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(params), std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
-concept applyCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg) 
+concept applyCreateReview = requires (TImpl impl, Episode epArg, ReviewInput reviewArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Review>> { impl.applyCreateReview(std::move(epArg), std::move(reviewArg)) } };
 };
 
 template <class TImpl>
-concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
 };
 
 template <class TImpl>
-concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params) 
+concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.endSelectionSet(params) };
 };
