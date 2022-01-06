@@ -51,7 +51,7 @@ TEST_F(ValidationExamplesCase, CounterExample102)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 2);
+	ASSERT_EQ(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined field type: Dog name: color","locations":[{"line":4,"column":5}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -103,7 +103,7 @@ TEST_F(ValidationExamplesCase, CounterExample104)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Duplicate operation name: getName","locations":[{"line":7,"column":3}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -128,7 +128,7 @@ TEST_F(ValidationExamplesCase, CounterExample105)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Duplicate operation name: dogOperation","locations":[{"line":7,"column":3}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -169,7 +169,7 @@ TEST_F(ValidationExamplesCase, CounterExample107)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Anonymous operation not alone","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -224,7 +224,7 @@ TEST_F(ValidationExamplesCase, CounterExample110)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -249,7 +249,7 @@ TEST_F(ValidationExamplesCase, CounterExample111)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Subscription with more than one root field name: sub","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -266,7 +266,7 @@ TEST_F(ValidationExamplesCase, CounterExample112)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 1);
+	ASSERT_EQ(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Subscription with Introspection root field name: sub","locations":[{"line":1,"column":1}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -287,7 +287,7 @@ TEST_F(ValidationExamplesCase, CounterExample113)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 4) << "2 undefined fields + 2 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 4 }) << "2 undefined fields + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined field type: Dog name: meowVolume","locations":[{"line":2,"column":4}]})js",
@@ -327,7 +327,7 @@ TEST_F(ValidationExamplesCase, CounterExample115)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined field type: Pet name: nickname","locations":[{"line":2,"column":4}]})js",
@@ -370,7 +370,7 @@ TEST_F(ValidationExamplesCase, CounterExample117)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 3) << "2 undefined fields + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 3 }) << "2 undefined fields + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Field on union type: CatOrDog name: name","locations":[{"line":2,"column":4}]})js",
@@ -418,7 +418,7 @@ TEST_F(ValidationExamplesCase, CounterExample119)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting field type: Dog name: name","locations":[{"line":3,"column":4}]})js",
@@ -482,7 +482,7 @@ TEST_F(ValidationExamplesCase, CounterExample121)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 9) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 9 }) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 4 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":3,"column":4}]})js",
@@ -550,7 +550,7 @@ TEST_F(ValidationExamplesCase, CounterExample123)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 conflicting field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 conflicting field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting field type: Cat name: meowVolume","locations":[{"line":6,"column":5}]})js",
@@ -588,7 +588,7 @@ TEST_F(ValidationExamplesCase, CounterExample125)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 invalid field + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 invalid field + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Field on scalar type: Int name: sinceWhen","locations":[{"line":3,"column":5}]})js",
@@ -639,7 +639,7 @@ TEST_F(ValidationExamplesCase, CounterExample127)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	ASSERT_EQ(errors.size(), 3) << "3 invalid fields";
+	ASSERT_EQ(errors.size(), size_t { 3 }) << "3 invalid fields";
 	EXPECT_EQ(
 		R"js({"message":"Missing fields on non-scalar type: Human","locations":[{"line":2,"column":4}]})js",
 		response::toJSON(std::move(errors[0])))
@@ -687,7 +687,7 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 3 }) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined argument type: Dog field: doesKnowCommand name: command","locations":[{"line":2,"column":20}]})js",
@@ -705,7 +705,7 @@ TEST_F(ValidationExamplesCase, CounterExample130)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 3) << "1 undefined argument + 1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 3 }) << "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined argument directive: include name: unless","locations":[{"line":2,"column":48}]})js",
@@ -806,7 +806,7 @@ TEST_F(ValidationExamplesCase, CounterExample135)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Missing argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js",
@@ -824,7 +824,7 @@ TEST_F(ValidationExamplesCase, CounterExample136)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Required non-null argument type: Arguments field: nonNullBooleanArgField name: nonNullBooleanArg","locations":[{"line":2,"column":4}]})js",
@@ -879,7 +879,7 @@ TEST_F(ValidationExamplesCase, CounterExample138)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 duplicate fragment";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 duplicate fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Duplicate fragment name: fragmentOne","locations":[{"line":11,"column":3}]})js",
@@ -935,7 +935,7 @@ TEST_F(ValidationExamplesCase, CounterExample140)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 4 }) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined target type on fragment definition: notOnExistingType name: NotInSchema","locations":[{"line":1,"column":28}]})js",
@@ -993,7 +993,7 @@ TEST_F(ValidationExamplesCase, CounterExample142)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 4) << "2 not existing types + 2 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 4 }) << "2 not existing types + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Scalar target type on fragment definition: fragOnScalar name: Int","locations":[{"line":1,"column":23}]})js",
@@ -1021,7 +1021,7 @@ TEST_F(ValidationExamplesCase, CounterExample143)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Unused fragment definition name: nameFragment","locations":[{"line":1,"column":1}]})js",
@@ -1041,7 +1041,7 @@ TEST_F(ValidationExamplesCase, CounterExample144)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined fragment + 1 missing field";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined fragment + 1 missing field";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined fragment spread name: undefinedFragment","locations":[{"line":3,"column":8}]})js",
@@ -1071,7 +1071,7 @@ TEST_F(ValidationExamplesCase, CounterExample145)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Cyclic fragment spread name: nameFragment","locations":[{"line":14,"column":7}]})js",
@@ -1132,7 +1132,7 @@ TEST_F(ValidationExamplesCase, CounterExample147)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "2 cyclic fragments";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "2 cyclic fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Cyclic fragment spread name: dogFragment","locations":[{"line":19,"column":8}]})js",
@@ -1176,7 +1176,7 @@ TEST_F(ValidationExamplesCase, CounterExample149)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 incompatible type + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 incompatible type + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Incompatible target type on inline fragment name: Cat","locations":[{"line":2,"column":8}]})js",
@@ -1276,7 +1276,7 @@ TEST_F(ValidationExamplesCase, CounterExample153)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 4) << "2 incompatible type + 2 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 4 }) << "2 incompatible type + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Incompatible target type on inline fragment name: Dog","locations":[{"line":2,"column":8}]})js",
@@ -1326,7 +1326,7 @@ TEST_F(ValidationExamplesCase, CounterExample155)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 3) << "1 incompatible type + 2 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 3 }) << "1 incompatible type + 2 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Incompatible fragment spread target type: Sentient name: sentientFragment","locations":[{"line":2,"column":7}]})js",
@@ -1400,7 +1400,7 @@ TEST_F(ValidationExamplesCase, CounterExample158)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 5)
+	EXPECT_EQ(errors.size(), size_t { 5 })
 		<< "2 expected values + 2 incompatible arguments + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 4 });
 	EXPECT_EQ(R"js({"message":"Expected Int value","locations":[{"line":2,"column":24}]})js",
@@ -1445,7 +1445,7 @@ TEST_F(ValidationExamplesCase, CounterExample160)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined field + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined field + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 2 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined Input Object field type: ComplexInput name: favoriteCookieFlavor","locations":[{"line":2,"column":45}]})js",
@@ -1469,7 +1469,7 @@ TEST_F(ValidationExamplesCase, CounterExample161)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 conflicting field";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 conflicting field";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting input field name: name","locations":[{"line":2,"column":37}]})js",
@@ -1489,7 +1489,7 @@ TEST_F(ValidationExamplesCase, CounterExample162)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 unexpected location";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 unexpected location";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Unexpected location for directive: skip name: QUERY","locations":[{"line":1,"column":7}]})js",
@@ -1509,7 +1509,7 @@ TEST_F(ValidationExamplesCase, CounterExample163)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 conflicting directive + 1 unused variable";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 conflicting directive + 1 unused variable";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting directive name: skip","locations":[{"line":2,"column":24}]})js",
@@ -1546,7 +1546,7 @@ TEST_F(ValidationExamplesCase, CounterExample165)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 conflicting variable";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 conflicting variable";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting variable operation: houseTrainedQuery name: atOtherHomes","locations":[{"line":1,"column":49}]})js",
@@ -1644,7 +1644,7 @@ TEST_F(ValidationExamplesCase, CounterExample169)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 4) << "4 invalid variable types";
+	EXPECT_EQ(errors.size(), size_t { 4 }) << "4 invalid variable types";
 	ASSERT_GE(errors.size(), size_t { 4 });
 	EXPECT_EQ(
 		R"js({"message":"Invalid variable type operation: takesCat name: cat","locations":[{"line":1,"column":22}]})js",
@@ -1690,7 +1690,7 @@ TEST_F(ValidationExamplesCase, CounterExample171)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":3,"column":34}]})js",
@@ -1732,7 +1732,7 @@ TEST_F(ValidationExamplesCase, CounterExample173)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":8,"column":33}]})js",
@@ -1760,7 +1760,7 @@ TEST_F(ValidationExamplesCase, CounterExample174)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":12,"column":33}]})js",
@@ -1814,7 +1814,7 @@ TEST_F(ValidationExamplesCase, CounterExample176)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 undefined variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 undefined variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined variable name: atOtherHomes","locations":[{"line":14,"column":33}]})js",
@@ -1834,7 +1834,7 @@ TEST_F(ValidationExamplesCase, CounterExample177)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 unused variable";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Unused variable name: atOtherHomes","locations":[{"line":1,"column":22}]})js",
@@ -1876,7 +1876,7 @@ TEST_F(ValidationExamplesCase, CounterExample179)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 unused variable";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Unused variable name: atOtherHomes","locations":[{"line":1,"column":37}]})js",
@@ -1906,7 +1906,7 @@ TEST_F(ValidationExamplesCase, CounterExample180)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 1) << "1 unused variable";
+	EXPECT_EQ(errors.size(), size_t { 1 }) << "1 unused variable";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Unused variable name: extra","locations":[{"line":7,"column":51}]})js",
@@ -1926,7 +1926,7 @@ TEST_F(ValidationExamplesCase, CounterExample181)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 incompatible variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Incompatible variable type: Int name: Boolean","locations":[{"line":3,"column":33}]})js",
@@ -1946,7 +1946,7 @@ TEST_F(ValidationExamplesCase, CounterExample182)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 incompatible variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Expected Scalar variable type","locations":[{"line":3,"column":33}]})js",
@@ -1966,7 +1966,7 @@ TEST_F(ValidationExamplesCase, CounterExample183)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 incompatible variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Expected Non-Null variable type","locations":[{"line":3,"column":47}]})js",
@@ -2000,7 +2000,7 @@ TEST_F(ValidationExamplesCase, CounterExample185)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), 2) << "1 incompatible variable + 1 incompatible argument";
+	EXPECT_EQ(errors.size(), size_t { 2 }) << "1 incompatible variable + 1 incompatible argument";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Expected Non-Null variable type","locations":[{"line":3,"column":52}]})js",

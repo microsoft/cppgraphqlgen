@@ -27,7 +27,7 @@ TEST(ArgumentsCase, ListArgumentStrings)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 
-	ASSERT_EQ(3, actual.size()) << "should get 3 entries";
+	ASSERT_EQ(size_t { 3 }, actual.size()) << "should get 3 entries";
 	EXPECT_EQ("string1", actual[0]) << "entry should match";
 	EXPECT_EQ("string2", actual[1]) << "entry should match";
 	EXPECT_EQ("string3", actual[2]) << "entry should match";
@@ -80,7 +80,7 @@ TEST(ArgumentsCase, ListArgumentStringsNullable)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 
-	ASSERT_EQ(4, actual.size()) << "should get 4 entries";
+	ASSERT_EQ(size_t { 4 }, actual.size()) << "should get 4 entries";
 	ASSERT_TRUE(actual[0].has_value()) << "should not be null";
 	EXPECT_EQ("string1", *actual[0]) << "entry should match";
 	ASSERT_TRUE(actual[1].has_value()) << "should not be null";
@@ -108,11 +108,11 @@ TEST(ArgumentsCase, ListArgumentListArgumentStrings)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 
-	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
-	ASSERT_EQ(2, actual[0].size()) << "should get 2 entries";
+	ASSERT_EQ(size_t { 2 }, actual.size()) << "should get 2 entries";
+	ASSERT_EQ(size_t { 2 }, actual[0].size()) << "should get 2 entries";
 	EXPECT_EQ("list1string1", actual[0][0]) << "entry should match";
 	EXPECT_EQ("list1string2", actual[0][1]) << "entry should match";
-	ASSERT_EQ(2, actual[1].size()) << "should get 2 entries";
+	ASSERT_EQ(size_t { 2 }, actual[1].size()) << "should get 2 entries";
 	EXPECT_EQ("list2string1", actual[1][0]) << "entry should match";
 	EXPECT_EQ("list2string2", actual[1][1]) << "entry should match";
 }
@@ -136,9 +136,9 @@ TEST(ArgumentsCase, ListArgumentNullableListArgumentStrings)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 
-	ASSERT_EQ(2, actual.size()) << "should get 2 entries";
+	ASSERT_EQ(size_t { 2 }, actual.size()) << "should get 2 entries";
 	EXPECT_FALSE(actual[0].has_value()) << "should be null";
-	ASSERT_EQ(2, actual[1]->size()) << "should get 2 entries";
+	ASSERT_EQ(size_t { 2 }, actual[1]->size()) << "should get 2 entries";
 	EXPECT_EQ("list2string1", (*actual[1])[0]) << "entry should match";
 	EXPECT_EQ("list2string2", (*actual[1])[1]) << "entry should match";
 }
@@ -227,7 +227,7 @@ TEST(ArgumentsCase, ScalarArgumentMap)
 
 	ASSERT_EQ(response::Type::Map, actual.type()) << "should parse the object";
 	values = actual.release<response::MapType>();
-	ASSERT_EQ(1, values.size()) << "should have a single key/value";
+	ASSERT_EQ(size_t { 1 }, values.size()) << "should have a single key/value";
 	ASSERT_EQ("foo", values.front().first) << "should match the key";
 	ASSERT_EQ("bar", values.front().second.get<std::string>()) << "should match the value";
 }
@@ -250,7 +250,7 @@ TEST(ArgumentsCase, ScalarArgumentList)
 
 	ASSERT_EQ(response::Type::List, actual.type()) << "should parse the array";
 	values = actual.release<response::ListType>();
-	ASSERT_EQ(2, values.size()) << "should have 2 values";
+	ASSERT_EQ(size_t { 2 }, values.size()) << "should have 2 values";
 	ASSERT_EQ("foo", values.front().get<std::string>()) << "should match the value";
 	ASSERT_EQ("bar", values.back().get<std::string>()) << "should match the value";
 }
