@@ -15,6 +15,12 @@ add_library(todaygraphql_nointrospection STATIC TodayMock.cpp)
 target_link_libraries(todaygraphql_nointrospection PUBLIC today_nointrospection_schema)
 target_include_directories(todaygraphql_nointrospection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(MSVC)
+  # warning C4702: unreachable code
+  target_compile_options(todaygraphql PUBLIC /wd4702)
+  target_compile_options(todaygraphql_nointrospection PUBLIC /wd4702)
+endif()
+
 # sample
 add_executable(sample sample.cpp)
 target_link_libraries(sample PRIVATE
