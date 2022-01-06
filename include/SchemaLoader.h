@@ -48,7 +48,7 @@ struct ScalarType
 {
 	std::string_view type;
 	std::string_view description;
-	std::string_view specifiedByURL;
+	std::string_view specifiedByURL {};
 };
 
 using ScalarTypeList = std::vector<ScalarType>;
@@ -105,7 +105,7 @@ struct InputType
 	std::string_view cppType;
 	InputFieldList fields;
 	std::string_view description;
-	std::unordered_set<std::string_view> dependencies;
+	std::unordered_set<std::string_view> dependencies {};
 };
 
 using InputTypeList = std::vector<InputType>;
@@ -298,8 +298,8 @@ private:
 	void validateImplementedInterfaces() const;
 	const InterfaceType& findInterfaceType(
 		std::string_view typeName, std::string_view interfaceName) const;
-	void validateInterfaceFields(std::string_view typeName,
-		std::string_view interfaceName, const OutputFieldList& typeFields) const;
+	void validateInterfaceFields(std::string_view typeName, std::string_view interfaceName,
+		const OutputFieldList& typeFields) const;
 	void validateTransitiveInterfaces(
 		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 

@@ -206,8 +206,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
-				   << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())
@@ -459,7 +458,6 @@ using namespace )cpp"
 
 		const auto& enumValues = enumType->enumValues();
 		const auto cppType = _schemaLoader.getCppType(enumType->name());
-		bool firstValue = true;
 
 		sourceFile << R"cpp(static const std::array<std::string_view, )cpp" << enumValues.size()
 				   << R"cpp(> s_names)cpp" << cppType << R"cpp( = {
@@ -467,7 +465,6 @@ using namespace )cpp"
 
 		for (const auto& enumValue : enumValues)
 		{
-			firstValue = false;
 			sourceFile << R"cpp(	")cpp" << SchemaLoader::getSafeCppName(enumValue->name())
 					   << R"cpp("sv,
 )cpp";

@@ -845,7 +845,7 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 	{
 		RequestSchemaType type;
 		std::string_view name;
-		std::unordered_set<std::string_view> dependencies;
+		std::unordered_set<std::string_view> dependencies {};
 	};
 
 	std::vector<InputTypeDependencies> inputTypes(_referencedInputTypes.size());
