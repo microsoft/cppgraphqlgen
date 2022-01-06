@@ -891,8 +891,6 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 
 						if (directiveName == "deprecated"sv)
 						{
-							std::string_view reason;
-
 							peg::on_first_child<peg::arguments>(directive,
 								[&value](const peg::ast_node& arguments) {
 									peg::on_first_child<peg::argument>(arguments,
