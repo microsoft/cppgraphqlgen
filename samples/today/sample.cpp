@@ -61,21 +61,21 @@ int main(int argc, char** argv)
 
 	try
 	{
-		peg::ast query;
+		peg::ast ast;
 
 		if (argc > 1)
 		{
-			query = peg::parseFile(argv[1]);
+			ast = peg::parseFile(argv[1]);
 		}
 		else
 		{
 			std::istream_iterator<char> start { std::cin >> std::noskipws }, end {};
 			std::string input { start, end };
 
-			query = peg::parseString(std::move(input));
+			ast = peg::parseString(std::move(input));
 		}
 
-		if (!query.root)
+		if (!ast.root)
 		{
 			std::cerr << "Unknown error!" << std::endl;
 			std::cerr << std::endl;
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 		std::cout << "Executing query..." << std::endl;
 
 		std::cout << response::toJSON(
-			service->resolve({ query, ((argc > 2) ? argv[2] : "") }).get())
+			service->resolve({ ast, ((argc > 2) ? argv[2] : "") }).get())
 				  << std::endl;
 	}
 	catch (const std::runtime_error& ex)

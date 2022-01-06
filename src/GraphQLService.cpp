@@ -1631,7 +1631,7 @@ std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefiniti
 	std::pair<std::string_view, const peg::ast_node*> result = { {}, nullptr };
 
 	peg::on_first_child_if<peg::operation_definition>(*query.root,
-		[this, &operationName, &result](const peg::ast_node& operationDefinition) noexcept -> bool {
+		[&operationName, &result](const peg::ast_node& operationDefinition) noexcept -> bool {
 			std::string_view operationType = strQuery;
 
 			peg::on_first_child<peg::operation_type>(operationDefinition,
@@ -1706,7 +1706,7 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
 		// https://spec.graphql.org/October2021/#sec-Normal-and-Serial-Execution
-		const auto operationLaunch = isMutation ? await_async {} : params.launch;
+		auto operationLaunch = isMutation ? await_async {} : params.launch;
 
 		OperationDefinitionVisitor operationVisitor(resolverContext,
 			std::move(operationLaunch),

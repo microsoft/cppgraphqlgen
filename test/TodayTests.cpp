@@ -661,7 +661,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(7);
 	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
-		[this](const std::shared_ptr<service::RequestState>& state)
+		[](const std::shared_ptr<service::RequestState>& state)
 			-> std::shared_ptr<today::Appointment> {
 			EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
@@ -1248,7 +1248,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(13);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
+		[](const std::shared_ptr<service::RequestState>& state,
 			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
 			EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
@@ -1316,8 +1316,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	response::Value variables(response::Type::Map);
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
+			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
 			calledResolver = true;
 			return nullptr;
 		});
@@ -1373,7 +1373,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		return true;
 	};
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
+		[](const std::shared_ptr<service::RequestState>& state,
 			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
 			const response::IdType fuzzyId { 'f', 'a', 'k' };
 
@@ -1453,8 +1453,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	};
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
+			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
 			calledResolver = true;
 			return nullptr;
 		});
@@ -1503,7 +1503,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s));
 	auto state = std::make_shared<today::RequestState>(14);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
+		[](const std::shared_ptr<service::RequestState>& state,
 			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
 			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
@@ -1917,7 +1917,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 	auto key = _service
 				   ->subscribe({
-					   [&calledCallback](response::Value&& response) {
+					   [&calledCallback](response::Value&& /* response */) {
 						   calledCallback = true;
 					   },
 					   std::move(query),
@@ -1970,7 +1970,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 	auto key = _service
-				   ->subscribe({ [&calledCallback](response::Value&& response) {
+				   ->subscribe({ [&calledCallback](response::Value&& /* response */) {
 									calledCallback = true;
 								},
 					   std::move(query),

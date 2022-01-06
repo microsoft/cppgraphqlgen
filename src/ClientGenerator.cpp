@@ -485,7 +485,6 @@ using namespace )cpp"
 		{
 			pendingSeparator.reset();
 
-			const auto& enumValues = enumType->enumValues();
 			const auto cppType = _schemaLoader.getCppType(enumType->name());
 
 			if (!variables.empty())

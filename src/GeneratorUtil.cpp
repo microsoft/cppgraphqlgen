@@ -21,7 +21,7 @@ IncludeGuardScope::IncludeGuardScope(
 				return '_';
 			}
 
-			return std::toupper(ch);
+			return static_cast<char>(std::toupper(ch));
 		});
 
 	_outputFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.

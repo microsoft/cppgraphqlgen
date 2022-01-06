@@ -244,12 +244,12 @@ void ValidateArgumentValueVisitor::visitObjectValue(const peg::ast_node& objectV
 		if (value.values.find(name) != value.values.end())
 		{
 			// https://spec.graphql.org/October2021/#sec-Input-Object-Field-Uniqueness
-			auto position = field->begin();
+			auto fieldPosition = field->begin();
 			std::ostringstream message;
 
 			message << "Conflicting input field name: " << name;
 
-			_errors.push_back({ message.str(), { position.line, position.column } });
+			_errors.push_back({ message.str(), { fieldPosition.line, fieldPosition.column } });
 			continue;
 		}
 
@@ -567,7 +567,6 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 	if (!_fragmentDefinitions.empty())
 	{
 		// https://spec.graphql.org/October2021/#sec-Fragments-Must-Be-Used
-		const size_t originalSize = _errors.size();
 		auto unreferencedFragments = std::move(_fragmentDefinitions);
 
 		for (const auto& name : _referencedFragments)
@@ -920,7 +919,7 @@ bool ValidateExecutableVisitor::matchesScopedType(std::string_view name) const
 	{
 		const auto itrMatch = std::find_if(itrScoped->second.begin(),
 			itrScoped->second.end(),
-			[this, itrNamed](std::string_view matchingType) noexcept {
+			[itrNamed](std::string_view matchingType) noexcept {
 				return itrNamed->second.find(matchingType) != itrNamed->second.end();
 			});
 

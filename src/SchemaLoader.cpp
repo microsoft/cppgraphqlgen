@@ -1097,7 +1097,7 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 		});
 
 	peg::on_first_child<peg::repeatable_keyword>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[&directive](const peg::ast_node& /* child */) {
 			directive.isRepeatable = true;
 		});
 

@@ -473,7 +473,7 @@ void RequestLoader::addTypesToSchema()
 			std::transform(objectType.interfaces.cbegin(),
 				objectType.interfaces.cend(),
 				interfaces.begin(),
-				[this, &interfaceTypes](std::string_view interfaceName) noexcept {
+				[&interfaceTypes](std::string_view interfaceName) noexcept {
 					return interfaceTypes[interfaceName];
 				});
 
