@@ -86,8 +86,8 @@ private:
 	service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLINTROSPECTION_EXPORT Field(std::shared_ptr<introspection::Field> pimpl) noexcept;
-	GRAPHQLINTROSPECTION_EXPORT ~Field();
+	GRAPHQLSERVICE_EXPORT Field(std::shared_ptr<introspection::Field> pimpl) noexcept;
+	GRAPHQLSERVICE_EXPORT ~Field();
 };
 
 } // namespace graphql::introspection::object

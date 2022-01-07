@@ -72,8 +72,8 @@ private:
 	service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLINTROSPECTION_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
-	GRAPHQLINTROSPECTION_EXPORT ~InputValue();
+	GRAPHQLSERVICE_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
+	GRAPHQLSERVICE_EXPORT ~InputValue();
 };
 
 } // namespace graphql::introspection::object

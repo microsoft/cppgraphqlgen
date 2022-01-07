@@ -3,19 +3,19 @@
 
 #pragma once
 
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef GRAPHQLVERSION_H
+#define GRAPHQLVERSION_H
 
 #include <string_view>
 
 namespace graphql::internal {
 
-constexpr std::string_view FullVersion { "4.0.1" };
+constexpr std::string_view FullVersion { "4.1.0" };
 
 constexpr size_t MajorVersion = 4;
-constexpr size_t MinorVersion = 0;
-constexpr size_t PatchVersion = 1;
+constexpr size_t MinorVersion = 1;
+constexpr size_t PatchVersion = 0;
 
 } // namespace graphql::internal
 
-#endif // VERSION_H
+#endif // GRAPHQLVERSION_H

@@ -47,20 +47,7 @@ function(add_graphql_schema_target SCHEMA_TARGET)
     add_library(${SCHEMA_TARGET}_schema STATIC ${SCHEMA_FILES})
     add_dependencies(${SCHEMA_TARGET}_schema ${SCHEMA_TARGET}_update_schema)
     target_include_directories(${SCHEMA_TARGET}_schema PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-    target_link_libraries(${SCHEMA_TARGET}_schema PUBLIC cppgraphqlgen::graphqlintrospection)
-  endif()
-endfunction()
-
-function(add_graphql_schema_no_introspection_target SCHEMA_NO_INTROSPECTION_TARGET)
-  add_custom_target(${SCHEMA_NO_INTROSPECTION_TARGET}_update_schema ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_NO_INTROSPECTION_TARGET}_schema_files)
-
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_NO_INTROSPECTION_TARGET}_schema_files)
-    file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_NO_INTROSPECTION_TARGET}_schema_files SCHEMA_FILES)
-    add_library(${SCHEMA_NO_INTROSPECTION_TARGET}_schema STATIC ${SCHEMA_FILES})
-    add_dependencies(${SCHEMA_NO_INTROSPECTION_TARGET}_schema ${SCHEMA_NO_INTROSPECTION_TARGET}_update_schema)
-    target_include_directories(${SCHEMA_NO_INTROSPECTION_TARGET}_schema PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-    target_link_libraries(${SCHEMA_NO_INTROSPECTION_TARGET}_schema PUBLIC cppgraphqlgen::graphqlservice)
+    target_link_libraries(${SCHEMA_TARGET}_schema PUBLIC cppgraphqlgen::graphqlservice)
   endif()
 endfunction()
 

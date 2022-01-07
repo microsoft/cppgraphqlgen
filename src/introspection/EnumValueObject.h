@@ -72,8 +72,8 @@ private:
 	service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLINTROSPECTION_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl) noexcept;
-	GRAPHQLINTROSPECTION_EXPORT ~EnumValue();
+	GRAPHQLSERVICE_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl) noexcept;
+	GRAPHQLSERVICE_EXPORT ~EnumValue();
 };
 
 } // namespace graphql::introspection::object

@@ -121,27 +121,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with schemagen: minor version mismatch");
 
-)cpp";
-	if (_loader.isIntrospection())
-	{
-		headerFile <<
-			R"cpp(// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLINTROSPECTION_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
-
-)cpp";
-	}
-
-	headerFile <<
-		R"cpp(#include <memory>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -431,7 +411,7 @@ private:
 	if (_loader.isIntrospection())
 	{
 		headerFile
-			<< R"cpp(GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+			<< R"cpp(GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 )cpp";
 
@@ -452,20 +432,20 @@ private:
 			for (const auto& enumType : _loader.getEnumTypes())
 			{
 				headerFile << R"cpp(template <>
-GRAPHQLINTROSPECTION_EXPORT )cpp"
+GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp( ModifiedArgument<)cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType << R"cpp(>::convert(
+						   << R"cpp(>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(> result, ResolverParams params);
 template <>
-GRAPHQLINTROSPECTION_EXPORT void ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT void ModifiedResult<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::validateScalar(
 	const response::Value& value);
@@ -475,10 +455,9 @@ GRAPHQLINTROSPECTION_EXPORT void ModifiedResult<)cpp"
 			for (const auto& inputType : _loader.getInputTypes())
 			{
 				headerFile << R"cpp(template <>
-GRAPHQLINTROSPECTION_EXPORT )cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
-						   << R"cpp( ModifiedArgument<)cpp" << inputType.cppType
-						   << R"cpp(>::convert(
+GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << inputType.cppType << R"cpp(>::convert(
 	const response::Value& value);
 )cpp";
 			}
@@ -922,11 +901,11 @@ private:
 	service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLINTROSPECTION_EXPORT )cpp"
+	GRAPHQLSERVICE_EXPORT )cpp"
 				   << objectType.cppType << R"cpp((std::shared_ptr<)cpp"
 				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
 				   << objectType.cppType << R"cpp(> pimpl) noexcept;
-	GRAPHQLINTROSPECTION_EXPORT ~)cpp"
+	GRAPHQLSERVICE_EXPORT ~)cpp"
 				   << objectType.cppType << R"cpp(();
 };
 )cpp";
@@ -960,8 +939,7 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
-						   << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
 )cpp";
 			}
 
@@ -1742,8 +1720,7 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
-					   << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}
