@@ -17,55 +17,6 @@ using namespace graphql;
 
 using namespace std::literals;
 
-namespace {
-
-response::IdType binAppointmentId;
-response::IdType binTaskId;
-response::IdType binFolderId;
-
-} // namespace
-
-std::shared_ptr<today::Operations> buildService()
-{
-	std::string fakeAppointmentId("fakeAppointmentId");
-	binAppointmentId.resize(fakeAppointmentId.size());
-	std::copy(fakeAppointmentId.cbegin(), fakeAppointmentId.cend(), binAppointmentId.begin());
-
-	std::string fakeTaskId("fakeTaskId");
-	binTaskId.resize(fakeTaskId.size());
-	std::copy(fakeTaskId.cbegin(), fakeTaskId.cend(), binTaskId.begin());
-
-	std::string fakeFolderId("fakeFolderId");
-	binFolderId.resize(fakeFolderId.size());
-	std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), binFolderId.begin());
-
-	auto query = std::make_shared<today::Query>(
-		[]() -> std::vector<std::shared_ptr<today::Appointment>> {
-			return { std::make_shared<today::Appointment>(std::move(binAppointmentId),
-				"tomorrow",
-				"Lunch?",
-				false) };
-		},
-		[]() -> std::vector<std::shared_ptr<today::Task>> {
-			return { std::make_shared<today::Task>(std::move(binTaskId), "Don't forget", true) };
-		},
-		[]() -> std::vector<std::shared_ptr<today::Folder>> {
-			return { std::make_shared<today::Folder>(std::move(binFolderId), "\"Fake\" Inbox", 3) };
-		});
-	auto mutation = std::make_shared<today::Mutation>(
-		[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload> {
-			return std::make_shared<today::CompleteTaskPayload>(
-				std::make_shared<today::Task>(std::move(input.id),
-					"Mutated Task!",
-					*(input.isComplete)),
-				std::move(input.clientMutationId));
-		});
-	auto subscription = std::make_shared<today::Subscription>();
-	auto service = std::make_shared<today::Operations>(query, mutation, subscription);
-
-	return service;
-}
-
 void outputOverview(
 	size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
 {
@@ -127,7 +78,8 @@ int main(int argc, char** argv)
 
 	std::cout << "Iterations: " << iterations << std::endl;
 
-	auto service = buildService();
+	const auto mockService = today::mock_service();
+	const auto& service = mockService->service;
 	std::vector<std::chrono::steady_clock::duration> durationParse(iterations);
 	std::vector<std::chrono::steady_clock::duration> durationValidate(iterations);
 	std::vector<std::chrono::steady_clock::duration> durationResolve(iterations);

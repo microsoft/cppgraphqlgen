@@ -15,8 +15,96 @@
 #include <chrono>
 #include <future>
 #include <iostream>
+#include <mutex>
 
 namespace graphql::today {
+
+const response::IdType& getFakeAppointmentId() noexcept
+{
+	static const auto s_fakeId = []() noexcept {
+		std::string fakeIdString("fakeAppointmentId");
+		response::IdType result(fakeIdString.size());
+
+		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+
+		return result;
+	}();
+
+	return s_fakeId;
+}
+
+const response::IdType& getFakeTaskId() noexcept
+{
+	static const auto s_fakeId = []() noexcept {
+		std::string fakeIdString("fakeTaskId");
+		response::IdType result(fakeIdString.size());
+
+		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+
+		return result;
+	}();
+
+	return s_fakeId;
+}
+
+const response::IdType& getFakeFolderId() noexcept
+{
+	static const auto s_fakeId = []() noexcept {
+		std::string fakeIdString("fakeFolderId");
+		response::IdType result(fakeIdString.size());
+
+		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+
+		return result;
+	}();
+
+	return s_fakeId;
+}
+
+std::unique_ptr<TodayMockService> mock_service() noexcept
+{
+	auto result = std::make_unique<TodayMockService>();
+
+	auto query = std::make_shared<Query>(
+		[mockService = result.get()]() -> std::vector<std::shared_ptr<Appointment>> {
+			++mockService->getAppointmentsCount;
+			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
+				"tomorrow",
+				"Lunch?",
+				false) };
+		},
+		[mockService = result.get()]() -> std::vector<std::shared_ptr<Task>> {
+			++mockService->getTasksCount;
+			return {
+				std::make_shared<Task>(response::IdType(getFakeTaskId()), "Don't forget", true)
+			};
+		},
+		[mockService = result.get()]() -> std::vector<std::shared_ptr<Folder>> {
+			++mockService->getUnreadCountsCount;
+			return {
+				std::make_shared<Folder>(response::IdType(getFakeFolderId()), "\"Fake\" Inbox", 3)
+			};
+		});
+	auto mutation = std::make_shared<Mutation>(
+		[](CompleteTaskInput&& input) -> std::shared_ptr<CompleteTaskPayload> {
+			return std::make_shared<CompleteTaskPayload>(
+				std::make_shared<Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
+				std::move(input.clientMutationId));
+		});
+	auto subscription = std::make_shared<NextAppointmentChange>(
+		[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<Appointment> {
+			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
+				"tomorrow",
+				"Lunch?",
+				true) };
+		});
+
+	result->service = std::make_shared<Operations>(std::move(query),
+		std::move(mutation),
+		std::move(subscription));
+
+	return result;
+}
 
 Appointment::Appointment(
 	response::IdType&& id, std::string&& when, std::string&& subject, bool isNow)
@@ -51,6 +139,9 @@ Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
 
 void Query::loadAppointments(const std::shared_ptr<service::RequestState>& state)
 {
+	static std::mutex s_loaderMutex {};
+	std::lock_guard lock { s_loaderMutex };
+
 	if (_getAppointments)
 	{
 		if (state)
@@ -84,6 +175,9 @@ std::shared_ptr<Appointment> Query::findAppointment(
 
 void Query::loadTasks(const std::shared_ptr<service::RequestState>& state)
 {
+	static std::mutex s_loaderMutex {};
+	std::lock_guard lock { s_loaderMutex };
+
 	if (_getTasks)
 	{
 		if (state)
@@ -117,6 +211,9 @@ std::shared_ptr<Task> Query::findTask(
 
 void Query::loadUnreadCounts(const std::shared_ptr<service::RequestState>& state)
 {
+	static std::mutex s_loaderMutex {};
+	std::lock_guard lock { s_loaderMutex };
+
 	if (_getUnreadCounts)
 	{
 		if (state)
@@ -495,6 +592,10 @@ double Mutation::applySetFloat(double valueArg) noexcept
 	_setFloat = std::make_optional(valueArg);
 	return valueArg;
 }
+
+size_t NextAppointmentChange::_notifySubscribeCount = 0;
+size_t NextAppointmentChange::_subscriptionCount = 0;
+size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
 
 std::stack<CapturedParams> NestedType::_capturedParams;
 
