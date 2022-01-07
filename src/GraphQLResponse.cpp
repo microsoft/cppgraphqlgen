@@ -496,7 +496,7 @@ Value::Value(const Value& other)
 			std::transform(members.cbegin(),
 				members.cend(),
 				std::back_inserter(copy.members),
-				[&copy](const auto& entry) noexcept {
+				[](const auto& entry) noexcept {
 					return entry.second;
 				});
 

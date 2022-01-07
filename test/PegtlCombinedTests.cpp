@@ -14,6 +14,6 @@ using namespace tao::graphqlpeg;
 
 TEST(PegtlCombinedCase, AnalyzeMixedGrammar)
 {
-	ASSERT_EQ(0, analyze<mixed_document>(true))
+	ASSERT_EQ(size_t {}, analyze<mixed_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }

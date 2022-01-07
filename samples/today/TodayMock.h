@@ -262,7 +262,6 @@ private:
 	response::IdType _id;
 	std::shared_ptr<const response::Value> _title;
 	bool _isComplete;
-	TaskState _state = TaskState::New;
 };
 
 class TaskEdge

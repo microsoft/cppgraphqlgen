@@ -136,6 +136,6 @@ TEST(PegtlExecutableCase, ParseVariableDefaultEmptyList)
 
 TEST(PegtlExecutableCase, AnalyzeExecutableGrammar)
 {
-	ASSERT_EQ(0, analyze<executable_document>(true))
+	ASSERT_EQ(size_t {}, analyze<executable_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }

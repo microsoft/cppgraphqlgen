@@ -6,6 +6,9 @@ cmake_minimum_required(VERSION 3.15)
 # Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows: https://cmake.org/cmake/help/latest/policy/CMP0091.html
 cmake_policy(SET CMP0091 NEW)
 
+# Do not set default MSVC warning flags: https://cmake.org/cmake/help/latest/policy/CMP0092.html
+cmake_policy(SET CMP0092 NEW)
+
 # Default to the last updated version from version.txt.
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.txt" VERSION_FILE)
 file(READ "${VERSION_FILE}" LATEST_VERSION)
@@ -50,6 +53,13 @@ if(VCPKG_TARGET_TRIPLET)
       message(STATUS "Using MSVC runtime DLL")
     endif()
   endif()
+endif()
+
+# Enable more warnings, and treat warnings as errors.
+if(MSVC)
+  add_compile_options(/W4 /WX /permissive-)
+else()
+  add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
 function(add_bigobj_flag target)

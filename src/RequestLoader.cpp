@@ -473,7 +473,7 @@ void RequestLoader::addTypesToSchema()
 			std::transform(objectType.interfaces.cbegin(),
 				objectType.interfaces.cend(),
 				interfaces.begin(),
-				[this, &interfaceTypes](std::string_view interfaceName) noexcept {
+				[&interfaceTypes](std::string_view interfaceName) noexcept {
 					return interfaceTypes[interfaceName];
 				});
 
@@ -845,7 +845,7 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 	{
 		RequestSchemaType type;
 		std::string_view name;
-		std::unordered_set<std::string_view> dependencies;
+		std::unordered_set<std::string_view> dependencies {};
 	};
 
 	std::vector<InputTypeDependencies> inputTypes(_referencedInputTypes.size());

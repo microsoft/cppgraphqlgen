@@ -891,8 +891,6 @@ void SchemaLoader::visitEnumTypeExtension(const peg::ast_node& enumTypeExtension
 
 						if (directiveName == "deprecated"sv)
 						{
-							std::string_view reason;
-
 							peg::on_first_child<peg::arguments>(directive,
 								[&value](const peg::ast_node& arguments) {
 									peg::on_first_child<peg::argument>(arguments,
@@ -1097,7 +1095,7 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 		});
 
 	peg::on_first_child<peg::repeatable_keyword>(directiveDefinition,
-		[&directive](const peg::ast_node& child) {
+		[&directive](const peg::ast_node& /* child */) {
 			directive.isRepeatable = true;
 		});
 

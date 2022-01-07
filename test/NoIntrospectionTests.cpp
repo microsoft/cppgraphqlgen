@@ -174,7 +174,7 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -192,7 +192,7 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode))
@@ -207,7 +207,7 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);

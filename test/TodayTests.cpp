@@ -168,7 +168,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -186,7 +186,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode))
@@ -201,7 +201,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -264,7 +264,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -336,7 +336,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -409,7 +409,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -471,7 +471,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(1, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode))
@@ -530,7 +530,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(1, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -661,9 +661,9 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(7);
 	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
-		[this](const std::shared_ptr<service::RequestState>& state)
+		[](const std::shared_ptr<service::RequestState>& state)
 			-> std::shared_ptr<today::Appointment> {
-			EXPECT_EQ(7, std::static_pointer_cast<today::RequestState>(state)->requestId)
+			EXPECT_EQ(size_t { 7 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
 				"today",
@@ -1247,17 +1247,15 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		})");
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(13);
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			EXPECT_EQ(13, std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
-					"Don't forget",
-					true)));
-		});
+	auto subscriptionObject = std::make_shared<
+		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
+							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		EXPECT_EQ(size_t { 13 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
+			<< "should pass the RequestState to the subscription resolvers";
+		EXPECT_EQ(_fakeTaskId, idArg);
+		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
+	});
 	response::Value result;
 	auto key = _service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1316,8 +1314,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 	response::Value variables(response::Type::Map);
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
+			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
 			calledResolver = true;
 			return nullptr;
 		});
@@ -1372,19 +1370,17 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		filterCalled = true;
 		return true;
 	};
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			const response::IdType fuzzyId { 'f', 'a', 'k' };
+	auto subscriptionObject = std::make_shared<
+		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
+							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		const response::IdType fuzzyId { 'f', 'a', 'k' };
 
-			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(fuzzyId, idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
-					"Don't forget",
-					true)));
-		});
+		EXPECT_EQ(size_t { 14 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
+			<< "should pass the RequestState to the subscription resolvers";
+		EXPECT_EQ(fuzzyId, idArg);
+		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
+	});
 	response::Value result;
 	auto key = _service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1453,8 +1449,8 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 	};
 	bool calledResolver = false;
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this, &calledResolver](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
+			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
 			calledResolver = true;
 			return nullptr;
 		});
@@ -1502,17 +1498,15 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s));
 	auto state = std::make_shared<today::RequestState>(14);
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[this](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			EXPECT_EQ(14, std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(_fakeTaskId, idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(_fakeTaskId),
-					"Don't forget",
-					true)));
-		});
+	auto subscriptionObject = std::make_shared<
+		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
+							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+		EXPECT_EQ(size_t { 14 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
+			<< "should pass the RequestState to the subscription resolvers";
+		EXPECT_EQ(_fakeTaskId, idArg);
+		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
+	});
 	response::Value result;
 	auto key = _service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1872,7 +1866,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(1, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -1917,7 +1911,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 	auto key = _service
 				   ->subscribe({
-					   [&calledCallback](response::Value&& response) {
+					   [&calledCallback](response::Value&& /* response */) {
 						   calledCallback = true;
 					   },
 					   std::move(query),
@@ -1970,7 +1964,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
 	auto key = _service
-				   ->subscribe({ [&calledCallback](response::Value&& response) {
+				   ->subscribe({ [&calledCallback](response::Value&& /* response */) {
 									calledCallback = true;
 								},
 					   std::move(query),

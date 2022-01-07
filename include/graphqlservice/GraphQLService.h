@@ -76,8 +76,8 @@ GRAPHQLSERVICE_EXPORT error_path buildErrorPath(const std::optional<field_path>&
 struct schema_error
 {
 	std::string message;
-	schema_location location;
-	error_path path;
+	schema_location location {};
+	error_path path {};
 };
 
 GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(std::list<schema_error>&& structuredErrors);
@@ -579,7 +579,7 @@ struct ResolverParams : SelectionSetParams
 struct ResolverResult
 {
 	response::Value data;
-	std::list<schema_error> errors;
+	std::list<schema_error> errors {};
 };
 
 using AwaitableResolver = internal::Awaitable<ResolverResult>;
@@ -1195,10 +1195,10 @@ struct RequestResolveParams
 	response::Value variables { response::Type::Map };
 
 	// Optional async execution awaitable.
-	await_async launch;
+	await_async launch {};
 
 	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
-	std::shared_ptr<RequestState> state;
+	std::shared_ptr<RequestState> state {};
 };
 
 struct RequestSubscribeParams
@@ -1212,10 +1212,10 @@ struct RequestSubscribeParams
 	response::Value variables { response::Type::Map };
 
 	// Optional async execution awaitable.
-	await_async launch;
+	await_async launch {};
 
 	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
-	std::shared_ptr<RequestState> state;
+	std::shared_ptr<RequestState> state {};
 };
 
 struct RequestUnsubscribeParams
@@ -1224,7 +1224,7 @@ struct RequestUnsubscribeParams
 	SubscriptionKey key;
 
 	// Optional async execution awaitable.
-	await_async launch;
+	await_async launch {};
 };
 
 using SubscriptionArguments = std::map<std::string_view, response::Value>;
@@ -1240,7 +1240,7 @@ struct SubscriptionFilter
 
 	// Optional field directives filter, which can either be a set of required directives and
 	// arguments, or a callback which returns true if the directives match custom criteria.
-	std::optional<std::variant<Directives, SubscriptionDirectiveFilterCallback>> directives;
+	std::optional<std::variant<Directives, SubscriptionDirectiveFilterCallback>> directives {};
 };
 
 // Deliver to a specific subscription key, or apply custom criteria for the field name, arguments,
@@ -1254,13 +1254,13 @@ struct RequestDeliverParams
 
 	// Optional filter to control which subscriptions will receive the event. If not specified,
 	// every subscription on this field will receive the event and evaluate their queries.
-	RequestDeliverFilter filter;
+	RequestDeliverFilter filter {};
 
 	// Optional async execution awaitable.
-	await_async launch;
+	await_async launch {};
 
 	// Optional override for the default Subscription operation object.
-	std::shared_ptr<Object> subscriptionObject;
+	std::shared_ptr<Object> subscriptionObject {};
 };
 
 using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;

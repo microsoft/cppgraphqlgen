@@ -42,7 +42,7 @@ if(GRAPHQL_UPDATE_VERSION)
 endif()
 
 if(WIN32)
-  # Always build the version.rc files with these flags, even if we aren't regnerating them.
+  # Always build the version.rc files with these flags, even if we aren't regenerating them.
   set(CMAKE_RC_FLAGS "/nologo")
   set(CMAKE_RC_FLAGS_DEBUG "/dDEBUG")
 
