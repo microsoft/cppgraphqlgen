@@ -16,89 +16,19 @@ using namespace std::literals;
 class TodayServiceCase : public ::testing::Test
 {
 public:
-	static void SetUpTestCase()
-	{
-		std::string fakeAppointmentId("fakeAppointmentId");
-		_fakeAppointmentId.resize(fakeAppointmentId.size());
-		std::copy(fakeAppointmentId.cbegin(), fakeAppointmentId.cend(), _fakeAppointmentId.begin());
-
-		std::string fakeTaskId("fakeTaskId");
-		_fakeTaskId.resize(fakeTaskId.size());
-		std::copy(fakeTaskId.cbegin(), fakeTaskId.cend(), _fakeTaskId.begin());
-
-		std::string fakeFolderId("fakeFolderId");
-		_fakeFolderId.resize(fakeFolderId.size());
-		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
-	}
-
 	void SetUp() override
 	{
-		auto query = std::make_shared<today::Query>(
-			[this]() -> std::vector<std::shared_ptr<today::Appointment>> {
-				++_getAppointmentsCount;
-				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
-					"tomorrow",
-					"Lunch?",
-					false) };
-			},
-			[this]() -> std::vector<std::shared_ptr<today::Task>> {
-				++_getTasksCount;
-				return { std::make_shared<today::Task>(response::IdType(_fakeTaskId),
-					"Don't forget",
-					true) };
-			},
-			[this]() -> std::vector<std::shared_ptr<today::Folder>> {
-				++_getUnreadCountsCount;
-				return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId),
-					"\"Fake\" Inbox",
-					3) };
-			});
-		auto mutation = std::make_shared<today::Mutation>(
-			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload> {
-				return std::make_shared<today::CompleteTaskPayload>(
-					std::make_shared<today::Task>(std::move(input.id),
-						"Mutated Task!",
-						*(input.isComplete)),
-					std::move(input.clientMutationId));
-			});
-		auto subscription = std::make_shared<today::NextAppointmentChange>(
-			[](const std::shared_ptr<service::RequestState>&)
-				-> std::shared_ptr<today::Appointment> {
-				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
-					"tomorrow",
-					"Lunch?",
-					true) };
-			});
-
-		_service = std::make_shared<today::Operations>(query, mutation, subscription);
+		_mockService = today::mock_service();
 	}
 
 	void TearDown() override
 	{
-		_service.reset();
-	}
-
-	static void TearDownTestCase()
-	{
-		_fakeAppointmentId.clear();
-		_fakeTaskId.clear();
-		_fakeFolderId.clear();
+		_mockService.reset();
 	}
 
 protected:
-	static response::IdType _fakeAppointmentId;
-	static response::IdType _fakeTaskId;
-	static response::IdType _fakeFolderId;
-
-	std::shared_ptr<today::Operations> _service {};
-	size_t _getAppointmentsCount {};
-	size_t _getTasksCount {};
-	size_t _getUnreadCountsCount {};
+	std::unique_ptr<today::TodayMockService> _mockService;
 };
-
-response::IdType TodayServiceCase::_fakeAppointmentId;
-response::IdType TodayServiceCase::_fakeTaskId;
-response::IdType TodayServiceCase::_fakeFolderId;
 
 TEST_F(TodayServiceCase, QueryEverything)
 {
@@ -139,14 +69,14 @@ TEST_F(TodayServiceCase, QueryEverything)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result =
-		_service->resolve(
-					{ query, "Everything"sv, std::move(variables), std::launch::async, state })
+		_mockService->service
+			->resolve({ query, "Everything"sv, std::move(variables), std::launch::async, state })
 			.get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getTasksCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -174,7 +104,8 @@ TEST_F(TodayServiceCase, QueryEverything)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode))
+		EXPECT_EQ(today::getFakeAppointmentId(),
+			service::IdArgument::require("id", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
 			<< "subject should match";
@@ -191,7 +122,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -207,7 +138,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode))
+		EXPECT_EQ(today::getFakeFolderId(), service::IdArgument::require("id", unreadCountNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode))
 			<< "name should match";
@@ -238,12 +169,13 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -272,7 +204,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -305,12 +237,13 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -346,7 +279,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -379,13 +312,14 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(2);
-	auto result =
-		_service->resolve({ query, {}, std::move(variables), std::launch::async, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result = _mockService->service
+					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
+					  .get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -421,7 +355,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -452,12 +386,13 @@ TEST_F(TodayServiceCase, QueryTasks)
 		})gql"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(3);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_GE(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_GE(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getTasksCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 0 }, state->appointmentsRequestId)
 		<< "today service did not call the loader";
@@ -486,7 +421,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("taskId", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("taskId", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -514,12 +449,13 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(4);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_GE(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_GE(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 0 }, state->appointmentsRequestId)
 		<< "today service did not call the loader";
@@ -548,7 +484,8 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("folderId", unreadCountNode))
+		EXPECT_EQ(today::getFakeFolderId(),
+			service::IdArgument::require("folderId", unreadCountNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode))
 			<< "name should match";
@@ -575,7 +512,8 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(5);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -592,7 +530,7 @@ TEST_F(TodayServiceCase, MutateCompleteTask)
 
 		const auto task = service::ScalarArgument::require("completedTask", completedTask);
 		EXPECT_TRUE(task.type() == response::Type::Map) << "should get back a task";
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("completedTaskId", task))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("completedTaskId", task))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Mutated Task!", service::StringArgument::require("title", task))
 			<< "title should match";
@@ -622,7 +560,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(6);
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -632,8 +570,8 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 					   {},
 					   state })
 				   .get();
-	_service->deliver({ "nextAppointmentChange"sv }).get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->deliver({ "nextAppointmentChange"sv }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -646,7 +584,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeDefault)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("nextAppointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -679,13 +617,14 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 			-> std::shared_ptr<today::Appointment> {
 			EXPECT_EQ(size_t { 7 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
-			return std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
+			return std::make_shared<today::Appointment>(
+				response::IdType(today::getFakeAppointmentId()),
 				"today",
 				"Dinner Time!",
 				true);
 		});
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -695,13 +634,13 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 					   {},
 					   state })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nextAppointmentChange"sv,
 			{}, // filter
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -714,7 +653,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("nextAppointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Dinner Time!", service::StringArgument::require("subject", appointmentNode))
@@ -803,8 +742,9 @@ TEST_F(TodayServiceCase, Introspection)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(8);
-	auto result =
-		_service->resolve({ query, {}, std::move(variables), std::launch::async, state }).get();
+	auto result = _mockService->service
+					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
+					  .get();
 
 	try
 	{
@@ -869,7 +809,8 @@ TEST_F(TodayServiceCase, SkipDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(9);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -934,7 +875,8 @@ TEST_F(TodayServiceCase, IncludeDirective)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(10);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -992,7 +934,8 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(11);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -1182,12 +1125,13 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
 	auto state = std::make_shared<today::RequestState>(12);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 12 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -1213,7 +1157,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
@@ -1234,7 +1178,7 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 	auto query = R"(query {
 			unimplemented
 		})"_graphql;
-	auto result = _service->resolve({ query }).get();
+	auto result = _mockService->service->resolve({ query }).get();
 
 	try
 	{
@@ -1267,17 +1211,20 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		})");
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(13);
-	auto subscriptionObject = std::make_shared<
-		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
-							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-		EXPECT_EQ(size_t { 13 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
-			<< "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
-	});
+	auto subscriptionObject = std::make_shared<today::NodeChange>(
+		[](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+			EXPECT_EQ(size_t { 13 },
+				std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(today::getFakeTaskId(), idArg);
+			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+					"Don't forget",
+					true)));
+		});
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -1287,14 +1234,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 					   {},
 					   state })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
 				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1307,7 +1254,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("changedId", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -1340,7 +1287,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 			return nullptr;
 		});
 	bool calledGet = false;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&calledGet](response::Value&&) {
 									calledGet = true;
 								},
@@ -1348,14 +1295,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 					   "TestSubscription"s,
 					   std::move(variables) })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
 				{ "id", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s) } } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1390,19 +1337,22 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		filterCalled = true;
 		return true;
 	};
-	auto subscriptionObject = std::make_shared<
-		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
-							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-		const response::IdType fuzzyId { 'f', 'a', 'k' };
+	auto subscriptionObject = std::make_shared<today::NodeChange>(
+		[](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+			const response::IdType fuzzyId { 'f', 'a', 'k' };
 
-		EXPECT_EQ(size_t { 14 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
-			<< "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(fuzzyId, idArg);
-		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
-	});
+			EXPECT_EQ(size_t { 14 },
+				std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(fuzzyId, idArg);
+			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+					"Don't forget",
+					true)));
+		});
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -1412,14 +1362,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 					   {},
 					   state })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter {
 				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1433,7 +1383,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("changedId", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -1475,7 +1425,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 			return nullptr;
 		});
 	bool calledGet = false;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&calledGet](response::Value&&) {
 									calledGet = true;
 								},
@@ -1483,14 +1433,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 					   "TestSubscription"s,
 					   std::move(variables) })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter {
 				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1518,17 +1468,20 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s));
 	auto state = std::make_shared<today::RequestState>(14);
-	auto subscriptionObject = std::make_shared<
-		today::NodeChange>([](const std::shared_ptr<service::RequestState>& state,
-							   response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-		EXPECT_EQ(size_t { 14 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
-			<< "should pass the RequestState to the subscription resolvers";
-		EXPECT_EQ(_fakeTaskId, idArg);
-		return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-			std::make_shared<today::Task>(response::IdType(_fakeTaskId), "Don't forget", true)));
-	});
+	auto subscriptionObject = std::make_shared<today::NodeChange>(
+		[](const std::shared_ptr<service::RequestState>& state,
+			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+			EXPECT_EQ(size_t { 14 },
+				std::static_pointer_cast<today::RequestState>(state)->requestId)
+				<< "should pass the RequestState to the subscription resolvers";
+			EXPECT_EQ(today::getFakeTaskId(), idArg);
+			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+					"Don't forget",
+					true)));
+		});
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -1538,14 +1491,14 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 					   {},
 					   state })
 				   .get();
-	_service
+	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
 				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1558,7 +1511,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto taskNode = service::ScalarArgument::require("changedNode", data);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("changedId", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("changedId", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -1584,12 +1537,13 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
 	auto state = std::make_shared<today::RequestState>(15);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 15 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -1615,7 +1569,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
@@ -1644,13 +1598,14 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 	response::Value variables(response::Type::Map);
 	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
 	auto state = std::make_shared<today::RequestState>(16);
-	auto result =
-		_service->resolve({ query, {}, std::move(variables), std::launch::async, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result = _mockService->service
+					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
+					  .get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 16 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -1676,7 +1631,7 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
 		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentEntry))
@@ -1699,7 +1654,7 @@ TEST_F(TodayServiceCase, NonExistentTypeIntrospection)
 				description
 			}
 		})"_graphql;
-	auto result = _service->resolve({ query }).get();
+	auto result = _mockService->service->resolve({ query }).get();
 
 	try
 	{
@@ -1731,7 +1686,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(17);
 	response::Value result;
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
 									result = std::move(response);
 								},
@@ -1741,8 +1696,8 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 					   {},
 					   state })
 				   .get();
-	_service->deliver({ "nextAppointmentChange"sv, {}, std::launch::async }).get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->deliver({ "nextAppointmentChange"sv, {}, std::launch::async }).get();
+	_mockService->service->unsubscribe({ key }).get();
 
 	try
 	{
@@ -1755,7 +1710,7 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeAsync)
 		const auto data = service::ScalarArgument::require("data", result);
 
 		const auto appointmentNode = service::ScalarArgument::require("nextAppointment", data);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("nextAppointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -1782,7 +1737,7 @@ TEST_F(TodayServiceCase, NonblockingDeferredExpensive)
 	auto state = std::make_shared<today::RequestState>(18);
 	std::unique_lock testLock(today::Expensive::testMutex);
 	auto result =
-		_service
+		_mockService->service
 			->resolve({ query, "NonblockingDeferredExpensive"sv, std::move(variables), {}, state })
 			.get();
 
@@ -1814,7 +1769,7 @@ TEST_F(TodayServiceCase, BlockingAsyncExpensive)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(19);
 	std::unique_lock testLock(today::Expensive::testMutex);
-	auto result = _service
+	auto result = _mockService->service
 					  ->resolve({ query,
 						  "BlockingAsyncExpensive"sv,
 						  std::move(variables),
@@ -1862,12 +1817,13 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(20);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _getTasksCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 20 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -1896,7 +1852,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId,
+		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
@@ -1911,10 +1867,6 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		FAIL() << response::toJSON(ex.getErrors());
 	}
 }
-
-size_t today::NextAppointmentChange::_notifySubscribeCount = 0;
-size_t today::NextAppointmentChange::_subscriptionCount = 0;
-size_t today::NextAppointmentChange::_notifyUnsubscribeCount = 0;
 
 TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 {
@@ -1935,7 +1887,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({
 					   [&calledCallback](response::Value&& /* response */) {
 						   calledCallback = true;
@@ -1947,7 +1899,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsAsync)
 					   state,
 				   })
 				   .get();
-	_service->unsubscribe({ key, std::launch::async }).get();
+	_mockService->service->unsubscribe({ key, std::launch::async }).get();
 	const auto notifySubscribeEnd =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
 	const auto subscriptionEnd =
@@ -1989,7 +1941,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 		today::NextAppointmentChange::getCount(service::ResolverContext::Subscription);
 	const auto notifyUnsubscribeBegin =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifyUnsubscribe);
-	auto key = _service
+	auto key = _mockService->service
 				   ->subscribe({ [&calledCallback](response::Value&& /* response */) {
 									calledCallback = true;
 								},
@@ -1999,7 +1951,7 @@ TEST_F(TodayServiceCase, SubscribeUnsubscribeNotificationsDeferred)
 					   {},
 					   state })
 				   .get();
-	_service->unsubscribe({ key }).get();
+	_mockService->service->unsubscribe({ key }).get();
 	const auto notifySubscribeEnd =
 		today::NextAppointmentChange::getCount(service::ResolverContext::NotifySubscribe);
 	const auto subscriptionEnd =
@@ -2029,7 +1981,8 @@ TEST_F(TodayServiceCase, MutateSetFloat)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(22);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{
@@ -2059,7 +2012,8 @@ TEST_F(TodayServiceCase, MutateCoerceSetFloat)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(22);
-	auto result = _service->resolve({ query, {}, std::move(variables), {}, state }).get();
+	auto result =
+		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
 
 	try
 	{

@@ -19,93 +19,19 @@ using namespace std::literals;
 class NoIntrospectionServiceCase : public ::testing::Test
 {
 public:
-	static void SetUpTestCase()
-	{
-		std::string fakeAppointmentId("fakeAppointmentId");
-		_fakeAppointmentId.resize(fakeAppointmentId.size());
-		std::copy(fakeAppointmentId.cbegin(), fakeAppointmentId.cend(), _fakeAppointmentId.begin());
-
-		std::string fakeTaskId("fakeTaskId");
-		_fakeTaskId.resize(fakeTaskId.size());
-		std::copy(fakeTaskId.cbegin(), fakeTaskId.cend(), _fakeTaskId.begin());
-
-		std::string fakeFolderId("fakeFolderId");
-		_fakeFolderId.resize(fakeFolderId.size());
-		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
-	}
-
 	void SetUp() override
 	{
-		auto query = std::make_shared<today::Query>(
-			[this]() -> std::vector<std::shared_ptr<today::Appointment>> {
-				++_getAppointmentsCount;
-				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
-					"tomorrow",
-					"Lunch?",
-					false) };
-			},
-			[this]() -> std::vector<std::shared_ptr<today::Task>> {
-				++_getTasksCount;
-				return { std::make_shared<today::Task>(response::IdType(_fakeTaskId),
-					"Don't forget",
-					true) };
-			},
-			[this]() -> std::vector<std::shared_ptr<today::Folder>> {
-				++_getUnreadCountsCount;
-				return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId),
-					"\"Fake\" Inbox",
-					3) };
-			});
-		auto mutation = std::make_shared<today::Mutation>(
-			[](today::CompleteTaskInput&& input) -> std::shared_ptr<today::CompleteTaskPayload> {
-				return std::make_shared<today::CompleteTaskPayload>(
-					std::make_shared<today::Task>(std::move(input.id),
-						"Mutated Task!",
-						*(input.isComplete)),
-					std::move(input.clientMutationId));
-			});
-		auto subscription = std::make_shared<today::NextAppointmentChange>(
-			[](const std::shared_ptr<service::RequestState>&)
-				-> std::shared_ptr<today::Appointment> {
-				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
-					"tomorrow",
-					"Lunch?",
-					true) };
-			});
-
-		_service = std::make_shared<today::Operations>(query, mutation, subscription);
+		_mockService = today::mock_service();
 	}
 
 	void TearDown() override
 	{
-		_service.reset();
-	}
-
-	static void TearDownTestCase()
-	{
-		_fakeAppointmentId.clear();
-		_fakeTaskId.clear();
-		_fakeFolderId.clear();
+		_mockService.reset();
 	}
 
 protected:
-	static response::IdType _fakeAppointmentId;
-	static response::IdType _fakeTaskId;
-	static response::IdType _fakeFolderId;
-
-	std::shared_ptr<today::Operations> _service {};
-	size_t _getAppointmentsCount {};
-	size_t _getTasksCount {};
-	size_t _getUnreadCountsCount {};
+	std::unique_ptr<today::TodayMockService> _mockService;
 };
-
-response::IdType NoIntrospectionServiceCase::_fakeAppointmentId;
-response::IdType NoIntrospectionServiceCase::_fakeTaskId;
-response::IdType NoIntrospectionServiceCase::_fakeFolderId;
-
-size_t today::NextAppointmentChange::_notifySubscribeCount = 0;
-size_t today::NextAppointmentChange::_subscriptionCount = 0;
-size_t today::NextAppointmentChange::_notifyUnsubscribeCount = 0;
 
 TEST_F(NoIntrospectionServiceCase, QueryEverything)
 {
@@ -146,14 +72,14 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
 	auto result =
-		_service->resolve(
-					{ query, "Everything"sv, std::move(variables), std::launch::async, state })
+		_mockService->service
+			->resolve({ query, "Everything"sv, std::move(variables), std::launch::async, state })
 			.get();
-	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getTasksCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _getUnreadCountsCount)
+	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
 	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
@@ -181,7 +107,8 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
-		EXPECT_EQ(_fakeAppointmentId, service::IdArgument::require("id", appointmentNode))
+		EXPECT_EQ(today::getFakeAppointmentId(),
+			service::IdArgument::require("id", appointmentNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Lunch?", service::StringArgument::require("subject", appointmentNode))
 			<< "subject should match";
@@ -198,7 +125,7 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
-		EXPECT_EQ(_fakeTaskId, service::IdArgument::require("id", taskNode))
+		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("Don't forget", service::StringArgument::require("title", taskNode))
 			<< "title should match";
@@ -214,7 +141,7 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
-		EXPECT_EQ(_fakeFolderId, service::IdArgument::require("id", unreadCountNode))
+		EXPECT_EQ(today::getFakeFolderId(), service::IdArgument::require("id", unreadCountNode))
 			<< "id should match in base64 encoding";
 		EXPECT_EQ("\"Fake\" Inbox", service::StringArgument::require("name", unreadCountNode))
 			<< "name should match";
@@ -236,7 +163,7 @@ TEST_F(NoIntrospectionServiceCase, NoSchema)
 				queryType { name }
 			}
 		})"_graphql;
-	auto result = _service->resolve({ query }).get();
+	auto result = _mockService->service->resolve({ query }).get();
 
 	try
 	{
@@ -262,7 +189,7 @@ TEST_F(NoIntrospectionServiceCase, NoType)
 				description
 			}
 		})"_graphql;
-	auto result = _service->resolve({ query }).get();
+	auto result = _mockService->service->resolve({ query }).get();
 
 	try
 	{

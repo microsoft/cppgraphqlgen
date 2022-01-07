@@ -26,6 +26,21 @@
 
 namespace graphql::today {
 
+// These IDs are hard-coded in every test which uses TodayMock.
+const response::IdType& getFakeAppointmentId() noexcept;
+const response::IdType& getFakeTaskId() noexcept;
+const response::IdType& getFakeFolderId() noexcept;
+
+struct TodayMockService
+{
+	std::shared_ptr<Operations> service {};
+	size_t getAppointmentsCount {};
+	size_t getTasksCount {};
+	size_t getUnreadCountsCount {};
+};
+
+std::unique_ptr<TodayMockService> mock_service() noexcept;
+
 struct RequestState : service::RequestState
 {
 	RequestState(size_t id)
