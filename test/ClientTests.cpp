@@ -30,22 +30,25 @@ public:
 		std::string fakeFolderId("fakeFolderId");
 		_fakeFolderId.resize(fakeFolderId.size());
 		std::copy(fakeFolderId.cbegin(), fakeFolderId.cend(), _fakeFolderId.begin());
+	}
 
+	void SetUp() override
+	{
 		auto query = std::make_shared<today::Query>(
-			[]() -> std::vector<std::shared_ptr<today::Appointment>> {
+			[this]() -> std::vector<std::shared_ptr<today::Appointment>> {
 				++_getAppointmentsCount;
 				return { std::make_shared<today::Appointment>(response::IdType(_fakeAppointmentId),
 					"tomorrow",
 					"Lunch?",
 					false) };
 			},
-			[]() -> std::vector<std::shared_ptr<today::Task>> {
+			[this]() -> std::vector<std::shared_ptr<today::Task>> {
 				++_getTasksCount;
 				return { std::make_shared<today::Task>(response::IdType(_fakeTaskId),
 					"Don't forget",
 					true) };
 			},
-			[]() -> std::vector<std::shared_ptr<today::Folder>> {
+			[this]() -> std::vector<std::shared_ptr<today::Folder>> {
 				++_getUnreadCountsCount;
 				return { std::make_shared<today::Folder>(response::IdType(_fakeFolderId),
 					"\"Fake\" Inbox",
@@ -71,12 +74,16 @@ public:
 		_service = std::make_shared<today::Operations>(query, mutation, subscription);
 	}
 
+	void TearDown() override
+	{
+		_service.reset();
+	}
+
 	static void TearDownTestCase()
 	{
 		_fakeAppointmentId.clear();
 		_fakeTaskId.clear();
 		_fakeFolderId.clear();
-		_service.reset();
 	}
 
 protected:
@@ -84,20 +91,15 @@ protected:
 	static response::IdType _fakeTaskId;
 	static response::IdType _fakeFolderId;
 
-	static std::shared_ptr<today::Operations> _service;
-	static size_t _getAppointmentsCount;
-	static size_t _getTasksCount;
-	static size_t _getUnreadCountsCount;
+	std::shared_ptr<today::Operations> _service {};
+	size_t _getAppointmentsCount {};
+	size_t _getTasksCount {};
+	size_t _getUnreadCountsCount {};
 };
 
 response::IdType ClientCase::_fakeAppointmentId;
 response::IdType ClientCase::_fakeTaskId;
 response::IdType ClientCase::_fakeFolderId;
-
-std::shared_ptr<today::Operations> ClientCase::_service;
-size_t ClientCase::_getAppointmentsCount = 0;
-size_t ClientCase::_getTasksCount = 0;
-size_t ClientCase::_getUnreadCountsCount = 0;
 
 TEST_F(ClientCase, QueryEverything)
 {
