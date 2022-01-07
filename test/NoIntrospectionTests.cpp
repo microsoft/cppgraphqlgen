@@ -149,20 +149,20 @@ TEST_F(NoIntrospectionServiceCase, QueryEverything)
 		_service->resolve(
 					{ query, "Everything"sv, std::move(variables), std::launch::async, state })
 			.get();
-	EXPECT_EQ(size_t(1), _getAppointmentsCount)
+	EXPECT_EQ(size_t { 1 }, _getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t(1), _getTasksCount)
+	EXPECT_EQ(size_t { 1 }, _getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t(1), _getUnreadCountsCount)
+	EXPECT_EQ(size_t { 1 }, _getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t(1), state->appointmentsRequestId)
+	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t(1), state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t(1), state->unreadCountsRequestId)
+	EXPECT_EQ(size_t { 1 }, state->tasksRequestId) << "today service passed the same RequestState";
+	EXPECT_EQ(size_t { 1 }, state->unreadCountsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t(1), state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t(1), state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t(1), state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
+	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
 
 	try
 	{
