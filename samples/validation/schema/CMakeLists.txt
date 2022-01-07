@@ -10,4 +10,4 @@ if(GRAPHQL_UPDATE_SAMPLES)
   update_graphql_schema_files(validation schema.validation.graphql Validation validation --stubs --no-introspection)
 endif()
 
-add_graphql_schema_no_introspection_target(validation)
+add_graphql_schema_target(validation)

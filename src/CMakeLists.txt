@@ -289,12 +289,15 @@ endif()
 
 # introspection
 add_subdirectory(introspection)
+file(GLOB INTROSPECTION_SCHEMA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/introspection/*.cpp)
 
 # graphqlservice
 add_library(graphqlservice
   GraphQLService.cpp
   Schema.cpp
-  Validation.cpp)
+  Validation.cpp
+  Introspection.cpp
+  ${INTROSPECTION_SCHEMA_FILES})
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
@@ -302,8 +305,6 @@ target_link_libraries(graphqlservice PUBLIC
   Threads::Threads)
 
 if(GRAPHQL_UPDATE_SAMPLES)
-  # Even though this target doesn't build IntrospectionSchema.cpp, it still
-  # depends on IntrospectionSchema.h for some enum definitions.
   add_dependencies(graphqlservice copy_introspection_schema_headers)
 endif()
 
@@ -319,26 +320,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlservice)
 endif()
 
-# graphqlintrospection
-file(GLOB INTROSPECTION_SCHEMA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/introspection/*.cpp)
-add_library(graphqlintrospection Introspection.cpp ${INTROSPECTION_SCHEMA_FILES})
-add_library(cppgraphqlgen::graphqlintrospection ALIAS graphqlintrospection)
-target_link_libraries(graphqlintrospection PUBLIC graphqlservice)
-
-if(GRAPHQL_UPDATE_VERSION)
-  update_version_rc(graphqlintrospection)
-endif()
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  target_compile_definitions(graphqlintrospection
-    PUBLIC GRAPHQL_DLLEXPORTS
-    PRIVATE IMPL_GRAPHQLINTROSPECTION_DLL)
-
-  add_version_rc(graphqlintrospection)
-endif()
-
 if(GRAPHQL_BUILD_CLIENTGEN)
-  target_link_libraries(clientgen PRIVATE graphqlintrospection)
+  target_link_libraries(clientgen PRIVATE graphqlservice)
 endif()
 
 # graphqlclient
@@ -392,7 +375,6 @@ endif()
 
 install(TARGETS
     graphqlclient
-    graphqlintrospection
     graphqlpeg
     graphqlcoro
     graphqlresponse
@@ -426,7 +408,7 @@ install(FILES
 if(BUILD_GRAPHQLJSON)
   option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
 
-  target_link_libraries(graphqljson PUBLIC graphqlintrospection)
+  target_link_libraries(graphqljson PUBLIC graphqlresponse)
 
   install(TARGETS graphqljson
     EXPORT cppgraphqlgen-targets

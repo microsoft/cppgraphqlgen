@@ -14,18 +14,6 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLINTROSPECTION_DLL
-		#define GRAPHQLINTROSPECTION_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLINTROSPECTION_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLINTROSPECTION_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -93,7 +81,7 @@ void AddInputValueDetails(const std::shared_ptr<schema::ObjectType>& typeInputVa
 void AddEnumValueDetails(const std::shared_ptr<schema::ObjectType>& typeEnumValue, const std::shared_ptr<schema::Schema>& schema);
 void AddDirectiveDetails(const std::shared_ptr<schema::ObjectType>& typeDirective, const std::shared_ptr<schema::Schema>& schema);
 
-GRAPHQLINTROSPECTION_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
+GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 } // namespace introspection
 
@@ -102,22 +90,22 @@ namespace service {
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLINTROSPECTION_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
+GRAPHQLSERVICE_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(
 	AwaitableScalar<introspection::TypeKind> result, ResolverParams params);
 template <>
-GRAPHQLINTROSPECTION_EXPORT void ModifiedResult<introspection::TypeKind>::validateScalar(
+GRAPHQLSERVICE_EXPORT void ModifiedResult<introspection::TypeKind>::validateScalar(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
+GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLINTROSPECTION_EXPORT AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(
+GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(
 	AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params);
 template <>
-GRAPHQLINTROSPECTION_EXPORT void ModifiedResult<introspection::DirectiveLocation>::validateScalar(
+GRAPHQLSERVICE_EXPORT void ModifiedResult<introspection::DirectiveLocation>::validateScalar(
 	const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 

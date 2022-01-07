@@ -92,7 +92,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_test_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:graphqlservice>
-      $<TARGET_FILE:graphqlintrospection>
       $<TARGET_FILE:graphqljson>
       $<TARGET_FILE:graphqlpeg>
       $<TARGET_FILE:graphqlresponse>
@@ -101,7 +100,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/copied_test_dlls
     DEPENDS
       graphqlservice
-      graphqlintrospection
       graphqljson
       graphqlpeg
       graphqlresponse

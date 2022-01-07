@@ -22,15 +22,15 @@ class EnumValue;
 class Schema
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
+	GRAPHQLSERVICE_EXPORT explicit Schema(const std::shared_ptr<schema::Schema>& schema);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::Type>> getTypes() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getQueryType() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getMutationType() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getSubscriptionType() const;
-	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::Directive>> getDirectives()
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT std::vector<std::shared_ptr<object::Type>> getTypes() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getQueryType() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getMutationType() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getSubscriptionType() const;
+	GRAPHQLSERVICE_EXPORT std::vector<std::shared_ptr<object::Directive>> getDirectives()
 		const;
 
 private:
@@ -40,24 +40,24 @@ private:
 class Type
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Type(const std::shared_ptr<const schema::BaseType>& type);
+	GRAPHQLSERVICE_EXPORT explicit Type(const std::shared_ptr<const schema::BaseType>& type);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT TypeKind getKind() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getName() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Field>>>
+	GRAPHQLSERVICE_EXPORT TypeKind getKind() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getName() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::vector<std::shared_ptr<object::Field>>>
 	getFields(std::optional<bool>&& includeDeprecatedArg) const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
+	GRAPHQLSERVICE_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
 	getInterfaces() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
+	GRAPHQLSERVICE_EXPORT std::optional<std::vector<std::shared_ptr<object::Type>>>
 	getPossibleTypes() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::EnumValue>>>
+	GRAPHQLSERVICE_EXPORT std::optional<std::vector<std::shared_ptr<object::EnumValue>>>
 	getEnumValues(std::optional<bool>&& includeDeprecatedArg) const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::vector<std::shared_ptr<object::InputValue>>>
+	GRAPHQLSERVICE_EXPORT std::optional<std::vector<std::shared_ptr<object::InputValue>>>
 	getInputFields() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getOfType() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getSpecifiedByURL() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getOfType() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getSpecifiedByURL() const;
 
 private:
 	const std::shared_ptr<const schema::BaseType> _type;
@@ -66,15 +66,15 @@ private:
 class Field
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Field(const std::shared_ptr<const schema::Field>& field);
+	GRAPHQLSERVICE_EXPORT explicit Field(const std::shared_ptr<const schema::Field>& field);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT std::string getName() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getType() const;
-	GRAPHQLINTROSPECTION_EXPORT bool getIsDeprecated() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDeprecationReason() const;
+	GRAPHQLSERVICE_EXPORT std::string getName() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getType() const;
+	GRAPHQLSERVICE_EXPORT bool getIsDeprecated() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDeprecationReason() const;
 
 private:
 	const std::shared_ptr<const schema::Field> _field;
@@ -83,14 +83,14 @@ private:
 class InputValue
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit InputValue(
+	GRAPHQLSERVICE_EXPORT explicit InputValue(
 		const std::shared_ptr<const schema::InputValue>& inputValue);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT std::string getName() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT std::shared_ptr<object::Type> getType() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDefaultValue() const;
+	GRAPHQLSERVICE_EXPORT std::string getName() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT std::shared_ptr<object::Type> getType() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDefaultValue() const;
 
 private:
 	const std::shared_ptr<const schema::InputValue> _inputValue;
@@ -99,14 +99,14 @@ private:
 class EnumValue
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit EnumValue(
+	GRAPHQLSERVICE_EXPORT explicit EnumValue(
 		const std::shared_ptr<const schema::EnumValue>& enumValue);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT std::string getName() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT bool getIsDeprecated() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDeprecationReason() const;
+	GRAPHQLSERVICE_EXPORT std::string getName() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT bool getIsDeprecated() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDeprecationReason() const;
 
 private:
 	const std::shared_ptr<const schema::EnumValue> _enumValue;
@@ -115,15 +115,15 @@ private:
 class Directive
 {
 public:
-	GRAPHQLINTROSPECTION_EXPORT explicit Directive(
+	GRAPHQLSERVICE_EXPORT explicit Directive(
 		const std::shared_ptr<const schema::Directive>& directive);
 
 	// Accessors
-	GRAPHQLINTROSPECTION_EXPORT std::string getName() const;
-	GRAPHQLINTROSPECTION_EXPORT std::optional<std::string> getDescription() const;
-	GRAPHQLINTROSPECTION_EXPORT std::vector<DirectiveLocation> getLocations() const;
-	GRAPHQLINTROSPECTION_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
-	GRAPHQLINTROSPECTION_EXPORT bool getIsRepeatable() const;
+	GRAPHQLSERVICE_EXPORT std::string getName() const;
+	GRAPHQLSERVICE_EXPORT std::optional<std::string> getDescription() const;
+	GRAPHQLSERVICE_EXPORT std::vector<DirectiveLocation> getLocations() const;
+	GRAPHQLSERVICE_EXPORT std::vector<std::shared_ptr<object::InputValue>> getArgs() const;
+	GRAPHQLSERVICE_EXPORT bool getIsRepeatable() const;
 
 private:
 	const std::shared_ptr<const schema::Directive> _directive;
