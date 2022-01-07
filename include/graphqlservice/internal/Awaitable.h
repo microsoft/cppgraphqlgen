@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef Awaitable_H
-#define Awaitable_H
+#ifndef GRAPHQLAWAITABLE_H
+#define GRAPHQLAWAITABLE_H
 
 // clang-format off
 #ifdef USE_STD_EXPERIMENTAL_COROUTINE
@@ -159,4 +159,4 @@ private:
 
 } // namespace graphql::internal
 
-#endif // Awaitable_H
+#endif // GRAPHQLAWAITABLE_H

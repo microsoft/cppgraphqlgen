@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef BASE64_H
-#define BASE64_H
+#ifndef GRAPHQLBASE64_H
+#define GRAPHQLBASE64_H
 
 // clang-format off
 #ifdef GRAPHQL_DLLEXPORTS
@@ -68,4 +68,4 @@ private:
 
 } // namespace graphql::internal
 
-#endif // BASE64_H
+#endif // GRAPHQLBASE64_H

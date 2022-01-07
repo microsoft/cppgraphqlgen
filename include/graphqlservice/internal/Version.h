@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef GRAPHQLVERSION_H
+#define GRAPHQLVERSION_H
 
 #include <string_view>
 
@@ -18,4 +18,4 @@ constexpr size_t PatchVersion = 1;
 
 } // namespace graphql::internal
 
-#endif // VERSION_H
+#endif // GRAPHQLVERSION_H

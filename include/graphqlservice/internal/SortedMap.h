@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef SORTEDMAP_H
-#define SORTEDMAP_H
+#ifndef GRAPHQLSORTEDMAP_H
+#define GRAPHQLSORTEDMAP_H
 
 #include <algorithm>
 #include <functional>
@@ -363,4 +363,4 @@ using string_view_set = sorted_set<std::string_view, shorter_or_less>;
 
 } // namespace graphql::internal
 
-#endif // SORTEDMAP_H
+#endif // GRAPHQLSORTEDMAP_H

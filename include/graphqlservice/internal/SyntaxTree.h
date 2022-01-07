@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifndef GRAPHQLTREE_H
-#define GRAPHQLTREE_H
+#ifndef GRAPHQLSYNTAXTREE_H
+#define GRAPHQLSYNTAXTREE_H
 
 #include "graphqlservice/GraphQLParse.h"
 
@@ -153,4 +153,4 @@ struct ast_input
 
 } // namespace graphql::peg
 
-#endif // GRAPHQLTREE_H
+#endif // GRAPHQLSYNTAXTREE_H
