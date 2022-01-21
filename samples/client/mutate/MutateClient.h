@@ -29,14 +29,14 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: 
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+/// mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
 ///   completedTask: completeTask(input: $input) {
 ///     completedTask: task {
 ///       completedTaskId: id
 ///       title
 ///       isComplete
 ///     }
-///     clientMutationId
+///     clientMutationId @skip(if: $skipClientMutationId)
 ///   }
 /// }
 /// </code>
@@ -67,6 +67,7 @@ struct Variables
 	};
 
 	CompleteTaskInput input {};
+	bool skipClientMutationId {};
 };
 
 response::Value serializeVariables(Variables&& variables);
