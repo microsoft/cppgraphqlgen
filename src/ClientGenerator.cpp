@@ -608,7 +608,10 @@ response::Value serializeVariables(Variables&& variables)
 			sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << variable.name
 					   << R"cpp()js"s, ModifiedVariable<)cpp";
 
-			if (_schemaLoader.getSchemaType(variable.type->name()) != SchemaType::Scalar)
+			const auto& builtinTypes = _schemaLoader.getBuiltinTypes();
+
+			if (builtinTypes.find(variable.type->name()) == builtinTypes.cend()
+				&& _schemaLoader.getSchemaType(variable.type->name()) != SchemaType::Scalar)
 			{
 				sourceFile << R"cpp(Variables::)cpp";
 			}
