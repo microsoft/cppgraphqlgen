@@ -1332,7 +1332,9 @@ private:
 		std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
-	std::unique_ptr<ValidateExecutableVisitor> _validation;
+	mutable std::mutex _validationMutex {};
+	const std::unique_ptr<ValidateExecutableVisitor> _validation;
+	mutable std::mutex _subscriptionMutex {};
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	internal::sorted_map<SubscriptionName, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;

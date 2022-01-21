@@ -1264,20 +1264,6 @@ private:
 	std::optional<AwaitableResolver> _result;
 };
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
-	response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
-	: data(std::move(data))
-	, field(std::move(field))
-	, arguments(std::move(arguments))
-	, fieldDirectives(std::move(fieldDirectives))
-	, query(std::move(query))
-	, operationName(std::move(operationName))
-	, callback(std::move(callback))
-	, selection(selection)
-{
-}
-
 OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverContext,
 	await_async launch, std::shared_ptr<RequestState> state, const TypeMap& operations,
 	response::Value&& variables, FragmentMap&& fragments)
@@ -1370,6 +1356,20 @@ void OperationDefinitionVisitor::visit(
 		*operationDefinition.children.back(),
 		_params->fragments,
 		_params->variables));
+}
+
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
+	response::Value arguments, Directives fieldDirectives, peg::ast&& query,
+	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
+	: data(std::move(data))
+	, field(std::move(field))
+	, arguments(std::move(arguments))
+	, fieldDirectives(std::move(fieldDirectives))
+	, query(std::move(query))
+	, operationName(std::move(operationName))
+	, callback(std::move(callback))
+	, selection(selection)
+{
 }
 
 // SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the subscription
@@ -1609,6 +1609,8 @@ std::list<schema_error> Request::validate(peg::ast& query) const
 
 	if (!query.validated)
 	{
+		const std::lock_guard lock { _validationMutex };
+
 		_validation->visit(*query.root);
 		errors = _validation->getStructuredErrors();
 		query.validated = errors.empty();
@@ -1746,14 +1748,14 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 {
 	const auto spThis = shared_from_this();
-	auto launch = params.launch;
+	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto key = spThis->addSubscription(std::move(params));
 	const auto itrOperation = spThis->_operations.find(strSubscription);
 
 	if (itrOperation != spThis->_operations.end())
 	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = spThis->_subscriptions.at(key);
+		const auto operation = itrOperation->second;
+		const auto registration = spThis->_subscriptions.at(key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifySubscribe,
 			registration->data->state,
@@ -1762,12 +1764,14 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 			std::make_shared<FragmentSpreadDirectiveStack>(),
 			std::make_shared<FragmentSpreadDirectiveStack>(),
 			{},
-			launch,
+			params.launch,
 		};
+
+		lock.unlock();
 
 		try
 		{
-			co_await launch;
+			co_await params.launch;
 			co_await operation->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
@@ -1775,6 +1779,8 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 		}
 		catch (const std::exception& ex)
 		{
+			lock.lock();
+
 			// Rethrow the exception, but don't leave it subscribed if the resolver failed.
 			spThis->removeSubscription(key);
 			throw ex;
@@ -1787,12 +1793,13 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 {
 	const auto spThis = shared_from_this();
+	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto itrOperation = spThis->_operations.find(strSubscription);
 
 	if (itrOperation != spThis->_operations.end())
 	{
-		const auto& operation = itrOperation->second;
-		const auto& registration = spThis->_subscriptions.at(params.key);
+		const auto operation = itrOperation->second;
+		const auto registration = spThis->_subscriptions.at(params.key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifyUnsubscribe,
 			registration->data->state,
@@ -1804,11 +1811,15 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 			params.launch,
 		};
 
+		lock.unlock();
+
 		co_await params.launch;
 		co_await operation->resolve(selectionSetParams,
 			registration->selection,
 			registration->data->fragments,
 			registration->data->variables);
+
+		lock.lock();
 	}
 
 	spThis->removeSubscription(params.key);
@@ -1990,6 +2001,7 @@ std::vector<std::shared_ptr<SubscriptionData>> Request::collectRegistrations(
 	std::string_view field, RequestDeliverFilter&& filter) const noexcept
 {
 	std::vector<std::shared_ptr<SubscriptionData>> registrations;
+	const std::lock_guard lock { _subscriptionMutex };
 	const auto itrListeners = _listeners.find(field);
 
 	if (itrListeners != _listeners.end())
