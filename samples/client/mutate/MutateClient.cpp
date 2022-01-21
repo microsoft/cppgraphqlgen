@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
@@ -132,14 +132,14 @@ const std::string& GetRequestText() noexcept
 		# Copyright (c) Microsoft Corporation. All rights reserved.
 		# Licensed under the MIT License.
 		
-		mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}) {
+		mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
 		  completedTask: completeTask(input: $input) {
 		    completedTask: task {
 		      completedTaskId: id
 		      title
 		      isComplete
 		    }
-		    clientMutationId
+		    clientMutationId @skip(if: $skipClientMutationId)
 		  }
 		}
 	)gql"s;
@@ -166,6 +166,7 @@ response::Value serializeVariables(Variables&& variables)
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(input)js"s, ModifiedVariable<Variables::CompleteTaskInput>::serialize(std::move(variables.input)));
+	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<response::BooleanType>::serialize(std::move(variables.skipClientMutationId)));
 
 	return result;
 }

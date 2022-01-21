@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 
 using namespace std::literals;
