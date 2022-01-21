@@ -826,7 +826,7 @@ struct ModifiedResult
 			typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>;
 
 		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
-			AwaitableObject<std::shared_ptr<Object>>, AwaitableScalar<type>>;
+			AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<type>>;
 	};
 
 	// Convert a single value of the specified type to JSON.
@@ -849,7 +849,7 @@ struct ModifiedResult
 		co_await params.launch;
 
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
-			std::static_pointer_cast<Object>(co_await result),
+			std::static_pointer_cast<const Object>(co_await result),
 			std::move(params));
 
 		co_return std::move(awaitedResult);
@@ -1155,7 +1155,7 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert
 	AwaitableScalar<response::Value> result, ResolverParams params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
-	AwaitableObject<std::shared_ptr<Object>> result, ResolverParams params);
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
 
 // Export all of the scalar value validation methods
 template <>
@@ -1260,10 +1260,10 @@ struct RequestDeliverParams
 	await_async launch {};
 
 	// Optional override for the default Subscription operation object.
-	std::shared_ptr<Object> subscriptionObject {};
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 
-using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
+using TypeMap = internal::string_view_map<std::shared_ptr<const Object>>;
 
 // State which is captured and kept alive until all pending futures have been resolved for an
 // operation. Note: SelectionSet is the other parameter that gets passed to the top level Object,
@@ -1328,14 +1328,14 @@ public:
 private:
 	SubscriptionKey addSubscription(RequestSubscribeParams&& params);
 	void removeSubscription(SubscriptionKey key);
-	std::vector<std::shared_ptr<SubscriptionData>> collectRegistrations(
+	std::vector<std::shared_ptr<const SubscriptionData>> collectRegistrations(
 		std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
 	mutable std::mutex _validationMutex {};
 	const std::unique_ptr<ValidateExecutableVisitor> _validation;
 	mutable std::mutex _subscriptionMutex {};
-	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
+	internal::sorted_map<SubscriptionKey, std::shared_ptr<const SubscriptionData>> _subscriptions;
 	internal::sorted_map<SubscriptionName, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };

@@ -695,7 +695,7 @@ void requireSubFields(const ResolverParams& params)
 
 template <>
 AwaitableResolver ModifiedResult<Object>::convert(
-	AwaitableObject<std::shared_ptr<Object>> result, ResolverParams params)
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params)
 {
 	requireSubFields(params);
 
@@ -1378,7 +1378,7 @@ class SubscriptionDefinitionVisitor
 {
 public:
 	SubscriptionDefinitionVisitor(RequestSubscribeParams&& params, FragmentMap&& fragments,
-		const std::shared_ptr<Object>& subscriptionObject);
+		const std::shared_ptr<const Object>& subscriptionObject);
 
 	const peg::ast_node& getRoot() const;
 	std::shared_ptr<SubscriptionData> getRegistration();
@@ -1392,7 +1392,7 @@ private:
 
 	RequestSubscribeParams _params;
 	FragmentMap _fragments;
-	const std::shared_ptr<Object>& _subscriptionObject;
+	const std::shared_ptr<const Object>& _subscriptionObject;
 	SubscriptionName _field;
 	response::Value _arguments;
 	Directives _fieldDirectives;
@@ -1400,7 +1400,7 @@ private:
 };
 
 SubscriptionDefinitionVisitor::SubscriptionDefinitionVisitor(RequestSubscribeParams&& params,
-	FragmentMap&& fragments, const std::shared_ptr<Object>& subscriptionObject)
+	FragmentMap&& fragments, const std::shared_ptr<const Object>& subscriptionObject)
 	: _params(std::move(params))
 	, _fragments(std::move(fragments))
 	, _subscriptionObject(subscriptionObject)
@@ -1748,6 +1748,7 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 {
 	const auto spThis = shared_from_this();
+	const auto launch = std::move(params.launch);
 	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto key = spThis->addSubscription(std::move(params));
 	const auto itrOperation = spThis->_operations.find(strSubscription);
@@ -1764,14 +1765,14 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 			std::make_shared<FragmentSpreadDirectiveStack>(),
 			std::make_shared<FragmentSpreadDirectiveStack>(),
 			{},
-			params.launch,
+			launch,
 		};
 
 		lock.unlock();
 
 		try
 		{
-			co_await params.launch;
+			co_await launch;
 			co_await operation->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
@@ -1997,10 +1998,10 @@ void Request::removeSubscription(SubscriptionKey key)
 	}
 }
 
-std::vector<std::shared_ptr<SubscriptionData>> Request::collectRegistrations(
+std::vector<std::shared_ptr<const SubscriptionData>> Request::collectRegistrations(
 	std::string_view field, RequestDeliverFilter&& filter) const noexcept
 {
-	std::vector<std::shared_ptr<SubscriptionData>> registrations;
+	std::vector<std::shared_ptr<const SubscriptionData>> registrations;
 	const std::lock_guard lock { _subscriptionMutex };
 	const auto itrListeners = _listeners.find(field);
 
@@ -2016,7 +2017,7 @@ std::vector<std::shared_ptr<SubscriptionData>> Request::collectRegistrations(
 				[this](const auto& key) noexcept {
 					const auto itr = _subscriptions.find(key);
 
-					return itr == _subscriptions.end() ? std::shared_ptr<SubscriptionData> {}
+					return itr == _subscriptions.end() ? std::shared_ptr<const SubscriptionData> {}
 													   : itr->second;
 				});
 		}
