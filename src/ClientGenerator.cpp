@@ -206,7 +206,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(
+		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
+				   << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())
@@ -605,8 +606,17 @@ response::Value serializeVariables(Variables&& variables)
 		for (const auto& variable : variables)
 		{
 			sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << variable.name
-					   << R"cpp()js"s, ModifiedVariable<Variables::)cpp"
-					   << _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
+					   << R"cpp()js"s, ModifiedVariable<)cpp";
+
+			const auto& builtinTypes = _schemaLoader.getBuiltinTypes();
+
+			if (builtinTypes.find(variable.type->name()) == builtinTypes.cend()
+				&& _schemaLoader.getSchemaType(variable.type->name()) != SchemaType::Scalar)
+			{
+				sourceFile << R"cpp(Variables::)cpp";
+			}
+
+			sourceFile << _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
 					   << getTypeModifierList(variable.modifiers)
 					   << R"cpp((std::move(variables.)cpp" << variable.cppName << R"cpp()));
 )cpp";
