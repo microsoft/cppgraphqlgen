@@ -1275,20 +1275,6 @@ private:
 	std::future<ResolverResult> _result;
 };
 
-SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field,
-	response::Value&& arguments, response::Value&& fieldDirectives, peg::ast&& query,
-	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
-	: data(std::move(data))
-	, field(std::move(field))
-	, arguments(std::move(arguments))
-	, fieldDirectives(std::move(fieldDirectives))
-	, query(std::move(query))
-	, operationName(std::move(operationName))
-	, callback(std::move(callback))
-	, selection(selection)
-{
-}
-
 OperationDefinitionVisitor::OperationDefinitionVisitor(ResolverContext resolverContext,
 	std::launch launch, std::shared_ptr<RequestState> state, const TypeMap& operations,
 	response::Value&& variables, FragmentMap&& fragments)
@@ -1386,6 +1372,20 @@ void OperationDefinitionVisitor::visit(
 				.get();
 		},
 		std::cref(*operationDefinition.children.back()));
+}
+
+SubscriptionData::SubscriptionData(std::shared_ptr<OperationData>&& data, SubscriptionName&& field,
+	response::Value&& arguments, response::Value&& fieldDirectives, peg::ast&& query,
+	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
+	: data(std::move(data))
+	, field(std::move(field))
+	, arguments(std::move(arguments))
+	, fieldDirectives(std::move(fieldDirectives))
+	, query(std::move(query))
+	, operationName(std::move(operationName))
+	, callback(std::move(callback))
+	, selection(selection)
+{
 }
 
 // SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the subscription
@@ -1628,6 +1628,8 @@ std::list<schema_error> Request::validate(peg::ast& query) const
 
 	if (!query.validated)
 	{
+		const std::lock_guard lock { _validationMutex };
+
 		_validation->visit(*query.root);
 		errors = _validation->getStructuredErrors();
 		query.validated = errors.empty();
@@ -1929,7 +1931,8 @@ std::future<response::Value> Request::resolveUnvalidated(std::launch launch,
 	}
 }
 
-SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
+SubscriptionKey Request::addSubscription(
+	SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
 	auto errors = validate(params.query);
 
@@ -1998,6 +2001,13 @@ SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCall
 	return key;
 }
 
+SubscriptionKey Request::subscribe(SubscriptionParams&& params, SubscriptionCallback&& callback)
+{
+	std::lock_guard lock { _subscriptionMutex };
+
+	return addSubscription(std::move(params), std::move(callback));
+}
+
 std::future<SubscriptionKey> Request::subscribe(
 	std::launch launch, SubscriptionParams&& params, SubscriptionCallback&& callback)
 {
@@ -2005,13 +2015,15 @@ std::future<SubscriptionKey> Request::subscribe(
 		launch,
 		[spThis = shared_from_this(), launch](SubscriptionParams&& paramsFuture,
 			SubscriptionCallback&& callbackFuture) {
-			const auto key = spThis->subscribe(std::move(paramsFuture), std::move(callbackFuture));
+			std::unique_lock lock { spThis->_subscriptionMutex };
+			const auto key =
+				spThis->addSubscription(std::move(paramsFuture), std::move(callbackFuture));
 			const auto itrOperation = spThis->_operations.find(strSubscription);
 
 			if (itrOperation != spThis->_operations.end())
 			{
-				const auto& operation = itrOperation->second;
-				const auto& registration = spThis->_subscriptions.at(key);
+				const auto operation = itrOperation->second;
+				const auto registration = spThis->_subscriptions.at(key);
 				response::Value emptyFragmentDirectives(response::Type::Map);
 				const SelectionSetParams selectionSetParams {
 					ResolverContext::NotifySubscribe,
@@ -2024,6 +2036,8 @@ std::future<SubscriptionKey> Request::subscribe(
 					launch,
 				};
 
+				lock.unlock();
+
 				try
 				{
 					operation
@@ -2035,8 +2049,10 @@ std::future<SubscriptionKey> Request::subscribe(
 				}
 				catch (const std::exception& ex)
 				{
+					lock.lock();
+
 					// Rethrow the exception, but don't leave it subscribed if the resolver failed.
-					spThis->unsubscribe(key);
+					spThis->removeSubscription(key);
 					throw ex;
 				}
 			}
@@ -2047,7 +2063,7 @@ std::future<SubscriptionKey> Request::subscribe(
 		std::move(callback));
 }
 
-void Request::unsubscribe(SubscriptionKey key)
+void Request::removeSubscription(SubscriptionKey key)
 {
 	auto itrSubscription = _subscriptions.find(key);
 
@@ -2077,15 +2093,23 @@ void Request::unsubscribe(SubscriptionKey key)
 	}
 }
 
+void Request::unsubscribe(SubscriptionKey key)
+{
+	std::lock_guard lock { _subscriptionMutex };
+
+	removeSubscription(key);
+}
+
 std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 {
 	return std::async(launch, [spThis = shared_from_this(), launch, key]() {
+		std::unique_lock lock { spThis->_subscriptionMutex };
 		const auto itrOperation = spThis->_operations.find(strSubscription);
 
 		if (itrOperation != spThis->_operations.end())
 		{
-			const auto& operation = itrOperation->second;
-			const auto& registration = spThis->_subscriptions.at(key);
+			const auto operation = itrOperation->second;
+			const auto registration = spThis->_subscriptions.at(key);
 			response::Value emptyFragmentDirectives(response::Type::Map);
 			const SelectionSetParams selectionSetParams {
 				ResolverContext::NotifyUnsubscribe,
@@ -2098,15 +2122,19 @@ std::future<void> Request::unsubscribe(std::launch launch, SubscriptionKey key)
 				launch,
 			};
 
+			lock.unlock();
+
 			operation
 				->resolve(selectionSetParams,
 					registration->selection,
 					registration->data->fragments,
 					registration->data->variables)
 				.get();
+
+			lock.lock();
 		}
 
-		spThis->unsubscribe(key);
+		spThis->removeSubscription(key);
 	});
 }
 
@@ -2215,6 +2243,7 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 		throw std::invalid_argument("Missing subscriptionObject");
 	}
 
+	std::unique_lock lock { _subscriptionMutex };
 	auto itrListeners = _listeners.find(name);
 
 	if (itrListeners == _listeners.end())
@@ -2322,6 +2351,8 @@ void Request::deliver(std::launch launch, const SubscriptionName& name,
 			},
 			std::move(result)));
 	}
+
+	lock.unlock();
 
 	for (auto& callback : callbacks)
 	{

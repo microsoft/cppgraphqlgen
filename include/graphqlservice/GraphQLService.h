@@ -35,8 +35,8 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -959,8 +959,13 @@ private:
 		const std::shared_ptr<RequestState>& state, const peg::ast_node& root,
 		const std::string& operationName, response::Value&& variables) const;
 
+	SubscriptionKey addSubscription(SubscriptionParams&& params, SubscriptionCallback&& callback);
+	void removeSubscription(SubscriptionKey key);
+
 	const TypeMap _operations;
-	std::unique_ptr<ValidateExecutableVisitor> _validation;
+	mutable std::mutex _validationMutex {};
+	const std::unique_ptr<ValidateExecutableVisitor> _validation;
+	mutable std::mutex _subscriptionMutex {};
 	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
 	internal::sorted_map<SubscriptionName, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
