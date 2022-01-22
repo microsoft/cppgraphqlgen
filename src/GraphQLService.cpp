@@ -164,6 +164,72 @@ response::Value schema_exception::getErrors()
 	return buildErrorValues(std::move(_structuredErrors));
 }
 
+void await_worker_thread::await_suspend(coro::coroutine_handle<> h) const
+{
+	std::thread(
+		[](coro::coroutine_handle<>&& h) {
+			h.resume();
+		},
+		std::move(h))
+		.detach();
+}
+
+await_worker_queue::await_worker_queue()
+	: _startId { std::this_thread::get_id() }
+	, _worker { [this]() {
+		resumePending();
+	} }
+{
+}
+
+await_worker_queue::~await_worker_queue()
+{
+	std::unique_lock lock { _mutex };
+
+	_shutdown = true;
+	lock.unlock();
+	_cv.notify_one();
+
+	_worker.join();
+}
+
+bool await_worker_queue::await_ready() const
+{
+	return std::this_thread::get_id() != _startId;
+}
+
+void await_worker_queue::await_suspend(coro::coroutine_handle<> h)
+{
+	std::unique_lock lock { _mutex };
+
+	_pending.push_back(std::move(h));
+	lock.unlock();
+	_cv.notify_one();
+}
+
+void await_worker_queue::resumePending()
+{
+	std::unique_lock lock { _mutex };
+
+	while (!_shutdown)
+	{
+		_cv.wait(lock, [this]() {
+			return _shutdown || !_pending.empty();
+		});
+
+		auto pending = std::move(_pending);
+
+		lock.unlock();
+
+		for (auto h : pending)
+		{
+			h.resume();
+		}
+
+		lock.lock();
+	}
+}
+
 FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, Directives directives)
 	: SelectionSetParams(std::move(selectionSetParams))
 	, fieldDirectives(std::move(directives))

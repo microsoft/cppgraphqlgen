@@ -148,18 +148,32 @@ enum class ResolverContext
 	NotifyUnsubscribe,
 };
 
-// Resume coroutine execution on a worker thread.
+// Resume coroutine execution on a new worker thread any time co_await is called. This emulates the
+// behavior of std::async when passing std::launch::async.
 struct await_worker_thread : coro::suspend_always
 {
-	void await_suspend(coro::coroutine_handle<> h) const
-	{
-		std::thread(
-			[](coro::coroutine_handle<>&& h) noexcept {
-				h.resume();
-			},
-			std::move(h))
-			.detach();
-	}
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+};
+
+// Queue coroutine execution on a single dedicated worker thread any time co_await is called from
+// the thread which created it.
+struct await_worker_queue : coro::suspend_always
+{
+	GRAPHQLSERVICE_EXPORT await_worker_queue();
+	GRAPHQLSERVICE_EXPORT ~await_worker_queue();
+
+	GRAPHQLSERVICE_EXPORT bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h);
+
+private:
+	void resumePending();
+
+	const std::thread::id _startId;
+	std::mutex _mutex {};
+	std::condition_variable _cv {};
+	std::list<coro::coroutine_handle<>> _pending {};
+	bool _shutdown = false;
+	std::thread _worker;
 };
 
 // Type-erased awaitable.
