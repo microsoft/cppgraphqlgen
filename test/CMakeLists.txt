@@ -23,6 +23,14 @@ target_link_libraries(today_tests PRIVATE
 add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
+add_executable(coroutine_tests CoroutineTests.cpp)
+target_link_libraries(coroutine_tests PRIVATE
+  todaygraphql
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+gtest_add_tests(TARGET coroutine_tests)
+
 add_executable(client_tests ClientTests.cpp)
 target_link_libraries(client_tests PRIVATE
   todaygraphql

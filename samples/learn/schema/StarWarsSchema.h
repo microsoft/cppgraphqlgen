@@ -46,7 +46,7 @@ class Mutation;
 
 } // namespace object
 
-class Operations
+class Operations final
 	: public service::Request
 {
 public:

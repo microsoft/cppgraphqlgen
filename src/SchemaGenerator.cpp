@@ -272,7 +272,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		bool firstOperation = true;
 
-		headerFile << R"cpp(class Operations
+		headerFile << R"cpp(class Operations final
 	: public service::Request
 {
 public:
@@ -480,7 +480,7 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 void Generator::outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const
 {
 	headerFile
-		<< R"cpp(class )cpp" << cppType << R"cpp(
+		<< R"cpp(class )cpp" << cppType << R"cpp( final
 	: public service::Object
 {
 private:
@@ -529,12 +529,12 @@ private:
 	};
 
 	)cpp"
-		<< cppType << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept;
+		<< cppType << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
@@ -542,7 +542,7 @@ public:
 		<< cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 		<< cppType
-		<< R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<)cpp"
 		<< cppType << R"cpp(>(), ")cpp" << cppType << R"cpp( is not implemented");
@@ -680,7 +680,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 void Generator::outputObjectDeclaration(
 	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
-	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp(
+	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp( final
 	: public service::Object
 {
 private:
@@ -895,7 +895,7 @@ private:
 
 	if (_loader.isIntrospection())
 	{
-		headerFile << R"cpp(	const std::unique_ptr<Concept> _pimpl;
+		headerFile << R"cpp(	const std::unique_ptr<const Concept> _pimpl;
 
 	service::TypeNames getTypeNames() const noexcept;
 	service::ResolverMap getResolvers() const noexcept;
@@ -913,7 +913,7 @@ public:
 	else
 	{
 		headerFile << R"cpp(	)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept;
+				   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 )cpp";
 
@@ -939,7 +939,8 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -966,7 +967,7 @@ public:
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
@@ -974,7 +975,7 @@ public:
 			<< R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
-			<< R"cpp( { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 };
@@ -1720,7 +1721,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -1786,7 +1788,7 @@ void Generator::outputInterfaceImplementation(
 	// with arguments that declare the set of types it implements and bind the fields to the
 	// resolver methods.
 	sourceFile << cppType << R"cpp(::)cpp" << cppType
-			   << R"cpp((std::unique_ptr<Concept>&& pimpl) noexcept
+			   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept
 	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -1865,7 +1867,7 @@ void Generator::outputObjectImplementation(
 		// with arguments that declare the set of types it implements and bind the fields to the
 		// resolver methods.
 		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<Concept>&& pimpl))cpp";
+				   << R"cpp((std::unique_ptr<const Concept>&& pimpl))cpp";
 	}
 
 	sourceFile << R"cpp( noexcept

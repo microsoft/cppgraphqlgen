@@ -148,22 +148,36 @@ enum class ResolverContext
 	NotifyUnsubscribe,
 };
 
-// Resume coroutine execution on a worker thread.
+// Resume coroutine execution on a new worker thread any time co_await is called. This emulates the
+// behavior of std::async when passing std::launch::async.
 struct await_worker_thread : coro::suspend_always
 {
-	void await_suspend(coro::coroutine_handle<> h) const
-	{
-		std::thread(
-			[](coro::coroutine_handle<>&& h) noexcept {
-				h.resume();
-			},
-			std::move(h))
-			.detach();
-	}
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+};
+
+// Queue coroutine execution on a single dedicated worker thread any time co_await is called from
+// the thread which created it.
+struct await_worker_queue : coro::suspend_always
+{
+	GRAPHQLSERVICE_EXPORT await_worker_queue();
+	GRAPHQLSERVICE_EXPORT ~await_worker_queue();
+
+	GRAPHQLSERVICE_EXPORT bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h);
+
+private:
+	void resumePending();
+
+	const std::thread::id _startId;
+	std::mutex _mutex {};
+	std::condition_variable _cv {};
+	std::list<coro::coroutine_handle<>> _pending {};
+	bool _shutdown = false;
+	std::thread _worker;
 };
 
 // Type-erased awaitable.
-class await_async : public coro::suspend_always
+class await_async final
 {
 private:
 	struct Concept
@@ -202,7 +216,7 @@ private:
 		std::shared_ptr<T> _pimpl;
 	};
 
-	const std::shared_ptr<Concept> _pimpl;
+	const std::shared_ptr<const Concept> _pimpl;
 
 public:
 	// Type-erased explicit constructor for a custom awaitable.
@@ -213,36 +227,14 @@ public:
 	}
 
 	// Default to immediate synchronous execution.
-	await_async()
-		: _pimpl { std::static_pointer_cast<Concept>(
-			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
-	{
-	}
+	GRAPHQLSERVICE_EXPORT await_async();
 
 	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
-	await_async(std::launch launch)
-		: _pimpl { ((launch & std::launch::async) == std::launch::async)
-				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
-					std::make_shared<await_worker_thread>()))
-				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
-					std::make_shared<coro::suspend_never>())) }
-	{
-	}
+	GRAPHQLSERVICE_EXPORT await_async(std::launch launch);
 
-	bool await_ready() const
-	{
-		return _pimpl->await_ready();
-	}
-
-	void await_suspend(coro::coroutine_handle<> h) const
-	{
-		_pimpl->await_suspend(std::move(h));
-	}
-
-	void await_resume() const
-	{
-		_pimpl->await_resume();
-	}
+	GRAPHQLSERVICE_EXPORT bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_resume() const;
 };
 
 // Directive order matters, and some of them are repeatable. So rather than passing them in a
@@ -826,7 +818,7 @@ struct ModifiedResult
 			typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>;
 
 		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
-			AwaitableObject<std::shared_ptr<Object>>, AwaitableScalar<type>>;
+			AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<type>>;
 	};
 
 	// Convert a single value of the specified type to JSON.
@@ -849,7 +841,7 @@ struct ModifiedResult
 		co_await params.launch;
 
 		auto awaitedResult = co_await ModifiedResult<Object>::convert(
-			std::static_pointer_cast<Object>(co_await result),
+			std::static_pointer_cast<const Object>(co_await result),
 			std::move(params));
 
 		co_return std::move(awaitedResult);
@@ -1155,7 +1147,7 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert
 	AwaitableScalar<response::Value> result, ResolverParams params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
-	AwaitableObject<std::shared_ptr<Object>> result, ResolverParams params);
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
 
 // Export all of the scalar value validation methods
 template <>
@@ -1260,10 +1252,10 @@ struct RequestDeliverParams
 	await_async launch {};
 
 	// Optional override for the default Subscription operation object.
-	std::shared_ptr<Object> subscriptionObject {};
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 
-using TypeMap = internal::string_view_map<std::shared_ptr<Object>>;
+using TypeMap = internal::string_view_map<std::shared_ptr<const Object>>;
 
 // State which is captured and kept alive until all pending futures have been resolved for an
 // operation. Note: SelectionSet is the other parameter that gets passed to the top level Object,
@@ -1328,12 +1320,14 @@ public:
 private:
 	SubscriptionKey addSubscription(RequestSubscribeParams&& params);
 	void removeSubscription(SubscriptionKey key);
-	std::vector<std::shared_ptr<SubscriptionData>> collectRegistrations(
+	std::vector<std::shared_ptr<const SubscriptionData>> collectRegistrations(
 		std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
-	std::unique_ptr<ValidateExecutableVisitor> _validation;
-	internal::sorted_map<SubscriptionKey, std::shared_ptr<SubscriptionData>> _subscriptions;
+	mutable std::mutex _validationMutex {};
+	const std::unique_ptr<ValidateExecutableVisitor> _validation;
+	mutable std::mutex _subscriptionMutex {};
+	internal::sorted_map<SubscriptionKey, std::shared_ptr<const SubscriptionData>> _subscriptions;
 	internal::sorted_map<SubscriptionName, internal::sorted_set<SubscriptionKey>> _listeners;
 	SubscriptionKey _nextKey = 0;
 };

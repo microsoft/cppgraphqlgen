@@ -269,7 +269,7 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 
 using AwaitableValue = internal::Awaitable<Value>;
 
-class Writer
+class Writer final
 {
 private:
 	struct Concept
@@ -357,7 +357,7 @@ private:
 public:
 	template <class T>
 	Writer(std::unique_ptr<T> writer)
-		: _concept { std::static_pointer_cast<Concept>(
+		: _concept { std::static_pointer_cast<const Concept>(
 			std::make_shared<Model<T>>(std::move(writer))) }
 	{
 	}

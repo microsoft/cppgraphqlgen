@@ -12,7 +12,7 @@
 
 namespace graphql::validation::object {
 
-class Node
+class Node final
 	: public service::Object
 {
 private:
@@ -60,17 +60,17 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Node(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Node(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Node(std::shared_ptr<T> pimpl) noexcept
-		: Node { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Node { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<Node>(), "Node is not implemented");
 	}

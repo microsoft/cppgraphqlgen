@@ -70,7 +70,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::TaskHas
 
-class Task
+class Task final
 	: public service::Object
 {
 private:
@@ -169,7 +169,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Task(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Task(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Node;
@@ -189,12 +189,12 @@ private:
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Task(std::shared_ptr<T> pimpl) noexcept
-		: Task { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Task { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 };

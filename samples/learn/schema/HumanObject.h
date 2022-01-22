@@ -94,7 +94,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::HumanHas
 
-class Human
+class Human final
 	: public service::Object
 {
 private:
@@ -214,7 +214,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Human(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Human(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Character;
@@ -231,12 +231,12 @@ private:
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Human(std::shared_ptr<T> pimpl) noexcept
-		: Human { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Human { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 };

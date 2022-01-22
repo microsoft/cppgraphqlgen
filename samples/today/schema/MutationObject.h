@@ -51,7 +51,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::MutationHas
 
-class Mutation
+class Mutation final
 	: public service::Object
 {
 private:
@@ -132,7 +132,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Mutation(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Mutation(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	service::TypeNames getTypeNames() const noexcept;
 	service::ResolverMap getResolvers() const noexcept;
@@ -140,12 +140,12 @@ private:
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Mutation(std::shared_ptr<T> pimpl) noexcept
-		: Mutation { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Mutation { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 };

@@ -82,7 +82,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::CatHas
 
-class Cat
+class Cat final
 	: public service::Object
 {
 private:
@@ -199,7 +199,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Cat(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Cat(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Pet;
@@ -219,12 +219,12 @@ private:
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Cat(std::shared_ptr<T> pimpl) noexcept
-		: Cat { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Cat { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 };
