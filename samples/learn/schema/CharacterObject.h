@@ -12,7 +12,7 @@
 
 namespace graphql::learn::object {
 
-class Character
+class Character final
 	: public service::Object
 {
 private:
@@ -60,17 +60,17 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Character(std::unique_ptr<Concept>&& pimpl) noexcept;
+	Character(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	Character(std::shared_ptr<T> pimpl) noexcept
-		: Character { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: Character { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<Character>(), "Character is not implemented");
 	}

@@ -46,7 +46,7 @@ to some other output mechanism, without building a single string buffer for the 
 document in memory. For example, you might use this to write directly to a buffered IPC pipe
 or network connection:
 ```cpp
-class Writer
+class Writer final
 {
 private:
 	struct Concept
@@ -71,7 +71,7 @@ private:
 public:
 	template <class T>
 	Writer(std::unique_ptr<T> writer)
-		: _concept { std::static_pointer_cast<Concept>(
+		: _concept { std::static_pointer_cast<const Concept>(
 			std::make_shared<Model<T>>(std::move(writer))) }
 	{
 	}

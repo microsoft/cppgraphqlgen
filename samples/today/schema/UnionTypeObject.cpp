@@ -14,7 +14,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-UnionType::UnionType(std::unique_ptr<Concept>&& pimpl) noexcept
+UnionType::UnionType(std::unique_ptr<const Concept>&& pimpl) noexcept
 	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {

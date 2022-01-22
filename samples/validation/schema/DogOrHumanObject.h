@@ -12,7 +12,7 @@
 
 namespace graphql::validation::object {
 
-class DogOrHuman
+class DogOrHuman final
 	: public service::Object
 {
 private:
@@ -60,17 +60,17 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	DogOrHuman(std::unique_ptr<Concept>&& pimpl) noexcept;
+	DogOrHuman(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	DogOrHuman(std::shared_ptr<T> pimpl) noexcept
-		: DogOrHuman { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: DogOrHuman { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<DogOrHuman>(), "DogOrHuman is not implemented");
 	}

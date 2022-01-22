@@ -8,7 +8,7 @@ specifically a type-erased `graphql::service::await_async` class in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
 // Type-erased awaitable.
-class await_async : public coro::suspend_always
+class await_async final
 {
 private:
 	struct Concept
@@ -31,7 +31,7 @@ public:
 
 	// Default to immediate synchronous execution.
 	await_async()
-		: _pimpl { std::static_pointer_cast<Concept>(
+		: _pimpl { std::static_pointer_cast<const Concept>(
 			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
 	{
 	}
@@ -39,9 +39,9 @@ public:
 	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
 	await_async(std::launch launch)
 		: _pimpl { ((launch & std::launch::async) == std::launch::async)
-				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
+				? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
 					std::make_shared<await_worker_thread>()))
-				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
+				: std::static_pointer_cast<const Concept>(std::make_shared<Model<coro::suspend_never>>(
 					std::make_shared<coro::suspend_never>())) }
 	{
 	}

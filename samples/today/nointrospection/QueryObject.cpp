@@ -30,7 +30,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Query::Query(std::unique_ptr<Concept>&& pimpl) noexcept
+Query::Query(std::unique_ptr<const Concept>&& pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {

@@ -177,7 +177,7 @@ private:
 };
 
 // Type-erased awaitable.
-class await_async
+class await_async final
 {
 private:
 	struct Concept

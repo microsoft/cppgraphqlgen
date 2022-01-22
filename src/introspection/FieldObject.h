@@ -12,7 +12,7 @@
 
 namespace graphql::introspection::object {
 
-class Field
+class Field final
 	: public service::Object
 {
 private:
@@ -80,7 +80,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 	service::TypeNames getTypeNames() const noexcept;
 	service::ResolverMap getResolvers() const noexcept;

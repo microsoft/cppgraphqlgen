@@ -63,7 +63,7 @@ class Arguments;
 
 } // namespace object
 
-class Operations
+class Operations final
 	: public service::Request
 {
 public:

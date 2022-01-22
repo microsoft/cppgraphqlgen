@@ -12,7 +12,7 @@
 
 namespace graphql::today::object {
 
-class UnionType
+class UnionType final
 	: public service::Object
 {
 private:
@@ -60,17 +60,17 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	UnionType(std::unique_ptr<Concept>&& pimpl) noexcept;
+	UnionType(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
-	const std::unique_ptr<Concept> _pimpl;
+	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
 	UnionType(std::shared_ptr<T> pimpl) noexcept
-		: UnionType { std::unique_ptr<Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+		: UnionType { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<UnionType>(), "UnionType is not implemented");
 	}

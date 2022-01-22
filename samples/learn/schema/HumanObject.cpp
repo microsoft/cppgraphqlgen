@@ -21,7 +21,7 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Human::Human(std::unique_ptr<Concept>&& pimpl) noexcept
+Human::Human(std::unique_ptr<const Concept>&& pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
