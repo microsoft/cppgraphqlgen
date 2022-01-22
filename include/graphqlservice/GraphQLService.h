@@ -177,7 +177,7 @@ private:
 };
 
 // Type-erased awaitable.
-class await_async : public coro::suspend_always
+class await_async
 {
 private:
 	struct Concept
@@ -216,7 +216,7 @@ private:
 		std::shared_ptr<T> _pimpl;
 	};
 
-	const std::shared_ptr<Concept> _pimpl;
+	const std::shared_ptr<const Concept> _pimpl;
 
 public:
 	// Type-erased explicit constructor for a custom awaitable.
@@ -227,36 +227,14 @@ public:
 	}
 
 	// Default to immediate synchronous execution.
-	await_async()
-		: _pimpl { std::static_pointer_cast<Concept>(
-			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
-	{
-	}
+	GRAPHQLSERVICE_EXPORT await_async();
 
 	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
-	await_async(std::launch launch)
-		: _pimpl { ((launch & std::launch::async) == std::launch::async)
-				? std::static_pointer_cast<Concept>(std::make_shared<Model<await_worker_thread>>(
-					std::make_shared<await_worker_thread>()))
-				: std::static_pointer_cast<Concept>(std::make_shared<Model<coro::suspend_never>>(
-					std::make_shared<coro::suspend_never>())) }
-	{
-	}
+	GRAPHQLSERVICE_EXPORT await_async(std::launch launch);
 
-	bool await_ready() const
-	{
-		return _pimpl->await_ready();
-	}
-
-	void await_suspend(coro::coroutine_handle<> h) const
-	{
-		_pimpl->await_suspend(std::move(h));
-	}
-
-	void await_resume() const
-	{
-		_pimpl->await_resume();
-	}
+	GRAPHQLSERVICE_EXPORT bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_resume() const;
 };
 
 // Directive order matters, and some of them are repeatable. So rather than passing them in a
