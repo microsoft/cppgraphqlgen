@@ -10,11 +10,11 @@
 
 namespace graphql::internal {
 
-constexpr std::string_view FullVersion { "3.7.0" };
+constexpr std::string_view FullVersion { "3.7.1" };
 
 constexpr size_t MajorVersion = 3;
 constexpr size_t MinorVersion = 7;
-constexpr size_t PatchVersion = 0;
+constexpr size_t PatchVersion = 1;
 
 } // namespace graphql::internal
 
