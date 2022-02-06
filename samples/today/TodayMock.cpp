@@ -569,6 +569,11 @@ std::vector<std::shared_ptr<object::UnionType>> Query::getAnyType(
 	return result;
 }
 
+std::optional<std::string> Query::getDefault() const noexcept
+{
+	return std::nullopt;
+}
+
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 	: _mutateCompleteTask(std::move(mutateCompleteTask))
 {
