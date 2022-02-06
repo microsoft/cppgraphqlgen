@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
-#include <thread>
 
 namespace graphql::service {
 
