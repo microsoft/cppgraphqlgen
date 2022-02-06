@@ -55,4 +55,7 @@ query {
       isNow
     }
   }
+
+  # Try a field with a C++ keyword
+  default
 }

@@ -592,10 +592,7 @@ void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& ob
 {
 	for (const auto& outputField : objectType.fields)
 	{
-		std::string fieldName(outputField.cppName);
-
-		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-
+		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 		std::ostringstream ossPassedArguments;
 		bool firstArgument = true;
 
@@ -614,8 +611,7 @@ void Generator::outputObjectStubs(std::ostream& headerFile, const ObjectType& ob
 
 		headerFile << R"cpp(
 template <class TImpl>
-concept )cpp" << outputField.accessor
-				   << fieldName
+concept )cpp" << accessorName
 				   << R"cpp(WithParams = requires (TImpl impl, service::FieldParams params)cpp";
 		for (const auto& argument : outputField.arguments)
 		{
@@ -626,8 +622,7 @@ concept )cpp" << outputField.accessor
 		headerFile << R"cpp()
 {
 	{ )cpp" << _loader.getOutputCppType(outputField)
-				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName
-				   << R"cpp((std::move(params))cpp";
+				   << R"cpp( { impl.)cpp" << accessorName << R"cpp((std::move(params))cpp";
 
 		if (!passedArguments.empty())
 		{
@@ -638,8 +633,8 @@ concept )cpp" << outputField.accessor
 };
 
 template <class TImpl>
-concept )cpp" << outputField.accessor
-				   << fieldName << R"cpp( = requires (TImpl impl)cpp";
+concept )cpp" << accessorName
+				   << R"cpp( = requires (TImpl impl)cpp";
 		for (const auto& argument : outputField.arguments)
 		{
 			headerFile << R"cpp(, )cpp" << _loader.getInputCppType(argument) << R"cpp( )cpp"
@@ -649,7 +644,7 @@ concept )cpp" << outputField.accessor
 		headerFile << R"cpp()
 {
 	{ )cpp" << _loader.getOutputCppType(outputField)
-				   << R"cpp( { impl.)cpp" << outputField.accessor << fieldName << R"cpp(()cpp";
+				   << R"cpp( { impl.)cpp" << accessorName << R"cpp(()cpp";
 
 		if (!passedArguments.empty())
 		{
@@ -740,13 +735,11 @@ private:
 
 	for (const auto& outputField : objectType.fields)
 	{
-		std::string fieldName(outputField.cppName);
-
-		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
 		headerFile << R"cpp(
 		)cpp" << _loader.getOutputCppType(outputField)
-				   << R"cpp( )cpp" << outputField.accessor << fieldName << R"cpp(()cpp";
+				   << R"cpp( )cpp" << accessorName << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
 
@@ -789,8 +782,7 @@ private:
 
 		if (_loader.isIntrospection())
 		{
-			headerFile << R"cpp(return { _pimpl->)cpp" << outputField.accessor << fieldName
-					   << R"cpp(()cpp";
+			headerFile << R"cpp(return { _pimpl->)cpp" << accessorName << R"cpp(()cpp";
 
 			if (!passedArguments.empty())
 			{
@@ -802,11 +794,10 @@ private:
 		else
 		{
 			headerFile << R"cpp(if constexpr (methods::)cpp" << objectType.cppType
-					   << R"cpp(Has::)cpp" << outputField.accessor << fieldName
-					   << R"cpp(WithParams<T>)
+					   << R"cpp(Has::)cpp" << accessorName << R"cpp(WithParams<T>)
 			{
 				return { _pimpl->)cpp"
-					   << outputField.accessor << fieldName << R"cpp((std::move(params))cpp";
+					   << accessorName << R"cpp((std::move(params))cpp";
 
 			if (!passedArguments.empty())
 			{
@@ -822,21 +813,20 @@ private:
 				headerFile << R"cpp(
 			{
 				static_assert(methods::)cpp"
-						   << objectType.cppType << R"cpp(Has::)cpp" << outputField.accessor
-						   << fieldName << R"cpp(<T>, R"msg()cpp" << objectType.cppType
-						   << R"cpp(::)cpp" << outputField.accessor << fieldName
-						   << R"cpp( is not implemented)msg");)cpp";
+						   << objectType.cppType << R"cpp(Has::)cpp" << accessorName
+						   << R"cpp(<T>, R"msg()cpp" << objectType.cppType << R"cpp(::)cpp"
+						   << accessorName << R"cpp( is not implemented)msg");)cpp";
 			}
 			else
 			{
 				headerFile << R"cpp( if constexpr (methods::)cpp" << objectType.cppType
-						   << R"cpp(Has::)cpp" << outputField.accessor << fieldName << R"cpp(<T>)
+						   << R"cpp(Has::)cpp" << accessorName << R"cpp(<T>)
 			{)cpp";
 			}
 
 			headerFile << R"cpp(
 				return { _pimpl->)cpp"
-					   << outputField.accessor << fieldName << R"cpp(()cpp";
+					   << accessorName << R"cpp(()cpp";
 
 			if (!passedArguments.empty())
 			{
@@ -852,8 +842,8 @@ private:
 			else
 			{
 				throw std::runtime_error(R"ex()cpp"
-						   << objectType.cppType << R"cpp(::)cpp" << outputField.accessor
-						   << fieldName << R"cpp( is not implemented)ex");
+						   << objectType.cppType << R"cpp(::)cpp" << accessorName
+						   << R"cpp( is not implemented)ex");
 			})cpp";
 			}
 		}
@@ -939,8 +929,7 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
-						   << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
 )cpp";
 			}
 
@@ -996,11 +985,10 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName { outputField.cppName };
+	const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
-	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
 	output << R"cpp(		virtual )cpp" << _loader.getOutputCppType(outputField) << R"cpp( )cpp"
-		   << outputField.accessor << fieldName << R"cpp(()cpp";
+		   << accessorName << R"cpp(()cpp";
 
 	bool firstArgument = _loader.isIntrospection();
 
@@ -1029,10 +1017,9 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 std::string Generator::getResolverDeclaration(const OutputField& outputField) const noexcept
 {
 	std::ostringstream output;
-	std::string fieldName(outputField.cppName);
+	const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 
-	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	service::AwaitableResolver resolve)cpp" << fieldName
+	output << R"cpp(	service::AwaitableResolver )cpp" << resolverName
 		   << R"cpp((service::ResolverParams&& params) const;
 )cpp";
 
@@ -1721,8 +1708,7 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
-					   << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}
@@ -1943,16 +1929,12 @@ service::ResolverMap )cpp"
 		objectType.fields.cend(),
 		std::inserter(resolvers, resolvers.begin()),
 		[](const OutputField& outputField) noexcept {
-			std::string fieldName(outputField.cppName);
-
-			fieldName[0] =
-				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-
+			const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 			std::ostringstream output;
 
 			output << R"cpp(		{ R"gql()cpp" << outputField.name
-				   << R"cpp()gql"sv, [this](service::ResolverParams&& params) { return resolve)cpp"
-				   << fieldName << R"cpp((std::move(params)); } })cpp";
+				   << R"cpp()gql"sv, [this](service::ResolverParams&& params) { return )cpp"
+				   << resolverName << R"cpp((std::move(params)); } })cpp";
 
 			return std::make_pair(std::string_view { outputField.name }, output.str());
 		});
@@ -2008,13 +1990,11 @@ void )cpp" << objectType.cppType
 	// getters that the implementer must define.
 	for (const auto& outputField : objectType.fields)
 	{
-		std::string fieldName(outputField.cppName);
-
-		fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+		const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 
 		sourceFile << R"cpp(
 service::AwaitableResolver )cpp"
-				   << objectType.cppType << R"cpp(::resolve)cpp" << fieldName
+				   << objectType.cppType << R"cpp(::)cpp" << resolverName
 				   << R"cpp((service::ResolverParams&& params) const
 {
 )cpp";
@@ -2073,7 +2053,9 @@ service::AwaitableResolver )cpp"
 )cpp";
 		}
 
-		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << outputField.accessor << fieldName
+		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
+
+		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << accessorName
 				   << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();

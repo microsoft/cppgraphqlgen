@@ -83,6 +83,9 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: 
 ///       isNow
 ///     }
 ///   }
+/// 
+///   # Try a field with a C++ keyword
+///   default
 /// }
 /// </code>
 namespace graphql::client::query::Query {
@@ -174,6 +177,7 @@ struct Response
 	unreadCounts_FolderConnection unreadCounts {};
 	TaskState testTaskState {};
 	std::vector<std::optional<anyType_UnionType>> anyType {};
+	std::optional<std::string> default_ {};
 };
 
 Response parseResponse(response::Value response);
