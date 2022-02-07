@@ -48,7 +48,12 @@ file(GLOB OLD_FILES ${SCHEMA_SOURCE_DIR}/*.h ${SCHEMA_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)
   if(NOT OLD_FILE IN_LIST FILE_NAMES)
-    file(REMOVE "${SCHEMA_SOURCE_DIR}/${OLD_FILE}")
+    if(OLD_FILE MATCHES "Object\\.h$" OR OLD_FILE MATCHES "Object\\.cpp$")
+      file(REMOVE "${SCHEMA_SOURCE_DIR}/${OLD_FILE}")
+    elseif(NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.h" AND
+        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.cpp")
+      message(WARNING "Unexpected file in ${SCHEMA_TARGET} GraphQL schema sources: ${OLD_FILE}")
+    endif()
   endif()
 endforeach()
 
