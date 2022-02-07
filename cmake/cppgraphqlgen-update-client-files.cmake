@@ -38,7 +38,7 @@ endforeach()
 
 # Don't update the files in the source directory if no files were generated in the binary directory.
 if(NOT FILE_NAMES)
-  message(FATAL_ERROR "Schema generation failed!")
+  message(FATAL_ERROR "Client generation failed!")
 endif()
 
  # Support if() IN_LIST operator: https://cmake.org/cmake/help/latest/policy/CMP0057.html
@@ -48,8 +48,10 @@ cmake_policy(SET CMP0057 NEW)
 file(GLOB OLD_FILES ${CLIENT_SOURCE_DIR}/*.h ${CLIENT_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)
-  if(NOT OLD_FILE IN_LIST FILE_NAMES)
-    file(REMOVE "${CLIENT_SOURCE_DIR}/${OLD_FILE}")
+  if(NOT OLD_FILE IN_LIST FILE_NAMES AND
+      NOT OLD_FILE STREQUAL "${CLIENT_PREFIX}Client.h" AND
+      NOT OLD_FILE STREQUAL "${CLIENT_PREFIX}Client.cpp")
+    message(WARNING "Unexpected file in ${CLIENT_TARGET} client sources: ${OLD_FILE}")
   endif()
 endforeach()
 
