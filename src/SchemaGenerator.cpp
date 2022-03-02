@@ -994,10 +994,6 @@ public:
 			<< R"cpp(	service::TypeNames getTypeNames() const noexcept;
 	service::ResolverMap getResolvers() const noexcept;
 
-	constexpr static std::string_view static_typename = std::string_view(
-		")cpp" <<  objectType.type << R"cpp("
-	);
-
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
 
@@ -1012,6 +1008,10 @@ public:
 			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
+
+	constexpr static std::string_view static_typename = std::string_view(
+		")cpp" <<  objectType.type << R"cpp("
+	);
 };
 )cpp";
 	}
