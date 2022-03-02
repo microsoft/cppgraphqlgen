@@ -146,6 +146,12 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		}
 	}
 
+		headerFile << R"cpp(
+
+using namespace std::literals;
+
+)cpp";
+
 	if (!_loader.getEnumTypes().empty())
 	{
 		pendingSeparator.reset();
@@ -173,6 +179,30 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 };
 
 )cpp";
+			firstValue = true;
+
+			headerFile << R"cpp(constexpr std::array<std::string_view, )cpp"
+					   << enumType.values.size() << R"cpp(> namesArray)cpp" << enumType.cppType
+					   << R"cpp( = {
+)cpp";
+
+			for (const auto& value : enumType.values)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(	R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+			}
+
+			headerFile << R"cpp(
+};
+
+)cpp";
+
 		}
 	}
 
@@ -963,6 +993,10 @@ public:
 		headerFile
 			<< R"cpp(	service::TypeNames getTypeNames() const noexcept;
 	service::ResolverMap getResolvers() const noexcept;
+
+	constexpr static std::string_view static_typename = std::string_view(
+		")cpp" <<  objectType.type << R"cpp("
+	);
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
