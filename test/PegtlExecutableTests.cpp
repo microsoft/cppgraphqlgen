@@ -139,3 +139,30 @@ TEST(PegtlExecutableCase, AnalyzeExecutableGrammar)
 	ASSERT_EQ(size_t { 0 }, analyze<executable_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
+
+TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
+{
+	bool parsedQuery = false;
+	bool caughtException = false;
+
+	try
+	{
+		memory_input<> input(R"gql(query { foo @something(arg: "\.") })gql",
+			"InvalidStringEscapeSequence");
+		parsedQuery = parse<executable_document>(input);
+	}
+	catch (const peg::parse_error& e)
+	{
+		using namespace std::literals;
+
+		ASSERT_NE(nullptr, e.what());
+		EXPECT_EQ("InvalidStringEscapeSequence:1:31: parse error matching struct "
+				  "graphql::peg::string_escape_sequence_content"sv,
+			e.what())
+			<< "should get an appropriate parser error message";
+		caughtException = true;
+	}
+
+	EXPECT_TRUE(caughtException) << "should catch a parse exception";
+	EXPECT_FALSE(parsedQuery) << "should not successfully parse the query";
+}
