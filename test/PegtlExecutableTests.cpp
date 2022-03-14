@@ -156,9 +156,9 @@ TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
 		using namespace std::literals;
 
 		ASSERT_NE(nullptr, e.what());
-		EXPECT_EQ("InvalidStringEscapeSequence:1:31: parse error matching struct "
-				  "graphql::peg::string_escape_sequence_content"sv,
-			e.what())
+		EXPECT_TRUE("InvalidStringEscapeSequence:1:31: parse error matching struct "
+					"graphql::peg::string_escape_sequence_content"sv
+			== e.what())
 			<< "should get an appropriate parser error message";
 		caughtException = true;
 	}
