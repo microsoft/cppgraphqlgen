@@ -153,13 +153,19 @@ TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
 	}
 	catch (const peg::parse_error& e)
 	{
+		ASSERT_NE(nullptr, e.what());
+
 		using namespace std::literals;
 
-		ASSERT_NE(nullptr, e.what());
-		EXPECT_TRUE(
-			"InvalidStringEscapeSequence:1:31: parse error matching struct graphql::peg::string_escape_sequence_content"sv
-			== e.what())
-			<< e.what();
+		const std::string_view error { e.what() };
+		constexpr auto c_start = "InvalidStringEscapeSequence:1:31: parse error matching "sv;
+		constexpr auto c_end = " graphql::peg::string_escape_sequence_content"sv;
+
+		ASSERT_TRUE(error.size() > c_start.size()) << "error message is too short";
+		ASSERT_TRUE(error.size() > c_end.size()) << "error message is too short";
+		EXPECT_TRUE(error.substr(0, c_start.size()) == c_start) << e.what();
+		EXPECT_TRUE(error.substr(error.size() - c_end.size()) == c_end) << e.what();
+
 		caughtException = true;
 	}
 
