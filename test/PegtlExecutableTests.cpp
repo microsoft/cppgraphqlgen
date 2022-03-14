@@ -159,7 +159,7 @@ TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
 		EXPECT_TRUE("InvalidStringEscapeSequence:1:31: parse error matching struct "
 					"graphql::peg::string_escape_sequence_content"sv
 			== e.what())
-			<< "should get an appropriate parser error message";
+			<< e.what();
 		caughtException = true;
 	}
 
