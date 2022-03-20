@@ -945,7 +945,12 @@ template <typename Rule, template <typename...> class Selector, typename ParseIn
 	{
 		return nullptr;
 	}
-	assert(state.stack.size() == 1);
+
+	if (state.stack.size() != 1)
+	{
+		throw std::logic_error("Unexpected error parsing GraphQL");
+	}
+
 	return std::move(state.back());
 }
 
