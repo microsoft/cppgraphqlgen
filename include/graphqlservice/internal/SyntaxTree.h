@@ -44,7 +44,6 @@ public:
 	[[nodiscard]] GRAPHQLPEG_EXPORT std::string string() const noexcept;
 	[[nodiscard]] GRAPHQLPEG_EXPORT bool has_content() const noexcept;
 	GRAPHQLPEG_EXPORT void remove_content() noexcept;
-	GRAPHQLPEG_EXPORT void emplace_back(std::unique_ptr<ast_node> child) noexcept;
 
 	GRAPHQLPEG_EXPORT void unescaped_view(std::string_view unescaped) noexcept;
 	[[nodiscard]] GRAPHQLPEG_EXPORT std::string_view unescaped_view() const;

@@ -195,11 +195,6 @@ void ast_node::remove_content() noexcept
 	_unescaped.reset();
 }
 
-void ast_node::emplace_back(std::unique_ptr<ast_node> child) noexcept
-{
-	children.emplace_back(std::move(child));
-}
-
 using namespace tao::graphqlpeg;
 
 template <typename Rule>
@@ -927,7 +922,7 @@ struct make_control<Selector>::state_handler<Rule, true, B> : ast_control<Rule>
 		parse_tree::internal::transform<Selector<Rule>>(in, n);
 		if (n)
 		{
-			state.back()->emplace_back(std::move(n));
+			state.back()->children.emplace_back(std::move(n));
 		}
 	}
 
