@@ -145,7 +145,11 @@ void Value::set<IdType>(const IdType& value)
 		throw std::logic_error("Invalid call to Value::set for IdType");
 	}
 
+#ifdef GRAPHQL_NO_BASE64
+	std::get<StringData>(_data).string = std::string ( std::string_view((const char*)value.data(), value.size()) );
+#else
 	std::get<StringData>(_data).string = internal::Base64::toBase64(value);
+#endif
 }
 
 template <>
@@ -266,7 +270,16 @@ IdType Value::get<IdType>() const
 		throw std::logic_error("Invalid call to Value::get for IdType");
 	}
 
+#ifdef GRAPHQL_NO_BASE64
+	IdType id;
+	std::string_view str = std::get<StringData>(typeData).string;
+	std::copy(
+		str.begin(), str.end(), std::back_inserter(id)
+	);
+	return id;
+#else
 	return internal::Base64::fromBase64(std::get<StringData>(typeData).string);
+#endif
 }
 
 template <>
@@ -378,7 +391,17 @@ IdType Value::release<IdType>()
 	auto& stringData = std::get<StringData>(_data);
 	auto stringValue = std::move(stringData.string);
 
+#ifdef GRAPHQL_NO_BASE64
+	IdType id;
+	std::copy(
+		stringValue.begin(),
+		stringValue.end(),
+		std::back_inserter(id)
+	);
+	return id;
+#else
 	return internal::Base64::fromBase64(stringValue);
+#endif
 }
 
 Value::Value(Type type /* = Type::Null */)
@@ -456,7 +479,11 @@ Value::Value(FloatType value)
 }
 
 Value::Value(const IdType& value)
+#ifdef GRAPHQL_NO_BASE64
+	: _data(TypeData { StringData { std::string{ std::string_view((const char*)value.data(), value.size()) }, false } })
+#else
 	: _data(TypeData { StringData { internal::Base64::toBase64(value), false } })
+#endif
 {
 }
 

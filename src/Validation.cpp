@@ -1218,9 +1218,10 @@ bool ValidateExecutableVisitor::validateInputValue(
 				{
 					try
 					{
+#ifndef GRAPHQL_NO_BASE64
 						auto decoded = internal::Base64::fromBase64(
 							std::get<std::string_view>(argument.value->data));
-
+#endif
 						return true;
 					}
 					catch (const std::logic_error&)

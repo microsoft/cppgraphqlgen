@@ -93,6 +93,8 @@ option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 
 option(GRAPHQL_UPDATE_VERSION "Regenerate graphqlservice/internal/Version.h and all of the version info rc files for Windows." ON)
 
+option(GRAPHQL_NO_BASE64 "Disable Base64 encoding for ID types" OFF)
+
 add_subdirectory(cmake)
 add_subdirectory(src)
 

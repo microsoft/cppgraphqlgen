@@ -140,6 +140,10 @@ target_include_directories(graphqlresponse PUBLIC
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 target_link_libraries(graphqlresponse PUBLIC graphqlcoro)
 
+if(GRAPHQL_NO_BASE64)
+target_compile_definitions(graphqlresponse PUBLIC GRAPHQL_NO_BASE64)
+endif()
+
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
 endif()
