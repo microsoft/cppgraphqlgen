@@ -110,6 +110,7 @@ private:
 // correlate the asynchronous/recursive callbacks and accumulate state in it.
 struct RequestState : std::enable_shared_from_this<RequestState>
 {
+	virtual ~RequestState() = default;
 };
 
 namespace {
