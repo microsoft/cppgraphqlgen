@@ -17,9 +17,13 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: 
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <string_view>
 
 namespace graphql {
 namespace introspection {
+
+
 
 enum class TypeKind
 {
@@ -31,6 +35,17 @@ enum class TypeKind
 	INPUT_OBJECT,
 	LIST,
 	NON_NULL
+};
+
+constexpr std::array<std::string_view, 8> s_namesTypeKind = {
+	std::string_view(R"gql(SCALAR)gql"),
+	std::string_view(R"gql(OBJECT)gql"),
+	std::string_view(R"gql(INTERFACE)gql"),
+	std::string_view(R"gql(UNION)gql"),
+	std::string_view(R"gql(ENUM)gql"),
+	std::string_view(R"gql(INPUT_OBJECT)gql"),
+	std::string_view(R"gql(LIST)gql"),
+	std::string_view(R"gql(NON_NULL)gql")
 };
 
 enum class DirectiveLocation
@@ -54,6 +69,28 @@ enum class DirectiveLocation
 	ENUM_VALUE,
 	INPUT_OBJECT,
 	INPUT_FIELD_DEFINITION
+};
+
+constexpr std::array<std::string_view, 19> s_namesDirectiveLocation = {
+	std::string_view(R"gql(QUERY)gql"),
+	std::string_view(R"gql(MUTATION)gql"),
+	std::string_view(R"gql(SUBSCRIPTION)gql"),
+	std::string_view(R"gql(FIELD)gql"),
+	std::string_view(R"gql(FRAGMENT_DEFINITION)gql"),
+	std::string_view(R"gql(FRAGMENT_SPREAD)gql"),
+	std::string_view(R"gql(INLINE_FRAGMENT)gql"),
+	std::string_view(R"gql(VARIABLE_DEFINITION)gql"),
+	std::string_view(R"gql(SCHEMA)gql"),
+	std::string_view(R"gql(SCALAR)gql"),
+	std::string_view(R"gql(OBJECT)gql"),
+	std::string_view(R"gql(FIELD_DEFINITION)gql"),
+	std::string_view(R"gql(ARGUMENT_DEFINITION)gql"),
+	std::string_view(R"gql(INTERFACE)gql"),
+	std::string_view(R"gql(UNION)gql"),
+	std::string_view(R"gql(ENUM)gql"),
+	std::string_view(R"gql(ENUM_VALUE)gql"),
+	std::string_view(R"gql(INPUT_OBJECT)gql"),
+	std::string_view(R"gql(INPUT_FIELD_DEFINITION)gql")
 };
 
 class Schema;

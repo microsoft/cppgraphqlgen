@@ -8,8 +8,8 @@
 #include "SubscriptionObject.h"
 
 #include "graphqlservice/internal/Schema.h"
-
 #include "graphqlservice/introspection/IntrospectionSchema.h"
+#include <ValidationSchema.h>
 
 #include <algorithm>
 #include <array>
@@ -25,11 +25,9 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 3> s_namesDogCommand = {
-	R"gql(SIT)gql"sv,
-	R"gql(DOWN)gql"sv,
-	R"gql(HEEL)gql"sv
-};
+
+
+using validation::s_namesDogCommand;
 
 template <>
 validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const response::Value& value)
@@ -79,9 +77,9 @@ void ModifiedResult<validation::DogCommand>::validateScalar(const response::Valu
 	}
 }
 
-static const std::array<std::string_view, 1> s_namesCatCommand = {
-	R"gql(JUMP)gql"sv
-};
+
+
+using validation::s_namesCatCommand;
 
 template <>
 validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const response::Value& value)

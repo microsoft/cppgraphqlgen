@@ -17,9 +17,13 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: 
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <string_view>
 
 namespace graphql {
 namespace today {
+
+
 
 enum class TaskState
 {
@@ -27,6 +31,13 @@ enum class TaskState
 	Started,
 	Complete,
 	Unassigned
+};
+
+constexpr std::array<std::string_view, 4> s_namesTaskState = {
+	std::string_view(R"gql(New)gql"),
+	std::string_view(R"gql(Started)gql"),
+	std::string_view(R"gql(Complete)gql"),
+	std::string_view(R"gql(Unassigned)gql")
 };
 
 struct CompleteTaskInput

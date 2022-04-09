@@ -17,9 +17,13 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: 
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <string_view>
 
 namespace graphql {
 namespace validation {
+
+
 
 enum class DogCommand
 {
@@ -28,9 +32,19 @@ enum class DogCommand
 	HEEL
 };
 
+constexpr std::array<std::string_view, 3> s_namesDogCommand = {
+	std::string_view(R"gql(SIT)gql"),
+	std::string_view(R"gql(DOWN)gql"),
+	std::string_view(R"gql(HEEL)gql")
+};
+
 enum class CatCommand
 {
 	JUMP
+};
+
+constexpr std::array<std::string_view, 1> s_namesCatCommand = {
+	std::string_view(R"gql(JUMP)gql")
 };
 
 struct ComplexInput

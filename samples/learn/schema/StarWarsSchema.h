@@ -17,15 +17,25 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: 
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <string_view>
 
 namespace graphql {
 namespace learn {
+
+
 
 enum class Episode
 {
 	NEW_HOPE,
 	EMPIRE,
 	JEDI
+};
+
+constexpr std::array<std::string_view, 3> s_namesEpisode = {
+	std::string_view(R"gql(NEW_HOPE)gql"),
+	std::string_view(R"gql(EMPIRE)gql"),
+	std::string_view(R"gql(JEDI)gql")
 };
 
 struct ReviewInput

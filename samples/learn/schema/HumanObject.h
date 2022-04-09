@@ -239,6 +239,10 @@ public:
 		: Human { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
+
+	constexpr static std::string_view static_typename = std::string_view(
+		"Human"
+	);
 };
 
 } // namespace graphql::learn::object

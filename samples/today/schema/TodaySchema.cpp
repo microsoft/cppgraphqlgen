@@ -8,8 +8,8 @@
 #include "SubscriptionObject.h"
 
 #include "graphqlservice/internal/Schema.h"
-
 #include "graphqlservice/introspection/IntrospectionSchema.h"
+#include <TodaySchema.h>
 
 #include <algorithm>
 #include <array>
@@ -25,12 +25,9 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	R"gql(New)gql"sv,
-	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
-};
+
+
+using today::s_namesTaskState;
 
 template <>
 today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)

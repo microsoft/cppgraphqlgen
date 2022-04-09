@@ -124,6 +124,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <string_view>
 
 )cpp";
 
@@ -147,8 +149,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	}
 
 		headerFile << R"cpp(
-
-using namespace std::literals;
 
 )cpp";
 
@@ -182,7 +182,7 @@ using namespace std::literals;
 			firstValue = true;
 
 			headerFile << R"cpp(constexpr std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> namesArray)cpp" << enumType.cppType
+					   << enumType.values.size() << R"cpp(> s_names)cpp" << enumType.cppType
 					   << R"cpp( = {
 )cpp";
 
@@ -195,7 +195,7 @@ using namespace std::literals;
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(	R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+				headerFile << R"cpp(	std::string_view(R"gql()cpp" << value.value << R"cpp()gql"))cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1098,13 +1098,14 @@ bool Generator::outputSource() const noexcept
 	if (_loader.isIntrospection())
 	{
 		sourceFile << R"cpp(#include "graphqlservice/internal/Introspection.h"
+#include "graphqlservice/introspection/IntrospectionSchema.h"
 )cpp";
 	}
 	else
 	{
 		sourceFile << R"cpp(#include "graphqlservice/internal/Schema.h"
-
 #include "graphqlservice/introspection/IntrospectionSchema.h"
+#include <)cpp" << getHeaderPath() << R"cpp(>
 )cpp";
 	}
 
@@ -1132,27 +1133,9 @@ using namespace std::literals;
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			bool firstValue = true;
-
-			sourceFile << R"cpp(static const std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> s_names)cpp" << enumType.cppType
-					   << R"cpp( = {
-)cpp";
-
-			for (const auto& value : enumType.values)
-			{
-				if (!firstValue)
-				{
-					sourceFile << R"cpp(,
-)cpp";
-				}
-
-				firstValue = false;
-				sourceFile << R"cpp(	R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
-			}
-
 			sourceFile << R"cpp(
-};
+
+using )cpp" << _loader.getSchemaNamespace() << "::s_names" <<  enumType.cppType << R"cpp(;
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
