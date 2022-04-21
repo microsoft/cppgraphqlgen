@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include "graphqlservice/GraphQLParse.h"
+
 #include "graphqlservice/internal/Grammar.h"
 
 #include <tao/pegtl/contrib/analyze.hpp>
@@ -165,6 +167,62 @@ TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
 		ASSERT_TRUE(error.size() > c_end.size()) << "error message is too short";
 		EXPECT_TRUE(error.substr(0, c_start.size()) == c_start) << e.what();
 		EXPECT_TRUE(error.substr(error.size() - c_end.size()) == c_end) << e.what();
+
+		caughtException = true;
+	}
+
+	EXPECT_TRUE(caughtException) << "should catch a parse exception";
+	EXPECT_FALSE(parsedQuery) << "should not successfully parse the query";
+}
+
+using namespace std::literals;
+
+constexpr auto queryWithDepth3 = R"gql(query {
+		foo {
+			bar
+		}
+	})gql"sv;
+
+TEST(PegtlExecutableCase, ParserDepthLimitNotExceeded)
+{
+	bool parsedQuery = false;
+
+	try
+	{
+		auto query = peg::parseString(queryWithDepth3, 3);
+
+		parsedQuery = query.root != nullptr;
+	}
+	catch (const peg::parse_error& ex)
+	{
+		FAIL() << ex.what();
+	}
+
+	EXPECT_TRUE(parsedQuery) << "should parse the query";
+}
+
+TEST(PegtlExecutableCase, ParserDepthLimitExceeded)
+{
+	bool parsedQuery = false;
+	bool caughtException = false;
+
+	try
+	{
+		auto query = peg::parseString(queryWithDepth3, 2);
+
+		parsedQuery = query.root != nullptr;
+	}
+	catch (const peg::parse_error& ex)
+	{
+		ASSERT_NE(nullptr, ex.what());
+
+		using namespace std::literals;
+
+		const std::string_view error { ex.what() };
+		constexpr auto expected =
+			"GraphQL:4:3: Exceeded 2 nested depth limit for https://spec.graphql.org/October2021/#SelectionSet"sv;
+
+		EXPECT_TRUE(error == expected) << ex.what();
 
 		caughtException = true;
 	}
