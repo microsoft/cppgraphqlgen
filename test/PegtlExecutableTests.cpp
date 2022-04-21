@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include "graphqlservice/GraphQLParse.h"
+
 #include "graphqlservice/internal/Grammar.h"
 
 #include <tao/pegtl/contrib/analyze.hpp>
@@ -138,4 +140,93 @@ TEST(PegtlExecutableCase, AnalyzeExecutableGrammar)
 {
 	ASSERT_EQ(size_t { 0 }, analyze<executable_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
+}
+
+TEST(PegtlExecutableCase, InvalidStringEscapeSequence)
+{
+	bool parsedQuery = false;
+	bool caughtException = false;
+
+	try
+	{
+		memory_input<> input(R"gql(query { foo @something(arg: "\.") })gql",
+			"InvalidStringEscapeSequence");
+		parsedQuery = parse<executable_document>(input);
+	}
+	catch (const peg::parse_error& e)
+	{
+		ASSERT_NE(nullptr, e.what());
+
+		using namespace std::literals;
+
+		const std::string_view error { e.what() };
+		constexpr auto c_start = "InvalidStringEscapeSequence:1:31: parse error matching "sv;
+		constexpr auto c_end = " graphql::peg::string_escape_sequence_content"sv;
+
+		ASSERT_TRUE(error.size() > c_start.size()) << "error message is too short";
+		ASSERT_TRUE(error.size() > c_end.size()) << "error message is too short";
+		EXPECT_TRUE(error.substr(0, c_start.size()) == c_start) << e.what();
+		EXPECT_TRUE(error.substr(error.size() - c_end.size()) == c_end) << e.what();
+
+		caughtException = true;
+	}
+
+	EXPECT_TRUE(caughtException) << "should catch a parse exception";
+	EXPECT_FALSE(parsedQuery) << "should not successfully parse the query";
+}
+
+using namespace std::literals;
+
+constexpr auto queryWithDepth3 = R"gql(query {
+		foo {
+			bar
+		}
+	})gql"sv;
+
+TEST(PegtlExecutableCase, ParserDepthLimitNotExceeded)
+{
+	bool parsedQuery = false;
+
+	try
+	{
+		auto query = peg::parseString(queryWithDepth3, 3);
+
+		parsedQuery = query.root != nullptr;
+	}
+	catch (const peg::parse_error& ex)
+	{
+		FAIL() << ex.what();
+	}
+
+	EXPECT_TRUE(parsedQuery) << "should parse the query";
+}
+
+TEST(PegtlExecutableCase, ParserDepthLimitExceeded)
+{
+	bool parsedQuery = false;
+	bool caughtException = false;
+
+	try
+	{
+		auto query = peg::parseString(queryWithDepth3, 2);
+
+		parsedQuery = query.root != nullptr;
+	}
+	catch (const peg::parse_error& ex)
+	{
+		ASSERT_NE(nullptr, ex.what());
+
+		using namespace std::literals;
+
+		const std::string_view error { ex.what() };
+		constexpr auto expected =
+			"GraphQL:4:3: Exceeded nested depth limit: 2 for https://spec.graphql.org/October2021/#SelectionSet"sv;
+
+		EXPECT_TRUE(error == expected) << ex.what();
+
+		caughtException = true;
+	}
+
+	EXPECT_TRUE(caughtException) << "should catch a parse exception";
+	EXPECT_FALSE(parsedQuery) << "should not successfully parse the query";
 }

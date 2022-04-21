@@ -7,12 +7,6 @@
 
 #include "graphqlservice/JSONResponse.h"
 
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
-#include <queue>
-#include <thread>
-
 using namespace graphql;
 
 using namespace std::literals;

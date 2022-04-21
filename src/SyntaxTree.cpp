@@ -13,6 +13,7 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <sstream>
 #include <tuple>
 #include <utility>
 
@@ -660,9 +661,59 @@ struct executable_selector<type_condition> : std::true_type
 };
 
 template <typename Rule>
+struct ast_action : nothing<Rule>
+{
+};
+
+struct [[nodiscard]] depth_guard
+{
+	explicit depth_guard(size_t& depth) noexcept
+		: _depth(depth)
+	{
+		++_depth;
+	}
+
+	~depth_guard()
+	{
+		--_depth;
+	}
+
+	depth_guard(depth_guard&&) noexcept = delete;
+	depth_guard(const depth_guard&) = delete;
+
+	depth_guard& operator=(depth_guard&&) noexcept = delete;
+	depth_guard& operator=(const depth_guard&) = delete;
+
+private:
+	size_t& _depth;
+};
+
+template <>
+struct ast_action<selection_set> : maybe_nothing
+{
+	template <typename Rule, apply_mode A, rewind_mode M, template <typename...> class Action,
+		template <typename...> class Control, typename ParseInput, typename... States>
+	[[nodiscard]] static bool match(ParseInput& in, States&&... st)
+	{
+		depth_guard guard(in.selectionSetDepth);
+		if (in.selectionSetDepth > in.depthLimit())
+		{
+			std::ostringstream oss;
+
+			oss << "Exceeded nested depth limit: " << in.depthLimit()
+				<< " for https://spec.graphql.org/October2021/#SelectionSet";
+
+			throw parse_error(oss.str(), in);
+		}
+
+		return tao::graphqlpeg::template match<Rule, A, M, Action, Control>(in, st...);
+	}
+};
+
+template <typename Rule>
 struct ast_control : normal<Rule>
 {
-	static const std::string error_message;
+	static const char* error_message;
 
 	template <typename Input, typename... State>
 	[[noreturn]] static void raise(const Input& in, State&&...)
@@ -672,178 +723,178 @@ struct ast_control : normal<Rule>
 };
 
 template <>
-const std::string ast_control<one<'}'>>::error_message = "Expected }";
+const char* ast_control<one<'}'>>::error_message = "Expected }";
 template <>
-const std::string ast_control<one<']'>>::error_message = "Expected ]";
+const char* ast_control<one<']'>>::error_message = "Expected ]";
 template <>
-const std::string ast_control<one<')'>>::error_message = "Expected )";
+const char* ast_control<one<')'>>::error_message = "Expected )";
 template <>
-const std::string ast_control<quote_token>::error_message = "Expected \"";
+const char* ast_control<quote_token>::error_message = "Expected \"";
 template <>
-const std::string ast_control<block_quote_token>::error_message = "Expected \"\"\"";
+const char* ast_control<block_quote_token>::error_message = "Expected \"\"\"";
 
 template <>
-const std::string ast_control<variable_name_content>::error_message =
+const char* ast_control<variable_name_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Variable";
 template <>
-const std::string ast_control<escaped_unicode_content>::error_message =
+const char* ast_control<escaped_unicode_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EscapedUnicode";
 template <>
-const std::string ast_control<string_escape_sequence_content>::error_message =
+const char* ast_control<string_escape_sequence_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EscapedCharacter";
 template <>
-const std::string ast_control<string_quote_content>::error_message =
+const char* ast_control<string_quote_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#StringCharacter";
 template <>
-const std::string ast_control<block_quote_content>::error_message =
+const char* ast_control<block_quote_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#BlockStringCharacter";
 template <>
-const std::string ast_control<fractional_part_content>::error_message =
+const char* ast_control<fractional_part_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#FractionalPart";
 template <>
-const std::string ast_control<exponent_part_content>::error_message =
+const char* ast_control<exponent_part_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ExponentPart";
 template <>
-const std::string ast_control<argument_content>::error_message =
+const char* ast_control<argument_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Argument";
 template <>
-const std::string ast_control<arguments_content>::error_message =
+const char* ast_control<arguments_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Arguments";
 template <>
-const std::string ast_control<list_value_content>::error_message =
+const char* ast_control<list_value_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ListValue";
 template <>
-const std::string ast_control<object_field_content>::error_message =
+const char* ast_control<object_field_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ObjectField";
 template <>
-const std::string ast_control<object_value_content>::error_message =
+const char* ast_control<object_value_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ObjectValue";
 template <>
-const std::string ast_control<input_value_content>::error_message =
+const char* ast_control<input_value_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Value";
 template <>
-const std::string ast_control<default_value_content>::error_message =
+const char* ast_control<default_value_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#DefaultValue";
 template <>
-const std::string ast_control<list_type_content>::error_message =
+const char* ast_control<list_type_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ListType";
 template <>
-const std::string ast_control<type_name_content>::error_message =
+const char* ast_control<type_name_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Type";
 template <>
-const std::string ast_control<variable_content>::error_message =
+const char* ast_control<variable_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#VariableDefinition";
 template <>
-const std::string ast_control<variable_definitions_content>::error_message =
+const char* ast_control<variable_definitions_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#VariableDefinitions";
 template <>
-const std::string ast_control<directive_content>::error_message =
+const char* ast_control<directive_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Directive";
 template <>
-const std::string ast_control<field_content>::error_message =
+const char* ast_control<field_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Field";
 template <>
-const std::string ast_control<type_condition_content>::error_message =
+const char* ast_control<type_condition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#TypeCondition";
 template <>
-const std::string ast_control<fragement_spread_or_inline_fragment_content>::error_message =
+const char* ast_control<fragement_spread_or_inline_fragment_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#FragmentSpread or "
 	"https://spec.graphql.org/October2021/#InlineFragment";
 template <>
-const std::string ast_control<selection_set_content>::error_message =
+const char* ast_control<selection_set_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#SelectionSet";
 template <>
-const std::string ast_control<operation_definition_operation_type_content>::error_message =
+const char* ast_control<operation_definition_operation_type_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#OperationDefinition";
 template <>
-const std::string ast_control<fragment_definition_content>::error_message =
+const char* ast_control<fragment_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#FragmentDefinition";
 template <>
-const std::string ast_control<root_operation_definition_content>::error_message =
+const char* ast_control<root_operation_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#RootOperationTypeDefinition";
 template <>
-const std::string ast_control<schema_definition_content>::error_message =
+const char* ast_control<schema_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#SchemaDefinition";
 template <>
-const std::string ast_control<scalar_type_definition_content>::error_message =
+const char* ast_control<scalar_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ScalarTypeDefinition";
 template <>
-const std::string ast_control<arguments_definition_content>::error_message =
+const char* ast_control<arguments_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ArgumentsDefinition";
 template <>
-const std::string ast_control<field_definition_content>::error_message =
+const char* ast_control<field_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#FieldDefinition";
 template <>
-const std::string ast_control<fields_definition_content>::error_message =
+const char* ast_control<fields_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#FieldsDefinition";
 template <>
-const std::string ast_control<implements_interfaces_content>::error_message =
+const char* ast_control<implements_interfaces_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ImplementsInterfaces";
 template <>
-const std::string ast_control<object_type_definition_content>::error_message =
+const char* ast_control<object_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ObjectTypeDefinition";
 template <>
-const std::string ast_control<interface_type_definition_content>::error_message =
+const char* ast_control<interface_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InterfaceTypeDefinition";
 template <>
-const std::string ast_control<union_member_types_content>::error_message =
+const char* ast_control<union_member_types_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#UnionMemberTypes";
 template <>
-const std::string ast_control<union_type_definition_content>::error_message =
+const char* ast_control<union_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#UnionTypeDefinition";
 template <>
-const std::string ast_control<enum_value_definition_content>::error_message =
+const char* ast_control<enum_value_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EnumValueDefinition";
 template <>
-const std::string ast_control<enum_values_definition_content>::error_message =
+const char* ast_control<enum_values_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EnumValuesDefinition";
 template <>
-const std::string ast_control<enum_type_definition_content>::error_message =
+const char* ast_control<enum_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EnumTypeDefinition";
 template <>
-const std::string ast_control<input_field_definition_content>::error_message =
+const char* ast_control<input_field_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InputValueDefinition";
 template <>
-const std::string ast_control<input_fields_definition_content>::error_message =
+const char* ast_control<input_fields_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InputFieldsDefinition";
 template <>
-const std::string ast_control<input_object_type_definition_content>::error_message =
+const char* ast_control<input_object_type_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InputObjectTypeDefinition";
 template <>
-const std::string ast_control<directive_definition_content>::error_message =
+const char* ast_control<directive_definition_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#DirectiveDefinition";
 template <>
-const std::string ast_control<schema_extension_content>::error_message =
+const char* ast_control<schema_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#SchemaExtension";
 template <>
-const std::string ast_control<scalar_type_extension_content>::error_message =
+const char* ast_control<scalar_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ScalarTypeExtension";
 template <>
-const std::string ast_control<object_type_extension_content>::error_message =
+const char* ast_control<object_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#ObjectTypeExtension";
 template <>
-const std::string ast_control<interface_type_extension_content>::error_message =
+const char* ast_control<interface_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InterfaceTypeExtension";
 template <>
-const std::string ast_control<union_type_extension_content>::error_message =
+const char* ast_control<union_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#UnionTypeExtension";
 template <>
-const std::string ast_control<enum_type_extension_content>::error_message =
+const char* ast_control<enum_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#EnumTypeExtension";
 template <>
-const std::string ast_control<input_object_type_extension_content>::error_message =
+const char* ast_control<input_object_type_extension_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#InputObjectTypeExtension";
 template <>
-const std::string ast_control<mixed_document_content>::error_message =
+const char* ast_control<mixed_document_content>::error_message =
 	"Expected https://spec.graphql.org/October2021/#Document";
 template <>
-const std::string ast_control<executable_document_content>::error_message =
+const char* ast_control<executable_document_content>::error_message =
 	"Expected executable https://spec.graphql.org/October2021/#Document";
 template <>
-const std::string ast_control<schema_document_content>::error_message =
+const char* ast_control<schema_document_content>::error_message =
 	"Expected schema type https://spec.graphql.org/October2021/#Document";
 
-ast parseSchemaString(std::string_view input)
+ast parseSchemaString(std::string_view input, size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
 					 ast_input { std::vector<char> { input.cbegin(), input.cend() } }),
@@ -854,55 +905,55 @@ ast parseSchemaString(std::string_view input)
 	{
 		// Try a smaller grammar with only schema type definitions first.
 		result.root =
-			parse_tree::parse<schema_document, ast_node, schema_selector, nothing, ast_control>(
-				memory_input<>(data.data(), data.size(), "GraphQL"));
+			parse_tree::parse<schema_document, ast_node, schema_selector, ast_action, ast_control>(
+				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
 		result.root =
-			parse_tree::parse<mixed_document, ast_node, schema_selector, nothing, ast_control>(
-				memory_input<>(data.data(), data.size(), "GraphQL"));
+			parse_tree::parse<mixed_document, ast_node, schema_selector, ast_action, ast_control>(
+				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 
 	return result;
 }
 
-ast parseSchemaFile(std::string_view filename)
+ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 {
 	ast result;
 
 	try
 	{
-		result.input =
-			std::make_shared<ast_input>(ast_input { std::make_unique<file_input<>>(filename) });
+		result.input = std::make_shared<ast_input>(
+			ast_input { std::make_unique<ast_file>(depthLimit, filename) });
 
-		auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
+		auto& in = *std::get<std::unique_ptr<ast_file>>(result.input->data);
 
 		// Try a smaller grammar with only schema type definitions first.
 		result.root =
-			parse_tree::parse<schema_document, ast_node, schema_selector, nothing, ast_control>(
+			parse_tree::parse<schema_document, ast_node, schema_selector, ast_action, ast_control>(
 				std::move(in));
 	}
 	catch (const peg::parse_error&)
 	{
-		result.input =
-			std::make_shared<ast_input>(ast_input { std::make_unique<file_input<>>(filename) });
+		result.input = std::make_shared<ast_input>(
+			ast_input { std::make_unique<ast_file>(depthLimit, filename) });
 
-		auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
+		auto& in = *std::get<std::unique_ptr<ast_file>>(result.input->data);
 
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
 		result.root =
-			parse_tree::parse<mixed_document, ast_node, schema_selector, nothing, ast_control>(
+			parse_tree::parse<mixed_document, ast_node, schema_selector, ast_action, ast_control>(
 				std::move(in));
 	}
 
 	return result;
 }
 
-ast parseString(std::string_view input)
+ast parseString(std::string_view input, size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
 					 ast_input { std::vector<char> { input.cbegin(), input.cend() } }),
@@ -913,48 +964,48 @@ ast parseString(std::string_view input)
 	{
 		// Try a smaller grammar with only executable definitions first.
 		result.root = parse_tree::
-			parse<executable_document, ast_node, executable_selector, nothing, ast_control>(
-				memory_input<>(data.data(), data.size(), "GraphQL"));
+			parse<executable_document, ast_node, executable_selector, ast_action, ast_control>(
+				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root =
-			parse_tree::parse<mixed_document, ast_node, executable_selector, nothing, ast_control>(
-				memory_input<>(data.data(), data.size(), "GraphQL"));
+		result.root = parse_tree::
+			parse<mixed_document, ast_node, executable_selector, ast_action, ast_control>(
+				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 
 	return result;
 }
 
-ast parseFile(std::string_view filename)
+ast parseFile(std::string_view filename, size_t depthLimit)
 {
 	ast result;
 
 	try
 	{
-		result.input =
-			std::make_shared<ast_input>(ast_input { std::make_unique<file_input<>>(filename) });
+		result.input = std::make_shared<ast_input>(
+			ast_input { std::make_unique<ast_file>(depthLimit, filename) });
 
-		auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
+		auto& in = *std::get<std::unique_ptr<ast_file>>(result.input->data);
 
 		// Try a smaller grammar with only executable definitions first.
 		result.root = parse_tree::
-			parse<executable_document, ast_node, executable_selector, nothing, ast_control>(
+			parse<executable_document, ast_node, executable_selector, ast_action, ast_control>(
 				std::move(in));
 	}
 	catch (const peg::parse_error&)
 	{
-		result.input =
-			std::make_shared<ast_input>(ast_input { std::make_unique<file_input<>>(filename) });
+		result.input = std::make_shared<ast_input>(
+			ast_input { std::make_unique<ast_file>(depthLimit, filename) });
 
-		auto& in = *std::get<std::unique_ptr<file_input<>>>(result.input->data);
+		auto& in = *std::get<std::unique_ptr<ast_file>>(result.input->data);
 
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root =
-			parse_tree::parse<mixed_document, ast_node, executable_selector, nothing, ast_control>(
+		result.root = parse_tree::
+			parse<mixed_document, ast_node, executable_selector, ast_action, ast_control>(
 				std::move(in));
 	}
 
@@ -976,7 +1027,7 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 			peg::ast_node,
 			peg::executable_selector,
 			peg::nothing,
-			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"));
+			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
@@ -986,7 +1037,7 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 			peg::ast_node,
 			peg::executable_selector,
 			peg::nothing,
-			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"));
+			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"s));
 	}
 
 	return result;

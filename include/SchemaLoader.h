@@ -154,7 +154,6 @@ struct OutputField
 {
 	std::string_view type;
 	std::string_view name;
-	std::string_view cppName;
 	InputFieldList arguments;
 	OutputFieldType fieldType = OutputFieldType::Builtin;
 	TypeModifierStack modifiers;
@@ -263,6 +262,9 @@ public:
 	std::string getInputCppType(const InputField& field) const noexcept;
 	std::string getOutputCppType(const OutputField& field) const noexcept;
 
+	static std::string getOutputCppAccessor(const OutputField& field) noexcept;
+	static std::string getOutputCppResolver(const OutputField& field) noexcept;
+
 private:
 	static bool isExtension(const peg::ast_node& definition) noexcept;
 
@@ -302,6 +304,8 @@ private:
 		const OutputFieldList& typeFields) const;
 	void validateTransitiveInterfaces(
 		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
+
+	static std::string getJoinedCppName(std::string_view prefix, std::string_view fieldName) noexcept;
 
 	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;

@@ -404,6 +404,9 @@ const std::string& GetRequestText() noexcept
 		      isNow
 		    }
 		  }
+		
+		  # Try a field with a C++ keyword
+		  default
 		}
 	)gql"s;
 
@@ -457,6 +460,11 @@ Response parseResponse(response::Value response)
 			if (member.first == R"js(anyType)js"sv)
 			{
 				result.anyType = ModifiedResponse<Response::anyType_UnionType>::parse<TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(default)js"sv)
+			{
+				result.default_ = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
