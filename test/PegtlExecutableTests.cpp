@@ -220,7 +220,7 @@ TEST(PegtlExecutableCase, ParserDepthLimitExceeded)
 
 		const std::string_view error { ex.what() };
 		constexpr auto expected =
-			"GraphQL:4:3: Exceeded 2 nested depth limit for https://spec.graphql.org/October2021/#SelectionSet"sv;
+			"GraphQL:4:3: Exceeded nested depth limit: 2 for https://spec.graphql.org/October2021/#SelectionSet"sv;
 
 		EXPECT_TRUE(error == expected) << ex.what();
 

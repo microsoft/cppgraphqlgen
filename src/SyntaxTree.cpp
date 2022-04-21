@@ -700,8 +700,8 @@ struct ast_action<selection_set> : maybe_nothing
 		{
 			std::ostringstream oss;
 
-			oss << "Exceeded " << in.depthLimit()
-				<< " nested depth limit for https://spec.graphql.org/October2021/#SelectionSet";
+			oss << "Exceeded nested depth limit: " << in.depthLimit()
+				<< " for https://spec.graphql.org/October2021/#SelectionSet";
 
 			throw parse_error(oss.str(), in);
 		}
