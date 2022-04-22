@@ -17,17 +17,17 @@ class Query
 {
 public:
 	explicit Query(std::map<Episode, SharedHero>&& heroes,
-		std::map<std::string, std::shared_ptr<Human>>&& humans,
-		std::map<std::string, std::shared_ptr<Droid>>&& droids) noexcept;
+		std::map<response::IdType, std::shared_ptr<Human>>&& humans,
+		std::map<response::IdType, std::shared_ptr<Droid>>&& droids) noexcept;
 
 	std::shared_ptr<object::Character> getHero(std::optional<Episode> episodeArg) const noexcept;
-	std::shared_ptr<object::Human> getHuman(const std::string& idArg) const noexcept;
-	std::shared_ptr<object::Droid> getDroid(const std::string& idArg) const noexcept;
+	std::shared_ptr<object::Human> getHuman(const response::IdType& idArg) const noexcept;
+	std::shared_ptr<object::Droid> getDroid(const response::IdType& idArg) const noexcept;
 
 private:
 	const std::map<Episode, SharedHero> heroes_;
-	const std::map<std::string, std::shared_ptr<Human>> humans_;
-	const std::map<std::string, std::shared_ptr<Droid>> droids_;
+	const std::map<response::IdType, std::shared_ptr<Human>> humans_;
+	const std::map<response::IdType, std::shared_ptr<Droid>> droids_;
 };
 
 } // namespace graphql::learn

@@ -34,7 +34,7 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 		});
 }
 
-const std::string& Human::getId() const noexcept
+const response::IdType& Human::getId() const noexcept
 {
 	return id_;
 }
