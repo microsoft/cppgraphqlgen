@@ -1001,6 +1001,9 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 					}
 				}
 			}
+
+			default:
+				break;
 		}
 
 		return typeOrder;
@@ -1016,6 +1019,9 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 
 		case Type::String:
 			return std::get<StringData>(lhsData) <=> std::get<StringData>(rhsData);
+
+		case Type::Null:
+			return std::get<NullData>(lhsData) <=> std::get<NullData>(rhsData);
 
 		case Type::Boolean:
 			return std::get<BooleanType>(lhsData) <=> std::get<BooleanType>(rhsData);
@@ -1034,9 +1040,10 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 
 		case Type::Scalar:
 			return std::get<ScalarData>(lhsData) <=> std::get<ScalarData>(rhsData);
-	}
 
-	return std::partial_ordering::unordered;
+		default:
+			return std::partial_ordering::unordered;
+	}
 }
 
 bool Value::operator==(const Value& rhs) const noexcept
