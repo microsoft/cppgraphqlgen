@@ -985,6 +985,8 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 						return enumData <=> stringData.string;
 					}
 				}
+
+				break;
 			}
 
 			case Type::ID:
@@ -1000,6 +1002,8 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 						return idType <=> stringData.string;
 					}
 				}
+
+				break;
 			}
 
 			default:
