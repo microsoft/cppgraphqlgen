@@ -29,28 +29,6 @@ bool Value::NullData::operator==(const NullData&) const
 	return true;
 }
 
-bool Value::IdData::operator==(const IdData& rhs) const
-{
-	return id == rhs.id;
-}
-
-bool Value::IdData::operator==(const StringData& rhs) const
-{
-	if (rhs.from_json || rhs.from_input)
-	{
-		if (std::holds_alternative<IdType>(id))
-		{
-			return rhs.string == internal::Base64::toBase64(std::get<IdType>(id));
-		}
-		else if (std::holds_alternative<StringType>(id))
-		{
-			return rhs.string == std::get<StringType>(id);
-		}
-	}
-
-	return false;
-}
-
 bool Value::ScalarData::operator==(const ScalarData& rhs) const
 {
 	if (scalar && rhs.scalar)
@@ -75,7 +53,7 @@ void Value::set<StringType>(StringType&& value)
 	}
 	else if (std::holds_alternative<IdData>(_data))
 	{
-		std::get<IdData>(_data).id = std::move(value);
+		std::get<IdData>(_data) = std::move(value);
 	}
 	else if (std::holds_alternative<StringData>(_data))
 	{
@@ -171,7 +149,7 @@ void Value::set<IdType>(IdType&& value)
 		throw std::logic_error("Invalid call to Value::set for IdType");
 	}
 
-	std::get<IdData>(_data).id = std::move(value);
+	std::get<IdData>(_data) = std::move(value);
 }
 
 template <>
@@ -213,9 +191,9 @@ const StringType& Value::get<StringType>() const
 	{
 		const auto& idData = std::get<IdData>(typeData);
 
-		if (std::holds_alternative<StringType>(idData.id))
+		if (std::holds_alternative<StringType>(idData))
 		{
-			return std::get<StringType>(idData.id);
+			return std::get<StringType>(idData);
 		}
 	}
 	else if (std::holds_alternative<StringData>(typeData))
@@ -300,9 +278,9 @@ const IdType& Value::get<IdType>() const
 	{
 		const auto& idData = std::get<IdData>(typeData);
 
-		if (std::holds_alternative<IdType>(idData.id))
+		if (std::holds_alternative<IdType>(idData))
 		{
-			return std::get<IdType>(idData.id);
+			return std::get<IdType>(idData);
 		}
 	}
 
@@ -366,16 +344,16 @@ StringType Value::release<StringType>()
 	{
 		auto& idData = std::get<IdData>(_data);
 
-		if (std::holds_alternative<IdType>(idData.id))
+		if (std::holds_alternative<IdType>(idData))
 		{
-			auto& idType = std::get<IdType>(idData.id);
+			auto& idType = std::get<IdType>(idData);
 
 			result = internal::Base64::toBase64(idType);
 			idType.clear();
 		}
-		else if (std::holds_alternative<StringType>(idData.id))
+		else if (std::holds_alternative<StringType>(idData))
 		{
-			result = std::move(std::get<StringType>(idData.id));
+			result = std::move(std::get<StringType>(idData));
 		}
 	}
 	else if (std::holds_alternative<StringData>(_data))
@@ -442,9 +420,9 @@ IdType Value::release<IdType>()
 	{
 		auto& idData = std::get<IdData>(_data);
 
-		if (std::holds_alternative<IdType>(idData.id))
+		if (std::holds_alternative<IdType>(idData))
 		{
-			auto idValue = std::move(std::get<IdType>(idData.id));
+			auto idValue = std::move(std::get<IdType>(idData));
 
 			return idValue;
 		}
@@ -490,7 +468,7 @@ Value::Value(Type type /* = Type::Null */)
 			break;
 
 		case Type::ID:
-			_data = { IdData { { IdType {} } } };
+			_data = { IdData { IdType {} } };
 			break;
 
 		case Type::Scalar:
@@ -532,7 +510,7 @@ Value::Value(FloatType value)
 }
 
 Value::Value(IdType&& value)
-	: _data(TypeData { IdData { { std::move(value) } } })
+	: _data(TypeData { IdData { std::move(value) } })
 {
 }
 
@@ -743,7 +721,7 @@ bool Value::maybe_id() const noexcept
 	{
 		const auto& idData = std::get<IdData>(typeData);
 
-		return std::holds_alternative<IdType>(idData.id);
+		return std::holds_alternative<IdType>(idData);
 	}
 	else if (std::holds_alternative<StringData>(typeData))
 	{

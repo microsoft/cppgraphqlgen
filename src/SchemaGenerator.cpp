@@ -929,7 +929,8 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -1708,7 +1709,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -2055,8 +2057,7 @@ service::AwaitableResolver )cpp"
 
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
-		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << accessorName
-				   << R"cpp(()cpp";
+		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << accessorName << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
 
@@ -2373,6 +2374,14 @@ std::string Generator::getArgumentDefaultValue(
 )cpp";
 			break;
 		}
+
+		case response::Type::ID:
+			argumentDefaultValue
+				<< padding << R"cpp(		entry = response::Value(response::Type::ID);
+		entry.set<std::string>(R"gql()cpp"
+				<< defaultValue.get<std::string>() << R"cpp()gql");
+)cpp";
+			break;
 
 		case response::Type::Scalar:
 		{

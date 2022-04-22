@@ -188,8 +188,6 @@ private:
 		std::vector<size_t> members;
 	};
 
-	struct IdData;
-
 	// Type::String
 	struct StringData
 	{
@@ -210,13 +208,7 @@ private:
 	using EnumData = StringType;
 
 	// Type::ID
-	struct IdData
-	{
-		bool operator==(const IdData& rhs) const;
-		bool operator==(const StringData& rhs) const;
-
-		std::variant<IdType, StringType> id;
-	};
+	using IdData = std::variant<IdType, StringType>;
 
 	// Type::Scalar
 	struct ScalarData
@@ -249,7 +241,7 @@ GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
 template <>
 GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
 template <>
-GRAPHQLRESPONSE_EXPORT void Value::set<IdType>(const IdType& value);
+GRAPHQLRESPONSE_EXPORT void Value::set<IdType>(IdType&& value);
 template <>
 GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
 template <>
@@ -265,7 +257,7 @@ GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
 template <>
-GRAPHQLRESPONSE_EXPORT IdType Value::get<IdType>() const;
+GRAPHQLRESPONSE_EXPORT const IdType& Value::get<IdType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
 template <>
