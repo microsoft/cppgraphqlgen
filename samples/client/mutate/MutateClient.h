@@ -90,7 +90,7 @@ struct Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 
 } // namespace graphql::client::mutation::CompleteTaskMutation
 

@@ -180,7 +180,7 @@ struct Response
 	std::optional<std::string> default_ {};
 };
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 
 } // namespace graphql::client::query::Query
 

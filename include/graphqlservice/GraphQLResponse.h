@@ -141,9 +141,9 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT Value&& from_json() noexcept;
 	GRAPHQLRESPONSE_EXPORT bool maybe_enum() const noexcept;
 
-	// Input values and variables don't distinguish between Type::String and Type::ID, so if this
-	// value comes from a string literal input value we need to track that fact that it can be
-	// interpreted as either of those types.
+	// Input values don't distinguish between Type::String and Type::ID, so if this value comes from
+	// a string literal input value we need to track that fact that it can be interpreted as either
+	// of those types.
 	GRAPHQLRESPONSE_EXPORT Value&& from_input() noexcept;
 	GRAPHQLRESPONSE_EXPORT bool maybe_id() const noexcept;
 
