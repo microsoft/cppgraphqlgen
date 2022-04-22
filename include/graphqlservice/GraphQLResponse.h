@@ -20,6 +20,9 @@
 
 #include "graphqlservice/internal/Awaitable.h"
 
+#include <compare>
+#include <cstdint>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -31,7 +34,7 @@ namespace graphql::response {
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
 // of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
-enum class Type : uint8_t
+enum class Type : std::uint8_t
 {
 	Map,	   // JSON Object
 	List,	   // JSON Array
@@ -54,7 +57,65 @@ using BooleanType = bool;
 using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
-using IdType = std::vector<uint8_t>;
+
+struct IdType
+{
+	using ByteData = std::vector<std::uint8_t>;
+	using OpaqueString = std::string;
+
+	GRAPHQLRESPONSE_EXPORT IdType(IdType&& other = IdType { ByteData {} }) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType(const IdType& other);
+	GRAPHQLRESPONSE_EXPORT ~IdType();
+
+	// Implicit ByteData constructors
+	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
+	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
+	GRAPHQLRESPONSE_EXPORT IdType(
+		typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+
+	// Assignment
+	GRAPHQLRESPONSE_EXPORT IdType& operator=(IdType&& rhs) noexcept;
+	IdType& operator=(const IdType& rhs) = delete;
+
+	// Conversion
+	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType& operator=(ByteData&& data) noexcept;
+
+	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType& operator=(OpaqueString&& opaque) noexcept;
+
+	template <typename ValueType>
+	const ValueType& get() const;
+
+	template <typename ValueType>
+	ValueType release();
+
+	// Comparison
+	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT bool operator==(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const ByteData& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT bool operator==(const ByteData& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const OpaqueString& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT bool operator==(const OpaqueString& rhs) const noexcept;
+
+	// Check the Type
+	GRAPHQLRESPONSE_EXPORT bool isBase64() const noexcept;
+
+private:
+	std::variant<ByteData, OpaqueString> _data;
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the specialized template methods
+template <>
+GRAPHQLRESPONSE_EXPORT const IdType::ByteData& IdType::get<IdType::ByteData>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT const IdType::OpaqueString& IdType::get<IdType::OpaqueString>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::ByteData IdType::release<IdType::ByteData>();
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::OpaqueString IdType::release<IdType::OpaqueString>();
+#endif // GRAPHQL_DLLEXPORTS
 
 template <typename ValueType>
 struct ValueTypeTraits
@@ -129,8 +190,8 @@ struct Value
 	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
+	GRAPHQLRESPONSE_EXPORT std::partial_ordering operator<=>(const Value& rhs) const noexcept;
 	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT bool operator!=(const Value& rhs) const noexcept;
 
 	// Check the Type
 	GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
@@ -182,16 +243,24 @@ private:
 	// Type::Map
 	struct MapData
 	{
-		bool operator==(const MapData& rhs) const;
+		std::partial_ordering operator<=>(const MapData& rhs) const;
 
 		MapType map;
 		std::vector<size_t> members;
 	};
 
+	// Type::List
+	struct ListData
+	{
+		std::partial_ordering operator<=>(const ListData& rhs) const;
+
+		std::vector<Value> entries;
+	};
+
 	// Type::String
 	struct StringData
 	{
-		bool operator==(const StringData& rhs) const;
+		std::strong_ordering operator<=>(const StringData& rhs) const;
 
 		StringType string;
 		bool from_json = false;
@@ -201,29 +270,28 @@ private:
 	// Type::Null
 	struct NullData
 	{
-		bool operator==(const NullData& rhs) const;
+		std::strong_ordering operator<=>(const NullData& rhs) const;
 	};
 
 	// Type::EnumValue
 	using EnumData = StringType;
 
-	// Type::ID
-	using IdData = std::variant<IdType, StringType>;
-
 	// Type::Scalar
 	struct ScalarData
 	{
-		bool operator==(const ScalarData& rhs) const;
+		std::partial_ordering operator<=>(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
 	};
 
 	using SharedData = std::shared_ptr<const Value>;
 
-	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
-		FloatType, EnumData, IdData, ScalarData, SharedData>;
+	using TypeData = std::variant<MapData, ListData, StringData, NullData, BooleanType, IntType,
+		FloatType, EnumData, IdType, ScalarData, SharedData>;
 
 	const TypeData& data() const noexcept;
+
+	static Type typeOf(const TypeData& data) noexcept;
 
 	TypeData _data;
 };

@@ -674,18 +674,14 @@ response::IdType ModifiedArgument<response::IdType>::convert(const response::Val
 		throw schema_exception { { "not an ID" } };
 	}
 
-	response::IdType result;
-
 	try
 	{
-		result = response::Value { value }.release<response::IdType>();
+		return response::Value { value }.release<response::IdType>();
 	}
 	catch (const std::logic_error& ex)
 	{
 		throw schema_exception { { ex.what() } };
 	}
-
-	return result;
 }
 
 void blockSubFields(const ResolverParams& params)
@@ -859,7 +855,7 @@ void ModifiedResult<response::IdType>::validateScalar(const response::Value& val
 
 	try
 	{
-		const auto result = value.get<response::IdType>();
+		value.get<response::IdType>();
 	}
 	catch (const std::logic_error& ex)
 	{

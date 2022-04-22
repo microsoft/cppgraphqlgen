@@ -56,6 +56,13 @@ public:
 	// Convert a set of bytes to Base64.
 	GRAPHQLRESPONSE_EXPORT static std::string toBase64(const std::vector<std::uint8_t>& bytes);
 
+	// Compare a set of bytes to possible Base64.
+	GRAPHQLRESPONSE_EXPORT static bool compareBase64(
+		const std::vector<std::uint8_t>& bytes, std::string_view maybeEncoded) noexcept;
+
+	// Validate a whether or not a string is valid Base64.
+	GRAPHQLRESPONSE_EXPORT static bool validateBase64(std::string_view maybeEncoded) noexcept;
+
 private:
 	static constexpr char padding = '=';
 
