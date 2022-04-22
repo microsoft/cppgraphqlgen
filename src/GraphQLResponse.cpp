@@ -675,7 +675,9 @@ IdType Value::release<IdType>()
 		{
 			auto stringValue = std::move(stringData.string);
 
-			return internal::Base64::fromBase64(stringValue);
+			return internal::Base64::validateBase64(stringValue)
+				? IdType { internal::Base64::fromBase64(stringValue) }
+				: IdType { std::move(stringValue) };
 		}
 	}
 	else if (std::holds_alternative<IdType>(_data))
