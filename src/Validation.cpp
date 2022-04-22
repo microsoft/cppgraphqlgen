@@ -1214,24 +1214,11 @@ bool ValidateExecutableVisitor::validateInputValue(
 			}
 			else if (name == R"gql(ID)gql"sv)
 			{
-				if (std::holds_alternative<std::string_view>(argument.value->data))
+				if (!std::holds_alternative<std::string_view>(argument.value->data))
 				{
-					try
-					{
-#ifndef GRAPHQL_NO_BASE64
-						auto decoded = internal::Base64::fromBase64(
-							std::get<std::string_view>(argument.value->data));
-#endif
-						return true;
-					}
-					catch (const std::logic_error&)
-					{
-						// Eat the exception and fail validation
-					}
+					_errors.push_back({ "Expected ID value", argument.position });
+					return false;
 				}
-
-				_errors.push_back({ "Expected ID value", argument.position });
-				return false;
 			}
 			else if (name == R"gql(Boolean)gql"sv)
 			{

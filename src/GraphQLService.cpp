@@ -377,7 +377,7 @@ void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 
 void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = response::Value(std::string { stringValue.unescaped_view() });
+	_value = response::Value(std::string { stringValue.unescaped_view() }).from_input();
 }
 
 void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
@@ -669,16 +669,16 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 template <>
 response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Type::String)
+	if (!value.maybe_id())
 	{
-		throw schema_exception { { "not a string" } };
+		throw schema_exception { { "not an ID" } };
 	}
 
 	response::IdType result;
 
 	try
 	{
-		result = value.get<response::IdType>();
+		result = response::Value { value }.release<response::IdType>();
 	}
 	catch (const std::logic_error& ex)
 	{
@@ -770,7 +770,7 @@ AwaitableResolver ModifiedResult<response::IdType>::convert(
 	return resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(value);
+			return response::Value(std::move(value));
 		});
 }
 
@@ -852,9 +852,9 @@ void ModifiedResult<bool>::validateScalar(const response::Value& value)
 template <>
 void ModifiedResult<response::IdType>::validateScalar(const response::Value& value)
 {
-	if (value.type() != response::Type::String)
+	if (!value.maybe_id())
 	{
-		throw schema_exception { { R"ex(not a valid String value)ex" } };
+		throw schema_exception { { R"ex(not a valid ID value)ex" } };
 	}
 
 	try

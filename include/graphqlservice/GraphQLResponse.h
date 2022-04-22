@@ -41,6 +41,7 @@ enum class Type : uint8_t
 	Int,	   // JSON Number
 	Float,	   // JSON Number
 	EnumValue, // JSON String
+	ID,		   // JSON String
 	Scalar,	   // JSON any type
 };
 
@@ -58,8 +59,8 @@ using IdType = std::vector<uint8_t>;
 template <typename ValueType>
 struct ValueTypeTraits
 {
-	// Set by r-value reference, get by const reference, and release by value. The only types
-	// that actually support all 3 methods are StringType and ScalarType, everything else
+	// Set by r-value reference, get by const reference, and release by value. The only types that
+	// actually support all 3 methods are StringType, IdType, and ScalarType, everything else
 	// overrides some subset of these types with a template specialization.
 	using set_type = ValueType&&;
 	using get_type = const ValueType&;
@@ -106,15 +107,6 @@ struct ValueTypeTraits<FloatType>
 	using get_type = FloatType;
 };
 
-template <>
-struct ValueTypeTraits<IdType>
-{
-	// ID values are represented as a Base64 String, so they require conversion.
-	using set_type = const IdType&;
-	using get_type = IdType;
-	using release_type = IdType;
-};
-
 // Represent a discriminated union of GraphQL response value types.
 struct Value
 {
@@ -126,7 +118,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
-	GRAPHQLRESPONSE_EXPORT explicit Value(const IdType& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(IdType&& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -143,10 +135,17 @@ struct Value
 	// Check the Type
 	GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
 
-	// JSON doesn't distinguish between Type::String and Type::EnumValue, so if this value comes
-	// from JSON and it's a string we need to track the fact that it can be interpreted as either.
+	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
+	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
+	// as any of those types.
 	GRAPHQLRESPONSE_EXPORT Value&& from_json() noexcept;
 	GRAPHQLRESPONSE_EXPORT bool maybe_enum() const noexcept;
+
+	// Input values and variables don't distinguish between Type::String and Type::ID, so if this
+	// value comes from a string literal input value we need to track that fact that it can be
+	// interpreted as either of those types.
+	GRAPHQLRESPONSE_EXPORT Value&& from_input() noexcept;
+	GRAPHQLRESPONSE_EXPORT bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
 	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
@@ -189,6 +188,8 @@ private:
 		std::vector<size_t> members;
 	};
 
+	struct IdData;
+
 	// Type::String
 	struct StringData
 	{
@@ -196,6 +197,7 @@ private:
 
 		StringType string;
 		bool from_json = false;
+		bool from_input = false;
 	};
 
 	// Type::Null
@@ -206,6 +208,15 @@ private:
 
 	// Type::EnumValue
 	using EnumData = StringType;
+
+	// Type::ID
+	struct IdData
+	{
+		bool operator==(const IdData& rhs) const;
+		bool operator==(const StringData& rhs) const;
+
+		std::variant<IdType, StringType> id;
+	};
 
 	// Type::Scalar
 	struct ScalarData
@@ -218,7 +229,7 @@ private:
 	using SharedData = std::shared_ptr<const Value>;
 
 	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
-		FloatType, EnumData, ScalarData, SharedData>;
+		FloatType, EnumData, IdData, ScalarData, SharedData>;
 
 	const TypeData& data() const noexcept;
 

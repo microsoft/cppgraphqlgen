@@ -197,7 +197,7 @@ response::Value ModifiedVariable<response::Value>::serialize(response::Value&& v
 template <>
 response::Value ModifiedVariable<response::IdType>::serialize(response::IdType&& value)
 {
-	return response::Value { value };
+	return response::Value { std::move(value) };
 }
 
 template <>
@@ -253,9 +253,9 @@ response::Value ModifiedResponse<response::Value>::parse(response::Value value)
 template <>
 response::IdType ModifiedResponse<response::IdType>::parse(response::Value value)
 {
-	if (value.type() != response::Type::String)
+	if (!value.maybe_id())
 	{
-		throw std::logic_error { "not a string" };
+		throw std::logic_error { "not an ID" };
 	}
 
 	return value.release<response::IdType>();

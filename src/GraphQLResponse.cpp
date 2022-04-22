@@ -21,12 +21,34 @@ bool Value::MapData::operator==(const MapData& rhs) const
 
 bool Value::StringData::operator==(const StringData& rhs) const
 {
-	return from_json == rhs.from_json && string == rhs.string;
+	return (from_json || from_input) == (rhs.from_json || rhs.from_input) && string == rhs.string;
 }
 
 bool Value::NullData::operator==(const NullData&) const
 {
 	return true;
+}
+
+bool Value::IdData::operator==(const IdData& rhs) const
+{
+	return id == rhs.id;
+}
+
+bool Value::IdData::operator==(const StringData& rhs) const
+{
+	if (rhs.from_json || rhs.from_input)
+	{
+		if (std::holds_alternative<IdType>(id))
+		{
+			return rhs.string == internal::Base64::toBase64(std::get<IdType>(id));
+		}
+		else if (std::holds_alternative<StringType>(id))
+		{
+			return rhs.string == std::get<StringType>(id);
+		}
+	}
+
+	return false;
 }
 
 bool Value::ScalarData::operator==(const ScalarData& rhs) const
@@ -50,6 +72,10 @@ void Value::set<StringType>(StringType&& value)
 	if (std::holds_alternative<EnumData>(_data))
 	{
 		std::get<EnumData>(_data) = std::move(value);
+	}
+	else if (std::holds_alternative<IdData>(_data))
+	{
+		std::get<IdData>(_data).id = std::move(value);
 	}
 	else if (std::holds_alternative<StringData>(_data))
 	{
@@ -133,23 +159,19 @@ void Value::set<ScalarType>(ScalarType&& value)
 }
 
 template <>
-void Value::set<IdType>(const IdType& value)
+void Value::set<IdType>(IdType&& value)
 {
 	if (std::holds_alternative<SharedData>(_data))
 	{
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<StringData>(_data))
+	if (!std::holds_alternative<IdData>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for IdType");
 	}
 
-#ifdef GRAPHQL_NO_BASE64
-	std::get<StringData>(_data).string = std::string ( std::string_view((const char*)value.data(), value.size()) );
-#else
-	std::get<StringData>(_data).string = internal::Base64::toBase64(value);
-#endif
+	std::get<IdData>(_data).id = std::move(value);
 }
 
 template <>
@@ -186,6 +208,15 @@ const StringType& Value::get<StringType>() const
 	if (std::holds_alternative<EnumData>(typeData))
 	{
 		return std::get<EnumData>(typeData);
+	}
+	else if (std::holds_alternative<IdData>(typeData))
+	{
+		const auto& idData = std::get<IdData>(typeData);
+
+		if (std::holds_alternative<StringType>(idData.id))
+		{
+			return std::get<StringType>(idData.id);
+		}
 	}
 	else if (std::holds_alternative<StringData>(typeData))
 	{
@@ -261,25 +292,21 @@ const ScalarType& Value::get<ScalarType>() const
 }
 
 template <>
-IdType Value::get<IdType>() const
+const IdType& Value::get<IdType>() const
 {
 	const auto& typeData = data();
 
-	if (!std::holds_alternative<StringData>(typeData))
+	if (std::holds_alternative<IdData>(typeData))
 	{
-		throw std::logic_error("Invalid call to Value::get for IdType");
+		const auto& idData = std::get<IdData>(typeData);
+
+		if (std::holds_alternative<IdType>(idData.id))
+		{
+			return std::get<IdType>(idData.id);
+		}
 	}
 
-#ifdef GRAPHQL_NO_BASE64
-	IdType id;
-	std::string_view str = std::get<StringData>(typeData).string;
-	std::copy(
-		str.begin(), str.end(), std::back_inserter(id)
-	);
-	return id;
-#else
-	return internal::Base64::fromBase64(std::get<StringData>(typeData).string);
-#endif
+	throw std::logic_error("Invalid call to Value::get for IdType");
 }
 
 template <>
@@ -335,12 +362,29 @@ StringType Value::release<StringType>()
 	{
 		result = std::move(std::get<EnumData>(_data));
 	}
+	else if (std::holds_alternative<IdData>(_data))
+	{
+		auto& idData = std::get<IdData>(_data);
+
+		if (std::holds_alternative<IdType>(idData.id))
+		{
+			auto& idType = std::get<IdType>(idData.id);
+
+			result = internal::Base64::toBase64(idType);
+			idType.clear();
+		}
+		else if (std::holds_alternative<StringType>(idData.id))
+		{
+			result = std::move(std::get<StringType>(idData.id));
+		}
+	}
 	else if (std::holds_alternative<StringData>(_data))
 	{
 		auto& stringData = std::get<StringData>(_data);
 
 		result = std::move(stringData.string);
 		stringData.from_json = false;
+		stringData.from_input = false;
 	}
 	else
 	{
@@ -383,25 +427,30 @@ IdType Value::release<IdType>()
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<StringData>(_data))
+	if (std::holds_alternative<StringData>(_data))
 	{
-		throw std::logic_error("Invalid call to Value::release for IdType");
+		auto& stringData = std::get<StringData>(_data);
+
+		if (stringData.from_json || stringData.from_input)
+		{
+			auto stringValue = std::move(stringData.string);
+
+			return internal::Base64::fromBase64(stringValue);
+		}
+	}
+	else if (std::holds_alternative<IdData>(_data))
+	{
+		auto& idData = std::get<IdData>(_data);
+
+		if (std::holds_alternative<IdType>(idData.id))
+		{
+			auto idValue = std::move(std::get<IdType>(idData.id));
+
+			return idValue;
+		}
 	}
 
-	auto& stringData = std::get<StringData>(_data);
-	auto stringValue = std::move(stringData.string);
-
-#ifdef GRAPHQL_NO_BASE64
-	IdType id;
-	std::copy(
-		stringValue.begin(),
-		stringValue.end(),
-		std::back_inserter(id)
-	);
-	return id;
-#else
-	return internal::Base64::fromBase64(stringValue);
-#endif
+	throw std::logic_error("Invalid call to Value::release for IdType");
 }
 
 Value::Value(Type type /* = Type::Null */)
@@ -438,6 +487,10 @@ Value::Value(Type type /* = Type::Null */)
 
 		case Type::EnumValue:
 			_data = { EnumData {} };
+			break;
+
+		case Type::ID:
+			_data = { IdData { { IdType {} } } };
 			break;
 
 		case Type::Scalar:
@@ -478,12 +531,8 @@ Value::Value(FloatType value)
 {
 }
 
-Value::Value(const IdType& value)
-#ifdef GRAPHQL_NO_BASE64
-	: _data(TypeData { StringData { std::string{ std::string_view((const char*)value.data(), value.size()) }, false } })
-#else
-	: _data(TypeData { StringData { internal::Base64::toBase64(value), false } })
-#endif
+Value::Value(IdType&& value)
+	: _data(TypeData { IdData { { std::move(value) } } })
 {
 }
 
@@ -546,7 +595,7 @@ Value::Value(const Value& other)
 		}
 
 		case Type::String:
-			_data = { StringData { other.get<StringType>(), other.maybe_enum() } };
+			_data = { StringData { std::get<StringData>(other._data) } };
 			break;
 
 		case Type::Null:
@@ -567,6 +616,10 @@ Value::Value(const Value& other)
 
 		case Type::EnumValue:
 			_data = { EnumData { other.get<StringType>() } };
+			break;
+
+		case Type::ID:
+			_data = { IdData { std::get<IdData>(other._data) } };
 			break;
 
 		case Type::Scalar:
@@ -643,6 +696,9 @@ Type Value::type() const noexcept
 			EnumData>,
 		"type mistmatch");
 	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::ID), TypeData>, IdData>,
+		"type mistmatch");
+	static_assert(
 		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Scalar), TypeData>,
 			ScalarData>,
 		"type mistmatch");
@@ -652,11 +708,7 @@ Type Value::type() const noexcept
 
 Value&& Value::from_json() noexcept
 {
-	if (std::holds_alternative<SharedData>(_data))
-	{
-		_data = StringData { { get<StringType>() }, true };
-	}
-	else if (std::holds_alternative<StringData>(_data))
+	if (std::holds_alternative<StringData>(_data))
 	{
 		std::get<StringData>(_data).from_json = true;
 	}
@@ -671,6 +723,36 @@ bool Value::maybe_enum() const noexcept
 	return std::holds_alternative<EnumData>(typeData)
 		|| (std::holds_alternative<StringData>(typeData)
 			&& std::get<StringData>(typeData).from_json);
+}
+
+Value&& Value::from_input() noexcept
+{
+	if (std::holds_alternative<StringData>(_data))
+	{
+		std::get<StringData>(_data).from_input = true;
+	}
+
+	return std::move(*this);
+}
+
+bool Value::maybe_id() const noexcept
+{
+	const auto& typeData = data();
+
+	if (std::holds_alternative<IdData>(typeData))
+	{
+		const auto& idData = std::get<IdData>(typeData);
+
+		return std::holds_alternative<IdType>(idData.id);
+	}
+	else if (std::holds_alternative<StringData>(typeData))
+	{
+		const auto& stringData = std::get<StringData>(typeData);
+
+		return stringData.from_json || stringData.from_input;
+	}
+
+	return false;
 }
 
 void Value::reserve(size_t count)
@@ -881,6 +963,7 @@ void Writer::write(Value response) const
 
 		case Type::String:
 		case Type::EnumValue:
+		case Type::ID:
 		{
 			auto value = response.release<StringType>();
 
