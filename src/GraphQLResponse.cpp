@@ -639,7 +639,7 @@ Value::Value(Type type /* = Type::Null */)
 			break;
 
 		case Type::ID:
-			_data = { IdType { IdType::ByteData {} } };
+			_data = { IdType {} };
 			break;
 
 		case Type::Scalar:
@@ -739,7 +739,7 @@ Value::Value(const Value& other)
 				copy.push_back(Value { other[i] });
 			}
 
-			_data = { ListType { std::move(copy) } };
+			_data = { std::move(copy) };
 			break;
 		}
 
