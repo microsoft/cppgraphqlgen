@@ -34,11 +34,11 @@ enum class TypeKind
 	NON_NULL
 };
 
-constexpr std::array<std::string_view, 8> getTypeKindNames() noexcept
+constexpr auto getTypeKindNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 8> {
 		R"gql(SCALAR)gql"sv,
 		R"gql(OBJECT)gql"sv,
 		R"gql(INTERFACE)gql"sv,
@@ -47,7 +47,7 @@ constexpr std::array<std::string_view, 8> getTypeKindNames() noexcept
 		R"gql(INPUT_OBJECT)gql"sv,
 		R"gql(LIST)gql"sv,
 		R"gql(NON_NULL)gql"sv
-	} };
+	};
 }
 
 enum class DirectiveLocation
@@ -73,11 +73,11 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-constexpr std::array<std::string_view, 19> getDirectiveLocationNames() noexcept
+constexpr auto getDirectiveLocationNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 19> {
 		R"gql(QUERY)gql"sv,
 		R"gql(MUTATION)gql"sv,
 		R"gql(SUBSCRIPTION)gql"sv,
@@ -97,7 +97,7 @@ constexpr std::array<std::string_view, 19> getDirectiveLocationNames() noexcept
 		R"gql(ENUM_VALUE)gql"sv,
 		R"gql(INPUT_OBJECT)gql"sv,
 		R"gql(INPUT_FIELD_DEFINITION)gql"sv
-	} };
+	};
 }
 
 class Schema;

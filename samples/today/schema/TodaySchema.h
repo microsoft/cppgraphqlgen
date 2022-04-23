@@ -30,16 +30,16 @@ enum class TaskState
 	Unassigned
 };
 
-constexpr std::array<std::string_view, 4> getTaskStateNames() noexcept
+constexpr auto getTaskStateNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 4> {
 		R"gql(New)gql"sv,
 		R"gql(Started)gql"sv,
 		R"gql(Complete)gql"sv,
 		R"gql(Unassigned)gql"sv
-	} };
+	};
 }
 
 struct CompleteTaskInput

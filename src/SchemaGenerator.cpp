@@ -175,13 +175,13 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-			headerFile << R"cpp(constexpr std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> get)cpp" << enumType.cppType
+			headerFile << R"cpp(constexpr auto get)cpp" << enumType.cppType
 					   << R"cpp(Names() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, )cpp"
+					   << enumType.values.size() << R"cpp(> {
 )cpp";
 
 			firstValue = true;
@@ -199,7 +199,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			}
 
 			headerFile << R"cpp(
-	} };
+	};
 }
 
 )cpp";

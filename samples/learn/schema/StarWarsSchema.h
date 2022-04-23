@@ -29,15 +29,15 @@ enum class Episode
 	JEDI
 };
 
-constexpr std::array<std::string_view, 3> getEpisodeNames() noexcept
+constexpr auto getEpisodeNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 3> {
 		R"gql(NEW_HOPE)gql"sv,
 		R"gql(EMPIRE)gql"sv,
 		R"gql(JEDI)gql"sv
-	} };
+	};
 }
 
 struct ReviewInput

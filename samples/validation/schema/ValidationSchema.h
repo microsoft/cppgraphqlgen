@@ -29,15 +29,15 @@ enum class DogCommand
 	HEEL
 };
 
-constexpr std::array<std::string_view, 3> getDogCommandNames() noexcept
+constexpr auto getDogCommandNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 3> {
 		R"gql(SIT)gql"sv,
 		R"gql(DOWN)gql"sv,
 		R"gql(HEEL)gql"sv
-	} };
+	};
 }
 
 enum class CatCommand
@@ -45,13 +45,13 @@ enum class CatCommand
 	JUMP
 };
 
-constexpr std::array<std::string_view, 1> getCatCommandNames() noexcept
+constexpr auto getCatCommandNames() noexcept
 {
 	using namespace std::literals;
 
-	return { {
+	return std::array<std::string_view, 1> {
 		R"gql(JUMP)gql"sv
-	} };
+	};
 }
 
 struct ComplexInput
