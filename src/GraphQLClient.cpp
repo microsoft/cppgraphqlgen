@@ -247,7 +247,7 @@ bool ModifiedResponse<bool>::parse(response::Value&& value)
 template <>
 response::Value ModifiedResponse<response::Value>::parse(response::Value&& value)
 {
-	return value;
+	return { std::move(value) };
 }
 
 template <>
