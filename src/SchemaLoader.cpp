@@ -1125,6 +1125,107 @@ void SchemaLoader::visitDirectiveDefinition(const peg::ast_node& directiveDefini
 
 std::string_view SchemaLoader::getSafeCppName(std::string_view type) noexcept
 {
+	// C++ keywords which must be escaped: https://en.cppreference.com/w/cpp/keyword
+	static const std::unordered_set<std::string_view> keywords {
+		R"cpp(alignas)cpp"sv,
+		R"cpp(alignof)cpp"sv,
+		R"cpp(and)cpp"sv,
+		R"cpp(and_eq)cpp"sv,
+		R"cpp(asm)cpp"sv,
+		R"cpp(atomic_cancel)cpp"sv,
+		R"cpp(atomic_commit)cpp"sv,
+		R"cpp(atomic_noexcept)cpp"sv,
+		R"cpp(auto)cpp"sv,
+		R"cpp(bitand)cpp"sv,
+		R"cpp(bitor)cpp"sv,
+		R"cpp(bool)cpp"sv,
+		R"cpp(break)cpp"sv,
+		R"cpp(case)cpp"sv,
+		R"cpp(catch)cpp"sv,
+		R"cpp(char)cpp"sv,
+		R"cpp(char8_t)cpp"sv,
+		R"cpp(char16_t)cpp"sv,
+		R"cpp(char32_t)cpp"sv,
+		R"cpp(class)cpp"sv,
+		R"cpp(compl)cpp"sv,
+		R"cpp(concept)cpp"sv,
+		R"cpp(const)cpp"sv,
+		R"cpp(consteval)cpp"sv,
+		R"cpp(constexpr)cpp"sv,
+		R"cpp(constinit)cpp"sv,
+		R"cpp(const_cast)cpp"sv,
+		R"cpp(continue)cpp"sv,
+		R"cpp(co_await)cpp"sv,
+		R"cpp(co_return)cpp"sv,
+		R"cpp(co_yield)cpp"sv,
+		R"cpp(decltype)cpp"sv,
+		R"cpp(default)cpp"sv,
+		R"cpp(delete)cpp"sv,
+		R"cpp(do)cpp"sv,
+		R"cpp(double)cpp"sv,
+		R"cpp(dynamic_cast)cpp"sv,
+		R"cpp(else)cpp"sv,
+		R"cpp(enum)cpp"sv,
+		R"cpp(explicit)cpp"sv,
+		R"cpp(export)cpp"sv,
+		R"cpp(extern)cpp"sv,
+		R"cpp(false)cpp"sv,
+		R"cpp(float)cpp"sv,
+		R"cpp(for)cpp"sv,
+		R"cpp(friend)cpp"sv,
+		R"cpp(goto)cpp"sv,
+		R"cpp(if)cpp"sv,
+		R"cpp(inline)cpp"sv,
+		R"cpp(int)cpp"sv,
+		R"cpp(long)cpp"sv,
+		R"cpp(mutable)cpp"sv,
+		R"cpp(namespace)cpp"sv,
+		R"cpp(new)cpp"sv,
+		R"cpp(noexcept)cpp"sv,
+		R"cpp(not)cpp"sv,
+		R"cpp(not_eq)cpp"sv,
+		R"cpp(nullptr)cpp"sv,
+		R"cpp(operator)cpp"sv,
+		R"cpp(or)cpp"sv,
+		R"cpp(or_eq)cpp"sv,
+		R"cpp(private)cpp"sv,
+		R"cpp(protected)cpp"sv,
+		R"cpp(public)cpp"sv,
+		R"cpp(reflexpr)cpp"sv,
+		R"cpp(register)cpp"sv,
+		R"cpp(reinterpret_cast)cpp"sv,
+		R"cpp(requires)cpp"sv,
+		R"cpp(return)cpp"sv,
+		R"cpp(short)cpp"sv,
+		R"cpp(signed)cpp"sv,
+		R"cpp(sizeof)cpp"sv,
+		R"cpp(static)cpp"sv,
+		R"cpp(static_assert)cpp"sv,
+		R"cpp(static_cast)cpp"sv,
+		R"cpp(struct)cpp"sv,
+		R"cpp(switch)cpp"sv,
+		R"cpp(synchronized)cpp"sv,
+		R"cpp(template)cpp"sv,
+		R"cpp(this)cpp"sv,
+		R"cpp(thread_local)cpp"sv,
+		R"cpp(throw)cpp"sv,
+		R"cpp(true)cpp"sv,
+		R"cpp(try)cpp"sv,
+		R"cpp(typedef)cpp"sv,
+		R"cpp(typeid)cpp"sv,
+		R"cpp(typename)cpp"sv,
+		R"cpp(union)cpp"sv,
+		R"cpp(unsigned)cpp"sv,
+		R"cpp(using)cpp"sv,
+		R"cpp(virtual)cpp"sv,
+		R"cpp(void)cpp"sv,
+		R"cpp(volatile)cpp"sv,
+		R"cpp(wchar_t)cpp"sv,
+		R"cpp(while)cpp"sv,
+		R"cpp(xor)cpp"sv,
+		R"cpp(xor_eq)cpp"sv,
+	};
+
 	// The C++ standard reserves all names starting with '_' followed by a capital letter,
 	// and all names that contain a double '_'. So we need to strip those from the types used
 	// in GraphQL when declaring C++ types.
@@ -1141,13 +1242,26 @@ std::string_view SchemaLoader::getSafeCppName(std::string_view type) noexcept
 	if (safeNames.cend() == itr)
 	{
 		std::string typeName { type };
+		std::string cppName;
 
-		if (std::regex_search(typeName, multiple_) || std::regex_search(typeName, leading_Capital))
+		if (keywords.contains(type))
 		{
-			auto cppName = std::regex_replace(std::regex_replace(typeName, multiple_, R"re(_)re"),
+			constexpr auto c_keywordSuffix = R"cpp(_)cpp"sv;
+
+			cppName.reserve(type.size() + c_keywordSuffix.size());
+			cppName = type;
+			cppName += c_keywordSuffix;
+		}
+		else if (std::regex_search(typeName, multiple_)
+			|| std::regex_search(typeName, leading_Capital))
+		{
+			cppName = std::regex_replace(std::regex_replace(typeName, multiple_, R"re(_)re"),
 				leading_Capital,
 				R"re($1)re");
+		}
 
+		if (!cppName.empty())
+		{
 			auto entry = std::make_unique<entry_allocation>(
 				entry_allocation { std::move(typeName), std::move(cppName) });
 
@@ -1314,7 +1428,6 @@ OutputFieldList SchemaLoader::getOutputFields(const peg::ast_node::children_t& f
 			if (child->is_type<peg::field_name>())
 			{
 				field.name = child->string_view();
-				field.cppName = getSafeCppName(field.name);
 			}
 			else if (child->is_type<peg::arguments_definition>())
 			{
@@ -1712,6 +1825,31 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 	}
 
 	return outputType.str();
+}
+
+std::string SchemaLoader::getOutputCppAccessor(const OutputField& field) noexcept
+{
+	return getJoinedCppName(field.accessor, field.name);
+}
+
+std::string SchemaLoader::getOutputCppResolver(const OutputField& field) noexcept
+{
+	return getJoinedCppName(R"cpp(resolve)cpp"sv, field.name);
+}
+
+std::string SchemaLoader::getJoinedCppName(
+	std::string_view prefix, std::string_view fieldName) noexcept
+{
+	std::string joinedName;
+
+	joinedName.reserve(prefix.size() + fieldName.size());
+	joinedName = prefix;
+	joinedName += fieldName;
+
+	joinedName[prefix.size()] =
+		static_cast<char>(std::toupper(static_cast<unsigned char>(joinedName[prefix.size()])));
+
+	return std::string { getSafeCppName(joinedName) };
 }
 
 } // namespace graphql::generator

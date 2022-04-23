@@ -50,6 +50,7 @@ service::ResolverMap Query::getResolvers() const noexcept
 		{ R"gql(tasks)gql"sv, [this](service::ResolverParams&& params) { return resolveTasks(std::move(params)); } },
 		{ R"gql(nested)gql"sv, [this](service::ResolverParams&& params) { return resolveNested(std::move(params)); } },
 		{ R"gql(anyType)gql"sv, [this](service::ResolverParams&& params) { return resolveAnyType(std::move(params)); } },
+		{ R"gql(default)gql"sv, [this](service::ResolverParams&& params) { return resolveDefault(std::move(params)); } },
 		{ R"gql(expensive)gql"sv, [this](service::ResolverParams&& params) { return resolveExpensive(std::move(params)); } },
 		{ R"gql(tasksById)gql"sv, [this](service::ResolverParams&& params) { return resolveTasksById(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -231,6 +232,16 @@ service::AwaitableResolver Query::resolveAnyType(service::ResolverParams&& param
 	return service::ModifiedResult<UnionType>::convert<service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Query::resolveDefault(service::ResolverParams&& params) const
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	auto directives = std::move(params.fieldDirectives);
+	auto result = _pimpl->getDefault(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
@@ -277,7 +288,8 @@ void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const
 		schema::Field::Make(R"gql(testTaskState)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(TaskState)gql"sv))),
 		schema::Field::Make(R"gql(anyType)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(UnionType)gql"sv))), {
 			schema::InputValue::Make(R"gql(ids)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))), R"gql()gql"sv)
-		})
+		}),
+		schema::Field::Make(R"gql(default)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
 	});
 }
 

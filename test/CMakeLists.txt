@@ -71,7 +71,7 @@ gtest_add_tests(TARGET pegtl_combined_tests)
 
 add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
 target_link_libraries(pegtl_executable_tests PRIVATE
-  taocpp::pegtl
+  graphqlpeg
   GTest::GTest
   GTest::Main)
 target_include_directories(pegtl_executable_tests PRIVATE

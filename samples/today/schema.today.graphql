@@ -37,6 +37,9 @@ type Query {
     testTaskState: TaskState!
 
     anyType(ids: [ID!]!): [UnionType]!
+
+    "Test C++ keyword names"
+    default: String
 }
 
 "Node interface for Relay support"

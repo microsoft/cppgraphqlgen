@@ -158,6 +158,18 @@ concept getAnyType = requires (TImpl impl, std::vector<response::IdType> idsArg)
 };
 
 template <class TImpl>
+concept getDefaultWithParams = requires (TImpl impl, service::FieldParams params)
+{
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getDefault(std::move(params)) } };
+};
+
+template <class TImpl>
+concept getDefault = requires (TImpl impl)
+{
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getDefault() } };
+};
+
+template <class TImpl>
 concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
@@ -187,6 +199,7 @@ private:
 	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params) const;
 	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params) const;
+	service::AwaitableResolver resolveDefault(service::ResolverParams&& params) const;
 
 	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
@@ -209,6 +222,7 @@ private:
 		virtual service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		virtual service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -409,6 +423,22 @@ private:
 			else
 			{
 				throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+			}
+		}
+
+		service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const final
+		{
+			if constexpr (methods::QueryHas::getDefaultWithParams<T>)
+			{
+				return { _pimpl->getDefault(std::move(params)) };
+			}
+			else if constexpr (methods::QueryHas::getDefault<T>)
+			{
+				return { _pimpl->getDefault() };
+			}
+			else
+			{
+				throw std::runtime_error(R"ex(Query::getDefault is not implemented)ex");
 			}
 		}
 

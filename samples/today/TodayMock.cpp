@@ -23,11 +23,11 @@ const response::IdType& getFakeAppointmentId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeAppointmentId");
-		response::IdType result(fakeIdString.size());
+		response::IdType::ByteData result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;
@@ -37,11 +37,11 @@ const response::IdType& getFakeTaskId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeTaskId");
-		response::IdType result(fakeIdString.size());
+		response::IdType::ByteData result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;
@@ -51,11 +51,11 @@ const response::IdType& getFakeFolderId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeFolderId");
-		response::IdType result(fakeIdString.size());
+		response::IdType::ByteData result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;
@@ -567,6 +567,11 @@ std::vector<std::shared_ptr<object::UnionType>> Query::getAnyType(
 		});
 
 	return result;
+}
+
+std::optional<std::string> Query::getDefault() const noexcept
+{
+	return std::nullopt;
 }
 
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)

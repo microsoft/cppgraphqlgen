@@ -14,9 +14,9 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.1.0
+// Check if the library version is compatible with clientgen 4.2.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
@@ -83,6 +83,9 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: 
 ///       isNow
 ///     }
 ///   }
+/// 
+///   # Try a field with a C++ keyword
+///   default
 /// }
 /// </code>
 namespace graphql::client::query::Query {
@@ -174,9 +177,10 @@ struct Response
 	unreadCounts_FolderConnection unreadCounts {};
 	TaskState testTaskState {};
 	std::vector<std::optional<anyType_UnionType>> anyType {};
+	std::optional<std::string> default_ {};
 };
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 
 } // namespace graphql::client::query::Query
 

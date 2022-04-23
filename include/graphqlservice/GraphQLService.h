@@ -26,6 +26,7 @@
 #include "graphqlservice/internal/Version.h"
 
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <future>
 #include <list>
@@ -37,6 +38,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <tuple>
 #include <type_traits>
 #include <variant>
@@ -108,6 +110,7 @@ private:
 // correlate the asynchronous/recursive callbacks and accumulate state in it.
 struct RequestState : std::enable_shared_from_this<RequestState>
 {
+	virtual ~RequestState() = default;
 };
 
 namespace {

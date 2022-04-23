@@ -35,7 +35,7 @@ void Droid::addFriends(
 		});
 }
 
-const std::string& Droid::getId() const noexcept
+const response::IdType& Droid::getId() const noexcept
 {
 	return id_;
 }

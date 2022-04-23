@@ -14,9 +14,9 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.1.0
+// Check if the library version is compatible with clientgen 4.2.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
@@ -90,7 +90,7 @@ struct Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 
 } // namespace graphql::client::mutation::CompleteTaskMutation
 

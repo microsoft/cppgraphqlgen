@@ -99,6 +99,7 @@ public:
 	TaskState getTestTaskState();
 	std::vector<std::shared_ptr<object::UnionType>> getAnyType(
 		const service::FieldParams& params, const std::vector<response::IdType>& ids);
+	std::optional<std::string> getDefault() const noexcept;
 
 private:
 	std::shared_ptr<Appointment> findAppointment(
