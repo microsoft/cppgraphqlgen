@@ -149,14 +149,22 @@ std::string Base64::toBase64(const std::vector<std::uint8_t>& bytes)
 	return result;
 }
 
-bool Base64::compareBase64(
+Base64::Comparison Base64::compareBase64(
 	const std::vector<std::uint8_t>& bytes, std::string_view maybeEncoded) noexcept
 {
-	if (bytes.empty() || maybeEncoded.empty())
+	if (bytes.empty())
 	{
-		return bytes.empty() && maybeEncoded.empty();
+		if (maybeEncoded.empty())
+		{
+			return Comparison::EqualTo;
+		}
+	}
+	else if (maybeEncoded.empty())
+	{
+		return Comparison::GreaterThan;
 	}
 
+	auto result = Comparison::EqualTo;
 	auto itr = bytes.cbegin();
 	const auto itrEnd = bytes.cend();
 
@@ -171,18 +179,34 @@ bool Base64::compareBase64(
 		if (((a | b | c | d) & 0xC0) != 0)
 		{
 			// Invalid Base64 characters
-			return false;
+			return Comparison::InvalidBase64;
 		}
 
-		const uint32_t segment = (static_cast<uint32_t>(a) << 18) | (static_cast<uint32_t>(b) << 12)
-			| (static_cast<uint32_t>(c) << 6) | static_cast<uint32_t>(d);
-
-		if (itr == itrEnd || *itr++ != static_cast<std::uint8_t>((segment & 0xFF0000) >> 16)
-			|| itr == itrEnd || *itr++ != static_cast<std::uint8_t>((segment & 0xFF00) >> 8)
-			|| itr == itrEnd || *itr++ != static_cast<std::uint8_t>(segment & 0xFF))
+		if (Comparison::EqualTo == result)
 		{
-			// Decoded bytes did not match
-			return false;
+			const uint32_t segment = (static_cast<uint32_t>(a) << 18)
+				| (static_cast<uint32_t>(b) << 12) | (static_cast<uint32_t>(c) << 6)
+				| static_cast<uint32_t>(d);
+			const std::array decoded { static_cast<std::uint8_t>((segment & 0xFF0000) >> 16),
+				static_cast<std::uint8_t>((segment & 0xFF00) >> 8),
+				static_cast<std::uint8_t>(segment & 0xFF) };
+
+			for (auto value : decoded)
+			{
+				if (itr == itrEnd)
+				{
+					result = Comparison::LessThan;
+					break;
+				}
+
+				if (*itr != value)
+				{
+					result = *itr < value ? Comparison::LessThan : Comparison::GreaterThan;
+					break;
+				}
+
+				++itr;
+			}
 		}
 
 		maybeEncoded = maybeEncoded.substr(4);
@@ -199,55 +223,81 @@ bool Base64::compareBase64(
 		if (((a | b | c) & 0xC0) != 0 || (c & 0x3) != 0)
 		{
 			// Invalid Base64 characters or padding
-			return false;
+			return Comparison::InvalidBase64;
 		}
 
 		const uint16_t segment = (static_cast<uint16_t>(a) << 10) | (static_cast<uint16_t>(b) << 4)
 			| (static_cast<uint16_t>(c) >> 2);
+		const std::array decoded { static_cast<std::uint8_t>((segment & 0xFF00) >> 8),
+			static_cast<std::uint8_t>(segment & 0xFF) };
 
 		if (triplet)
 		{
-			if (itr == itrEnd || *itr++ != static_cast<std::uint8_t>((segment & 0xFF00) >> 8)
-				|| itr == itrEnd || *itr++ != static_cast<std::uint8_t>(segment & 0xFF))
+			if (Comparison::EqualTo == result)
 			{
-				// Decoded bytes did not match
-				return false;
+				for (auto value : decoded)
+				{
+					if (itr == itrEnd)
+					{
+						result = Comparison::LessThan;
+						break;
+					}
+
+					if (*itr != value)
+					{
+						result = *itr < value ? Comparison::LessThan : Comparison::GreaterThan;
+						break;
+					}
+
+					++itr;
+				}
 			}
 
 			maybeEncoded = maybeEncoded.substr(3);
 		}
 		else
 		{
-			if ((segment & 0xFF) != 0)
+			if (decoded[1] != 0)
 			{
 				// Invalid padding
-				return false;
+				return Comparison::InvalidBase64;
 			}
 
-			if (itr == itrEnd || *itr++ != static_cast<std::uint8_t>((segment & 0xFF00) >> 8))
+			if (Comparison::EqualTo == result)
 			{
-				// Decoded byte did not match
-				return false;
+				if (itr == itrEnd)
+				{
+					result = Comparison::LessThan;
+				}
+				else if (*itr != decoded[0])
+				{
+					result = *itr < decoded[0] ? Comparison::LessThan : Comparison::GreaterThan;
+				}
+
+				++itr;
 			}
 
 			maybeEncoded = maybeEncoded.substr(2);
 		}
 	}
 
-	// We should reach the end of the byte vector
-	if (itr != itrEnd)
-	{
-		return false;
-	}
-
 	// Make sure anything that's left is 0 - 2 characters of padding
 	if ((maybeEncoded.size() > 0 && padding != maybeEncoded[0])
 		|| (maybeEncoded.size() > 1 && padding != maybeEncoded[1]) || maybeEncoded.size() > 2)
 	{
-		return false;
+		return Comparison::InvalidBase64;
 	}
 
-	return true;
+	if (Comparison::EqualTo == result)
+	{
+		// We should reach the end of the byte vector
+		if (itr != itrEnd)
+		{
+			result = Comparison::GreaterThan;
+		}
+	}
+
+	return result;
 }
 
 bool Base64::validateBase64(std::string_view maybeEncoded) noexcept

@@ -78,73 +78,70 @@ IdType& IdType::operator=(OpaqueString&& opaque) noexcept
 	return *this;
 }
 
-std::strong_ordering IdType::operator<=>(const IdType& rhs) const noexcept
+bool IdType::operator==(const IdType& rhs) const noexcept
 {
 	if (_data.index() == rhs._data.index())
 	{
 		if (std::holds_alternative<ByteData>(_data))
 		{
-			return std::get<ByteData>(_data) <=> std::get<ByteData>(rhs._data);
+			return std::get<ByteData>(_data) == std::get<ByteData>(rhs._data);
 		}
 		else
 		{
-			return std::get<OpaqueString>(_data) <=> std::get<OpaqueString>(rhs._data);
+			return std::get<OpaqueString>(_data) == std::get<OpaqueString>(rhs._data);
 		}
 	}
 
-	if (std::holds_alternative<ByteData>(_data)
-			? internal::Base64::compareBase64(std::get<ByteData>(_data),
-				std::get<OpaqueString>(rhs._data))
-			: internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-				std::get<OpaqueString>(_data)))
-	{
-		return std::strong_ordering::equal;
-	}
-
-	return _data.index() <=> rhs._data.index();
-}
-
-bool IdType::operator==(const IdType& rhs) const noexcept
-{
-	return std::is_eq(*this <=> rhs);
-}
-
-std::strong_ordering IdType::operator<=>(const ByteData& rhs) const noexcept
-{
-	if (std::holds_alternative<ByteData>(_data))
-	{
-		return std::get<ByteData>(_data) <=> rhs;
-	}
-	else if (internal::Base64::compareBase64(rhs, std::get<OpaqueString>(_data)))
-	{
-		return std::strong_ordering::equal;
-	}
-
-	return std::strong_ordering::greater;
+	return (std::holds_alternative<ByteData>(_data)
+				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
+					   std::get<OpaqueString>(rhs._data))
+				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
+					   std::get<OpaqueString>(_data)))
+		== internal::Base64::Comparison::EqualTo;
 }
 
 bool IdType::operator==(const ByteData& rhs) const noexcept
 {
-	return std::is_eq(*this <=> rhs);
-}
-
-std::strong_ordering IdType::operator<=>(const OpaqueString& rhs) const noexcept
-{
-	if (std::holds_alternative<OpaqueString>(_data))
+	if (std::holds_alternative<ByteData>(_data))
 	{
-		return std::get<OpaqueString>(_data) <=> rhs;
-	}
-	else if (internal::Base64::compareBase64(std::get<ByteData>(_data), rhs))
-	{
-		return std::strong_ordering::equivalent;
+		return std::get<ByteData>(_data) == rhs;
 	}
 
-	return std::strong_ordering::less;
+	return internal::Base64::compareBase64(rhs, std::get<OpaqueString>(_data))
+		== internal::Base64::Comparison::EqualTo;
 }
 
 bool IdType::operator==(const OpaqueString& rhs) const noexcept
 {
-	return std::is_eq(*this <=> rhs);
+	if (std::holds_alternative<OpaqueString>(_data))
+	{
+		return std::get<OpaqueString>(_data) == rhs;
+	}
+
+	return internal::Base64::compareBase64(std::get<ByteData>(_data), rhs)
+		== internal::Base64::Comparison::EqualTo;
+}
+
+bool IdType::operator<(const IdType& rhs) const noexcept
+{
+	if (_data.index() == rhs._data.index())
+	{
+		if (std::holds_alternative<ByteData>(_data))
+		{
+			return std::get<ByteData>(_data) < std::get<ByteData>(rhs._data);
+		}
+		else
+		{
+			return std::get<OpaqueString>(_data) < std::get<OpaqueString>(rhs._data);
+		}
+	}
+
+	return (std::holds_alternative<ByteData>(_data)
+				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
+					   std::get<OpaqueString>(rhs._data))
+				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
+					   std::get<OpaqueString>(_data)))
+		> internal::Base64::Comparison::EqualTo;
 }
 
 bool IdType::isBase64() const noexcept
@@ -209,114 +206,29 @@ IdType::OpaqueString IdType::release<IdType::OpaqueString>()
 	}
 }
 
-std::partial_ordering Value::MapData::operator<=>(const MapData& rhs) const
+bool Value::MapData::operator==(const MapData& rhs) const
 {
-	auto lhsItr = map.cbegin();
-	auto lhsEnd = map.cend();
-	auto rhsItr = rhs.map.cbegin();
-	auto rhsEnd = rhs.map.cend();
-
-	while (lhsItr != lhsEnd && rhsItr != rhsEnd)
-	{
-		const auto nameOrder = lhsItr->first <=> rhsItr->first;
-
-		if (std::is_neq(nameOrder))
-		{
-			return nameOrder;
-		}
-
-		const auto valueOrder = lhsItr->second <=> rhsItr->second;
-
-		if (std::is_neq(valueOrder))
-		{
-			return valueOrder;
-		}
-
-		++lhsItr;
-		++rhsItr;
-	}
-
-	if (lhsItr != lhsEnd)
-	{
-		return std::strong_ordering::greater;
-	}
-	else if (rhsItr != rhsEnd)
-	{
-		return std::strong_ordering::less;
-	}
-
-	return std::strong_ordering::equal;
+	return map == rhs.map;
 }
 
-std::partial_ordering Value::ListData::operator<=>(const ListData& rhs) const
+bool Value::StringData::operator==(const StringData& rhs) const
 {
-	auto lhsItr = entries.cbegin();
-	auto lhsEnd = entries.cend();
-	auto rhsItr = rhs.entries.cbegin();
-	auto rhsEnd = rhs.entries.cend();
-
-	while (lhsItr != lhsEnd && rhsItr != rhsEnd)
-	{
-		const auto entryOrder = *lhsItr <=> *rhsItr;
-
-		if (std::is_neq(entryOrder))
-		{
-			return entryOrder;
-		}
-
-		++lhsItr;
-		++rhsItr;
-	}
-
-	if (lhsItr != lhsEnd)
-	{
-		return std::strong_ordering::greater;
-	}
-	else if (rhsItr != rhsEnd)
-	{
-		return std::strong_ordering::less;
-	}
-
-	return std::strong_ordering::equal;
+	return (from_json || from_input) == (rhs.from_json || rhs.from_input) && string == rhs.string;
 }
 
-std::strong_ordering Value::StringData::operator<=>(const StringData& rhs) const
+bool Value::NullData::operator==(const NullData&) const
 {
-	const bool lhsMaybeOther = (from_json || from_input);
-	const bool rhsMaybeOther = (rhs.from_json || rhs.from_input);
-
-	if (lhsMaybeOther != rhsMaybeOther)
-	{
-		return lhsMaybeOther <=> rhsMaybeOther;
-	}
-
-	return string <=> rhs.string;
+	return true;
 }
 
-std::strong_ordering Value::NullData::operator<=>(const NullData&) const
+bool Value::ScalarData::operator==(const ScalarData& rhs) const
 {
-	return std::strong_ordering::equal;
-}
-
-std::partial_ordering Value::ScalarData::operator<=>(const ScalarData& rhs) const
-{
-	if (scalar)
+	if (scalar && rhs.scalar)
 	{
-		if (rhs.scalar)
-		{
-			return *scalar <=> *rhs.scalar;
-		}
-		else
-		{
-			return std::strong_ordering::less;
-		}
-	}
-	else if (rhs.scalar)
-	{
-		return std::strong_ordering::greater;
+		return *scalar == *rhs.scalar;
 	}
 
-	return std::strong_ordering::equal;
+	return !scalar && !rhs.scalar;
 }
 
 template <>
@@ -450,12 +362,12 @@ const ListType& Value::get<ListType>() const
 {
 	const auto& typeData = data();
 
-	if (!std::holds_alternative<ListData>(typeData))
+	if (!std::holds_alternative<ListType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::get for ListType");
 	}
 
-	return std::get<ListData>(typeData).entries;
+	return std::get<ListType>(typeData);
 }
 
 template <>
@@ -588,12 +500,12 @@ ListType Value::release<ListType>()
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<ListData>(_data))
+	if (!std::holds_alternative<ListType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::release for ListType");
 	}
 
-	ListType result = std::move(std::get<ListData>(_data).entries);
+	ListType result = std::move(std::get<ListType>(_data));
 
 	return result;
 }
@@ -699,7 +611,7 @@ Value::Value(Type type /* = Type::Null */)
 			break;
 
 		case Type::List:
-			_data = { ListData {} };
+			_data = { ListType {} };
 			break;
 
 		case Type::String:
@@ -827,7 +739,7 @@ Value::Value(const Value& other)
 				copy.push_back(Value { other[i] });
 			}
 
-			_data = { ListData { std::move(copy) } };
+			_data = { ListType { std::move(copy) } };
 			break;
 		}
 
@@ -890,7 +802,7 @@ Type Value::typeOf(const TypeData& data) noexcept
 		"type mistmatch");
 	static_assert(
 		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::List), TypeData>,
-			ListData>,
+			ListType>,
 		"type mistmatch");
 	static_assert(
 		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::String), TypeData>,
@@ -933,15 +845,14 @@ Value& Value::operator=(Value&& rhs) noexcept
 	return *this;
 }
 
-std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
+bool Value::operator==(const Value& rhs) const noexcept
 {
 	const auto& lhsData = data();
 	const auto& rhsData = rhs.data();
 	const auto lhsType = typeOf(lhsData);
 	const auto rhsType = typeOf(rhsData);
-	const auto typeOrder = lhsType <=> rhsType;
 
-	if (std::is_neq(typeOrder))
+	if (lhsType != rhsType)
 	{
 		// There are a limited set of overlapping string types which we can compare.
 		switch (lhsType)
@@ -956,7 +867,7 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 					{
 						const auto& enumData = std::get<EnumData>(rhsData);
 
-						return stringData.string <=> enumData;
+						return stringData.string == enumData;
 					}
 				}
 				else if (std::holds_alternative<IdType>(rhsData))
@@ -965,11 +876,11 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 
 					if (stringData.from_json || stringData.from_input)
 					{
-						return stringData.string <=> idType;
+						return stringData.string == idType;
 					}
 				}
 
-				break;
+				return false;
 			}
 
 			case Type::EnumValue:
@@ -982,11 +893,11 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 
 					if (stringData.from_json)
 					{
-						return enumData <=> stringData.string;
+						return enumData == stringData.string;
 					}
 				}
 
-				break;
+				return false;
 			}
 
 			case Type::ID:
@@ -999,60 +910,19 @@ std::partial_ordering Value::operator<=>(const Value& rhs) const noexcept
 
 					if (stringData.from_json || stringData.from_input)
 					{
-						return idType <=> stringData.string;
+						return idType == stringData.string;
 					}
 				}
 
-				break;
+				return false;
 			}
 
 			default:
-				break;
+				return false;
 		}
-
-		return typeOrder;
 	}
 
-	switch (lhsType)
-	{
-		case Type::Map:
-			return std::get<MapData>(lhsData) <=> std::get<MapData>(rhsData);
-
-		case Type::List:
-			return std::get<ListData>(lhsData) <=> std::get<ListData>(rhsData);
-
-		case Type::String:
-			return std::get<StringData>(lhsData) <=> std::get<StringData>(rhsData);
-
-		case Type::Null:
-			return std::get<NullData>(lhsData) <=> std::get<NullData>(rhsData);
-
-		case Type::Boolean:
-			return std::get<BooleanType>(lhsData) <=> std::get<BooleanType>(rhsData);
-
-		case Type::Int:
-			return std::get<IntType>(lhsData) <=> std::get<IntType>(rhsData);
-
-		case Type::Float:
-			return std::get<FloatType>(lhsData) <=> std::get<FloatType>(rhsData);
-
-		case Type::EnumValue:
-			return std::get<EnumData>(lhsData) <=> std::get<EnumData>(rhsData);
-
-		case Type::ID:
-			return std::get<IdType>(lhsData) <=> std::get<IdType>(rhsData);
-
-		case Type::Scalar:
-			return std::get<ScalarData>(lhsData) <=> std::get<ScalarData>(rhsData);
-
-		default:
-			return std::partial_ordering::unordered;
-	}
-}
-
-bool Value::operator==(const Value& rhs) const noexcept
-{
-	return std::is_eq(*this <=> rhs);
+	return lhsData == rhsData;
 }
 
 Type Value::type() const noexcept
@@ -1127,7 +997,7 @@ void Value::reserve(size_t count)
 
 		case Type::List:
 		{
-			std::get<ListData>(_data).entries.reserve(count);
+			std::get<ListType>(_data).reserve(count);
 			break;
 		}
 
@@ -1147,7 +1017,7 @@ size_t Value::size() const
 
 		case Type::List:
 		{
-			return std::get<ListData>(data()).entries.size();
+			return std::get<ListType>(data()).size();
 		}
 
 		default:
@@ -1258,24 +1128,24 @@ void Value::emplace_back(Value&& value)
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<ListData>(_data))
+	if (!std::holds_alternative<ListType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::emplace_back for ListType");
 	}
 
-	std::get<ListData>(_data).entries.emplace_back(std::move(value));
+	std::get<ListType>(_data).emplace_back(std::move(value));
 }
 
 const Value& Value::operator[](size_t index) const
 {
 	const auto& typeData = data();
 
-	if (!std::holds_alternative<ListData>(typeData))
+	if (!std::holds_alternative<ListType>(typeData))
 	{
 		throw std::logic_error("Invalid call to Value::operator[] for ListType");
 	}
 
-	return std::get<ListData>(typeData).entries.at(index);
+	return std::get<ListType>(typeData).at(index);
 }
 
 void Writer::write(Value response) const

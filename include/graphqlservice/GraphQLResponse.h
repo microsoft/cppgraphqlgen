@@ -20,7 +20,6 @@
 
 #include "graphqlservice/internal/Awaitable.h"
 
-#include <compare>
 #include <cstdint>
 #include <initializer_list>
 #include <memory>
@@ -91,12 +90,11 @@ struct IdType
 	ValueType release();
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const IdType& rhs) const noexcept;
 	GRAPHQLRESPONSE_EXPORT bool operator==(const IdType& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const ByteData& rhs) const noexcept;
 	GRAPHQLRESPONSE_EXPORT bool operator==(const ByteData& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT std::strong_ordering operator<=>(const OpaqueString& rhs) const noexcept;
 	GRAPHQLRESPONSE_EXPORT bool operator==(const OpaqueString& rhs) const noexcept;
+
+	GRAPHQLRESPONSE_EXPORT bool operator<(const IdType& rhs) const noexcept;
 
 	// Check the Type
 	GRAPHQLRESPONSE_EXPORT bool isBase64() const noexcept;
@@ -190,7 +188,6 @@ struct Value
 	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT std::partial_ordering operator<=>(const Value& rhs) const noexcept;
 	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
 
 	// Check the Type
@@ -243,24 +240,16 @@ private:
 	// Type::Map
 	struct MapData
 	{
-		std::partial_ordering operator<=>(const MapData& rhs) const;
+		bool operator==(const MapData& rhs) const;
 
 		MapType map;
 		std::vector<size_t> members;
 	};
 
-	// Type::List
-	struct ListData
-	{
-		std::partial_ordering operator<=>(const ListData& rhs) const;
-
-		std::vector<Value> entries;
-	};
-
 	// Type::String
 	struct StringData
 	{
-		std::strong_ordering operator<=>(const StringData& rhs) const;
+		bool operator==(const StringData& rhs) const;
 
 		StringType string;
 		bool from_json = false;
@@ -270,7 +259,7 @@ private:
 	// Type::Null
 	struct NullData
 	{
-		std::strong_ordering operator<=>(const NullData& rhs) const;
+		bool operator==(const NullData& rhs) const;
 	};
 
 	// Type::EnumValue
@@ -279,14 +268,14 @@ private:
 	// Type::Scalar
 	struct ScalarData
 	{
-		std::partial_ordering operator<=>(const ScalarData& rhs) const;
+		bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
 	};
 
 	using SharedData = std::shared_ptr<const Value>;
 
-	using TypeData = std::variant<MapData, ListData, StringData, NullData, BooleanType, IntType,
+	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
 		FloatType, EnumData, IdType, ScalarData, SharedData>;
 
 	const TypeData& data() const noexcept;
