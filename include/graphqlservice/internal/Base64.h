@@ -19,7 +19,6 @@
 // clang-format on
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -70,7 +69,7 @@ public:
 	GRAPHQLRESPONSE_EXPORT static Comparison compareBase64(
 		const std::vector<std::uint8_t>& bytes, std::string_view maybeEncoded) noexcept;
 
-	// Validate a whether or not a string is valid Base64 without performing any heap allocations.
+	// Validate whether or not a string is valid Base64 without performing any heap allocations.
 	GRAPHQLRESPONSE_EXPORT static bool validateBase64(std::string_view maybeEncoded) noexcept;
 
 private:
