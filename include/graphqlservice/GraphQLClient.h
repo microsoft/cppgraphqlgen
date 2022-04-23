@@ -188,12 +188,12 @@ struct ModifiedResponse
 	};
 
 	// Parse a single value of the response document.
-	static Type parse(response::Value response);
+	static Type parse(response::Value&& response);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
-	parse(response::Value response)
+	parse(response::Value&& response)
 	{
 		return parse(std::move(response));
 	}
@@ -202,7 +202,7 @@ struct ModifiedResponse
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		std::optional<typename ResponseTraits<Type, Other...>::type>>
-	parse(response::Value response)
+	parse(response::Value&& response)
 	{
 		if (response.type() == response::Type::Null)
 		{
@@ -217,7 +217,7 @@ struct ModifiedResponse
 	template <TypeModifier Modifier, TypeModifier... Other>
 	static typename std::enable_if_t<TypeModifier::List == Modifier,
 		std::vector<typename ResponseTraits<Type, Other...>::type>>
-	parse(response::Value response)
+	parse(response::Value&& response)
 	{
 		std::vector<typename ResponseTraits<Type, Other...>::type> result;
 
@@ -251,19 +251,19 @@ using ScalarResponse = ModifiedResponse<response::Value>;
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLCLIENT_EXPORT int ModifiedResponse<int>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT int ModifiedResponse<int>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT double ModifiedResponse<double>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT double ModifiedResponse<double>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT std::string ModifiedResponse<std::string>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT std::string ModifiedResponse<std::string>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT bool ModifiedResponse<bool>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT bool ModifiedResponse<bool>::parse(response::Value&& response);
 template <>
 GRAPHQLCLIENT_EXPORT response::IdType ModifiedResponse<response::IdType>::parse(
-	response::Value response);
+	response::Value&& response);
 template <>
 GRAPHQLCLIENT_EXPORT response::Value ModifiedResponse<response::Value>::parse(
-	response::Value response);
+	response::Value&& response);
 #endif // GRAPHQL_DLLEXPORTS
 
 } // namespace graphql::client

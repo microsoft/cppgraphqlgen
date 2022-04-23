@@ -20,14 +20,14 @@ public:
 
 	void addFriends(std::vector<SharedHero> friends) noexcept;
 
-	const std::string& getId() const noexcept;
+	const response::IdType& getId() const noexcept;
 	const std::optional<std::string>& getName() const noexcept;
 	std::optional<std::vector<std::shared_ptr<object::Character>>> getFriends() const noexcept;
 	std::optional<std::vector<std::optional<Episode>>> getAppearsIn() const noexcept;
 	const std::optional<std::string>& getHomePlanet() const noexcept;
 
 private:
-	const std::string id_;
+	const response::IdType id_;
 	const std::optional<std::string> name_;
 	const std::vector<Episode> appearsIn_;
 	const std::optional<std::string> homePlanet_;

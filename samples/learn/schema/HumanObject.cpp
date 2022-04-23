@@ -64,7 +64,7 @@ service::AwaitableResolver Human::resolveId(service::ResolverParams&& params) co
 	auto result = _pimpl->getId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<response::IdType>::convert(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Human::resolveName(service::ResolverParams&& params) const
@@ -120,7 +120,7 @@ void AddHumanDetails(const std::shared_ptr<schema::ObjectType>& typeHuman, const
 		std::static_pointer_cast<const schema::InterfaceType>(schema->LookupType(R"gql(Character)gql"sv))
 	});
 	typeHuman->AddFields({
-		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv))),
+		schema::Field::Make(R"gql(id)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv))),
 		schema::Field::Make(R"gql(name)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
 		schema::Field::Make(R"gql(friends)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Character)gql"sv))),
 		schema::Field::Make(R"gql(appearsIn)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::LIST, schema->LookupType(R"gql(Episode)gql"sv))),

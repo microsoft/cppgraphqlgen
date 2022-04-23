@@ -308,7 +308,7 @@ response::Value serializeVariables(Variables&& variables);
 
 	headerFile << R"cpp(};
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 )cpp";
 
 	pendingSeparator.add();
@@ -548,7 +548,7 @@ response::Value ModifiedVariable<Variables::)cpp"
 
 		sourceFile << R"cpp(template <>
 )cpp" << cppType << R"cpp( ModifiedResponse<)cpp"
-				   << cppType << R"cpp(>::parse(response::Value value)
+				   << cppType << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -629,7 +629,7 @@ response::Value serializeVariables(Variables&& variables)
 	}
 
 	sourceFile << R"cpp(
-Response parseResponse(response::Value response)
+Response parseResponse(response::Value&& response)
 {
 	Response result;
 
@@ -747,7 +747,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 template <>
 )cpp" << cppType
 			   << R"cpp( ModifiedResponse<)cpp" << cppType
-			   << R"cpp(>::parse(response::Value response)
+			   << R"cpp(>::parse(response::Value&& response)
 {
 	)cpp" << cppType
 			   << R"cpp( result;
