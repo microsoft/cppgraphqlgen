@@ -25,12 +25,7 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	R"gql(New)gql"sv,
-	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
-};
+static const auto s_namesTaskState = today::getTaskStateNames();
 
 template <>
 today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)

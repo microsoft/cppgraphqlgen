@@ -14,9 +14,10 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace graphql {
 namespace introspection {
@@ -32,6 +33,22 @@ enum class TypeKind
 	LIST,
 	NON_NULL
 };
+
+constexpr auto getTypeKindNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 8> {
+		R"gql(SCALAR)gql"sv,
+		R"gql(OBJECT)gql"sv,
+		R"gql(INTERFACE)gql"sv,
+		R"gql(UNION)gql"sv,
+		R"gql(ENUM)gql"sv,
+		R"gql(INPUT_OBJECT)gql"sv,
+		R"gql(LIST)gql"sv,
+		R"gql(NON_NULL)gql"sv
+	};
+}
 
 enum class DirectiveLocation
 {
@@ -55,6 +72,33 @@ enum class DirectiveLocation
 	INPUT_OBJECT,
 	INPUT_FIELD_DEFINITION
 };
+
+constexpr auto getDirectiveLocationNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 19> {
+		R"gql(QUERY)gql"sv,
+		R"gql(MUTATION)gql"sv,
+		R"gql(SUBSCRIPTION)gql"sv,
+		R"gql(FIELD)gql"sv,
+		R"gql(FRAGMENT_DEFINITION)gql"sv,
+		R"gql(FRAGMENT_SPREAD)gql"sv,
+		R"gql(INLINE_FRAGMENT)gql"sv,
+		R"gql(VARIABLE_DEFINITION)gql"sv,
+		R"gql(SCHEMA)gql"sv,
+		R"gql(SCALAR)gql"sv,
+		R"gql(OBJECT)gql"sv,
+		R"gql(FIELD_DEFINITION)gql"sv,
+		R"gql(ARGUMENT_DEFINITION)gql"sv,
+		R"gql(INTERFACE)gql"sv,
+		R"gql(UNION)gql"sv,
+		R"gql(ENUM)gql"sv,
+		R"gql(ENUM_VALUE)gql"sv,
+		R"gql(INPUT_OBJECT)gql"sv,
+		R"gql(INPUT_FIELD_DEFINITION)gql"sv
+	};
+}
 
 class Schema;
 class Type;

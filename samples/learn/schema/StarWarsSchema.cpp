@@ -24,11 +24,7 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 3> s_namesEpisode = {
-	R"gql(NEW_HOPE)gql"sv,
-	R"gql(EMPIRE)gql"sv,
-	R"gql(JEDI)gql"sv
-};
+static const auto s_namesEpisode = learn::getEpisodeNames();
 
 template <>
 learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)
