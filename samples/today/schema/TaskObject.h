@@ -198,9 +198,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Task"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Task)gql" };
+	}
 };
 
 } // namespace graphql::today::object

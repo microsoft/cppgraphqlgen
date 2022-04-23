@@ -168,9 +168,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Alien"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Alien)gql" };
+	}
 };
 
 } // namespace graphql::validation::object

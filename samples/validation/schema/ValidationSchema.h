@@ -14,16 +14,13 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <string_view>
 
 namespace graphql {
 namespace validation {
-
-
 
 enum class DogCommand
 {
@@ -32,20 +29,30 @@ enum class DogCommand
 	HEEL
 };
 
-constexpr std::array<std::string_view, 3> s_namesDogCommand = {
-	std::string_view(R"gql(SIT)gql"),
-	std::string_view(R"gql(DOWN)gql"),
-	std::string_view(R"gql(HEEL)gql")
-};
+constexpr std::array<std::string_view, 3> getDogCommandNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(SIT)gql"sv,
+		R"gql(DOWN)gql"sv,
+		R"gql(HEEL)gql"sv
+	} };
+}
 
 enum class CatCommand
 {
 	JUMP
 };
 
-constexpr std::array<std::string_view, 1> s_namesCatCommand = {
-	std::string_view(R"gql(JUMP)gql")
-};
+constexpr std::array<std::string_view, 1> getCatCommandNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(JUMP)gql"sv
+	} };
+}
 
 struct ComplexInput
 {

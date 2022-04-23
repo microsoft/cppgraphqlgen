@@ -14,16 +14,13 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <string_view>
 
 namespace graphql {
 namespace learn {
-
-
 
 enum class Episode
 {
@@ -32,11 +29,16 @@ enum class Episode
 	JEDI
 };
 
-constexpr std::array<std::string_view, 3> s_namesEpisode = {
-	std::string_view(R"gql(NEW_HOPE)gql"),
-	std::string_view(R"gql(EMPIRE)gql"),
-	std::string_view(R"gql(JEDI)gql")
-};
+constexpr std::array<std::string_view, 3> getEpisodeNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(NEW_HOPE)gql"sv,
+		R"gql(EMPIRE)gql"sv,
+		R"gql(JEDI)gql"sv
+	} };
+}
 
 struct ReviewInput
 {

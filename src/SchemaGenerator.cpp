@@ -121,10 +121,9 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <string_view>
 
 )cpp";
@@ -147,10 +146,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			}
 		}
 	}
-
-		headerFile << R"cpp(
-
-)cpp";
 
 	if (!_loader.getEnumTypes().empty())
 	{
@@ -179,12 +174,17 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 };
 
 )cpp";
-			firstValue = true;
 
 			headerFile << R"cpp(constexpr std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> s_names)cpp" << enumType.cppType
-					   << R"cpp( = {
+					   << enumType.values.size() << R"cpp(> get)cpp" << enumType.cppType
+					   << R"cpp(Names() noexcept
+{
+	using namespace std::literals;
+
+	return { {
 )cpp";
+
+			firstValue = true;
 
 			for (const auto& value : enumType.values)
 			{
@@ -195,14 +195,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(	std::string_view(R"gql()cpp" << value.value << R"cpp()gql"))cpp";
+				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
 			}
 
 			headerFile << R"cpp(
-};
+	} };
+}
 
 )cpp";
-
 		}
 	}
 
@@ -999,9 +999,11 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		")cpp" <<  objectType.type << R"cpp("
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql()cpp"
+			<< objectType.type << R"cpp()gql" };
+	}
 };
 )cpp";
 	}
@@ -1074,10 +1076,19 @@ bool Generator::outputSource() const noexcept
 
 	if (!_loader.isIntrospection())
 	{
-		for (const auto& operation : _loader.getOperationTypes())
+		if (_loader.getOperationTypes().empty())
 		{
-			sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+			// Normally this would be included by each of the operation object headers.
+			sourceFile << R"cpp(#include ")cpp" << getHeaderPath() << R"cpp("
 )cpp";
+		}
+		else
+		{
+			for (const auto& operation : _loader.getOperationTypes())
+			{
+				sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+)cpp";
+			}
 		}
 
 		sourceFile << std::endl;
@@ -1086,14 +1097,13 @@ bool Generator::outputSource() const noexcept
 	if (_loader.isIntrospection())
 	{
 		sourceFile << R"cpp(#include "graphqlservice/internal/Introspection.h"
-#include "graphqlservice/introspection/IntrospectionSchema.h"
 )cpp";
 	}
 	else
 	{
 		sourceFile << R"cpp(#include "graphqlservice/internal/Schema.h"
+
 #include "graphqlservice/introspection/IntrospectionSchema.h"
-#include <)cpp" << getHeaderPath() << R"cpp(>
 )cpp";
 	}
 
@@ -1121,9 +1131,9 @@ using namespace std::literals;
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			sourceFile << R"cpp(
-
-using )cpp" << _loader.getSchemaNamespace() << "::s_names" <<  enumType.cppType << R"cpp(;
+			sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
+					   << R"cpp(Names();
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
@@ -2393,10 +2403,10 @@ std::string Generator::getArgumentDefaultValue(
 		}
 
 		case response::Type::ID:
-			argumentDefaultValue
-				<< padding << R"cpp(		entry = response::Value(response::Type::ID);
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(response::Type::ID);
 		entry.set<std::string>(R"gql()cpp"
-				<< defaultValue.get<std::string>() << R"cpp()gql");
+								 << defaultValue.get<std::string>() << R"cpp()gql");
 )cpp";
 			break;
 

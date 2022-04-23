@@ -7,8 +7,8 @@
 #include "MutationObject.h"
 
 #include "graphqlservice/internal/Schema.h"
+
 #include "graphqlservice/introspection/IntrospectionSchema.h"
-#include <StarWarsSchema.h>
 
 #include <algorithm>
 #include <array>
@@ -24,9 +24,7 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-
-
-using learn::s_namesEpisode;
+static const auto s_namesEpisode = learn::getEpisodeNames();
 
 template <>
 learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)

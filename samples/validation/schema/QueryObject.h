@@ -329,9 +329,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Query"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Query)gql" };
+	}
 };
 
 } // namespace graphql::validation::object

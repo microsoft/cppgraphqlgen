@@ -119,9 +119,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Expensive"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Expensive)gql" };
+	}
 };
 
 } // namespace graphql::today::object

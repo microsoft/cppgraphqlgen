@@ -14,16 +14,13 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <string_view>
 
 namespace graphql {
 namespace today {
-
-
 
 enum class TaskState
 {
@@ -33,12 +30,17 @@ enum class TaskState
 	Unassigned
 };
 
-constexpr std::array<std::string_view, 4> s_namesTaskState = {
-	std::string_view(R"gql(New)gql"),
-	std::string_view(R"gql(Started)gql"),
-	std::string_view(R"gql(Complete)gql"),
-	std::string_view(R"gql(Unassigned)gql")
-};
+constexpr std::array<std::string_view, 4> getTaskStateNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(New)gql"sv,
+		R"gql(Started)gql"sv,
+		R"gql(Complete)gql"sv,
+		R"gql(Unassigned)gql"sv
+	} };
+}
 
 struct CompleteTaskInput
 {

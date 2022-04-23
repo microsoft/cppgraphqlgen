@@ -14,16 +14,13 @@
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <string_view>
 
 namespace graphql {
 namespace introspection {
-
-
 
 enum class TypeKind
 {
@@ -37,16 +34,21 @@ enum class TypeKind
 	NON_NULL
 };
 
-constexpr std::array<std::string_view, 8> s_namesTypeKind = {
-	std::string_view(R"gql(SCALAR)gql"),
-	std::string_view(R"gql(OBJECT)gql"),
-	std::string_view(R"gql(INTERFACE)gql"),
-	std::string_view(R"gql(UNION)gql"),
-	std::string_view(R"gql(ENUM)gql"),
-	std::string_view(R"gql(INPUT_OBJECT)gql"),
-	std::string_view(R"gql(LIST)gql"),
-	std::string_view(R"gql(NON_NULL)gql")
-};
+constexpr std::array<std::string_view, 8> getTypeKindNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(SCALAR)gql"sv,
+		R"gql(OBJECT)gql"sv,
+		R"gql(INTERFACE)gql"sv,
+		R"gql(UNION)gql"sv,
+		R"gql(ENUM)gql"sv,
+		R"gql(INPUT_OBJECT)gql"sv,
+		R"gql(LIST)gql"sv,
+		R"gql(NON_NULL)gql"sv
+	} };
+}
 
 enum class DirectiveLocation
 {
@@ -71,27 +73,32 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-constexpr std::array<std::string_view, 19> s_namesDirectiveLocation = {
-	std::string_view(R"gql(QUERY)gql"),
-	std::string_view(R"gql(MUTATION)gql"),
-	std::string_view(R"gql(SUBSCRIPTION)gql"),
-	std::string_view(R"gql(FIELD)gql"),
-	std::string_view(R"gql(FRAGMENT_DEFINITION)gql"),
-	std::string_view(R"gql(FRAGMENT_SPREAD)gql"),
-	std::string_view(R"gql(INLINE_FRAGMENT)gql"),
-	std::string_view(R"gql(VARIABLE_DEFINITION)gql"),
-	std::string_view(R"gql(SCHEMA)gql"),
-	std::string_view(R"gql(SCALAR)gql"),
-	std::string_view(R"gql(OBJECT)gql"),
-	std::string_view(R"gql(FIELD_DEFINITION)gql"),
-	std::string_view(R"gql(ARGUMENT_DEFINITION)gql"),
-	std::string_view(R"gql(INTERFACE)gql"),
-	std::string_view(R"gql(UNION)gql"),
-	std::string_view(R"gql(ENUM)gql"),
-	std::string_view(R"gql(ENUM_VALUE)gql"),
-	std::string_view(R"gql(INPUT_OBJECT)gql"),
-	std::string_view(R"gql(INPUT_FIELD_DEFINITION)gql")
-};
+constexpr std::array<std::string_view, 19> getDirectiveLocationNames() noexcept
+{
+	using namespace std::literals;
+
+	return { {
+		R"gql(QUERY)gql"sv,
+		R"gql(MUTATION)gql"sv,
+		R"gql(SUBSCRIPTION)gql"sv,
+		R"gql(FIELD)gql"sv,
+		R"gql(FRAGMENT_DEFINITION)gql"sv,
+		R"gql(FRAGMENT_SPREAD)gql"sv,
+		R"gql(INLINE_FRAGMENT)gql"sv,
+		R"gql(VARIABLE_DEFINITION)gql"sv,
+		R"gql(SCHEMA)gql"sv,
+		R"gql(SCALAR)gql"sv,
+		R"gql(OBJECT)gql"sv,
+		R"gql(FIELD_DEFINITION)gql"sv,
+		R"gql(ARGUMENT_DEFINITION)gql"sv,
+		R"gql(INTERFACE)gql"sv,
+		R"gql(UNION)gql"sv,
+		R"gql(ENUM)gql"sv,
+		R"gql(ENUM_VALUE)gql"sv,
+		R"gql(INPUT_OBJECT)gql"sv,
+		R"gql(INPUT_FIELD_DEFINITION)gql"sv
+	} };
+}
 
 class Schema;
 class Type;

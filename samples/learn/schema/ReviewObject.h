@@ -143,9 +143,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Review"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Review)gql" };
+	}
 };
 
 } // namespace graphql::learn::object

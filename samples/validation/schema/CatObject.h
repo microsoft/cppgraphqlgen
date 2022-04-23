@@ -228,9 +228,10 @@ public:
 	{
 	}
 
-	constexpr static std::string_view static_typename = std::string_view(
-		"Cat"
-	);
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Cat)gql" };
+	}
 };
 
 } // namespace graphql::validation::object
