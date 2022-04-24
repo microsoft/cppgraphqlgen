@@ -860,7 +860,15 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 			std::for_each(fields.begin(),
 				fields.end(),
 				[&result](const std::shared_ptr<const schema::InputValue>& field) noexcept {
-					const auto fieldType = field->type().lock();
+					auto fieldType = field->type().lock();
+					auto fieldKind = fieldType->kind();
+
+					while (fieldKind == introspection::TypeKind::LIST
+						|| fieldKind == introspection::TypeKind::NON_NULL)
+					{
+						fieldType = fieldType->ofType().lock();
+						fieldKind = fieldType->kind();
+					}
 
 					if (fieldType->kind() == introspection::TypeKind::INPUT_OBJECT)
 					{
