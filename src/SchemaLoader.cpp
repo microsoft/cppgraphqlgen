@@ -388,6 +388,7 @@ void SchemaLoader::reorderInputTypeDependencies()
 			});
 	});
 
+	std::unordered_set<std::string_view> forwardDeclared;
 	std::unordered_set<std::string_view> handled;
 	auto itr = _inputTypes.begin();
 

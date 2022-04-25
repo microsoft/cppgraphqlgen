@@ -184,3 +184,11 @@ input ThirdNestedInput {
 input FourthNestedInput {
     id: ID!
 }
+
+#input IncludeNullableSelfInput {
+#    self: IncludeNullableSelfInput
+#}
+#
+#input IncludeNonNullableListSelfInput {
+#    selves: [IncludeNonNullableListSelfInput!]!
+#}
