@@ -591,6 +591,15 @@ enum class TypeModifier
 	List,
 };
 
+template <typename Type>
+constexpr bool isInputType = false;
+
+template <TypeModifier Modifier>
+constexpr bool isNoneModifier = (Modifier == TypeModifier::None);
+
+template <TypeModifier... Other>
+constexpr bool trailingNoneModifiers = (... && isNoneModifer<Other>);
+
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
 // argument is missing or not the correct type. If it's optional, use find and check the second
@@ -604,7 +613,8 @@ struct ModifiedArgument
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			std::optional<typename ArgumentTraits<U, Other...>::type>,
+			typename std::conditional_t<isInputType<U> && trailingNoneModifiers<Other...>,
+				std::unique_ptr<U>, std::optional<typename ArgumentTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ArgumentTraits<U, Other...>::type>, U>>;
 	};
@@ -678,12 +688,19 @@ struct ModifiedArgument
 		if (valueItr == arguments.get<response::MapType>().cend()
 			|| valueItr->second.type() == response::Type::Null)
 		{
-			return std::nullopt;
+			return {};
 		}
 
 		auto result = require<Other...>(name, arguments);
 
-		return std::make_optional<decltype(result)>(std::move(result));
+		if constexpr (isInputType<Type> && trailingNoneModifiers<Other...>)
+		{
+			return std::make_unique<decltype(result)>(std::move(result));
+		}
+		else
+		{
+			return std::make_optional<decltype(result)>(std::move(result));
+		}
 	}
 
 	// Peel off list modifiers.

@@ -126,6 +126,26 @@ today::FourthNestedInput ModifiedArgument<today::FourthNestedInput>::convert(con
 }
 
 template <>
+today::IncludeNullableSelfInput ModifiedArgument<today::IncludeNullableSelfInput>::convert(const response::Value& value)
+{
+	auto valueSelf = service::ModifiedArgument<today::IncludeNullableSelfInput>::require<service::TypeModifier::Nullable>("self", value);
+
+	return {
+		std::move(valueSelf)
+	};
+}
+
+template <>
+today::IncludeNonNullableListSelfInput ModifiedArgument<today::IncludeNonNullableListSelfInput>::convert(const response::Value& value)
+{
+	auto valueSelves = service::ModifiedArgument<today::IncludeNonNullableListSelfInput>::require<service::TypeModifier::List>("selves", value);
+
+	return {
+		std::move(valueSelves)
+	};
+}
+
+template <>
 today::SecondNestedInput ModifiedArgument<today::SecondNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
@@ -134,6 +154,18 @@ today::SecondNestedInput ModifiedArgument<today::SecondNestedInput>::convert(con
 	return {
 		std::move(valueId),
 		std::move(valueThird)
+	};
+}
+
+template <>
+today::ForwardDeclaredInput ModifiedArgument<today::ForwardDeclaredInput>::convert(const response::Value& value)
+{
+	auto valueNullableSelf = service::ModifiedArgument<today::IncludeNullableSelfInput>::require<service::TypeModifier::Nullable>("nullableSelf", value);
+	auto valueListSelves = service::ModifiedArgument<today::IncludeNonNullableListSelfInput>::require("listSelves", value);
+
+	return {
+		std::move(valueNullableSelf),
+		std::move(valueListSelves)
 	};
 }
 
@@ -179,8 +211,14 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(ThirdNestedInput)gql"sv, typeThirdNestedInput);
 	auto typeFourthNestedInput = schema::InputObjectType::Make(R"gql(FourthNestedInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FourthNestedInput)gql"sv, typeFourthNestedInput);
+	auto typeIncludeNullableSelfInput = schema::InputObjectType::Make(R"gql(IncludeNullableSelfInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(IncludeNullableSelfInput)gql"sv, typeIncludeNullableSelfInput);
+	auto typeIncludeNonNullableListSelfInput = schema::InputObjectType::Make(R"gql(IncludeNonNullableListSelfInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(IncludeNonNullableListSelfInput)gql"sv, typeIncludeNonNullableListSelfInput);
 	auto typeSecondNestedInput = schema::InputObjectType::Make(R"gql(SecondNestedInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(SecondNestedInput)gql"sv, typeSecondNestedInput);
+	auto typeForwardDeclaredInput = schema::InputObjectType::Make(R"gql(ForwardDeclaredInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(ForwardDeclaredInput)gql"sv, typeForwardDeclaredInput);
 	auto typeFirstNestedInput = schema::InputObjectType::Make(R"gql(FirstNestedInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(FirstNestedInput)gql"sv, typeFirstNestedInput);
 	auto typeNode = schema::InterfaceType::Make(R"gql(Node)gql"sv, R"md(Node interface for Relay support)md"sv);
@@ -242,9 +280,19 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	typeFourthNestedInput->AddInputValues({
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 	});
+	typeIncludeNullableSelfInput->AddInputValues({
+		schema::InputValue::Make(R"gql(self)gql"sv, R"md()md"sv, schema->LookupType(R"gql(IncludeNullableSelfInput)gql"sv), R"gql()gql"sv)
+	});
+	typeIncludeNonNullableListSelfInput->AddInputValues({
+		schema::InputValue::Make(R"gql(selves)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(IncludeNonNullableListSelfInput)gql"sv)))), R"gql()gql"sv)
+	});
 	typeSecondNestedInput->AddInputValues({
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),
 		schema::InputValue::Make(R"gql(third)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ThirdNestedInput)gql"sv)), R"gql()gql"sv)
+	});
+	typeForwardDeclaredInput->AddInputValues({
+		schema::InputValue::Make(R"gql(nullableSelf)gql"sv, R"md()md"sv, schema->LookupType(R"gql(IncludeNullableSelfInput)gql"sv), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(listSelves)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(IncludeNonNullableListSelfInput)gql"sv)), R"gql()gql"sv)
 	});
 	typeFirstNestedInput->AddInputValues({
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),

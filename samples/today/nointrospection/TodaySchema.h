@@ -60,10 +60,26 @@ struct FourthNestedInput
 	response::IdType id {};
 };
 
+struct IncludeNullableSelfInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> self {};
+};
+
+struct IncludeNonNullableListSelfInput
+{
+	std::vector<IncludeNonNullableListSelfInput> selves {};
+};
+
 struct SecondNestedInput
 {
 	response::IdType id {};
 	ThirdNestedInput third {};
+};
+
+struct ForwardDeclaredInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
+	IncludeNonNullableListSelfInput listSelves {};
 };
 
 struct FirstNestedInput
@@ -140,6 +156,27 @@ void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensiv
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace today
+
+namespace service {
+
+template <>
+constexpr bool isInputType<today::CompleteTaskInput> = true;
+template <>
+constexpr bool isInputType<today::ThirdNestedInput> = true;
+template <>
+constexpr bool isInputType<today::FourthNestedInput> = true;
+template <>
+constexpr bool isInputType<today::IncludeNullableSelfInput> = true;
+template <>
+constexpr bool isInputType<today::IncludeNonNullableListSelfInput> = true;
+template <>
+constexpr bool isInputType<today::SecondNestedInput> = true;
+template <>
+constexpr bool isInputType<today::ForwardDeclaredInput> = true;
+template <>
+constexpr bool isInputType<today::FirstNestedInput> = true;
+
+} // namespace service
 } // namespace graphql
 
 #endif // TODAYSCHEMA_H

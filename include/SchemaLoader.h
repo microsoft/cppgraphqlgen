@@ -106,7 +106,7 @@ struct InputType
 	InputFieldList fields;
 	std::string_view description;
 	std::unordered_set<std::string_view> dependencies {};
-	std::vector<std::string_view> forwardDeclarations {};
+	std::vector<std::string_view> declarations {};
 };
 
 using InputTypeList = std::vector<InputType>;

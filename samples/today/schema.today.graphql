@@ -185,10 +185,15 @@ input FourthNestedInput {
     id: ID!
 }
 
-#input IncludeNullableSelfInput {
-#    self: IncludeNullableSelfInput
-#}
-#
-#input IncludeNonNullableListSelfInput {
-#    selves: [IncludeNonNullableListSelfInput!]!
-#}
+input ForwardDeclaredInput {
+    nullableSelf: IncludeNullableSelfInput
+    listSelves: IncludeNonNullableListSelfInput!
+}
+
+input IncludeNullableSelfInput {
+    self: IncludeNullableSelfInput
+}
+
+input IncludeNonNullableListSelfInput {
+    selves: [IncludeNonNullableListSelfInput!]!
+}
