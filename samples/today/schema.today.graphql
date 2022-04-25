@@ -197,3 +197,18 @@ input IncludeNullableSelfInput {
 input IncludeNonNullableListSelfInput {
     selves: [IncludeNonNullableListSelfInput!]!
 }
+
+input StringOperationFilterInput {
+    and: [StringOperationFilterInput!]
+    or: [StringOperationFilterInput!]
+    equal: String
+    notEqual: String
+    contains: String
+    notContains: String
+    in: [String!]
+    notIn: [String!]
+    startsWith: String
+    notStartsWith: String
+    endsWith: String
+    notEndsWith: String
+}

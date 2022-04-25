@@ -70,6 +70,22 @@ struct IncludeNonNullableListSelfInput
 	std::vector<IncludeNonNullableListSelfInput> selves {};
 };
 
+struct StringOperationFilterInput
+{
+	std::optional<std::vector<StringOperationFilterInput>> and_ {};
+	std::optional<std::vector<StringOperationFilterInput>> or_ {};
+	std::optional<std::string> equal {};
+	std::optional<std::string> notEqual {};
+	std::optional<std::string> contains {};
+	std::optional<std::string> notContains {};
+	std::optional<std::vector<std::string>> in {};
+	std::optional<std::vector<std::string>> notIn {};
+	std::optional<std::string> startsWith {};
+	std::optional<std::string> notStartsWith {};
+	std::optional<std::string> endsWith {};
+	std::optional<std::string> notEndsWith {};
+};
+
 struct SecondNestedInput
 {
 	response::IdType id {};
@@ -185,6 +201,12 @@ constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
 
 template <>
 constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
 {
 	return true;
 }
