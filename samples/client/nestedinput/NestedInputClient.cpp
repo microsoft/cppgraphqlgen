@@ -67,9 +67,9 @@ response::Value ModifiedVariable<Variables::InputABCD>::serialize(Variables::Inp
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(d)js"s, ModifiedVariable<std::string>::serialize(std::move(inputValue.d)));
-	result.emplace_back(R"js(a)js"s, ModifiedVariable<InputA>::serialize(std::move(inputValue.a)));
-	result.emplace_back(R"js(b)js"s, ModifiedVariable<InputB>::serialize(std::move(inputValue.b)));
-	result.emplace_back(R"js(bc)js"s, ModifiedVariable<InputBC>::serialize<TypeModifier::List>(std::move(inputValue.bc)));
+	result.emplace_back(R"js(a)js"s, ModifiedVariable<Variables::InputA>::serialize(std::move(inputValue.a)));
+	result.emplace_back(R"js(b)js"s, ModifiedVariable<Variables::InputB>::serialize(std::move(inputValue.b)));
+	result.emplace_back(R"js(bc)js"s, ModifiedVariable<Variables::InputBC>::serialize<TypeModifier::List>(std::move(inputValue.bc)));
 
 	return result;
 }
@@ -80,7 +80,7 @@ response::Value ModifiedVariable<Variables::InputBC>::serialize(Variables::Input
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(c)js"s, ModifiedVariable<response::IdType>::serialize(std::move(inputValue.c)));
-	result.emplace_back(R"js(b)js"s, ModifiedVariable<InputB>::serialize(std::move(inputValue.b)));
+	result.emplace_back(R"js(b)js"s, ModifiedVariable<Variables::InputB>::serialize(std::move(inputValue.b)));
 
 	return result;
 }

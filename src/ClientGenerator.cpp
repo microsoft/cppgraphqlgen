@@ -559,8 +559,14 @@ response::Value ModifiedVariable<Variables::)cpp"
 					RequestLoader::unwrapSchemaType(inputField->type().lock());
 
 				sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << inputField->name()
-						   << R"cpp()js"s, ModifiedVariable<)cpp"
-						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::serialize)cpp"
+						   << R"cpp()js"s, ModifiedVariable<)cpp";
+
+				if (type->kind() == introspection::TypeKind::INPUT_OBJECT)
+				{
+					sourceFile << R"cpp(Variables::)cpp";
+				}
+
+				sourceFile << _schemaLoader.getCppType(type->name()) << R"cpp(>::serialize)cpp"
 						   << getTypeModifierList(modifiers) << R"cpp((std::move(inputValue.)cpp"
 						   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp()));
 )cpp";
