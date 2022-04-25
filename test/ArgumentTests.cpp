@@ -331,3 +331,22 @@ TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
 	ASSERT_EQ(response::Type::String, actual.first.type()) << "should parse the object";
 	ASSERT_EQ("foobar", actual.first.get<std::string>()) << "should match the value";
 }
+
+TEST(ArgumentsCase, OnlyNoneModifiers)
+{
+	constexpr bool emptyModifiers = service::onlyNoneModifiers<>;
+	constexpr bool threeNone = service::onlyNoneModifiers<service::TypeModifier::None,
+		service::TypeModifier::None,
+		service::TypeModifier::None>;
+	constexpr bool firtNullable = service::onlyNoneModifiers<service::TypeModifier::Nullable,
+		service::TypeModifier::None,
+		service::TypeModifier::None>;
+	constexpr bool middleList = service::onlyNoneModifiers<service::TypeModifier::None,
+		service::TypeModifier::List,
+		service::TypeModifier::None>;
+
+	ASSERT_TRUE(emptyModifiers) << "onlyNoneModifiers<> is true";
+	ASSERT_TRUE(threeNone) << "onlyNoneModifiers<None, None, None> is true";
+	ASSERT_FALSE(firtNullable) << "onlyNoneModifiers<Nullable, None, None> is false";
+	ASSERT_FALSE(middleList) << "onlyNoneModifiers<None, List, None> is false";
+}
