@@ -591,13 +591,6 @@ enum class TypeModifier
 	List,
 };
 
-// Used by ModifiedArgument to special-case an innermost nullable INPUT_OBJECT type.
-template <TypeModifier... Other>
-constexpr bool onlyNoneModifiers() noexcept
-{
-	return (... && (Other == TypeModifier::None));
-}
-
 // Specialized to return true for all INPUT_OBJECT types.
 template <typename Type>
 constexpr bool isInputType()
@@ -612,6 +605,13 @@ constexpr bool isInputType()
 template <typename Type>
 struct ModifiedArgument
 {
+	// Special-case an innermost nullable INPUT_OBJECT type.
+	template <TypeModifier... Other>
+	static constexpr bool onlyNoneModifiers() noexcept
+	{
+		return (... && (Other == TypeModifier::None));
+	}
+
 	// Peel off modifiers until we get to the underlying type.
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ArgumentTraits

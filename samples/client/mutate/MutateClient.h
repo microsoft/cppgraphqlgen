@@ -29,7 +29,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
 ///   completedTask: completeTask(input: $input) {
 ///     completedTask: task {
 ///       completedTaskId: id
@@ -66,7 +66,7 @@ struct Variables
 		std::optional<std::string> clientMutationId {};
 	};
 
-	CompleteTaskInput input {};
+	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 

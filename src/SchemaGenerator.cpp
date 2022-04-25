@@ -215,6 +215,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
+			forwardDeclared.insert(inputType.type);
+
 			if (!inputType.declarations.empty())
 			{
 				// Forward declare nullable dependencies
@@ -227,9 +229,9 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 						pendingSeparator.add();
 					}
 				}
-			}
 
-			pendingSeparator.reset();
+				pendingSeparator.reset();
+			}
 
 			headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(
 {

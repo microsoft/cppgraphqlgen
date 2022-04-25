@@ -65,8 +65,8 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	// Variables can reference both input types and enums.
 	for (const auto& variable : _variables)
 	{
-		collectInputTypes(variable.type);
-		collectEnums(variable.type);
+		collectInputTypes(variable.inputType.type);
+		collectEnums(variable.inputType.type);
 	}
 
 	// Handle nested input types by fully declaring the dependencies first.
@@ -126,7 +126,7 @@ const RequestVariableList& RequestLoader::getVariables() const noexcept
 	return _variables;
 }
 
-const RequestSchemaTypeList& RequestLoader::getReferencedInputTypes() const noexcept
+const RequestInputTypeList& RequestLoader::getReferencedInputTypes() const noexcept
 {
 	return _referencedInputTypes;
 }
@@ -138,25 +138,58 @@ const RequestSchemaTypeList& RequestLoader::getReferencedEnums() const noexcept
 
 std::string RequestLoader::getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept
 {
+	const auto [inputType, modifiers] = unwrapSchemaType(RequestSchemaType { wrappedInputType });
+
+	return getInputCppType(inputType, modifiers);
+}
+
+std::string RequestLoader::getInputCppType(
+	const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept
+{
+	bool nonNull = true;
 	size_t templateCount = 0;
 	std::ostringstream cppType;
-	auto [inputType, modifiers] = unwrapSchemaType(RequestSchemaType { wrappedInputType });
 
 	for (auto modifier : modifiers)
 	{
+		if (!nonNull)
+		{
+			cppType << R"cpp(std::optional<)cpp";
+			++templateCount;
+		}
+
 		switch (modifier)
 		{
+			case service::TypeModifier::None:
+				nonNull = true;
+				break;
+
 			case service::TypeModifier::Nullable:
-				cppType << R"cpp(std::optional<)cpp";
-				++templateCount;
+				nonNull = false;
 				break;
 
 			case service::TypeModifier::List:
+				nonNull = true;
 				cppType << R"cpp(std::vector<)cpp";
+				++templateCount;
+				break;
+		}
+	}
+
+	if (!nonNull)
+	{
+		switch (inputType->kind())
+		{
+			case introspection::TypeKind::INPUT_OBJECT:
+				// If it's nullable, we want to return std::unique_ptr instead of std::optional for
+				// innermost complex types
+				cppType << R"cpp(std::unique_ptr<)cpp";
 				++templateCount;
 				break;
 
 			default:
+				cppType << R"cpp(std::optional<)cpp";
+				++templateCount;
 				break;
 		}
 	}
@@ -233,7 +266,7 @@ std::pair<RequestSchemaType, TypeModifierStack> RequestLoader::unwrapSchemaType(
 		{
 			case introspection::TypeKind::NON_NULL:
 				nonNull = true;
-				result.first = result.first->ofType().lock();
+				result.first = { result.first->ofType().lock() };
 				break;
 
 			case introspection::TypeKind::LIST:
@@ -244,7 +277,7 @@ std::pair<RequestSchemaType, TypeModifierStack> RequestLoader::unwrapSchemaType(
 
 				nonNull = false;
 				result.second.push_back(service::TypeModifier::List);
-				result.first = result.first->ofType().lock();
+				result.first = { result.first->ofType().lock() };
 				break;
 
 			default:
@@ -776,7 +809,7 @@ void RequestLoader::collectVariables() noexcept
 
 			const auto [type, modifiers] = variableType.getType();
 
-			variable.type = _schema->LookupType(type);
+			variable.inputType.type = _schema->LookupType(type);
 			variable.modifiers = modifiers;
 
 			if (!variable.defaultValueString.empty()
@@ -806,7 +839,7 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 		{
 			if (_inputTypeNames.emplace(variableType->name()).second)
 			{
-				_referencedInputTypes.push_back(variableType);
+				_referencedInputTypes.push_back({ variableType });
 
 				// Input types can reference other input types and enums.
 				for (const auto& inputField : variableType->inputFields())
@@ -824,7 +857,7 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 		case introspection::TypeKind::LIST:
 		case introspection::TypeKind::NON_NULL:
 		{
-			collectInputTypes(variableType->ofType().lock());
+			collectInputTypes({ variableType->ofType().lock() });
 			break;
 		}
 
@@ -833,7 +866,7 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 	}
 }
 
-void RequestLoader::reorderInputTypeDependencies() noexcept
+void RequestLoader::reorderInputTypeDependencies()
 {
 	if (_referencedInputTypes.empty())
 	{
@@ -841,53 +874,39 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 	}
 
 	// Build the dependency list for each input type.
-	struct InputTypeDependencies
-	{
-		RequestSchemaType type;
-		std::string_view name;
-		std::unordered_set<std::string_view> dependencies {};
-	};
-
-	std::vector<InputTypeDependencies> inputTypes(_referencedInputTypes.size());
-
-	std::transform(_referencedInputTypes.cbegin(),
-		_referencedInputTypes.cend(),
-		inputTypes.begin(),
-		[](const RequestSchemaType& type) noexcept {
-			InputTypeDependencies result { type, type->name() };
-			const auto& fields = type->inputFields();
-
+	std::for_each(_referencedInputTypes.begin(),
+		_referencedInputTypes.end(),
+		[](RequestInputType& entry) noexcept {
+			const auto& fields = entry.type->inputFields();
 			std::for_each(fields.begin(),
 				fields.end(),
-				[&result](const std::shared_ptr<const schema::InputValue>& field) noexcept {
-					auto fieldType = field->type().lock();
-					auto fieldKind = fieldType->kind();
+				[&entry](const std::shared_ptr<const schema::InputValue>& field) noexcept {
+					const auto [inputType, modifiers] = unwrapSchemaType(field->type().lock());
 
-					while (fieldKind == introspection::TypeKind::LIST
-						|| fieldKind == introspection::TypeKind::NON_NULL)
+					if (inputType->kind() == introspection::TypeKind::INPUT_OBJECT)
 					{
-						fieldType = fieldType->ofType().lock();
-						fieldKind = fieldType->kind();
-					}
-
-					if (fieldType->kind() == introspection::TypeKind::INPUT_OBJECT)
-					{
-						result.dependencies.insert(fieldType->name());
+						// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
+						if (!modifiers.empty() && modifiers.front() != service::TypeModifier::None)
+						{
+							entry.declarations.push_back(inputType->name());
+						}
+						else
+						{
+							entry.dependencies.insert(inputType->name());
+						}
 					}
 				});
-
-			return result;
 		});
 
 	std::unordered_set<std::string_view> handled;
-	auto itr = inputTypes.begin();
+	auto itr = _referencedInputTypes.begin();
 
-	while (itr != inputTypes.end())
+	while (itr != _referencedInputTypes.end())
 	{
 		// Put all of the input types without unhandled dependencies at the front.
 		const auto itrDependent = std::stable_partition(itr,
-			inputTypes.end(),
-			[&handled](const InputTypeDependencies& entry) noexcept {
+			_referencedInputTypes.end(),
+			[&handled](const RequestInputType& entry) noexcept {
 				return std::find_if(entry.dependencies.cbegin(),
 						   entry.dependencies.cend(),
 						   [&handled](std::string_view dependency) noexcept {
@@ -896,28 +915,27 @@ void RequestLoader::reorderInputTypeDependencies() noexcept
 					== entry.dependencies.cend();
 			});
 
-		if (itrDependent != inputTypes.end())
+		// Check to make sure we made progress. This should already be guaranteed by the same check
+		// in SchemaLoader::reorderInputTypeDependencies, which will throw an exception if there are
+		// any cycles in the full set of input types. This is only validating a sub-set of those
+		// input types which are referenced in the request.
+		if (itrDependent == itr)
 		{
-			std::for_each(itr,
-				itrDependent,
-				[&handled](const InputTypeDependencies& entry) noexcept {
-					handled.insert(entry.name);
-				});
+			std::ostringstream error;
+
+			error << "Input object cycle type: " << itr->type;
+
+			throw std::logic_error(error.str());
+		}
+
+		if (itrDependent != _referencedInputTypes.end())
+		{
+			std::for_each(itr, itrDependent, [&handled](const RequestInputType& entry) noexcept {
+				handled.insert(entry.type->name());
+			});
 		}
 
 		itr = itrDependent;
-	}
-
-	if (!handled.empty())
-	{
-		std::transform(inputTypes.begin(),
-			inputTypes.end(),
-			_referencedInputTypes.begin(),
-			[](InputTypeDependencies& entry) noexcept {
-				auto result = std::move(entry.type);
-
-				return result;
-			});
 	}
 }
 

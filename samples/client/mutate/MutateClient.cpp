@@ -25,6 +25,12 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 };
 
 template <>
+constexpr bool isInputType<Variables::CompleteTaskInput>() noexcept
+{
+	return true;
+}
+
+template <>
 response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
@@ -132,7 +138,7 @@ const std::string& GetRequestText() noexcept
 		# Copyright (c) Microsoft Corporation. All rights reserved.
 		# Licensed under the MIT License.
 		
-		mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
 		  completedTask: completeTask(input: $input) {
 		    completedTask: task {
 		      completedTaskId: id
@@ -165,7 +171,7 @@ response::Value serializeVariables(Variables&& variables)
 {
 	response::Value result { response::Type::Map };
 
-	result.emplace_back(R"js(input)js"s, ModifiedVariable<Variables::CompleteTaskInput>::serialize(std::move(variables.input)));
+	result.emplace_back(R"js(input)js"s, ModifiedVariable<Variables::CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
 	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<bool>::serialize(std::move(variables.skipClientMutationId)));
 
 	return result;
