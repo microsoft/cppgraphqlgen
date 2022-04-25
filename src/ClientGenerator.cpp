@@ -247,7 +247,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				{
 					if (forwardDeclared.insert(declaration).second)
 					{
-						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+						headerFile << R"cpp(	struct )cpp" << declaration << R"cpp(;
 )cpp";
 						pendingSeparator.add();
 					}
