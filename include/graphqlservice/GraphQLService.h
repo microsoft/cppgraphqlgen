@@ -593,11 +593,17 @@ enum class TypeModifier
 
 // Used by ModifiedArgument to special-case an innermost nullable INPUT_OBJECT type.
 template <TypeModifier... Other>
-constexpr bool onlyNoneModifiers = (... && (Other == TypeModifier::None));
+constexpr bool onlyNoneModifiers() noexcept
+{
+	return (... && (Other == TypeModifier::None));
+}
 
-// Specialized as true for all INPUT_OBJECT types.
+// Specialized to return true for all INPUT_OBJECT types.
 template <typename Type>
-constexpr bool isInputType = false;
+constexpr bool isInputType()
+{
+	return false;
+}
 
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
@@ -612,7 +618,7 @@ struct ModifiedArgument
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<isInputType<U> && onlyNoneModifiers<Other...>,
+			typename std::conditional_t<isInputType<U>() && onlyNoneModifiers<Other...>(),
 				std::unique_ptr<U>, std::optional<typename ArgumentTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ArgumentTraits<U, Other...>::type>, U>>;
@@ -692,7 +698,7 @@ struct ModifiedArgument
 
 		auto result = require<Other...>(name, arguments);
 
-		if constexpr (isInputType<Type> && onlyNoneModifiers<Other...>)
+		if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
 		{
 			return std::make_unique<decltype(result)>(std::move(result));
 		}

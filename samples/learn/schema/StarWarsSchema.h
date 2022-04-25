@@ -90,7 +90,10 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<learn::ReviewInput> = true;
+constexpr bool isInputType<learn::ReviewInput>()
+{
+	return true;
+}
 
 } // namespace service
 } // namespace graphql

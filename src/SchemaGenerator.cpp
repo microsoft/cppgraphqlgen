@@ -543,11 +543,13 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 			headerFile << R"cpp(template <>
 constexpr bool isInputType<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
-					   << R"cpp(> = true;
+					   << R"cpp(>()
+{
+	return true;
+}
+
 )cpp";
 		}
-
-		headerFile << std::endl;
 	}
 
 	return true;

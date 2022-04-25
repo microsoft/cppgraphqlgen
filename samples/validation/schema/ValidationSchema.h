@@ -129,7 +129,10 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<validation::ComplexInput> = true;
+constexpr bool isInputType<validation::ComplexInput>()
+{
+	return true;
+}
 
 } // namespace service
 } // namespace graphql

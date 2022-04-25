@@ -160,21 +160,52 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<today::CompleteTaskInput> = true;
+constexpr bool isInputType<today::CompleteTaskInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::ThirdNestedInput> = true;
+constexpr bool isInputType<today::ThirdNestedInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::FourthNestedInput> = true;
+constexpr bool isInputType<today::FourthNestedInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::IncludeNullableSelfInput> = true;
+constexpr bool isInputType<today::IncludeNullableSelfInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::IncludeNonNullableListSelfInput> = true;
+constexpr bool isInputType<today::IncludeNonNullableListSelfInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::SecondNestedInput> = true;
+constexpr bool isInputType<today::SecondNestedInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::ForwardDeclaredInput> = true;
+constexpr bool isInputType<today::ForwardDeclaredInput>()
+{
+	return true;
+}
+
 template <>
-constexpr bool isInputType<today::FirstNestedInput> = true;
+constexpr bool isInputType<today::FirstNestedInput>()
+{
+	return true;
+}
 
 } // namespace service
 } // namespace graphql

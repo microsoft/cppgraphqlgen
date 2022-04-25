@@ -334,16 +334,16 @@ TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
 
 TEST(ArgumentsCase, OnlyNoneModifiers)
 {
-	constexpr bool emptyModifiers = service::onlyNoneModifiers<>;
+	constexpr bool emptyModifiers = service::onlyNoneModifiers<>();
 	constexpr bool threeNone = service::onlyNoneModifiers<service::TypeModifier::None,
 		service::TypeModifier::None,
-		service::TypeModifier::None>;
+		service::TypeModifier::None>();
 	constexpr bool firtNullable = service::onlyNoneModifiers<service::TypeModifier::Nullable,
 		service::TypeModifier::None,
-		service::TypeModifier::None>;
+		service::TypeModifier::None>();
 	constexpr bool middleList = service::onlyNoneModifiers<service::TypeModifier::None,
 		service::TypeModifier::List,
-		service::TypeModifier::None>;
+		service::TypeModifier::None>();
 
 	ASSERT_TRUE(emptyModifiers) << "onlyNoneModifiers<> is true";
 	ASSERT_TRUE(threeNone) << "onlyNoneModifiers<None, None, None> is true";
