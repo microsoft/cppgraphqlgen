@@ -60,10 +60,42 @@ struct FourthNestedInput
 	response::IdType id {};
 };
 
+struct IncludeNullableSelfInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> self {};
+};
+
+struct IncludeNonNullableListSelfInput
+{
+	std::vector<IncludeNonNullableListSelfInput> selves {};
+};
+
+struct StringOperationFilterInput
+{
+	std::optional<std::vector<StringOperationFilterInput>> and_ {};
+	std::optional<std::vector<StringOperationFilterInput>> or_ {};
+	std::optional<std::string> equal {};
+	std::optional<std::string> notEqual {};
+	std::optional<std::string> contains {};
+	std::optional<std::string> notContains {};
+	std::optional<std::vector<std::string>> in {};
+	std::optional<std::vector<std::string>> notIn {};
+	std::optional<std::string> startsWith {};
+	std::optional<std::string> notStartsWith {};
+	std::optional<std::string> endsWith {};
+	std::optional<std::string> notEndsWith {};
+};
+
 struct SecondNestedInput
 {
 	response::IdType id {};
 	ThirdNestedInput third {};
+};
+
+struct ForwardDeclaredInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
+	IncludeNonNullableListSelfInput listSelves {};
 };
 
 struct FirstNestedInput
@@ -140,6 +172,64 @@ void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensiv
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace today
+
+namespace service {
+
+template <>
+constexpr bool isInputType<today::CompleteTaskInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::ThirdNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::FourthNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::SecondNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::FirstNestedInput>() noexcept
+{
+	return true;
+}
+
+} // namespace service
 } // namespace graphql
 
 #endif // TODAYSCHEMA_H

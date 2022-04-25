@@ -210,9 +210,29 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
+		std::unordered_set<std::string_view> forwardDeclared;
+
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
+			forwardDeclared.insert(inputType.type);
+
+			if (!inputType.declarations.empty())
+			{
+				// Forward declare nullable dependencies
+				for (auto declaration : inputType.declarations)
+				{
+					if (forwardDeclared.insert(declaration).second)
+					{
+						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+)cpp";
+						pendingSeparator.add();
+					}
+				}
+
+				pendingSeparator.reset();
+			}
+
 			headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(
 {
 )cpp";
@@ -224,6 +244,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << R"cpp(};
 
 )cpp";
+
+			forwardDeclared.insert(inputType.type);
 		}
 	}
 
@@ -438,6 +460,8 @@ private:
 		headerFile << std::endl;
 	}
 
+	NamespaceScope serviceNamespace { headerFile, "service", true };
+
 	if (_loader.isIntrospection())
 	{
 		headerFile
@@ -452,7 +476,7 @@ private:
 				headerFile << std::endl;
 			}
 
-			NamespaceScope serviceNamespace { headerFile, "service" };
+			serviceNamespace.enter();
 
 			headerFile << R"cpp(
 #ifdef GRAPHQL_DLLEXPORTS
@@ -502,6 +526,32 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 		headerFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema();
 
 )cpp";
+	}
+
+	if (!_loader.getInputTypes().empty())
+	{
+		if (schemaNamespace.exit())
+		{
+			headerFile << std::endl;
+		}
+
+		if (serviceNamespace.enter())
+		{
+			headerFile << std::endl;
+		}
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			headerFile << R"cpp(template <>
+constexpr bool isInputType<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
+					   << R"cpp(>() noexcept
+{
+	return true;
+}
+
+)cpp";
+		}
 	}
 
 	return true;

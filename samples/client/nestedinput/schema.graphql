@@ -1,0 +1,31 @@
+input InputA {
+  a: Boolean!
+}
+
+input InputB {
+  b: Float!
+}
+
+input InputBC {
+  c: ID!
+  b: InputB!
+}
+
+input InputABCD {
+  d: String!
+  a: InputA!
+  b: InputB!
+  bc: [InputBC!]!
+}
+
+type Output {
+  id:Boolean
+}
+
+type Control {
+  test(new: InputABCD!): Output
+}
+
+type Query {
+  control: Control!
+}

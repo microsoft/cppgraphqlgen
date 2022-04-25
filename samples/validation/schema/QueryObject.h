@@ -86,13 +86,13 @@ concept getResource = requires (TImpl impl)
 };
 
 template <class TImpl>
-concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg)
+concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::unique_ptr<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg)
+concept getFindDog = requires (TImpl impl, std::unique_ptr<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
 };
@@ -151,7 +151,7 @@ private:
 		virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
 		virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const final
+		service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const final
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{

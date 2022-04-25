@@ -71,17 +71,32 @@ enum class TypeModifier
 	List,
 };
 
+// Specialized to return true for all INPUT_OBJECT types.
+template <typename Type>
+constexpr bool isInputType() noexcept
+{
+	return false;
+}
+
 // Serialize variable input values with chained type modifiers which add nullable or list wrappers.
 template <typename Type>
 struct ModifiedVariable
 {
+	// Special-case an innermost nullable INPUT_OBJECT type.
+	template <TypeModifier... Other>
+	static constexpr bool onlyNoneModifiers() noexcept
+	{
+		return (... && (Other == TypeModifier::None));
+	}
+
 	// Peel off modifiers until we get to the underlying type.
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct VariableTraits
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			std::optional<typename VariableTraits<U, Other...>::type>,
+			typename std::conditional_t<isInputType<U>() && onlyNoneModifiers<Other...>(),
+				std::unique_ptr<U>, std::optional<typename VariableTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename VariableTraits<U, Other...>::type>, U>>;
 	};
@@ -115,7 +130,7 @@ struct ModifiedVariable
 		if (nullableValue)
 		{
 			result = serialize<Other...>(std::move(*nullableValue));
-			nullableValue = std::nullopt;
+			nullableValue.reset();
 		}
 
 		return result;
