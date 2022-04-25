@@ -73,7 +73,7 @@ enum class TypeModifier
 
 // Specialized to return true for all INPUT_OBJECT types.
 template <typename Type>
-constexpr bool isInputType()
+constexpr bool isInputType() noexcept
 {
 	return false;
 }

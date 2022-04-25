@@ -545,7 +545,7 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 			headerFile << R"cpp(template <>
 constexpr bool isInputType<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
-					   << R"cpp(>()
+					   << R"cpp(>() noexcept
 {
 	return true;
 }

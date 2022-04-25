@@ -160,49 +160,49 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<today::CompleteTaskInput>()
+constexpr bool isInputType<today::CompleteTaskInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::ThirdNestedInput>()
+constexpr bool isInputType<today::ThirdNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::FourthNestedInput>()
+constexpr bool isInputType<today::FourthNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::IncludeNullableSelfInput>()
+constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::IncludeNonNullableListSelfInput>()
+constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::SecondNestedInput>()
+constexpr bool isInputType<today::SecondNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::ForwardDeclaredInput>()
+constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::FirstNestedInput>()
+constexpr bool isInputType<today::FirstNestedInput>() noexcept
 {
 	return true;
 }

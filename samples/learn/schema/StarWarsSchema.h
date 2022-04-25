@@ -90,7 +90,7 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<learn::ReviewInput>()
+constexpr bool isInputType<learn::ReviewInput>() noexcept
 {
 	return true;
 }

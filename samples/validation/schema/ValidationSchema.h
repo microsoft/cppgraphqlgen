@@ -129,7 +129,7 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<validation::ComplexInput>()
+constexpr bool isInputType<validation::ComplexInput>() noexcept
 {
 	return true;
 }
