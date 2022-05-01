@@ -23,13 +23,13 @@ namespace methods::DroidHas {
 template <class TImpl>
 concept getIdWithParams = requires (TImpl impl, service::FieldParams params)
 {
-	{ service::AwaitableScalar<std::string> { impl.getId(std::move(params)) } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId(std::move(params)) } };
 };
 
 template <class TImpl>
 concept getId = requires (TImpl impl)
 {
-	{ service::AwaitableScalar<std::string> { impl.getId() } };
+	{ service::AwaitableScalar<response::IdType> { impl.getId() } };
 };
 
 template <class TImpl>
@@ -113,7 +113,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<std::string> getId(service::FieldParams&& params) const = 0;
+		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const = 0;
 		virtual service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const = 0;
@@ -129,7 +129,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getId(service::FieldParams&& params) const final
+		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DroidHas::getIdWithParams<T>)
 			{
@@ -238,6 +238,11 @@ public:
 	Droid(std::shared_ptr<T> pimpl) noexcept
 		: Droid { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Droid)gql" };
 	}
 };
 

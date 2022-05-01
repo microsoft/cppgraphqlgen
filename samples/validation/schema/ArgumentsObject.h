@@ -328,6 +328,11 @@ public:
 		: Arguments { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
+
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Arguments)gql" };
+	}
 };
 
 } // namespace graphql::validation::object

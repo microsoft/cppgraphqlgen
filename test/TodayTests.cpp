@@ -1123,7 +1123,8 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(12);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
@@ -1237,7 +1238,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
-				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s).from_input() } } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
@@ -1466,7 +1467,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 			}
 		})");
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s));
+	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s).from_json());
 	auto state = std::make_shared<today::RequestState>(14);
 	auto subscriptionObject = std::make_shared<today::NodeChange>(
 		[](const std::shared_ptr<service::RequestState>& state,
@@ -1494,7 +1495,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
-				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s).from_input() } } } } },
 			{}, // launch
 			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
 		.get();
@@ -1535,7 +1536,8 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(15);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
@@ -1596,7 +1598,8 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(16);
 	auto result = _mockService->service
 					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })

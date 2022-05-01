@@ -218,6 +218,11 @@ There are several helper functions for `CMake` declared in
 other samples sub-directories for examples of how to use them to automatically rerun the code generators and update
 the files in your source directory.
 
+### Migrating from v3.x to main
+
+Please see the [Migration Guide for v4.x](./doc/migration.md) for more details about upgrading to from the `v3.x` branch
+to the `main` branch. Active development takes place almost entirely in `main`.
+
 ### Additional Documentation
 
 There are some more targeted documents in the [doc](./doc) directory:

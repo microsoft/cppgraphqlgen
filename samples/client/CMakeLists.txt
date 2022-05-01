@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.15)
 add_subdirectory(query)
 add_subdirectory(mutate)
 add_subdirectory(subscribe)
+add_subdirectory(nestedinput)
 
 add_subdirectory(benchmark)
 

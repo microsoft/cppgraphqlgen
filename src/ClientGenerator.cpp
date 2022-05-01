@@ -233,17 +233,35 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 {
 )cpp";
 
+		std::unordered_set<std::string_view> forwardDeclared;
+
 		// Define all of the input object structs referenced in variables.
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes())
 		{
 			pendingSeparator.reset();
 
-			headerFile << R"cpp(	struct )cpp" << _schemaLoader.getCppType(inputType->name())
+			if (!inputType.declarations.empty())
+			{
+				// Forward declare nullable dependencies
+				for (auto declaration : inputType.declarations)
+				{
+					if (forwardDeclared.insert(declaration).second)
+					{
+						headerFile << R"cpp(	struct )cpp" << declaration << R"cpp(;
+)cpp";
+						pendingSeparator.add();
+					}
+				}
+
+				pendingSeparator.reset();
+			}
+
+			headerFile << R"cpp(	struct )cpp" << _schemaLoader.getCppType(inputType.type->name())
 					   << R"cpp(
 	{
 )cpp";
 
-			for (const auto& inputField : inputType->inputFields())
+			for (const auto& inputField : inputType.type->inputFields())
 			{
 
 				headerFile << R"cpp(		)cpp"
@@ -263,7 +281,9 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 		for (const auto& variable : variables)
 		{
-			headerFile << R"cpp(	)cpp" << _schemaLoader.getCppType(variable.type->name())
+			headerFile << R"cpp(	)cpp"
+					   << _requestLoader.getInputCppType(variable.inputType.type,
+							  variable.modifiers)
 					   << R"cpp( )cpp" << variable.cppName << R"cpp( {};
 )cpp";
 		}
@@ -308,7 +328,7 @@ response::Value serializeVariables(Variables&& variables);
 
 	headerFile << R"cpp(};
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 )cpp";
 
 	pendingSeparator.add();
@@ -477,6 +497,21 @@ using namespace )cpp"
 		pendingSeparator.add();
 	}
 
+	for (const auto& inputType : _requestLoader.getReferencedInputTypes())
+	{
+		pendingSeparator.reset();
+
+		sourceFile << R"cpp(template <>
+constexpr bool isInputType<Variables::)cpp"
+				   << _schemaLoader.getCppType(inputType.type->name()) << R"cpp(>() noexcept
+{
+	return true;
+}
+)cpp";
+
+		pendingSeparator.add();
+	}
+
 	if (!variables.empty())
 	{
 		for (const auto& enumType : _requestLoader.getReferencedEnums())
@@ -508,7 +543,7 @@ response::Value ModifiedVariable<)cpp"
 		{
 			pendingSeparator.reset();
 
-			const auto cppType = _schemaLoader.getCppType(inputType->name());
+			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
 
 			sourceFile << R"cpp(template <>
 response::Value ModifiedVariable<Variables::)cpp"
@@ -518,14 +553,20 @@ response::Value ModifiedVariable<Variables::)cpp"
 	response::Value result { response::Type::Map };
 
 )cpp";
-			for (const auto& inputField : inputType->inputFields())
+			for (const auto& inputField : inputType.type->inputFields())
 			{
 				const auto [type, modifiers] =
 					RequestLoader::unwrapSchemaType(inputField->type().lock());
 
 				sourceFile << R"cpp(	result.emplace_back(R"js()cpp" << inputField->name()
-						   << R"cpp()js"s, ModifiedVariable<)cpp"
-						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::serialize)cpp"
+						   << R"cpp()js"s, ModifiedVariable<)cpp";
+
+				if (type->kind() == introspection::TypeKind::INPUT_OBJECT)
+				{
+					sourceFile << R"cpp(Variables::)cpp";
+				}
+
+				sourceFile << _schemaLoader.getCppType(type->name()) << R"cpp(>::serialize)cpp"
 						   << getTypeModifierList(modifiers) << R"cpp((std::move(inputValue.)cpp"
 						   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp()));
 )cpp";
@@ -548,7 +589,7 @@ response::Value ModifiedVariable<Variables::)cpp"
 
 		sourceFile << R"cpp(template <>
 )cpp" << cppType << R"cpp( ModifiedResponse<)cpp"
-				   << cppType << R"cpp(>::parse(response::Value value)
+				   << cppType << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -610,14 +651,15 @@ response::Value serializeVariables(Variables&& variables)
 
 			const auto& builtinTypes = _schemaLoader.getBuiltinTypes();
 
-			if (builtinTypes.find(variable.type->name()) == builtinTypes.cend()
-				&& _schemaLoader.getSchemaType(variable.type->name()) != SchemaType::Scalar)
+			if (builtinTypes.find(variable.inputType.type->name()) == builtinTypes.cend()
+				&& _schemaLoader.getSchemaType(variable.inputType.type->name())
+					!= SchemaType::Scalar)
 			{
 				sourceFile << R"cpp(Variables::)cpp";
 			}
 
-			sourceFile << _schemaLoader.getCppType(variable.type->name()) << R"cpp(>::serialize)cpp"
-					   << getTypeModifierList(variable.modifiers)
+			sourceFile << _schemaLoader.getCppType(variable.inputType.type->name())
+					   << R"cpp(>::serialize)cpp" << getTypeModifierList(variable.modifiers)
 					   << R"cpp((std::move(variables.)cpp" << variable.cppName << R"cpp()));
 )cpp";
 		}
@@ -629,7 +671,7 @@ response::Value serializeVariables(Variables&& variables)
 	}
 
 	sourceFile << R"cpp(
-Response parseResponse(response::Value response)
+Response parseResponse(response::Value&& response)
 {
 	Response result;
 
@@ -747,7 +789,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 template <>
 )cpp" << cppType
 			   << R"cpp( ModifiedResponse<)cpp" << cppType
-			   << R"cpp(>::parse(response::Value response)
+			   << R"cpp(>::parse(response::Value&& response)
 {
 	)cpp" << cppType
 			   << R"cpp( result;

@@ -14,9 +14,9 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.1.0
+// Check if the library version is compatible with clientgen 4.2.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
@@ -29,7 +29,7 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: 
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// mutation CompleteTaskMutation($input: CompleteTaskInput! = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
 ///   completedTask: completeTask(input: $input) {
 ///     completedTask: task {
 ///       completedTaskId: id
@@ -66,7 +66,7 @@ struct Variables
 		std::optional<std::string> clientMutationId {};
 	};
 
-	CompleteTaskInput input {};
+	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 
@@ -90,7 +90,7 @@ struct Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-Response parseResponse(response::Value response);
+Response parseResponse(response::Value&& response);
 
 } // namespace graphql::client::mutation::CompleteTaskMutation
 

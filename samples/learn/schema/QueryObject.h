@@ -26,25 +26,25 @@ concept getHero = requires (TImpl impl, std::optional<Episode> episodeArg)
 };
 
 template <class TImpl>
-concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg)
+concept getHumanWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getHuman = requires (TImpl impl, std::string idArg)
+concept getHuman = requires (TImpl impl, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Human>> { impl.getHuman(std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, std::string idArg)
+concept getDroidWithParams = requires (TImpl impl, service::FieldParams params, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(params), std::move(idArg)) } };
 };
 
 template <class TImpl>
-concept getDroid = requires (TImpl impl, std::string idArg)
+concept getDroid = requires (TImpl impl, response::IdType idArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Droid>> { impl.getDroid(std::move(idArg)) } };
 };
@@ -85,8 +85,8 @@ private:
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
 		virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
 
 	template <class T>
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, std::string&& idArg) const final
+		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, std::string&& idArg) const final
+		service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{
@@ -172,6 +172,11 @@ public:
 	Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Query)gql" };
 	}
 };
 

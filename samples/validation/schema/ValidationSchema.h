@@ -10,13 +10,14 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.1.0
+// Check if the library version is compatible with schemagen 4.2.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace graphql {
 namespace validation {
@@ -28,10 +29,30 @@ enum class DogCommand
 	HEEL
 };
 
+constexpr auto getDogCommandNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 3> {
+		R"gql(SIT)gql"sv,
+		R"gql(DOWN)gql"sv,
+		R"gql(HEEL)gql"sv
+	};
+}
+
 enum class CatCommand
 {
 	JUMP
 };
+
+constexpr auto getCatCommandNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 1> {
+		R"gql(JUMP)gql"sv
+	};
+}
 
 struct ComplexInput
 {
@@ -104,6 +125,16 @@ void AddArgumentsDetails(const std::shared_ptr<schema::ObjectType>& typeArgument
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace validation
+
+namespace service {
+
+template <>
+constexpr bool isInputType<validation::ComplexInput>() noexcept
+{
+	return true;
+}
+
+} // namespace service
 } // namespace graphql
 
 #endif // VALIDATIONSCHEMA_H

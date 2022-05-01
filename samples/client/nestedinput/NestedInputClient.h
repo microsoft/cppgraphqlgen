@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef SUBSCRIBECLIENT_H
-#define SUBSCRIBECLIENT_H
+#ifndef NESTEDINPUTCLIENT_H
+#define NESTEDINPUTCLIENT_H
 
 #include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -23,22 +23,18 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <vector>
 
 /// <summary>
-/// Operation: subscription TestSubscription
+/// Operation: query testQuery
 /// </summary>
 /// <code class="language-graphql">
-/// # Copyright (c) Microsoft Corporation. All rights reserved.
-/// # Licensed under the MIT License.
-/// 
-/// subscription TestSubscription {
-///   nextAppointment: nextAppointmentChange {
-///     nextAppointmentId: id
-///     when
-///     subject
-///     isNow
+/// query testQuery($stream: InputABCD!) {
+///   control {
+///     test(new: $stream) {
+///       id
+///     }
 ///   }
 /// }
 /// </code>
-namespace graphql::client::subscription::TestSubscription {
+namespace graphql::client::query::testQuery {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -46,21 +42,56 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
-struct Response
+struct Variables
 {
-	struct nextAppointment_Appointment
+	struct InputA
 	{
-		response::IdType nextAppointmentId {};
-		std::optional<response::Value> when {};
-		std::optional<std::string> subject {};
-		bool isNow {};
+		bool a {};
 	};
 
-	std::optional<nextAppointment_Appointment> nextAppointment {};
+	struct InputB
+	{
+		double b {};
+	};
+
+	struct InputBC;
+
+	struct InputABCD
+	{
+		std::string d {};
+		InputA a {};
+		InputB b {};
+		std::vector<InputBC> bc {};
+	};
+
+	struct InputBC
+	{
+		response::IdType c {};
+		InputB b {};
+	};
+
+	InputABCD stream {};
+};
+
+response::Value serializeVariables(Variables&& variables);
+
+struct Response
+{
+	struct control_Control
+	{
+		struct test_Output
+		{
+			std::optional<bool> id {};
+		};
+
+		std::optional<test_Output> test {};
+	};
+
+	control_Control control {};
 };
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::subscription::TestSubscription
+} // namespace graphql::client::query::testQuery
 
-#endif // SUBSCRIBECLIENT_H
+#endif // NESTEDINPUTCLIENT_H

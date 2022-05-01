@@ -121,9 +121,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 )cpp";
 
@@ -173,6 +174,35 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 };
 
 )cpp";
+
+			headerFile << R"cpp(constexpr auto get)cpp" << enumType.cppType
+					   << R"cpp(Names() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, )cpp"
+					   << enumType.values.size() << R"cpp(> {
+)cpp";
+
+			firstValue = true;
+
+			for (const auto& value : enumType.values)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+			}
+
+			headerFile << R"cpp(
+	};
+}
+
+)cpp";
 		}
 	}
 
@@ -180,9 +210,29 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
+		std::unordered_set<std::string_view> forwardDeclared;
+
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
+			forwardDeclared.insert(inputType.type);
+
+			if (!inputType.declarations.empty())
+			{
+				// Forward declare nullable dependencies
+				for (auto declaration : inputType.declarations)
+				{
+					if (forwardDeclared.insert(declaration).second)
+					{
+						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+)cpp";
+						pendingSeparator.add();
+					}
+				}
+
+				pendingSeparator.reset();
+			}
+
 			headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(
 {
 )cpp";
@@ -194,6 +244,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << R"cpp(};
 
 )cpp";
+
+			forwardDeclared.insert(inputType.type);
 		}
 	}
 
@@ -408,6 +460,8 @@ private:
 		headerFile << std::endl;
 	}
 
+	NamespaceScope serviceNamespace { headerFile, "service", true };
+
 	if (_loader.isIntrospection())
 	{
 		headerFile
@@ -422,7 +476,7 @@ private:
 				headerFile << std::endl;
 			}
 
-			NamespaceScope serviceNamespace { headerFile, "service" };
+			serviceNamespace.enter();
 
 			headerFile << R"cpp(
 #ifdef GRAPHQL_DLLEXPORTS
@@ -472,6 +526,32 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 		headerFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema();
 
 )cpp";
+	}
+
+	if (!_loader.getInputTypes().empty())
+	{
+		if (schemaNamespace.exit())
+		{
+			headerFile << std::endl;
+		}
+
+		if (serviceNamespace.enter())
+		{
+			headerFile << std::endl;
+		}
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			headerFile << R"cpp(template <>
+constexpr bool isInputType<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
+					   << R"cpp(>() noexcept
+{
+	return true;
+}
+
+)cpp";
+		}
 	}
 
 	return true;
@@ -929,7 +1009,8 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName) << R"cpp(;
+				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -966,6 +1047,12 @@ public:
 			<< objectType.cppType
 			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql()cpp"
+			<< objectType.type << R"cpp()gql" };
 	}
 };
 )cpp";
@@ -1039,10 +1126,19 @@ bool Generator::outputSource() const noexcept
 
 	if (!_loader.isIntrospection())
 	{
-		for (const auto& operation : _loader.getOperationTypes())
+		if (_loader.getOperationTypes().empty())
 		{
-			sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+			// Normally this would be included by each of the operation object headers.
+			sourceFile << R"cpp(#include ")cpp" << getHeaderPath() << R"cpp("
 )cpp";
+		}
+		else
+		{
+			for (const auto& operation : _loader.getOperationTypes())
+			{
+				sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+)cpp";
+			}
 		}
 
 		sourceFile << std::endl;
@@ -1085,27 +1181,9 @@ using namespace std::literals;
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			bool firstValue = true;
-
-			sourceFile << R"cpp(static const std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> s_names)cpp" << enumType.cppType
-					   << R"cpp( = {
-)cpp";
-
-			for (const auto& value : enumType.values)
-			{
-				if (!firstValue)
-				{
-					sourceFile << R"cpp(,
-)cpp";
-				}
-
-				firstValue = false;
-				sourceFile << R"cpp(	R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
-			}
-
-			sourceFile << R"cpp(
-};
+			sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
+					   << R"cpp(Names();
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
@@ -1708,7 +1786,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -2055,8 +2134,7 @@ service::AwaitableResolver )cpp"
 
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
-		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << accessorName
-				   << R"cpp(()cpp";
+		sourceFile << R"cpp(	auto result = _pimpl->)cpp" << accessorName << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
 
@@ -2373,6 +2451,14 @@ std::string Generator::getArgumentDefaultValue(
 )cpp";
 			break;
 		}
+
+		case response::Type::ID:
+			argumentDefaultValue << padding
+								 << R"cpp(		entry = response::Value(response::Type::ID);
+		entry.set<std::string>(R"gql()cpp"
+								 << defaultValue.get<std::string>() << R"cpp()gql");
+)cpp";
+			break;
 
 		case response::Type::Scalar:
 		{

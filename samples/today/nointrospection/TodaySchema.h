@@ -10,13 +10,14 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.1.0
+// Check if the library version is compatible with schemagen 4.2.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace graphql {
 namespace today {
@@ -28,6 +29,18 @@ enum class TaskState
 	Complete,
 	Unassigned
 };
+
+constexpr auto getTaskStateNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 4> {
+		R"gql(New)gql"sv,
+		R"gql(Started)gql"sv,
+		R"gql(Complete)gql"sv,
+		R"gql(Unassigned)gql"sv
+	};
+}
 
 struct CompleteTaskInput
 {
@@ -47,10 +60,42 @@ struct FourthNestedInput
 	response::IdType id {};
 };
 
+struct IncludeNullableSelfInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> self {};
+};
+
+struct IncludeNonNullableListSelfInput
+{
+	std::vector<IncludeNonNullableListSelfInput> selves {};
+};
+
+struct StringOperationFilterInput
+{
+	std::optional<std::vector<StringOperationFilterInput>> and_ {};
+	std::optional<std::vector<StringOperationFilterInput>> or_ {};
+	std::optional<std::string> equal {};
+	std::optional<std::string> notEqual {};
+	std::optional<std::string> contains {};
+	std::optional<std::string> notContains {};
+	std::optional<std::vector<std::string>> in {};
+	std::optional<std::vector<std::string>> notIn {};
+	std::optional<std::string> startsWith {};
+	std::optional<std::string> notStartsWith {};
+	std::optional<std::string> endsWith {};
+	std::optional<std::string> notEndsWith {};
+};
+
 struct SecondNestedInput
 {
 	response::IdType id {};
 	ThirdNestedInput third {};
+};
+
+struct ForwardDeclaredInput
+{
+	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
+	IncludeNonNullableListSelfInput listSelves {};
 };
 
 struct FirstNestedInput
@@ -127,6 +172,64 @@ void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensiv
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace today
+
+namespace service {
+
+template <>
+constexpr bool isInputType<today::CompleteTaskInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::ThirdNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::FourthNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::SecondNestedInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<today::FirstNestedInput>() noexcept
+{
+	return true;
+}
+
+} // namespace service
 } // namespace graphql
 
 #endif // TODAYSCHEMA_H

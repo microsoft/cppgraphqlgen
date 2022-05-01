@@ -14,6 +14,8 @@
 #include "graphqlservice/internal/Grammar.h"
 #include "graphqlservice/internal/Schema.h"
 
+#include <unordered_set>
+
 namespace graphql::generator {
 
 using RequestSchemaType = std::shared_ptr<const schema::BaseType>;
@@ -40,9 +42,18 @@ struct ResponseField
 	ResponseFieldList children;
 };
 
-struct RequestVariable
+struct RequestInputType
 {
 	RequestSchemaType type;
+	std::unordered_set<std::string_view> dependencies {};
+	std::vector<std::string_view> declarations {};
+};
+
+using RequestInputTypeList = std::vector<RequestInputType>;
+
+struct RequestVariable
+{
+	RequestInputType inputType;
 	TypeModifierStack modifiers;
 	std::string_view name;
 	std::string_view cppName;
@@ -76,10 +87,12 @@ public:
 	const ResponseType& getResponseType() const noexcept;
 	const RequestVariableList& getVariables() const noexcept;
 
-	const RequestSchemaTypeList& getReferencedInputTypes() const noexcept;
+	const RequestInputTypeList& getReferencedInputTypes() const noexcept;
 	const RequestSchemaTypeList& getReferencedEnums() const noexcept;
 
 	std::string getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept;
+	std::string getInputCppType(const RequestSchemaType& inputType,
+		const TypeModifierStack& modifiers) const noexcept;
 	static std::string getOutputCppType(
 		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
 
@@ -99,7 +112,7 @@ private:
 	void collectFragments() noexcept;
 	void collectVariables() noexcept;
 	void collectInputTypes(const RequestSchemaType& variableType) noexcept;
-	void reorderInputTypeDependencies() noexcept;
+	void reorderInputTypeDependencies();
 	void collectEnums(const RequestSchemaType& variableType) noexcept;
 	void collectEnums(const ResponseField& responseField) noexcept;
 
@@ -146,7 +159,7 @@ private:
 	ResponseType _responseType;
 	RequestVariableList _variables;
 	internal::string_view_set _inputTypeNames;
-	RequestSchemaTypeList _referencedInputTypes;
+	RequestInputTypeList _referencedInputTypes;
 	internal::string_view_set _enumNames;
 	RequestSchemaTypeList _referencedEnums;
 };
