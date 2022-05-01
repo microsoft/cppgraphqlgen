@@ -47,12 +47,16 @@ For a long time, `schemagen` also supported a `--separate-files` flag which woul
 
 In v4.x, the separate files option is not only the default, it's the only option. Supporting both modes of code generation would have added too much complexity and too many tradeoffs for the simplified build logic. Instead, v4.x adds several CMake helper functions in [cmake/cppgraphqlgen-functions.cmake](../cmake/cppgraphqlgen-functions.cmake) which encapsulate the best practices for regenerating and building the schema targets dynamically when the schema file changes. These functions are automatically included by `find_package(cppgraphqlgen)`.
 
-Replace custom CMake logic to invoke `schemagen` and `clientgen` with the helper functions:
-- `update_graphql_schema_files`: Runs `schemagen` with required parameters and additional optional parameters. The output is generated in the CMake build directory, compared against the contents of the source directory, and any changed/added files will be copied over to the sources directory.
+Replace custom CMake logic to invoke `schemagen` and `clientgen` with these helper functions:
+- `update_graphql_schema_files`: Runs `schemagen` with required parameters and additional optional parameters.
+- `update_graphql_client_files`: Runs `clientgen` with required parameters and additional optional parameters.
+
+The output is generated in the CMake build directory. The files are compared against the contents of the source directory, and any changed/added files will be copied over to the sources directory. Files which were not regenerated will be deleted from the source directory.
+
+_IMPORTANT_: The `update_graphql_schema_files` and `update_graphql_client_files` functions expect to generate sources in a separate sub-directory from any other source code. They will check for any source files that don't match the naming patterns of the code generators and fail the build rather than deleting them. Just in case, it's a good idea to make sure you have your source code backed up or under source control (e.g. committed in a git repository) before invoking these CMake functions.
+
+Declare library targets which automatically include all of the generated files with these helper functions:
 - `add_graphql_schema_target`: Declares a library target for the specified schema which depends on the output of `update_graphql_schema_files` and automatically links all of the shared library dependencies needed for a service.
-- `update_graphql_client_files`: Runs `clientgen` with required parameters and additional optional parameters. The output is generated in the CMake build directory, compared against the contents of the source directory, and any changed/added files will be copied over to the sources directory.
 - `add_graphql_client_target`: Declares a library target for the specified client which depends on the output of `update_graphql_client_files` and automatically links all of the shared library dependencies needed for a client.
 
-_IMPORTANT_: The `update_graphql_schema_files` and `update_graphql_client_files` functions expect to generate sources in a separate sub-directory from any other source code. To handle removing or renaming generated files, they may delete stale files from the source directory. Just in case, it's a good idea to make sure you have your source code backed up or under source control (e.g. committed in a git repository) before invoking these CMake functions.
-
-With all of the refactoring in v4.x, there ceased to be any separation between the `graphqlintrospection` and `graphqlservice` libraries. Even if you use the `--no-introspection` flag with `schemagen`, the generated code still depends on the general schema types which remained in `graphqlintrospection` to perform query validation. As part of the v4.x release, the 2 libraries were combined back into a single `graphqlservice` target.
+With all of the refactoring in v4.x, there ceased to be any separation between the `graphqlintrospection` and `graphqlservice` libraries. Even if you use the `--no-introspection` flag with `schemagen`, the generated code still depends on the general schema types which remained in `graphqlintrospection` to perform query validation. As part of the v4.x release, the 2 libraries were combined back into a single `graphqlservice` target. If you use `add_graphql_schema_target` you do not need to worry about this, otherwise you should replace any references to just `graphqlintrospection` with `graphqlservice`.
