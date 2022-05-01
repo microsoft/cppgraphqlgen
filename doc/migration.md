@@ -27,8 +27,6 @@ Change your class declarations so that they no longer inherit from the generated
 
 In cases where the return type has changed from `std::shared_ptr<service::Object>` to `std::shared_ptr<object::Interface>` or `std::shared_ptr<object::Union>`, wrap the concrete type in `std::make_shared<T>(...)` for the polymorphic type and return that.
 
-If your implementation is tightly coupled with the object hierarchy from the schema, there are some strategies for separating them discussed in [#210](https://github.com/microsoft/cppgraphqlgen/issues/210).
-
 ## Simplify Field Accessor Signatures
 
 Examine the generated object types and determine what the expected return type is from each field getter method. Replace the `service::FieldResult` wrapped type with the expected return type (possibly including the awaitable wrapper).
@@ -38,6 +36,122 @@ Make methods `const` or non-`const` as appropriate. The `const` type erased obje
 Parameters can be passed as a `const&` reference, a `&&` r-value reference, or by value. The generated template methods will forward an r-value reference which will be implicitly converted into any of these types when calling your method.
 
 Remove any unused `service::FieldParams` arguments. If your method does not take that as the first parameter, the generated template method will drop it and pass the rest of the expected arguments to your method.
+
+## Decoupling Implementation Types from the Generated Types
+
+If your implementation is tightly coupled with the object hierarchy from the schema, here's an example of how you might decouple them. Let's assume that you have a schema that looks something like this:
+```graphql
+interface Node
+{
+    id: ID!
+}
+
+type NodeTypeA implements Node
+{
+     id: ID!
+     # More fields specific to NodeTypeA...
+}
+
+type NodeTypeB implements Node
+{
+     id: ID!
+     # More fields specific to NodeTypeB...
+}
+
+# ...and so on for NodeTypeC, NodeTypeD, etc.
+```
+If you want a collection of `Node` interface objects, the C++ implementation using inheritance in prior versions might look something like:
+```c++
+class NodeTypeA : public object::NodeTypeA
+{
+    // Implement the field accessors with an exact match for the virtual method signature...
+    service::FieldResult<response::IdType> getId(service::FieldParams&&) const override;
+};
+
+class NodeTypeB : public object::NodeTypeB
+{
+    // Implement the field accessors with an exact match for the virtual method signature...
+    service::FieldResult<response::IdType> getId(service::FieldParams&&) const override;
+};
+
+std::vector<std::shared_ptr<service::Object>> nodes {
+    std::make_shared<NodeTypeA>(),
+    std::make_shared<NodeTypeB>(),
+    // Can insert any sub-class of service::Object...
+};
+```
+It's up to the you to make sure the `nodes` vector in this example only contains objects which actually implement the `Node` interface. If you want to do something more sophisticated like performing a lookup by `id`, you'd either need to request that before inserting an element and up-casting to `std::shared_ptr<service::Object>`, or you'd need to preserve the concrete type of each element, e.g. in a `std::variant` to be able to safely down-cast to the concrete type.
+
+As of 4.x, the implementation might look more like this:
+```c++
+class NodeTypeImpl
+{
+public:
+    // Need to override this in the sub-classes to construct the correct sub-type wrappers.
+    virtual std::shared_ptr<object::Node> make_node() const = 0;
+
+    const response::IdType& getId() const noexcept final;
+
+    // Implement/declare any other accessors you want to use without downcasting...
+
+private:
+    const response::IdType _id;
+};
+
+class NodeTypeA
+    : public NodeTypeImpl
+    , public std::enable_shared_from_this<NodeTypeA>
+{
+public:
+    // Convert to a type-erased Node.
+    std::shared_ptr<object::Node> make_node() const final
+    {
+        return std::make_shared<object::Node>(std::make_shared<object::NodeTypeA>(shared_from_this()));
+    }
+
+    // Implement NodeTypeA and any NodeTypeImpl override accessors...
+};
+
+class NodeTypeB
+    : public NodeTypeImpl
+    , public std::enable_shared_from_this<NodeTypeB>
+{
+public:
+    // Convert to a type-erased Node.
+    std::shared_ptr<object::Node> make_node() const final
+    {
+        return std::make_shared<object::Node>(std::make_shared<object::NodeTypeB>(shared_from_this()));
+    }
+
+    // Implement NodeTypeB and any NodeTypeImpl override accessors...
+};
+
+std::vector<std::shared_ptr<NodeTypeImpl>> nodes {
+    std::make_shared<NodeTypeA>(),
+    std::make_shared<NodeTypeB>(),
+    // Can only insert sub-classes of NodeTypeImpl...
+};
+
+std::vector<std::shared_ptr<object::Node>> wrap_nodes()
+{
+    std::vector<std::shared_ptr<object::Node>> result(nodes.size());
+
+    std::transform(nodes.cbegin(), nodes.cend(), result.begin(), [](const auto& node) {
+        return node
+            ? node->make_node()
+            : std::shared_ptr<object::Node> {};
+    });
+
+    return result;
+}
+```
+This has several advantages over the previous version.
+
+- You can declare your own inheritance heirarchy without any constraints inherited from `service::Object`, such as already inheriting from `std::enable_shared_from_this<service::Object>` and defininig `shared_from_this()` for that type.
+- You can add your own common implementation for the interface methods you want, e.g. `NodeTypeImpl::getId`.
+- Best of all, you no longer need to match an exact method signature to override the `object::NodeType*` accessors. For example, `NodeTypeImpl::getId` uses a more efficient return type, does not require a `service::FieldParams` argument (which is likely ignored anyway), and it can be `const` and `noexcept`. All of that together means you can use it as an internal accessor from any of these types as well as the field getter implementation.
+
+The type erased implementation gives you a lot more control over your class hierarchy and makes it easier to use outside of the GraphQL service.
 
 ## CMake Changes
 
