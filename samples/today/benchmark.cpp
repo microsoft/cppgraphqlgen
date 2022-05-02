@@ -106,13 +106,21 @@ int main(int argc, char** argv)
 			})gql"sv);
 			const auto startValidate = std::chrono::steady_clock::now();
 
-			service->validate(query);
+			if (!service->validate(query).empty())
+			{
+				std::cerr << "Failed to validate the query!" << std::endl;
+				break;
+			}
 
 			const auto startResolve = std::chrono::steady_clock::now();
 			auto response = service->resolve({ query }).get();
 			const auto startToJson = std::chrono::steady_clock::now();
 
-			response::toJSON(std::move(response));
+			if (response::toJSON(std::move(response)).empty())
+			{
+				std::cerr << "Failed to convert to JSON!" << std::endl;
+				break;
+			}
 
 			const auto endToJson = std::chrono::steady_clock::now();
 
