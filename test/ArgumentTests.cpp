@@ -218,6 +218,8 @@ TEST(ArgumentsCase, TaskStateEnumConstexpr)
 		internal::sorted_map_lookup<internal::shorter_or_less>(today::getTaskStateValues(),
 			"Started"sv);
 
+	static_assert(today::TaskState::Started == *actual, "can also perform lookups at compile time");
+
 	ASSERT_TRUE(actual) << "should find a value";
 	EXPECT_TRUE(today::TaskState::Started == *actual) << "should parse the enum";
 }
