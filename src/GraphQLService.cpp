@@ -1850,10 +1850,17 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 		try
 		{
 			co_await launch;
-			co_await operation->resolve(selectionSetParams,
-				registration->selection,
-				registration->data->fragments,
-				registration->data->variables);
+
+			auto errors = std::move((co_await operation->resolve(selectionSetParams,
+										 registration->selection,
+										 registration->data->fragments,
+										 registration->data->variables))
+										.errors);
+
+			if (!errors.empty())
+			{
+				throw schema_exception { std::move(errors) };
+			}
 		}
 		catch (const std::exception& ex)
 		{
@@ -1873,6 +1880,7 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 	const auto spThis = shared_from_this();
 	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto itrOperation = spThis->_operations.find(strSubscription);
+	std::list<schema_error> errors {};
 
 	if (itrOperation != spThis->_operations.end())
 	{
@@ -1892,15 +1900,21 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 		lock.unlock();
 
 		co_await params.launch;
-		co_await operation->resolve(selectionSetParams,
-			registration->selection,
-			registration->data->fragments,
-			registration->data->variables);
+		errors = std::move((co_await operation->resolve(selectionSetParams,
+								registration->selection,
+								registration->data->fragments,
+								registration->data->variables))
+							   .errors);
 
 		lock.lock();
 	}
 
 	spThis->removeSubscription(params.key);
+
+	if (!errors.empty())
+	{
+		throw schema_exception { std::move(errors) };
+	}
 
 	co_return;
 }
