@@ -24,7 +24,9 @@ public:
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
 
-	sorted_map() = default;
+	constexpr sorted_map() = default;
+	constexpr sorted_map(const sorted_map& other) = default;
+	sorted_map(sorted_map&& other) noexcept = default;
 
 	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
 		: _data { init }
@@ -33,6 +35,11 @@ public:
 			return Compare {}(lhs.first, rhs.first);
 		});
 	}
+
+	constexpr ~sorted_map() = default;
+
+	sorted_map& operator=(const sorted_map& rhs) = default;
+	sorted_map& operator=(sorted_map&& rhs) noexcept = default;
 
 	constexpr bool operator==(const sorted_map& rhs) const noexcept
 	{
@@ -205,6 +212,8 @@ private:
 		{
 		}
 
+		constexpr ~sorted_map_key() = default;
+
 		const K& key;
 	};
 
@@ -219,13 +228,20 @@ public:
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 
-	sorted_set() = default;
+	constexpr sorted_set() = default;
+	constexpr sorted_set(const sorted_set& other) = default;
+	sorted_set(sorted_set&& other) noexcept = default;
 
 	constexpr sorted_set(std::initializer_list<K> init)
 		: _data { init }
 	{
 		std::sort(_data.begin(), _data.end(), Compare {});
 	}
+
+	constexpr ~sorted_set() = default;
+
+	sorted_set& operator=(const sorted_set& rhs) = default;
+	sorted_set& operator=(sorted_set&& rhs) noexcept = default;
 
 	constexpr bool operator==(const sorted_set& rhs) const noexcept
 	{
