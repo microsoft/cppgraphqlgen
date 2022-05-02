@@ -43,7 +43,7 @@ constexpr std::pair<Iterator, Iterator> find_sorted_map_key(
 		[](sorted_map_key<K, V> lhs, sorted_map_key<K, V> rhs) noexcept {
 			return Compare {}(lhs.key, rhs.key);
 		});
-};
+}
 
 template <class K, class V, class Compare = std::less<K>>
 class sorted_map
