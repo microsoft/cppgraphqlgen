@@ -9,8 +9,9 @@
 #include <algorithm>
 #include <functional>
 #include <initializer_list>
+#include <iterator>
 #include <stdexcept>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace graphql::internal {
@@ -19,7 +20,54 @@ template <class K, class V, class Compare = std::less<K>>
 class sorted_map
 {
 public:
-	using vector_type = std::vector<std::pair<K, V>>;
+	struct value_type
+	{
+		constexpr value_type(K first, V second) noexcept
+			: first { std::move(first) }
+			, second { std::move(second) }
+		{
+		}
+
+		constexpr value_type(const value_type& other)
+			: first { other.first }
+			, second { other.second }
+		{
+		}
+
+		value_type(value_type&& other) noexcept
+			: first { std::move(other.first) }
+			, second { std::move(other.second) }
+		{
+		}
+
+		constexpr ~value_type() noexcept
+		{
+		}
+
+		value_type& operator=(const value_type& rhs)
+		{
+			first = rhs.first;
+			second = rhs.second;
+			return *this;
+		}
+
+		value_type& operator=(value_type&& rhs) noexcept
+		{
+			first = std::move(rhs.first);
+			second = std::move(rhs.second);
+			return *this;
+		}
+
+		constexpr bool operator==(const value_type& rhs) const noexcept
+		{
+			return first == rhs.first && second == rhs.second;
+		}
+
+		K first;
+		V second;
+	};
+
+	using vector_type = std::vector<value_type>;
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
@@ -40,8 +88,15 @@ public:
 	}
 
 	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
-		: _data { init }
+		: _data {}
 	{
+		_data.reserve(init.size());
+		std::transform(init.begin(),
+			init.end(),
+			std::back_inserter(_data),
+			[](auto& entry) noexcept {
+				return value_type { std::move(entry.first), std::move(entry.second) };
+			});
 		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
 			return Compare {}(lhs.first, rhs.first);
 		});
@@ -224,7 +279,7 @@ public:
 private:
 	struct sorted_map_key
 	{
-		constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
+		constexpr sorted_map_key(const value_type& entry) noexcept
 			: key { entry.first }
 		{
 		}
@@ -419,7 +474,8 @@ struct shorter_or_less
 	{
 	}
 
-	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const noexcept
+	constexpr bool operator()(
+		const std::string_view& lhs, const std::string_view& rhs) const noexcept
 	{
 		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
 	}
