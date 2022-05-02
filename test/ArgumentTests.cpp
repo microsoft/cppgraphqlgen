@@ -209,6 +209,18 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
 }
 
+
+TEST(ArgumentsCase, TaskStateEnumConstexpr)
+{
+	using namespace std::literals;
+
+	const auto values = today::getTaskStateValues();
+	const auto itr = values.find("Started"sv);
+
+	ASSERT_TRUE(itr != values.end()) << "should find a value";
+	EXPECT_TRUE(today::TaskState::Started == itr->second) << "should parse the enum";
+}
+
 TEST(ArgumentsCase, ScalarArgumentMap)
 {
 	response::Value response(response::Type::Map);

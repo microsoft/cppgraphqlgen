@@ -40,6 +40,17 @@ constexpr auto getEpisodeNames() noexcept
 	};
 }
 
+constexpr auto getEpisodeValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<Episode> {
+		{ R"gql(JEDI)gql"sv, Episode::JEDI },
+		{ R"gql(EMPIRE)gql"sv, Episode::EMPIRE },
+		{ R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE }
+	};
+}
+
 struct ReviewInput
 {
 	int stars {};

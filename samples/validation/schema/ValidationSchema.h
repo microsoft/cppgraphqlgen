@@ -40,6 +40,17 @@ constexpr auto getDogCommandNames() noexcept
 	};
 }
 
+constexpr auto getDogCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<DogCommand> {
+		{ R"gql(SIT)gql"sv, DogCommand::SIT },
+		{ R"gql(DOWN)gql"sv, DogCommand::DOWN },
+		{ R"gql(HEEL)gql"sv, DogCommand::HEEL }
+	};
+}
+
 enum class CatCommand
 {
 	JUMP
@@ -51,6 +62,15 @@ constexpr auto getCatCommandNames() noexcept
 
 	return std::array<std::string_view, 1> {
 		R"gql(JUMP)gql"sv
+	};
+}
+
+constexpr auto getCatCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<CatCommand> {
+		{ R"gql(JUMP)gql"sv, CatCommand::JUMP }
 	};
 }
 

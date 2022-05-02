@@ -25,6 +25,7 @@ namespace graphql {
 namespace service {
 
 static const auto s_namesEpisode = learn::getEpisodeNames();
+static const auto s_valuesEpisode = learn::getEpisodeValues();
 
 template <>
 learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)
@@ -34,14 +35,14 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto itr = s_valuesEpisode.find(value.get<std::string>());
 
-	if (itr == s_namesEpisode.cend())
+	if (itr == s_valuesEpisode.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	return static_cast<learn::Episode>(itr - s_namesEpisode.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -66,9 +67,9 @@ void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto itr = s_valuesEpisode.find(value.get<std::string>());
 
-	if (itr == s_namesEpisode.cend())
+	if (itr == s_valuesEpisode.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}

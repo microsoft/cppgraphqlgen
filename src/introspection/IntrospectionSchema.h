@@ -50,6 +50,22 @@ constexpr auto getTypeKindNames() noexcept
 	};
 }
 
+constexpr auto getTypeKindValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<TypeKind> {
+		{ R"gql(ENUM)gql"sv, TypeKind::ENUM },
+		{ R"gql(LIST)gql"sv, TypeKind::LIST },
+		{ R"gql(UNION)gql"sv, TypeKind::UNION },
+		{ R"gql(OBJECT)gql"sv, TypeKind::OBJECT },
+		{ R"gql(SCALAR)gql"sv, TypeKind::SCALAR },
+		{ R"gql(NON_NULL)gql"sv, TypeKind::NON_NULL },
+		{ R"gql(INTERFACE)gql"sv, TypeKind::INTERFACE },
+		{ R"gql(INPUT_OBJECT)gql"sv, TypeKind::INPUT_OBJECT }
+	};
+}
+
 enum class DirectiveLocation
 {
 	QUERY,
@@ -97,6 +113,33 @@ constexpr auto getDirectiveLocationNames() noexcept
 		R"gql(ENUM_VALUE)gql"sv,
 		R"gql(INPUT_OBJECT)gql"sv,
 		R"gql(INPUT_FIELD_DEFINITION)gql"sv
+	};
+}
+
+constexpr auto getDirectiveLocationValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<DirectiveLocation> {
+		{ R"gql(ENUM)gql"sv, DirectiveLocation::ENUM },
+		{ R"gql(FIELD)gql"sv, DirectiveLocation::FIELD },
+		{ R"gql(QUERY)gql"sv, DirectiveLocation::QUERY },
+		{ R"gql(UNION)gql"sv, DirectiveLocation::UNION },
+		{ R"gql(OBJECT)gql"sv, DirectiveLocation::OBJECT },
+		{ R"gql(SCALAR)gql"sv, DirectiveLocation::SCALAR },
+		{ R"gql(SCHEMA)gql"sv, DirectiveLocation::SCHEMA },
+		{ R"gql(MUTATION)gql"sv, DirectiveLocation::MUTATION },
+		{ R"gql(INTERFACE)gql"sv, DirectiveLocation::INTERFACE },
+		{ R"gql(ENUM_VALUE)gql"sv, DirectiveLocation::ENUM_VALUE },
+		{ R"gql(INPUT_OBJECT)gql"sv, DirectiveLocation::INPUT_OBJECT },
+		{ R"gql(SUBSCRIPTION)gql"sv, DirectiveLocation::SUBSCRIPTION },
+		{ R"gql(FRAGMENT_SPREAD)gql"sv, DirectiveLocation::FRAGMENT_SPREAD },
+		{ R"gql(INLINE_FRAGMENT)gql"sv, DirectiveLocation::INLINE_FRAGMENT },
+		{ R"gql(FIELD_DEFINITION)gql"sv, DirectiveLocation::FIELD_DEFINITION },
+		{ R"gql(ARGUMENT_DEFINITION)gql"sv, DirectiveLocation::ARGUMENT_DEFINITION },
+		{ R"gql(FRAGMENT_DEFINITION)gql"sv, DirectiveLocation::FRAGMENT_DEFINITION },
+		{ R"gql(VARIABLE_DEFINITION)gql"sv, DirectiveLocation::VARIABLE_DEFINITION },
+		{ R"gql(INPUT_FIELD_DEFINITION)gql"sv, DirectiveLocation::INPUT_FIELD_DEFINITION }
 	};
 }
 

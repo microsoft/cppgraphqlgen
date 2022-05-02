@@ -20,6 +20,7 @@ namespace graphql {
 namespace service {
 
 static const auto s_namesTypeKind = introspection::getTypeKindNames();
+static const auto s_valuesTypeKind = introspection::getTypeKindValues();
 
 template <>
 introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const response::Value& value)
@@ -29,14 +30,14 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+	const auto itr = s_valuesTypeKind.find(value.get<std::string>());
 
-	if (itr == s_namesTypeKind.cend())
+	if (itr == s_valuesTypeKind.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	return static_cast<introspection::TypeKind>(itr - s_namesTypeKind.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -61,15 +62,16 @@ void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Val
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+	const auto itr = s_valuesTypeKind.find(value.get<std::string>());
 
-	if (itr == s_namesTypeKind.cend())
+	if (itr == s_valuesTypeKind.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 }
 
 static const auto s_namesDirectiveLocation = introspection::getDirectiveLocationNames();
+static const auto s_valuesDirectiveLocation = introspection::getDirectiveLocationValues();
 
 template <>
 introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(const response::Value& value)
@@ -79,14 +81,14 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+	const auto itr = s_valuesDirectiveLocation.find(value.get<std::string>());
 
-	if (itr == s_namesDirectiveLocation.cend())
+	if (itr == s_valuesDirectiveLocation.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	return static_cast<introspection::DirectiveLocation>(itr - s_namesDirectiveLocation.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -111,9 +113,9 @@ void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const resp
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+	const auto itr = s_valuesDirectiveLocation.find(value.get<std::string>());
 
-	if (itr == s_namesDirectiveLocation.cend())
+	if (itr == s_valuesDirectiveLocation.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}

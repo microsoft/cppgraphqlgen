@@ -26,6 +26,7 @@ namespace graphql {
 namespace service {
 
 static const auto s_namesTaskState = today::getTaskStateNames();
+static const auto s_valuesTaskState = today::getTaskStateValues();
 
 template <>
 today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)
@@ -35,14 +36,14 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<std::string>());
+	const auto itr = s_valuesTaskState.find(value.get<std::string>());
 
-	if (itr == s_namesTaskState.cend())
+	if (itr == s_valuesTaskState.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	return static_cast<today::TaskState>(itr - s_namesTaskState.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -67,9 +68,9 @@ void ModifiedResult<today::TaskState>::validateScalar(const response::Value& val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.get<std::string>());
+	const auto itr = s_valuesTaskState.find(value.get<std::string>());
 
-	if (itr == s_namesTaskState.cend())
+	if (itr == s_valuesTaskState.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}

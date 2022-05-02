@@ -26,6 +26,7 @@ namespace graphql {
 namespace service {
 
 static const auto s_namesDogCommand = validation::getDogCommandNames();
+static const auto s_valuesDogCommand = validation::getDogCommandValues();
 
 template <>
 validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const response::Value& value)
@@ -35,14 +36,14 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+	const auto itr = s_valuesDogCommand.find(value.get<std::string>());
 
-	if (itr == s_namesDogCommand.cend())
+	if (itr == s_valuesDogCommand.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	return static_cast<validation::DogCommand>(itr - s_namesDogCommand.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -67,15 +68,16 @@ void ModifiedResult<validation::DogCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+	const auto itr = s_valuesDogCommand.find(value.get<std::string>());
 
-	if (itr == s_namesDogCommand.cend())
+	if (itr == s_valuesDogCommand.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 }
 
 static const auto s_namesCatCommand = validation::getCatCommandNames();
+static const auto s_valuesCatCommand = validation::getCatCommandValues();
 
 template <>
 validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const response::Value& value)
@@ -85,14 +87,14 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+	const auto itr = s_valuesCatCommand.find(value.get<std::string>());
 
-	if (itr == s_namesCatCommand.cend())
+	if (itr == s_valuesCatCommand.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	return static_cast<validation::CatCommand>(itr - s_namesCatCommand.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -117,9 +119,9 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+	const auto itr = s_valuesCatCommand.find(value.get<std::string>());
 
-	if (itr == s_namesCatCommand.cend())
+	if (itr == s_valuesCatCommand.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}

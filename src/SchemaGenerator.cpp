@@ -168,7 +168,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(	)cpp" << value.value;
+				headerFile << R"cpp(	)cpp" << value.cppValue;
 			}
 			headerFile << R"cpp(
 };
@@ -196,6 +196,49 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 				firstValue = false;
 				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+			}
+
+			headerFile << R"cpp(
+	};
+}
+
+constexpr auto get)cpp" << enumType.cppType
+					   << R"cpp(Values() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<)cpp"
+					   << enumType.cppType << R"cpp(> {
+)cpp";
+
+			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
+				enumType.values.size());
+
+			std::transform(enumType.values.cbegin(),
+				enumType.values.cend(),
+				sortedValues.begin(),
+				[](const auto& value) noexcept {
+					return std::make_pair(value.value, value.cppValue);
+				});
+			std::sort(sortedValues.begin(),
+				sortedValues.end(),
+				[](const auto& lhs, const auto& rhs) noexcept {
+					return internal::shorter_or_less {}(lhs.first, rhs.first);
+				});
+
+			firstValue = true;
+
+			for (const auto& value : sortedValues)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(		{ R"gql()cpp" << value.first << R"cpp()gql"sv, )cpp"
+						   << enumType.cppType << R"cpp(::)cpp" << value.second << R"cpp( })cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1184,6 +1227,9 @@ using namespace std::literals;
 			sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
 					   << R"cpp(Names();
+static const auto s_values)cpp"
+					   << enumType.cppType << R"cpp( = )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values();
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
@@ -1197,20 +1243,17 @@ template <>
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = std::find(s_names)cpp"
-					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<std::string>());
+	const auto itr = s_values)cpp"
+					   << enumType.cppType << R"cpp(.find(value.get<std::string>());
 
-	if (itr == s_names)cpp"
-					   << enumType.cppType << R"cpp(.cend())
+	if (itr == s_values)cpp"
+					   << enumType.cppType << R"cpp(.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	return static_cast<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>(itr - s_names)cpp" << enumType.cppType << R"cpp(.cbegin());
+	return itr->second;
 }
 
 template <>
@@ -1244,12 +1287,11 @@ void ModifiedResult<)cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = std::find(s_names)cpp"
-					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<std::string>());
+	const auto itr = s_values)cpp"
+					   << enumType.cppType << R"cpp(.find(value.get<std::string>());
 
-	if (itr == s_names)cpp"
-					   << enumType.cppType << R"cpp(.cend())
+	if (itr == s_values)cpp"
+					   << enumType.cppType << R"cpp(.end())
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };

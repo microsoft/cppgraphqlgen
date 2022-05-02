@@ -26,7 +26,7 @@ public:
 
 	sorted_map() = default;
 
-	sorted_map(std::initializer_list<std::pair<K, V>> init)
+	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
 		: _data { init }
 	{
 		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
@@ -34,7 +34,7 @@ public:
 		});
 	}
 
-	bool operator==(const sorted_map& rhs) const noexcept
+	constexpr bool operator==(const sorted_map& rhs) const noexcept
 	{
 		return _data == rhs._data;
 	}
@@ -44,7 +44,7 @@ public:
 		_data.reserve(size);
 	}
 
-	size_t capacity() const noexcept
+	constexpr size_t capacity() const noexcept
 	{
 		return _data.capacity();
 	}
@@ -54,37 +54,37 @@ public:
 		_data.clear();
 	}
 
-	bool empty() const noexcept
+	constexpr bool empty() const noexcept
 	{
 		return _data.empty();
 	}
 
-	size_t size() const noexcept
+	constexpr size_t size() const noexcept
 	{
 		return _data.size();
 	}
 
-	const_iterator begin() const noexcept
+	constexpr const_iterator begin() const noexcept
 	{
 		return _data.begin();
 	}
 
-	const_iterator end() const noexcept
+	constexpr const_iterator end() const noexcept
 	{
 		return _data.end();
 	}
 
-	const_reverse_iterator rbegin() const noexcept
+	constexpr const_reverse_iterator rbegin() const noexcept
 	{
 		return _data.rbegin();
 	}
 
-	const_reverse_iterator rend() const noexcept
+	constexpr const_reverse_iterator rend() const noexcept
 	{
 		return _data.rend();
 	}
 
-	const_iterator find(const K& key) const noexcept
+	constexpr const_iterator find(const K& key) const noexcept
 	{
 		const auto [itr, itrEnd] = std::equal_range(begin(),
 			end(),
@@ -97,7 +97,7 @@ public:
 	}
 
 	template <typename KeyArg>
-	const_iterator find(KeyArg&& keyArg) const noexcept
+	constexpr const_iterator find(KeyArg&& keyArg) const noexcept
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
 
@@ -195,12 +195,12 @@ public:
 private:
 	struct sorted_map_key
 	{
-		sorted_map_key(const std::pair<K, V>& entry)
+		constexpr sorted_map_key(const std::pair<K, V>& entry)
 			: key { entry.first }
 		{
 		}
 
-		sorted_map_key(const K& key)
+		constexpr sorted_map_key(const K& key)
 			: key { key }
 		{
 		}
@@ -221,15 +221,13 @@ public:
 
 	sorted_set() = default;
 
-	sorted_set(std::initializer_list<K> init)
+	constexpr sorted_set(std::initializer_list<K> init)
 		: _data { init }
 	{
-		std::sort(_data.begin(), _data.end(), [](const K& lhs, const K& rhs) noexcept {
-			return Compare {}(lhs, rhs);
-		});
+		std::sort(_data.begin(), _data.end(), Compare {});
 	}
 
-	bool operator==(const sorted_set& rhs) const noexcept
+	constexpr bool operator==(const sorted_set& rhs) const noexcept
 	{
 		return _data == rhs._data;
 	}
@@ -239,7 +237,7 @@ public:
 		_data.reserve(size);
 	}
 
-	size_t capacity() const noexcept
+	constexpr size_t capacity() const noexcept
 	{
 		return _data.capacity();
 	}
@@ -249,37 +247,37 @@ public:
 		_data.clear();
 	}
 
-	bool empty() const noexcept
+	constexpr bool empty() const noexcept
 	{
 		return _data.empty();
 	}
 
-	size_t size() const noexcept
+	constexpr size_t size() const noexcept
 	{
 		return _data.size();
 	}
 
-	const_iterator begin() const noexcept
+	constexpr const_iterator begin() const noexcept
 	{
 		return _data.begin();
 	}
 
-	const_iterator end() const noexcept
+	constexpr const_iterator end() const noexcept
 	{
 		return _data.end();
 	}
 
-	const_reverse_iterator rbegin() const noexcept
+	constexpr const_reverse_iterator rbegin() const noexcept
 	{
 		return _data.rbegin();
 	}
 
-	const_reverse_iterator rend() const noexcept
+	constexpr const_reverse_iterator rend() const noexcept
 	{
 		return _data.rend();
 	}
 
-	const_iterator find(const K& key) const noexcept
+	constexpr const_iterator find(const K& key) const noexcept
 	{
 		const auto [itr, itrEnd] =
 			std::equal_range(begin(), end(), key, [](const K& lhs, const K& rhs) noexcept {
@@ -290,7 +288,7 @@ public:
 	}
 
 	template <typename Arg>
-	const_iterator find(Arg&& arg) const noexcept
+	constexpr const_iterator find(Arg&& arg) const noexcept
 	{
 		const K key { std::forward<Arg>(arg) };
 

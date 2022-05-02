@@ -42,6 +42,18 @@ constexpr auto getTaskStateNames() noexcept
 	};
 }
 
+constexpr auto getTaskStateValues() noexcept
+{
+	using namespace std::literals;
+
+	return internal::string_view_map<TaskState> {
+		{ R"gql(New)gql"sv, TaskState::New },
+		{ R"gql(Started)gql"sv, TaskState::Started },
+		{ R"gql(Complete)gql"sv, TaskState::Complete },
+		{ R"gql(Unassigned)gql"sv, TaskState::Unassigned }
+	};
+}
+
 struct CompleteTaskInput
 {
 	response::IdType id {};
