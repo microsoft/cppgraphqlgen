@@ -207,8 +207,8 @@ constexpr auto get)cpp" << enumType.cppType
 {
 	using namespace std::literals;
 
-	return internal::string_view_map<)cpp"
-					   << enumType.cppType << R"cpp(> {
+	return std::array<std::pair<std::string_view, )cpp"
+					   << enumType.cppType << R"cpp(>, )cpp" << enumType.values.size() << R"cpp(> {
 )cpp";
 
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
@@ -237,8 +237,9 @@ constexpr auto get)cpp" << enumType.cppType
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(		{ R"gql()cpp" << value.first << R"cpp()gql"sv, )cpp"
-						   << enumType.cppType << R"cpp(::)cpp" << value.second << R"cpp( })cpp";
+				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << value.first
+						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp"
+						   << value.second << R"cpp())cpp";
 			}
 
 			headerFile << R"cpp(
@@ -1207,7 +1208,7 @@ bool Generator::outputSource() const noexcept
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -1243,11 +1244,14 @@ template <>
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = s_values)cpp"
-					   << enumType.cppType << R"cpp(.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.begin(),
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_values)cpp"
-					   << enumType.cppType << R"cpp(.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };
@@ -1287,11 +1291,14 @@ void ModifiedResult<)cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = s_values)cpp"
-					   << enumType.cppType << R"cpp(.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.begin(),
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_values)cpp"
-					   << enumType.cppType << R"cpp(.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };

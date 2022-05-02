@@ -14,6 +14,37 @@
 
 namespace graphql::internal {
 
+template <class K, class V>
+struct sorted_map_key
+{
+	constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
+		: key { entry.first }
+	{
+	}
+
+	constexpr sorted_map_key(const K& key) noexcept
+		: key { key }
+	{
+	}
+
+	constexpr ~sorted_map_key() noexcept = default;
+
+	const K& key;
+};
+
+template <class Compare, class Iterator, class K = decltype(std::declval<Iterator>()->first),
+	class V = decltype(std::declval<Iterator>()->second)>
+constexpr std::pair<Iterator, Iterator> find_sorted_map_key(
+	Iterator itrBegin, Iterator itrEnd, const K& key) noexcept
+{
+	return std::equal_range(itrBegin,
+		itrEnd,
+		key,
+		[](sorted_map_key<K, V> lhs, sorted_map_key<K, V> rhs) noexcept {
+			return Compare {}(lhs.key, rhs.key);
+		});
+};
+
 template <class K, class V, class Compare = std::less<K>>
 class sorted_map
 {
@@ -93,14 +124,9 @@ public:
 
 	constexpr const_iterator find(const K& key) const noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(begin(),
-			end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = find_sorted_map_key<Compare>(_data.begin(), _data.end(), key);
 
-		return itr == itrEnd ? _data.end() : itr;
+		return itr == itrEnd ? _data.cend() : itr;
 	}
 
 	template <typename KeyArg>
@@ -115,12 +141,7 @@ public:
 	std::pair<const_iterator, bool> emplace(KeyArg&& keyArg, ValueArgs&&... args) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = find_sorted_map_key<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr != itrEnd)
 		{
@@ -133,12 +154,7 @@ public:
 
 	const_iterator erase(const K& key) noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = find_sorted_map_key<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr == itrEnd)
 		{
@@ -165,12 +181,7 @@ public:
 	V& operator[](KeyArg&& keyArg) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = find_sorted_map_key<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr != itrEnd)
 		{
@@ -184,12 +195,7 @@ public:
 	V& at(KeyArg&& keyArg)
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = find_sorted_map_key<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr == itrEnd)
 		{
@@ -200,23 +206,6 @@ public:
 	}
 
 private:
-	struct sorted_map_key
-	{
-		constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
-			: key { entry.first }
-		{
-		}
-
-		constexpr sorted_map_key(const K& key) noexcept
-			: key { key }
-		{
-		}
-
-		constexpr ~sorted_map_key() noexcept = default;
-
-		const K& key;
-	};
-
 	vector_type _data;
 };
 

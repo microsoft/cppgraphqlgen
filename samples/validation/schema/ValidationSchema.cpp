@@ -17,7 +17,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -36,9 +36,12 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = s_valuesDogCommand.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesDogCommand.begin(),
+		s_valuesDogCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesDogCommand.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
@@ -68,9 +71,12 @@ void ModifiedResult<validation::DogCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = s_valuesDogCommand.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesDogCommand.begin(),
+		s_valuesDogCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesDogCommand.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
@@ -87,9 +93,12 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = s_valuesCatCommand.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesCatCommand.begin(),
+		s_valuesCatCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesCatCommand.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
@@ -119,9 +128,12 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = s_valuesCatCommand.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesCatCommand.begin(),
+		s_valuesCatCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesCatCommand.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}

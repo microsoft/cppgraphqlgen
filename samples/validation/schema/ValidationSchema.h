@@ -44,10 +44,10 @@ constexpr auto getDogCommandValues() noexcept
 {
 	using namespace std::literals;
 
-	return internal::string_view_map<DogCommand> {
-		{ R"gql(SIT)gql"sv, DogCommand::SIT },
-		{ R"gql(DOWN)gql"sv, DogCommand::DOWN },
-		{ R"gql(HEEL)gql"sv, DogCommand::HEEL }
+	return std::array<std::pair<std::string_view, DogCommand>, 3> {
+		std::make_pair(R"gql(SIT)gql"sv, DogCommand::SIT),
+		std::make_pair(R"gql(DOWN)gql"sv, DogCommand::DOWN),
+		std::make_pair(R"gql(HEEL)gql"sv, DogCommand::HEEL)
 	};
 }
 
@@ -69,8 +69,8 @@ constexpr auto getCatCommandValues() noexcept
 {
 	using namespace std::literals;
 
-	return internal::string_view_map<CatCommand> {
-		{ R"gql(JUMP)gql"sv, CatCommand::JUMP }
+	return std::array<std::pair<std::string_view, CatCommand>, 1> {
+		std::make_pair(R"gql(JUMP)gql"sv, CatCommand::JUMP)
 	};
 }
 

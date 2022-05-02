@@ -46,11 +46,11 @@ constexpr auto getTaskStateValues() noexcept
 {
 	using namespace std::literals;
 
-	return internal::string_view_map<TaskState> {
-		{ R"gql(New)gql"sv, TaskState::New },
-		{ R"gql(Started)gql"sv, TaskState::Started },
-		{ R"gql(Complete)gql"sv, TaskState::Complete },
-		{ R"gql(Unassigned)gql"sv, TaskState::Unassigned }
+	return std::array<std::pair<std::string_view, TaskState>, 4> {
+		std::make_pair(R"gql(New)gql"sv, TaskState::New),
+		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
 	};
 }
 

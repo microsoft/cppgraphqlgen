@@ -209,15 +209,17 @@ TEST(ArgumentsCase, TaskStateEnumFromJSONString)
 	EXPECT_EQ(today::TaskState::Started, actual) << "should parse the enum";
 }
 
-
 TEST(ArgumentsCase, TaskStateEnumConstexpr)
 {
 	using namespace std::literals;
 
 	const auto values = today::getTaskStateValues();
-	const auto itr = values.find("Started"sv);
+	const auto [itr, itrEnd] =
+		internal::find_sorted_map_key<internal::shorter_or_less>(values.begin(),
+			values.end(),
+			"Started"sv);
 
-	ASSERT_TRUE(itr != values.end()) << "should find a value";
+	ASSERT_TRUE(itr != itrEnd) << "should find a value";
 	EXPECT_TRUE(today::TaskState::Started == itr->second) << "should parse the enum";
 }
 

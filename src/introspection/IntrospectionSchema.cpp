@@ -11,7 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -30,9 +30,12 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = s_valuesTypeKind.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesTypeKind.begin(),
+		s_valuesTypeKind.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesTypeKind.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
@@ -62,9 +65,12 @@ void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Val
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = s_valuesTypeKind.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesTypeKind.begin(),
+		s_valuesTypeKind.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesTypeKind.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
@@ -81,9 +87,12 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = s_valuesDirectiveLocation.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesDirectiveLocation.begin(),
+		s_valuesDirectiveLocation.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesDirectiveLocation.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
@@ -113,9 +122,12 @@ void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const resp
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = s_valuesDirectiveLocation.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesDirectiveLocation.begin(),
+		s_valuesDirectiveLocation.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesDirectiveLocation.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}

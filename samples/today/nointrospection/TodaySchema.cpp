@@ -17,7 +17,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -36,9 +36,12 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto itr = s_valuesTaskState.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesTaskState.begin(),
+		s_valuesTaskState.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesTaskState.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
@@ -68,9 +71,12 @@ void ModifiedResult<today::TaskState>::validateScalar(const response::Value& val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto itr = s_valuesTaskState.find(value.get<std::string>());
+	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+		s_valuesTaskState.begin(),
+		s_valuesTaskState.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_valuesTaskState.end())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}

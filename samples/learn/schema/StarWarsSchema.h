@@ -44,10 +44,10 @@ constexpr auto getEpisodeValues() noexcept
 {
 	using namespace std::literals;
 
-	return internal::string_view_map<Episode> {
-		{ R"gql(JEDI)gql"sv, Episode::JEDI },
-		{ R"gql(EMPIRE)gql"sv, Episode::EMPIRE },
-		{ R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE }
+	return std::array<std::pair<std::string_view, Episode>, 3> {
+		std::make_pair(R"gql(JEDI)gql"sv, Episode::JEDI),
+		std::make_pair(R"gql(EMPIRE)gql"sv, Episode::EMPIRE),
+		std::make_pair(R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE)
 	};
 }
 
