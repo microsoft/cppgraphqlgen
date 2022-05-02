@@ -365,6 +365,9 @@ private:
 
 struct shorter_or_less
 {
+	constexpr shorter_or_less() = default;
+	constexpr ~shorter_or_less() = default;
+
 	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const
 	{
 		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
