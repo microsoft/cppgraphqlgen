@@ -7,9 +7,7 @@
 #define GRAPHQLSORTEDMAP_H
 
 #include <algorithm>
-#include <functional>
 #include <initializer_list>
-#include <iterator>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -20,103 +18,28 @@ template <class K, class V, class Compare = std::less<K>>
 class sorted_map
 {
 public:
-	struct value_type
-	{
-		constexpr value_type(K first, V second) noexcept
-			: first { std::move(first) }
-			, second { std::move(second) }
-		{
-		}
-
-		constexpr value_type(const value_type& other)
-			: first { other.first }
-			, second { other.second }
-		{
-		}
-
-		value_type(value_type&& other) noexcept
-			: first { std::move(other.first) }
-			, second { std::move(other.second) }
-		{
-		}
-
-		constexpr ~value_type() noexcept
-		{
-		}
-
-		value_type& operator=(const value_type& rhs)
-		{
-			first = rhs.first;
-			second = rhs.second;
-			return *this;
-		}
-
-		value_type& operator=(value_type&& rhs) noexcept
-		{
-			first = std::move(rhs.first);
-			second = std::move(rhs.second);
-			return *this;
-		}
-
-		constexpr bool operator==(const value_type& rhs) const noexcept
-		{
-			return first == rhs.first && second == rhs.second;
-		}
-
-		K first;
-		V second;
-	};
-
-	using vector_type = std::vector<value_type>;
+	using vector_type = std::vector<std::pair<K, V>>;
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
 
-	constexpr sorted_map() noexcept
-		: _data {}
-	{
-	}
+	constexpr sorted_map() noexcept = default;
 
-	constexpr sorted_map(const sorted_map& other)
-		: _data { other._data }
-	{
-	}
-
-	sorted_map(sorted_map&& other) noexcept
-		: _data { std::move(other._data) }
-	{
-	}
+	constexpr sorted_map(const sorted_map& other) = default;
+	sorted_map(sorted_map&& other) noexcept = default;
 
 	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
-		: _data {}
+		: _data { init }
 	{
-		_data.reserve(init.size());
-		std::transform(init.begin(),
-			init.end(),
-			std::back_inserter(_data),
-			[](auto& entry) noexcept {
-				return value_type { std::move(entry.first), std::move(entry.second) };
-			});
 		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
 			return Compare {}(lhs.first, rhs.first);
 		});
 	}
 
-	constexpr ~sorted_map() noexcept
-	{
-	}
+	constexpr ~sorted_map() noexcept = default;
 
-	sorted_map& operator=(const sorted_map& rhs)
-	{
-		_data = rhs._data;
-		return *this;
-	}
-
-	sorted_map& operator=(sorted_map&& rhs) noexcept
-	{
-		_data = std::move(rhs._data);
-		return *this;
-	}
+	sorted_map& operator=(const sorted_map& rhs) = default;
+	sorted_map& operator=(sorted_map&& rhs) noexcept = default;
 
 	constexpr bool operator==(const sorted_map& rhs) const noexcept
 	{
@@ -279,7 +202,7 @@ public:
 private:
 	struct sorted_map_key
 	{
-		constexpr sorted_map_key(const value_type& entry) noexcept
+		constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
 			: key { entry.first }
 		{
 		}
@@ -289,9 +212,7 @@ private:
 		{
 		}
 
-		constexpr ~sorted_map_key() noexcept
-		{
-		}
+		constexpr ~sorted_map_key() noexcept = default;
 
 		const K& key;
 	};
@@ -307,20 +228,9 @@ public:
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 
-	constexpr sorted_set() noexcept
-		: _data {}
-	{
-	}
-
-	constexpr sorted_set(const sorted_set& other)
-		: _data { other._data }
-	{
-	}
-
-	sorted_set(sorted_set&& other) noexcept
-		: _data { std::move(other._data) }
-	{
-	}
+	constexpr sorted_set() noexcept = default;
+	constexpr sorted_set(const sorted_set& other) = default;
+	sorted_set(sorted_set&& other) noexcept = default;
 
 	constexpr sorted_set(std::initializer_list<K> init)
 		: _data { init }
@@ -328,21 +238,10 @@ public:
 		std::sort(_data.begin(), _data.end(), Compare {});
 	}
 
-	constexpr ~sorted_set() noexcept
-	{
-	}
+	constexpr ~sorted_set() noexcept = default;
 
-	sorted_set& operator=(const sorted_set& rhs)
-	{
-		_data = rhs._data;
-		return *this;
-	}
-
-	sorted_set& operator=(sorted_set&& rhs) noexcept
-	{
-		_data = std::move(rhs._data);
-		return *this;
-	}
+	sorted_set& operator=(const sorted_set& rhs) = default;
+	sorted_set& operator=(sorted_set&& rhs) noexcept = default;
 
 	constexpr bool operator==(const sorted_set& rhs) const noexcept
 	{
@@ -466,14 +365,6 @@ private:
 
 struct shorter_or_less
 {
-	constexpr shorter_or_less() noexcept
-	{
-	}
-
-	constexpr ~shorter_or_less() noexcept
-	{
-	}
-
 	constexpr bool operator()(
 		const std::string_view& lhs, const std::string_view& rhs) const noexcept
 	{
