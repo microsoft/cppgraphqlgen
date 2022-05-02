@@ -213,7 +213,6 @@ TEST(ArgumentsCase, TaskStateEnumConstexpr)
 {
 	using namespace std::literals;
 
-	const auto values = today::getTaskStateValues();
 	constexpr auto actual =
 		internal::sorted_map_lookup<internal::shorter_or_less>(today::getTaskStateValues(),
 			"Started"sv);
