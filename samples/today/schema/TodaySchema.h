@@ -22,7 +22,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace today {
 
-enum class TaskState
+enum class [[nodiscard]] TaskState
 {
 	New,
 	Started,
@@ -30,7 +30,7 @@ enum class TaskState
 	Unassigned
 };
 
-constexpr auto getTaskStateNames() noexcept
+[[nodiscard]] constexpr auto getTaskStateNames() noexcept
 {
 	using namespace std::literals;
 
@@ -42,7 +42,7 @@ constexpr auto getTaskStateNames() noexcept
 	};
 }
 
-constexpr auto getTaskStateValues() noexcept
+[[nodiscard]] constexpr auto getTaskStateValues() noexcept
 {
 	using namespace std::literals;
 
@@ -142,7 +142,7 @@ class Expensive;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -188,55 +188,55 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<today::CompleteTaskInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::CompleteTaskInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::ThirdNestedInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::ThirdNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::FourthNestedInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::FourthNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::SecondNestedInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::SecondNestedInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<today::FirstNestedInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<today::FirstNestedInput>() noexcept
 {
 	return true;
 }

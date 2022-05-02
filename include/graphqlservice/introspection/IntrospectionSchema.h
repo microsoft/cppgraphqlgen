@@ -22,7 +22,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace introspection {
 
-enum class TypeKind
+enum class [[nodiscard]] TypeKind
 {
 	SCALAR,
 	OBJECT,
@@ -34,7 +34,7 @@ enum class TypeKind
 	NON_NULL
 };
 
-constexpr auto getTypeKindNames() noexcept
+[[nodiscard]] constexpr auto getTypeKindNames() noexcept
 {
 	using namespace std::literals;
 
@@ -50,7 +50,7 @@ constexpr auto getTypeKindNames() noexcept
 	};
 }
 
-constexpr auto getTypeKindValues() noexcept
+[[nodiscard]] constexpr auto getTypeKindValues() noexcept
 {
 	using namespace std::literals;
 
@@ -66,7 +66,7 @@ constexpr auto getTypeKindValues() noexcept
 	};
 }
 
-enum class DirectiveLocation
+enum class [[nodiscard]] DirectiveLocation
 {
 	QUERY,
 	MUTATION,
@@ -89,7 +89,7 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-constexpr auto getDirectiveLocationNames() noexcept
+[[nodiscard]] constexpr auto getDirectiveLocationNames() noexcept
 {
 	using namespace std::literals;
 
@@ -116,7 +116,7 @@ constexpr auto getDirectiveLocationNames() noexcept
 	};
 }
 
-constexpr auto getDirectiveLocationValues() noexcept
+[[nodiscard]] constexpr auto getDirectiveLocationValues() noexcept
 {
 	using namespace std::literals;
 

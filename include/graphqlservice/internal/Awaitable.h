@@ -22,10 +22,10 @@
 namespace graphql::internal {
 
 template <typename T>
-class Awaitable;
+class [[nodiscard]] Awaitable;
 
 template <>
-class Awaitable<void>
+class [[nodiscard]] Awaitable<void>
 {
 public:
 	Awaitable(std::future<void> value)
@@ -89,7 +89,7 @@ private:
 };
 
 template <typename T>
-class Awaitable
+class [[nodiscard]] Awaitable
 {
 public:
 	Awaitable(std::future<T> value)

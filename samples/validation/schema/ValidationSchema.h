@@ -22,14 +22,14 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace validation {
 
-enum class DogCommand
+enum class [[nodiscard]] DogCommand
 {
 	SIT,
 	DOWN,
 	HEEL
 };
 
-constexpr auto getDogCommandNames() noexcept
+[[nodiscard]] constexpr auto getDogCommandNames() noexcept
 {
 	using namespace std::literals;
 
@@ -40,7 +40,7 @@ constexpr auto getDogCommandNames() noexcept
 	};
 }
 
-constexpr auto getDogCommandValues() noexcept
+[[nodiscard]] constexpr auto getDogCommandValues() noexcept
 {
 	using namespace std::literals;
 
@@ -51,12 +51,12 @@ constexpr auto getDogCommandValues() noexcept
 	};
 }
 
-enum class CatCommand
+enum class [[nodiscard]] CatCommand
 {
 	JUMP
 };
 
-constexpr auto getCatCommandNames() noexcept
+[[nodiscard]] constexpr auto getCatCommandNames() noexcept
 {
 	using namespace std::literals;
 
@@ -65,7 +65,7 @@ constexpr auto getCatCommandNames() noexcept
 	};
 }
 
-constexpr auto getCatCommandValues() noexcept
+[[nodiscard]] constexpr auto getCatCommandValues() noexcept
 {
 	using namespace std::literals;
 
@@ -104,7 +104,7 @@ class Arguments;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -149,7 +149,7 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<validation::ComplexInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<validation::ComplexInput>() noexcept
 {
 	return true;
 }

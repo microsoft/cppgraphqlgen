@@ -22,14 +22,14 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace learn {
 
-enum class Episode
+enum class [[nodiscard]] Episode
 {
 	NEW_HOPE,
 	EMPIRE,
 	JEDI
 };
 
-constexpr auto getEpisodeNames() noexcept
+[[nodiscard]] constexpr auto getEpisodeNames() noexcept
 {
 	using namespace std::literals;
 
@@ -40,7 +40,7 @@ constexpr auto getEpisodeNames() noexcept
 	};
 }
 
-constexpr auto getEpisodeValues() noexcept
+[[nodiscard]] constexpr auto getEpisodeValues() noexcept
 {
 	using namespace std::literals;
 
@@ -69,7 +69,7 @@ class Mutation;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -101,7 +101,7 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<learn::ReviewInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<learn::ReviewInput>() noexcept
 {
 	return true;
 }

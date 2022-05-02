@@ -10,13 +10,13 @@
 
 namespace graphql::generator::schema {
 
-struct GeneratorPaths
+struct [[nodiscard]] GeneratorPaths
 {
 	const std::string headerPath;
 	const std::string sourcePath;
 };
 
-struct GeneratorOptions
+struct [[nodiscard]] GeneratorOptions
 {
 	const GeneratorPaths paths;
 	const bool verbose = false;
@@ -24,32 +24,32 @@ struct GeneratorOptions
 	const bool noIntrospection = false;
 };
 
-class Generator
+class [[nodiscard]] Generator
 {
 public:
 	// Initialize the generator with the introspection schema or a custom GraphQL schema.
 	explicit Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
-	std::vector<std::string> Build() const noexcept;
+	[[nodiscard]] std::vector<std::string> Build() const noexcept;
 
 private:
-	std::string getHeaderDir() const noexcept;
-	std::string getSourceDir() const noexcept;
-	std::string getHeaderPath() const noexcept;
-	std::string getSourcePath() const noexcept;
+	[[nodiscard]] std::string getHeaderDir() const noexcept;
+	[[nodiscard]] std::string getSourceDir() const noexcept;
+	[[nodiscard]] std::string getHeaderPath() const noexcept;
+	[[nodiscard]] std::string getSourcePath() const noexcept;
 
-	bool outputHeader() const noexcept;
+	[[nodiscard]] bool outputHeader() const noexcept;
 	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
 	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectDeclaration(
 		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
-	std::string getFieldDeclaration(const InputField& inputField) const noexcept;
-	std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
-	std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
+	[[nodiscard]] std::string getFieldDeclaration(const InputField& inputField) const noexcept;
+	[[nodiscard]] std::string getFieldDeclaration(const OutputField& outputField) const noexcept;
+	[[nodiscard]] std::string getResolverDeclaration(const OutputField& outputField) const noexcept;
 
-	bool outputSource() const noexcept;
+	[[nodiscard]] bool outputSource() const noexcept;
 	void outputInterfaceImplementation(std::ostream& sourceFile, std::string_view cppType) const;
 	void outputInterfaceIntrospection(
 		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
@@ -61,17 +61,18 @@ private:
 		const std::vector<std::string_view>& interfaces) const;
 	void outputIntrospectionFields(
 		std::ostream& sourceFile, std::string_view cppType, const OutputFieldList& fields) const;
-	std::string getArgumentDefaultValue(
+	[[nodiscard]] std::string getArgumentDefaultValue(
 		size_t level, const response::Value& defaultValue) const noexcept;
-	std::string getArgumentDeclaration(const InputField& argument, const char* prefixToken,
-		const char* argumentsToken, const char* defaultToken) const noexcept;
-	std::string getArgumentAccessType(const InputField& argument) const noexcept;
-	std::string getResultAccessType(const OutputField& result) const noexcept;
-	std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
-	std::string getIntrospectionType(
+	[[nodiscard]] std::string getArgumentDeclaration(const InputField& argument,
+		const char* prefixToken, const char* argumentsToken,
+		const char* defaultToken) const noexcept;
+	[[nodiscard]] std::string getArgumentAccessType(const InputField& argument) const noexcept;
+	[[nodiscard]] std::string getResultAccessType(const OutputField& result) const noexcept;
+	[[nodiscard]] std::string getTypeModifiers(const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard]] std::string getIntrospectionType(
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 
-	std::vector<std::string> outputSeparateFiles() const noexcept;
+	[[nodiscard]] std::vector<std::string> outputSeparateFiles() const noexcept;
 
 	static const std::string s_currentDirectory;
 

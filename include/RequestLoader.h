@@ -25,14 +25,14 @@ struct ResponseField;
 
 using ResponseFieldList = std::vector<ResponseField>;
 
-struct ResponseType
+struct [[nodiscard]] ResponseType
 {
 	RequestSchemaType type;
 	std::string_view cppType;
 	ResponseFieldList fields;
 };
 
-struct ResponseField
+struct [[nodiscard]] ResponseField
 {
 	RequestSchemaType type;
 	TypeModifierStack modifiers;
@@ -42,7 +42,7 @@ struct ResponseField
 	ResponseFieldList children;
 };
 
-struct RequestInputType
+struct [[nodiscard]] RequestInputType
 {
 	RequestSchemaType type;
 	std::unordered_set<std::string_view> dependencies {};
@@ -51,7 +51,7 @@ struct RequestInputType
 
 using RequestInputTypeList = std::vector<RequestInputType>;
 
-struct RequestVariable
+struct [[nodiscard]] RequestVariable
 {
 	RequestInputType inputType;
 	TypeModifierStack modifiers;
@@ -64,7 +64,7 @@ struct RequestVariable
 
 using RequestVariableList = std::vector<RequestVariable>;
 
-struct RequestOptions
+struct [[nodiscard]] RequestOptions
 {
 	const std::string requestFilename;
 	const std::string operationName;
@@ -73,40 +73,41 @@ struct RequestOptions
 
 class SchemaLoader;
 
-class RequestLoader
+class [[nodiscard]] RequestLoader
 {
 public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
-	std::string_view getRequestFilename() const noexcept;
-	std::string_view getOperationDisplayName() const noexcept;
-	std::string getOperationNamespace() const noexcept;
-	std::string_view getOperationType() const noexcept;
-	std::string_view getRequestText() const noexcept;
+	[[nodiscard]] std::string_view getRequestFilename() const noexcept;
+	[[nodiscard]] std::string_view getOperationDisplayName() const noexcept;
+	[[nodiscard]] std::string getOperationNamespace() const noexcept;
+	[[nodiscard]] std::string_view getOperationType() const noexcept;
+	[[nodiscard]] std::string_view getRequestText() const noexcept;
 
-	const ResponseType& getResponseType() const noexcept;
-	const RequestVariableList& getVariables() const noexcept;
+	[[nodiscard]] const ResponseType& getResponseType() const noexcept;
+	[[nodiscard]] const RequestVariableList& getVariables() const noexcept;
 
-	const RequestInputTypeList& getReferencedInputTypes() const noexcept;
-	const RequestSchemaTypeList& getReferencedEnums() const noexcept;
+	[[nodiscard]] const RequestInputTypeList& getReferencedInputTypes() const noexcept;
+	[[nodiscard]] const RequestSchemaTypeList& getReferencedEnums() const noexcept;
 
-	std::string getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept;
-	std::string getInputCppType(const RequestSchemaType& inputType,
-		const TypeModifierStack& modifiers) const noexcept;
-	static std::string getOutputCppType(
+	[[nodiscard]] std::string getInputCppType(
+		const RequestSchemaType& wrappedInputType) const noexcept;
+	[[nodiscard]] std::string getInputCppType(
+		const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard]] static std::string getOutputCppType(
 		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
 
-	static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
+	[[nodiscard]] static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
 		RequestSchemaType&& type) noexcept;
 
 private:
 	void buildSchema();
 	void addTypesToSchema();
-	RequestSchemaType getSchemaType(
+	[[nodiscard]] RequestSchemaType getSchemaType(
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
-	static std::string_view trimWhitespace(std::string_view content) noexcept;
+	[[nodiscard]] static std::string_view trimWhitespace(std::string_view content) noexcept;
 
 	void findOperation();
 	void collectFragments() noexcept;
@@ -119,7 +120,7 @@ private:
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
 	// SelectionVisitor visits the AST and fills in the ResponseType for the request.
-	class SelectionVisitor
+	class [[nodiscard]] SelectionVisitor
 	{
 	public:
 		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
@@ -128,7 +129,7 @@ private:
 
 		void visit(const peg::ast_node& selection);
 
-		ResponseFieldList getFields();
+		[[nodiscard]] ResponseFieldList getFields();
 
 	private:
 		void visitField(const peg::ast_node& field);
