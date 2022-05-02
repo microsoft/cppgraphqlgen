@@ -24,9 +24,20 @@ public:
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
 
-	constexpr sorted_map() = default;
-	constexpr sorted_map(const sorted_map& other) = default;
-	sorted_map(sorted_map&& other) noexcept = default;
+	constexpr sorted_map() noexcept
+		: _data {}
+	{
+	}
+
+	constexpr sorted_map(const sorted_map& other)
+		: _data { other._data }
+	{
+	}
+
+	sorted_map(sorted_map&& other) noexcept
+		: _data { std::move(other._data) }
+	{
+	}
 
 	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
 		: _data { init }
@@ -36,10 +47,21 @@ public:
 		});
 	}
 
-	constexpr ~sorted_map() = default;
+	constexpr ~sorted_map() noexcept
+	{
+	}
 
-	sorted_map& operator=(const sorted_map& rhs) = default;
-	sorted_map& operator=(sorted_map&& rhs) noexcept = default;
+	sorted_map& operator=(const sorted_map& rhs)
+	{
+		_data = rhs._data;
+		return *this;
+	}
+
+	sorted_map& operator=(sorted_map&& rhs) noexcept
+	{
+		_data = std::move(rhs._data);
+		return *this;
+	}
 
 	constexpr bool operator==(const sorted_map& rhs) const noexcept
 	{
@@ -202,17 +224,19 @@ public:
 private:
 	struct sorted_map_key
 	{
-		constexpr sorted_map_key(const std::pair<K, V>& entry)
+		constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
 			: key { entry.first }
 		{
 		}
 
-		constexpr sorted_map_key(const K& key)
+		constexpr sorted_map_key(const K& key) noexcept
 			: key { key }
 		{
 		}
 
-		constexpr ~sorted_map_key() = default;
+		constexpr ~sorted_map_key() noexcept
+		{
+		}
 
 		const K& key;
 	};
@@ -228,9 +252,20 @@ public:
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 
-	constexpr sorted_set() = default;
-	constexpr sorted_set(const sorted_set& other) = default;
-	sorted_set(sorted_set&& other) noexcept = default;
+	constexpr sorted_set() noexcept
+		: _data {}
+	{
+	}
+
+	constexpr sorted_set(const sorted_set& other)
+		: _data { other._data }
+	{
+	}
+
+	sorted_set(sorted_set&& other) noexcept
+		: _data { std::move(other._data) }
+	{
+	}
 
 	constexpr sorted_set(std::initializer_list<K> init)
 		: _data { init }
@@ -238,10 +273,21 @@ public:
 		std::sort(_data.begin(), _data.end(), Compare {});
 	}
 
-	constexpr ~sorted_set() = default;
+	constexpr ~sorted_set() noexcept
+	{
+	}
 
-	sorted_set& operator=(const sorted_set& rhs) = default;
-	sorted_set& operator=(sorted_set&& rhs) noexcept = default;
+	sorted_set& operator=(const sorted_set& rhs)
+	{
+		_data = rhs._data;
+		return *this;
+	}
+
+	sorted_set& operator=(sorted_set&& rhs) noexcept
+	{
+		_data = std::move(rhs._data);
+		return *this;
+	}
 
 	constexpr bool operator==(const sorted_set& rhs) const noexcept
 	{
@@ -365,10 +411,15 @@ private:
 
 struct shorter_or_less
 {
-	constexpr shorter_or_less() = default;
-	constexpr ~shorter_or_less() = default;
+	constexpr shorter_or_less() noexcept
+	{
+	}
 
-	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const
+	constexpr ~shorter_or_less() noexcept
+	{
+	}
+
+	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const noexcept
 	{
 		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
 	}
