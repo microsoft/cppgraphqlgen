@@ -22,7 +22,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace introspection {
 
-enum class [[nodiscard]] TypeKind
+enum class TypeKind
 {
 	SCALAR,
 	OBJECT,
@@ -66,7 +66,7 @@ enum class [[nodiscard]] TypeKind
 	};
 }
 
-enum class [[nodiscard]] DirectiveLocation
+enum class DirectiveLocation
 {
 	QUERY,
 	MUTATION,

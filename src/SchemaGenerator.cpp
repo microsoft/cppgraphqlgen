@@ -153,7 +153,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			headerFile << R"cpp(enum class [[nodiscard]] )cpp" << enumType.cppType << R"cpp(
+			headerFile << R"cpp(enum class )cpp";
+
+			if (!_loader.isIntrospection())
+			{
+				headerFile << R"cpp([[nodiscard]] )cpp";
+			}
+
+			headerFile << enumType.cppType << R"cpp(
 {
 )cpp";
 

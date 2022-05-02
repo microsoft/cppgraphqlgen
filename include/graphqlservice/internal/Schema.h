@@ -13,8 +13,8 @@
 namespace graphql {
 namespace introspection {
 
-enum class TypeKind;
-enum class DirectiveLocation;
+enum class [[nodiscard]] TypeKind;
+enum class [[nodiscard]] DirectiveLocation;
 
 } // namespace introspection
 
