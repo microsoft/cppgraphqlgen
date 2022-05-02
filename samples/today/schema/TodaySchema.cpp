@@ -36,17 +36,16 @@ today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesTaskState.begin(),
-		s_valuesTaskState.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesTaskState,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -71,7 +70,7 @@ void ModifiedResult<today::TaskState>::validateScalar(const response::Value& val
 		throw service::schema_exception { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesTaskState.begin(),
 		s_valuesTaskState.end(),
 		std::string_view { value.get<std::string>() });

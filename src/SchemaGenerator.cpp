@@ -1244,20 +1244,18 @@ template <>
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
 		s_values)cpp" << enumType.cppType
-					   << R"cpp(.begin(),
-		s_values)cpp" << enumType.cppType
-					   << R"cpp(.end(),
+					   << R"cpp(,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -1291,7 +1289,7 @@ void ModifiedResult<)cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_values)cpp" << enumType.cppType
 					   << R"cpp(.begin(),
 		s_values)cpp" << enumType.cppType

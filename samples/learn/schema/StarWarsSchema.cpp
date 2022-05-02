@@ -35,17 +35,16 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesEpisode.begin(),
-		s_valuesEpisode.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesEpisode,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -70,7 +69,7 @@ void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesEpisode.begin(),
 		s_valuesEpisode.end(),
 		std::string_view { value.get<std::string>() });

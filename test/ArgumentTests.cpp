@@ -214,13 +214,12 @@ TEST(ArgumentsCase, TaskStateEnumConstexpr)
 	using namespace std::literals;
 
 	const auto values = today::getTaskStateValues();
-	const auto [itr, itrEnd] =
-		internal::find_sorted_map_key<internal::shorter_or_less>(values.begin(),
-			values.end(),
+	constexpr auto actual =
+		internal::sorted_map_lookup<internal::shorter_or_less>(today::getTaskStateValues(),
 			"Started"sv);
 
-	ASSERT_TRUE(itr != itrEnd) << "should find a value";
-	EXPECT_TRUE(today::TaskState::Started == itr->second) << "should parse the enum";
+	ASSERT_TRUE(actual) << "should find a value";
+	EXPECT_TRUE(today::TaskState::Started == *actual) << "should parse the enum";
 }
 
 TEST(ArgumentsCase, ScalarArgumentMap)

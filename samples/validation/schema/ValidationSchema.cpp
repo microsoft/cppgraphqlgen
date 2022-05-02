@@ -36,17 +36,16 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesDogCommand.begin(),
-		s_valuesDogCommand.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesDogCommand,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -71,7 +70,7 @@ void ModifiedResult<validation::DogCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesDogCommand.begin(),
 		s_valuesDogCommand.end(),
 		std::string_view { value.get<std::string>() });
@@ -93,17 +92,16 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesCatCommand.begin(),
-		s_valuesCatCommand.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesCatCommand,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -128,7 +126,7 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesCatCommand.begin(),
 		s_valuesCatCommand.end(),
 		std::string_view { value.get<std::string>() });

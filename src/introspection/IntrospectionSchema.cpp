@@ -30,17 +30,16 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesTypeKind.begin(),
-		s_valuesTypeKind.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesTypeKind,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -65,7 +64,7 @@ void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Val
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesTypeKind.begin(),
 		s_valuesTypeKind.end(),
 		std::string_view { value.get<std::string>() });
@@ -87,17 +86,16 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
-		s_valuesDirectiveLocation.begin(),
-		s_valuesDirectiveLocation.end(),
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesDirectiveLocation,
 		std::string_view { value.get<std::string>() });
 
-	if (itr == itrEnd)
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	return itr->second;
+	return *result;
 }
 
 template <>
@@ -122,7 +120,7 @@ void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const resp
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto [itr, itrEnd] = internal::find_sorted_map_key<internal::shorter_or_less>(
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
 		s_valuesDirectiveLocation.begin(),
 		s_valuesDirectiveLocation.end(),
 		std::string_view { value.get<std::string>() });
