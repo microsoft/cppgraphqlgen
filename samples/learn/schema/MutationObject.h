@@ -39,26 +39,26 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::MutationHas
 
-class Mutation final
+class [[nodiscard]] Mutation final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveCreateReview(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -66,7 +66,7 @@ private:
 		{
 		}
 
-		service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Review>> applyCreateReview(service::FieldParams&& params, Episode&& epArg, ReviewInput&& reviewArg) const final
 		{
 			if constexpr (methods::MutationHas::applyCreateReviewWithParams<T>)
 			{
@@ -101,8 +101,8 @@ private:
 
 	Mutation(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -116,7 +116,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Mutation)gql" };
 	}

@@ -16,7 +16,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -25,6 +25,7 @@ namespace graphql {
 namespace service {
 
 static const auto s_namesEpisode = learn::getEpisodeNames();
+static const auto s_valuesEpisode = learn::getEpisodeValues();
 
 template <>
 learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)
@@ -34,14 +35,16 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesEpisode,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesEpisode.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	return static_cast<learn::Episode>(itr - s_namesEpisode.cbegin());
+	return *result;
 }
 
 template <>
@@ -66,9 +69,12 @@ void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesEpisode.begin(),
+		s_valuesEpisode.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesEpisode.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}

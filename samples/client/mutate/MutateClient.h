@@ -48,7 +48,7 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
-enum class TaskState
+enum class [[nodiscard]] TaskState
 {
 	New,
 	Started,

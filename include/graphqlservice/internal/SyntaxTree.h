@@ -23,7 +23,7 @@ namespace graphql::peg {
 using namespace tao::graphqlpeg;
 namespace peginternal = tao::graphqlpeg::internal;
 
-class ast_node
+class [[nodiscard]] ast_node
 {
 public:
 	// Must be default constructible
@@ -147,7 +147,7 @@ private:
 };
 
 template <class ParseInput>
-class depth_limit_input : public ParseInput
+class [[nodiscard]] depth_limit_input : public ParseInput
 {
 public:
 	template <typename... Args>
@@ -171,7 +171,7 @@ private:
 using ast_file = depth_limit_input<file_input<>>;
 using ast_memory = depth_limit_input<memory_input<>>;
 
-struct ast_input
+struct [[nodiscard]] ast_input
 {
 	std::variant<std::vector<char>, std::unique_ptr<ast_file>, std::string_view> data;
 };

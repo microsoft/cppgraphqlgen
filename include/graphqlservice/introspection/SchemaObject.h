@@ -12,33 +12,33 @@
 
 namespace graphql::introspection::object {
 
-class Schema final
+class [[nodiscard]] Schema final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDirectives(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDirectives(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -46,32 +46,32 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
 		{
 			return { _pimpl->getDirectives() };
 		}
@@ -82,8 +82,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl) noexcept;

@@ -123,40 +123,40 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::QueryHas
 
-class Query final
+class [[nodiscard]] Query final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveDog(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDog(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -164,7 +164,7 @@ private:
 		{
 		}
 
-		service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getDogWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getPetWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getArgumentsWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getResourceWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const final
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::QueryHas::getBooleanListWithParams<T>)
 			{
@@ -314,8 +314,8 @@ private:
 
 	Query(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -329,7 +329,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Query)gql" };
 	}

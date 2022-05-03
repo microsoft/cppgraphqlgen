@@ -51,28 +51,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::ReviewHas
 
-class Review final
+class [[nodiscard]] Review final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveStars(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveCommentary(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveStars(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveCommentary(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<int> getStars(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<int> getStars(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<int> getStars(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<int> getStars(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewHas::getStarsWithParams<T>)
 			{
@@ -93,7 +93,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ReviewHas::getCommentaryWithParams<T>)
 			{
@@ -128,8 +128,8 @@ private:
 
 	Review(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -143,7 +143,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Review)gql" };
 	}

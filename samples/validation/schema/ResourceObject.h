@@ -12,23 +12,23 @@
 
 namespace graphql::validation::object {
 
-class Resource final
+class [[nodiscard]] Resource final
 	: public service::Object
 {
 private:
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::TypeNames getTypeNames() const noexcept = 0;
-		virtual service::ResolverMap getResolvers() const noexcept = 0;
+		[[nodiscard]] virtual service::TypeNames getTypeNames() const noexcept = 0;
+		[[nodiscard]] virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -36,12 +36,12 @@ private:
 		{
 		}
 
-		service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}

@@ -94,34 +94,34 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::AppointmentHas
 
-class Appointment final
+class [[nodiscard]] Appointment final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveId(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveWhen(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveSubject(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveIsNow(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveForceError(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveId(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveWhen(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveSubject(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveIsNow(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveForceError(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -129,7 +129,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIdWithParams<T>)
 			{
@@ -145,7 +145,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getWhenWithParams<T>)
 			{
@@ -161,7 +161,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getSubjectWithParams<T>)
 			{
@@ -177,7 +177,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIsNowWithParams<T>)
 			{
@@ -193,7 +193,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getForceErrorWithParams<T>)
 			{
@@ -238,13 +238,13 @@ private:
 	friend UnionType;
 
 	template <class I>
-	static constexpr bool implements() noexcept
+	[[nodiscard]] static constexpr bool implements() noexcept
 	{
 		return implements::AppointmentIs<I>;
 	}
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -258,7 +258,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Appointment)gql" };
 	}
