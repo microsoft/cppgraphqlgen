@@ -12,29 +12,29 @@
 
 namespace graphql::introspection::object {
 
-class InputValue final
+class [[nodiscard]] InputValue final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::AwaitableScalar<std::string> getName() const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Type>> getType() const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getType() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::AwaitableObject<std::shared_ptr<Type>> getType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const final
 		{
 			return { _pimpl->getType() };
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const final
 		{
 			return { _pimpl->getDefaultValue() };
 		}
@@ -68,8 +68,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;

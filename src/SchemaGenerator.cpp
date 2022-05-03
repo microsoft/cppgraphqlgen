@@ -153,7 +153,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			headerFile << R"cpp(enum class )cpp" << enumType.cppType << R"cpp(
+			headerFile << R"cpp(enum class )cpp";
+
+			if (!_loader.isIntrospection())
+			{
+				headerFile << R"cpp([[nodiscard]] )cpp";
+			}
+
+			headerFile << enumType.cppType << R"cpp(
 {
 )cpp";
 
@@ -168,14 +175,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(	)cpp" << value.value;
+				headerFile << R"cpp(	)cpp" << value.cppValue;
 			}
 			headerFile << R"cpp(
 };
 
 )cpp";
 
-			headerFile << R"cpp(constexpr auto get)cpp" << enumType.cppType
+			headerFile << R"cpp([[nodiscard]] constexpr auto get)cpp" << enumType.cppType
 					   << R"cpp(Names() noexcept
 {
 	using namespace std::literals;
@@ -196,6 +203,50 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 				firstValue = false;
 				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+			}
+
+			headerFile << R"cpp(
+	};
+}
+
+[[nodiscard]] constexpr auto get)cpp"
+					   << enumType.cppType << R"cpp(Values() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, )cpp"
+					   << enumType.cppType << R"cpp(>, )cpp" << enumType.values.size() << R"cpp(> {
+)cpp";
+
+			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
+				enumType.values.size());
+
+			std::transform(enumType.values.cbegin(),
+				enumType.values.cend(),
+				sortedValues.begin(),
+				[](const auto& value) noexcept {
+					return std::make_pair(value.value, value.cppValue);
+				});
+			std::sort(sortedValues.begin(),
+				sortedValues.end(),
+				[](const auto& lhs, const auto& rhs) noexcept {
+					return internal::shorter_or_less {}(lhs.first, rhs.first);
+				});
+
+			firstValue = true;
+
+			for (const auto& value : sortedValues)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << value.first
+						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp"
+						   << value.second << R"cpp())cpp";
 			}
 
 			headerFile << R"cpp(
@@ -238,8 +289,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 )cpp";
 			for (const auto& inputField : inputType.fields)
 			{
-				headerFile << getFieldDeclaration(inputField) << R"cpp( {};
-)cpp";
+				headerFile << getFieldDeclaration(inputField);
 			}
 			headerFile << R"cpp(};
 
@@ -324,7 +374,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		bool firstOperation = true;
 
-		headerFile << R"cpp(class Operations final
+		headerFile << R"cpp(class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -543,7 +593,7 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 		for (const auto& inputType : _loader.getInputTypes())
 		{
 			headerFile << R"cpp(template <>
-constexpr bool isInputType<)cpp"
+[[nodiscard]] constexpr bool isInputType<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
 					   << R"cpp(>() noexcept
 {
@@ -560,23 +610,23 @@ constexpr bool isInputType<)cpp"
 void Generator::outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const
 {
 	headerFile
-		<< R"cpp(class )cpp" << cppType << R"cpp( final
+		<< R"cpp(class [[nodiscard]] )cpp" << cppType << R"cpp( final
 	: public service::Object
 {
 private:
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::TypeNames getTypeNames() const noexcept = 0;
-		virtual service::ResolverMap getResolvers() const noexcept = 0;
+		[[nodiscard]] virtual service::TypeNames getTypeNames() const noexcept = 0;
+		[[nodiscard]] virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -584,12 +634,12 @@ private:
 		{
 		}
 
-		service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}
@@ -755,7 +805,7 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 void Generator::outputObjectDeclaration(
 	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
-	headerFile << R"cpp(class )cpp" << objectType.cppType << R"cpp( final
+	headerFile << R"cpp(class [[nodiscard]] )cpp" << objectType.cppType << R"cpp( final
 	: public service::Object
 {
 private:
@@ -767,21 +817,21 @@ private:
 	}
 
 	headerFile << R"cpp(
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 )cpp";
 
 	if (!_options.noIntrospection && isQueryType)
 	{
 		headerFile
-			<< R"cpp(	service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
+			<< R"cpp(	[[nodiscard]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 )cpp";
 	}
 
 	headerFile << R"cpp(
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
@@ -804,7 +854,7 @@ private:
 	headerFile << R"cpp(	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -818,8 +868,9 @@ private:
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
 		headerFile << R"cpp(
-		)cpp" << _loader.getOutputCppType(outputField)
-				   << R"cpp( )cpp" << accessorName << R"cpp(()cpp";
+		[[nodiscard]] )cpp"
+				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << accessorName
+				   << R"cpp(()cpp";
 
 		bool firstArgument = _loader.isIntrospection();
 
@@ -967,8 +1018,8 @@ private:
 	{
 		headerFile << R"cpp(	const std::unique_ptr<const Concept> _pimpl;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT )cpp"
@@ -1021,7 +1072,7 @@ public:
 		{
 
 			headerFile << R"cpp(	template <class I>
-	static constexpr bool implements() noexcept
+	[[nodiscard]] static constexpr bool implements() noexcept
 	{
 		return implements::)cpp"
 					   << objectType.cppType << R"cpp(Is<I>;
@@ -1031,8 +1082,8 @@ public:
 		}
 
 		headerFile
-			<< R"cpp(	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+			<< R"cpp(	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -1049,7 +1100,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql()cpp"
 			<< objectType.type << R"cpp()gql" };
@@ -1064,7 +1115,8 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 	std::ostringstream output;
 
 	output << R"cpp(	)cpp" << _loader.getInputCppType(inputField) << R"cpp( )cpp"
-		   << inputField.cppName;
+		   << inputField.cppName << R"cpp( {};
+)cpp";
 
 	return output.str();
 }
@@ -1074,8 +1126,8 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::ostringstream output;
 	const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
-	output << R"cpp(		virtual )cpp" << _loader.getOutputCppType(outputField) << R"cpp( )cpp"
-		   << accessorName << R"cpp(()cpp";
+	output << R"cpp(		[[nodiscard]] virtual )cpp" << _loader.getOutputCppType(outputField)
+		   << R"cpp( )cpp" << accessorName << R"cpp(()cpp";
 
 	bool firstArgument = _loader.isIntrospection();
 
@@ -1106,7 +1158,7 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::ostringstream output;
 	const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 
-	output << R"cpp(	service::AwaitableResolver )cpp" << resolverName
+	output << R"cpp(	[[nodiscard]] service::AwaitableResolver )cpp" << resolverName
 		   << R"cpp((service::ResolverParams&& params) const;
 )cpp";
 
@@ -1164,7 +1216,7 @@ bool Generator::outputSource() const noexcept
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -1184,6 +1236,9 @@ using namespace std::literals;
 			sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
 					   << R"cpp(Names();
+static const auto s_values)cpp"
+					   << enumType.cppType << R"cpp( = )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values();
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
@@ -1197,20 +1252,18 @@ template <>
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = std::find(s_names)cpp"
-					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_names)cpp"
-					   << enumType.cppType << R"cpp(.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	return static_cast<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>(itr - s_names)cpp" << enumType.cppType << R"cpp(.cbegin());
+	return *result;
 }
 
 template <>
@@ -1244,12 +1297,14 @@ void ModifiedResult<)cpp"
 					   << enumType.type << R"cpp( value)ex" } };
 	}
 
-	const auto itr = std::find(s_names)cpp"
-					   << enumType.cppType << R"cpp(.cbegin(), s_names)cpp" << enumType.cppType
-					   << R"cpp(.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.begin(),
+		s_values)cpp" << enumType.cppType
+					   << R"cpp(.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_names)cpp"
-					   << enumType.cppType << R"cpp(.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid )cpp"
 					   << enumType.type << R"cpp( value)ex" } };

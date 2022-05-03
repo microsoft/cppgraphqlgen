@@ -34,7 +34,7 @@ enum class TypeKind
 	NON_NULL
 };
 
-constexpr auto getTypeKindNames() noexcept
+[[nodiscard]] constexpr auto getTypeKindNames() noexcept
 {
 	using namespace std::literals;
 
@@ -47,6 +47,22 @@ constexpr auto getTypeKindNames() noexcept
 		R"gql(INPUT_OBJECT)gql"sv,
 		R"gql(LIST)gql"sv,
 		R"gql(NON_NULL)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getTypeKindValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, TypeKind>, 8> {
+		std::make_pair(R"gql(ENUM)gql"sv, TypeKind::ENUM),
+		std::make_pair(R"gql(LIST)gql"sv, TypeKind::LIST),
+		std::make_pair(R"gql(UNION)gql"sv, TypeKind::UNION),
+		std::make_pair(R"gql(OBJECT)gql"sv, TypeKind::OBJECT),
+		std::make_pair(R"gql(SCALAR)gql"sv, TypeKind::SCALAR),
+		std::make_pair(R"gql(NON_NULL)gql"sv, TypeKind::NON_NULL),
+		std::make_pair(R"gql(INTERFACE)gql"sv, TypeKind::INTERFACE),
+		std::make_pair(R"gql(INPUT_OBJECT)gql"sv, TypeKind::INPUT_OBJECT)
 	};
 }
 
@@ -73,7 +89,7 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-constexpr auto getDirectiveLocationNames() noexcept
+[[nodiscard]] constexpr auto getDirectiveLocationNames() noexcept
 {
 	using namespace std::literals;
 
@@ -97,6 +113,33 @@ constexpr auto getDirectiveLocationNames() noexcept
 		R"gql(ENUM_VALUE)gql"sv,
 		R"gql(INPUT_OBJECT)gql"sv,
 		R"gql(INPUT_FIELD_DEFINITION)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getDirectiveLocationValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, DirectiveLocation>, 19> {
+		std::make_pair(R"gql(ENUM)gql"sv, DirectiveLocation::ENUM),
+		std::make_pair(R"gql(FIELD)gql"sv, DirectiveLocation::FIELD),
+		std::make_pair(R"gql(QUERY)gql"sv, DirectiveLocation::QUERY),
+		std::make_pair(R"gql(UNION)gql"sv, DirectiveLocation::UNION),
+		std::make_pair(R"gql(OBJECT)gql"sv, DirectiveLocation::OBJECT),
+		std::make_pair(R"gql(SCALAR)gql"sv, DirectiveLocation::SCALAR),
+		std::make_pair(R"gql(SCHEMA)gql"sv, DirectiveLocation::SCHEMA),
+		std::make_pair(R"gql(MUTATION)gql"sv, DirectiveLocation::MUTATION),
+		std::make_pair(R"gql(INTERFACE)gql"sv, DirectiveLocation::INTERFACE),
+		std::make_pair(R"gql(ENUM_VALUE)gql"sv, DirectiveLocation::ENUM_VALUE),
+		std::make_pair(R"gql(INPUT_OBJECT)gql"sv, DirectiveLocation::INPUT_OBJECT),
+		std::make_pair(R"gql(SUBSCRIPTION)gql"sv, DirectiveLocation::SUBSCRIPTION),
+		std::make_pair(R"gql(FRAGMENT_SPREAD)gql"sv, DirectiveLocation::FRAGMENT_SPREAD),
+		std::make_pair(R"gql(INLINE_FRAGMENT)gql"sv, DirectiveLocation::INLINE_FRAGMENT),
+		std::make_pair(R"gql(FIELD_DEFINITION)gql"sv, DirectiveLocation::FIELD_DEFINITION),
+		std::make_pair(R"gql(ARGUMENT_DEFINITION)gql"sv, DirectiveLocation::ARGUMENT_DEFINITION),
+		std::make_pair(R"gql(FRAGMENT_DEFINITION)gql"sv, DirectiveLocation::FRAGMENT_DEFINITION),
+		std::make_pair(R"gql(VARIABLE_DEFINITION)gql"sv, DirectiveLocation::VARIABLE_DEFINITION),
+		std::make_pair(R"gql(INPUT_FIELD_DEFINITION)gql"sv, DirectiveLocation::INPUT_FIELD_DEFINITION)
 	};
 }
 

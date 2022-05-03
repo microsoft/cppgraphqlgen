@@ -13,7 +13,7 @@
 namespace graphql::generator {
 
 // RAII object to help with emitting matching include guard begin and end statements
-class IncludeGuardScope
+class [[nodiscard]] IncludeGuardScope
 {
 public:
 	explicit IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept;
@@ -25,7 +25,7 @@ private:
 };
 
 // RAII object to help with emitting matching namespace begin and end statements
-class NamespaceScope
+class [[nodiscard]] NamespaceScope
 {
 public:
 	explicit NamespaceScope(
@@ -44,7 +44,7 @@ private:
 
 // Keep track of whether we want to add a blank separator line once some additional content is about
 // to be output.
-class PendingBlankLine
+class [[nodiscard]] PendingBlankLine
 {
 public:
 	explicit PendingBlankLine(std::ostream& outputFile) noexcept;

@@ -22,14 +22,14 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: 
 namespace graphql {
 namespace validation {
 
-enum class DogCommand
+enum class [[nodiscard]] DogCommand
 {
 	SIT,
 	DOWN,
 	HEEL
 };
 
-constexpr auto getDogCommandNames() noexcept
+[[nodiscard]] constexpr auto getDogCommandNames() noexcept
 {
 	using namespace std::literals;
 
@@ -40,17 +40,37 @@ constexpr auto getDogCommandNames() noexcept
 	};
 }
 
-enum class CatCommand
+[[nodiscard]] constexpr auto getDogCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, DogCommand>, 3> {
+		std::make_pair(R"gql(SIT)gql"sv, DogCommand::SIT),
+		std::make_pair(R"gql(DOWN)gql"sv, DogCommand::DOWN),
+		std::make_pair(R"gql(HEEL)gql"sv, DogCommand::HEEL)
+	};
+}
+
+enum class [[nodiscard]] CatCommand
 {
 	JUMP
 };
 
-constexpr auto getCatCommandNames() noexcept
+[[nodiscard]] constexpr auto getCatCommandNames() noexcept
 {
 	using namespace std::literals;
 
 	return std::array<std::string_view, 1> {
 		R"gql(JUMP)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getCatCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, CatCommand>, 1> {
+		std::make_pair(R"gql(JUMP)gql"sv, CatCommand::JUMP)
 	};
 }
 
@@ -84,7 +104,7 @@ class Arguments;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -129,7 +149,7 @@ std::shared_ptr<schema::Schema> GetSchema();
 namespace service {
 
 template <>
-constexpr bool isInputType<validation::ComplexInput>() noexcept
+[[nodiscard]] constexpr bool isInputType<validation::ComplexInput>() noexcept
 {
 	return true;
 }

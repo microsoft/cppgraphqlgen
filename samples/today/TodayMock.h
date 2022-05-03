@@ -547,7 +547,7 @@ public:
 
 	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const
 	{
-		throw std::runtime_error("Unexpected call to getNodeChange");
+		return {};
 	}
 
 private:

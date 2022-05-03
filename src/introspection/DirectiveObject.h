@@ -12,31 +12,31 @@
 
 namespace graphql::introspection::object {
 
-class Directive final
+class [[nodiscard]] Directive final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveLocations(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveArgs(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveIsRepeatable(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveLocations(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveArgs(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveIsRepeatable(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::AwaitableScalar<std::string> getName() const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		virtual service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
-		virtual service::AwaitableScalar<bool> getIsRepeatable() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getIsRepeatable() const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -44,27 +44,27 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
+		[[nodiscard]] service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
 		{
 			return { _pimpl->getLocations() };
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
 		}
 
-		service::AwaitableScalar<bool> getIsRepeatable() const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsRepeatable() const final
 		{
 			return { _pimpl->getIsRepeatable() };
 		}
@@ -75,8 +75,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT Directive(std::shared_ptr<introspection::Directive> pimpl) noexcept;

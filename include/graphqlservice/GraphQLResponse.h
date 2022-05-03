@@ -33,8 +33,7 @@ namespace graphql::response {
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
 // of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
-enum class Type : std::uint8_t
-{
+enum class [[nodiscard]] Type : std::uint8_t {
 	Map,	   // JSON Object
 	List,	   // JSON Array
 	String,	   // JSON String
@@ -57,7 +56,7 @@ using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
 
-struct IdType
+struct [[nodiscard]] IdType
 {
 	using ByteData = std::vector<std::uint8_t>;
 	using OpaqueString = std::string;
@@ -84,20 +83,20 @@ struct IdType
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(OpaqueString&& opaque) noexcept;
 
 	template <typename ValueType>
-	const ValueType& get() const;
+	[[nodiscard]] const ValueType& get() const;
 
 	template <typename ValueType>
-	ValueType release();
+	[[nodiscard]] ValueType release();
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT bool operator==(const IdType& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT bool operator==(const ByteData& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT bool operator==(const OpaqueString& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const ByteData& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const OpaqueString& rhs) const noexcept;
 
-	GRAPHQLRESPONSE_EXPORT bool operator<(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator<(const IdType& rhs) const noexcept;
 
 	// Check the Type
-	GRAPHQLRESPONSE_EXPORT bool isBase64() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool isBase64() const noexcept;
 
 private:
 	std::variant<ByteData, OpaqueString> _data;
@@ -167,7 +166,7 @@ struct ValueTypeTraits<FloatType>
 };
 
 // Represent a discriminated union of GraphQL response value types.
-struct Value
+struct [[nodiscard]] Value
 {
 	GRAPHQLRESPONSE_EXPORT Value(Type type = Type::Null);
 	GRAPHQLRESPONSE_EXPORT ~Value();
@@ -188,37 +187,37 @@ struct Value
 	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const Value& rhs) const noexcept;
 
 	// Check the Type
-	GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Type type() const noexcept;
 
 	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
 	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
 	// as any of those types.
-	GRAPHQLRESPONSE_EXPORT Value&& from_json() noexcept;
-	GRAPHQLRESPONSE_EXPORT bool maybe_enum() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_json() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_enum() const noexcept;
 
 	// Input values don't distinguish between Type::String and Type::ID, so if this value comes from
 	// a string literal input value we need to track that fact that it can be interpreted as either
 	// of those types.
-	GRAPHQLRESPONSE_EXPORT Value&& from_input() noexcept;
-	GRAPHQLRESPONSE_EXPORT bool maybe_id() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_input() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
 	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
-	GRAPHQLRESPONSE_EXPORT size_t size() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const;
 
 	// Valid for Type::Map
 	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(std::string_view name) const;
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator begin() const;
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator end() const;
-	GRAPHQLRESPONSE_EXPORT const Value& operator[](std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator find(std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](std::string_view name) const;
 
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
-	GRAPHQLRESPONSE_EXPORT const Value& operator[](size_t index) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](size_t index) const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -228,28 +227,28 @@ struct Value
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
+	[[nodiscard]] typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
 		typename ValueTypeTraits<ValueType>::get_type>
 	get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
-	typename ValueTypeTraits<ValueType>::release_type release();
+	[[nodiscard]] typename ValueTypeTraits<ValueType>::release_type release();
 
 private:
 	// Type::Map
-	struct MapData
+	struct [[nodiscard]] MapData
 	{
-		bool operator==(const MapData& rhs) const;
+		[[nodiscard]] bool operator==(const MapData& rhs) const;
 
 		MapType map;
 		std::vector<size_t> members;
 	};
 
 	// Type::String
-	struct StringData
+	struct [[nodiscard]] StringData
 	{
-		bool operator==(const StringData& rhs) const;
+		[[nodiscard]] bool operator==(const StringData& rhs) const;
 
 		StringType string;
 		bool from_json = false;
@@ -257,18 +256,18 @@ private:
 	};
 
 	// Type::Null
-	struct NullData
+	struct [[nodiscard]] NullData
 	{
-		bool operator==(const NullData& rhs) const;
+		[[nodiscard]] bool operator==(const NullData& rhs) const;
 	};
 
 	// Type::EnumValue
 	using EnumData = StringType;
 
 	// Type::Scalar
-	struct ScalarData
+	struct [[nodiscard]] ScalarData
 	{
-		bool operator==(const ScalarData& rhs) const;
+		[[nodiscard]] bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
 	};
@@ -278,9 +277,9 @@ private:
 	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
 		FloatType, EnumData, IdType, ScalarData, SharedData>;
 
-	const TypeData& data() const noexcept;
+	[[nodiscard]] const TypeData& data() const noexcept;
 
-	static Type typeOf(const TypeData& data) noexcept;
+	[[nodiscard]] static Type typeOf(const TypeData& data) noexcept;
 
 	TypeData _data;
 };
@@ -329,7 +328,7 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 
 using AwaitableValue = internal::Awaitable<Value>;
 
-class Writer final
+class [[nodiscard]] Writer final
 {
 private:
 	struct Concept

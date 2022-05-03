@@ -183,50 +183,50 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::QueryHas
 
-class Query final
+class [[nodiscard]] Query final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveAppointments(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveTasks(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveTasksById(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveExpensive(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveAnyType(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDefault(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveAppointments(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveTasks(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveUnreadCounts(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveAppointmentsById(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveTasksById(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveUnreadCountsById(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveUnimplemented(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveExpensive(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveTestTaskState(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveAnyType(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDefault(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -234,7 +234,7 @@ private:
 		{
 		}
 
-		service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getNodeWithParams<T>)
 			{
@@ -250,7 +250,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryHas::getAppointmentsWithParams<T>)
 			{
@@ -266,7 +266,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryHas::getTasksWithParams<T>)
 			{
@@ -282,7 +282,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
 		{
 			if constexpr (methods::QueryHas::getUnreadCountsWithParams<T>)
 			{
@@ -298,7 +298,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getAppointmentsByIdWithParams<T>)
 			{
@@ -314,7 +314,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getTasksByIdWithParams<T>)
 			{
@@ -330,7 +330,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getUnreadCountsByIdWithParams<T>)
 			{
@@ -346,7 +346,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getNestedWithParams<T>)
 			{
@@ -362,7 +362,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getUnimplementedWithParams<T>)
 			{
@@ -378,7 +378,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getExpensiveWithParams<T>)
 			{
@@ -394,7 +394,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getTestTaskStateWithParams<T>)
 			{
@@ -410,7 +410,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
 		{
 			if constexpr (methods::QueryHas::getAnyTypeWithParams<T>)
 			{
@@ -426,7 +426,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::QueryHas::getDefaultWithParams<T>)
 			{
@@ -464,8 +464,8 @@ private:
 
 	Query(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -479,7 +479,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Query)gql" };
 	}

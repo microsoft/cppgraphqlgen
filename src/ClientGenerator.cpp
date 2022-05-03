@@ -206,8 +206,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	{
 		pendingSeparator.reset();
 
-		headerFile << R"cpp(enum class )cpp" << _schemaLoader.getCppType(enumType->name())
-				   << R"cpp(
+		headerFile << R"cpp(enum class [[nodiscard]] )cpp"
+				   << _schemaLoader.getCppType(enumType->name()) << R"cpp(
 {
 )cpp";
 		for (const auto& enumValue : enumType->enumValues())

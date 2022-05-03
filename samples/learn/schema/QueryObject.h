@@ -63,34 +63,34 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::QueryHas
 
-class Query final
+class [[nodiscard]] Query final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveHero(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDroid(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveHero(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDroid(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const = 0;
-		virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -98,7 +98,7 @@ private:
 		{
 		}
 
-		service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
 		{
 			if constexpr (methods::QueryHas::getHeroWithParams<T>)
 			{
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{
@@ -159,8 +159,8 @@ private:
 
 	Query(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -174,7 +174,7 @@ public:
 	{
 	}
 
-	static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Query)gql" };
 	}
