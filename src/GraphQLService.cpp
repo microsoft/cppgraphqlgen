@@ -1827,12 +1827,21 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 	const auto spThis = shared_from_this();
 	const auto launch = std::move(params.launch);
 	std::unique_lock lock { spThis->_subscriptionMutex };
-	const auto key = spThis->addSubscription(std::move(params));
 	const auto itrOperation = spThis->_operations.find(strSubscription);
 
-	if (itrOperation != spThis->_operations.end())
+	if (itrOperation == _operations.end())
 	{
-		const auto operation = itrOperation->second;
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
+	const auto optionalOrDefaultSubscription =
+		params.subscriptionObject ? std::move(params.subscriptionObject) : itrOperation->second;
+	const auto key = spThis->addSubscription(std::move(params));
+
+	if (optionalOrDefaultSubscription)
+	{
 		const auto registration = spThis->_subscriptions.at(key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifySubscribe,
@@ -1851,24 +1860,25 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 		{
 			co_await launch;
 
-			auto errors = std::move((co_await operation->resolve(selectionSetParams,
-										 registration->selection,
-										 registration->data->fragments,
-										 registration->data->variables))
-										.errors);
+			auto errors =
+				std::move((co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+							   registration->selection,
+							   registration->data->fragments,
+							   registration->data->variables))
+							  .errors);
 
 			if (!errors.empty())
 			{
 				throw schema_exception { std::move(errors) };
 			}
 		}
-		catch (const std::exception& ex)
+		catch (...)
 		{
 			lock.lock();
 
 			// Rethrow the exception, but don't leave it subscribed if the resolver failed.
 			spThis->removeSubscription(key);
-			throw ex;
+			throw;
 		}
 	}
 
@@ -1880,11 +1890,20 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 	const auto spThis = shared_from_this();
 	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto itrOperation = spThis->_operations.find(strSubscription);
+
+	if (itrOperation == _operations.end())
+	{
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
+	const auto optionalOrDefaultSubscription =
+		params.subscriptionObject ? std::move(params.subscriptionObject) : itrOperation->second;
 	std::list<schema_error> errors {};
 
-	if (itrOperation != spThis->_operations.end())
+	if (optionalOrDefaultSubscription)
 	{
-		const auto operation = itrOperation->second;
 		const auto registration = spThis->_subscriptions.at(params.key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifyUnsubscribe,
@@ -1900,7 +1919,7 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 		lock.unlock();
 
 		co_await params.launch;
-		errors = std::move((co_await operation->resolve(selectionSetParams,
+		errors = std::move((co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 								registration->selection,
 								registration->data->fragments,
 								registration->data->variables))

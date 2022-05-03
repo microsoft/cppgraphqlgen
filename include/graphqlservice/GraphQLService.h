@@ -1236,6 +1236,9 @@ struct [[nodiscard]] RequestSubscribeParams
 
 	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
 	std::shared_ptr<RequestState> state {};
+
+	// Optional override for the default Subscription operation object.
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 
 struct [[nodiscard]] RequestUnsubscribeParams
@@ -1245,6 +1248,9 @@ struct [[nodiscard]] RequestUnsubscribeParams
 
 	// Optional async execution awaitable.
 	await_async launch {};
+
+	// Optional override for the default Subscription operation object.
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 
 using SubscriptionArguments = std::map<std::string_view, response::Value>;
@@ -1319,6 +1325,13 @@ struct [[nodiscard]] SubscriptionData : std::enable_shared_from_this<Subscriptio
 	std::string operationName;
 	SubscriptionCallback callback;
 	const peg::ast_node& selection;
+};
+
+// Placeholder for an empty subscription object.
+class SubscriptionPlaceholder
+{
+	// Private constructor, since it should never actually be instantiated.
+	SubscriptionPlaceholder() noexcept = default;
 };
 
 // Forward declare just the class type so we can reference it in the Request::_validation member.
