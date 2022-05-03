@@ -372,6 +372,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 	if (!_loader.isIntrospection())
 	{
+		bool hasSubscription = false;
 		bool firstOperation = true;
 
 		headerFile << R"cpp(class [[nodiscard]] Operations final
@@ -382,6 +383,8 @@ public:
 
 		for (const auto& operation : _loader.getOperationTypes())
 		{
+			hasSubscription = hasSubscription || operation.operation == service::strSubscription;
+
 			if (!firstOperation)
 			{
 				headerFile << R"cpp(, )cpp";
@@ -410,6 +413,11 @@ public:
 
 				firstOperation = false;
 				headerFile << R"cpp(class T)cpp" << operation.cppType;
+
+				if (hasSubscription && operation.operation == service::strSubscription)
+				{
+					headerFile << R"cpp( = service::SubscriptionPlaceholder)cpp";
+				}
 			}
 
 			headerFile << R"cpp(>
@@ -427,6 +435,11 @@ public:
 				firstOperation = false;
 				headerFile << R"cpp(std::shared_ptr<T)cpp" << operation.cppType << R"cpp(> )cpp"
 						   << operation.operation;
+
+				if (hasSubscription && operation.operation == service::strSubscription)
+				{
+					headerFile << R"cpp( = {})cpp";
+				}
 			}
 
 			headerFile << R"cpp()
@@ -442,11 +455,27 @@ public:
 				}
 
 				firstOperation = false;
-				headerFile << R"cpp( std::make_shared<object::)cpp" << operation.cppType
-						   << R"cpp(>(std::move()cpp" << operation.operation << R"cpp()))cpp";
+
+				if (hasSubscription && operation.operation == service::strSubscription)
+				{
+					headerFile << R"cpp(
+			)cpp" << operation.operation
+							   << R"cpp( ? std::make_shared<object::)cpp" << operation.cppType
+							   << R"cpp(>(std::move()cpp" << operation.operation
+							   << R"cpp()) : std::shared_ptr<object::)cpp" << operation.cppType
+							   << R"cpp(> {})cpp";
+				}
+				else
+				{
+					headerFile << R"cpp(
+			std::make_shared<object::)cpp"
+							   << operation.cppType << R"cpp(>(std::move()cpp"
+							   << operation.operation << R"cpp()))cpp";
+				}
 			}
 
-			headerFile << R"cpp( }
+			headerFile << R"cpp(
+		}
 	{
 	}
 )cpp";
@@ -1448,7 +1477,12 @@ Operations::Operations()cpp";
 			}
 
 			firstOperation = false;
-			sourceFile << R"cpp(		{ ")cpp" << operation.operation << R"cpp(", )cpp"
+
+			std::string operationName(operation.operation);
+
+			operationName[0] =
+				static_cast<char>(std::toupper(static_cast<unsigned char>(operationName[0])));
+			sourceFile << R"cpp(		{ service::str)cpp" << operationName << R"cpp(, )cpp"
 					   << operation.operation << R"cpp( })cpp";
 		}
 

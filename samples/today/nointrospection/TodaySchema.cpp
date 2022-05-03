@@ -227,9 +227,9 @@ namespace today {
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
-		{ "query", query },
-		{ "mutation", mutation },
-		{ "subscription", subscription }
+		{ service::strQuery, query },
+		{ service::strMutation, mutation },
+		{ service::strSubscription, subscription }
 	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))

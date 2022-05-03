@@ -26,12 +26,6 @@ public:
 	explicit Mutation() = default;
 };
 
-class Subscription
-{
-public:
-	explicit Subscription() = default;
-};
-
 } // namespace graphql::validation
 
 #endif // VALIDATIONMOCK_H

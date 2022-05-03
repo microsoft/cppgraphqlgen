@@ -19,8 +19,7 @@ public:
 	static void SetUpTestCase()
 	{
 		_service = std::make_shared<validation::Operations>(std::make_shared<validation::Query>(),
-			std::make_shared<validation::Mutation>(),
-			std::make_shared<validation::Subscription>());
+			std::make_shared<validation::Mutation>());
 	}
 
 	static void TearDownTestCase()
@@ -482,7 +481,8 @@ TEST_F(ValidationExamplesCase, CounterExample121)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), size_t { 9 }) << "4 conflicting fields + 1 missing argument + 4 unused fragments";
+	EXPECT_EQ(errors.size(), size_t { 9 })
+		<< "4 conflicting fields + 1 missing argument + 4 unused fragments";
 	ASSERT_GE(errors.size(), size_t { 4 });
 	EXPECT_EQ(
 		R"js({"message":"Conflicting field type: Dog name: doesKnowCommand","locations":[{"line":3,"column":4}]})js",
@@ -687,7 +687,8 @@ TEST_F(ValidationExamplesCase, CounterExample129)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), size_t { 3 }) << "1 undefined argument + 1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 3 })
+		<< "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined argument type: Dog field: doesKnowCommand name: command","locations":[{"line":2,"column":20}]})js",
@@ -705,7 +706,8 @@ TEST_F(ValidationExamplesCase, CounterExample130)
 	auto errors =
 		service::buildErrorValues(_service->validate(query)).release<response::ListType>();
 
-	EXPECT_EQ(errors.size(), size_t { 3 }) << "1 undefined argument + 1 missing argument + 1 unused fragment";
+	EXPECT_EQ(errors.size(), size_t { 3 })
+		<< "1 undefined argument + 1 missing argument + 1 unused fragment";
 	ASSERT_GE(errors.size(), size_t { 1 });
 	EXPECT_EQ(
 		R"js({"message":"Undefined argument directive: include name: unless","locations":[{"line":2,"column":48}]})js",
