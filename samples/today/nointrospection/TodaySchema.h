@@ -148,9 +148,13 @@ class [[nodiscard]] Operations final
 public:
 	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
-	template <class TQuery, class TMutation, class TSubscription>
-	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription)
-		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)), std::make_shared<object::Subscription>(std::move(subscription)) }
+	template <class TQuery, class TMutation, class TSubscription = service::SubscriptionPlaceholder>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription = {})
+		: Operations {
+			std::make_shared<object::Query>(std::move(query)),
+			std::make_shared<object::Mutation>(std::move(mutation)),
+			subscription ? std::make_shared<object::Subscription>(std::move(subscription)) : std::shared_ptr<object::Subscription> {}
+		}
 	{
 	}
 

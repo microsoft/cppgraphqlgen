@@ -77,7 +77,10 @@ public:
 
 	template <class TQuery, class TMutation>
 	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
-		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)) }
+		: Operations {
+			std::make_shared<object::Query>(std::move(query)),
+			std::make_shared<object::Mutation>(std::move(mutation))
+		}
 	{
 	}
 

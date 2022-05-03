@@ -98,8 +98,8 @@ namespace learn {
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)
 	: service::Request({
-		{ "query", query },
-		{ "mutation", mutation }
+		{ service::strQuery, query },
+		{ service::strMutation, mutation }
 	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
