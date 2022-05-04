@@ -14,118 +14,7 @@
 using namespace std::literals;
 
 namespace graphql::client {
-
-using namespace query::Query;
-
-template <>
-Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
-{
-	Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
-
-	if (response.type() == response::Type::Map)
-	{
-		auto members = response.release<response::MapType>();
-
-		for (auto& member : members)
-		{
-			if (member.first == R"js(hasNextPage)js"sv)
-			{
-				result.hasNextPage = ModifiedResponse<bool>::parse(std::move(member.second));
-				continue;
-			}
-		}
-	}
-
-	return result;
-}
-
-template <>
-Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
-{
-	Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
-
-	if (response.type() == response::Type::Map)
-	{
-		auto members = response.release<response::MapType>();
-
-		for (auto& member : members)
-		{
-			if (member.first == R"js(id)js"sv)
-			{
-				result.id = ModifiedResponse<response::IdType>::parse(std::move(member.second));
-				continue;
-			}
-			if (member.first == R"js(when)js"sv)
-			{
-				result.when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(std::move(member.second));
-				continue;
-			}
-			if (member.first == R"js(subject)js"sv)
-			{
-				result.subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
-				continue;
-			}
-			if (member.first == R"js(isNow)js"sv)
-			{
-				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
-				continue;
-			}
-		}
-	}
-
-	return result;
-}
-
-template <>
-Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
-{
-	Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
-
-	if (response.type() == response::Type::Map)
-	{
-		auto members = response.release<response::MapType>();
-
-		for (auto& member : members)
-		{
-			if (member.first == R"js(node)js"sv)
-			{
-				result.node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
-				continue;
-			}
-		}
-	}
-
-	return result;
-}
-
-template <>
-Response::appointments_AppointmentConnection ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value&& response)
-{
-	Response::appointments_AppointmentConnection result;
-
-	if (response.type() == response::Type::Map)
-	{
-		auto members = response.release<response::MapType>();
-
-		for (auto& member : members)
-		{
-			if (member.first == R"js(pageInfo)js"sv)
-			{
-				result.pageInfo = ModifiedResponse<Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(std::move(member.second));
-				continue;
-			}
-			if (member.first == R"js(edges)js"sv)
-			{
-				result.edges = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
-				continue;
-			}
-		}
-	}
-
-	return result;
-}
-
-namespace query::Query {
+namespace benchmark {
 
 const std::string& GetRequestText() noexcept
 {
@@ -167,6 +56,125 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace benchmark
+
+template <>
+query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
+{
+	query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(hasNextPage)js"sv)
+			{
+				result.hasNextPage = ModifiedResponse<bool>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+template <>
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+{
+	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(id)js"sv)
+			{
+				result.id = ModifiedResponse<response::IdType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(when)js"sv)
+			{
+				result.when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(subject)js"sv)
+			{
+				result.subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isNow)js"sv)
+			{
+				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+template <>
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+{
+	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(node)js"sv)
+			{
+				result.node = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+template <>
+query::Query::Response::appointments_AppointmentConnection ModifiedResponse<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+{
+	query::Query::Response::appointments_AppointmentConnection result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(pageInfo)js"sv)
+			{
+				result.pageInfo = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(edges)js"sv)
+			{
+				result.edges = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+namespace query::Query {
+
+const std::string& GetOperationName() noexcept
+{
+	static const auto s_name = R"gql()gql"s;
+
+	return s_name;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	Response result;
@@ -179,7 +187,7 @@ Response parseResponse(response::Value&& response)
 		{
 			if (member.first == R"js(appointments)js"sv)
 			{
-				result.appointments = ModifiedResponse<Response::appointments_AppointmentConnection>::parse(std::move(member.second));
+				result.appointments = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection>::parse(std::move(member.second));
 				continue;
 			}
 		}

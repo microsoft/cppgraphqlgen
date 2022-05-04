@@ -43,39 +43,47 @@ RequestLoader::RequestLoader(RequestOptions&& requestOptions, const SchemaLoader
 	findOperation();
 	collectFragments();
 
-	const peg::ast_node* selection = nullptr;
-
-	peg::on_first_child<peg::selection_set>(*_operation, [&selection](const peg::ast_node& child) {
-		selection = &child;
-	});
-
-	if (!selection)
+	for (auto& operation : _operations)
 	{
-		throw std::logic_error("Request successfully validated, but there was no selection set on "
-							   "the operation object!");
-	}
+		const peg::ast_node* selection = nullptr;
 
-	SelectionVisitor visitor { _schemaLoader, _fragments, _schema, _responseType.type };
+		peg::on_first_child<peg::selection_set>(*operation.operation,
+			[&selection](const peg::ast_node& child) {
+				selection = &child;
+			});
 
-	visitor.visit(*selection);
-	_responseType.fields = visitor.getFields();
+		if (!selection)
+		{
+			throw std::logic_error(
+				"Request successfully validated, but there was no selection set on "
+				"the operation object!");
+		}
 
-	collectVariables();
+		SelectionVisitor visitor { _schemaLoader,
+			_fragments,
+			_schema,
+			operation.responseType.type };
 
-	// Variables can reference both input types and enums.
-	for (const auto& variable : _variables)
-	{
-		collectInputTypes(variable.inputType.type);
-		collectEnums(variable.inputType.type);
-	}
+		visitor.visit(*selection);
+		operation.responseType.fields = visitor.getFields();
 
-	// Handle nested input types by fully declaring the dependencies first.
-	reorderInputTypeDependencies();
+		collectVariables(operation);
 
-	// The response can also reference enums.
-	for (const auto& responseField : _responseType.fields)
-	{
-		collectEnums(responseField);
+		// Variables can reference both input types and enums.
+		for (const auto& variable : operation.variables)
+		{
+			collectInputTypes(operation, variable.inputType.type);
+			collectEnums(operation, variable.inputType.type);
+		}
+
+		// Handle nested input types by fully declaring the dependencies first.
+		reorderInputTypeDependencies(operation);
+
+		// The response can also reference enums.
+		for (const auto& responseField : operation.responseType.fields)
+		{
+			collectEnums(operation, responseField);
+		}
 	}
 }
 
@@ -84,31 +92,36 @@ std::string_view RequestLoader::getRequestFilename() const noexcept
 	return _requestOptions.requestFilename;
 }
 
-std::string_view RequestLoader::getOperationDisplayName() const noexcept
+const OperationList& RequestLoader::getOperations() const noexcept
 {
-	return _operationName.empty() ? "(unnamed)"sv : _operationName;
+	return _operations;
 }
 
-std::string RequestLoader::getOperationNamespace() const noexcept
+std::string_view RequestLoader::getOperationDisplayName(const Operation& operation) const noexcept
+{
+	return operation.name.empty() ? "(unnamed)"sv : operation.name;
+}
+
+std::string RequestLoader::getOperationNamespace(const Operation& operation) const noexcept
 {
 	std::string result;
 
-	if (_operationName.empty())
+	if (operation.name.empty())
 	{
-		result = _operationType;
+		result = operation.type;
 		result.front() = static_cast<char>(std::toupper(result.front()));
 	}
 	else
 	{
-		result = _operationName;
+		result = operation.name;
 	}
 
 	return result;
 }
 
-std::string_view RequestLoader::getOperationType() const noexcept
+std::string_view RequestLoader::getOperationType(const Operation& operation) const noexcept
 {
-	return _operationType;
+	return operation.type;
 }
 
 std::string_view RequestLoader::getRequestText() const noexcept
@@ -116,24 +129,26 @@ std::string_view RequestLoader::getRequestText() const noexcept
 	return trimWhitespace(_requestText);
 }
 
-const ResponseType& RequestLoader::getResponseType() const noexcept
+const ResponseType& RequestLoader::getResponseType(const Operation& operation) const noexcept
 {
-	return _responseType;
+	return operation.responseType;
 }
 
-const RequestVariableList& RequestLoader::getVariables() const noexcept
+const RequestVariableList& RequestLoader::getVariables(const Operation& operation) const noexcept
 {
-	return _variables;
+	return operation.variables;
 }
 
-const RequestInputTypeList& RequestLoader::getReferencedInputTypes() const noexcept
+const RequestInputTypeList& RequestLoader::getReferencedInputTypes(
+	const Operation& operation) const noexcept
 {
-	return _referencedInputTypes;
+	return operation.referencedInputTypes;
 }
 
-const RequestSchemaTypeList& RequestLoader::getReferencedEnums() const noexcept
+const RequestSchemaTypeList& RequestLoader::getReferencedEnums(
+	const Operation& operation) const noexcept
 {
-	return _referencedEnums;
+	return operation.referencedEnums;
 }
 
 std::string RequestLoader::getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept
@@ -710,60 +725,76 @@ void RequestLoader::findOperation()
 					name = child.string_view();
 				});
 
-			if (_requestOptions.operationName.empty() || name == _requestOptions.operationName)
+			if (!_requestOptions.operationName || name == *_requestOptions.operationName)
 			{
-				_operationName = name;
-				_operationType = operationType;
-				_operation = &operationDefinition;
-				return true;
+				_operations.emplace_back(&operationDefinition, name, operationType);
+
+				if (_requestOptions.operationName)
+				{
+					return true;
+				}
 			}
 
 			return false;
 		});
 
-	if (!_operation)
+	if (_operations.empty())
 	{
 		std::ostringstream message;
 
 		message << "Missing operation";
 
-		if (!_operationName.empty())
+		if (_requestOptions.operationName && !_requestOptions.operationName->empty())
 		{
-			message << " name: " << _operationName;
+			message << " name: " << *_requestOptions.operationName;
 		}
 
 		throw service::schema_exception { { message.str() } };
 	}
 
-	if (_operationType == service::strQuery)
-	{
-		_responseType.type = _schema->queryType();
-	}
-	else if (_operationType == service::strMutation)
-	{
-		_responseType.type = _schema->mutationType();
-	}
-	else if (_operationType == service::strSubscription)
-	{
-		_responseType.type = _schema->subscriptionType();
-	}
+	std::list<service::schema_error> errors;
 
-	if (!_responseType.type)
+	for (auto& operation : _operations)
 	{
-		std::ostringstream message;
-
-		message << "Unsupported operation type: " << _operationType;
-
-		if (!_operationName.empty())
+		if (operation.type == service::strQuery)
 		{
-			message << " name: " << _operationName;
+			operation.responseType.type = _schema->queryType();
+		}
+		else if (operation.type == service::strMutation)
+		{
+			operation.responseType.type = _schema->mutationType();
+		}
+		else if (operation.type == service::strSubscription)
+		{
+			operation.responseType.type = _schema->subscriptionType();
 		}
 
-		throw service::schema_exception { { message.str() } };
+		if (!operation.responseType.type)
+		{
+			std::ostringstream message;
+			const auto position = operation.operation->begin();
+
+			message << "Unsupported operation type: " << operation.type;
+
+			if (!operation.name.empty())
+			{
+				message << " name: " << operation.name;
+			}
+
+			errors.emplace_back(message.str(),
+				service::schema_location { position.line, position.column });
+
+			continue;
+		}
+
+		operation.responseType.cppType = SchemaLoader::getSafeCppName(
+			operation.name.empty() ? operation.responseType.type->name() : operation.name);
 	}
 
-	_responseType.cppType = SchemaLoader::getSafeCppName(
-		_operationName.empty() ? _responseType.type->name() : _operationName);
+	if (!errors.empty())
+	{
+		throw service::schema_exception { std::move(errors) };
+	}
 }
 
 void RequestLoader::collectFragments() noexcept
@@ -773,10 +804,10 @@ void RequestLoader::collectFragments() noexcept
 	});
 }
 
-void RequestLoader::collectVariables() noexcept
+void RequestLoader::collectVariables(Operation& operation) noexcept
 {
-	peg::for_each_child<peg::variable>(*_operation,
-		[this](const peg::ast_node& variableDefinition) {
+	peg::for_each_child<peg::variable>(*operation.operation,
+		[this, &operation](const peg::ast_node& variableDefinition) {
 			RequestVariable variable;
 			TypeVisitor variableType;
 			service::schema_location defaultValueLocation;
@@ -827,27 +858,28 @@ void RequestLoader::collectVariables() noexcept
 
 			variable.position = variableDefinition.begin();
 
-			_variables.push_back(std::move(variable));
+			operation.variables.push_back(std::move(variable));
 		});
 }
 
-void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noexcept
+void RequestLoader::collectInputTypes(
+	Operation& operation, const RequestSchemaType& variableType) noexcept
 {
 	switch (variableType->kind())
 	{
 		case introspection::TypeKind::INPUT_OBJECT:
 		{
-			if (_inputTypeNames.emplace(variableType->name()).second)
+			if (operation.inputTypeNames.emplace(variableType->name()).second)
 			{
-				_referencedInputTypes.push_back({ variableType });
+				operation.referencedInputTypes.push_back({ variableType });
 
 				// Input types can reference other input types and enums.
 				for (const auto& inputField : variableType->inputFields())
 				{
 					const auto fieldType = inputField->type().lock();
 
-					collectInputTypes(fieldType);
-					collectEnums(fieldType);
+					collectInputTypes(operation, fieldType);
+					collectEnums(operation, fieldType);
 				}
 			}
 
@@ -857,7 +889,7 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 		case introspection::TypeKind::LIST:
 		case introspection::TypeKind::NON_NULL:
 		{
-			collectInputTypes({ variableType->ofType().lock() });
+			collectInputTypes(operation, { variableType->ofType().lock() });
 			break;
 		}
 
@@ -866,16 +898,16 @@ void RequestLoader::collectInputTypes(const RequestSchemaType& variableType) noe
 	}
 }
 
-void RequestLoader::reorderInputTypeDependencies()
+void RequestLoader::reorderInputTypeDependencies(Operation& operation)
 {
-	if (_referencedInputTypes.empty())
+	if (operation.referencedInputTypes.empty())
 	{
 		return;
 	}
 
 	// Build the dependency list for each input type.
-	std::for_each(_referencedInputTypes.begin(),
-		_referencedInputTypes.end(),
+	std::for_each(operation.referencedInputTypes.begin(),
+		operation.referencedInputTypes.end(),
 		[](RequestInputType& entry) noexcept {
 			const auto& fields = entry.type->inputFields();
 			std::for_each(fields.begin(),
@@ -899,13 +931,13 @@ void RequestLoader::reorderInputTypeDependencies()
 		});
 
 	std::unordered_set<std::string_view> handled;
-	auto itr = _referencedInputTypes.begin();
+	auto itr = operation.referencedInputTypes.begin();
 
-	while (itr != _referencedInputTypes.end())
+	while (itr != operation.referencedInputTypes.end())
 	{
 		// Put all of the input types without unhandled dependencies at the front.
 		const auto itrDependent = std::stable_partition(itr,
-			_referencedInputTypes.end(),
+			operation.referencedInputTypes.end(),
 			[&handled](const RequestInputType& entry) noexcept {
 				return std::find_if(entry.dependencies.cbegin(),
 						   entry.dependencies.cend(),
@@ -928,7 +960,7 @@ void RequestLoader::reorderInputTypeDependencies()
 			throw std::logic_error(error.str());
 		}
 
-		if (itrDependent != _referencedInputTypes.end())
+		if (itrDependent != operation.referencedInputTypes.end())
 		{
 			std::for_each(itr, itrDependent, [&handled](const RequestInputType& entry) noexcept {
 				handled.insert(entry.type->name());
@@ -939,15 +971,16 @@ void RequestLoader::reorderInputTypeDependencies()
 	}
 }
 
-void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
+void RequestLoader::collectEnums(
+	Operation& operation, const RequestSchemaType& variableType) noexcept
 {
 	switch (variableType->kind())
 	{
 		case introspection::TypeKind::ENUM:
 		{
-			if (_enumNames.emplace(variableType->name()).second)
+			if (operation.enumNames.emplace(variableType->name()).second)
 			{
-				_referencedEnums.push_back(variableType);
+				operation.referencedEnums.push_back(variableType);
 			}
 
 			break;
@@ -956,7 +989,7 @@ void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
 		case introspection::TypeKind::LIST:
 		case introspection::TypeKind::NON_NULL:
 		{
-			collectEnums(variableType->ofType().lock());
+			collectEnums(operation, variableType->ofType().lock());
 			break;
 		}
 
@@ -965,15 +998,15 @@ void RequestLoader::collectEnums(const RequestSchemaType& variableType) noexcept
 	}
 }
 
-void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
+void RequestLoader::collectEnums(Operation& operation, const ResponseField& responseField) noexcept
 {
 	switch (responseField.type->kind())
 	{
 		case introspection::TypeKind::ENUM:
 		{
-			if (_enumNames.emplace(responseField.type->name()).second)
+			if (operation.enumNames.emplace(responseField.type->name()).second)
 			{
-				_referencedEnums.push_back(responseField.type);
+				operation.referencedEnums.push_back(responseField.type);
 			}
 
 			break;
@@ -985,7 +1018,7 @@ void RequestLoader::collectEnums(const ResponseField& responseField) noexcept
 		{
 			for (const auto& field : responseField.children)
 			{
-				collectEnums(field);
+				collectEnums(operation, field);
 			}
 
 			break;
@@ -1104,8 +1137,10 @@ void RequestLoader::SelectionVisitor::visitField(const peg::ast_node& field)
 		responseField.type = (*itr)->type().lock();
 	}
 
-	std::tie(responseField.type, responseField.modifiers) =
-		unwrapSchemaType(std::move(responseField.type));
+	auto [unwrappedType, unwrappedModifiers] = unwrapSchemaType(std::move(responseField.type));
+
+	responseField.type = std::move(unwrappedType);
+	responseField.modifiers = std::move(unwrappedModifiers);
 
 	const peg::ast_node* selection = nullptr;
 

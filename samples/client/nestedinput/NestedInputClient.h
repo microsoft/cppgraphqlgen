@@ -22,6 +22,8 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+namespace graphql::client {
+
 /// <summary>
 /// Operation: query testQuery
 /// </summary>
@@ -34,13 +36,23 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::client::query::testQuery {
+namespace nestedinput {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
+
+} // namespace nestedinput
+
+namespace query::testQuery {
+
+using nestedinput::GetRequestText;
+using nestedinput::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
 
 struct Variables
 {
@@ -92,6 +104,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::query::testQuery
+} // namespace query::testQuery
+} // namespace graphql::client
 
 #endif // NESTEDINPUTCLIENT_H

@@ -7,6 +7,7 @@ add_subdirectory(query)
 add_subdirectory(mutate)
 add_subdirectory(subscribe)
 add_subdirectory(nestedinput)
+add_subdirectory(multiple)
 
 add_subdirectory(benchmark)
 

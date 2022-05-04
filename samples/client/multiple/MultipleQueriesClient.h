@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYCLIENT_H
-#define QUERYCLIENT_H
+#ifndef MULTIPLEQUERIESCLIENT_H
+#define MULTIPLEQUERIESCLIENT_H
 
 #include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -25,13 +25,13 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 namespace graphql::client {
 
 /// <summary>
-/// Operation: query (unnamed)
+/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous
 /// </summary>
 /// <code class="language-graphql">
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// query {
+/// query Appointments {
 ///   appointments {
 ///     edges {
 ///       node {
@@ -43,6 +43,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
+/// 
+/// query Tasks {
 ///   tasks {
 ///     edges {
 ///       node {
@@ -53,6 +56,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
+/// 
+/// query UnreadCounts {
 ///   unreadCounts {
 ///     edges {
 ///       node {
@@ -63,7 +69,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
 /// 
+/// query Miscellaneous {
 ///   # Read a field with an enum type
 ///   testTaskState
 /// 
@@ -90,7 +98,7 @@ namespace graphql::client {
 ///   default
 /// }
 /// </code>
-namespace query {
+namespace multiple {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -98,23 +106,15 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
-} // namespace query
+} // namespace multiple
 
-namespace query::Query {
+namespace query::Appointments {
 
-using query::GetRequestText;
-using query::GetRequestObject;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 const std::string& GetOperationName() noexcept;
-
-enum class [[nodiscard]] TaskState
-{
-	New,
-	Started,
-	Complete,
-	Unassigned,
-};
 
 struct Response
 {
@@ -137,6 +137,23 @@ struct Response
 		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
+	appointments_AppointmentConnection appointments {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::Appointments
+
+namespace query::Tasks {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+struct Response
+{
 	struct tasks_TaskConnection
 	{
 		struct edges_TaskEdge
@@ -155,6 +172,23 @@ struct Response
 		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
 
+	tasks_TaskConnection tasks {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::Tasks
+
+namespace query::UnreadCounts {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+struct Response
+{
 	struct unreadCounts_FolderConnection
 	{
 		struct edges_FolderEdge
@@ -173,6 +207,31 @@ struct Response
 		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
+	unreadCounts_FolderConnection unreadCounts {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::UnreadCounts
+
+namespace query::Miscellaneous {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+enum class [[nodiscard]] TaskState
+{
+	New,
+	Started,
+	Complete,
+	Unassigned,
+};
+
+struct Response
+{
 	struct anyType_UnionType
 	{
 		std::string _typename {};
@@ -184,9 +243,6 @@ struct Response
 		bool isNow {};
 	};
 
-	appointments_AppointmentConnection appointments {};
-	tasks_TaskConnection tasks {};
-	unreadCounts_FolderConnection unreadCounts {};
 	TaskState testTaskState {};
 	std::vector<std::optional<anyType_UnionType>> anyType {};
 	std::optional<std::string> default_ {};
@@ -194,7 +250,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace query::Query
+} // namespace query::Miscellaneous
 } // namespace graphql::client
 
-#endif // QUERYCLIENT_H
+#endif // MULTIPLEQUERIESCLIENT_H

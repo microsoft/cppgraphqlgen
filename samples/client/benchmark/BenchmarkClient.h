@@ -22,6 +22,8 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+namespace graphql::client {
+
 /// <summary>
 /// Operation: query (unnamed)
 /// </summary>
@@ -45,13 +47,23 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::client::query::Query {
+namespace benchmark {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
+
+} // namespace benchmark
+
+namespace query::Query {
+
+using benchmark::GetRequestText;
+using benchmark::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
 
 struct Response
 {
@@ -84,6 +96,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::query::Query
+} // namespace query::Query
+} // namespace graphql::client
 
 #endif // BENCHMARKCLIENT_H

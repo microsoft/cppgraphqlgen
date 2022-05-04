@@ -22,6 +22,8 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+namespace graphql::client {
+
 /// <summary>
 /// Operation: mutation CompleteTaskMutation
 /// </summary>
@@ -40,13 +42,23 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::client::mutation::CompleteTaskMutation {
+namespace mutate {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
+
+} // namespace mutate
+
+namespace mutation::CompleteTaskMutation {
+
+using mutate::GetRequestText;
+using mutate::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
 
 enum class [[nodiscard]] TaskState
 {
@@ -92,6 +104,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::mutation::CompleteTaskMutation
+} // namespace mutation::CompleteTaskMutation
+} // namespace graphql::client
 
 #endif // MUTATECLIENT_H
