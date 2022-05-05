@@ -727,7 +727,7 @@ void RequestLoader::findOperation()
 
 			if (!_requestOptions.operationName || name == *_requestOptions.operationName)
 			{
-				_operations.push_back(Operation { &operationDefinition, name, operationType });
+				_operations.emplace_back(&operationDefinition, name, operationType);
 
 				if (_requestOptions.operationName)
 				{
