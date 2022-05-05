@@ -74,7 +74,7 @@ enum class [[nodiscard]] CatCommand
 	};
 }
 
-struct ComplexInput
+struct [[nodiscard]] ComplexInput
 {
 	std::optional<std::string> name {};
 	std::optional<std::string> owner {};

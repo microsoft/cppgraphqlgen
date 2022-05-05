@@ -51,7 +51,7 @@ enum class [[nodiscard]] Episode
 	};
 }
 
-struct ReviewInput
+struct [[nodiscard]] ReviewInput
 {
 	int stars {};
 	std::optional<std::string> commentary {};

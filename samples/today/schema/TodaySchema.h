@@ -54,7 +54,7 @@ enum class [[nodiscard]] TaskState
 	};
 }
 
-struct CompleteTaskInput
+struct [[nodiscard]] CompleteTaskInput
 {
 	response::IdType id {};
 	std::optional<TaskState> testTaskState {};
@@ -62,27 +62,30 @@ struct CompleteTaskInput
 	std::optional<std::string> clientMutationId {};
 };
 
-struct ThirdNestedInput
+struct [[nodiscard]] SecondNestedInput;
+
+struct [[nodiscard]] ThirdNestedInput
+{
+	response::IdType id {};
+	std::unique_ptr<SecondNestedInput> second {};
+};
+
+struct [[nodiscard]] FourthNestedInput
 {
 	response::IdType id {};
 };
 
-struct FourthNestedInput
-{
-	response::IdType id {};
-};
-
-struct IncludeNullableSelfInput
+struct [[nodiscard]] IncludeNullableSelfInput
 {
 	std::unique_ptr<IncludeNullableSelfInput> self {};
 };
 
-struct IncludeNonNullableListSelfInput
+struct [[nodiscard]] IncludeNonNullableListSelfInput
 {
 	std::vector<IncludeNonNullableListSelfInput> selves {};
 };
 
-struct StringOperationFilterInput
+struct [[nodiscard]] StringOperationFilterInput
 {
 	std::optional<std::vector<StringOperationFilterInput>> and_ {};
 	std::optional<std::vector<StringOperationFilterInput>> or_ {};
@@ -104,13 +107,13 @@ struct SecondNestedInput
 	ThirdNestedInput third {};
 };
 
-struct ForwardDeclaredInput
+struct [[nodiscard]] ForwardDeclaredInput
 {
 	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
 	IncludeNonNullableListSelfInput listSelves {};
 };
 
-struct FirstNestedInput
+struct [[nodiscard]] FirstNestedInput
 {
 	response::IdType id {};
 	SecondNestedInput second {};

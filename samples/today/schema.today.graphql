@@ -179,6 +179,7 @@ input SecondNestedInput {
 
 input ThirdNestedInput {
     id: ID!
+    second: SecondNestedInput
 }
 
 input FourthNestedInput {
