@@ -269,7 +269,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				pendingSeparator.reset();
 			}
 
-			headerFile << R"cpp(struct )cpp" << cppType << R"cpp(
+			headerFile << R"cpp(struct [[nodiscard]] )cpp" << cppType << R"cpp(
 {
 )cpp";
 
@@ -337,7 +337,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 		if (!variables.empty())
 		{
-			headerFile << R"cpp(struct Variables
+			headerFile << R"cpp(struct [[nodiscard]] Variables
 {
 )cpp";
 
@@ -352,7 +352,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 			headerFile << R"cpp(};
 
-response::Value serializeVariables(Variables&& variables);
+[[nodiscard]] response::Value serializeVariables(Variables&& variables);
 )cpp";
 
 			pendingSeparator.add();
@@ -362,7 +362,7 @@ response::Value serializeVariables(Variables&& variables);
 
 		const auto& responseType = _requestLoader.getResponseType(operation);
 
-		headerFile << R"cpp(struct Response
+		headerFile << R"cpp(struct [[nodiscard]] Response
 {)cpp";
 
 		pendingSeparator.add();
@@ -390,7 +390,7 @@ response::Value serializeVariables(Variables&& variables);
 
 		headerFile << R"cpp(};
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 )cpp";
 
@@ -450,10 +450,10 @@ void Generator::outputGetRequestDeclaration(std::ostream& headerFile) const noex
 {
 	headerFile << R"cpp(
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 )cpp";
 }
 
@@ -461,7 +461,7 @@ void Generator::outputGetOperationNameDeclaration(std::ostream& headerFile) cons
 {
 	headerFile << R"cpp(
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
 )cpp";
 }
@@ -486,7 +486,7 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	std::unordered_set<std::string_view> fieldNames;
 	PendingBlankLine pendingSeparator { headerFile };
 
-	headerFile << indentTabs << R"cpp(struct )cpp" << getResponseFieldCppType(responseField)
+	headerFile << indentTabs << R"cpp(struct [[nodiscard]] )cpp" << getResponseFieldCppType(responseField)
 			   << R"cpp(
 )cpp" << indentTabs
 			   << R"cpp({)cpp";

@@ -43,10 +43,10 @@ namespace graphql::client {
 namespace subscribe {
 
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
 } // namespace subscribe
 
@@ -56,11 +56,11 @@ using subscribe::GetRequestText;
 using subscribe::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct nextAppointment_Appointment
+	struct [[nodiscard]] nextAppointment_Appointment
 	{
 		response::IdType nextAppointmentId {};
 		std::optional<response::Value> when {};
@@ -71,7 +71,7 @@ struct Response
 	std::optional<nextAppointment_Appointment> nextAppointment {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace subscription::TestSubscription
 } // namespace graphql::client

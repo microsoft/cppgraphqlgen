@@ -50,10 +50,10 @@ namespace graphql::client {
 namespace benchmark {
 
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
 } // namespace benchmark
 
@@ -63,20 +63,20 @@ using benchmark::GetRequestText;
 using benchmark::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct appointments_AppointmentConnection
+	struct [[nodiscard]] appointments_AppointmentConnection
 	{
-		struct pageInfo_PageInfo
+		struct [[nodiscard]] pageInfo_PageInfo
 		{
 			bool hasNextPage {};
 		};
 
-		struct edges_AppointmentEdge
+		struct [[nodiscard]] edges_AppointmentEdge
 		{
-			struct node_Appointment
+			struct [[nodiscard]] node_Appointment
 			{
 				response::IdType id {};
 				std::optional<response::Value> when {};
@@ -94,7 +94,7 @@ struct Response
 	appointments_AppointmentConnection appointments {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace query::Query
 } // namespace graphql::client

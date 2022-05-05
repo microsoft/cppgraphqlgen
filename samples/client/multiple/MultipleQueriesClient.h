@@ -112,10 +112,10 @@ namespace graphql::client {
 namespace multiple {
 
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
 enum class [[nodiscard]] TaskState
 {
@@ -125,7 +125,7 @@ enum class [[nodiscard]] TaskState
 	Unassigned,
 };
 
-struct CompleteTaskInput
+struct [[nodiscard]] CompleteTaskInput
 {
 	response::IdType id {};
 	std::optional<TaskState> testTaskState {};
@@ -141,15 +141,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct appointments_AppointmentConnection
+	struct [[nodiscard]] appointments_AppointmentConnection
 	{
-		struct edges_AppointmentEdge
+		struct [[nodiscard]] edges_AppointmentEdge
 		{
-			struct node_Appointment
+			struct [[nodiscard]] node_Appointment
 			{
 				response::IdType id {};
 				std::optional<std::string> subject {};
@@ -167,7 +167,7 @@ struct Response
 	appointments_AppointmentConnection appointments {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace query::Appointments
 
@@ -177,15 +177,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct tasks_TaskConnection
+	struct [[nodiscard]] tasks_TaskConnection
 	{
-		struct edges_TaskEdge
+		struct [[nodiscard]] edges_TaskEdge
 		{
-			struct node_Task
+			struct [[nodiscard]] node_Task
 			{
 				response::IdType id {};
 				std::optional<std::string> title {};
@@ -202,7 +202,7 @@ struct Response
 	tasks_TaskConnection tasks {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace query::Tasks
 
@@ -212,15 +212,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct unreadCounts_FolderConnection
+	struct [[nodiscard]] unreadCounts_FolderConnection
 	{
-		struct edges_FolderEdge
+		struct [[nodiscard]] edges_FolderEdge
 		{
-			struct node_Folder
+			struct [[nodiscard]] node_Folder
 			{
 				response::IdType id {};
 				std::optional<std::string> name {};
@@ -237,7 +237,7 @@ struct Response
 	unreadCounts_FolderConnection unreadCounts {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace query::UnreadCounts
 
@@ -247,13 +247,13 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
 using multiple::TaskState;
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct anyType_UnionType
+	struct [[nodiscard]] anyType_UnionType
 	{
 		std::string _typename {};
 		response::IdType id {};
@@ -269,7 +269,7 @@ struct Response
 	std::optional<std::string> default_ {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace query::Miscellaneous
 
@@ -279,25 +279,25 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
 using multiple::TaskState;
 
 using multiple::CompleteTaskInput;
 
-struct Variables
+struct [[nodiscard]] Variables
 {
 	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 
-response::Value serializeVariables(Variables&& variables);
+[[nodiscard]] response::Value serializeVariables(Variables&& variables);
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct completedTask_CompleteTaskPayload
+	struct [[nodiscard]] completedTask_CompleteTaskPayload
 	{
-		struct completedTask_Task
+		struct [[nodiscard]] completedTask_Task
 		{
 			response::IdType completedTaskId {};
 			std::optional<std::string> title {};
@@ -311,7 +311,7 @@ struct Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
