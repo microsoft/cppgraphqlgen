@@ -266,16 +266,15 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
-			forwardDeclared.insert(inputType.type);
-
 			if (!inputType.declarations.empty())
 			{
 				// Forward declare nullable dependencies
 				for (auto declaration : inputType.declarations)
 				{
-					if (forwardDeclared.insert(declaration).second)
+					if (declaration != inputType.cppType
+						&& forwardDeclared.insert(declaration).second)
 					{
-						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+						headerFile << R"cpp(struct [[nodiscard]] )cpp" << declaration << R"cpp(;
 )cpp";
 						pendingSeparator.add();
 					}
@@ -284,9 +283,19 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				pendingSeparator.reset();
 			}
 
-			headerFile << R"cpp(struct )cpp" << inputType.cppType << R"cpp(
+			headerFile << R"cpp(struct )cpp";
+
+			if (forwardDeclared.find(inputType.cppType) == forwardDeclared.end())
+			{
+				headerFile << R"cpp([[nodiscard]] )cpp";
+			}
+
+			headerFile << inputType.cppType << R"cpp(
 {
 )cpp";
+
+			forwardDeclared.insert(inputType.cppType);
+
 			for (const auto& inputField : inputType.fields)
 			{
 				headerFile << getFieldDeclaration(inputField);

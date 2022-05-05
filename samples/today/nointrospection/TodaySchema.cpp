@@ -115,9 +115,11 @@ template <>
 today::ThirdNestedInput ModifiedArgument<today::ThirdNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
+	auto valueSecond = service::ModifiedArgument<today::SecondNestedInput>::require<service::TypeModifier::Nullable>("second", value);
 
 	return {
-		std::move(valueId)
+		std::move(valueId),
+		std::move(valueSecond)
 	};
 }
 
@@ -312,7 +314,8 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		schema::InputValue::Make(R"gql(clientMutationId)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
 	});
 	typeThirdNestedInput->AddInputValues({
-		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
+		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(second)gql"sv, R"md()md"sv, schema->LookupType(R"gql(SecondNestedInput)gql"sv), R"gql()gql"sv)
 	});
 	typeFourthNestedInput->AddInputValues({
 		schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)

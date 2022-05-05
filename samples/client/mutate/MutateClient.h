@@ -14,9 +14,9 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.2.0
+// Check if the library version is compatible with clientgen 4.3.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 3, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
@@ -45,10 +45,10 @@ namespace graphql::client {
 namespace mutate {
 
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
 enum class [[nodiscard]] TaskState
 {
@@ -58,7 +58,7 @@ enum class [[nodiscard]] TaskState
 	Unassigned,
 };
 
-struct CompleteTaskInput
+struct [[nodiscard]] CompleteTaskInput
 {
 	response::IdType id {};
 	std::optional<TaskState> testTaskState {};
@@ -74,25 +74,25 @@ using mutate::GetRequestText;
 using mutate::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-const std::string& GetOperationName() noexcept;
+[[nodiscard]] const std::string& GetOperationName() noexcept;
 
 using mutate::TaskState;
 
 using mutate::CompleteTaskInput;
 
-struct Variables
+struct [[nodiscard]] Variables
 {
 	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 
-response::Value serializeVariables(Variables&& variables);
+[[nodiscard]] response::Value serializeVariables(Variables&& variables);
 
-struct Response
+struct [[nodiscard]] Response
 {
-	struct completedTask_CompleteTaskPayload
+	struct [[nodiscard]] completedTask_CompleteTaskPayload
 	{
-		struct completedTask_Task
+		struct [[nodiscard]] completedTask_Task
 		{
 			response::IdType completedTaskId {};
 			std::optional<std::string> title {};
@@ -106,7 +106,7 @@ struct Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-Response parseResponse(response::Value&& response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client

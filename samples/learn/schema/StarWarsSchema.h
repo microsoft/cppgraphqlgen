@@ -10,9 +10,9 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.2.0
+// Check if the library version is compatible with schemagen 4.3.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 2, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 3, "regenerate with schemagen: minor version mismatch");
 
 #include <array>
 #include <memory>
@@ -51,7 +51,7 @@ enum class [[nodiscard]] Episode
 	};
 }
 
-struct ReviewInput
+struct [[nodiscard]] ReviewInput
 {
 	int stars {};
 	std::optional<std::string> commentary {};

@@ -5,6 +5,8 @@
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
+#include <tuple>
+
 using namespace std::literals;
 
 namespace graphql::schema {
