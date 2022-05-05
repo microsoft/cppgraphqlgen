@@ -50,6 +50,22 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+enum class [[nodiscard]] TaskState
+{
+	New,
+	Started,
+	Complete,
+	Unassigned,
+};
+
+struct CompleteTaskInput
+{
+	response::IdType id {};
+	std::optional<TaskState> testTaskState {};
+	std::optional<bool> isComplete {};
+	std::optional<std::string> clientMutationId {};
+};
+
 } // namespace mutate
 
 namespace mutation::CompleteTaskMutation {
@@ -60,24 +76,12 @@ using mutate::GetRequestObject;
 // Return the name of this operation in the shared request document.
 const std::string& GetOperationName() noexcept;
 
-enum class [[nodiscard]] TaskState
-{
-	New,
-	Started,
-	Complete,
-	Unassigned,
-};
+using mutate::TaskState;
+
+using mutate::CompleteTaskInput;
 
 struct Variables
 {
-	struct CompleteTaskInput
-	{
-		response::IdType id {};
-		std::optional<TaskState> testTaskState {};
-		std::optional<bool> isComplete {};
-		std::optional<std::string> clientMutationId {};
-	};
-
 	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };

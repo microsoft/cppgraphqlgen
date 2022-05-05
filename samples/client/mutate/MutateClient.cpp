@@ -51,8 +51,6 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-} // namespace mutate
-
 static const std::array<std::string_view, 4> s_namesTaskState = {
 	"New"sv,
 	"Started"sv,
@@ -60,14 +58,18 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
+} // namespace mutate
+
+using namespace mutate;
+
 template <>
-constexpr bool isInputType<mutation::CompleteTaskMutation::Variables::CompleteTaskInput>() noexcept
+constexpr bool isInputType<CompleteTaskInput>() noexcept
 {
 	return true;
 }
 
 template <>
-response::Value ModifiedVariable<mutation::CompleteTaskMutation::TaskState>::serialize(mutation::CompleteTaskMutation::TaskState&& value)
+response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
@@ -77,12 +79,12 @@ response::Value ModifiedVariable<mutation::CompleteTaskMutation::TaskState>::ser
 }
 
 template <>
-response::Value ModifiedVariable<mutation::CompleteTaskMutation::Variables::CompleteTaskInput>::serialize(mutation::CompleteTaskMutation::Variables::CompleteTaskInput&& inputValue)
+response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(id)js"s, ModifiedVariable<response::IdType>::serialize(std::move(inputValue.id)));
-	result.emplace_back(R"js(testTaskState)js"s, ModifiedVariable<mutation::CompleteTaskMutation::TaskState>::serialize<TypeModifier::Nullable>(std::move(inputValue.testTaskState)));
+	result.emplace_back(R"js(testTaskState)js"s, ModifiedVariable<TaskState>::serialize<TypeModifier::Nullable>(std::move(inputValue.testTaskState)));
 	result.emplace_back(R"js(isComplete)js"s, ModifiedVariable<bool>::serialize<TypeModifier::Nullable>(std::move(inputValue.isComplete)));
 	result.emplace_back(R"js(clientMutationId)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.clientMutationId)));
 
@@ -90,7 +92,7 @@ response::Value ModifiedVariable<mutation::CompleteTaskMutation::Variables::Comp
 }
 
 template <>
-mutation::CompleteTaskMutation::TaskState ModifiedResponse<mutation::CompleteTaskMutation::TaskState>::parse(response::Value&& value)
+TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -104,7 +106,7 @@ mutation::CompleteTaskMutation::TaskState ModifiedResponse<mutation::CompleteTas
 		throw std::logic_error { "not a valid TaskState value" };
 	}
 
-	return static_cast<mutation::CompleteTaskMutation::TaskState>(itr - s_namesTaskState.cbegin());
+	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
 }
 
 template <>
@@ -179,7 +181,7 @@ response::Value serializeVariables(Variables&& variables)
 {
 	response::Value result { response::Type::Map };
 
-	result.emplace_back(R"js(input)js"s, ModifiedVariable<Variables::CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
+	result.emplace_back(R"js(input)js"s, ModifiedVariable<CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
 	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<bool>::serialize(std::move(variables.skipClientMutationId)));
 
 	return result;

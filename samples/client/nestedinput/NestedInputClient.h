@@ -44,6 +44,32 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+struct InputA
+{
+	bool a {};
+};
+
+struct InputB
+{
+	double b {};
+};
+
+struct InputBC;
+
+struct InputABCD
+{
+	std::string d {};
+	InputA a {};
+	InputB b {};
+	std::vector<InputBC> bc {};
+};
+
+struct InputBC
+{
+	response::IdType c {};
+	InputB b {};
+};
+
 } // namespace nestedinput
 
 namespace query::testQuery {
@@ -54,34 +80,13 @@ using nestedinput::GetRequestObject;
 // Return the name of this operation in the shared request document.
 const std::string& GetOperationName() noexcept;
 
+using nestedinput::InputA;
+using nestedinput::InputB;
+using nestedinput::InputABCD;
+using nestedinput::InputBC;
+
 struct Variables
 {
-	struct InputA
-	{
-		bool a {};
-	};
-
-	struct InputB
-	{
-		double b {};
-	};
-
-	struct InputBC;
-
-	struct InputABCD
-	{
-		std::string d {};
-		InputA a {};
-		InputB b {};
-		std::vector<InputBC> bc {};
-	};
-
-	struct InputBC
-	{
-		response::IdType c {};
-		InputB b {};
-	};
-
 	InputABCD stream {};
 };
 

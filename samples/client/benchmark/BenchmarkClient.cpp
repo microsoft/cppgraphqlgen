@@ -58,6 +58,8 @@ const peg::ast& GetRequestObject() noexcept
 
 } // namespace benchmark
 
+using namespace benchmark;
+
 template <>
 query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
 {

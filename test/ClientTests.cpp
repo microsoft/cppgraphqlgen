@@ -132,8 +132,8 @@ TEST_F(ClientCase, MutateCompleteTask)
 	using namespace client::mutation::CompleteTaskMutation;
 
 	auto query = GetRequestObject();
-	auto variables = serializeVariables({ std::make_unique<Variables::CompleteTaskInput>(
-		Variables::CompleteTaskInput { today::getFakeTaskId(),
+	auto variables = serializeVariables(
+		{ std::make_unique<CompleteTaskInput>(CompleteTaskInput { today::getFakeTaskId(),
 			std::nullopt,
 			std::make_optional(true),
 			std::make_optional("Hi There!"s) }) });

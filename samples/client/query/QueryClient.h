@@ -98,6 +98,14 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+enum class [[nodiscard]] TaskState
+{
+	New,
+	Started,
+	Complete,
+	Unassigned,
+};
+
 } // namespace query
 
 namespace query::Query {
@@ -108,13 +116,7 @@ using query::GetRequestObject;
 // Return the name of this operation in the shared request document.
 const std::string& GetOperationName() noexcept;
 
-enum class [[nodiscard]] TaskState
-{
-	New,
-	Started,
-	Complete,
-	Unassigned,
-};
+using query::TaskState;
 
 struct Response
 {

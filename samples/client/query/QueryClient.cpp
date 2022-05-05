@@ -99,8 +99,6 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-} // namespace query
-
 static const std::array<std::string_view, 4> s_namesTaskState = {
 	"New"sv,
 	"Started"sv,
@@ -108,8 +106,12 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
+} // namespace query
+
+using namespace query;
+
 template <>
-query::Query::TaskState ModifiedResponse<query::Query::TaskState>::parse(response::Value&& value)
+TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -123,7 +125,7 @@ query::Query::TaskState ModifiedResponse<query::Query::TaskState>::parse(respons
 		throw std::logic_error { "not a valid TaskState value" };
 	}
 
-	return static_cast<query::Query::TaskState>(itr - s_namesTaskState.cbegin());
+	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
 }
 
 template <>

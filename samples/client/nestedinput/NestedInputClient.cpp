@@ -47,32 +47,34 @@ const peg::ast& GetRequestObject() noexcept
 
 } // namespace nestedinput
 
+using namespace nestedinput;
+
 template <>
-constexpr bool isInputType<query::testQuery::Variables::InputA>() noexcept
+constexpr bool isInputType<InputA>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<query::testQuery::Variables::InputB>() noexcept
+constexpr bool isInputType<InputB>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<query::testQuery::Variables::InputABCD>() noexcept
+constexpr bool isInputType<InputABCD>() noexcept
 {
 	return true;
 }
 
 template <>
-constexpr bool isInputType<query::testQuery::Variables::InputBC>() noexcept
+constexpr bool isInputType<InputBC>() noexcept
 {
 	return true;
 }
 
 template <>
-response::Value ModifiedVariable<query::testQuery::Variables::InputA>::serialize(query::testQuery::Variables::InputA&& inputValue)
+response::Value ModifiedVariable<InputA>::serialize(InputA&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -82,7 +84,7 @@ response::Value ModifiedVariable<query::testQuery::Variables::InputA>::serialize
 }
 
 template <>
-response::Value ModifiedVariable<query::testQuery::Variables::InputB>::serialize(query::testQuery::Variables::InputB&& inputValue)
+response::Value ModifiedVariable<InputB>::serialize(InputB&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -92,25 +94,25 @@ response::Value ModifiedVariable<query::testQuery::Variables::InputB>::serialize
 }
 
 template <>
-response::Value ModifiedVariable<query::testQuery::Variables::InputABCD>::serialize(query::testQuery::Variables::InputABCD&& inputValue)
+response::Value ModifiedVariable<InputABCD>::serialize(InputABCD&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(d)js"s, ModifiedVariable<std::string>::serialize(std::move(inputValue.d)));
-	result.emplace_back(R"js(a)js"s, ModifiedVariable<query::testQuery::Variables::InputA>::serialize(std::move(inputValue.a)));
-	result.emplace_back(R"js(b)js"s, ModifiedVariable<query::testQuery::Variables::InputB>::serialize(std::move(inputValue.b)));
-	result.emplace_back(R"js(bc)js"s, ModifiedVariable<query::testQuery::Variables::InputBC>::serialize<TypeModifier::List>(std::move(inputValue.bc)));
+	result.emplace_back(R"js(a)js"s, ModifiedVariable<InputA>::serialize(std::move(inputValue.a)));
+	result.emplace_back(R"js(b)js"s, ModifiedVariable<InputB>::serialize(std::move(inputValue.b)));
+	result.emplace_back(R"js(bc)js"s, ModifiedVariable<InputBC>::serialize<TypeModifier::List>(std::move(inputValue.bc)));
 
 	return result;
 }
 
 template <>
-response::Value ModifiedVariable<query::testQuery::Variables::InputBC>::serialize(query::testQuery::Variables::InputBC&& inputValue)
+response::Value ModifiedVariable<InputBC>::serialize(InputBC&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(c)js"s, ModifiedVariable<response::IdType>::serialize(std::move(inputValue.c)));
-	result.emplace_back(R"js(b)js"s, ModifiedVariable<query::testQuery::Variables::InputB>::serialize(std::move(inputValue.b)));
+	result.emplace_back(R"js(b)js"s, ModifiedVariable<InputB>::serialize(std::move(inputValue.b)));
 
 	return result;
 }
@@ -172,7 +174,7 @@ response::Value serializeVariables(Variables&& variables)
 {
 	response::Value result { response::Type::Map };
 
-	result.emplace_back(R"js(stream)js"s, ModifiedVariable<Variables::InputABCD>::serialize(std::move(variables.stream)));
+	result.emplace_back(R"js(stream)js"s, ModifiedVariable<InputABCD>::serialize(std::move(variables.stream)));
 
 	return result;
 }
