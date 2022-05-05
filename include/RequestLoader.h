@@ -69,12 +69,12 @@ struct [[nodiscard]] Operation
 	const peg::ast_node* operation;
 	std::string_view name;
 	std::string_view type;
-	ResponseType responseType {};
-	RequestVariableList variables {};
-	internal::string_view_set inputTypeNames {};
-	RequestInputTypeList referencedInputTypes {};
-	internal::string_view_set enumNames {};
-	RequestSchemaTypeList referencedEnums {};
+	ResponseType responseType;
+	RequestVariableList variables;
+	internal::string_view_set inputTypeNames;
+	RequestInputTypeList referencedInputTypes;
+	internal::string_view_set enumNames;
+	RequestSchemaTypeList referencedEnums;
 };
 
 using OperationList = std::vector<Operation>;

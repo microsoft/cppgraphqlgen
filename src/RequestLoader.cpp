@@ -727,7 +727,9 @@ void RequestLoader::findOperation()
 
 			if (!_requestOptions.operationName || name == *_requestOptions.operationName)
 			{
-				_operations.emplace_back(&operationDefinition, name, operationType);
+				Operation operation { &operationDefinition, name, operationType };
+
+				_operations.push_back(std::move(operation));
 
 				if (_requestOptions.operationName)
 				{
@@ -781,8 +783,10 @@ void RequestLoader::findOperation()
 				message << " name: " << operation.name;
 			}
 
-			errors.emplace_back(message.str(),
-				service::schema_location { position.line, position.column });
+			service::schema_error error { message.str(),
+				service::schema_location { position.line, position.column } };
+
+			errors.push_back(std::move(error));
 
 			continue;
 		}
