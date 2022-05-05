@@ -40,7 +40,7 @@ public:
 
 	struct promise_type
 	{
-		Awaitable get_return_object() noexcept
+		[[nodiscard]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -69,7 +69,7 @@ public:
 		std::promise<void> _promise;
 	};
 
-	constexpr bool await_ready() const noexcept
+	[[nodiscard]] constexpr bool await_ready() const noexcept
 	{
 		return true;
 	}
@@ -97,14 +97,14 @@ public:
 	{
 	}
 
-	T get()
+	[[nodiscard]] T get()
 	{
 		return _value.get();
 	}
 
 	struct promise_type
 	{
-		Awaitable get_return_object() noexcept
+		[[nodiscard]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -138,7 +138,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	constexpr bool await_ready() const noexcept
+	[[nodiscard]] constexpr bool await_ready() const noexcept
 	{
 		return true;
 	}
@@ -148,7 +148,7 @@ public:
 		h.resume();
 	}
 
-	T await_resume()
+	[[nodiscard]] T await_resume()
 	{
 		return _value.get();
 	}

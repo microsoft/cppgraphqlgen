@@ -10,17 +10,17 @@ represented in GraphQL, as of the
 [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format):
 
 ```c++
-enum class Type : uint8_t
-{
-	Map,		// JSON Object
-	List,		// JSON Array
-	String,		// JSON String
-	Null,		// JSON null
-	Boolean,	// JSON true or false
-	Int,		// JSON Number
-	Float,		// JSON Number
-	EnumValue,	// JSON String
-	Scalar,		// JSON any type
+enum class [[nodiscard]] Type : std::uint8_t {
+	Map,	   // JSON Object
+	List,	   // JSON Array
+	String,	   // JSON String
+	Null,	   // JSON null
+	Boolean,   // JSON true or false
+	Int,	   // JSON Number
+	Float,	   // JSON Number
+	EnumValue, // JSON String
+	ID,		   // JSON String
+	Scalar,	   // JSON any type
 };
 ```
 
