@@ -22,6 +22,8 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+namespace graphql::client {
+
 /// <summary>
 /// Operation: query testQuery
 /// </summary>
@@ -34,7 +36,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::client::query::testQuery {
+namespace nestedinput {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -42,34 +44,49 @@ const std::string& GetRequestText() noexcept;
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
 
+struct InputA
+{
+	bool a {};
+};
+
+struct InputB
+{
+	double b {};
+};
+
+struct InputBC;
+
+struct InputABCD
+{
+	std::string d {};
+	InputA a {};
+	InputB b {};
+	std::vector<InputBC> bc {};
+};
+
+struct InputBC
+{
+	response::IdType c {};
+	InputB b {};
+};
+
+} // namespace nestedinput
+
+namespace query::testQuery {
+
+using nestedinput::GetRequestText;
+using nestedinput::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+using nestedinput::InputA;
+using nestedinput::InputB;
+using nestedinput::InputABCD;
+using nestedinput::InputBC;
+
 struct Variables
 {
-	struct InputA
-	{
-		bool a {};
-	};
-
-	struct InputB
-	{
-		double b {};
-	};
-
-	struct InputBC;
-
-	struct InputABCD
-	{
-		std::string d {};
-		InputA a {};
-		InputB b {};
-		std::vector<InputBC> bc {};
-	};
-
-	struct InputBC
-	{
-		response::IdType c {};
-		InputB b {};
-	};
-
 	InputABCD stream {};
 };
 
@@ -92,6 +109,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::query::testQuery
+} // namespace query::testQuery
+} // namespace graphql::client
 
 #endif // NESTEDINPUTCLIENT_H

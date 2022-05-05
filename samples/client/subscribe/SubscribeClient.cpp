@@ -14,13 +14,49 @@
 using namespace std::literals;
 
 namespace graphql::client {
+namespace subscribe {
 
-using namespace subscription::TestSubscription;
+const std::string& GetRequestText() noexcept
+{
+	static const auto s_request = R"gql(
+		# Copyright (c) Microsoft Corporation. All rights reserved.
+		# Licensed under the MIT License.
+		
+		subscription TestSubscription {
+		  nextAppointment: nextAppointmentChange {
+		    nextAppointmentId: id
+		    when
+		    subject
+		    isNow
+		  }
+		}
+	)gql"s;
+
+	return s_request;
+}
+
+const peg::ast& GetRequestObject() noexcept
+{
+	static const auto s_request = []() noexcept {
+		auto ast = peg::parseString(GetRequestText());
+
+		// This has already been validated against the schema by clientgen.
+		ast.validated = true;
+
+		return ast;
+	}();
+
+	return s_request;
+}
+
+} // namespace subscribe
+
+using namespace subscribe;
 
 template <>
-Response::nextAppointment_Appointment ModifiedResponse<Response::nextAppointment_Appointment>::parse(response::Value&& response)
+subscription::TestSubscription::Response::nextAppointment_Appointment ModifiedResponse<subscription::TestSubscription::Response::nextAppointment_Appointment>::parse(response::Value&& response)
 {
-	Response::nextAppointment_Appointment result;
+	subscription::TestSubscription::Response::nextAppointment_Appointment result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -56,37 +92,11 @@ Response::nextAppointment_Appointment ModifiedResponse<Response::nextAppointment
 
 namespace subscription::TestSubscription {
 
-const std::string& GetRequestText() noexcept
+const std::string& GetOperationName() noexcept
 {
-	static const auto s_request = R"gql(
-		# Copyright (c) Microsoft Corporation. All rights reserved.
-		# Licensed under the MIT License.
-		
-		subscription TestSubscription {
-		  nextAppointment: nextAppointmentChange {
-		    nextAppointmentId: id
-		    when
-		    subject
-		    isNow
-		  }
-		}
-	)gql"s;
+	static const auto s_name = R"gql(TestSubscription)gql"s;
 
-	return s_request;
-}
-
-const peg::ast& GetRequestObject() noexcept
-{
-	static const auto s_request = []() noexcept {
-		auto ast = peg::parseString(GetRequestText());
-
-		// This has already been validated against the schema by clientgen.
-		ast.validated = true;
-
-		return ast;
-	}();
-
-	return s_request;
+	return s_name;
 }
 
 Response parseResponse(response::Value&& response)
@@ -101,7 +111,7 @@ Response parseResponse(response::Value&& response)
 		{
 			if (member.first == R"js(nextAppointment)js"sv)
 			{
-				result.nextAppointment = ModifiedResponse<Response::nextAppointment_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.nextAppointment = ModifiedResponse<subscription::TestSubscription::Response::nextAppointment_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}

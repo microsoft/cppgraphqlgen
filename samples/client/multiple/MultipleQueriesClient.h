@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYCLIENT_H
-#define QUERYCLIENT_H
+#ifndef MULTIPLEQUERIESCLIENT_H
+#define MULTIPLEQUERIESCLIENT_H
 
 #include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -25,13 +25,13 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 namespace graphql::client {
 
 /// <summary>
-/// Operation: query (unnamed)
+/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
 /// </summary>
 /// <code class="language-graphql">
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// query {
+/// query Appointments {
 ///   appointments {
 ///     edges {
 ///       node {
@@ -43,6 +43,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
+/// 
+/// query Tasks {
 ///   tasks {
 ///     edges {
 ///       node {
@@ -53,6 +56,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
+/// 
+/// query UnreadCounts {
 ///   unreadCounts {
 ///     edges {
 ///       node {
@@ -63,7 +69,9 @@ namespace graphql::client {
 ///       }
 ///     }
 ///   }
+/// }
 /// 
+/// query Miscellaneous {
 ///   # Read a field with an enum type
 ///   testTaskState
 /// 
@@ -89,8 +97,19 @@ namespace graphql::client {
 ///   # Try a field with a C++ keyword
 ///   default
 /// }
+/// 
+/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+///   completedTask: completeTask(input: $input) {
+///     completedTask: task {
+///       completedTaskId: id
+///       title
+///       isComplete
+///     }
+///     clientMutationId @skip(if: $skipClientMutationId)
+///   }
+/// }
 /// </code>
-namespace query {
+namespace multiple {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
@@ -106,17 +125,23 @@ enum class [[nodiscard]] TaskState
 	Unassigned,
 };
 
-} // namespace query
+struct CompleteTaskInput
+{
+	response::IdType id {};
+	std::optional<TaskState> testTaskState {};
+	std::optional<bool> isComplete {};
+	std::optional<std::string> clientMutationId {};
+};
 
-namespace query::Query {
+} // namespace multiple
 
-using query::GetRequestText;
-using query::GetRequestObject;
+namespace query::Appointments {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 const std::string& GetOperationName() noexcept;
-
-using query::TaskState;
 
 struct Response
 {
@@ -139,6 +164,23 @@ struct Response
 		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
+	appointments_AppointmentConnection appointments {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::Appointments
+
+namespace query::Tasks {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+struct Response
+{
 	struct tasks_TaskConnection
 	{
 		struct edges_TaskEdge
@@ -157,6 +199,23 @@ struct Response
 		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
 
+	tasks_TaskConnection tasks {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::Tasks
+
+namespace query::UnreadCounts {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+struct Response
+{
 	struct unreadCounts_FolderConnection
 	{
 		struct edges_FolderEdge
@@ -175,6 +234,25 @@ struct Response
 		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
+	unreadCounts_FolderConnection unreadCounts {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace query::UnreadCounts
+
+namespace query::Miscellaneous {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+using multiple::TaskState;
+
+struct Response
+{
 	struct anyType_UnionType
 	{
 		std::string _typename {};
@@ -186,9 +264,6 @@ struct Response
 		bool isNow {};
 	};
 
-	appointments_AppointmentConnection appointments {};
-	tasks_TaskConnection tasks {};
-	unreadCounts_FolderConnection unreadCounts {};
 	TaskState testTaskState {};
 	std::vector<std::optional<anyType_UnionType>> anyType {};
 	std::optional<std::string> default_ {};
@@ -196,7 +271,49 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace query::Query
+} // namespace query::Miscellaneous
+
+namespace mutation::CompleteTaskMutation {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+using multiple::TaskState;
+
+using multiple::CompleteTaskInput;
+
+struct Variables
+{
+	std::unique_ptr<CompleteTaskInput> input {};
+	bool skipClientMutationId {};
+};
+
+response::Value serializeVariables(Variables&& variables);
+
+struct Response
+{
+	struct completedTask_CompleteTaskPayload
+	{
+		struct completedTask_Task
+		{
+			response::IdType completedTaskId {};
+			std::optional<std::string> title {};
+			bool isComplete {};
+		};
+
+		std::optional<completedTask_Task> completedTask {};
+		std::optional<std::string> clientMutationId {};
+	};
+
+	completedTask_CompleteTaskPayload completedTask {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
 
-#endif // QUERYCLIENT_H
+#endif // MULTIPLEQUERIESCLIENT_H

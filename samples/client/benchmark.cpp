@@ -86,14 +86,15 @@ int main(int argc, char** argv)
 
 	try
 	{
+		using namespace client::query::Query;
+
+		auto query = GetRequestObject();
+		const auto& name = GetOperationName();
+
 		for (size_t i = 0; i < iterations; ++i)
 		{
-			using namespace client::query::Query;
-
-			auto query = GetRequestObject();
-
 			const auto startResolve = std::chrono::steady_clock::now();
-			auto response = service->resolve({ query }).get();
+			auto response = service->resolve({ query, name }).get();
 			const auto startParseServiceResponse = std::chrono::steady_clock::now();
 			auto serviceResponse = client::parseServiceResponse(std::move(response));
 			const auto startParseResponse = std::chrono::steady_clock::now();

@@ -64,10 +64,25 @@ struct [[nodiscard]] RequestVariable
 
 using RequestVariableList = std::vector<RequestVariable>;
 
+struct [[nodiscard]] Operation
+{
+	const peg::ast_node* operation;
+	std::string_view name;
+	std::string_view type;
+	ResponseType responseType {};
+	RequestVariableList variables {};
+	internal::string_view_set inputTypeNames {};
+	RequestInputTypeList referencedInputTypes {};
+	internal::string_view_set enumNames {};
+	RequestSchemaTypeList referencedEnums {};
+};
+
+using OperationList = std::vector<Operation>;
+
 struct [[nodiscard]] RequestOptions
 {
 	const std::string requestFilename;
-	const std::string operationName;
+	const std::optional<std::string> operationName;
 	const bool noIntrospection = false;
 };
 
@@ -79,16 +94,21 @@ public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
 	[[nodiscard]] std::string_view getRequestFilename() const noexcept;
-	[[nodiscard]] std::string_view getOperationDisplayName() const noexcept;
-	[[nodiscard]] std::string getOperationNamespace() const noexcept;
-	[[nodiscard]] std::string_view getOperationType() const noexcept;
+	[[nodiscard]] const OperationList& getOperations() const noexcept;
+	[[nodiscard]] std::string_view getOperationDisplayName(
+		const Operation& operation) const noexcept;
+	[[nodiscard]] std::string getOperationNamespace(const Operation& operation) const noexcept;
+	[[nodiscard]] std::string_view getOperationType(const Operation& operation) const noexcept;
 	[[nodiscard]] std::string_view getRequestText() const noexcept;
 
-	[[nodiscard]] const ResponseType& getResponseType() const noexcept;
-	[[nodiscard]] const RequestVariableList& getVariables() const noexcept;
+	[[nodiscard]] const ResponseType& getResponseType(const Operation& operation) const noexcept;
+	[[nodiscard]] const RequestVariableList& getVariables(
+		const Operation& operation) const noexcept;
 
-	[[nodiscard]] const RequestInputTypeList& getReferencedInputTypes() const noexcept;
-	[[nodiscard]] const RequestSchemaTypeList& getReferencedEnums() const noexcept;
+	[[nodiscard]] const RequestInputTypeList& getReferencedInputTypes(
+		const Operation& operation) const noexcept;
+	[[nodiscard]] const RequestSchemaTypeList& getReferencedEnums(
+		const Operation& operation) const noexcept;
 
 	[[nodiscard]] std::string getInputCppType(
 		const RequestSchemaType& wrappedInputType) const noexcept;
@@ -111,11 +131,11 @@ private:
 
 	void findOperation();
 	void collectFragments() noexcept;
-	void collectVariables() noexcept;
-	void collectInputTypes(const RequestSchemaType& variableType) noexcept;
-	void reorderInputTypeDependencies();
-	void collectEnums(const RequestSchemaType& variableType) noexcept;
-	void collectEnums(const ResponseField& responseField) noexcept;
+	void collectVariables(Operation& operation) noexcept;
+	void collectInputTypes(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void reorderInputTypeDependencies(Operation& operation);
+	void collectEnums(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void collectEnums(Operation& operation, const ResponseField& responseField) noexcept;
 
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
@@ -153,16 +173,8 @@ private:
 	peg::ast _ast;
 
 	std::string _requestText;
-	const peg::ast_node* _operation = nullptr;
-	std::string_view _operationName;
-	std::string_view _operationType;
+	OperationList _operations;
 	FragmentDefinitionMap _fragments;
-	ResponseType _responseType;
-	RequestVariableList _variables;
-	internal::string_view_set _inputTypeNames;
-	RequestInputTypeList _referencedInputTypes;
-	internal::string_view_set _enumNames;
-	RequestSchemaTypeList _referencedEnums;
 };
 
 } // namespace graphql::generator

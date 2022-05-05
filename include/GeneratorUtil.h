@@ -39,7 +39,7 @@ public:
 private:
 	bool _inside = false;
 	std::ostream& _outputFile;
-	std::string_view _cppNamespace;
+	std::string _cppNamespace;
 };
 
 // Keep track of whether we want to add a blank separator line once some additional content is about

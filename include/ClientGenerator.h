@@ -39,19 +39,22 @@ private:
 	[[nodiscard]] std::string getHeaderPath() const noexcept;
 	[[nodiscard]] std::string getSourcePath() const noexcept;
 	[[nodiscard]] const std::string& getClientNamespace() const noexcept;
-	[[nodiscard]] const std::string& getRequestNamespace() const noexcept;
-	[[nodiscard]] const std::string& getFullNamespace() const noexcept;
+	[[nodiscard]] const std::string& getOperationNamespace(
+		const Operation& operation) const noexcept;
 	[[nodiscard]] std::string getResponseFieldCppType(
 		const ResponseField& responseField, std::string_view currentScope = {}) const noexcept;
 
 	[[nodiscard]] bool outputHeader() const noexcept;
 	void outputRequestComment(std::ostream& headerFile) const noexcept;
 	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
+	void outputGetOperationNameDeclaration(std::ostream& headerFile) const noexcept;
 	[[nodiscard]] bool outputResponseFieldType(std::ostream& headerFile,
 		const ResponseField& responseField, size_t indent = 0) const noexcept;
 
 	[[nodiscard]] bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
+	void outputGetOperationNameImplementation(
+		std::ostream& sourceFile, const Operation& operation) const noexcept;
 	bool outputModifiedResponseImplementation(std::ostream& sourceFile,
 		const std::string& outerScope, const ResponseField& responseField) const noexcept;
 	[[nodiscard]] static std::string getTypeModifierList(

@@ -22,6 +22,8 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 #include <string>
 #include <vector>
 
+namespace graphql::client {
+
 /// <summary>
 /// Operation: subscription TestSubscription
 /// </summary>
@@ -38,13 +40,23 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 ///   }
 /// }
 /// </code>
-namespace graphql::client::subscription::TestSubscription {
+namespace subscribe {
 
 // Return the original text of the request document.
 const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 const peg::ast& GetRequestObject() noexcept;
+
+} // namespace subscribe
+
+namespace subscription::TestSubscription {
+
+using subscribe::GetRequestText;
+using subscribe::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
 
 struct Response
 {
@@ -61,6 +73,7 @@ struct Response
 
 Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::subscription::TestSubscription
+} // namespace subscription::TestSubscription
+} // namespace graphql::client
 
 #endif // SUBSCRIBECLIENT_H
