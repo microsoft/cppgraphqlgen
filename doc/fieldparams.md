@@ -21,7 +21,7 @@ The `graphql::service::FieldParams` struct is declared in [GraphQLService.h](../
 ```cpp
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
-struct SelectionSetParams
+struct [[nodiscard]] SelectionSetParams
 {
 	// Context for this selection set.
 	const ResolverContext resolverContext;
@@ -46,7 +46,7 @@ struct SelectionSetParams
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
-struct FieldParams : SelectionSetParams
+struct [[nodiscard]] FieldParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit FieldParams(
 		SelectionSetParams&& selectionSetParams, Directives directives);
@@ -64,8 +64,7 @@ The `SelectionSetParams::resolverContext` enum member informs the `getField`
 accessors about what type of operation is being resolved:
 ```cpp
 // Resolvers may be called in multiple different Operation contexts.
-enum class ResolverContext
-{
+enum class [[nodiscard]] ResolverContext {
 	// Resolving a Query operation.
 	Query,
 
@@ -95,8 +94,9 @@ The `SelectionSetParams::state` member is a reference to the
 // any per-request state that you want to maintain throughout the request (e.g. optimizing or
 // batching backend requests), you can inherit from RequestState and pass it to Request::resolve to
 // correlate the asynchronous/recursive callbacks and accumulate state in it.
-struct RequestState : std::enable_shared_from_this<RequestState>
+struct [[nodiscard]] RequestState : std::enable_shared_from_this<RequestState>
 {
+	virtual ~RequestState() = default;
 };
 ```
 

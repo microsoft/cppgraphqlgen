@@ -46,7 +46,7 @@ to some other output mechanism, without building a single string buffer for the 
 document in memory. For example, you might use this to write directly to a buffered IPC pipe
 or network connection:
 ```cpp
-class Writer final
+class [[nodiscard]] Writer final
 {
 private:
 	struct Concept
