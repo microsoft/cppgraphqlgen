@@ -67,3 +67,14 @@ query Miscellaneous {
   # Try a field with a C++ keyword
   default
 }
+
+mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+  completedTask: completeTask(input: $input) {
+    completedTask: task {
+      completedTaskId: id
+      title
+      isComplete
+    }
+    clientMutationId @skip(if: $skipClientMutationId)
+  }
+}

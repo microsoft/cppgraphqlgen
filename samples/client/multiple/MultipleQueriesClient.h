@@ -25,7 +25,7 @@ static_assert(graphql::internal::MinorVersion == 2, "regenerate with clientgen: 
 namespace graphql::client {
 
 /// <summary>
-/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous
+/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
 /// </summary>
 /// <code class="language-graphql">
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -97,6 +97,17 @@ namespace graphql::client {
 ///   # Try a field with a C++ keyword
 ///   default
 /// }
+/// 
+/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+///   completedTask: completeTask(input: $input) {
+///     completedTask: task {
+///       completedTaskId: id
+///       title
+///       isComplete
+///     }
+///     clientMutationId @skip(if: $skipClientMutationId)
+///   }
+/// }
 /// </code>
 namespace multiple {
 
@@ -112,6 +123,14 @@ enum class [[nodiscard]] TaskState
 	Started,
 	Complete,
 	Unassigned,
+};
+
+struct CompleteTaskInput
+{
+	response::IdType id {};
+	std::optional<TaskState> testTaskState {};
+	std::optional<bool> isComplete {};
+	std::optional<std::string> clientMutationId {};
 };
 
 } // namespace multiple
@@ -253,6 +272,48 @@ struct Response
 Response parseResponse(response::Value&& response);
 
 } // namespace query::Miscellaneous
+
+namespace mutation::CompleteTaskMutation {
+
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+const std::string& GetOperationName() noexcept;
+
+using multiple::TaskState;
+
+using multiple::CompleteTaskInput;
+
+struct Variables
+{
+	std::unique_ptr<CompleteTaskInput> input {};
+	bool skipClientMutationId {};
+};
+
+response::Value serializeVariables(Variables&& variables);
+
+struct Response
+{
+	struct completedTask_CompleteTaskPayload
+	{
+		struct completedTask_Task
+		{
+			response::IdType completedTaskId {};
+			std::optional<std::string> title {};
+			bool isComplete {};
+		};
+
+		std::optional<completedTask_Task> completedTask {};
+		std::optional<std::string> clientMutationId {};
+	};
+
+	completedTask_CompleteTaskPayload completedTask {};
+};
+
+Response parseResponse(response::Value&& response);
+
+} // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
 
 #endif // MULTIPLEQUERIESCLIENT_H

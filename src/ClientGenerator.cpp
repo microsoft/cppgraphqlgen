@@ -567,7 +567,6 @@ using namespace std::literals;
 
 	const auto& operations = _requestLoader.getOperations();
 	std::unordered_set<std::string_view> outputEnumNames;
-	std::unordered_set<std::string_view> outputIsInputType;
 
 	for (const auto& operation : operations)
 	{
@@ -612,6 +611,11 @@ using namespace )cpp"
 
 	pendingSeparator.add();
 
+	std::unordered_set<std::string_view> outputIsInputType;
+	std::unordered_set<std::string_view> outputModifiedVariableEnum;
+	std::unordered_set<std::string_view> outputModifiedVariableInput;
+	std::unordered_set<std::string_view> outputModifiedResponseEnum;
+
 	for (const auto& operation : operations)
 	{
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
@@ -642,9 +646,14 @@ constexpr bool isInputType<)cpp"
 		{
 			for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 			{
-				pendingSeparator.reset();
-
 				const auto cppType = _schemaLoader.getCppType(enumType->name());
+
+				if (!outputModifiedVariableEnum.insert(cppType).second)
+				{
+					continue;
+				}
+
+				pendingSeparator.reset();
 
 				if (!variables.empty())
 				{
@@ -667,9 +676,14 @@ response::Value ModifiedVariable<)cpp"
 
 			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 			{
-				pendingSeparator.reset();
-
 				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+				if (!outputModifiedVariableInput.insert(cppType).second)
+				{
+					continue;
+				}
+
+				pendingSeparator.reset();
 
 				sourceFile << R"cpp(template <>
 response::Value ModifiedVariable<)cpp"
@@ -705,9 +719,14 @@ response::Value ModifiedVariable<)cpp"
 
 		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 		{
-			pendingSeparator.reset();
-
 			const auto cppType = _schemaLoader.getCppType(enumType->name());
+
+			if (!outputModifiedResponseEnum.insert(cppType).second)
+			{
+				continue;
+			}
+
+			pendingSeparator.reset();
 
 			sourceFile << R"cpp(template <>
 )cpp" << cppType << R"cpp( ModifiedResponse<)cpp"

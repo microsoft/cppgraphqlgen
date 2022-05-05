@@ -88,6 +88,17 @@ const std::string& GetRequestText() noexcept
 		  # Try a field with a C++ keyword
 		  default
 		}
+		
+		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+		  completedTask: completeTask(input: $input) {
+		    completedTask: task {
+		      completedTaskId: id
+		      title
+		      isComplete
+		    }
+		    clientMutationId @skip(if: $skipClientMutationId)
+		  }
+		}
 	)gql"s;
 
 	return s_request;
@@ -573,4 +584,134 @@ Response parseResponse(response::Value&& response)
 }
 
 } // namespace query::Miscellaneous
+
+template <>
+constexpr bool isInputType<CompleteTaskInput>() noexcept
+{
+	return true;
+}
+
+template <>
+response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
+{
+	response::Value result { response::Type::EnumValue };
+
+	result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+
+	return result;
+}
+
+template <>
+response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
+{
+	response::Value result { response::Type::Map };
+
+	result.emplace_back(R"js(id)js"s, ModifiedVariable<response::IdType>::serialize(std::move(inputValue.id)));
+	result.emplace_back(R"js(testTaskState)js"s, ModifiedVariable<TaskState>::serialize<TypeModifier::Nullable>(std::move(inputValue.testTaskState)));
+	result.emplace_back(R"js(isComplete)js"s, ModifiedVariable<bool>::serialize<TypeModifier::Nullable>(std::move(inputValue.isComplete)));
+	result.emplace_back(R"js(clientMutationId)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.clientMutationId)));
+
+	return result;
+}
+
+template <>
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+{
+	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTaskId)js"sv)
+			{
+				result.completedTaskId = ModifiedResponse<response::IdType>::parse(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(title)js"sv)
+			{
+				result.title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(isComplete)js"sv)
+			{
+				result.isComplete = ModifiedResponse<bool>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+template <>
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+{
+	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTask)js"sv)
+			{
+				result.completedTask = ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(clientMutationId)js"sv)
+			{
+				result.clientMutationId = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+namespace mutation::CompleteTaskMutation {
+
+const std::string& GetOperationName() noexcept
+{
+	static const auto s_name = R"gql(CompleteTaskMutation)gql"s;
+
+	return s_name;
+}
+
+response::Value serializeVariables(Variables&& variables)
+{
+	response::Value result { response::Type::Map };
+
+	result.emplace_back(R"js(input)js"s, ModifiedVariable<CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
+	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<bool>::serialize(std::move(variables.skipClientMutationId)));
+
+	return result;
+}
+
+Response parseResponse(response::Value&& response)
+{
+	Response result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(completedTask)js"sv)
+			{
+				result.completedTask = ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
+
+} // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
