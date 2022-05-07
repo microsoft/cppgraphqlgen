@@ -20,7 +20,7 @@ TEST(ResponseCase, IdTypeCompareEqual)
 {
 	const auto fakeId = []() noexcept {
 		std::string fakeIdString("fakeId");
-		response::IdType::ByteData result(fakeIdString.size());
+		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 

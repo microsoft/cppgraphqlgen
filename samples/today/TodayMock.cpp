@@ -23,7 +23,7 @@ const response::IdType& getFakeAppointmentId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeAppointmentId");
-		response::IdType::ByteData result(fakeIdString.size());
+		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
@@ -37,7 +37,7 @@ const response::IdType& getFakeTaskId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeTaskId");
-		response::IdType::ByteData result(fakeIdString.size());
+		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
@@ -51,7 +51,7 @@ const response::IdType& getFakeFolderId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
 		std::string fakeIdString("fakeFolderId");
-		response::IdType::ByteData result(fakeIdString.size());
+		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
