@@ -77,10 +77,7 @@ struct [[nodiscard]] IdType
 
 	// Conversion
 	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
-	GRAPHQLRESPONSE_EXPORT IdType& operator=(ByteData&& data) noexcept;
-
 	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
-	GRAPHQLRESPONSE_EXPORT IdType& operator=(OpaqueString&& opaque) noexcept;
 
 	template <typename ValueType>
 	[[nodiscard]] const ValueType& get() const;

@@ -68,21 +68,9 @@ IdType::IdType(ByteData&& data) noexcept
 {
 }
 
-IdType& IdType::operator=(ByteData&& data) noexcept
-{
-	_data = { std::move(data) };
-	return *this;
-}
-
 IdType::IdType(OpaqueString&& opaque) noexcept
 	: _data { std::move(opaque) }
 {
-}
-
-IdType& IdType::operator=(OpaqueString&& opaque) noexcept
-{
-	_data = { std::move(opaque) };
-	return *this;
 }
 
 bool IdType::operator==(const IdType& rhs) const noexcept
