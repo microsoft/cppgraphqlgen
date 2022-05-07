@@ -72,6 +72,12 @@ IdType& IdType::operator=(ByteData&& data) noexcept
 	return *this;
 }
 
+IdType& IdType::operator=(std::initializer_list<typename IdType::ByteData::value_type> values)
+{
+	_data = ByteData { values };
+	return *this;
+}
+
 IdType::IdType(OpaqueString&& opaque) noexcept
 	: _data { std::move(opaque) }
 {

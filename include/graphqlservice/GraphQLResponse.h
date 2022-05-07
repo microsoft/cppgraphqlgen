@@ -80,6 +80,7 @@ struct [[nodiscard]] IdType
 	// Conversion
 	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(ByteData&& data) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType& operator=(std::initializer_list<typename ByteData::value_type> values);
 
 	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(OpaqueString&& opaque) noexcept;
