@@ -41,16 +41,6 @@ IdType::IdType(std::initializer_list<typename ByteData::value_type> values)
 {
 }
 
-IdType::IdType(typename ByteData::const_iterator begin, typename ByteData::const_iterator end)
-	: _data { ByteData { begin, end } }
-{
-}
-
-IdType::IdType(typename ByteData::const_pointer begin, typename ByteData::const_pointer end)
-	: _data { ByteData { begin, end } }
-{
-}
-
 IdType& IdType::operator=(IdType&& rhs) noexcept
 {
 	if (&rhs != this)
@@ -69,12 +59,6 @@ IdType::IdType(ByteData&& data) noexcept
 IdType& IdType::operator=(ByteData&& data) noexcept
 {
 	_data = { std::move(data) };
-	return *this;
-}
-
-IdType& IdType::operator=(std::initializer_list<typename IdType::ByteData::value_type> values)
-{
-	_data = ByteData { values };
 	return *this;
 }
 
