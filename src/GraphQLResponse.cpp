@@ -204,10 +204,10 @@ void IdType::shrink_to_fit()
 		_data);
 }
 
-void IdType::clear()
+void IdType::clear() noexcept
 {
 	std::visit(
-		[](auto& data) {
+		[](auto& data) noexcept {
 			data.clear();
 		},
 		_data);
