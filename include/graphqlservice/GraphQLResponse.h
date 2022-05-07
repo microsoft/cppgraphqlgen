@@ -68,12 +68,8 @@ struct [[nodiscard]] IdType
 	// Implicit ByteData constructors
 	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
 	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
-
 	template <typename InputIt>
-	IdType(InputIt begin, InputIt end)
-		: _data { ByteData { begin, end } }
-	{
-	}
+	IdType(InputIt begin, InputIt end);
 
 	// Assignment
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(IdType&& rhs) noexcept;
@@ -146,6 +142,12 @@ private:
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the specialized template methods
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_pointer begin, typename ByteData::const_pointer end);
 template <>
 GRAPHQLRESPONSE_EXPORT const IdType::ByteData& IdType::get<IdType::ByteData>() const;
 template <>

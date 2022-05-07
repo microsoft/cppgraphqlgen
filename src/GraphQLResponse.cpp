@@ -41,6 +41,18 @@ IdType::IdType(std::initializer_list<typename ByteData::value_type> values)
 {
 }
 
+template <>
+IdType::IdType(typename ByteData::const_iterator begin, typename ByteData::const_iterator end)
+	: _data { ByteData { begin, end } }
+{
+}
+
+template <>
+IdType::IdType(typename ByteData::const_pointer begin, typename ByteData::const_pointer end)
+	: _data { ByteData { begin, end } }
+{
+}
+
 IdType& IdType::operator=(IdType&& rhs) noexcept
 {
 	if (&rhs != this)
