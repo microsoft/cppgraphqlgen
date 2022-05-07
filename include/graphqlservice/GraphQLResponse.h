@@ -70,6 +70,8 @@ struct [[nodiscard]] IdType
 	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
 	GRAPHQLRESPONSE_EXPORT IdType(
 		typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+	GRAPHQLRESPONSE_EXPORT IdType(
+		typename ByteData::const_pointer begin, typename ByteData::const_pointer end);
 
 	// Assignment
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(IdType&& rhs) noexcept;
