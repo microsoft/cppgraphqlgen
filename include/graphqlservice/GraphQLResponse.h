@@ -68,8 +68,8 @@ struct [[nodiscard]] IdType
 	// Implicit ByteData constructors
 	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
 	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
-	GRAPHQLRESPONSE_EXPORT IdType(
-		typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+	template <typename InputIt>
+	IdType(InputIt begin, InputIt end);
 
 	// Assignment
 	GRAPHQLRESPONSE_EXPORT IdType& operator=(IdType&& rhs) noexcept;
@@ -77,10 +77,7 @@ struct [[nodiscard]] IdType
 
 	// Conversion
 	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
-	GRAPHQLRESPONSE_EXPORT IdType& operator=(ByteData&& data) noexcept;
-
 	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
-	GRAPHQLRESPONSE_EXPORT IdType& operator=(OpaqueString&& opaque) noexcept;
 
 	template <typename ValueType>
 	[[nodiscard]] const ValueType& get() const;
@@ -95,8 +92,46 @@ struct [[nodiscard]] IdType
 
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator<(const IdType& rhs) const noexcept;
 
-	// Check the Type
+	// Check the type
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool isBase64() const noexcept;
+
+	// Shared accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool empty() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t max_size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t capacity() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
+	GRAPHQLRESPONSE_EXPORT void clear() noexcept;
+
+	// ByteData accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& at(size_t pos) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& at(size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& operator[](size_t pos) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& operator[](size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& front() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& front();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& back() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& back();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t* data() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t* data();
+
+	// ByteData iterators
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator begin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator end();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rbegin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rend();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crend() const;
+
+	// OpaqueString accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const char* c_str() const;
 
 private:
 	std::variant<ByteData, OpaqueString> _data;
@@ -104,6 +139,12 @@ private:
 
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the specialized template methods
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_pointer begin, typename ByteData::const_pointer end);
 template <>
 GRAPHQLRESPONSE_EXPORT const IdType::ByteData& IdType::get<IdType::ByteData>() const;
 template <>

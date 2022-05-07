@@ -41,7 +41,14 @@ IdType::IdType(std::initializer_list<typename ByteData::value_type> values)
 {
 }
 
+template <>
 IdType::IdType(typename ByteData::const_iterator begin, typename ByteData::const_iterator end)
+	: _data { ByteData { begin, end } }
+{
+}
+
+template <>
+IdType::IdType(typename ByteData::const_pointer begin, typename ByteData::const_pointer end)
 	: _data { ByteData { begin, end } }
 {
 }
@@ -61,21 +68,9 @@ IdType::IdType(ByteData&& data) noexcept
 {
 }
 
-IdType& IdType::operator=(ByteData&& data) noexcept
-{
-	_data = { std::move(data) };
-	return *this;
-}
-
 IdType::IdType(OpaqueString&& opaque) noexcept
 	: _data { std::move(opaque) }
 {
-}
-
-IdType& IdType::operator=(OpaqueString&& opaque) noexcept
-{
-	_data = { std::move(opaque) };
-	return *this;
 }
 
 bool IdType::operator==(const IdType& rhs) const noexcept
@@ -148,6 +143,299 @@ bool IdType::isBase64() const noexcept
 {
 	return !std::holds_alternative<OpaqueString>(_data)
 		|| internal::Base64::validateBase64(std::get<OpaqueString>(_data));
+}
+
+bool IdType::empty() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.empty();
+		},
+		_data);
+}
+
+size_t IdType::size() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.size();
+		},
+		_data);
+}
+
+size_t IdType::max_size() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.max_size();
+		},
+		_data);
+}
+
+void IdType::reserve(size_t new_cap)
+{
+	std::visit(
+		[new_cap](auto& data) {
+			data.reserve(new_cap);
+		},
+		_data);
+}
+
+size_t IdType::capacity() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.capacity();
+		},
+		_data);
+}
+
+void IdType::shrink_to_fit()
+{
+	std::visit(
+		[](auto& data) {
+			data.shrink_to_fit();
+		},
+		_data);
+}
+
+void IdType::clear() noexcept
+{
+	std::visit(
+		[](auto& data) noexcept {
+			data.clear();
+		},
+		_data);
+}
+
+const std::uint8_t& IdType::at(size_t pos) const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::at for ByteData");
+	}
+
+	return std::get<ByteData>(_data).at(pos);
+}
+
+std::uint8_t& IdType::at(size_t pos)
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::at for ByteData");
+	}
+
+	return std::get<ByteData>(_data).at(pos);
+}
+
+const std::uint8_t& IdType::operator[](size_t pos) const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::operator[] for ByteData");
+	}
+
+	return std::get<ByteData>(_data)[pos];
+}
+
+std::uint8_t& IdType::operator[](size_t pos)
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::operator[] for ByteData");
+	}
+
+	return std::get<ByteData>(_data)[pos];
+}
+
+const std::uint8_t& IdType::front() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::front for ByteData");
+	}
+
+	return std::get<ByteData>(_data).front();
+}
+
+std::uint8_t& IdType::front()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::front for ByteData");
+	}
+
+	return std::get<ByteData>(_data).front();
+}
+
+const std::uint8_t& IdType::back() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::back for ByteData");
+	}
+
+	return std::get<ByteData>(_data).back();
+}
+
+std::uint8_t& IdType::back()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::back for ByteData");
+	}
+
+	return std::get<ByteData>(_data).back();
+}
+
+const std::uint8_t* IdType::data() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::data for ByteData");
+	}
+
+	return std::get<ByteData>(_data).data();
+}
+
+std::uint8_t* IdType::data()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::data for ByteData");
+	}
+
+	return std::get<ByteData>(_data).data();
+}
+
+IdType::ByteData::const_iterator IdType::begin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::begin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).begin();
+}
+
+IdType::ByteData::iterator IdType::begin()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::begin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).begin();
+}
+
+IdType::ByteData::const_iterator IdType::cbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::cbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).cbegin();
+}
+
+IdType::ByteData::const_iterator IdType::end() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::end for ByteData");
+	}
+
+	return std::get<ByteData>(_data).end();
+}
+
+IdType::ByteData::iterator IdType::end()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::end for ByteData");
+	}
+
+	return std::get<ByteData>(_data).end();
+}
+
+IdType::ByteData::const_iterator IdType::cend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::cend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).cend();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::rbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rbegin();
+}
+
+IdType::ByteData::reverse_iterator IdType::rbegin()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rbegin();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::crbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).crbegin();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::rend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rend();
+}
+
+IdType::ByteData::reverse_iterator IdType::rend()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rend();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::crend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).crend();
+}
+
+const char* IdType::c_str() const
+{
+	if (!std::holds_alternative<OpaqueString>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crend for OpaqueString");
+	}
+
+	return std::get<OpaqueString>(_data).c_str();
 }
 
 template <>
