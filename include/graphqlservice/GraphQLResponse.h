@@ -102,10 +102,10 @@ struct [[nodiscard]] IdType
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool empty() const noexcept;
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const noexcept;
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t max_size() const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] void reserve(size_t new_cap);
+	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t capacity() const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] void shrink_to_fit();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] void clear();
+	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
+	GRAPHQLRESPONSE_EXPORT void clear();
 
 	// ByteData accessors
 	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& at(size_t pos) const;
