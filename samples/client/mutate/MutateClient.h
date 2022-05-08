@@ -60,6 +60,17 @@ enum class [[nodiscard]] TaskState
 
 struct [[nodiscard]] CompleteTaskInput
 {
+	explicit CompleteTaskInput(
+		response::IdType idArg = response::IdType {},
+		std::optional<TaskState> testTaskStateArg = std::optional<TaskState> {},
+		std::optional<bool> isCompleteArg = std::optional<bool> {},
+		std::optional<std::string> clientMutationIdArg = std::optional<std::string> {}) noexcept;
+	CompleteTaskInput(const CompleteTaskInput& other);
+	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
+
+	CompleteTaskInput& operator=(const CompleteTaskInput& other);
+	CompleteTaskInput& operator=(CompleteTaskInput&& other) noexcept;
+
 	response::IdType id {};
 	std::optional<TaskState> testTaskState {};
 	std::optional<bool> isComplete {};
@@ -67,6 +78,12 @@ struct [[nodiscard]] CompleteTaskInput
 };
 
 } // namespace mutate
+
+template <>
+constexpr bool isInputType<mutate::CompleteTaskInput>() noexcept
+{
+	return true;
+}
 
 namespace mutation::CompleteTaskMutation {
 

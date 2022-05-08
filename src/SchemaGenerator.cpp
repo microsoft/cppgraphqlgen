@@ -262,19 +262,22 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		pendingSeparator.reset();
 
 		std::unordered_set<std::string_view> forwardDeclared;
+		const auto introspectionExport =
+			(_loader.isIntrospection() ? "GRAPHQLSERVICE_EXPORT "sv : ""sv);
 
 		// Output the full declarations
 		for (const auto& inputType : _loader.getInputTypes())
 		{
+			forwardDeclared.insert(inputType.cppType);
+
 			if (!inputType.declarations.empty())
 			{
 				// Forward declare nullable dependencies
 				for (auto declaration : inputType.declarations)
 				{
-					if (declaration != inputType.cppType
-						&& forwardDeclared.insert(declaration).second)
+					if (forwardDeclared.insert(declaration).second)
 					{
-						headerFile << R"cpp(struct [[nodiscard]] )cpp" << declaration << R"cpp(;
+						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
 )cpp";
 						pendingSeparator.add();
 					}
@@ -283,18 +286,46 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				pendingSeparator.reset();
 			}
 
-			headerFile << R"cpp(struct )cpp";
+			headerFile << R"cpp(struct [[nodiscard]] )cpp" << inputType.cppType << R"cpp(
+{
+	)cpp" << introspectionExport
+					   << R"cpp(explicit )cpp" << inputType.cppType << R"cpp(()cpp";
 
-			if (forwardDeclared.find(inputType.cppType) == forwardDeclared.end())
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.fields)
 			{
-				headerFile << R"cpp([[nodiscard]] )cpp";
+				if (!firstField)
+				{
+					headerFile << R"cpp(,)cpp";
+				}
+
+				firstField = false;
+
+				const auto inputCppType = _loader.getInputCppType(inputField);
+
+				headerFile << R"cpp(
+		)cpp" << inputCppType
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg = )cpp"
+						   << inputCppType << R"cpp( {})cpp";
 			}
 
-			headerFile << inputType.cppType << R"cpp(
-{
-)cpp";
+			headerFile << R"cpp() noexcept;
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp((const )cpp" << inputType.cppType
+					   << R"cpp(& other);
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(()cpp" << inputType.cppType
+					   << R"cpp(&& other) noexcept;
 
-			forwardDeclared.insert(inputType.cppType);
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(& operator=(const )cpp" << inputType.cppType
+					   << R"cpp(& other);
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(& operator=()cpp" << inputType.cppType
+					   << R"cpp(&& other) noexcept;
+
+)cpp";
 
 			for (const auto& inputField : inputType.fields)
 			{
@@ -303,8 +334,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			headerFile << R"cpp(};
 
 )cpp";
-
-			forwardDeclared.insert(inputType.type);
 		}
 	}
 
@@ -1405,7 +1434,8 @@ void ModifiedResult<)cpp"
 				sourceFile << std::endl;
 			}
 
-			sourceFile << R"cpp(	return {
+			sourceFile << R"cpp(	return )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << inputType.cppType << R"cpp( {
 )cpp";
 
 			firstField = true;
@@ -1439,6 +1469,145 @@ void ModifiedResult<)cpp"
 
 	NamespaceScope schemaNamespace { sourceFile, _loader.getSchemaNamespace() };
 	std::string_view queryType;
+
+	for (const auto& inputType : _loader.getInputTypes())
+	{
+		sourceFile << std::endl
+				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
+
+		bool firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			if (!firstField)
+			{
+				sourceFile << R"cpp(,)cpp";
+			}
+
+			firstField = false;
+			sourceFile << R"cpp(
+		)cpp" << _loader.getInputCppType(inputField)
+					   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
+		}
+
+		sourceFile << R"cpp() noexcept
+)cpp";
+
+		firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+			firstField = false;
+
+			sourceFile << inputField.cppName << R"cpp( { std::move()cpp" << inputField.cppName
+					   << R"cpp(Arg) }
+)cpp";
+		}
+
+		sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::)cpp" << inputType.cppType << R"cpp((const )cpp" << inputType.cppType
+				   << R"cpp(& other)
+)cpp";
+
+		firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+			firstField = false;
+
+			sourceFile << inputField.cppName << R"cpp( { service::ModifiedArgument<)cpp"
+					   << _loader.getCppType(inputField.type) << R"cpp(>::duplicate)cpp";
+
+			if (!inputField.modifiers.empty())
+			{
+				bool firstModifier = true;
+
+				for (const auto modifier : inputField.modifiers)
+				{
+					sourceFile << (firstModifier ? R"cpp(<)cpp" : R"cpp(, )cpp");
+					firstModifier = false;
+
+					switch (modifier)
+					{
+						case service::TypeModifier::None:
+							sourceFile << R"cpp(service::TypeModifier::None)cpp";
+							break;
+
+						case service::TypeModifier::Nullable:
+							sourceFile << R"cpp(service::TypeModifier::Nullable)cpp";
+							break;
+
+						case service::TypeModifier::List:
+							sourceFile << R"cpp(service::TypeModifier::List)cpp";
+							break;
+					}
+				}
+
+				sourceFile << R"cpp(>)cpp";
+			}
+
+			sourceFile << R"cpp((other.)cpp" << inputField.cppName << R"cpp() }
+)cpp";
+		}
+
+		sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp" << inputType.cppType
+				   << R"cpp(&& other) noexcept
+)cpp";
+
+		firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+			firstField = false;
+
+			sourceFile << inputField.cppName << R"cpp( { std::move(other.)cpp" << inputField.cppName
+					   << R"cpp() }
+)cpp";
+		}
+
+		sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=(const )cpp"
+				   << inputType.cppType << R"cpp(& other)
+{
+	)cpp" << inputType.cppType
+				   << R"cpp( value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=()cpp"
+				   << inputType.cppType << R"cpp(&& other) noexcept
+{
+)cpp";
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << R"cpp(	)cpp" << inputField.cppName << R"cpp( = std::move(other.)cpp"
+					   << inputField.cppName << R"cpp();
+)cpp";
+		}
+
+		sourceFile << R"cpp(
+	return *this;
+}
+)cpp";
+	}
 
 	if (!_loader.isIntrospection())
 	{

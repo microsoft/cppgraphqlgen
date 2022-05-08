@@ -53,6 +53,12 @@ IdType::IdType(typename ByteData::const_pointer begin, typename ByteData::const_
 {
 }
 
+template <>
+IdType::IdType(typename ByteData::pointer begin, typename ByteData::pointer end)
+	: _data { ByteData { begin, end } }
+{
+}
+
 IdType& IdType::operator=(IdType&& rhs) noexcept
 {
 	if (&rhs != this)

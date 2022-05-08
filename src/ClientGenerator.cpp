@@ -271,11 +271,43 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			headerFile << R"cpp(struct [[nodiscard]] )cpp" << cppType << R"cpp(
 {
+	explicit )cpp" << cppType
+					   << R"cpp(()cpp";
+
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				if (!firstField)
+				{
+					headerFile << R"cpp(,)cpp";
+				}
+
+				firstField = false;
+
+				const auto inputCppType = _requestLoader.getInputCppType(inputField->type().lock());
+
+				headerFile << R"cpp(
+		)cpp" << inputCppType
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp(Arg = )cpp" << inputCppType << R"cpp( {})cpp";
+			}
+
+			headerFile << R"cpp() noexcept;
+	)cpp" << cppType << R"cpp((const )cpp"
+					   << cppType << R"cpp(& other);
+	)cpp" << cppType << R"cpp(()cpp"
+					   << cppType << R"cpp(&& other) noexcept;
+
+	)cpp" << cppType << R"cpp(& operator=(const )cpp"
+					   << cppType << R"cpp(& other);
+	)cpp" << cppType << R"cpp(& operator=()cpp"
+					   << cppType << R"cpp(&& other) noexcept;
+
 )cpp";
 
 			for (const auto& inputField : inputType.type->inputFields())
 			{
-
 				headerFile << R"cpp(	)cpp"
 						   << _requestLoader.getInputCppType(inputField->type().lock())
 						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
@@ -293,6 +325,34 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	pendingSeparator.reset();
 	schemaNamespaceScope.exit();
 	pendingSeparator.add();
+
+	std::unordered_set<std::string_view> outputIsInputType;
+
+	for (const auto& operation : operations)
+	{
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+		{
+			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+			if (!outputIsInputType.insert(cppType).second)
+			{
+				continue;
+			}
+
+			pendingSeparator.reset();
+
+			headerFile << R"cpp(template <>
+constexpr bool isInputType<)cpp"
+					   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << cppType
+					   << R"cpp(>() noexcept
+{
+	return true;
+}
+)cpp";
+
+			pendingSeparator.add();
+		}
+	}
 
 	for (const auto& operation : operations)
 	{
@@ -486,8 +546,8 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	std::unordered_set<std::string_view> fieldNames;
 	PendingBlankLine pendingSeparator { headerFile };
 
-	headerFile << indentTabs << R"cpp(struct [[nodiscard]] )cpp" << getResponseFieldCppType(responseField)
-			   << R"cpp(
+	headerFile << indentTabs << R"cpp(struct [[nodiscard]] )cpp"
+			   << getResponseFieldCppType(responseField) << R"cpp(
 )cpp" << indentTabs
 			   << R"cpp({)cpp";
 
@@ -554,6 +614,7 @@ bool Generator::outputSource() const noexcept
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 using namespace std::literals;
 
@@ -567,6 +628,7 @@ using namespace std::literals;
 
 	const auto& operations = _requestLoader.getOperations();
 	std::unordered_set<std::string_view> outputEnumNames;
+	std::unordered_set<std::string_view> outputInputMethods;
 
 	for (const auto& operation : operations)
 	{
@@ -601,6 +663,134 @@ using namespace std::literals;
 		}
 	}
 
+	for (const auto& operation : operations)
+	{
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+		{
+			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+			if (!outputInputMethods.insert(cppType).second)
+			{
+				continue;
+			}
+
+			pendingSeparator.reset();
+
+			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(()cpp";
+
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				if (!firstField)
+				{
+					sourceFile << R"cpp(,)cpp";
+				}
+
+				firstField = false;
+				sourceFile << R"cpp(
+		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp(Arg)cpp";
+			}
+
+			sourceFile << R"cpp() noexcept
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+
+				sourceFile << name << R"cpp( { std::move()cpp" << name << R"cpp(Arg) }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << cppType << R"cpp(::)cpp"
+					   << cppType << R"cpp((const )cpp" << cppType << R"cpp(& other)
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+				const auto [type, modifiers] =
+					RequestLoader::unwrapSchemaType(inputField->type().lock());
+
+				sourceFile << name << R"cpp( { ModifiedVariable<)cpp"
+						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::duplicate)cpp"
+						   << getTypeModifierList(modifiers) << R"cpp((other.)cpp" << name
+						   << R"cpp() }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << cppType << R"cpp(::)cpp"
+					   << cppType << R"cpp(()cpp" << cppType << R"cpp(&& other) noexcept
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+
+				sourceFile << name << R"cpp( { std::move(other.)cpp" << name << R"cpp() }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << cppType << R"cpp(& )cpp"
+					   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
+{
+	)cpp" << cppType << R"cpp( value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+)cpp" << cppType << R"cpp(& )cpp"
+					   << cppType << R"cpp(::operator=()cpp" << cppType << R"cpp(&& other) noexcept
+{
+)cpp";
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+
+				sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
+						   << R"cpp();
+)cpp";
+			}
+
+			sourceFile << R"cpp(
+	return *this;
+}
+)cpp";
+
+			pendingSeparator.add();
+		}
+	}
+
 	pendingSeparator.reset();
 	schemaNamespaceScope.exit();
 
@@ -611,35 +801,12 @@ using namespace )cpp"
 
 	pendingSeparator.add();
 
-	std::unordered_set<std::string_view> outputIsInputType;
 	std::unordered_set<std::string_view> outputModifiedVariableEnum;
 	std::unordered_set<std::string_view> outputModifiedVariableInput;
 	std::unordered_set<std::string_view> outputModifiedResponseEnum;
 
 	for (const auto& operation : operations)
 	{
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
-		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!outputIsInputType.insert(cppType).second)
-			{
-				continue;
-			}
-
-			pendingSeparator.reset();
-
-			sourceFile << R"cpp(template <>
-constexpr bool isInputType<)cpp"
-					   << cppType << R"cpp(>() noexcept
-{
-	return true;
-}
-)cpp";
-
-			pendingSeparator.add();
-		}
-
 		const auto& variables = _requestLoader.getVariables(operation);
 
 		if (!variables.empty())

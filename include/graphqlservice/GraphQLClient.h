@@ -77,17 +77,17 @@ template <typename Type>
 	return false;
 }
 
+// Special-case an innermost nullable INPUT_OBJECT type.
+template <TypeModifier... Other>
+[[nodiscard]] constexpr bool onlyNoneModifiers() noexcept
+{
+	return (... && (Other == TypeModifier::None));
+}
+
 // Serialize variable input values with chained type modifiers which add nullable or list wrappers.
 template <typename Type>
 struct ModifiedVariable
 {
-	// Special-case an innermost nullable INPUT_OBJECT type.
-	template <TypeModifier... Other>
-	[[nodiscard]] static constexpr bool onlyNoneModifiers() noexcept
-	{
-		return (... && (Other == TypeModifier::None));
-	}
-
 	// Peel off modifiers until we get to the underlying type.
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct VariableTraits
@@ -149,6 +149,53 @@ struct ModifiedVariable
 			result.emplace_back(serialize<Other...>(std::move(value)));
 		});
 		listValue.clear();
+
+		return result;
+	}
+
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
+		duplicate(const Type& value)
+	{
+		// Just copy the value.
+		return Type { value };
+	}
+
+	// Peel off nullable modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+		typename VariableTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue)
+	{
+		typename VariableTraits<Type, Modifier, Other...>::type result {};
+
+		if (nullableValue)
+		{
+			if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
+			{
+				// Special case duplicating the std::unique_ptr.
+				result = std::make_unique<Type>(Type { *nullableValue });
+			}
+			else
+			{
+				result = duplicate<Other...>(*nullableValue);
+			}
+		}
+
+		return result;
+	}
+
+	// Peel off list modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+		typename VariableTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& listValue)
+	{
+		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
+
+		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
 
 		return result;
 	}

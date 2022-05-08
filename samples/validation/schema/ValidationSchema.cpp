@@ -143,7 +143,7 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 	auto valueName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("name", value);
 	auto valueOwner = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("owner", value);
 
-	return {
+	return validation::ComplexInput {
 		std::move(valueName),
 		std::move(valueOwner)
 	};
@@ -152,6 +152,43 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 } // namespace service
 
 namespace validation {
+
+ComplexInput::ComplexInput(
+		std::optional<std::string> nameArg,
+		std::optional<std::string> ownerArg) noexcept
+	: name { std::move(nameArg) }
+	, owner { std::move(ownerArg) }
+{
+}
+
+ComplexInput::ComplexInput(const ComplexInput& other)
+	: name { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.name) }
+	, owner { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.owner) }
+{
+}
+
+ComplexInput::ComplexInput(ComplexInput&& other) noexcept
+	: name { std::move(other.name) }
+	, owner { std::move(other.owner) }
+{
+}
+
+ComplexInput& ComplexInput::operator=(const ComplexInput& other)
+{
+	ComplexInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
+{
+	name = std::move(other.name);
+	owner = std::move(other.owner);
+
+	return *this;
+}
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({

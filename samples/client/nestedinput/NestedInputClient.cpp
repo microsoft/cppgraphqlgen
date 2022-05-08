@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 using namespace std::literals;
 
@@ -45,33 +46,157 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+InputA::InputA(
+		bool aArg) noexcept
+	: a { std::move(aArg) }
+{
+}
+
+InputA::InputA(const InputA& other)
+	: a { ModifiedVariable<bool>::duplicate(other.a) }
+{
+}
+
+InputA::InputA(InputA&& other) noexcept
+	: a { std::move(other.a) }
+{
+}
+
+InputA& InputA::operator=(const InputA& other)
+{
+	InputA value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+InputA& InputA::operator=(InputA&& other) noexcept
+{
+	a = std::move(other.a);
+
+	return *this;
+}
+
+InputB::InputB(
+		double bArg) noexcept
+	: b { std::move(bArg) }
+{
+}
+
+InputB::InputB(const InputB& other)
+	: b { ModifiedVariable<double>::duplicate(other.b) }
+{
+}
+
+InputB::InputB(InputB&& other) noexcept
+	: b { std::move(other.b) }
+{
+}
+
+InputB& InputB::operator=(const InputB& other)
+{
+	InputB value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+InputB& InputB::operator=(InputB&& other) noexcept
+{
+	b = std::move(other.b);
+
+	return *this;
+}
+
+InputABCD::InputABCD(
+		std::string dArg,
+		InputA aArg,
+		InputB bArg,
+		std::vector<InputBC> bcArg) noexcept
+	: d { std::move(dArg) }
+	, a { std::move(aArg) }
+	, b { std::move(bArg) }
+	, bc { std::move(bcArg) }
+{
+}
+
+InputABCD::InputABCD(const InputABCD& other)
+	: d { ModifiedVariable<std::string>::duplicate(other.d) }
+	, a { ModifiedVariable<InputA>::duplicate(other.a) }
+	, b { ModifiedVariable<InputB>::duplicate(other.b) }
+	, bc { ModifiedVariable<InputBC>::duplicate<TypeModifier::List>(other.bc) }
+{
+}
+
+InputABCD::InputABCD(InputABCD&& other) noexcept
+	: d { std::move(other.d) }
+	, a { std::move(other.a) }
+	, b { std::move(other.b) }
+	, bc { std::move(other.bc) }
+{
+}
+
+InputABCD& InputABCD::operator=(const InputABCD& other)
+{
+	InputABCD value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
+{
+	d = std::move(other.d);
+	a = std::move(other.a);
+	b = std::move(other.b);
+	bc = std::move(other.bc);
+
+	return *this;
+}
+
+InputBC::InputBC(
+		response::IdType cArg,
+		InputB bArg) noexcept
+	: c { std::move(cArg) }
+	, b { std::move(bArg) }
+{
+}
+
+InputBC::InputBC(const InputBC& other)
+	: c { ModifiedVariable<response::IdType>::duplicate(other.c) }
+	, b { ModifiedVariable<InputB>::duplicate(other.b) }
+{
+}
+
+InputBC::InputBC(InputBC&& other) noexcept
+	: c { std::move(other.c) }
+	, b { std::move(other.b) }
+{
+}
+
+InputBC& InputBC::operator=(const InputBC& other)
+{
+	InputBC value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+InputBC& InputBC::operator=(InputBC&& other) noexcept
+{
+	c = std::move(other.c);
+	b = std::move(other.b);
+
+	return *this;
+}
+
 } // namespace nestedinput
 
 using namespace nestedinput;
-
-template <>
-constexpr bool isInputType<InputA>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<InputB>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<InputABCD>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<InputBC>() noexcept
-{
-	return true;
-}
 
 template <>
 response::Value ModifiedVariable<InputA>::serialize(InputA&& inputValue)
