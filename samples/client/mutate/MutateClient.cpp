@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 using namespace std::literals;
 
@@ -58,15 +59,51 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
+CompleteTaskInput::CompleteTaskInput(response::IdType&& idArg, std::optional<TaskState>&& testTaskStateArg, std::optional<bool>&& isCompleteArg, std::optional<std::string>&& clientMutationIdArg) noexcept
+	: id { std::move(idArg) }
+	, testTaskState { std::move(testTaskStateArg) }
+	, isComplete { std::move(isCompleteArg) }
+	, clientMutationId { std::move(clientMutationIdArg) }
+{
+}
+
+CompleteTaskInput::CompleteTaskInput(const CompleteTaskInput& other)
+	: id { ModifiedVariable<response::IdType>::duplicate(other.id) }
+	, testTaskState { ModifiedVariable<TaskState>::duplicate<TypeModifier::Nullable>(other.testTaskState) }
+	, isComplete { ModifiedVariable<bool>::duplicate<TypeModifier::Nullable>(other.isComplete) }
+	, clientMutationId { ModifiedVariable<std::string>::duplicate<TypeModifier::Nullable>(other.clientMutationId) }
+{
+}
+
+CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
+	: id { std::move(other.id) }
+	, testTaskState { std::move(other.testTaskState) }
+	, isComplete { std::move(other.isComplete) }
+	, clientMutationId { std::move(other.clientMutationId) }
+{
+}
+
+CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
+{
+	CompleteTaskInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexcept
+{
+	CompleteTaskInput value { std::move(other) };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
 } // namespace mutate
 
 using namespace mutate;
-
-template <>
-constexpr bool isInputType<CompleteTaskInput>() noexcept
-{
-	return true;
-}
 
 template <>
 response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)

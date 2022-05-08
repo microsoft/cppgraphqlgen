@@ -56,37 +56,79 @@ enum class [[nodiscard]] TaskState
 
 struct [[nodiscard]] CompleteTaskInput
 {
+	explicit CompleteTaskInput(response::IdType&& idArg = response::IdType {}, std::optional<TaskState>&& testTaskStateArg = std::optional<TaskState> {}, std::optional<bool>&& isCompleteArg = std::optional<bool> {}, std::optional<std::string>&& clientMutationIdArg = std::optional<std::string> {}) noexcept;
+	CompleteTaskInput(const CompleteTaskInput& other);
+	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
+
+	CompleteTaskInput& operator=(const CompleteTaskInput& other);
+	CompleteTaskInput& operator=(CompleteTaskInput&& other) noexcept;
+
 	response::IdType id {};
 	std::optional<TaskState> testTaskState {};
 	std::optional<bool> isComplete {};
 	std::optional<std::string> clientMutationId {};
 };
 
-struct [[nodiscard]] SecondNestedInput;
+struct SecondNestedInput;
 
 struct [[nodiscard]] ThirdNestedInput
 {
+	explicit ThirdNestedInput(response::IdType&& idArg = response::IdType {}, std::unique_ptr<SecondNestedInput>&& secondArg = std::unique_ptr<SecondNestedInput> {}) noexcept;
+	ThirdNestedInput(const ThirdNestedInput& other);
+	ThirdNestedInput(ThirdNestedInput&& other) noexcept;
+
+	ThirdNestedInput& operator=(const ThirdNestedInput& other);
+	ThirdNestedInput& operator=(ThirdNestedInput&& other) noexcept;
+
 	response::IdType id {};
 	std::unique_ptr<SecondNestedInput> second {};
 };
 
 struct [[nodiscard]] FourthNestedInput
 {
+	explicit FourthNestedInput(response::IdType&& idArg = response::IdType {}) noexcept;
+	FourthNestedInput(const FourthNestedInput& other);
+	FourthNestedInput(FourthNestedInput&& other) noexcept;
+
+	FourthNestedInput& operator=(const FourthNestedInput& other);
+	FourthNestedInput& operator=(FourthNestedInput&& other) noexcept;
+
 	response::IdType id {};
 };
 
 struct [[nodiscard]] IncludeNullableSelfInput
 {
+	explicit IncludeNullableSelfInput(std::unique_ptr<IncludeNullableSelfInput>&& selfArg = std::unique_ptr<IncludeNullableSelfInput> {}) noexcept;
+	IncludeNullableSelfInput(const IncludeNullableSelfInput& other);
+	IncludeNullableSelfInput(IncludeNullableSelfInput&& other) noexcept;
+
+	IncludeNullableSelfInput& operator=(const IncludeNullableSelfInput& other);
+	IncludeNullableSelfInput& operator=(IncludeNullableSelfInput&& other) noexcept;
+
 	std::unique_ptr<IncludeNullableSelfInput> self {};
 };
 
 struct [[nodiscard]] IncludeNonNullableListSelfInput
 {
+	explicit IncludeNonNullableListSelfInput(std::vector<IncludeNonNullableListSelfInput>&& selvesArg = std::vector<IncludeNonNullableListSelfInput> {}) noexcept;
+	IncludeNonNullableListSelfInput(const IncludeNonNullableListSelfInput& other);
+	IncludeNonNullableListSelfInput(IncludeNonNullableListSelfInput&& other) noexcept;
+
+	IncludeNonNullableListSelfInput& operator=(const IncludeNonNullableListSelfInput& other);
+	IncludeNonNullableListSelfInput& operator=(IncludeNonNullableListSelfInput&& other) noexcept;
+
 	std::vector<IncludeNonNullableListSelfInput> selves {};
 };
 
 struct [[nodiscard]] StringOperationFilterInput
 {
+	explicit StringOperationFilterInput(std::optional<std::vector<StringOperationFilterInput>>&& and_Arg = std::optional<std::vector<StringOperationFilterInput>> {}, std::optional<std::vector<StringOperationFilterInput>>&& or_Arg = std::optional<std::vector<StringOperationFilterInput>> {}, std::optional<std::string>&& equalArg = std::optional<std::string> {}, std::optional<std::string>&& notEqualArg = std::optional<std::string> {}, std::optional<std::string>&& containsArg = std::optional<std::string> {}, std::optional<std::string>&& notContainsArg = std::optional<std::string> {}, std::optional<std::vector<std::string>>&& inArg = std::optional<std::vector<std::string>> {}, std::optional<std::vector<std::string>>&& notInArg = std::optional<std::vector<std::string>> {}, std::optional<std::string>&& startsWithArg = std::optional<std::string> {}, std::optional<std::string>&& notStartsWithArg = std::optional<std::string> {}, std::optional<std::string>&& endsWithArg = std::optional<std::string> {}, std::optional<std::string>&& notEndsWithArg = std::optional<std::string> {}) noexcept;
+	StringOperationFilterInput(const StringOperationFilterInput& other);
+	StringOperationFilterInput(StringOperationFilterInput&& other) noexcept;
+
+	StringOperationFilterInput& operator=(const StringOperationFilterInput& other);
+	StringOperationFilterInput& operator=(StringOperationFilterInput&& other) noexcept;
+
 	std::optional<std::vector<StringOperationFilterInput>> and_ {};
 	std::optional<std::vector<StringOperationFilterInput>> or_ {};
 	std::optional<std::string> equal {};
@@ -101,20 +143,41 @@ struct [[nodiscard]] StringOperationFilterInput
 	std::optional<std::string> notEndsWith {};
 };
 
-struct SecondNestedInput
+struct [[nodiscard]] SecondNestedInput
 {
+	explicit SecondNestedInput(response::IdType&& idArg = response::IdType {}, ThirdNestedInput&& thirdArg = ThirdNestedInput {}) noexcept;
+	SecondNestedInput(const SecondNestedInput& other);
+	SecondNestedInput(SecondNestedInput&& other) noexcept;
+
+	SecondNestedInput& operator=(const SecondNestedInput& other);
+	SecondNestedInput& operator=(SecondNestedInput&& other) noexcept;
+
 	response::IdType id {};
 	ThirdNestedInput third {};
 };
 
 struct [[nodiscard]] ForwardDeclaredInput
 {
+	explicit ForwardDeclaredInput(std::unique_ptr<IncludeNullableSelfInput>&& nullableSelfArg = std::unique_ptr<IncludeNullableSelfInput> {}, IncludeNonNullableListSelfInput&& listSelvesArg = IncludeNonNullableListSelfInput {}) noexcept;
+	ForwardDeclaredInput(const ForwardDeclaredInput& other);
+	ForwardDeclaredInput(ForwardDeclaredInput&& other) noexcept;
+
+	ForwardDeclaredInput& operator=(const ForwardDeclaredInput& other);
+	ForwardDeclaredInput& operator=(ForwardDeclaredInput&& other) noexcept;
+
 	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
 	IncludeNonNullableListSelfInput listSelves {};
 };
 
 struct [[nodiscard]] FirstNestedInput
 {
+	explicit FirstNestedInput(response::IdType&& idArg = response::IdType {}, SecondNestedInput&& secondArg = SecondNestedInput {}, ThirdNestedInput&& thirdArg = ThirdNestedInput {}) noexcept;
+	FirstNestedInput(const FirstNestedInput& other);
+	FirstNestedInput(FirstNestedInput&& other) noexcept;
+
+	FirstNestedInput& operator=(const FirstNestedInput& other);
+	FirstNestedInput& operator=(FirstNestedInput&& other) noexcept;
+
 	response::IdType id {};
 	SecondNestedInput second {};
 	ThirdNestedInput third {};

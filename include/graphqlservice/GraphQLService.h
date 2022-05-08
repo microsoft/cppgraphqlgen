@@ -599,6 +599,13 @@ template <typename Type>
 	return false;
 }
 
+// Special-case an innermost nullable INPUT_OBJECT type.
+template <TypeModifier... Other>
+[[nodiscard]] constexpr bool onlyNoneModifiers() noexcept
+{
+	return (... && (Other == TypeModifier::None));
+}
+
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
 // argument is missing or not the correct type. If it's optional, use find and check the second
@@ -606,13 +613,6 @@ template <typename Type>
 template <typename Type>
 struct ModifiedArgument
 {
-	// Special-case an innermost nullable INPUT_OBJECT type.
-	template <TypeModifier... Other>
-	[[nodiscard]] static constexpr bool onlyNoneModifiers() noexcept
-	{
-		return (... && (Other == TypeModifier::None));
-	}
-
 	// Peel off modifiers until we get to the underlying type.
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ArgumentTraits
@@ -746,6 +746,53 @@ struct ModifiedArgument
 		{
 			return { typename ArgumentTraits<Type, Modifier, Other...>::type {}, false };
 		}
+	}
+
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
+		duplicate(const Type& value)
+	{
+		// Just copy the value.
+		return { value };
+	}
+
+	// Peel off nullable modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+		typename ArgumentTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
+	{
+		typename ArgumentTraits<Type, Modifier, Other...>::type result {};
+
+		if (nullableValue)
+		{
+			if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
+			{
+				// Special case duplicating the std::unique_ptr.
+				result = std::make_unique<Type>(*nullableValue);
+			}
+			else
+			{
+				result = duplicate<Other...>(*nullableValue);
+			}
+		}
+
+		return result;
+	}
+
+	// Peel off list modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+		typename ArgumentTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
+	{
+		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
+
+		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+
+		return result;
 	}
 };
 

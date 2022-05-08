@@ -46,11 +46,25 @@ namespace nestedinput {
 
 struct [[nodiscard]] InputA
 {
+	explicit InputA(bool&& aArg = bool {}) noexcept;
+	InputA(const InputA& other);
+	InputA(InputA&& other) noexcept;
+
+	InputA& operator=(const InputA& other);
+	InputA& operator=(InputA&& other) noexcept;
+
 	bool a {};
 };
 
 struct [[nodiscard]] InputB
 {
+	explicit InputB(double&& bArg = double {}) noexcept;
+	InputB(const InputB& other);
+	InputB(InputB&& other) noexcept;
+
+	InputB& operator=(const InputB& other);
+	InputB& operator=(InputB&& other) noexcept;
+
 	double b {};
 };
 
@@ -58,6 +72,13 @@ struct InputBC;
 
 struct [[nodiscard]] InputABCD
 {
+	explicit InputABCD(std::string&& dArg = std::string {}, InputA&& aArg = InputA {}, InputB&& bArg = InputB {}, std::vector<InputBC>&& bcArg = std::vector<InputBC> {}) noexcept;
+	InputABCD(const InputABCD& other);
+	InputABCD(InputABCD&& other) noexcept;
+
+	InputABCD& operator=(const InputABCD& other);
+	InputABCD& operator=(InputABCD&& other) noexcept;
+
 	std::string d {};
 	InputA a {};
 	InputB b {};
@@ -66,11 +87,42 @@ struct [[nodiscard]] InputABCD
 
 struct [[nodiscard]] InputBC
 {
+	explicit InputBC(response::IdType&& cArg = response::IdType {}, InputB&& bArg = InputB {}) noexcept;
+	InputBC(const InputBC& other);
+	InputBC(InputBC&& other) noexcept;
+
+	InputBC& operator=(const InputBC& other);
+	InputBC& operator=(InputBC&& other) noexcept;
+
 	response::IdType c {};
 	InputB b {};
 };
 
 } // namespace nestedinput
+
+template <>
+constexpr bool isInputType<nestedinput::InputA>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<nestedinput::InputB>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<nestedinput::InputABCD>() noexcept
+{
+	return true;
+}
+
+template <>
+constexpr bool isInputType<nestedinput::InputBC>() noexcept
+{
+	return true;
+}
 
 namespace query::testQuery {
 

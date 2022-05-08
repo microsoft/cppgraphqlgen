@@ -86,7 +86,7 @@ learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response:
 	auto valueStars = service::ModifiedArgument<int>::require("stars", value);
 	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);
 
-	return {
+	return learn::ReviewInput {
 		std::move(valueStars),
 		std::move(valueCommentary)
 	};
@@ -95,6 +95,42 @@ learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response:
 } // namespace service
 
 namespace learn {
+
+ReviewInput::ReviewInput(int&& starsArg, std::optional<std::string>&& commentaryArg) noexcept
+	: stars { std::move(starsArg) }
+	, commentary { std::move(commentaryArg) }
+{
+}
+
+ReviewInput::ReviewInput(const ReviewInput& other)
+	: stars { service::ModifiedArgument<int>::duplicate(other.stars) }
+	, commentary { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.commentary) }
+{
+}
+
+ReviewInput::ReviewInput(ReviewInput&& other) noexcept
+	: stars { std::move(other.stars) }
+	, commentary { std::move(other.commentary) }
+{
+}
+
+ReviewInput& ReviewInput::operator=(const ReviewInput& other)
+{
+	ReviewInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
+{
+	ReviewInput value { std::move(other) };
+
+	std::swap(*this, value);
+
+	return *this;
+}
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)
 	: service::Request({
