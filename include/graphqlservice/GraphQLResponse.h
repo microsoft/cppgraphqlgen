@@ -146,6 +146,9 @@ template <>
 GRAPHQLRESPONSE_EXPORT IdType::IdType(
 	typename ByteData::const_pointer begin, typename ByteData::const_pointer end);
 template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::pointer begin, typename ByteData::pointer end);
+template <>
 GRAPHQLRESPONSE_EXPORT const IdType::ByteData& IdType::get<IdType::ByteData>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const IdType::OpaqueString& IdType::get<IdType::OpaqueString>() const;
