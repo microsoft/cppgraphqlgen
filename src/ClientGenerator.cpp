@@ -1224,6 +1224,7 @@ int main(int argc, char** argv)
 	po::variables_map variables;
 	bool showUsage = false;
 	bool showVersion = false;
+	bool buildCustom = false;
 	bool verbose = false;
 	bool noIntrospection = false;
 	std::string schemaFileName;
@@ -1264,21 +1265,28 @@ int main(int argc, char** argv)
 			variables);
 		po::notify(variables);
 
-		if (schemaFileName.empty())
+		// If you specify any of these parameters, you must specify all four.
+		buildCustom = !schemaFileName.empty() || !requestFileName.empty() || !filenamePrefix.empty()
+			|| !schemaNamespace.empty();
+
+		if (buildCustom)
 		{
-			throw po::required_option("schema");
-		}
-		else if (requestFileName.empty())
-		{
-			throw po::required_option("request");
-		}
-		else if (filenamePrefix.empty())
-		{
-			throw po::required_option("prefix");
-		}
-		else if (schemaNamespace.empty())
-		{
-			throw po::required_option("namespace");
+			if (schemaFileName.empty())
+			{
+				throw po::required_option("schema");
+			}
+			else if (requestFileName.empty())
+			{
+				throw po::required_option("request");
+			}
+			else if (filenamePrefix.empty())
+			{
+				throw po::required_option("prefix");
+			}
+			else if (schemaNamespace.empty())
+			{
+				throw po::required_option("namespace");
+			}
 		}
 	}
 	catch (const po::error& oe)
@@ -1293,7 +1301,7 @@ int main(int argc, char** argv)
 		outputVersion(std::cout);
 		return 0;
 	}
-	else if (showUsage)
+	else if (showUsage || !buildCustom)
 	{
 		outputUsage(std::cout, options);
 		return 0;
