@@ -76,7 +76,9 @@ enum class [[nodiscard]] CatCommand
 
 struct [[nodiscard]] ComplexInput
 {
-	explicit ComplexInput(std::optional<std::string>&& nameArg = std::optional<std::string> {}, std::optional<std::string>&& ownerArg = std::optional<std::string> {}) noexcept;
+	explicit ComplexInput(
+		std::optional<std::string> nameArg = std::optional<std::string> {},
+		std::optional<std::string> ownerArg = std::optional<std::string> {}) noexcept;
 	ComplexInput(const ComplexInput& other);
 	ComplexInput(ComplexInput&& other) noexcept;
 

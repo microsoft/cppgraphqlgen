@@ -96,7 +96,9 @@ learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response:
 
 namespace learn {
 
-ReviewInput::ReviewInput(int&& starsArg, std::optional<std::string>&& commentaryArg) noexcept
+ReviewInput::ReviewInput(
+		int starsArg,
+		std::optional<std::string> commentaryArg) noexcept
 	: stars { std::move(starsArg) }
 	, commentary { std::move(commentaryArg) }
 {

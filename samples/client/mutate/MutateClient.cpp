@@ -59,7 +59,11 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 	"Unassigned"sv,
 };
 
-CompleteTaskInput::CompleteTaskInput(response::IdType&& idArg, std::optional<TaskState>&& testTaskStateArg, std::optional<bool>&& isCompleteArg, std::optional<std::string>&& clientMutationIdArg) noexcept
+CompleteTaskInput::CompleteTaskInput(
+		response::IdType idArg,
+		std::optional<TaskState> testTaskStateArg,
+		std::optional<bool> isCompleteArg,
+		std::optional<std::string> clientMutationIdArg) noexcept
 	: id { std::move(idArg) }
 	, testTaskState { std::move(testTaskStateArg) }
 	, isComplete { std::move(isCompleteArg) }

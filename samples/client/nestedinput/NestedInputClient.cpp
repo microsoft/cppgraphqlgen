@@ -46,7 +46,8 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-InputA::InputA(bool&& aArg) noexcept
+InputA::InputA(
+		bool aArg) noexcept
 	: a { std::move(aArg) }
 {
 }
@@ -79,7 +80,8 @@ InputA& InputA::operator=(InputA&& other) noexcept
 	return *this;
 }
 
-InputB::InputB(double&& bArg) noexcept
+InputB::InputB(
+		double bArg) noexcept
 	: b { std::move(bArg) }
 {
 }
@@ -112,7 +114,11 @@ InputB& InputB::operator=(InputB&& other) noexcept
 	return *this;
 }
 
-InputABCD::InputABCD(std::string&& dArg, InputA&& aArg, InputB&& bArg, std::vector<InputBC>&& bcArg) noexcept
+InputABCD::InputABCD(
+		std::string dArg,
+		InputA aArg,
+		InputB bArg,
+		std::vector<InputBC> bcArg) noexcept
 	: d { std::move(dArg) }
 	, a { std::move(aArg) }
 	, b { std::move(bArg) }
@@ -154,7 +160,9 @@ InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 	return *this;
 }
 
-InputBC::InputBC(response::IdType&& cArg, InputB&& bArg) noexcept
+InputBC::InputBC(
+		response::IdType cArg,
+		InputB bArg) noexcept
 	: c { std::move(cArg) }
 	, b { std::move(bArg) }
 {

@@ -227,7 +227,11 @@ today::FirstNestedInput ModifiedArgument<today::FirstNestedInput>::convert(const
 
 namespace today {
 
-CompleteTaskInput::CompleteTaskInput(response::IdType&& idArg, std::optional<TaskState>&& testTaskStateArg, std::optional<bool>&& isCompleteArg, std::optional<std::string>&& clientMutationIdArg) noexcept
+CompleteTaskInput::CompleteTaskInput(
+		response::IdType idArg,
+		std::optional<TaskState> testTaskStateArg,
+		std::optional<bool> isCompleteArg,
+		std::optional<std::string> clientMutationIdArg) noexcept
 	: id { std::move(idArg) }
 	, testTaskState { std::move(testTaskStateArg) }
 	, isComplete { std::move(isCompleteArg) }
@@ -269,7 +273,9 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 	return *this;
 }
 
-ThirdNestedInput::ThirdNestedInput(response::IdType&& idArg, std::unique_ptr<SecondNestedInput>&& secondArg) noexcept
+ThirdNestedInput::ThirdNestedInput(
+		response::IdType idArg,
+		std::unique_ptr<SecondNestedInput> secondArg) noexcept
 	: id { std::move(idArg) }
 	, second { std::move(secondArg) }
 {
@@ -305,7 +311,8 @@ ThirdNestedInput& ThirdNestedInput::operator=(ThirdNestedInput&& other) noexcept
 	return *this;
 }
 
-FourthNestedInput::FourthNestedInput(response::IdType&& idArg) noexcept
+FourthNestedInput::FourthNestedInput(
+		response::IdType idArg) noexcept
 	: id { std::move(idArg) }
 {
 }
@@ -338,7 +345,8 @@ FourthNestedInput& FourthNestedInput::operator=(FourthNestedInput&& other) noexc
 	return *this;
 }
 
-IncludeNullableSelfInput::IncludeNullableSelfInput(std::unique_ptr<IncludeNullableSelfInput>&& selfArg) noexcept
+IncludeNullableSelfInput::IncludeNullableSelfInput(
+		std::unique_ptr<IncludeNullableSelfInput> selfArg) noexcept
 	: self { std::move(selfArg) }
 {
 }
@@ -371,7 +379,8 @@ IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(IncludeNullableSel
 	return *this;
 }
 
-IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput(std::vector<IncludeNonNullableListSelfInput>&& selvesArg) noexcept
+IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput(
+		std::vector<IncludeNonNullableListSelfInput> selvesArg) noexcept
 	: selves { std::move(selvesArg) }
 {
 }
@@ -404,7 +413,19 @@ IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(Incl
 	return *this;
 }
 
-StringOperationFilterInput::StringOperationFilterInput(std::optional<std::vector<StringOperationFilterInput>>&& and_Arg, std::optional<std::vector<StringOperationFilterInput>>&& or_Arg, std::optional<std::string>&& equalArg, std::optional<std::string>&& notEqualArg, std::optional<std::string>&& containsArg, std::optional<std::string>&& notContainsArg, std::optional<std::vector<std::string>>&& inArg, std::optional<std::vector<std::string>>&& notInArg, std::optional<std::string>&& startsWithArg, std::optional<std::string>&& notStartsWithArg, std::optional<std::string>&& endsWithArg, std::optional<std::string>&& notEndsWithArg) noexcept
+StringOperationFilterInput::StringOperationFilterInput(
+		std::optional<std::vector<StringOperationFilterInput>> and_Arg,
+		std::optional<std::vector<StringOperationFilterInput>> or_Arg,
+		std::optional<std::string> equalArg,
+		std::optional<std::string> notEqualArg,
+		std::optional<std::string> containsArg,
+		std::optional<std::string> notContainsArg,
+		std::optional<std::vector<std::string>> inArg,
+		std::optional<std::vector<std::string>> notInArg,
+		std::optional<std::string> startsWithArg,
+		std::optional<std::string> notStartsWithArg,
+		std::optional<std::string> endsWithArg,
+		std::optional<std::string> notEndsWithArg) noexcept
 	: and_ { std::move(and_Arg) }
 	, or_ { std::move(or_Arg) }
 	, equal { std::move(equalArg) }
@@ -470,7 +491,9 @@ StringOperationFilterInput& StringOperationFilterInput::operator=(StringOperatio
 	return *this;
 }
 
-SecondNestedInput::SecondNestedInput(response::IdType&& idArg, ThirdNestedInput&& thirdArg) noexcept
+SecondNestedInput::SecondNestedInput(
+		response::IdType idArg,
+		ThirdNestedInput thirdArg) noexcept
 	: id { std::move(idArg) }
 	, third { std::move(thirdArg) }
 {
@@ -506,7 +529,9 @@ SecondNestedInput& SecondNestedInput::operator=(SecondNestedInput&& other) noexc
 	return *this;
 }
 
-ForwardDeclaredInput::ForwardDeclaredInput(std::unique_ptr<IncludeNullableSelfInput>&& nullableSelfArg, IncludeNonNullableListSelfInput&& listSelvesArg) noexcept
+ForwardDeclaredInput::ForwardDeclaredInput(
+		std::unique_ptr<IncludeNullableSelfInput> nullableSelfArg,
+		IncludeNonNullableListSelfInput listSelvesArg) noexcept
 	: nullableSelf { std::move(nullableSelfArg) }
 	, listSelves { std::move(listSelvesArg) }
 {
@@ -542,7 +567,10 @@ ForwardDeclaredInput& ForwardDeclaredInput::operator=(ForwardDeclaredInput&& oth
 	return *this;
 }
 
-FirstNestedInput::FirstNestedInput(response::IdType&& idArg, SecondNestedInput&& secondArg, ThirdNestedInput&& thirdArg) noexcept
+FirstNestedInput::FirstNestedInput(
+		response::IdType idArg,
+		SecondNestedInput secondArg,
+		ThirdNestedInput thirdArg) noexcept
 	: id { std::move(idArg) }
 	, second { std::move(secondArg) }
 	, third { std::move(thirdArg) }

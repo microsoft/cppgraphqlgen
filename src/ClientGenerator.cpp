@@ -280,16 +280,17 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			{
 				if (!firstField)
 				{
-					headerFile << R"cpp(, )cpp";
+					headerFile << R"cpp(,)cpp";
 				}
 
 				firstField = false;
 
 				const auto inputCppType = _requestLoader.getInputCppType(inputField->type().lock());
 
-				headerFile << inputCppType << R"cpp(&& )cpp"
-						   << SchemaLoader::getSafeCppName(inputField->name()) << R"cpp(Arg = )cpp"
-						   << inputCppType << R"cpp( {})cpp";
+				headerFile << R"cpp(
+		)cpp" << inputCppType
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp(Arg = )cpp" << inputCppType << R"cpp( {})cpp";
 			}
 
 			headerFile << R"cpp() noexcept;
@@ -683,12 +684,13 @@ using namespace std::literals;
 			{
 				if (!firstField)
 				{
-					sourceFile << R"cpp(, )cpp";
+					sourceFile << R"cpp(,)cpp";
 				}
 
 				firstField = false;
-				sourceFile << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp(&& )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+				sourceFile << R"cpp(
+		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
 						   << R"cpp(Arg)cpp";
 			}
 

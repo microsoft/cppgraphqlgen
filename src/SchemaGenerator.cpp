@@ -297,15 +297,17 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			{
 				if (!firstField)
 				{
-					headerFile << R"cpp(, )cpp";
+					headerFile << R"cpp(,)cpp";
 				}
 
 				firstField = false;
 
 				const auto inputCppType = _loader.getInputCppType(inputField);
 
-				headerFile << inputCppType << R"cpp(&& )cpp" << inputField.cppName
-						   << R"cpp(Arg = )cpp" << inputCppType << R"cpp( {})cpp";
+				headerFile << R"cpp(
+		)cpp" << inputCppType
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg = )cpp"
+						   << inputCppType << R"cpp( {})cpp";
 			}
 
 			headerFile << R"cpp() noexcept;
@@ -1479,12 +1481,13 @@ void ModifiedResult<)cpp"
 		{
 			if (!firstField)
 			{
-				sourceFile << R"cpp(, )cpp";
+				sourceFile << R"cpp(,)cpp";
 			}
 
 			firstField = false;
-			sourceFile << _loader.getInputCppType(inputField) << R"cpp(&& )cpp"
-					   << inputField.cppName << R"cpp(Arg)cpp";
+			sourceFile << R"cpp(
+		)cpp" << _loader.getInputCppType(inputField)
+					   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
 		}
 
 		sourceFile << R"cpp() noexcept

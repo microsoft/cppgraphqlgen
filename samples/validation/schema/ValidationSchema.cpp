@@ -153,7 +153,9 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 
 namespace validation {
 
-ComplexInput::ComplexInput(std::optional<std::string>&& nameArg, std::optional<std::string>&& ownerArg) noexcept
+ComplexInput::ComplexInput(
+		std::optional<std::string> nameArg,
+		std::optional<std::string> ownerArg) noexcept
 	: name { std::move(nameArg) }
 	, owner { std::move(ownerArg) }
 {

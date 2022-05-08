@@ -127,7 +127,11 @@ enum class [[nodiscard]] TaskState
 
 struct [[nodiscard]] CompleteTaskInput
 {
-	explicit CompleteTaskInput(response::IdType&& idArg = response::IdType {}, std::optional<TaskState>&& testTaskStateArg = std::optional<TaskState> {}, std::optional<bool>&& isCompleteArg = std::optional<bool> {}, std::optional<std::string>&& clientMutationIdArg = std::optional<std::string> {}) noexcept;
+	explicit CompleteTaskInput(
+		response::IdType idArg = response::IdType {},
+		std::optional<TaskState> testTaskStateArg = std::optional<TaskState> {},
+		std::optional<bool> isCompleteArg = std::optional<bool> {},
+		std::optional<std::string> clientMutationIdArg = std::optional<std::string> {}) noexcept;
 	CompleteTaskInput(const CompleteTaskInput& other);
 	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
 
