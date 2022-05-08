@@ -160,7 +160,7 @@ struct ModifiedVariable
 		duplicate(const Type& value)
 	{
 		// Just copy the value.
-		return { value };
+		return Type { value };
 	}
 
 	// Peel off nullable modifiers.
@@ -176,7 +176,7 @@ struct ModifiedVariable
 			if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
 			{
 				// Special case duplicating the std::unique_ptr.
-				result = std::make_unique<Type>(*nullableValue);
+				result = std::make_unique<Type>(Type { *nullableValue });
 			}
 			else
 			{
