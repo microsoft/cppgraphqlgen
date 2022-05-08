@@ -1794,9 +1794,8 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 			std::move(params.variables),
 			std::move(fragments));
 
-		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
-
 		co_await params.launch;
+		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
