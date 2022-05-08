@@ -1594,11 +1594,16 @@ void ModifiedResult<)cpp"
 				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=()cpp"
 				   << inputType.cppType << R"cpp(&& other) noexcept
 {
-	)cpp" << inputType.cppType
-				   << R"cpp( value { std::move(other) };
+)cpp";
 
-	std::swap(*this, value);
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << R"cpp(	)cpp" << inputField.cppName << R"cpp( = std::move(other.)cpp"
+					   << inputField.cppName << R"cpp();
+)cpp";
+		}
 
+		sourceFile << R"cpp(
 	return *this;
 }
 )cpp";

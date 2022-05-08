@@ -184,9 +184,8 @@ ComplexInput& ComplexInput::operator=(const ComplexInput& other)
 
 ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
 {
-	ComplexInput value { std::move(other) };
-
-	std::swap(*this, value);
+	name = std::move(other.name);
+	owner = std::move(other.owner);
 
 	return *this;
 }

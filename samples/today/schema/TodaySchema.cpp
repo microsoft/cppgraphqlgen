@@ -266,9 +266,10 @@ CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
 
 CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexcept
 {
-	CompleteTaskInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
+	testTaskState = std::move(other.testTaskState);
+	isComplete = std::move(other.isComplete);
+	clientMutationId = std::move(other.clientMutationId);
 
 	return *this;
 }
@@ -304,9 +305,8 @@ ThirdNestedInput& ThirdNestedInput::operator=(const ThirdNestedInput& other)
 
 ThirdNestedInput& ThirdNestedInput::operator=(ThirdNestedInput&& other) noexcept
 {
-	ThirdNestedInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
+	second = std::move(other.second);
 
 	return *this;
 }
@@ -338,9 +338,7 @@ FourthNestedInput& FourthNestedInput::operator=(const FourthNestedInput& other)
 
 FourthNestedInput& FourthNestedInput::operator=(FourthNestedInput&& other) noexcept
 {
-	FourthNestedInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
 
 	return *this;
 }
@@ -372,9 +370,7 @@ IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(const IncludeNulla
 
 IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(IncludeNullableSelfInput&& other) noexcept
 {
-	IncludeNullableSelfInput value { std::move(other) };
-
-	std::swap(*this, value);
+	self = std::move(other.self);
 
 	return *this;
 }
@@ -406,9 +402,7 @@ IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(cons
 
 IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(IncludeNonNullableListSelfInput&& other) noexcept
 {
-	IncludeNonNullableListSelfInput value { std::move(other) };
-
-	std::swap(*this, value);
+	selves = std::move(other.selves);
 
 	return *this;
 }
@@ -484,9 +478,18 @@ StringOperationFilterInput& StringOperationFilterInput::operator=(const StringOp
 
 StringOperationFilterInput& StringOperationFilterInput::operator=(StringOperationFilterInput&& other) noexcept
 {
-	StringOperationFilterInput value { std::move(other) };
-
-	std::swap(*this, value);
+	and_ = std::move(other.and_);
+	or_ = std::move(other.or_);
+	equal = std::move(other.equal);
+	notEqual = std::move(other.notEqual);
+	contains = std::move(other.contains);
+	notContains = std::move(other.notContains);
+	in = std::move(other.in);
+	notIn = std::move(other.notIn);
+	startsWith = std::move(other.startsWith);
+	notStartsWith = std::move(other.notStartsWith);
+	endsWith = std::move(other.endsWith);
+	notEndsWith = std::move(other.notEndsWith);
 
 	return *this;
 }
@@ -522,9 +525,8 @@ SecondNestedInput& SecondNestedInput::operator=(const SecondNestedInput& other)
 
 SecondNestedInput& SecondNestedInput::operator=(SecondNestedInput&& other) noexcept
 {
-	SecondNestedInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
+	third = std::move(other.third);
 
 	return *this;
 }
@@ -560,9 +562,8 @@ ForwardDeclaredInput& ForwardDeclaredInput::operator=(const ForwardDeclaredInput
 
 ForwardDeclaredInput& ForwardDeclaredInput::operator=(ForwardDeclaredInput&& other) noexcept
 {
-	ForwardDeclaredInput value { std::move(other) };
-
-	std::swap(*this, value);
+	nullableSelf = std::move(other.nullableSelf);
+	listSelves = std::move(other.listSelves);
 
 	return *this;
 }
@@ -602,9 +603,9 @@ FirstNestedInput& FirstNestedInput::operator=(const FirstNestedInput& other)
 
 FirstNestedInput& FirstNestedInput::operator=(FirstNestedInput&& other) noexcept
 {
-	FirstNestedInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
+	second = std::move(other.second);
+	third = std::move(other.third);
 
 	return *this;
 }

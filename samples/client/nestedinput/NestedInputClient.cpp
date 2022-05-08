@@ -73,9 +73,7 @@ InputA& InputA::operator=(const InputA& other)
 
 InputA& InputA::operator=(InputA&& other) noexcept
 {
-	InputA value { std::move(other) };
-
-	std::swap(*this, value);
+	a = std::move(other.a);
 
 	return *this;
 }
@@ -107,9 +105,7 @@ InputB& InputB::operator=(const InputB& other)
 
 InputB& InputB::operator=(InputB&& other) noexcept
 {
-	InputB value { std::move(other) };
-
-	std::swap(*this, value);
+	b = std::move(other.b);
 
 	return *this;
 }
@@ -153,9 +149,10 @@ InputABCD& InputABCD::operator=(const InputABCD& other)
 
 InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 {
-	InputABCD value { std::move(other) };
-
-	std::swap(*this, value);
+	d = std::move(other.d);
+	a = std::move(other.a);
+	b = std::move(other.b);
+	bc = std::move(other.bc);
 
 	return *this;
 }
@@ -191,9 +188,8 @@ InputBC& InputBC::operator=(const InputBC& other)
 
 InputBC& InputBC::operator=(InputBC&& other) noexcept
 {
-	InputBC value { std::move(other) };
-
-	std::swap(*this, value);
+	c = std::move(other.c);
+	b = std::move(other.b);
 
 	return *this;
 }

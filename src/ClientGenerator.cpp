@@ -771,10 +771,18 @@ using namespace std::literals;
 )cpp" << cppType << R"cpp(& )cpp"
 					   << cppType << R"cpp(::operator=()cpp" << cppType << R"cpp(&& other) noexcept
 {
-	)cpp" << cppType << R"cpp( value { std::move(other) };
+)cpp";
 
-	std::swap(*this, value);
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
+				sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
+						   << R"cpp();
+)cpp";
+			}
+
+			sourceFile << R"cpp(
 	return *this;
 }
 )cpp";

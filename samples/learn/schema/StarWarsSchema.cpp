@@ -127,9 +127,8 @@ ReviewInput& ReviewInput::operator=(const ReviewInput& other)
 
 ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
 {
-	ReviewInput value { std::move(other) };
-
-	std::swap(*this, value);
+	stars = std::move(other.stars);
+	commentary = std::move(other.commentary);
 
 	return *this;
 }

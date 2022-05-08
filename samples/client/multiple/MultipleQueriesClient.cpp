@@ -165,9 +165,10 @@ CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
 
 CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexcept
 {
-	CompleteTaskInput value { std::move(other) };
-
-	std::swap(*this, value);
+	id = std::move(other.id);
+	testTaskState = std::move(other.testTaskState);
+	isComplete = std::move(other.isComplete);
+	clientMutationId = std::move(other.clientMutationId);
 
 	return *this;
 }
