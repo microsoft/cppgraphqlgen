@@ -54,20 +54,6 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	R"gql(New)gql"sv,
-	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
-};
-
-static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
-	std::make_pair(R"gql(New)gql"sv, TaskState::New),
-	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-};
-
 CompleteTaskInput::CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
@@ -119,6 +105,13 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 
 using namespace mutate;
 
+static const std::array<std::string_view, 4> s_namesTaskState = {
+	R"gql(New)gql"sv,
+	R"gql(Started)gql"sv,
+	R"gql(Complete)gql"sv,
+	R"gql(Unassigned)gql"sv
+};
+
 template <>
 response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 {
@@ -141,6 +134,13 @@ response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput
 
 	return result;
 }
+
+static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
+	std::make_pair(R"gql(New)gql"sv, TaskState::New),
+	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+};
 
 template <>
 TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)

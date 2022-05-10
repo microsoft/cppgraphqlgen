@@ -102,12 +102,9 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	R"gql(New)gql"sv,
-	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
-};
+} // namespace query
+
+using namespace query;
 
 static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
 	std::make_pair(R"gql(New)gql"sv, TaskState::New),
@@ -115,10 +112,6 @@ static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskS
 	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
 	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
 };
-
-} // namespace query
-
-using namespace query;
 
 template <>
 TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
