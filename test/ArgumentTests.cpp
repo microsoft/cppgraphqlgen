@@ -346,21 +346,134 @@ TEST(ArgumentsCase, FindArgumentEmptyTemplateArgs)
 	ASSERT_EQ("foobar", actual.first.get<std::string>()) << "should match the value";
 }
 
+struct FakeInput
+{
+};
+
+enum class FakeEnum
+{
+	Foo,
+	Bar,
+};
+
+TEST(ArgumentsCase, ScalarArgumentClass)
+{
+	constexpr bool boolType = service::ScalarArgumentClass<bool>;
+	constexpr bool stringClass = service::ScalarArgumentClass<std::string>;
+	constexpr bool idTypeClass = service::ScalarArgumentClass<response::IdType>;
+	constexpr bool valueClass = service::ScalarArgumentClass<response::Value>;
+	constexpr bool fakeStruct = service::ScalarArgumentClass<FakeInput>;
+	constexpr bool fakeEnum = service::ScalarArgumentClass<FakeEnum>;
+
+	static_assert(!boolType, "ScalarArgumentClass<bool> is false");
+	static_assert(stringClass, "ScalarArgumentClass<std::string> is true");
+	static_assert(idTypeClass, "ScalarArgumentClass<response::IdType> is true");
+	static_assert(valueClass, "ScalarArgumentClass<response::Value> is true");
+	static_assert(!fakeStruct, "ScalarArgumentClass<FakeInput> is false");
+	static_assert(!fakeEnum, "ScalarArgumentClass<FakeEnum> is false");
+	ASSERT_FALSE(boolType) << "ScalarArgumentClass<bool> is false";
+	ASSERT_TRUE(stringClass) << "ScalarArgumentClass<std::string> is true";
+	ASSERT_TRUE(idTypeClass) << "ScalarArgumentClass<response::IdType> is true";
+	ASSERT_TRUE(valueClass) << "ScalarArgumentClass<response::Value> is true";
+	ASSERT_FALSE(fakeStruct) << "ScalarArgumentClass<FakeInput> is false";
+	ASSERT_FALSE(fakeEnum) << "ScalarArgumentClass<FakeEnum> is false";
+}
+
+TEST(ArgumentsCase, InputArgumentClass)
+{
+	constexpr bool boolType = service::InputArgumentClass<bool>;
+	constexpr bool stringClass = service::InputArgumentClass<std::string>;
+	constexpr bool idTypeClass = service::InputArgumentClass<response::IdType>;
+	constexpr bool valueClass = service::InputArgumentClass<response::Value>;
+	constexpr bool fakeStruct = service::InputArgumentClass<FakeInput>;
+	constexpr bool fakeEnum = service::InputArgumentClass<FakeEnum>;
+
+	static_assert(!boolType, "InputArgumentClass<bool> is false");
+	static_assert(!stringClass, "InputArgumentClass<std::string> is false");
+	static_assert(!idTypeClass, "InputArgumentClass<response::IdType> is false");
+	static_assert(!valueClass, "InputArgumentClass<response::Value> is false");
+	static_assert(fakeStruct, "InputArgumentClass<FakeInput> is true");
+	static_assert(!fakeEnum, "InputArgumentClass<FakeEnum> is false");
+	ASSERT_FALSE(boolType) << "InputArgumentClass<bool> is false";
+	ASSERT_FALSE(stringClass) << "InputArgumentClass<std::string> is false";
+	ASSERT_FALSE(idTypeClass) << "InputArgumentClass<response::IdType> is false";
+	ASSERT_FALSE(valueClass) << "InputArgumentClass<response::Value> is false";
+	ASSERT_TRUE(fakeStruct) << "InputArgumentClass<FakeInput> is true";
+	ASSERT_FALSE(fakeEnum) << "InputArgumentClass<FakeEnum> is false";
+}
+
 TEST(ArgumentsCase, OnlyNoneModifiers)
 {
-	constexpr bool emptyModifiers = service::onlyNoneModifiers<>();
-	constexpr bool threeNone = service::onlyNoneModifiers<service::TypeModifier::None,
+	constexpr bool emptyModifiers = service::OnlyNoneModifiers<>;
+	constexpr bool threeNone = service::OnlyNoneModifiers<service::TypeModifier::None,
 		service::TypeModifier::None,
-		service::TypeModifier::None>();
-	constexpr bool firtNullable = service::onlyNoneModifiers<service::TypeModifier::Nullable,
+		service::TypeModifier::None>;
+	constexpr bool firtNullable = service::OnlyNoneModifiers<service::TypeModifier::Nullable,
 		service::TypeModifier::None,
-		service::TypeModifier::None>();
-	constexpr bool middleList = service::onlyNoneModifiers<service::TypeModifier::None,
+		service::TypeModifier::None>;
+	constexpr bool middleList = service::OnlyNoneModifiers<service::TypeModifier::None,
 		service::TypeModifier::List,
-		service::TypeModifier::None>();
+		service::TypeModifier::None>;
 
-	ASSERT_TRUE(emptyModifiers) << "onlyNoneModifiers<> is true";
-	ASSERT_TRUE(threeNone) << "onlyNoneModifiers<None, None, None> is true";
-	ASSERT_FALSE(firtNullable) << "onlyNoneModifiers<Nullable, None, None> is false";
-	ASSERT_FALSE(middleList) << "onlyNoneModifiers<None, List, None> is false";
+	static_assert(emptyModifiers, "OnlyNoneModifiers<> is true");
+	static_assert(threeNone, "OnlyNoneModifiers<None, None, None> is true");
+	static_assert(!firtNullable, "OnlyNoneModifiers<Nullable, None, None> is false");
+	static_assert(!middleList, "OnlyNoneModifiers<None, List, None> is false");
+	ASSERT_TRUE(emptyModifiers) << "OnlyNoneModifiers<> is true";
+	ASSERT_TRUE(threeNone) << "OnlyNoneModifiers<None, None, None> is true";
+	ASSERT_FALSE(firtNullable) << "OnlyNoneModifiers<Nullable, None, None> is false";
+	ASSERT_FALSE(middleList) << "OnlyNoneModifiers<None, List, None> is false";
+}
+
+TEST(ArgumentsCase, InputArgumentUniquePtr)
+{
+	constexpr bool boolType = service::InputArgumentUniquePtr<bool>;
+	constexpr bool stringClass = service::InputArgumentUniquePtr<std::string>;
+	constexpr bool idTypeClass = service::InputArgumentUniquePtr<response::IdType>;
+	constexpr bool valueClass = service::InputArgumentUniquePtr<response::Value>;
+	constexpr bool fakeStruct = service::InputArgumentUniquePtr<FakeInput>;
+	constexpr bool fakeEnum = service::InputArgumentUniquePtr<FakeEnum>;
+
+	static_assert(!boolType, "InputArgumentUniquePtr<bool> is false");
+	static_assert(!stringClass, "InputArgumentUniquePtr<std::string> is false");
+	static_assert(!idTypeClass, "InputArgumentUniquePtr<response::IdType> is false");
+	static_assert(!valueClass, "InputArgumentUniquePtr<response::Value> is false");
+	static_assert(fakeStruct, "InputArgumentUniquePtr<FakeInput> is true");
+	static_assert(!fakeEnum, "InputArgumentUniquePtr<FakeEnum> is false");
+	ASSERT_FALSE(boolType) << "InputArgumentUniquePtr<bool> is false";
+	ASSERT_FALSE(stringClass) << "InputArgumentUniquePtr<std::string> is false";
+	ASSERT_FALSE(idTypeClass) << "InputArgumentUniquePtr<response::IdType> is false";
+	ASSERT_FALSE(valueClass) << "InputArgumentUniquePtr<response::Value> is false";
+	ASSERT_TRUE(fakeStruct) << "InputArgumentUniquePtr<FakeInput> is true";
+	ASSERT_FALSE(fakeEnum) << "InputArgumentUniquePtr<FakeEnum> is false";
+}
+
+template <typename Type>
+using NullableType = typename service::ModifiedArgument<Type>::template ArgumentTraits<Type,
+	service::TypeModifier::Nullable>::type;
+
+TEST(ArgumentsCase, ArgumentTraitsUniquePtr)
+{
+	constexpr bool boolType = std::is_same_v<NullableType<bool>, std::optional<bool>>;
+	constexpr bool stringClass =
+		std::is_same_v<NullableType<std::string>, std::optional<std::string>>;
+	constexpr bool idTypeClass =
+		std::is_same_v<NullableType<response::IdType>, std::optional<response::IdType>>;
+	constexpr bool valueClass =
+		std::is_same_v<NullableType<response::Value>, std::optional<response::Value>>;
+	constexpr bool fakeStruct = std::is_same_v<NullableType<FakeInput>, std::unique_ptr<FakeInput>>;
+	constexpr bool fakeEnum = std::is_same_v<NullableType<FakeEnum>, std::optional<FakeEnum>>;
+
+	static_assert(boolType, "NullableType<bool> is std::optional<bool>");
+	static_assert(stringClass, "NullableType<std::string> is std::optional<std::string>");
+	static_assert(idTypeClass, "NullableType<response::IdType> is std::optional<response::IdType>");
+	static_assert(valueClass, "NullableType<response::Value> is std::optional<response::Value>");
+	static_assert(fakeStruct, "NullableType<FakeInput> is std::unique_ptr<FakeInput>");
+	static_assert(fakeEnum, "NullableType<FakeEnum> is std::optional<FakeEnum>");
+	ASSERT_TRUE(boolType) << "NullableType<bool> is std::optional<bool>";
+	ASSERT_TRUE(stringClass) << "NullableType<std::string> is std::optional<std::string>";
+	ASSERT_TRUE(idTypeClass) << "NullableType<response::IdType> is std::optional<response::IdType>";
+	ASSERT_TRUE(valueClass) << "NullableType<response::Value> is std::optional<response::Value>";
+	ASSERT_TRUE(fakeStruct) << "NullableType<FakeInput> is std::unique_ptr<FakeInput>";
+	ASSERT_TRUE(fakeEnum) << "NullableType<FakeEnum> is std::optional<FakeEnum>";
 }

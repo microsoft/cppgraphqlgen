@@ -158,16 +158,6 @@ void AddArgumentsDetails(const std::shared_ptr<schema::ObjectType>& typeArgument
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace validation
-
-namespace service {
-
-template <>
-[[nodiscard]] constexpr bool isInputType<validation::ComplexInput>() noexcept
-{
-	return true;
-}
-
-} // namespace service
 } // namespace graphql
 
 #endif // VALIDATIONSCHEMA_H

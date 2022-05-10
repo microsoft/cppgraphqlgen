@@ -282,64 +282,6 @@ void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensiv
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace today
-
-namespace service {
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::CompleteTaskInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::ThirdNestedInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::FourthNestedInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::IncludeNullableSelfInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::IncludeNonNullableListSelfInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::StringOperationFilterInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::SecondNestedInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::ForwardDeclaredInput>() noexcept
-{
-	return true;
-}
-
-template <>
-[[nodiscard]] constexpr bool isInputType<today::FirstNestedInput>() noexcept
-{
-	return true;
-}
-
-} // namespace service
 } // namespace graphql
 
 #endif // TODAYSCHEMA_H

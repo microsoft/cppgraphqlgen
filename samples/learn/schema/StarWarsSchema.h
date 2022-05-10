@@ -109,16 +109,6 @@ void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation,
 std::shared_ptr<schema::Schema> GetSchema();
 
 } // namespace learn
-
-namespace service {
-
-template <>
-[[nodiscard]] constexpr bool isInputType<learn::ReviewInput>() noexcept
-{
-	return true;
-}
-
-} // namespace service
 } // namespace graphql
 
 #endif // STARWARSSCHEMA_H
