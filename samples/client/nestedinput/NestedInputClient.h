@@ -108,30 +108,6 @@ struct [[nodiscard]] InputBC
 
 } // namespace nestedinput
 
-template <>
-constexpr bool isInputType<nestedinput::InputA>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputB>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputABCD>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputBC>() noexcept
-{
-	return true;
-}
-
 namespace query::testQuery {
 
 using nestedinput::GetRequestText;

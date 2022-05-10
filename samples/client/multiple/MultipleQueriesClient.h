@@ -146,12 +146,6 @@ struct [[nodiscard]] CompleteTaskInput
 
 } // namespace multiple
 
-template <>
-constexpr bool isInputType<multiple::CompleteTaskInput>() noexcept
-{
-	return true;
-}
-
 namespace query::Appointments {
 
 using multiple::GetRequestText;

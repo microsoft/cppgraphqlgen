@@ -326,34 +326,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	schemaNamespaceScope.exit();
 	pendingSeparator.add();
 
-	std::unordered_set<std::string_view> outputIsInputType;
-
-	for (const auto& operation : operations)
-	{
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
-		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!outputIsInputType.insert(cppType).second)
-			{
-				continue;
-			}
-
-			pendingSeparator.reset();
-
-			headerFile << R"cpp(template <>
-constexpr bool isInputType<)cpp"
-					   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << cppType
-					   << R"cpp(>() noexcept
-{
-	return true;
-}
-)cpp";
-
-			pendingSeparator.add();
-		}
-	}
-
 	for (const auto& operation : operations)
 	{
 		pendingSeparator.reset();

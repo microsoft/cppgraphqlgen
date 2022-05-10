@@ -79,12 +79,6 @@ struct [[nodiscard]] CompleteTaskInput
 
 } // namespace mutate
 
-template <>
-constexpr bool isInputType<mutate::CompleteTaskInput>() noexcept
-{
-	return true;
-}
-
 namespace mutation::CompleteTaskMutation {
 
 using mutate::GetRequestText;
