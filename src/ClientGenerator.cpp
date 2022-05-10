@@ -908,7 +908,7 @@ response::Value ModifiedVariable<)cpp"
 {
 	if (!value.maybe_enum())
 	{
-		throw std::logic_error {  R"ex(not a valid )cpp"
+		throw std::logic_error { R"ex(not a valid )cpp"
 					   << enumType->name() << R"cpp( value)ex" };
 	}
 
@@ -919,8 +919,8 @@ response::Value ModifiedVariable<)cpp"
 
 	if (!result)
 	{
-		throw std::logic_error { { R"ex(not a valid )cpp"
-					   << enumType->name() << R"cpp( value)ex" } };
+		throw std::logic_error { R"ex(not a valid )cpp"
+					   << enumType->name() << R"cpp( value)ex" };
 	}
 
 	return *result;

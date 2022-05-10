@@ -535,7 +535,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
-		throw std::logic_error {  R"ex(not a valid TaskState value)ex" };
+		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
@@ -544,7 +544,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 
 	if (!result)
 	{
-		throw std::logic_error { { R"ex(not a valid TaskState value)ex" } };
+		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
 	return *result;
