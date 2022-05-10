@@ -5,6 +5,8 @@
 
 #include "QueryClient.h"
 
+#include "graphqlservice/internal/SortedMap.h"
+
 #include <algorithm>
 #include <array>
 #include <sstream>
@@ -101,10 +103,17 @@ const peg::ast& GetRequestObject() noexcept
 }
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
-	"New"sv,
-	"Started"sv,
-	"Complete"sv,
-	"Unassigned"sv,
+	R"gql(New)gql"sv,
+	R"gql(Started)gql"sv,
+	R"gql(Complete)gql"sv,
+	R"gql(Unassigned)gql"sv
+};
+
+static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
+	std::make_pair(R"gql(New)gql"sv, TaskState::New),
+	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
 };
 
 } // namespace query
@@ -116,17 +125,19 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
-		throw std::logic_error { "not a valid TaskState value" };
+		throw std::logic_error {  R"ex(not a valid TaskState value)ex" };
 	}
 
-	const auto itr = std::find(s_namesTaskState.cbegin(), s_namesTaskState.cend(), value.release<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesTaskState,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesTaskState.cend())
+	if (!result)
 	{
-		throw std::logic_error { "not a valid TaskState value" };
+		throw std::logic_error { { R"ex(not a valid TaskState value)ex" } };
 	}
 
-	return static_cast<TaskState>(itr - s_namesTaskState.cbegin());
+	return *result;
 }
 
 template <>

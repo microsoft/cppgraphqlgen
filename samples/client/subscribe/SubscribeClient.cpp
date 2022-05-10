@@ -5,6 +5,8 @@
 
 #include "SubscribeClient.h"
 
+#include "graphqlservice/internal/SortedMap.h"
+
 #include <algorithm>
 #include <array>
 #include <sstream>

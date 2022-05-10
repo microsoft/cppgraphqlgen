@@ -581,6 +581,8 @@ bool Generator::outputSource() const noexcept
 #include ")cpp" << _schemaLoader.getFilenamePrefix()
 			   << R"cpp(Client.h"
 
+#include "graphqlservice/internal/SortedMap.h"
+
 #include <algorithm>
 #include <array>
 #include <sstream>
@@ -618,16 +620,49 @@ using namespace std::literals;
 			const auto& enumValues = enumType->enumValues();
 
 			sourceFile << R"cpp(static const std::array<std::string_view, )cpp" << enumValues.size()
-					   << R"cpp(> s_names)cpp" << cppType << R"cpp( = {
-)cpp";
+					   << R"cpp(> s_names)cpp" << cppType << R"cpp( = {)cpp";
+
+			bool firstValue = true;
 
 			for (const auto& enumValue : enumValues)
 			{
-				sourceFile << R"cpp(	")cpp" << SchemaLoader::getSafeCppName(enumValue->name())
-						   << R"cpp("sv,
-)cpp";
+				if (!firstValue)
+				{
+					sourceFile << R"cpp(,)cpp";
+				}
+
+				firstValue = false;
+				sourceFile << R"cpp(
+	R"gql()cpp" << enumValue->name()
+						   << R"cpp()gql"sv)cpp";
+				pendingSeparator.add();
 			}
 
+			pendingSeparator.reset();
+			sourceFile << R"cpp(};
+
+static const std::array<std::pair<std::string_view, )cpp"
+					   << cppType << R"cpp(>, )cpp" << enumValues.size() << R"cpp(> s_values)cpp"
+					   << cppType << R"cpp( = {)cpp";
+
+			firstValue = true;
+
+			for (const auto& enumValue : enumValues)
+			{
+				if (!firstValue)
+				{
+					sourceFile << R"cpp(,)cpp";
+				}
+
+				firstValue = false;
+				sourceFile << R"cpp(
+	std::make_pair(R"gql()cpp"
+						   << enumValue->name() << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
+						   << SchemaLoader::getSafeCppName(enumValue->name()) << R"cpp())cpp";
+				pendingSeparator.add();
+			}
+
+			pendingSeparator.reset();
 			sourceFile << R"cpp(};
 )cpp";
 
@@ -873,23 +908,22 @@ response::Value ModifiedVariable<)cpp"
 {
 	if (!value.maybe_enum())
 	{
-		throw std::logic_error { "not a valid )cpp"
-					   << cppType << R"cpp( value" };
+		throw std::logic_error {  R"ex(not a valid )cpp"
+					   << enumType->name() << R"cpp( value)ex" };
 	}
 
-	const auto itr = std::find(s_names)cpp"
-					   << cppType << R"cpp(.cbegin(), s_names)cpp" << cppType
-					   << R"cpp(.cend(), value.release<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_values)cpp" << cppType
+					   << R"cpp(,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_names)cpp"
-					   << cppType << R"cpp(.cend())
+	if (!result)
 	{
-		throw std::logic_error { "not a valid )cpp"
-					   << cppType << R"cpp( value" };
+		throw std::logic_error { { R"ex(not a valid )cpp"
+					   << enumType->name() << R"cpp( value)ex" } };
 	}
 
-	return static_cast<)cpp"
-					   << cppType << R"cpp(>(itr - s_names)cpp" << cppType << R"cpp(.cbegin());
+	return *result;
 }
 )cpp";
 
