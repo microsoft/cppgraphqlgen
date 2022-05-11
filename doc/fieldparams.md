@@ -152,5 +152,5 @@ See the [Awaitable](./awaitable.md) document for more information about
 1. The `getField` methods are discussed in more detail in [resolvers.md](./resolvers.md).
 2. Awaitable types are covered in [awaitable.md](./awaitable.md).
 3. Built-in and custom `directives` are discussed in [directives.md](./directives.md).
-4. Subscription resolvers may be called 2 extra times, inside of subscribe` and `unsubscribe`.
+4. Subscription resolvers may be called 2 extra times, inside of `subscribe` and `unsubscribe`.
 See [subscriptions.md](./subscriptions.md) for more details.
