@@ -181,17 +181,16 @@ Command line options:
   --no-introspection     Do not expect support for Introspection
 ```
 
-This utility should output one header and one source file for each request document. A request document may contain
-more than one operation, in which case you must specify the `--operation` (or `-o`) parameter to indicate which one
-should be used to generate the files. If you want to generate client code for more than one operation in the same
-document, you will need to run `clientgen` more than once and specify another operation name each time.
+This utility should output one header and one source file for each request document. A request document may contain more
+than one operation, in which case it will output definitions for all of them together. You may limit the output to a
+single operation from the request document by specifying the `--operation` (or `-o`) argument with the operation name.
 
 The generated code depends on the `graphqlclient` library for serialization of built-in types. If you link the generated
 code, you'll also need to link `graphqlclient`, `graphqlpeg` for the pre-parsed, pre-validated request AST, and
 `graphqlresponse` for the `graphql::response::Value` implementation.
 
-Sample output for `clientgen` is in the sub-directories of [samples/client](samples/client), and each sample is consumed by
-a unit test in [test/ClientTests.cpp](test/ClientTests.cpp).
+Sample output for `clientgen` is in the sub-directories of [samples/client](samples/client), and several of them are
+consumed by unit tests in [test/ClientTests.cpp](test/ClientTests.cpp).
 
 ### tests (`GRAPHQL_BUILD_TESTS=ON`)
 
