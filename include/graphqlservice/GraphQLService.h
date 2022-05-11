@@ -592,19 +592,22 @@ enum class [[nodiscard]] TypeModifier {
 	List,
 };
 
-// Specialized to return true for all INPUT_OBJECT types.
+// These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
-[[nodiscard]] constexpr bool isInputType() noexcept
-{
-	return false;
-}
+concept ScalarArgumentClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
+	response::IdType> || std::is_same_v<Type, response::Value>;
+
+// Any non-scalar class used in an argument is a generated INPUT_OBJECT type.
+template <typename Type>
+concept InputArgumentClass = std::is_class_v<Type> && !ScalarArgumentClass<Type>;
+
+// Test if there are any non-None modifiers left.
+template <TypeModifier... Other>
+concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Special-case an innermost nullable INPUT_OBJECT type.
-template <TypeModifier... Other>
-[[nodiscard]] constexpr bool onlyNoneModifiers() noexcept
-{
-	return (... && (Other == TypeModifier::None));
-}
+template <typename Type, TypeModifier... Other>
+concept InputArgumentUniquePtr = InputArgumentClass<Type> && OnlyNoneModifiers<Other...>;
 
 // Extract individual arguments with chained type modifiers which add nullable or list wrappers.
 // If the argument is not optional, use require and let it throw a schema_exception when the
@@ -619,8 +622,8 @@ struct ModifiedArgument
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<isInputType<U>() && onlyNoneModifiers<Other...>(),
-				std::unique_ptr<U>, std::optional<typename ArgumentTraits<U, Other...>::type>>,
+			typename std::conditional_t<InputArgumentUniquePtr<U, Other...>, std::unique_ptr<U>,
+				std::optional<typename ArgumentTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ArgumentTraits<U, Other...>::type>, U>>;
 	};
@@ -699,7 +702,7 @@ struct ModifiedArgument
 
 		auto result = require<Other...>(name, arguments);
 
-		if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
+		if constexpr (InputArgumentUniquePtr<Type, Other...>)
 		{
 			return std::make_unique<decltype(result)>(std::move(result));
 		}
@@ -768,7 +771,7 @@ struct ModifiedArgument
 
 		if (nullableValue)
 		{
-			if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
+			if constexpr (InputArgumentUniquePtr<Type, Other...>)
 			{
 				// Special case duplicating the std::unique_ptr.
 				result = std::make_unique<Type>(Type { *nullableValue });

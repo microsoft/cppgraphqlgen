@@ -14,9 +14,9 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.3.0
+// Check if the library version is compatible with clientgen 4.4.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 3, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 4, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
@@ -107,30 +107,6 @@ struct [[nodiscard]] InputBC
 };
 
 } // namespace nestedinput
-
-template <>
-constexpr bool isInputType<nestedinput::InputA>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputB>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputABCD>() noexcept
-{
-	return true;
-}
-
-template <>
-constexpr bool isInputType<nestedinput::InputBC>() noexcept
-{
-	return true;
-}
 
 namespace query::testQuery {
 

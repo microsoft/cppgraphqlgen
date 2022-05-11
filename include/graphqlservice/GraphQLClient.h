@@ -70,19 +70,23 @@ enum class [[nodiscard]] TypeModifier {
 	List,
 };
 
-// Specialized to return true for all INPUT_OBJECT types.
+// These types are used as scalar variables even though they are represented with a class.
 template <typename Type>
-[[nodiscard]] constexpr bool isInputType() noexcept
-{
-	return false;
-}
+concept ScalarVariableClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
+	response::IdType> || std::is_same_v<Type, response::Value>;
+
+// Any non-scalar class used in a variable is a generated INPUT_OBJECT type.
+template <typename Type>
+concept InputVariableClass = std::is_class_v<Type> && !ScalarVariableClass<Type>;
+
+// Test if there are any non-None modifiers left.
+template <TypeModifier... Other>
+concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Special-case an innermost nullable INPUT_OBJECT type.
-template <TypeModifier... Other>
-[[nodiscard]] constexpr bool onlyNoneModifiers() noexcept
-{
-	return (... && (Other == TypeModifier::None));
-}
+template <typename Type, TypeModifier... Other>
+concept InputVariableUniquePtr = InputVariableClass<Type> && OnlyNoneModifiers<Other...>;
+
 
 // Serialize variable input values with chained type modifiers which add nullable or list wrappers.
 template <typename Type>
@@ -94,8 +98,8 @@ struct ModifiedVariable
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<isInputType<U>() && onlyNoneModifiers<Other...>(),
-				std::unique_ptr<U>, std::optional<typename VariableTraits<U, Other...>::type>>,
+			typename std::conditional_t<InputVariableUniquePtr<U, Other...>, std::unique_ptr<U>,
+				std::optional<typename VariableTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename VariableTraits<U, Other...>::type>, U>>;
 	};
@@ -173,7 +177,7 @@ struct ModifiedVariable
 
 		if (nullableValue)
 		{
-			if constexpr (isInputType<Type>() && onlyNoneModifiers<Other...>())
+			if constexpr (InputVariableUniquePtr<Type, Other...>)
 			{
 				// Special case duplicating the std::unique_ptr.
 				result = std::make_unique<Type>(Type { *nullableValue });

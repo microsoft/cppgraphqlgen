@@ -645,32 +645,6 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 )cpp";
 	}
 
-	if (!_loader.getInputTypes().empty())
-	{
-		if (schemaNamespace.exit())
-		{
-			headerFile << std::endl;
-		}
-
-		if (serviceNamespace.enter())
-		{
-			headerFile << std::endl;
-		}
-
-		for (const auto& inputType : _loader.getInputTypes())
-		{
-			headerFile << R"cpp(template <>
-[[nodiscard]] constexpr bool isInputType<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
-					   << R"cpp(>() noexcept
-{
-	return true;
-}
-
-)cpp";
-		}
-	}
-
 	return true;
 }
 
