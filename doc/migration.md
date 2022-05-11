@@ -80,7 +80,7 @@ std::vector<std::shared_ptr<service::Object>> nodes {
     // Can insert any sub-class of service::Object...
 };
 ```
-It's up to the you to make sure the `nodes` vector in this example only contains objects which actually implement the `Node` interface. If you want to do something more sophisticated like performing a lookup by `id`, you'd either need to request that before inserting an element and up-casting to `std::shared_ptr<service::Object>`, or you'd need to preserve the concrete type of each element, e.g. in a `std::variant` to be able to safely down-cast to the concrete type.
+It's up to you to make sure the `nodes` vector in this example only contains objects which actually implement the `Node` interface. If you want to do something more sophisticated like performing a lookup by `id`, you'd either need to request that before inserting an element and up-casting to `std::shared_ptr<service::Object>`, or you'd need to preserve the concrete type of each element, e.g. in a `std::variant` to be able to safely down-cast to the concrete type.
 
 As of 4.x, the implementation might look more like this:
 ```c++
@@ -149,7 +149,7 @@ This has several advantages over the previous version.
 
 - You can declare your own inheritance heirarchy without any constraints inherited from `service::Object`, such as already inheriting from `std::enable_shared_from_this<service::Object>` and defininig `shared_from_this()` for that type.
 - You can add your own common implementation for the interface methods you want, e.g. `NodeTypeImpl::getId`.
-- Best of all, you no longer need to match an exact method signature to override the `object::NodeType*` accessors. For example, `NodeTypeImpl::getId` uses a more efficient return type, does not require a `service::FieldParams` argument (which is likely ignored anyway), and it can be `const` and `noexcept`. All of that together means you can use it as an internal accessor from any of these types as well as the field getter implementation.
+- Best of all, you no longer need to match an exact method signature to override the `object::NodeType*` accessors. For example, `NodeTypeImpl::getId` uses a more efficient return type, does not require a `service::FieldParams` argument (which is likely ignored anyway), and it can be non-`const` or `noexcept` if you like. All of that together means you can use it as an internal accessor from any of these types as well as the field getter implementation.
 
 The type erased implementation gives you a lot more control over your class hierarchy and makes it easier to use outside of the GraphQL service.
 
