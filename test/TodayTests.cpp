@@ -1123,7 +1123,8 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(12);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
@@ -1210,19 +1211,24 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 			}
 		})");
 	response::Value variables(response::Type::Map);
+	auto expectedContext = service::ResolverContext::NotifySubscribe;
 	auto state = std::make_shared<today::RequestState>(13);
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			EXPECT_EQ(size_t { 13 },
-				std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(today::getFakeTaskId(), idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
-					"Don't forget",
-					true)));
-		});
+	auto subscriptionObject =
+		std::make_shared<today::object::Subscription>(std::make_shared<today::NodeChange>(
+			[&expectedContext](service::ResolverContext resolverContext,
+				const std::shared_ptr<service::RequestState>& state,
+				response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+				EXPECT_EQ(expectedContext, resolverContext);
+				EXPECT_EQ(size_t { 13 },
+					std::static_pointer_cast<today::RequestState>(state)->requestId)
+					<< "should pass the RequestState to the subscription resolvers";
+				EXPECT_EQ(today::getFakeTaskId(), idArg);
+
+				return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+					std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+						"Don't forget",
+						true)));
+			}));
 	response::Value result;
 	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1232,16 +1238,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 					   "TestSubscription",
 					   std::move(variables),
 					   {},
-					   state })
+					   state,
+					   subscriptionObject })
 				   .get();
+	expectedContext = service::ResolverContext::Subscription;
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
-				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s).from_input() } } } } },
 			{}, // launch
-			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+			subscriptionObject })
 		.get();
-	_mockService->service->unsubscribe({ key }).get();
+	expectedContext = service::ResolverContext::NotifyUnsubscribe;
+	_mockService->service->unsubscribe({ key, {}, std::move(subscriptionObject) }).get();
 
 	try
 	{
@@ -1279,13 +1288,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 			}
 		})");
 	response::Value variables(response::Type::Map);
-	bool calledResolver = false;
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
-			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
-			calledResolver = true;
-			return nullptr;
-		});
+	bool deliveredSubscription = false;
+	auto expectedContext = service::ResolverContext::NotifySubscribe;
+	auto subscriptionObject =
+		std::make_shared<today::object::Subscription>(std::make_shared<today::NodeChange>(
+			[&deliveredSubscription, &expectedContext](service::ResolverContext resolverContext,
+				const std::shared_ptr<service::RequestState>& /* state */,
+				response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
+				EXPECT_EQ(expectedContext, resolverContext);
+				deliveredSubscription = deliveredSubscription
+					|| resolverContext == service::ResolverContext::Subscription;
+
+				return nullptr;
+			}));
 	bool calledGet = false;
 	auto key = _mockService->service
 				   ->subscribe({ [&calledGet](response::Value&&) {
@@ -1293,20 +1308,25 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMismatchedId)
 								},
 					   std::move(query),
 					   "TestSubscription"s,
-					   std::move(variables) })
+					   std::move(variables),
+					   {},
+					   {},
+					   subscriptionObject })
 				   .get();
+	expectedContext = service::ResolverContext::Subscription;
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
 				{ "id", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s) } } } } },
 			{}, // launch
-			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+			subscriptionObject })
 		.get();
-	_mockService->service->unsubscribe({ key }).get();
+	expectedContext = service::ResolverContext::NotifyUnsubscribe;
+	_mockService->service->unsubscribe({ key, {}, std::move(subscriptionObject) }).get();
 
 	try
 	{
-		ASSERT_FALSE(calledResolver);
+		ASSERT_FALSE(deliveredSubscription);
 		ASSERT_FALSE(calledGet);
 	}
 	catch (service::schema_exception& ex)
@@ -1327,6 +1347,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 			}
 		})");
 	response::Value variables(response::Type::Map);
+	auto expectedContext = service::ResolverContext::NotifySubscribe;
 	auto state = std::make_shared<today::RequestState>(14);
 	bool filterCalled = false;
 	auto filterCallback = [&filterCalled](
@@ -1337,20 +1358,24 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 		filterCalled = true;
 		return true;
 	};
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			const response::IdType fuzzyId { 'f', 'a', 'k' };
+	auto subscriptionObject =
+		std::make_shared<today::object::Subscription>(std::make_shared<today::NodeChange>(
+			[&expectedContext](service::ResolverContext resolverContext,
+				const std::shared_ptr<service::RequestState>& state,
+				response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+				const response::IdType fuzzyId { 'f', 'a', 'k' };
 
-			EXPECT_EQ(size_t { 14 },
-				std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(fuzzyId, idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
-					"Don't forget",
-					true)));
-		});
+				EXPECT_EQ(expectedContext, resolverContext);
+				EXPECT_EQ(size_t { 14 },
+					std::static_pointer_cast<today::RequestState>(state)->requestId)
+					<< "should pass the RequestState to the subscription resolvers";
+				EXPECT_EQ(fuzzyId, idArg);
+
+				return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+					std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+						"Don't forget",
+						true)));
+			}));
 	response::Value result;
 	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1360,16 +1385,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 					   "TestSubscription"s,
 					   std::move(variables),
 					   {},
-					   state })
+					   state,
+					   subscriptionObject })
 				   .get();
+	expectedContext = service::ResolverContext::Subscription;
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter {
 				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
 			{}, // launch
-			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+			subscriptionObject })
 		.get();
-	_mockService->service->unsubscribe({ key }).get();
+	expectedContext = service::ResolverContext::NotifyUnsubscribe;
+	_mockService->service->unsubscribe({ key, {}, std::move(subscriptionObject) }).get();
 
 	try
 	{
@@ -1417,13 +1445,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 		filterCalled = true;
 		return false;
 	};
-	bool calledResolver = false;
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[&calledResolver](const std::shared_ptr<service::RequestState>& /* state */,
-			response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
-			calledResolver = true;
-			return nullptr;
-		});
+	bool deliveredSubscription = false;
+	auto expectedContext = service::ResolverContext::NotifySubscribe;
+	auto subscriptionObject =
+		std::make_shared<today::object::Subscription>(std::make_shared<today::NodeChange>(
+			[&deliveredSubscription, &expectedContext](service::ResolverContext resolverContext,
+				const std::shared_ptr<service::RequestState>& /* state */,
+				response::IdType&& /* idArg */) -> std::shared_ptr<today::object::Node> {
+				EXPECT_EQ(expectedContext, resolverContext);
+				deliveredSubscription = deliveredSubscription
+					|| resolverContext == service::ResolverContext::Subscription;
+
+				return nullptr;
+			}));
 	bool calledGet = false;
 	auto key = _mockService->service
 				   ->subscribe({ [&calledGet](response::Value&&) {
@@ -1431,21 +1465,26 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyMismatch)
 								},
 					   std::move(query),
 					   "TestSubscription"s,
-					   std::move(variables) })
+					   std::move(variables),
+					   {},
+					   {},
+					   subscriptionObject })
 				   .get();
+	expectedContext = service::ResolverContext::Subscription;
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter {
 				{ service::SubscriptionArgumentFilterCallback { std::move(filterCallback) } } } },
 			{}, // launch
-			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+			subscriptionObject })
 		.get();
-	_mockService->service->unsubscribe({ key }).get();
+	expectedContext = service::ResolverContext::NotifyUnsubscribe;
+	_mockService->service->unsubscribe({ key, {}, std::move(subscriptionObject) }).get();
 
 	try
 	{
 		ASSERT_TRUE(filterCalled) << "should not match the id parameter in the subscription";
-		ASSERT_FALSE(calledResolver);
+		ASSERT_FALSE(deliveredSubscription);
 		ASSERT_FALSE(calledGet);
 	}
 	catch (service::schema_exception& ex)
@@ -1466,20 +1505,25 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 			}
 		})");
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s));
+	variables.emplace_back("taskId", response::Value("ZmFrZVRhc2tJZA=="s).from_json());
+	auto expectedContext = service::ResolverContext::NotifySubscribe;
 	auto state = std::make_shared<today::RequestState>(14);
-	auto subscriptionObject = std::make_shared<today::NodeChange>(
-		[](const std::shared_ptr<service::RequestState>& state,
-			response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
-			EXPECT_EQ(size_t { 14 },
-				std::static_pointer_cast<today::RequestState>(state)->requestId)
-				<< "should pass the RequestState to the subscription resolvers";
-			EXPECT_EQ(today::getFakeTaskId(), idArg);
-			return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
-				std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
-					"Don't forget",
-					true)));
-		});
+	auto subscriptionObject =
+		std::make_shared<today::object::Subscription>(std::make_shared<today::NodeChange>(
+			[&expectedContext](service::ResolverContext resolverContext,
+				const std::shared_ptr<service::RequestState>& state,
+				response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
+				EXPECT_EQ(expectedContext, resolverContext);
+				EXPECT_EQ(size_t { 14 },
+					std::static_pointer_cast<today::RequestState>(state)->requestId)
+					<< "should pass the RequestState to the subscription resolvers";
+				EXPECT_EQ(today::getFakeTaskId(), idArg);
+
+				return std::make_shared<today::object::Node>(std::make_shared<today::object::Task>(
+					std::make_shared<today::Task>(response::IdType(today::getFakeTaskId()),
+						"Don't forget",
+						true)));
+			}));
 	response::Value result;
 	auto key = _mockService->service
 				   ->subscribe({ [&result](response::Value&& response) {
@@ -1489,16 +1533,19 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 					   "TestSubscription",
 					   std::move(variables),
 					   {},
-					   state })
+					   state,
+					   subscriptionObject })
 				   .get();
+	expectedContext = service::ResolverContext::Subscription;
 	_mockService->service
 		->deliver({ "nodeChange"sv,
 			{ service::SubscriptionFilter { { service::SubscriptionArguments {
-				{ "id", response::Value("ZmFrZVRhc2tJZA=="s) } } } } },
+				{ "id", response::Value("ZmFrZVRhc2tJZA=="s).from_input() } } } } },
 			{}, // launch
-			std::make_shared<today::object::Subscription>(std::move(subscriptionObject)) })
+			subscriptionObject })
 		.get();
-	_mockService->service->unsubscribe({ key }).get();
+	expectedContext = service::ResolverContext::NotifyUnsubscribe;
+	_mockService->service->unsubscribe({ key, {}, std::move(subscriptionObject) }).get();
 
 	try
 	{
@@ -1535,7 +1582,8 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(15);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
@@ -1596,7 +1644,8 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 			}
 		})"_graphql;
 	response::Value variables(response::Type::Map);
-	variables.emplace_back("appointmentId", response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s));
+	variables.emplace_back("appointmentId",
+		response::Value("ZmFrZUFwcG9pbnRtZW50SWQ="s).from_json());
 	auto state = std::make_shared<today::RequestState>(16);
 	auto result = _mockService->service
 					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })

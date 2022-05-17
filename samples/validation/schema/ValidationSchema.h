@@ -10,31 +10,81 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.1.0
+// Check if the library version is compatible with schemagen 4.4.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 4, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace graphql {
 namespace validation {
 
-enum class DogCommand
+enum class [[nodiscard]] DogCommand
 {
 	SIT,
 	DOWN,
 	HEEL
 };
 
-enum class CatCommand
+[[nodiscard]] constexpr auto getDogCommandNames() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, 3> {
+		R"gql(SIT)gql"sv,
+		R"gql(DOWN)gql"sv,
+		R"gql(HEEL)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getDogCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, DogCommand>, 3> {
+		std::make_pair(R"gql(SIT)gql"sv, DogCommand::SIT),
+		std::make_pair(R"gql(DOWN)gql"sv, DogCommand::DOWN),
+		std::make_pair(R"gql(HEEL)gql"sv, DogCommand::HEEL)
+	};
+}
+
+enum class [[nodiscard]] CatCommand
 {
 	JUMP
 };
 
-struct ComplexInput
+[[nodiscard]] constexpr auto getCatCommandNames() noexcept
 {
+	using namespace std::literals;
+
+	return std::array<std::string_view, 1> {
+		R"gql(JUMP)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getCatCommandValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, CatCommand>, 1> {
+		std::make_pair(R"gql(JUMP)gql"sv, CatCommand::JUMP)
+	};
+}
+
+struct [[nodiscard]] ComplexInput
+{
+	explicit ComplexInput(
+		std::optional<std::string> nameArg = std::optional<std::string> {},
+		std::optional<std::string> ownerArg = std::optional<std::string> {}) noexcept;
+	ComplexInput(const ComplexInput& other);
+	ComplexInput(ComplexInput&& other) noexcept;
+
+	ComplexInput& operator=(const ComplexInput& other);
+	ComplexInput& operator=(ComplexInput&& other) noexcept;
+
 	std::optional<std::string> name {};
 	std::optional<std::string> owner {};
 };
@@ -63,15 +113,19 @@ class Arguments;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
 	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
-	template <class TQuery, class TMutation, class TSubscription>
-	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription)
-		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)), std::make_shared<object::Subscription>(std::move(subscription)) }
+	template <class TQuery, class TMutation, class TSubscription = service::SubscriptionPlaceholder>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription = {})
+		: Operations {
+			std::make_shared<object::Query>(std::move(query)),
+			std::make_shared<object::Mutation>(std::move(mutation)),
+			subscription ? std::make_shared<object::Subscription>(std::move(subscription)) : std::shared_ptr<object::Subscription> {}
+		}
 	{
 	}
 

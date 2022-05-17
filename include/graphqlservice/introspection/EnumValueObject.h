@@ -12,29 +12,29 @@
 
 namespace graphql::introspection::object {
 
-class EnumValue final
+class [[nodiscard]] EnumValue final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual service::AwaitableScalar<std::string> getName() const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		virtual service::AwaitableScalar<bool> getIsDeprecated() const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getIsDeprecated() const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		service::AwaitableScalar<bool> getIsDeprecated() const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsDeprecated() const final
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
 		{
 			return { _pimpl->getDeprecationReason() };
 		}
@@ -68,8 +68,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT EnumValue(std::shared_ptr<introspection::EnumValue> pimpl) noexcept;

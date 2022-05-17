@@ -561,8 +561,9 @@ private:
 class NodeChange
 {
 public:
-	using nodeChange = std::function<std::shared_ptr<object::Node>(
-		const std::shared_ptr<service::RequestState>&, response::IdType&&)>;
+	using nodeChange =
+		std::function<std::shared_ptr<object::Node>(service::ResolverContext resolverContext,
+			const std::shared_ptr<service::RequestState>&, response::IdType&&)>;
 
 	explicit NodeChange(nodeChange&& changeNode)
 		: _changeNode(std::move(changeNode))
@@ -577,7 +578,7 @@ public:
 	std::shared_ptr<object::Node> getNodeChange(
 		const service::FieldParams& params, response::IdType&& idArg) const
 	{
-		return _changeNode(params.state, std::move(idArg));
+		return _changeNode(params.resolverContext, params.state, std::move(idArg));
 	}
 
 private:

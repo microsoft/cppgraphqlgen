@@ -377,7 +377,7 @@ void ValueVisitor::visitFloatValue(const peg::ast_node& floatValue)
 
 void ValueVisitor::visitStringValue(const peg::ast_node& stringValue)
 {
-	_value = response::Value(std::string { stringValue.unescaped_view() });
+	_value = response::Value(std::string { stringValue.unescaped_view() }).from_input();
 }
 
 void ValueVisitor::visitBooleanValue(const peg::ast_node& booleanValue)
@@ -669,23 +669,12 @@ response::Value ModifiedArgument<response::Value>::convert(const response::Value
 template <>
 response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value)
 {
-	if (value.type() != response::Type::String)
+	if (!value.maybe_id())
 	{
-		throw schema_exception { { "not a string" } };
+		throw schema_exception { { "not an ID" } };
 	}
 
-	response::IdType result;
-
-	try
-	{
-		result = value.get<response::IdType>();
-	}
-	catch (const std::logic_error& ex)
-	{
-		throw schema_exception { { ex.what() } };
-	}
-
-	return result;
+	return response::Value { value }.release<response::IdType>();
 }
 
 void blockSubFields(const ResolverParams& params)
@@ -770,7 +759,7 @@ AwaitableResolver ModifiedResult<response::IdType>::convert(
 	return resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(value);
+			return response::Value(std::move(value));
 		});
 }
 
@@ -852,18 +841,9 @@ void ModifiedResult<bool>::validateScalar(const response::Value& value)
 template <>
 void ModifiedResult<response::IdType>::validateScalar(const response::Value& value)
 {
-	if (value.type() != response::Type::String)
+	if (!value.maybe_id())
 	{
-		throw schema_exception { { R"ex(not a valid String value)ex" } };
-	}
-
-	try
-	{
-		const auto result = value.get<response::IdType>();
-	}
-	catch (const std::logic_error& ex)
-	{
-		throw schema_exception { { ex.what() } };
+		throw schema_exception { { R"ex(not a valid ID value)ex" } };
 	}
 }
 
@@ -1814,9 +1794,8 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 			std::move(params.variables),
 			std::move(fragments));
 
-		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
-
 		co_await params.launch;
+		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
@@ -1847,12 +1826,21 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 	const auto spThis = shared_from_this();
 	const auto launch = std::move(params.launch);
 	std::unique_lock lock { spThis->_subscriptionMutex };
-	const auto key = spThis->addSubscription(std::move(params));
 	const auto itrOperation = spThis->_operations.find(strSubscription);
 
-	if (itrOperation != spThis->_operations.end())
+	if (itrOperation == _operations.end())
 	{
-		const auto operation = itrOperation->second;
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
+	const auto optionalOrDefaultSubscription =
+		params.subscriptionObject ? std::move(params.subscriptionObject) : itrOperation->second;
+	const auto key = spThis->addSubscription(std::move(params));
+
+	if (optionalOrDefaultSubscription)
+	{
 		const auto registration = spThis->_subscriptions.at(key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifySubscribe,
@@ -1870,18 +1858,26 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 		try
 		{
 			co_await launch;
-			co_await operation->resolve(selectionSetParams,
-				registration->selection,
-				registration->data->fragments,
-				registration->data->variables);
+
+			auto errors =
+				std::move((co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+							   registration->selection,
+							   registration->data->fragments,
+							   registration->data->variables))
+							  .errors);
+
+			if (!errors.empty())
+			{
+				throw schema_exception { std::move(errors) };
+			}
 		}
-		catch (const std::exception& ex)
+		catch (...)
 		{
 			lock.lock();
 
 			// Rethrow the exception, but don't leave it subscribed if the resolver failed.
 			spThis->removeSubscription(key);
-			throw ex;
+			throw;
 		}
 	}
 
@@ -1894,9 +1890,19 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 	std::unique_lock lock { spThis->_subscriptionMutex };
 	const auto itrOperation = spThis->_operations.find(strSubscription);
 
-	if (itrOperation != spThis->_operations.end())
+	if (itrOperation == _operations.end())
 	{
-		const auto operation = itrOperation->second;
+		// There may be an empty entry in the operations map, but if it's completely missing then
+		// that means the schema doesn't support subscriptions at all.
+		throw std::logic_error("Subscriptions not supported");
+	}
+
+	const auto optionalOrDefaultSubscription =
+		params.subscriptionObject ? std::move(params.subscriptionObject) : itrOperation->second;
+	std::list<schema_error> errors {};
+
+	if (optionalOrDefaultSubscription)
+	{
 		const auto registration = spThis->_subscriptions.at(params.key);
 		const SelectionSetParams selectionSetParams {
 			ResolverContext::NotifyUnsubscribe,
@@ -1912,15 +1918,21 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 		lock.unlock();
 
 		co_await params.launch;
-		co_await operation->resolve(selectionSetParams,
-			registration->selection,
-			registration->data->fragments,
-			registration->data->variables);
+		errors = std::move((co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+								registration->selection,
+								registration->data->fragments,
+								registration->data->variables))
+							   .errors);
 
 		lock.lock();
 	}
 
 	spThis->removeSubscription(params.key);
+
+	if (!errors.empty())
+	{
+		throw schema_exception { std::move(errors) };
+	}
 
 	co_return;
 }

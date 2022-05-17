@@ -17,7 +17,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -25,11 +25,8 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 3> s_namesDogCommand = {
-	R"gql(SIT)gql"sv,
-	R"gql(DOWN)gql"sv,
-	R"gql(HEEL)gql"sv
-};
+static const auto s_namesDogCommand = validation::getDogCommandNames();
+static const auto s_valuesDogCommand = validation::getDogCommandValues();
 
 template <>
 validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const response::Value& value)
@@ -39,14 +36,16 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesDogCommand,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesDogCommand.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	return static_cast<validation::DogCommand>(itr - s_namesDogCommand.cbegin());
+	return *result;
 }
 
 template <>
@@ -71,17 +70,19 @@ void ModifiedResult<validation::DogCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDogCommand.cbegin(), s_namesDogCommand.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesDogCommand.begin(),
+		s_valuesDogCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesDogCommand.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid DogCommand value)ex" } };
 	}
 }
 
-static const std::array<std::string_view, 1> s_namesCatCommand = {
-	R"gql(JUMP)gql"sv
-};
+static const auto s_namesCatCommand = validation::getCatCommandNames();
+static const auto s_valuesCatCommand = validation::getCatCommandValues();
 
 template <>
 validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const response::Value& value)
@@ -91,14 +92,16 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesCatCommand,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesCatCommand.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	return static_cast<validation::CatCommand>(itr - s_namesCatCommand.cbegin());
+	return *result;
 }
 
 template <>
@@ -123,9 +126,12 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesCatCommand.cbegin(), s_namesCatCommand.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesCatCommand.begin(),
+		s_valuesCatCommand.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesCatCommand.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid CatCommand value)ex" } };
 	}
@@ -137,7 +143,7 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 	auto valueName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("name", value);
 	auto valueOwner = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("owner", value);
 
-	return {
+	return validation::ComplexInput {
 		std::move(valueName),
 		std::move(valueOwner)
 	};
@@ -147,11 +153,48 @@ validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(con
 
 namespace validation {
 
+ComplexInput::ComplexInput(
+		std::optional<std::string> nameArg,
+		std::optional<std::string> ownerArg) noexcept
+	: name { std::move(nameArg) }
+	, owner { std::move(ownerArg) }
+{
+}
+
+ComplexInput::ComplexInput(const ComplexInput& other)
+	: name { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.name) }
+	, owner { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.owner) }
+{
+}
+
+ComplexInput::ComplexInput(ComplexInput&& other) noexcept
+	: name { std::move(other.name) }
+	, owner { std::move(other.owner) }
+{
+}
+
+ComplexInput& ComplexInput::operator=(const ComplexInput& other)
+{
+	ComplexInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
+{
+	name = std::move(other.name);
+	owner = std::move(other.owner);
+
+	return *this;
+}
+
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
-		{ "query", query },
-		{ "mutation", mutation },
-		{ "subscription", subscription }
+		{ service::strQuery, query },
+		{ service::strMutation, mutation },
+		{ service::strSubscription, subscription }
 	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))

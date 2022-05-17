@@ -7,16 +7,56 @@
 #define GRAPHQLSORTEDMAP_H
 
 #include <algorithm>
-#include <functional>
 #include <initializer_list>
+#include <optional>
 #include <stdexcept>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace graphql::internal {
 
+template <class K, class V>
+struct [[nodiscard]] sorted_map_key
+{
+	constexpr sorted_map_key(const std::pair<K, V>& entry) noexcept
+		: key { entry.first }
+	{
+	}
+
+	constexpr sorted_map_key(const K& key) noexcept
+		: key { key }
+	{
+	}
+
+	constexpr ~sorted_map_key() noexcept = default;
+
+	const K& key;
+};
+
+template <class Compare, class Iterator, class K,
+	class V = decltype(std::declval<Iterator>()->second)>
+[[nodiscard]] constexpr std::pair<Iterator, Iterator> sorted_map_equal_range(
+	Iterator itrBegin, Iterator itrEnd, const K& key) noexcept
+{
+	return std::equal_range(itrBegin,
+		itrEnd,
+		key,
+		[](sorted_map_key<K, V> lhs, sorted_map_key<K, V> rhs) noexcept {
+			return Compare {}(lhs.key, rhs.key);
+		});
+}
+
+template <class Compare, class Container, class K>
+[[nodiscard]] constexpr auto sorted_map_lookup(const Container& container, const K& key) noexcept
+{
+	const auto [itr, itrEnd] =
+		sorted_map_equal_range<Compare>(container.begin(), container.end(), key);
+
+	return itr == itrEnd ? std::nullopt : std::make_optional(itr->second);
+}
+
 template <class K, class V, class Compare = std::less<K>>
-class sorted_map
+class [[nodiscard]] sorted_map
 {
 public:
 	using vector_type = std::vector<std::pair<K, V>>;
@@ -24,9 +64,11 @@ public:
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 	using mapped_type = V;
 
-	sorted_map() = default;
+	constexpr sorted_map() noexcept = default;
+	constexpr sorted_map(const sorted_map& other) = default;
+	sorted_map(sorted_map&& other) noexcept = default;
 
-	sorted_map(std::initializer_list<std::pair<K, V>> init)
+	constexpr sorted_map(std::initializer_list<std::pair<K, V>> init)
 		: _data { init }
 	{
 		std::sort(_data.begin(), _data.end(), [](const auto& lhs, const auto& rhs) noexcept {
@@ -34,7 +76,12 @@ public:
 		});
 	}
 
-	bool operator==(const sorted_map& rhs) const noexcept
+	constexpr ~sorted_map() noexcept = default;
+
+	sorted_map& operator=(const sorted_map& rhs) = default;
+	sorted_map& operator=(sorted_map&& rhs) noexcept = default;
+
+	[[nodiscard]] constexpr bool operator==(const sorted_map& rhs) const noexcept
 	{
 		return _data == rhs._data;
 	}
@@ -44,7 +91,7 @@ public:
 		_data.reserve(size);
 	}
 
-	size_t capacity() const noexcept
+	[[nodiscard]] constexpr size_t capacity() const noexcept
 	{
 		return _data.capacity();
 	}
@@ -54,50 +101,45 @@ public:
 		_data.clear();
 	}
 
-	bool empty() const noexcept
+	[[nodiscard]] constexpr bool empty() const noexcept
 	{
 		return _data.empty();
 	}
 
-	size_t size() const noexcept
+	[[nodiscard]] constexpr size_t size() const noexcept
 	{
 		return _data.size();
 	}
 
-	const_iterator begin() const noexcept
+	[[nodiscard]] constexpr const_iterator begin() const noexcept
 	{
 		return _data.begin();
 	}
 
-	const_iterator end() const noexcept
+	[[nodiscard]] constexpr const_iterator end() const noexcept
 	{
 		return _data.end();
 	}
 
-	const_reverse_iterator rbegin() const noexcept
+	[[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept
 	{
 		return _data.rbegin();
 	}
 
-	const_reverse_iterator rend() const noexcept
+	[[nodiscard]] constexpr const_reverse_iterator rend() const noexcept
 	{
 		return _data.rend();
 	}
 
-	const_iterator find(const K& key) const noexcept
+	[[nodiscard]] constexpr const_iterator find(const K& key) const noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(begin(),
-			end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
-		return itr == itrEnd ? _data.end() : itr;
+		return itr == itrEnd ? _data.cend() : itr;
 	}
 
 	template <typename KeyArg>
-	const_iterator find(KeyArg&& keyArg) const noexcept
+	[[nodiscard]] constexpr const_iterator find(KeyArg&& keyArg) const noexcept
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
 
@@ -108,12 +150,7 @@ public:
 	std::pair<const_iterator, bool> emplace(KeyArg&& keyArg, ValueArgs&&... args) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr != itrEnd)
 		{
@@ -126,12 +163,7 @@ public:
 
 	const_iterator erase(const K& key) noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr == itrEnd)
 		{
@@ -155,15 +187,10 @@ public:
 	}
 
 	template <typename KeyArg>
-	V& operator[](KeyArg&& keyArg) noexcept
+	[[nodiscard]] V& operator[](KeyArg&& keyArg) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr != itrEnd)
 		{
@@ -174,15 +201,10 @@ public:
 	}
 
 	template <typename KeyArg>
-	V& at(KeyArg&& keyArg)
+	[[nodiscard]] V& at(KeyArg&& keyArg)
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](sorted_map_key lhs, sorted_map_key rhs) noexcept {
-				return Compare {}(lhs.key, rhs.key);
-			});
+		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
 		if (itr == itrEnd)
 		{
@@ -193,43 +215,33 @@ public:
 	}
 
 private:
-	struct sorted_map_key
-	{
-		sorted_map_key(const std::pair<K, V>& entry)
-			: key { entry.first }
-		{
-		}
-
-		sorted_map_key(const K& key)
-			: key { key }
-		{
-		}
-
-		const K& key;
-	};
-
 	vector_type _data;
 };
 
 template <class K, class Compare = std::less<K>>
-class sorted_set
+class [[nodiscard]] sorted_set
 {
 public:
 	using vector_type = std::vector<K>;
 	using const_iterator = typename vector_type::const_iterator;
 	using const_reverse_iterator = typename vector_type::const_reverse_iterator;
 
-	sorted_set() = default;
+	constexpr sorted_set() noexcept = default;
+	constexpr sorted_set(const sorted_set& other) = default;
+	sorted_set(sorted_set&& other) noexcept = default;
 
-	sorted_set(std::initializer_list<K> init)
+	constexpr sorted_set(std::initializer_list<K> init)
 		: _data { init }
 	{
-		std::sort(_data.begin(), _data.end(), [](const K& lhs, const K& rhs) noexcept {
-			return Compare {}(lhs, rhs);
-		});
+		std::sort(_data.begin(), _data.end(), Compare {});
 	}
 
-	bool operator==(const sorted_set& rhs) const noexcept
+	constexpr ~sorted_set() noexcept = default;
+
+	sorted_set& operator=(const sorted_set& rhs) = default;
+	sorted_set& operator=(sorted_set&& rhs) noexcept = default;
+
+	[[nodiscard]] constexpr bool operator==(const sorted_set& rhs) const noexcept
 	{
 		return _data == rhs._data;
 	}
@@ -239,7 +251,7 @@ public:
 		_data.reserve(size);
 	}
 
-	size_t capacity() const noexcept
+	[[nodiscard]] constexpr size_t capacity() const noexcept
 	{
 		return _data.capacity();
 	}
@@ -249,37 +261,37 @@ public:
 		_data.clear();
 	}
 
-	bool empty() const noexcept
+	[[nodiscard]] constexpr bool empty() const noexcept
 	{
 		return _data.empty();
 	}
 
-	size_t size() const noexcept
+	[[nodiscard]] constexpr size_t size() const noexcept
 	{
 		return _data.size();
 	}
 
-	const_iterator begin() const noexcept
+	[[nodiscard]] constexpr const_iterator begin() const noexcept
 	{
 		return _data.begin();
 	}
 
-	const_iterator end() const noexcept
+	[[nodiscard]] constexpr const_iterator end() const noexcept
 	{
 		return _data.end();
 	}
 
-	const_reverse_iterator rbegin() const noexcept
+	[[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept
 	{
 		return _data.rbegin();
 	}
 
-	const_reverse_iterator rend() const noexcept
+	[[nodiscard]] constexpr const_reverse_iterator rend() const noexcept
 	{
 		return _data.rend();
 	}
 
-	const_iterator find(const K& key) const noexcept
+	[[nodiscard]] constexpr const_iterator find(const K& key) const noexcept
 	{
 		const auto [itr, itrEnd] =
 			std::equal_range(begin(), end(), key, [](const K& lhs, const K& rhs) noexcept {
@@ -290,7 +302,7 @@ public:
 	}
 
 	template <typename Arg>
-	const_iterator find(Arg&& arg) const noexcept
+	[[nodiscard]] constexpr const_iterator find(Arg&& arg) const noexcept
 	{
 		const K key { std::forward<Arg>(arg) };
 
@@ -349,9 +361,10 @@ private:
 	vector_type _data;
 };
 
-struct shorter_or_less
+struct [[nodiscard]] shorter_or_less
 {
-	constexpr bool operator()(const std::string_view& lhs, const std::string_view& rhs) const
+	[[nodiscard]] constexpr bool operator()(
+		const std::string_view& lhs, const std::string_view& rhs) const noexcept
 	{
 		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
 	}

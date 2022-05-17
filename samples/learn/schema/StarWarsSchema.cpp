@@ -16,7 +16,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -24,11 +24,8 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 3> s_namesEpisode = {
-	R"gql(NEW_HOPE)gql"sv,
-	R"gql(EMPIRE)gql"sv,
-	R"gql(JEDI)gql"sv
-};
+static const auto s_namesEpisode = learn::getEpisodeNames();
+static const auto s_valuesEpisode = learn::getEpisodeValues();
 
 template <>
 learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)
@@ -38,14 +35,16 @@ learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& 
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesEpisode,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesEpisode.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	return static_cast<learn::Episode>(itr - s_namesEpisode.cbegin());
+	return *result;
 }
 
 template <>
@@ -70,9 +69,12 @@ void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesEpisode.cbegin(), s_namesEpisode.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesEpisode.begin(),
+		s_valuesEpisode.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesEpisode.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid Episode value)ex" } };
 	}
@@ -84,7 +86,7 @@ learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response:
 	auto valueStars = service::ModifiedArgument<int>::require("stars", value);
 	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);
 
-	return {
+	return learn::ReviewInput {
 		std::move(valueStars),
 		std::move(valueCommentary)
 	};
@@ -94,10 +96,47 @@ learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response:
 
 namespace learn {
 
+ReviewInput::ReviewInput(
+		int starsArg,
+		std::optional<std::string> commentaryArg) noexcept
+	: stars { std::move(starsArg) }
+	, commentary { std::move(commentaryArg) }
+{
+}
+
+ReviewInput::ReviewInput(const ReviewInput& other)
+	: stars { service::ModifiedArgument<int>::duplicate(other.stars) }
+	, commentary { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.commentary) }
+{
+}
+
+ReviewInput::ReviewInput(ReviewInput&& other) noexcept
+	: stars { std::move(other.stars) }
+	, commentary { std::move(other.commentary) }
+{
+}
+
+ReviewInput& ReviewInput::operator=(const ReviewInput& other)
+{
+	ReviewInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
+{
+	stars = std::move(other.stars);
+	commentary = std::move(other.commentary);
+
+	return *this;
+}
+
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)
 	: service::Request({
-		{ "query", query },
-		{ "mutation", mutation }
+		{ service::strQuery, query },
+		{ service::strMutation, mutation }
 	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))

@@ -10,6 +10,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <tuple>
 
 using namespace std::literals;
 
@@ -383,7 +384,16 @@ void SchemaLoader::reorderInputTypeDependencies()
 			[&entry](const InputField& field) noexcept {
 				if (field.fieldType == InputFieldType::Input)
 				{
-					entry.dependencies.insert(field.type);
+					// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
+					if (!field.modifiers.empty()
+						&& field.modifiers.front() != service::TypeModifier::None)
+					{
+						entry.declarations.push_back(field.type);
+					}
+					else
+					{
+						entry.dependencies.insert(field.type);
+					}
 				}
 			});
 	});
@@ -1705,24 +1715,50 @@ std::string_view SchemaLoader::getCppType(std::string_view type) const noexcept
 
 std::string SchemaLoader::getInputCppType(const InputField& field) const noexcept
 {
+	bool nonNull = true;
 	size_t templateCount = 0;
 	std::ostringstream inputType;
 
 	for (auto modifier : field.modifiers)
 	{
+		if (!nonNull)
+		{
+			inputType << R"cpp(std::optional<)cpp";
+			++templateCount;
+		}
+
 		switch (modifier)
 		{
+			case service::TypeModifier::None:
+				nonNull = true;
+				break;
+
 			case service::TypeModifier::Nullable:
-				inputType << R"cpp(std::optional<)cpp";
-				++templateCount;
+				nonNull = false;
 				break;
 
 			case service::TypeModifier::List:
+				nonNull = true;
 				inputType << R"cpp(std::vector<)cpp";
+				++templateCount;
+				break;
+		}
+	}
+
+	if (!nonNull)
+	{
+		switch (field.fieldType)
+		{
+			case InputFieldType::Input:
+				// If it's nullable, we want to return std::unique_ptr instead of std::optional for
+				// innermost complex types
+				inputType << R"cpp(std::unique_ptr<)cpp";
 				++templateCount;
 				break;
 
 			default:
+				inputType << R"cpp(std::optional<)cpp";
+				++templateCount;
 				break;
 		}
 	}

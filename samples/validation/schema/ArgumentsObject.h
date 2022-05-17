@@ -123,40 +123,40 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::ArgumentsHas
 
-class Arguments final
+class [[nodiscard]] Arguments final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveMultipleReqs(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveBooleanArgField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveFloatArgField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveIntArgField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveNonNullBooleanArgField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveNonNullBooleanListField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveBooleanListArgField(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveMultipleReqs(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveBooleanArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveFloatArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveIntArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNonNullBooleanArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNonNullBooleanListField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveBooleanListArgField(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveOptionalNonNullBooleanArgField(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const = 0;
-		virtual service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const = 0;
-		virtual service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -164,7 +164,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
+		[[nodiscard]] service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getMultipleReqsWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanArgFieldWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getFloatArgFieldWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getIntArgFieldWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanArgFieldWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanListFieldWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanListArgFieldWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getOptionalNonNullBooleanArgFieldWithParams<T>)
 			{
@@ -314,8 +314,8 @@ private:
 
 	Arguments(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -327,6 +327,11 @@ public:
 	Arguments(std::shared_ptr<T> pimpl) noexcept
 		: Arguments { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Arguments)gql" };
 	}
 };
 

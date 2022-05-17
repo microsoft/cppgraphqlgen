@@ -14,13 +14,15 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.1.0
+// Check if the library version is compatible with clientgen 4.4.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 4, "regenerate with clientgen: minor version mismatch");
 
 #include <optional>
 #include <string>
 #include <vector>
+
+namespace graphql::client {
 
 /// <summary>
 /// Operation: query (unnamed)
@@ -88,15 +90,15 @@ static_assert(graphql::internal::MinorVersion == 1, "regenerate with clientgen: 
 ///   default
 /// }
 /// </code>
-namespace graphql::client::query::Query {
+namespace query {
 
 // Return the original text of the request document.
-const std::string& GetRequestText() noexcept;
+[[nodiscard]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-const peg::ast& GetRequestObject() noexcept;
+[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
-enum class TaskState
+enum class [[nodiscard]] TaskState
 {
 	New,
 	Started,
@@ -104,13 +106,25 @@ enum class TaskState
 	Unassigned,
 };
 
-struct Response
+} // namespace query
+
+namespace query::Query {
+
+using query::GetRequestText;
+using query::GetRequestObject;
+
+// Return the name of this operation in the shared request document.
+[[nodiscard]] const std::string& GetOperationName() noexcept;
+
+using query::TaskState;
+
+struct [[nodiscard]] Response
 {
-	struct appointments_AppointmentConnection
+	struct [[nodiscard]] appointments_AppointmentConnection
 	{
-		struct edges_AppointmentEdge
+		struct [[nodiscard]] edges_AppointmentEdge
 		{
-			struct node_Appointment
+			struct [[nodiscard]] node_Appointment
 			{
 				response::IdType id {};
 				std::optional<std::string> subject {};
@@ -125,11 +139,11 @@ struct Response
 		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
-	struct tasks_TaskConnection
+	struct [[nodiscard]] tasks_TaskConnection
 	{
-		struct edges_TaskEdge
+		struct [[nodiscard]] edges_TaskEdge
 		{
-			struct node_Task
+			struct [[nodiscard]] node_Task
 			{
 				response::IdType id {};
 				std::optional<std::string> title {};
@@ -143,11 +157,11 @@ struct Response
 		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
 
-	struct unreadCounts_FolderConnection
+	struct [[nodiscard]] unreadCounts_FolderConnection
 	{
-		struct edges_FolderEdge
+		struct [[nodiscard]] edges_FolderEdge
 		{
-			struct node_Folder
+			struct [[nodiscard]] node_Folder
 			{
 				response::IdType id {};
 				std::optional<std::string> name {};
@@ -161,7 +175,7 @@ struct Response
 		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
-	struct anyType_UnionType
+	struct [[nodiscard]] anyType_UnionType
 	{
 		std::string _typename {};
 		response::IdType id {};
@@ -180,8 +194,9 @@ struct Response
 	std::optional<std::string> default_ {};
 };
 
-Response parseResponse(response::Value response);
+[[nodiscard]] Response parseResponse(response::Value&& response);
 
-} // namespace graphql::client::query::Query
+} // namespace query::Query
+} // namespace graphql::client
 
 #endif // QUERYCLIENT_H

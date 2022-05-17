@@ -14,6 +14,492 @@
 
 namespace graphql::response {
 
+IdType::IdType(IdType&& other /* = IdType { ByteData {} } */) noexcept
+	: _data { std::move(other._data) }
+{
+}
+
+IdType::IdType(const IdType& other)
+	: _data { other._data }
+{
+}
+
+IdType::~IdType()
+{
+	// The default destructor gets inlined and may use a different allocator to free IdType's member
+	// variables than the graphqlresponse module used to allocate them. So even though this could be
+	// omitted, declare it explicitly and define it in graphqlresponse.
+}
+
+IdType::IdType(size_t count, typename ByteData::value_type value /* = 0 */)
+	: _data { ByteData(count, value) }
+{
+}
+
+IdType::IdType(std::initializer_list<typename ByteData::value_type> values)
+	: _data { ByteData { values } }
+{
+}
+
+template <>
+IdType::IdType(typename ByteData::const_iterator begin, typename ByteData::const_iterator end)
+	: _data { ByteData { begin, end } }
+{
+}
+
+template <>
+IdType::IdType(typename ByteData::const_pointer begin, typename ByteData::const_pointer end)
+	: _data { ByteData { begin, end } }
+{
+}
+
+template <>
+IdType::IdType(typename ByteData::pointer begin, typename ByteData::pointer end)
+	: _data { ByteData { begin, end } }
+{
+}
+
+IdType& IdType::operator=(IdType&& rhs) noexcept
+{
+	if (&rhs != this)
+	{
+		_data = std::move(rhs._data);
+	}
+
+	return *this;
+}
+
+IdType::IdType(ByteData&& data) noexcept
+	: _data { std::move(data) }
+{
+}
+
+IdType::IdType(OpaqueString&& opaque) noexcept
+	: _data { std::move(opaque) }
+{
+}
+
+bool IdType::operator==(const IdType& rhs) const noexcept
+{
+	if (_data.index() == rhs._data.index())
+	{
+		if (std::holds_alternative<ByteData>(_data))
+		{
+			return std::get<ByteData>(_data) == std::get<ByteData>(rhs._data);
+		}
+		else
+		{
+			return std::get<OpaqueString>(_data) == std::get<OpaqueString>(rhs._data);
+		}
+	}
+
+	return (std::holds_alternative<ByteData>(_data)
+				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
+					   std::get<OpaqueString>(rhs._data))
+				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
+					   std::get<OpaqueString>(_data)))
+		== internal::Base64::Comparison::EqualTo;
+}
+
+bool IdType::operator==(const ByteData& rhs) const noexcept
+{
+	if (std::holds_alternative<ByteData>(_data))
+	{
+		return std::get<ByteData>(_data) == rhs;
+	}
+
+	return internal::Base64::compareBase64(rhs, std::get<OpaqueString>(_data))
+		== internal::Base64::Comparison::EqualTo;
+}
+
+bool IdType::operator==(const OpaqueString& rhs) const noexcept
+{
+	if (std::holds_alternative<OpaqueString>(_data))
+	{
+		return std::get<OpaqueString>(_data) == rhs;
+	}
+
+	return internal::Base64::compareBase64(std::get<ByteData>(_data), rhs)
+		== internal::Base64::Comparison::EqualTo;
+}
+
+bool IdType::operator<(const IdType& rhs) const noexcept
+{
+	if (_data.index() == rhs._data.index())
+	{
+		if (std::holds_alternative<ByteData>(_data))
+		{
+			return std::get<ByteData>(_data) < std::get<ByteData>(rhs._data);
+		}
+		else
+		{
+			return std::get<OpaqueString>(_data) < std::get<OpaqueString>(rhs._data);
+		}
+	}
+
+	return (std::holds_alternative<ByteData>(_data)
+				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
+					   std::get<OpaqueString>(rhs._data))
+				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
+					   std::get<OpaqueString>(_data)))
+		> internal::Base64::Comparison::EqualTo;
+}
+
+bool IdType::isBase64() const noexcept
+{
+	return !std::holds_alternative<OpaqueString>(_data)
+		|| internal::Base64::validateBase64(std::get<OpaqueString>(_data));
+}
+
+bool IdType::empty() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.empty();
+		},
+		_data);
+}
+
+size_t IdType::size() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.size();
+		},
+		_data);
+}
+
+size_t IdType::max_size() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.max_size();
+		},
+		_data);
+}
+
+void IdType::reserve(size_t new_cap)
+{
+	std::visit(
+		[new_cap](auto& data) {
+			data.reserve(new_cap);
+		},
+		_data);
+}
+
+size_t IdType::capacity() const noexcept
+{
+	return std::visit(
+		[](const auto& data) noexcept {
+			return data.capacity();
+		},
+		_data);
+}
+
+void IdType::shrink_to_fit()
+{
+	std::visit(
+		[](auto& data) {
+			data.shrink_to_fit();
+		},
+		_data);
+}
+
+void IdType::clear() noexcept
+{
+	std::visit(
+		[](auto& data) noexcept {
+			data.clear();
+		},
+		_data);
+}
+
+const std::uint8_t& IdType::at(size_t pos) const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::at for ByteData");
+	}
+
+	return std::get<ByteData>(_data).at(pos);
+}
+
+std::uint8_t& IdType::at(size_t pos)
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::at for ByteData");
+	}
+
+	return std::get<ByteData>(_data).at(pos);
+}
+
+const std::uint8_t& IdType::operator[](size_t pos) const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::operator[] for ByteData");
+	}
+
+	return std::get<ByteData>(_data)[pos];
+}
+
+std::uint8_t& IdType::operator[](size_t pos)
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::operator[] for ByteData");
+	}
+
+	return std::get<ByteData>(_data)[pos];
+}
+
+const std::uint8_t& IdType::front() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::front for ByteData");
+	}
+
+	return std::get<ByteData>(_data).front();
+}
+
+std::uint8_t& IdType::front()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::front for ByteData");
+	}
+
+	return std::get<ByteData>(_data).front();
+}
+
+const std::uint8_t& IdType::back() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::back for ByteData");
+	}
+
+	return std::get<ByteData>(_data).back();
+}
+
+std::uint8_t& IdType::back()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::back for ByteData");
+	}
+
+	return std::get<ByteData>(_data).back();
+}
+
+const std::uint8_t* IdType::data() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::data for ByteData");
+	}
+
+	return std::get<ByteData>(_data).data();
+}
+
+std::uint8_t* IdType::data()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::data for ByteData");
+	}
+
+	return std::get<ByteData>(_data).data();
+}
+
+IdType::ByteData::const_iterator IdType::begin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::begin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).begin();
+}
+
+IdType::ByteData::iterator IdType::begin()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::begin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).begin();
+}
+
+IdType::ByteData::const_iterator IdType::cbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::cbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).cbegin();
+}
+
+IdType::ByteData::const_iterator IdType::end() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::end for ByteData");
+	}
+
+	return std::get<ByteData>(_data).end();
+}
+
+IdType::ByteData::iterator IdType::end()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::end for ByteData");
+	}
+
+	return std::get<ByteData>(_data).end();
+}
+
+IdType::ByteData::const_iterator IdType::cend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::cend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).cend();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::rbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rbegin();
+}
+
+IdType::ByteData::reverse_iterator IdType::rbegin()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rbegin();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::crbegin() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crbegin for ByteData");
+	}
+
+	return std::get<ByteData>(_data).crbegin();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::rend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rend();
+}
+
+IdType::ByteData::reverse_iterator IdType::rend()
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::rend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).rend();
+}
+
+IdType::ByteData::const_reverse_iterator IdType::crend() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crend for ByteData");
+	}
+
+	return std::get<ByteData>(_data).crend();
+}
+
+const char* IdType::c_str() const
+{
+	if (!std::holds_alternative<OpaqueString>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::crend for OpaqueString");
+	}
+
+	return std::get<OpaqueString>(_data).c_str();
+}
+
+template <>
+const IdType::ByteData& IdType::get<IdType::ByteData>() const
+{
+	if (!std::holds_alternative<ByteData>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::get for ByteData");
+	}
+
+	return std::get<ByteData>(_data);
+}
+
+template <>
+const IdType::OpaqueString& IdType::get<IdType::OpaqueString>() const
+{
+	if (!std::holds_alternative<OpaqueString>(_data))
+	{
+		throw std::logic_error("Invalid call to IdType::get for OpaqueString");
+	}
+
+	return std::get<OpaqueString>(_data);
+}
+
+template <>
+IdType::ByteData IdType::release<IdType::ByteData>()
+{
+	if (std::holds_alternative<ByteData>(_data))
+	{
+		ByteData data { std::move(std::get<ByteData>(_data)) };
+
+		return data;
+	}
+	else
+	{
+		OpaqueString opaque { std::move(std::get<OpaqueString>(_data)) };
+
+		return internal::Base64::fromBase64(opaque);
+	}
+}
+
+template <>
+IdType::OpaqueString IdType::release<IdType::OpaqueString>()
+{
+	if (std::holds_alternative<OpaqueString>(_data))
+	{
+		OpaqueString opaque { std::move(std::get<OpaqueString>(_data)) };
+
+		return opaque;
+	}
+	else
+	{
+		ByteData data { std::move(std::get<ByteData>(_data)) };
+
+		return internal::Base64::toBase64(data);
+	}
+}
+
 bool Value::MapData::operator==(const MapData& rhs) const
 {
 	return map == rhs.map;
@@ -21,7 +507,7 @@ bool Value::MapData::operator==(const MapData& rhs) const
 
 bool Value::StringData::operator==(const StringData& rhs) const
 {
-	return from_json == rhs.from_json && string == rhs.string;
+	return (from_json || from_input) == (rhs.from_json || rhs.from_input) && string == rhs.string;
 }
 
 bool Value::NullData::operator==(const NullData&) const
@@ -50,6 +536,10 @@ void Value::set<StringType>(StringType&& value)
 	if (std::holds_alternative<EnumData>(_data))
 	{
 		std::get<EnumData>(_data) = std::move(value);
+	}
+	else if (std::holds_alternative<IdType>(_data))
+	{
+		std::get<IdType>(_data) = std::move(value);
 	}
 	else if (std::holds_alternative<StringData>(_data))
 	{
@@ -133,19 +623,19 @@ void Value::set<ScalarType>(ScalarType&& value)
 }
 
 template <>
-void Value::set<IdType>(const IdType& value)
+void Value::set<IdType>(IdType&& value)
 {
 	if (std::holds_alternative<SharedData>(_data))
 	{
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<StringData>(_data))
+	if (!std::holds_alternative<IdType>(_data))
 	{
 		throw std::logic_error("Invalid call to Value::set for IdType");
 	}
 
-	std::get<StringData>(_data).string = internal::Base64::toBase64(value);
+	std::get<IdType>(_data) = std::move(value);
 }
 
 template <>
@@ -182,6 +672,12 @@ const StringType& Value::get<StringType>() const
 	if (std::holds_alternative<EnumData>(typeData))
 	{
 		return std::get<EnumData>(typeData);
+	}
+	else if (std::holds_alternative<IdType>(typeData))
+	{
+		const auto& idType = std::get<IdType>(typeData);
+
+		return idType.get<IdType::OpaqueString>();
 	}
 	else if (std::holds_alternative<StringData>(typeData))
 	{
@@ -257,16 +753,16 @@ const ScalarType& Value::get<ScalarType>() const
 }
 
 template <>
-IdType Value::get<IdType>() const
+const IdType& Value::get<IdType>() const
 {
 	const auto& typeData = data();
 
-	if (!std::holds_alternative<StringData>(typeData))
+	if (std::holds_alternative<IdType>(typeData))
 	{
-		throw std::logic_error("Invalid call to Value::get for IdType");
+		return std::get<IdType>(typeData);
 	}
 
-	return internal::Base64::fromBase64(std::get<StringData>(typeData).string);
+	throw std::logic_error("Invalid call to Value::get for IdType");
 }
 
 template <>
@@ -322,12 +818,19 @@ StringType Value::release<StringType>()
 	{
 		result = std::move(std::get<EnumData>(_data));
 	}
+	else if (std::holds_alternative<IdType>(_data))
+	{
+		auto& idType = std::get<IdType>(_data);
+
+		result = idType.release<IdType::OpaqueString>();
+	}
 	else if (std::holds_alternative<StringData>(_data))
 	{
 		auto& stringData = std::get<StringData>(_data);
 
 		result = std::move(stringData.string);
 		stringData.from_json = false;
+		stringData.from_input = false;
 	}
 	else
 	{
@@ -370,15 +873,27 @@ IdType Value::release<IdType>()
 		*this = Value { *std::get<SharedData>(_data) };
 	}
 
-	if (!std::holds_alternative<StringData>(_data))
+	if (std::holds_alternative<StringData>(_data))
 	{
-		throw std::logic_error("Invalid call to Value::release for IdType");
+		auto& stringData = std::get<StringData>(_data);
+
+		if (stringData.from_json || stringData.from_input)
+		{
+			auto stringValue = std::move(stringData.string);
+
+			return internal::Base64::validateBase64(stringValue)
+				? IdType { internal::Base64::fromBase64(stringValue) }
+				: IdType { std::move(stringValue) };
+		}
+	}
+	else if (std::holds_alternative<IdType>(_data))
+	{
+		auto idValue = std::move(std::get<IdType>(_data));
+
+		return idValue;
 	}
 
-	auto& stringData = std::get<StringData>(_data);
-	auto stringValue = std::move(stringData.string);
-
-	return internal::Base64::fromBase64(stringValue);
+	throw std::logic_error("Invalid call to Value::release for IdType");
 }
 
 Value::Value(Type type /* = Type::Null */)
@@ -415,6 +930,10 @@ Value::Value(Type type /* = Type::Null */)
 
 		case Type::EnumValue:
 			_data = { EnumData {} };
+			break;
+
+		case Type::ID:
+			_data = { IdType {} };
 			break;
 
 		case Type::Scalar:
@@ -455,8 +974,8 @@ Value::Value(FloatType value)
 {
 }
 
-Value::Value(const IdType& value)
-	: _data(TypeData { StringData { internal::Base64::toBase64(value), false } })
+Value::Value(IdType&& value)
+	: _data(TypeData { IdType { std::move(value) } })
 {
 }
 
@@ -519,7 +1038,7 @@ Value::Value(const Value& other)
 		}
 
 		case Type::String:
-			_data = { StringData { other.get<StringType>(), other.maybe_enum() } };
+			_data = { StringData { std::get<StringData>(other._data) } };
 			break;
 
 		case Type::Null:
@@ -542,6 +1061,10 @@ Value::Value(const Value& other)
 			_data = { EnumData { other.get<StringType>() } };
 			break;
 
+		case Type::ID:
+			_data = { IdType { std::get<IdType>(other._data) } };
+			break;
+
 		case Type::Scalar:
 			_data = { ScalarData { std::make_unique<ScalarType>(other.get<ScalarType>()) } };
 			break;
@@ -558,31 +1081,11 @@ const Value::TypeData& Value::data() const noexcept
 	return std::holds_alternative<SharedData>(_data) ? std::get<SharedData>(_data)->data() : _data;
 }
 
-Value& Value::operator=(Value&& rhs) noexcept
+Type Value::typeOf(const TypeData& data) noexcept
 {
-	if (&rhs != this)
+	if (std::holds_alternative<SharedData>(data))
 	{
-		_data = std::move(rhs._data);
-	}
-
-	return *this;
-}
-
-bool Value::operator==(const Value& rhs) const noexcept
-{
-	return data() == rhs.data();
-}
-
-bool Value::operator!=(const Value& rhs) const noexcept
-{
-	return !(*this == rhs);
-}
-
-Type Value::type() const noexcept
-{
-	if (std::holds_alternative<SharedData>(_data))
-	{
-		return std::get<SharedData>(_data)->type();
+		return typeOf(std::get<SharedData>(data)->_data);
 	}
 
 	// As long as the order of the variant alternatives matches the Type enum, we can cast the index
@@ -616,20 +1119,114 @@ Type Value::type() const noexcept
 			EnumData>,
 		"type mistmatch");
 	static_assert(
+		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::ID), TypeData>, IdType>,
+		"type mistmatch");
+	static_assert(
 		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Scalar), TypeData>,
 			ScalarData>,
 		"type mistmatch");
 
-	return static_cast<Type>(_data.index());
+	return static_cast<Type>(data.index());
+}
+
+Value& Value::operator=(Value&& rhs) noexcept
+{
+	if (&rhs != this)
+	{
+		_data = std::move(rhs._data);
+	}
+
+	return *this;
+}
+
+bool Value::operator==(const Value& rhs) const noexcept
+{
+	const auto& lhsData = data();
+	const auto& rhsData = rhs.data();
+	const auto lhsType = typeOf(lhsData);
+	const auto rhsType = typeOf(rhsData);
+
+	if (lhsType != rhsType)
+	{
+		// There are a limited set of overlapping string types which we can compare.
+		switch (lhsType)
+		{
+			case Type::String:
+			{
+				const auto& stringData = std::get<StringData>(lhsData);
+
+				if (std::holds_alternative<EnumData>(rhsData))
+				{
+					if (stringData.from_json)
+					{
+						const auto& enumData = std::get<EnumData>(rhsData);
+
+						return stringData.string == enumData;
+					}
+				}
+				else if (std::holds_alternative<IdType>(rhsData))
+				{
+					const auto& idType = std::get<IdType>(rhsData);
+
+					if (stringData.from_json || stringData.from_input)
+					{
+						return stringData.string == idType;
+					}
+				}
+
+				return false;
+			}
+
+			case Type::EnumValue:
+			{
+				const auto& enumData = std::get<EnumData>(lhsData);
+
+				if (std::holds_alternative<StringData>(rhsData))
+				{
+					const auto& stringData = std::get<StringData>(rhsData);
+
+					if (stringData.from_json)
+					{
+						return enumData == stringData.string;
+					}
+				}
+
+				return false;
+			}
+
+			case Type::ID:
+			{
+				const auto& idType = std::get<IdType>(rhsData);
+
+				if (std::holds_alternative<StringData>(rhsData))
+				{
+					const auto& stringData = std::get<StringData>(rhsData);
+
+					if (stringData.from_json || stringData.from_input)
+					{
+						return idType == stringData.string;
+					}
+				}
+
+				return false;
+			}
+
+			default:
+				return false;
+		}
+	}
+
+	return lhsData == rhsData;
+}
+
+Type Value::type() const noexcept
+{
+	return typeOf(_data);
 }
 
 Value&& Value::from_json() noexcept
 {
-	if (std::holds_alternative<SharedData>(_data))
-	{
-		_data = StringData { { get<StringType>() }, true };
-	}
-	else if (std::holds_alternative<StringData>(_data))
+	if (std::holds_alternative<StringData>(_data))
 	{
 		std::get<StringData>(_data).from_json = true;
 	}
@@ -644,6 +1241,34 @@ bool Value::maybe_enum() const noexcept
 	return std::holds_alternative<EnumData>(typeData)
 		|| (std::holds_alternative<StringData>(typeData)
 			&& std::get<StringData>(typeData).from_json);
+}
+
+Value&& Value::from_input() noexcept
+{
+	if (std::holds_alternative<StringData>(_data))
+	{
+		std::get<StringData>(_data).from_input = true;
+	}
+
+	return std::move(*this);
+}
+
+bool Value::maybe_id() const noexcept
+{
+	const auto& typeData = data();
+
+	if (std::holds_alternative<IdType>(typeData))
+	{
+		return true;
+	}
+	else if (std::holds_alternative<StringData>(typeData))
+	{
+		const auto& stringData = std::get<StringData>(typeData);
+
+		return stringData.from_json || stringData.from_input;
+	}
+
+	return false;
 }
 
 void Value::reserve(size_t count)
@@ -854,6 +1479,7 @@ void Writer::write(Value response) const
 
 		case Type::String:
 		case Type::EnumValue:
+		case Type::ID:
 		{
 			auto value = response.release<StringType>();
 

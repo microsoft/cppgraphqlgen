@@ -14,6 +14,8 @@
 #include "graphqlservice/internal/Grammar.h"
 #include "graphqlservice/internal/Schema.h"
 
+#include <unordered_set>
+
 namespace graphql::generator {
 
 using RequestSchemaType = std::shared_ptr<const schema::BaseType>;
@@ -23,14 +25,14 @@ struct ResponseField;
 
 using ResponseFieldList = std::vector<ResponseField>;
 
-struct ResponseType
+struct [[nodiscard]] ResponseType
 {
 	RequestSchemaType type;
 	std::string_view cppType;
 	ResponseFieldList fields;
 };
 
-struct ResponseField
+struct [[nodiscard]] ResponseField
 {
 	RequestSchemaType type;
 	TypeModifierStack modifiers;
@@ -40,9 +42,18 @@ struct ResponseField
 	ResponseFieldList children;
 };
 
-struct RequestVariable
+struct [[nodiscard]] RequestInputType
 {
 	RequestSchemaType type;
+	std::unordered_set<std::string_view> dependencies {};
+	std::vector<std::string_view> declarations {};
+};
+
+using RequestInputTypeList = std::vector<RequestInputType>;
+
+struct [[nodiscard]] RequestVariable
+{
+	RequestInputType inputType;
 	TypeModifierStack modifiers;
 	std::string_view name;
 	std::string_view cppName;
@@ -53,60 +64,83 @@ struct RequestVariable
 
 using RequestVariableList = std::vector<RequestVariable>;
 
-struct RequestOptions
+struct [[nodiscard]] Operation
+{
+	const peg::ast_node* operation;
+	std::string_view name;
+	std::string_view type;
+	ResponseType responseType {};
+	RequestVariableList variables {};
+	internal::string_view_set inputTypeNames {};
+	RequestInputTypeList referencedInputTypes {};
+	internal::string_view_set enumNames {};
+	RequestSchemaTypeList referencedEnums {};
+};
+
+using OperationList = std::vector<Operation>;
+
+struct [[nodiscard]] RequestOptions
 {
 	const std::string requestFilename;
-	const std::string operationName;
+	const std::optional<std::string> operationName;
 	const bool noIntrospection = false;
 };
 
 class SchemaLoader;
 
-class RequestLoader
+class [[nodiscard]] RequestLoader
 {
 public:
 	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
-	std::string_view getRequestFilename() const noexcept;
-	std::string_view getOperationDisplayName() const noexcept;
-	std::string getOperationNamespace() const noexcept;
-	std::string_view getOperationType() const noexcept;
-	std::string_view getRequestText() const noexcept;
+	[[nodiscard]] std::string_view getRequestFilename() const noexcept;
+	[[nodiscard]] const OperationList& getOperations() const noexcept;
+	[[nodiscard]] std::string_view getOperationDisplayName(
+		const Operation& operation) const noexcept;
+	[[nodiscard]] std::string getOperationNamespace(const Operation& operation) const noexcept;
+	[[nodiscard]] std::string_view getOperationType(const Operation& operation) const noexcept;
+	[[nodiscard]] std::string_view getRequestText() const noexcept;
 
-	const ResponseType& getResponseType() const noexcept;
-	const RequestVariableList& getVariables() const noexcept;
+	[[nodiscard]] const ResponseType& getResponseType(const Operation& operation) const noexcept;
+	[[nodiscard]] const RequestVariableList& getVariables(
+		const Operation& operation) const noexcept;
 
-	const RequestSchemaTypeList& getReferencedInputTypes() const noexcept;
-	const RequestSchemaTypeList& getReferencedEnums() const noexcept;
+	[[nodiscard]] const RequestInputTypeList& getReferencedInputTypes(
+		const Operation& operation) const noexcept;
+	[[nodiscard]] const RequestSchemaTypeList& getReferencedEnums(
+		const Operation& operation) const noexcept;
 
-	std::string getInputCppType(const RequestSchemaType& wrappedInputType) const noexcept;
-	static std::string getOutputCppType(
+	[[nodiscard]] std::string getInputCppType(
+		const RequestSchemaType& wrappedInputType) const noexcept;
+	[[nodiscard]] std::string getInputCppType(
+		const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard]] static std::string getOutputCppType(
 		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
 
-	static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
+	[[nodiscard]] static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
 		RequestSchemaType&& type) noexcept;
 
 private:
 	void buildSchema();
 	void addTypesToSchema();
-	RequestSchemaType getSchemaType(
+	[[nodiscard]] RequestSchemaType getSchemaType(
 		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
-	static std::string_view trimWhitespace(std::string_view content) noexcept;
+	[[nodiscard]] static std::string_view trimWhitespace(std::string_view content) noexcept;
 
 	void findOperation();
 	void collectFragments() noexcept;
-	void collectVariables() noexcept;
-	void collectInputTypes(const RequestSchemaType& variableType) noexcept;
-	void reorderInputTypeDependencies() noexcept;
-	void collectEnums(const RequestSchemaType& variableType) noexcept;
-	void collectEnums(const ResponseField& responseField) noexcept;
+	void collectVariables(Operation& operation) noexcept;
+	void collectInputTypes(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void reorderInputTypeDependencies(Operation& operation);
+	void collectEnums(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void collectEnums(Operation& operation, const ResponseField& responseField) noexcept;
 
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
 	// SelectionVisitor visits the AST and fills in the ResponseType for the request.
-	class SelectionVisitor
+	class [[nodiscard]] SelectionVisitor
 	{
 	public:
 		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
@@ -115,7 +149,7 @@ private:
 
 		void visit(const peg::ast_node& selection);
 
-		ResponseFieldList getFields();
+		[[nodiscard]] ResponseFieldList getFields();
 
 	private:
 		void visitField(const peg::ast_node& field);
@@ -139,16 +173,8 @@ private:
 	peg::ast _ast;
 
 	std::string _requestText;
-	const peg::ast_node* _operation = nullptr;
-	std::string_view _operationName;
-	std::string_view _operationType;
+	OperationList _operations;
 	FragmentDefinitionMap _fragments;
-	ResponseType _responseType;
-	RequestVariableList _variables;
-	internal::string_view_set _inputTypeNames;
-	RequestSchemaTypeList _referencedInputTypes;
-	internal::string_view_set _enumNames;
-	RequestSchemaTypeList _referencedEnums;
 };
 
 } // namespace graphql::generator

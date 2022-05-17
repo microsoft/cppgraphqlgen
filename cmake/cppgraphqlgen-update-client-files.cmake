@@ -48,10 +48,12 @@ cmake_policy(SET CMP0057 NEW)
 file(GLOB OLD_FILES ${CLIENT_SOURCE_DIR}/*.h ${CLIENT_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)
-  if(NOT OLD_FILE IN_LIST FILE_NAMES AND
-      NOT OLD_FILE STREQUAL "${CLIENT_PREFIX}Client.h" AND
-      NOT OLD_FILE STREQUAL "${CLIENT_PREFIX}Client.cpp")
-    message(WARNING "Unexpected file in ${CLIENT_TARGET} client sources: ${OLD_FILE}")
+  if(NOT OLD_FILE IN_LIST FILE_NAMES)
+    if(OLD_FILE MATCHES "Client\\.h$" OR OLD_FILE MATCHES "Client\\.cpp$")
+      file(REMOVE "${CLIENT_SOURCE_DIR}/${OLD_FILE}")
+    else()
+      message(WARNING "Unexpected file in ${CLIENT_TARGET} client sources: ${OLD_FILE}")
+    endif()
   endif()
 endforeach()
 

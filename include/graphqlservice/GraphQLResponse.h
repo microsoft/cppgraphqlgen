@@ -20,6 +20,8 @@
 
 #include "graphqlservice/internal/Awaitable.h"
 
+#include <cstdint>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -31,8 +33,7 @@ namespace graphql::response {
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
 // of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
-enum class Type : uint8_t
-{
+enum class [[nodiscard]] Type : std::uint8_t {
 	Map,	   // JSON Object
 	List,	   // JSON Array
 	String,	   // JSON String
@@ -41,6 +42,7 @@ enum class Type : uint8_t
 	Int,	   // JSON Number
 	Float,	   // JSON Number
 	EnumValue, // JSON String
+	ID,		   // JSON String
 	Scalar,	   // JSON any type
 };
 
@@ -53,13 +55,114 @@ using BooleanType = bool;
 using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
-using IdType = std::vector<uint8_t>;
+
+struct [[nodiscard]] IdType
+{
+	using ByteData = std::vector<std::uint8_t>;
+	using OpaqueString = std::string;
+
+	GRAPHQLRESPONSE_EXPORT IdType(IdType&& other = IdType { ByteData {} }) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType(const IdType& other);
+	GRAPHQLRESPONSE_EXPORT ~IdType();
+
+	// Implicit ByteData constructors
+	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
+	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
+	template <typename InputIt>
+	IdType(InputIt begin, InputIt end);
+
+	// Assignment
+	GRAPHQLRESPONSE_EXPORT IdType& operator=(IdType&& rhs) noexcept;
+	IdType& operator=(const IdType& rhs) = delete;
+
+	// Conversion
+	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
+
+	template <typename ValueType>
+	[[nodiscard]] const ValueType& get() const;
+
+	template <typename ValueType>
+	[[nodiscard]] ValueType release();
+
+	// Comparison
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const ByteData& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const OpaqueString& rhs) const noexcept;
+
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator<(const IdType& rhs) const noexcept;
+
+	// Check the type
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool isBase64() const noexcept;
+
+	// Shared accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool empty() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t max_size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t capacity() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
+	GRAPHQLRESPONSE_EXPORT void clear() noexcept;
+
+	// ByteData accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& at(size_t pos) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& at(size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& operator[](size_t pos) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& operator[](size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& front() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& front();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& back() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& back();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t* data() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t* data();
+
+	// ByteData iterators
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator begin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator end();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rbegin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rend();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crend() const;
+
+	// OpaqueString accessors
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const char* c_str() const;
+
+private:
+	std::variant<ByteData, OpaqueString> _data;
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the specialized template methods
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_iterator begin, typename ByteData::const_iterator end);
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::const_pointer begin, typename ByteData::const_pointer end);
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::IdType(
+	typename ByteData::pointer begin, typename ByteData::pointer end);
+template <>
+GRAPHQLRESPONSE_EXPORT const IdType::ByteData& IdType::get<IdType::ByteData>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT const IdType::OpaqueString& IdType::get<IdType::OpaqueString>() const;
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::ByteData IdType::release<IdType::ByteData>();
+template <>
+GRAPHQLRESPONSE_EXPORT IdType::OpaqueString IdType::release<IdType::OpaqueString>();
+#endif // GRAPHQL_DLLEXPORTS
 
 template <typename ValueType>
 struct ValueTypeTraits
 {
-	// Set by r-value reference, get by const reference, and release by value. The only types
-	// that actually support all 3 methods are StringType and ScalarType, everything else
+	// Set by r-value reference, get by const reference, and release by value. The only types that
+	// actually support all 3 methods are StringType, IdType, and ScalarType, everything else
 	// overrides some subset of these types with a template specialization.
 	using set_type = ValueType&&;
 	using get_type = const ValueType&;
@@ -106,17 +209,8 @@ struct ValueTypeTraits<FloatType>
 	using get_type = FloatType;
 };
 
-template <>
-struct ValueTypeTraits<IdType>
-{
-	// ID values are represented as a Base64 String, so they require conversion.
-	using set_type = const IdType&;
-	using get_type = IdType;
-	using release_type = IdType;
-};
-
 // Represent a discriminated union of GraphQL response value types.
-struct Value
+struct [[nodiscard]] Value
 {
 	GRAPHQLRESPONSE_EXPORT Value(Type type = Type::Null);
 	GRAPHQLRESPONSE_EXPORT ~Value();
@@ -126,7 +220,7 @@ struct Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
-	GRAPHQLRESPONSE_EXPORT explicit Value(const IdType& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(IdType&& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -137,31 +231,37 @@ struct Value
 	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT bool operator==(const Value& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT bool operator!=(const Value& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const Value& rhs) const noexcept;
 
 	// Check the Type
-	GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Type type() const noexcept;
 
-	// JSON doesn't distinguish between Type::String and Type::EnumValue, so if this value comes
-	// from JSON and it's a string we need to track the fact that it can be interpreted as either.
-	GRAPHQLRESPONSE_EXPORT Value&& from_json() noexcept;
-	GRAPHQLRESPONSE_EXPORT bool maybe_enum() const noexcept;
+	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
+	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
+	// as any of those types.
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_json() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_enum() const noexcept;
+
+	// Input values don't distinguish between Type::String and Type::ID, so if this value comes from
+	// a string literal input value we need to track that fact that it can be interpreted as either
+	// of those types.
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_input() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
 	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
-	GRAPHQLRESPONSE_EXPORT size_t size() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const;
 
 	// Valid for Type::Map
 	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator find(std::string_view name) const;
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator begin() const;
-	GRAPHQLRESPONSE_EXPORT MapType::const_iterator end() const;
-	GRAPHQLRESPONSE_EXPORT const Value& operator[](std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator find(std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](std::string_view name) const;
 
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
-	GRAPHQLRESPONSE_EXPORT const Value& operator[](size_t index) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](size_t index) const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -171,46 +271,47 @@ struct Value
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
+	[[nodiscard]] typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
 		typename ValueTypeTraits<ValueType>::get_type>
 	get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
-	typename ValueTypeTraits<ValueType>::release_type release();
+	[[nodiscard]] typename ValueTypeTraits<ValueType>::release_type release();
 
 private:
 	// Type::Map
-	struct MapData
+	struct [[nodiscard]] MapData
 	{
-		bool operator==(const MapData& rhs) const;
+		[[nodiscard]] bool operator==(const MapData& rhs) const;
 
 		MapType map;
 		std::vector<size_t> members;
 	};
 
 	// Type::String
-	struct StringData
+	struct [[nodiscard]] StringData
 	{
-		bool operator==(const StringData& rhs) const;
+		[[nodiscard]] bool operator==(const StringData& rhs) const;
 
 		StringType string;
 		bool from_json = false;
+		bool from_input = false;
 	};
 
 	// Type::Null
-	struct NullData
+	struct [[nodiscard]] NullData
 	{
-		bool operator==(const NullData& rhs) const;
+		[[nodiscard]] bool operator==(const NullData& rhs) const;
 	};
 
 	// Type::EnumValue
 	using EnumData = StringType;
 
 	// Type::Scalar
-	struct ScalarData
+	struct [[nodiscard]] ScalarData
 	{
-		bool operator==(const ScalarData& rhs) const;
+		[[nodiscard]] bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
 	};
@@ -218,9 +319,11 @@ private:
 	using SharedData = std::shared_ptr<const Value>;
 
 	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
-		FloatType, EnumData, ScalarData, SharedData>;
+		FloatType, EnumData, IdType, ScalarData, SharedData>;
 
-	const TypeData& data() const noexcept;
+	[[nodiscard]] const TypeData& data() const noexcept;
+
+	[[nodiscard]] static Type typeOf(const TypeData& data) noexcept;
 
 	TypeData _data;
 };
@@ -238,7 +341,7 @@ GRAPHQLRESPONSE_EXPORT void Value::set<FloatType>(FloatType value);
 template <>
 GRAPHQLRESPONSE_EXPORT void Value::set<ScalarType>(ScalarType&& value);
 template <>
-GRAPHQLRESPONSE_EXPORT void Value::set<IdType>(const IdType& value);
+GRAPHQLRESPONSE_EXPORT void Value::set<IdType>(IdType&& value);
 template <>
 GRAPHQLRESPONSE_EXPORT const MapType& Value::get<MapType>() const;
 template <>
@@ -254,7 +357,7 @@ GRAPHQLRESPONSE_EXPORT FloatType Value::get<FloatType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT const ScalarType& Value::get<ScalarType>() const;
 template <>
-GRAPHQLRESPONSE_EXPORT IdType Value::get<IdType>() const;
+GRAPHQLRESPONSE_EXPORT const IdType& Value::get<IdType>() const;
 template <>
 GRAPHQLRESPONSE_EXPORT MapType Value::release<MapType>();
 template <>
@@ -269,7 +372,7 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 
 using AwaitableValue = internal::Awaitable<Value>;
 
-class Writer final
+class [[nodiscard]] Writer final
 {
 private:
 	struct Concept

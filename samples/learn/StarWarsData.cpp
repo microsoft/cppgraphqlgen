@@ -97,7 +97,7 @@ std::shared_ptr<service::Request> GetService() noexcept
 		{ learn::Episode::JEDI, { artoo } },
 	};
 
-	std::map<std::string, std::shared_ptr<learn::Human>> humans {
+	std::map<response::IdType, std::shared_ptr<learn::Human>> humans {
 		{ luke->getId(), luke },
 		{ vader->getId(), vader },
 		{ han->getId(), han },
@@ -105,7 +105,7 @@ std::shared_ptr<service::Request> GetService() noexcept
 		{ tarkin->getId(), tarkin },
 	};
 
-	std::map<std::string, std::shared_ptr<learn::Droid>> droids {
+	std::map<response::IdType, std::shared_ptr<learn::Droid>> droids {
 		{ threepio->getId(), threepio },
 		{ artoo->getId(), artoo },
 	};

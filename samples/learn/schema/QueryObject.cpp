@@ -73,7 +73,7 @@ service::AwaitableResolver Query::resolveHero(service::ResolverParams&& params) 
 
 service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params) const
 {
-	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
@@ -84,7 +84,7 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 
 service::AwaitableResolver Query::resolveDroid(service::ResolverParams&& params) const
 {
-	auto argId = service::ModifiedArgument<std::string>::require("id", params.arguments);
+	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	auto directives = std::move(params.fieldDirectives);
 	auto result = _pimpl->getDroid(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
@@ -121,10 +121,10 @@ void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const
 			schema::InputValue::Make(R"gql(episode)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Episode)gql"sv), R"gql()gql"sv)
 		}),
 		schema::Field::Make(R"gql(human)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Human)gql"sv), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 		}),
 		schema::Field::Make(R"gql(droid)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Droid)gql"sv), {
-			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv)
+			schema::InputValue::Make(R"gql(id)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

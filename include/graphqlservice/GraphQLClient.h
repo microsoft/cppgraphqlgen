@@ -32,7 +32,7 @@
 namespace graphql::client {
 
 // Errors may specify the line number and column number where the error occurred.
-struct ErrorLocation
+struct [[nodiscard]] ErrorLocation
 {
 	int line {};
 	int column {};
@@ -43,7 +43,7 @@ struct ErrorLocation
 using ErrorPathSegment = std::variant<std::string, int>;
 
 // Error returned from the service.
-struct Error
+struct [[nodiscard]] Error
 {
 	std::string message;
 	std::vector<ErrorLocation> locations;
@@ -52,24 +52,41 @@ struct Error
 
 // Complete response from the service, split into the unparsed graphql::response::Value in
 // data and the (typically empty) collection of Errors in errors.
-struct ServiceResponse
+struct [[nodiscard]] ServiceResponse
 {
 	response::Value data;
 	std::vector<Error> errors;
 };
 
 // Split a service response into separate ServiceResponse data and errors members.
-GRAPHQLCLIENT_EXPORT ServiceResponse parseServiceResponse(response::Value response);
+GRAPHQLCLIENT_EXPORT [[nodiscard]] ServiceResponse parseServiceResponse(response::Value response);
 
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.
-enum class TypeModifier
-{
+enum class [[nodiscard]] TypeModifier {
 	None,
 	Nullable,
 	List,
 };
+
+// These types are used as scalar variables even though they are represented with a class.
+template <typename Type>
+concept ScalarVariableClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
+	response::IdType> || std::is_same_v<Type, response::Value>;
+
+// Any non-scalar class used in a variable is a generated INPUT_OBJECT type.
+template <typename Type>
+concept InputVariableClass = std::is_class_v<Type> && !ScalarVariableClass<Type>;
+
+// Test if there are any non-None modifiers left.
+template <TypeModifier... Other>
+concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
+
+// Special-case an innermost nullable INPUT_OBJECT type.
+template <typename Type, TypeModifier... Other>
+concept InputVariableUniquePtr = InputVariableClass<Type> && OnlyNoneModifiers<Other...>;
+
 
 // Serialize variable input values with chained type modifiers which add nullable or list wrappers.
 template <typename Type>
@@ -81,7 +98,8 @@ struct ModifiedVariable
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			std::optional<typename VariableTraits<U, Other...>::type>,
+			typename std::conditional_t<InputVariableUniquePtr<U, Other...>, std::unique_ptr<U>,
+				std::optional<typename VariableTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename VariableTraits<U, Other...>::type>, U>>;
 	};
@@ -93,13 +111,14 @@ struct ModifiedVariable
 	};
 
 	// Serialize a single value to the variables document.
-	static response::Value serialize(Type&& value);
+	[[nodiscard]] static response::Value serialize(Type&& value);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0,
-		response::Value>
-	serialize(Type&& value)
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0,
+			response::Value>
+		serialize(Type&& value)
 	{
 		// Just call through to the non-template method without the modifiers.
 		return serialize(std::move(value));
@@ -107,15 +126,16 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::Nullable == Modifier, response::Value> serialize(
-		typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue)
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::Nullable == Modifier, response::Value>
+		serialize(typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue)
 	{
 		response::Value result;
 
 		if (nullableValue)
 		{
 			result = serialize<Other...>(std::move(*nullableValue));
-			nullableValue = std::nullopt;
+			nullableValue.reset();
 		}
 
 		return result;
@@ -123,8 +143,8 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::List == Modifier, response::Value> serialize(
-		typename VariableTraits<Type, Modifier, Other...>::type&& listValue)
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier, response::Value>
+	serialize(typename VariableTraits<Type, Modifier, Other...>::type&& listValue)
 	{
 		response::Value result { response::Type::List };
 
@@ -133,6 +153,53 @@ struct ModifiedVariable
 			result.emplace_back(serialize<Other...>(std::move(value)));
 		});
 		listValue.clear();
+
+		return result;
+	}
+
+	// Peel off the none modifier. If it's included, it should always be last in the list.
+	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
+		duplicate(const Type& value)
+	{
+		// Just copy the value.
+		return Type { value };
+	}
+
+	// Peel off nullable modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+		typename VariableTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue)
+	{
+		typename VariableTraits<Type, Modifier, Other...>::type result {};
+
+		if (nullableValue)
+		{
+			if constexpr (InputVariableUniquePtr<Type, Other...>)
+			{
+				// Special case duplicating the std::unique_ptr.
+				result = std::make_unique<Type>(Type { *nullableValue });
+			}
+			else
+			{
+				result = duplicate<Other...>(*nullableValue);
+			}
+		}
+
+		return result;
+	}
+
+	// Peel off list modifiers.
+	template <TypeModifier Modifier, TypeModifier... Other>
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+		typename VariableTraits<Type, Modifier, Other...>::type>
+	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& listValue)
+	{
+		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
+
+		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
 
 		return result;
 	}
@@ -188,21 +255,22 @@ struct ModifiedResponse
 	};
 
 	// Parse a single value of the response document.
-	static Type parse(response::Value response);
+	[[nodiscard]] static Type parse(response::Value&& response);
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
-	parse(response::Value response)
+	[[nodiscard]] static
+		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
+		parse(response::Value&& response)
 	{
 		return parse(std::move(response));
 	}
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		std::optional<typename ResponseTraits<Type, Other...>::type>>
-	parse(response::Value response)
+	parse(response::Value&& response)
 	{
 		if (response.type() == response::Type::Null)
 		{
@@ -215,9 +283,9 @@ struct ModifiedResponse
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static typename std::enable_if_t<TypeModifier::List == Modifier,
+	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
 		std::vector<typename ResponseTraits<Type, Other...>::type>>
-	parse(response::Value response)
+	parse(response::Value&& response)
 	{
 		std::vector<typename ResponseTraits<Type, Other...>::type> result;
 
@@ -251,19 +319,19 @@ using ScalarResponse = ModifiedResponse<response::Value>;
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLCLIENT_EXPORT int ModifiedResponse<int>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT int ModifiedResponse<int>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT double ModifiedResponse<double>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT double ModifiedResponse<double>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT std::string ModifiedResponse<std::string>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT std::string ModifiedResponse<std::string>::parse(response::Value&& response);
 template <>
-GRAPHQLCLIENT_EXPORT bool ModifiedResponse<bool>::parse(response::Value response);
+GRAPHQLCLIENT_EXPORT bool ModifiedResponse<bool>::parse(response::Value&& response);
 template <>
 GRAPHQLCLIENT_EXPORT response::IdType ModifiedResponse<response::IdType>::parse(
-	response::Value response);
+	response::Value&& response);
 template <>
 GRAPHQLCLIENT_EXPORT response::Value ModifiedResponse<response::Value>::parse(
-	response::Value response);
+	response::Value&& response);
 #endif // GRAPHQL_DLLEXPORTS
 
 } // namespace graphql::client

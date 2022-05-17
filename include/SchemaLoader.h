@@ -20,8 +20,7 @@
 namespace graphql::generator {
 
 // These are the set of built-in types in GraphQL.
-enum class BuiltinType
-{
+enum class [[nodiscard]] BuiltinType {
 	Int,
 	Float,
 	String,
@@ -44,7 +43,7 @@ using TypeNameMap = std::unordered_map<std::string_view, size_t>;
 // Scalar types are opaque to the generator, it's up to the service implementation
 // to handle parsing, validating, and serializing them. We just need to track which
 // scalar type names have been declared so we recognize the references.
-struct ScalarType
+struct [[nodiscard]] ScalarType
 {
 	std::string_view type;
 	std::string_view description;
@@ -54,7 +53,7 @@ struct ScalarType
 using ScalarTypeList = std::vector<ScalarType>;
 
 // Enum types map a type name to a collection of valid string values.
-struct EnumValueType
+struct [[nodiscard]] EnumValueType
 {
 	std::string_view value;
 	std::string_view cppValue;
@@ -63,7 +62,7 @@ struct EnumValueType
 	std::optional<tao::graphqlpeg::position> position;
 };
 
-struct EnumType
+struct [[nodiscard]] EnumType
 {
 	std::string_view type;
 	std::string_view cppType;
@@ -76,15 +75,14 @@ using EnumTypeList = std::vector<EnumType>;
 // Input types are complex types that have a set of named fields. Each field may be
 // a scalar type (including lists or non-null wrappers) or another nested input type,
 // but it cannot include output object types.
-enum class InputFieldType
-{
+enum class [[nodiscard]] InputFieldType {
 	Builtin,
 	Scalar,
 	Enum,
 	Input,
 };
 
-struct InputField
+struct [[nodiscard]] InputField
 {
 	std::string_view type;
 	std::string_view name;
@@ -99,19 +97,20 @@ struct InputField
 
 using InputFieldList = std::vector<InputField>;
 
-struct InputType
+struct [[nodiscard]] InputType
 {
 	std::string_view type;
 	std::string_view cppType;
 	InputFieldList fields;
 	std::string_view description;
 	std::unordered_set<std::string_view> dependencies {};
+	std::vector<std::string_view> declarations {};
 };
 
 using InputTypeList = std::vector<InputType>;
 
 // Directives are defined with arguments and a list of valid locations.
-struct Directive
+struct [[nodiscard]] Directive
 {
 	std::string_view name;
 	bool isRepeatable = false;
@@ -123,7 +122,7 @@ struct Directive
 using DirectiveList = std::vector<Directive>;
 
 // Union types map a type name to a set of potential concrete type names.
-struct UnionType
+struct [[nodiscard]] UnionType
 {
 	std::string_view type;
 	std::string_view cppType;
@@ -137,8 +136,7 @@ using UnionTypeList = std::vector<UnionType>;
 // field may be a scalar type (including lists or non-null wrappers) or another nested
 // output type, but it cannot include input object types. Each field can also take
 // optional arguments which are all input types.
-enum class OutputFieldType
-{
+enum class [[nodiscard]] OutputFieldType {
 	Builtin,
 	Scalar,
 	Enum,
@@ -150,7 +148,7 @@ enum class OutputFieldType
 constexpr std::string_view strGet = "get";
 constexpr std::string_view strApply = "apply";
 
-struct OutputField
+struct [[nodiscard]] OutputField
 {
 	std::string_view type;
 	std::string_view name;
@@ -171,7 +169,7 @@ using OutputFieldList = std::vector<OutputField>;
 // are inherited by concrete object output types which support all of the fields in
 // the interface, and the concrete object matches the interface for fragment type
 // conditions. The fields can include any output type.
-struct InterfaceType
+struct [[nodiscard]] InterfaceType
 {
 	std::string_view type;
 	std::string_view cppType;
@@ -184,7 +182,7 @@ using InterfaceTypeList = std::vector<InterfaceType>;
 
 // Object types are concrete complex output types that have a set of fields. They
 // may inherit multiple interfaces.
-struct ObjectType
+struct [[nodiscard]] ObjectType
 {
 	std::string_view type;
 	std::string_view cppType;
@@ -197,7 +195,7 @@ struct ObjectType
 using ObjectTypeList = std::vector<ObjectType>;
 
 // The schema maps operation types to named types.
-struct OperationType
+struct [[nodiscard]] OperationType
 {
 	std::string_view type;
 	std::string_view cppType;
@@ -206,7 +204,7 @@ struct OperationType
 
 using OperationTypeList = std::vector<OperationType>;
 
-struct SchemaOptions
+struct [[nodiscard]] SchemaOptions
 {
 	const std::string schemaFilename;
 	const std::string filenamePrefix;
@@ -214,59 +212,60 @@ struct SchemaOptions
 	const bool isIntrospection = false;
 };
 
-class SchemaLoader
+class [[nodiscard]] SchemaLoader
 {
 public:
 	// Initialize the loader with the introspection schema or a custom GraphQL schema.
 	explicit SchemaLoader(SchemaOptions&& schemaOptions);
 
-	bool isIntrospection() const noexcept;
-	std::string_view getSchemaDescription() const noexcept;
-	std::string_view getFilenamePrefix() const noexcept;
-	std::string_view getSchemaNamespace() const noexcept;
+	[[nodiscard]] bool isIntrospection() const noexcept;
+	[[nodiscard]] std::string_view getSchemaDescription() const noexcept;
+	[[nodiscard]] std::string_view getFilenamePrefix() const noexcept;
+	[[nodiscard]] std::string_view getSchemaNamespace() const noexcept;
 
-	static std::string_view getIntrospectionNamespace() noexcept;
-	static const BuiltinTypeMap& getBuiltinTypes() noexcept;
-	static const CppTypeMap& getBuiltinCppTypes() noexcept;
-	static std::string_view getScalarCppType() noexcept;
+	[[nodiscard]] static std::string_view getIntrospectionNamespace() noexcept;
+	[[nodiscard]] static const BuiltinTypeMap& getBuiltinTypes() noexcept;
+	[[nodiscard]] static const CppTypeMap& getBuiltinCppTypes() noexcept;
+	[[nodiscard]] static std::string_view getScalarCppType() noexcept;
 
-	SchemaType getSchemaType(std::string_view type) const;
-	const tao::graphqlpeg::position& getTypePosition(std::string_view type) const;
+	[[nodiscard]] SchemaType getSchemaType(std::string_view type) const;
+	[[nodiscard]] const tao::graphqlpeg::position& getTypePosition(std::string_view type) const;
 
-	size_t getScalarIndex(std::string_view type) const;
-	const ScalarTypeList& getScalarTypes() const noexcept;
+	[[nodiscard]] size_t getScalarIndex(std::string_view type) const;
+	[[nodiscard]] const ScalarTypeList& getScalarTypes() const noexcept;
 
-	size_t getEnumIndex(std::string_view type) const;
-	const EnumTypeList& getEnumTypes() const noexcept;
+	[[nodiscard]] size_t getEnumIndex(std::string_view type) const;
+	[[nodiscard]] const EnumTypeList& getEnumTypes() const noexcept;
 
-	size_t getInputIndex(std::string_view type) const;
-	const InputTypeList& getInputTypes() const noexcept;
+	[[nodiscard]] size_t getInputIndex(std::string_view type) const;
+	[[nodiscard]] const InputTypeList& getInputTypes() const noexcept;
 
-	size_t getUnionIndex(std::string_view type) const;
-	const UnionTypeList& getUnionTypes() const noexcept;
+	[[nodiscard]] size_t getUnionIndex(std::string_view type) const;
+	[[nodiscard]] const UnionTypeList& getUnionTypes() const noexcept;
 
-	size_t getInterfaceIndex(std::string_view type) const;
-	const InterfaceTypeList& getInterfaceTypes() const noexcept;
+	[[nodiscard]] size_t getInterfaceIndex(std::string_view type) const;
+	[[nodiscard]] const InterfaceTypeList& getInterfaceTypes() const noexcept;
 
-	size_t getObjectIndex(std::string_view type) const;
-	const ObjectTypeList& getObjectTypes() const noexcept;
+	[[nodiscard]] size_t getObjectIndex(std::string_view type) const;
+	[[nodiscard]] const ObjectTypeList& getObjectTypes() const noexcept;
 
-	const DirectiveList& getDirectives() const noexcept;
-	const tao::graphqlpeg::position& getDirectivePosition(std::string_view type) const;
+	[[nodiscard]] const DirectiveList& getDirectives() const noexcept;
+	[[nodiscard]] const tao::graphqlpeg::position& getDirectivePosition(
+		std::string_view type) const;
 
-	const OperationTypeList& getOperationTypes() const noexcept;
+	[[nodiscard]] const OperationTypeList& getOperationTypes() const noexcept;
 
-	static std::string_view getSafeCppName(std::string_view type) noexcept;
+	[[nodiscard]] static std::string_view getSafeCppName(std::string_view type) noexcept;
 
-	std::string_view getCppType(std::string_view type) const noexcept;
-	std::string getInputCppType(const InputField& field) const noexcept;
-	std::string getOutputCppType(const OutputField& field) const noexcept;
+	[[nodiscard]] std::string_view getCppType(std::string_view type) const noexcept;
+	[[nodiscard]] std::string getInputCppType(const InputField& field) const noexcept;
+	[[nodiscard]] std::string getOutputCppType(const OutputField& field) const noexcept;
 
-	static std::string getOutputCppAccessor(const OutputField& field) noexcept;
-	static std::string getOutputCppResolver(const OutputField& field) noexcept;
+	[[nodiscard]] static std::string getOutputCppAccessor(const OutputField& field) noexcept;
+	[[nodiscard]] static std::string getOutputCppResolver(const OutputField& field) noexcept;
 
 private:
-	static bool isExtension(const peg::ast_node& definition) noexcept;
+	[[nodiscard]] static bool isExtension(const peg::ast_node& definition) noexcept;
 
 	void visitDefinition(const peg::ast_node& definition);
 
@@ -288,8 +287,8 @@ private:
 
 	static void blockReservedName(
 		std::string_view name, std::optional<tao::graphqlpeg::position> position = std::nullopt);
-	static OutputFieldList getOutputFields(const peg::ast_node::children_t& fields);
-	static InputFieldList getInputFields(const peg::ast_node::children_t& fields);
+	[[nodiscard]] static OutputFieldList getOutputFields(const peg::ast_node::children_t& fields);
+	[[nodiscard]] static InputFieldList getInputFields(const peg::ast_node::children_t& fields);
 
 	void validateSchema();
 	void fixupOutputFieldList(OutputFieldList& fields,
@@ -298,14 +297,15 @@ private:
 	void fixupInputFieldList(InputFieldList& fields);
 	void reorderInputTypeDependencies();
 	void validateImplementedInterfaces() const;
-	const InterfaceType& findInterfaceType(
+	[[nodiscard]] const InterfaceType& findInterfaceType(
 		std::string_view typeName, std::string_view interfaceName) const;
 	void validateInterfaceFields(std::string_view typeName, std::string_view interfaceName,
 		const OutputFieldList& typeFields) const;
 	void validateTransitiveInterfaces(
 		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 
-	static std::string getJoinedCppName(std::string_view prefix, std::string_view fieldName) noexcept;
+	[[nodiscard]] static std::string getJoinedCppName(
+		std::string_view prefix, std::string_view fieldName) noexcept;
 
 	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;

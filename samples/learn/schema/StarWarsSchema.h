@@ -10,26 +10,58 @@
 
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.1.0
+// Check if the library version is compatible with schemagen 4.4.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 1, "regenerate with schemagen: minor version mismatch");
+static_assert(graphql::internal::MinorVersion == 4, "regenerate with schemagen: minor version mismatch");
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace graphql {
 namespace learn {
 
-enum class Episode
+enum class [[nodiscard]] Episode
 {
 	NEW_HOPE,
 	EMPIRE,
 	JEDI
 };
 
-struct ReviewInput
+[[nodiscard]] constexpr auto getEpisodeNames() noexcept
 {
+	using namespace std::literals;
+
+	return std::array<std::string_view, 3> {
+		R"gql(NEW_HOPE)gql"sv,
+		R"gql(EMPIRE)gql"sv,
+		R"gql(JEDI)gql"sv
+	};
+}
+
+[[nodiscard]] constexpr auto getEpisodeValues() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, Episode>, 3> {
+		std::make_pair(R"gql(JEDI)gql"sv, Episode::JEDI),
+		std::make_pair(R"gql(EMPIRE)gql"sv, Episode::EMPIRE),
+		std::make_pair(R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE)
+	};
+}
+
+struct [[nodiscard]] ReviewInput
+{
+	explicit ReviewInput(
+		int starsArg = int {},
+		std::optional<std::string> commentaryArg = std::optional<std::string> {}) noexcept;
+	ReviewInput(const ReviewInput& other);
+	ReviewInput(ReviewInput&& other) noexcept;
+
+	ReviewInput& operator=(const ReviewInput& other);
+	ReviewInput& operator=(ReviewInput&& other) noexcept;
+
 	int stars {};
 	std::optional<std::string> commentary {};
 };
@@ -46,7 +78,7 @@ class Mutation;
 
 } // namespace object
 
-class Operations final
+class [[nodiscard]] Operations final
 	: public service::Request
 {
 public:
@@ -54,7 +86,10 @@ public:
 
 	template <class TQuery, class TMutation>
 	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
-		: Operations { std::make_shared<object::Query>(std::move(query)), std::make_shared<object::Mutation>(std::move(mutation)) }
+		: Operations {
+			std::make_shared<object::Query>(std::move(query)),
+			std::make_shared<object::Mutation>(std::move(mutation))
+		}
 	{
 	}
 

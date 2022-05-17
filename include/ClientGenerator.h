@@ -11,19 +11,19 @@
 
 namespace graphql::generator::client {
 
-struct GeneratorPaths
+struct [[nodiscard]] GeneratorPaths
 {
 	const std::string headerPath;
 	const std::string sourcePath;
 };
 
-struct GeneratorOptions
+struct [[nodiscard]] GeneratorOptions
 {
 	const GeneratorPaths paths;
 	const bool verbose = false;
 };
 
-class Generator
+class [[nodiscard]] Generator
 {
 public:
 	// Initialize the generator with the introspection client or a custom GraphQL client.
@@ -31,30 +31,34 @@ public:
 		SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
-	std::vector<std::string> Build() const noexcept;
+	[[nodiscard]] std::vector<std::string> Build() const noexcept;
 
 private:
-	std::string getHeaderDir() const noexcept;
-	std::string getSourceDir() const noexcept;
-	std::string getHeaderPath() const noexcept;
-	std::string getSourcePath() const noexcept;
-	const std::string& getClientNamespace() const noexcept;
-	const std::string& getRequestNamespace() const noexcept;
-	const std::string& getFullNamespace() const noexcept;
-	std::string getResponseFieldCppType(
+	[[nodiscard]] std::string getHeaderDir() const noexcept;
+	[[nodiscard]] std::string getSourceDir() const noexcept;
+	[[nodiscard]] std::string getHeaderPath() const noexcept;
+	[[nodiscard]] std::string getSourcePath() const noexcept;
+	[[nodiscard]] const std::string& getClientNamespace() const noexcept;
+	[[nodiscard]] const std::string& getOperationNamespace(
+		const Operation& operation) const noexcept;
+	[[nodiscard]] std::string getResponseFieldCppType(
 		const ResponseField& responseField, std::string_view currentScope = {}) const noexcept;
 
-	bool outputHeader() const noexcept;
+	[[nodiscard]] bool outputHeader() const noexcept;
 	void outputRequestComment(std::ostream& headerFile) const noexcept;
 	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
-	bool outputResponseFieldType(std::ostream& headerFile, const ResponseField& responseField,
-		size_t indent = 0) const noexcept;
+	void outputGetOperationNameDeclaration(std::ostream& headerFile) const noexcept;
+	[[nodiscard]] bool outputResponseFieldType(std::ostream& headerFile,
+		const ResponseField& responseField, size_t indent = 0) const noexcept;
 
-	bool outputSource() const noexcept;
+	[[nodiscard]] bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
+	void outputGetOperationNameImplementation(
+		std::ostream& sourceFile, const Operation& operation) const noexcept;
 	bool outputModifiedResponseImplementation(std::ostream& sourceFile,
 		const std::string& outerScope, const ResponseField& responseField) const noexcept;
-	static std::string getTypeModifierList(const TypeModifierStack& modifiers) noexcept;
+	[[nodiscard]] static std::string getTypeModifierList(
+		const TypeModifierStack& modifiers) noexcept;
 
 	const SchemaLoader _schemaLoader;
 	const RequestLoader _requestLoader;

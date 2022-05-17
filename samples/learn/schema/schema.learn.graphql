@@ -4,14 +4,14 @@
 enum Episode { NEW_HOPE, EMPIRE, JEDI }
 
 interface Character {
-  id: String!
+  id: ID!
   name: String
   friends: [Character]
   appearsIn: [Episode]
 }
 
 type Human implements Character {
-  id: String!
+  id: ID!
   name: String
   friends: [Character]
   appearsIn: [Episode]
@@ -19,7 +19,7 @@ type Human implements Character {
 }
 
 type Droid implements Character {
-  id: String!
+  id: ID!
   name: String
   friends: [Character]
   appearsIn: [Episode]
@@ -28,8 +28,8 @@ type Droid implements Character {
 
 type Query {
   hero(episode: Episode): Character
-  human(id: String!): Human
-  droid(id: String!): Droid
+  human(id: ID!): Human
+  droid(id: ID!): Droid
 }
 
 input ReviewInput {

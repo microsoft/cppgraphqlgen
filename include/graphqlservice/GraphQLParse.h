@@ -27,22 +27,30 @@ namespace peg {
 class ast_node;
 struct ast_input;
 
-struct ast
+struct [[nodiscard]] ast
 {
 	std::shared_ptr<ast_input> input;
 	std::shared_ptr<ast_node> root;
 	bool validated = false;
 };
 
-GRAPHQLPEG_EXPORT ast parseSchemaString(std::string_view input);
-GRAPHQLPEG_EXPORT ast parseSchemaFile(std::string_view filename);
+// By default, we want to limit the depth of nested nodes. You can override this with
+// another value for the depthLimit parameter in these parse functions.
+constexpr size_t c_defaultDepthLimit = 25;
 
-GRAPHQLPEG_EXPORT ast parseString(std::string_view input);
-GRAPHQLPEG_EXPORT ast parseFile(std::string_view filename);
+GRAPHQLPEG_EXPORT [[nodiscard]] ast parseSchemaString(
+	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
+GRAPHQLPEG_EXPORT [[nodiscard]] ast parseSchemaFile(
+	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
+
+GRAPHQLPEG_EXPORT [[nodiscard]] ast parseString(
+	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
+GRAPHQLPEG_EXPORT [[nodiscard]] ast parseFile(
+	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
 
 } // namespace peg
 
-GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(const char* text, size_t size);
+GRAPHQLPEG_EXPORT [[nodiscard]] peg::ast operator"" _graphql(const char* text, size_t size);
 
 } // namespace graphql
 

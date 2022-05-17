@@ -58,28 +58,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::HumanHas
 
-class Human final
+class [[nodiscard]] Human final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolvePets(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolvePets(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -87,7 +87,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getNameWithParams<T>)
 			{
@@ -103,7 +103,7 @@ private:
 			}
 		}
 
-		service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getPetsWithParams<T>)
 			{
@@ -149,13 +149,13 @@ private:
 	friend HumanOrAlien;
 
 	template <class I>
-	static constexpr bool implements() noexcept
+	[[nodiscard]] static constexpr bool implements() noexcept
 	{
 		return implements::HumanIs<I>;
 	}
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -167,6 +167,11 @@ public:
 	Human(std::shared_ptr<T> pimpl) noexcept
 		: Human { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Human)gql" };
 	}
 };
 

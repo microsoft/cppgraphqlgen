@@ -51,28 +51,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::FolderEdgeHas
 
-class FolderEdge final
+class [[nodiscard]] FolderEdge final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveCursor(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveCursor(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Folder>> getNode(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderEdgeHas::getNodeWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::FolderEdgeHas::getCursorWithParams<T>)
 			{
@@ -134,8 +134,8 @@ private:
 
 	FolderEdge(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -147,6 +147,11 @@ public:
 	FolderEdge(std::shared_ptr<T> pimpl) noexcept
 		: FolderEdge { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(FolderEdge)gql" };
 	}
 };
 

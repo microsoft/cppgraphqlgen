@@ -13,13 +13,13 @@ the subscriptions to those listeners.
 Subscriptions are created by calling the `Request::subscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(RequestSubscribeParams params);
+GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableSubscribe subscribe(RequestSubscribeParams params);
 ```
 
 You need to fill in a `RequestSubscribeParams` struct with the subscription event
 callback, the [parsed](./parsing.md) `query` and any other relevant operation parameters:
 ```cpp
-struct RequestSubscribeParams
+struct [[nodiscard]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
 	SubscriptionCallback callback;
@@ -34,6 +34,9 @@ struct RequestSubscribeParams
 
 	// Optional sub-class of RequestState which will be passed to each resolver and field accessor.
 	std::shared_ptr<RequestState> state;
+
+	// Optional override for the default Subscription operation object.
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 ```
 
@@ -61,19 +64,22 @@ The `internal::Awaitable<T>` template is described in [awaitable.md](./awaitable
 Subscriptions are removed by calling the `Request::unsubscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
+GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
 ```
 
 You need to fill in a `RequestUnsubscribeParams` struct with the `SubscriptionKey`
 returned by `Request::subscribe` in `AwaitableSubscribe`:
 ```cpp
-struct RequestUnsubscribeParams
+struct [[nodiscard]] RequestUnsubscribeParams
 {
 	// Key returned by a previous call to subscribe.
 	SubscriptionKey key;
 
 	// Optional async execution awaitable.
 	await_async launch;
+
+	// Optional override for the default Subscription operation object.
+	std::shared_ptr<const Object> subscriptionObject {};
 };
 ```
 
@@ -83,12 +89,12 @@ By default, the resolvers will run on the same thread synchronously.
 ## `ResolverContext::NotifySubscribe` and `ResolverContext::NotifyUnsubscribe`
 
 If you provide a default instance of the `Subscription` object to the `Request`/
-`Operations` constructor, you will get additional callbacks with the
-`ResolverContext::NotifySubscribe` and `ResolverContext::NotifyUnsubscribe` values
-for the `FieldParams::resolverContext` member. These are passed by the
-`subscribe` and `unsubscribe` calls to the default subscription object, and
-they provide an opportunity to acquire or release resources that are required
-to implement the subscription.
+`Operations` constructor, or in the `RequestSubscribeParams`/`RequestUnsubscribeParams`
+struct, you will get additional callbacks with the `ResolverContext::NotifySubscribe`
+and `ResolverContext::NotifyUnsubscribe` values for the `FieldParams::resolverContext`
+member. These are passed by the `subscribe` and `unsubscribe` calls to the default
+subscription object, and they provide an opportunity to acquire or release resources
+that are required to implement the subscription.
 
 You can provide separate implementations of the `Subscription` object as the
 default in the `Operations` constructor and as the payload of a specific
@@ -111,7 +117,7 @@ The `Request::deliver` method determines which subscriptions should receive
 an event based on several factors, which makes the `RequestDeliverParams` struct
 more complicated:
 ```cpp
-struct RequestDeliverParams
+struct [[nodiscard]] RequestDeliverParams
 {
 	// Deliver to subscriptions on this field.
 	std::string_view field;
@@ -149,7 +155,7 @@ using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
 using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
 
-struct SubscriptionFilter
+struct [[nodiscard]] SubscriptionFilter
 {
 	// Optional field argument filter, which can either be a set of required arguments, or a
 	// callback which returns true if the arguments match custom criteria.
@@ -180,6 +186,6 @@ that, there's a public `Request::findOperationDefinition` method which returns
 the operation type as a `std::string_view` along with a pointer to the AST node
 for the selected operation in the parsed query:
 ```cpp
-GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*> findOperationDefinition(
-	peg::ast& query, std::string_view operationName) const;
+GRAPHQLSERVICE_EXPORT [[nodiscard]] std::pair<std::string_view, const peg::ast_node*>
+findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 ```

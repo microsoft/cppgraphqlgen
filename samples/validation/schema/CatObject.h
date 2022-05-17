@@ -82,32 +82,32 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::CatHas
 
-class Cat final
+class [[nodiscard]] Cat final
 	: public service::Object
 {
 private:
-	service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
-	service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolveMeowVolume(service::ResolverParams&& params) const;
 
-	service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct Concept
+	struct [[nodiscard]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
-		virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
-		virtual service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const = 0;
+		[[nodiscard]] virtual service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct Model
+	struct [[nodiscard]] Model
 		: Concept
 	{
 		Model(std::shared_ptr<T>&& pimpl) noexcept
@@ -115,7 +115,7 @@ private:
 		{
 		}
 
-		service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNameWithParams<T>)
 			{
@@ -131,7 +131,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNicknameWithParams<T>)
 			{
@@ -147,7 +147,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
 			if constexpr (methods::CatHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -163,7 +163,7 @@ private:
 			}
 		}
 
-		service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getMeowVolumeWithParams<T>)
 			{
@@ -208,13 +208,13 @@ private:
 	friend CatOrDog;
 
 	template <class I>
-	static constexpr bool implements() noexcept
+	[[nodiscard]] static constexpr bool implements() noexcept
 	{
 		return implements::CatIs<I>;
 	}
 
-	service::TypeNames getTypeNames() const noexcept;
-	service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -226,6 +226,11 @@ public:
 	Cat(std::shared_ptr<T> pimpl) noexcept
 		: Cat { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
+	}
+
+	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	{
+		return { R"gql(Cat)gql" };
 	}
 };
 

@@ -27,7 +27,7 @@ const response::IdType& getFakeAppointmentId() noexcept
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;
@@ -41,7 +41,7 @@ const response::IdType& getFakeTaskId() noexcept
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;
@@ -55,7 +55,7 @@ const response::IdType& getFakeFolderId() noexcept
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
 
-		return result;
+		return response::IdType { std::move(result) };
 	}();
 
 	return s_fakeId;

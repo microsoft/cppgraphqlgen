@@ -11,7 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -19,16 +19,8 @@ using namespace std::literals;
 namespace graphql {
 namespace service {
 
-static const std::array<std::string_view, 8> s_namesTypeKind = {
-	R"gql(SCALAR)gql"sv,
-	R"gql(OBJECT)gql"sv,
-	R"gql(INTERFACE)gql"sv,
-	R"gql(UNION)gql"sv,
-	R"gql(ENUM)gql"sv,
-	R"gql(INPUT_OBJECT)gql"sv,
-	R"gql(LIST)gql"sv,
-	R"gql(NON_NULL)gql"sv
-};
+static const auto s_namesTypeKind = introspection::getTypeKindNames();
+static const auto s_valuesTypeKind = introspection::getTypeKindValues();
 
 template <>
 introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const response::Value& value)
@@ -38,14 +30,16 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesTypeKind,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesTypeKind.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	return static_cast<introspection::TypeKind>(itr - s_namesTypeKind.cbegin());
+	return *result;
 }
 
 template <>
@@ -70,35 +64,19 @@ void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Val
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesTypeKind.cbegin(), s_namesTypeKind.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesTypeKind.begin(),
+		s_valuesTypeKind.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesTypeKind.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __TypeKind value)ex" } };
 	}
 }
 
-static const std::array<std::string_view, 19> s_namesDirectiveLocation = {
-	R"gql(QUERY)gql"sv,
-	R"gql(MUTATION)gql"sv,
-	R"gql(SUBSCRIPTION)gql"sv,
-	R"gql(FIELD)gql"sv,
-	R"gql(FRAGMENT_DEFINITION)gql"sv,
-	R"gql(FRAGMENT_SPREAD)gql"sv,
-	R"gql(INLINE_FRAGMENT)gql"sv,
-	R"gql(VARIABLE_DEFINITION)gql"sv,
-	R"gql(SCHEMA)gql"sv,
-	R"gql(SCALAR)gql"sv,
-	R"gql(OBJECT)gql"sv,
-	R"gql(FIELD_DEFINITION)gql"sv,
-	R"gql(ARGUMENT_DEFINITION)gql"sv,
-	R"gql(INTERFACE)gql"sv,
-	R"gql(UNION)gql"sv,
-	R"gql(ENUM)gql"sv,
-	R"gql(ENUM_VALUE)gql"sv,
-	R"gql(INPUT_OBJECT)gql"sv,
-	R"gql(INPUT_FIELD_DEFINITION)gql"sv
-};
+static const auto s_namesDirectiveLocation = introspection::getDirectiveLocationNames();
+static const auto s_valuesDirectiveLocation = introspection::getDirectiveLocationValues();
 
 template <>
 introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(const response::Value& value)
@@ -108,14 +86,16 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_valuesDirectiveLocation,
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesDirectiveLocation.cend())
+	if (!result)
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	return static_cast<introspection::DirectiveLocation>(itr - s_namesDirectiveLocation.cbegin());
+	return *result;
 }
 
 template <>
@@ -140,9 +120,12 @@ void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const resp
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
 
-	const auto itr = std::find(s_namesDirectiveLocation.cbegin(), s_namesDirectiveLocation.cend(), value.get<std::string>());
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_valuesDirectiveLocation.begin(),
+		s_valuesDirectiveLocation.end(),
+		std::string_view { value.get<std::string>() });
 
-	if (itr == s_namesDirectiveLocation.cend())
+	if (itr == itrEnd)
 	{
 		throw service::schema_exception { { R"ex(not a valid __DirectiveLocation value)ex" } };
 	}
