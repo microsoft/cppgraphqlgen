@@ -6,7 +6,6 @@
 #include "graphqlservice/internal/Grammar.h"
 #include "graphqlservice/internal/SyntaxTree.h"
 
-#include <tao/pegtl/contrib/parse_tree.hpp>
 #include <tao/pegtl/contrib/unescape.hpp>
 
 #include <functional>
@@ -21,26 +20,6 @@ using namespace std::literals;
 
 namespace graphql {
 namespace peg {
-
-bool ast_node::is_root() const noexcept
-{
-	return _type.empty();
-}
-
-position ast_node::begin() const noexcept
-{
-	return { _begin, _source };
-}
-
-std::string_view ast_node::string_view() const noexcept
-{
-	return _content;
-}
-
-std::string ast_node::string() const noexcept
-{
-	return std::string { string_view() };
-}
 
 void ast_node::unescaped_view(std::string_view unescaped) noexcept
 {
@@ -131,8 +110,7 @@ std::string_view ast_node::unescaped_view() const
 				}
 			}
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(joined));
+			_unescaped = std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (children.size() > 1)
 		{
@@ -150,13 +128,11 @@ std::string_view ast_node::unescaped_view() const
 				joined.append(child->string_view());
 			}
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(joined));
+			_unescaped = std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (!children.empty())
 		{
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(children.front()->string_view());
+			_unescaped = std::make_unique<unescaped_t>(children.front()->string_view());
 		}
 		else if (has_content() && is_type<escaped_unicode>())
 		{
@@ -167,13 +143,11 @@ std::string_view ast_node::unescaped_view() const
 			utf8.reserve((content.size() + 1) / 2);
 			unescape::unescape_j::apply(in, utf8);
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(utf8));
+			_unescaped = std::make_unique<unescaped_t>(std::move(utf8));
 		}
 		else
 		{
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::string_view {});
+			_unescaped = std::make_unique<unescaped_t>(std::string_view {});
 		}
 	}
 
@@ -184,14 +158,9 @@ std::string_view ast_node::unescaped_view() const
 		*_unescaped);
 }
 
-bool ast_node::has_content() const noexcept
-{
-	return !string_view().empty();
-}
-
 void ast_node::remove_content() noexcept
 {
-	_content = {};
+	basic_node_t::remove_content();
 	_unescaped.reset();
 }
 
@@ -960,7 +929,7 @@ struct make_control<Selector>::state_handler<Rule, true, B> : ast_control<Rule>
 	static void start(const ParseInput& in, ast_state& state)
 	{
 		state.emplace_back();
-		state.back()->start(in);
+		state.back()->template start<Rule>(in);
 	}
 
 	template <typename ParseInput>
