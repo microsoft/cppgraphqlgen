@@ -55,10 +55,6 @@ public:
 		_type_hash = type_hash<Rule>();
 	}
 
-	using children_t = std::vector<std::unique_ptr<ast_node>>;
-
-	children_t children;
-
 private:
 	template <typename U>
 	[[nodiscard]] static std::string_view type_name() noexcept
