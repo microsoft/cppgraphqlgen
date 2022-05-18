@@ -21,26 +21,6 @@ using namespace std::literals;
 namespace graphql {
 namespace peg {
 
-bool ast_node::is_root() const noexcept
-{
-	return _type.empty();
-}
-
-position ast_node::begin() const noexcept
-{
-	return { _begin, _source };
-}
-
-std::string_view ast_node::string_view() const noexcept
-{
-	return _content;
-}
-
-std::string ast_node::string() const noexcept
-{
-	return std::string { string_view() };
-}
-
 void ast_node::unescaped_view(std::string_view unescaped) noexcept
 {
 	_unescaped = std::make_unique<unescaped_t>(unescaped);
@@ -130,8 +110,7 @@ std::string_view ast_node::unescaped_view() const
 				}
 			}
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(joined));
+			_unescaped = std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (children.size() > 1)
 		{
@@ -149,13 +128,11 @@ std::string_view ast_node::unescaped_view() const
 				joined.append(child->string_view());
 			}
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(joined));
+			_unescaped = std::make_unique<unescaped_t>(std::move(joined));
 		}
 		else if (!children.empty())
 		{
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(children.front()->string_view());
+			_unescaped = std::make_unique<unescaped_t>(children.front()->string_view());
 		}
 		else if (has_content() && is_type<escaped_unicode>())
 		{
@@ -166,13 +143,11 @@ std::string_view ast_node::unescaped_view() const
 			utf8.reserve((content.size() + 1) / 2);
 			unescape::unescape_j::apply(in, utf8);
 
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::move(utf8));
+			_unescaped = std::make_unique<unescaped_t>(std::move(utf8));
 		}
 		else
 		{
-			const_cast<ast_node*>(this)->_unescaped =
-				std::make_unique<unescaped_t>(std::string_view {});
+			_unescaped = std::make_unique<unescaped_t>(std::string_view {});
 		}
 	}
 
@@ -183,9 +158,10 @@ std::string_view ast_node::unescaped_view() const
 		*_unescaped);
 }
 
-bool ast_node::has_content() const noexcept
+void ast_node::remove_content() noexcept
 {
-	return !string_view().empty();
+	basic_node_t::remove_content();
+	_unescaped.reset();
 }
 
 using namespace tao::graphqlpeg;
@@ -893,6 +869,113 @@ template <>
 const char* ast_control<schema_document_content>::error_message =
 	"Expected schema type https://spec.graphql.org/October2021/#Document";
 
+namespace graphql_parse_tree {
+namespace internal {
+
+using ast_state = parse_tree::internal::state<ast_node>;
+
+template <template <typename...> class Selector>
+struct make_control
+{
+	template <typename Rule, bool, bool>
+	struct state_handler;
+
+	template <typename Rule>
+	using type = state_handler<Rule, parse_tree::internal::is_selected_node<Rule, Selector>,
+		parse_tree::internal::is_leaf<8, typename Rule::subs_t, Selector>>;
+};
+
+template <template <typename...> class Selector>
+template <typename Rule>
+struct make_control<Selector>::state_handler<Rule, false, true> : ast_control<Rule>
+{
+};
+
+template <template <typename...> class Selector>
+template <typename Rule>
+struct make_control<Selector>::state_handler<Rule, false, false> : ast_control<Rule>
+{
+	static constexpr bool enable = true;
+
+	template <typename ParseInput>
+	static void start(const ParseInput& /*unused*/, ast_state& state)
+	{
+		state.emplace_back();
+	}
+
+	template <typename ParseInput>
+	static void success(const ParseInput& /*unused*/, ast_state& state)
+	{
+		auto n = std::move(state.back());
+		state.pop_back();
+		for (auto& c : n->children)
+		{
+			state.back()->children.emplace_back(std::move(c));
+		}
+	}
+
+	template <typename ParseInput>
+	static void failure(const ParseInput& /*unused*/, ast_state& state)
+	{
+		state.pop_back();
+	}
+};
+
+template <template <typename...> class Selector>
+template <typename Rule, bool B>
+struct make_control<Selector>::state_handler<Rule, true, B> : ast_control<Rule>
+{
+	template <typename ParseInput>
+	static void start(const ParseInput& in, ast_state& state)
+	{
+		state.emplace_back();
+		state.back()->template start<Rule>(in);
+	}
+
+	template <typename ParseInput>
+	static void success(const ParseInput& in, ast_state& state)
+	{
+		auto n = std::move(state.back());
+		state.pop_back();
+		n->template success<Rule>(in);
+		parse_tree::internal::transform<Selector<Rule>>(in, n);
+		if (n)
+		{
+			state.back()->children.emplace_back(std::move(n));
+		}
+	}
+
+	template <typename ParseInput>
+	static void failure(const ParseInput& /*unused*/, ast_state& state)
+	{
+		state.pop_back();
+	}
+};
+
+} // namespace internal
+
+template <typename Rule, template <typename...> class Action, template <typename...> class Selector,
+	typename ParseInput>
+[[nodiscard]] std::unique_ptr<ast_node> parse(ParseInput&& in)
+{
+	internal::ast_state state;
+	if (!tao::graphqlpeg::parse<Rule, Action, internal::make_control<Selector>::template type>(
+			std::forward<ParseInput>(in),
+			state))
+	{
+		return nullptr;
+	}
+
+	if (state.stack.size() != 1)
+	{
+		throw std::logic_error("Unexpected error parsing GraphQL");
+	}
+
+	return std::move(state.back());
+}
+
+} // namespace graphql_parse_tree
+
 ast parseSchemaString(std::string_view input, size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
@@ -903,17 +986,15 @@ ast parseSchemaString(std::string_view input, size_t depthLimit)
 	try
 	{
 		// Try a smaller grammar with only schema type definitions first.
-		result.root =
-			parse_tree::parse<schema_document, ast_node, schema_selector, ast_action, ast_control>(
-				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+		result.root = graphql_parse_tree::parse<schema_document, ast_action, schema_selector>(
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
-		result.root =
-			parse_tree::parse<mixed_document, ast_node, schema_selector, ast_action, ast_control>(
-				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+		result.root = graphql_parse_tree::parse<mixed_document, ast_action, schema_selector>(
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 
 	return result;
@@ -932,8 +1013,7 @@ ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 
 		// Try a smaller grammar with only schema type definitions first.
 		result.root =
-			parse_tree::parse<schema_document, ast_node, schema_selector, ast_action, ast_control>(
-				std::move(in));
+			graphql_parse_tree::parse<schema_document, ast_action, schema_selector>(std::move(in));
 	}
 	catch (const peg::parse_error&)
 	{
@@ -945,8 +1025,7 @@ ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
 		result.root =
-			parse_tree::parse<mixed_document, ast_node, schema_selector, ast_action, ast_control>(
-				std::move(in));
+			graphql_parse_tree::parse<mixed_document, ast_action, schema_selector>(std::move(in));
 	}
 
 	return result;
@@ -962,17 +1041,16 @@ ast parseString(std::string_view input, size_t depthLimit)
 	try
 	{
 		// Try a smaller grammar with only executable definitions first.
-		result.root = parse_tree::
-			parse<executable_document, ast_node, executable_selector, ast_action, ast_control>(
+		result.root =
+			graphql_parse_tree::parse<executable_document, ast_action, executable_selector>(
 				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root = parse_tree::
-			parse<mixed_document, ast_node, executable_selector, ast_action, ast_control>(
-				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+		result.root = graphql_parse_tree::parse<mixed_document, ast_action, executable_selector>(
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
 	}
 
 	return result;
@@ -990,8 +1068,8 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 		auto& in = *std::get<std::unique_ptr<ast_file>>(result.input->data);
 
 		// Try a smaller grammar with only executable definitions first.
-		result.root = parse_tree::
-			parse<executable_document, ast_node, executable_selector, ast_action, ast_control>(
+		result.root =
+			graphql_parse_tree::parse<executable_document, ast_action, executable_selector>(
 				std::move(in));
 	}
 	catch (const peg::parse_error&)
@@ -1003,9 +1081,8 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root = parse_tree::
-			parse<mixed_document, ast_node, executable_selector, ast_action, ast_control>(
-				std::move(in));
+		result.root = graphql_parse_tree::parse<mixed_document, ast_action, executable_selector>(
+			std::move(in));
 	}
 
 	return result;
@@ -1022,21 +1099,17 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 	try
 	{
 		// Try a smaller grammar with only executable definitions first.
-		result.root = peg::parse_tree::parse<peg::executable_document,
-			peg::ast_node,
-			peg::executable_selector,
+		result.root = peg::graphql_parse_tree::parse<peg::executable_document,
 			peg::nothing,
-			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"s));
+			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"s));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root = peg::parse_tree::parse<peg::mixed_document,
-			peg::ast_node,
-			peg::executable_selector,
+		result.root = peg::graphql_parse_tree::parse<peg::mixed_document,
 			peg::nothing,
-			peg::ast_control>(peg::memory_input<>(text, size, "GraphQL"s));
+			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"s));
 	}
 
 	return result;
