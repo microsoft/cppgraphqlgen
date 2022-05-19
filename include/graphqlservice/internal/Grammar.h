@@ -11,11 +11,6 @@
 
 #include "graphqlservice/internal/SyntaxTree.h"
 
-#define TAO_PEGTL_NAMESPACE tao::graphqlpeg
-
-#include <tao/pegtl.hpp>
-#include <tao/pegtl/contrib/parse_tree.hpp>
-
 #include <functional>
 
 namespace graphql::peg {
