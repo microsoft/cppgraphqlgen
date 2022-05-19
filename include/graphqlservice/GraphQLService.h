@@ -197,22 +197,22 @@ private:
 	template <class T>
 	struct [[nodiscard]] Model : Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl)
+		inline Model(std::shared_ptr<T>&& pimpl)
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] bool await_ready() const final
+		[[nodiscard]] inline bool await_ready() const final
 		{
 			return _pimpl->await_ready();
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) const final
+		inline void await_suspend(coro::coroutine_handle<> h) const final
 		{
 			_pimpl->await_suspend(std::move(h));
 		}
 
-		void await_resume() const final
+		inline void await_resume() const final
 		{
 			_pimpl->await_resume();
 		}
@@ -226,7 +226,7 @@ private:
 public:
 	// Type-erased explicit constructor for a custom awaitable.
 	template <class T>
-	explicit await_async(std::shared_ptr<T> pimpl)
+	inline explicit await_async(std::shared_ptr<T> pimpl)
 		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
 	{
 	}
@@ -300,39 +300,39 @@ class [[nodiscard]] AwaitableScalar
 {
 public:
 	template <typename U>
-	AwaitableScalar(U&& value)
+	inline AwaitableScalar(U&& value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableScalar<T> get_return_object() noexcept
+		[[nodiscard]] inline AwaitableScalar<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		inline coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		inline coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		inline void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
 		}
 
-		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		inline void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
 		{
 			_promise.set_value(std::move(value));
 		}
 
-		void unhandled_exception() noexcept
+		inline void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -341,7 +341,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard]] inline bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -366,7 +366,7 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	inline void await_suspend(coro::coroutine_handle<> h) const
 	{
 		std::thread(
 			[this](coro::coroutine_handle<> h) noexcept {
@@ -377,7 +377,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard]] inline T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -400,7 +400,7 @@ public:
 			std::move(_value));
 	}
 
-	[[nodiscard]] std::shared_ptr<const response::Value> get_value() noexcept
+	[[nodiscard]] inline std::shared_ptr<const response::Value> get_value() noexcept
 	{
 		return std::visit(
 			[](auto&& value) noexcept {
@@ -429,39 +429,39 @@ class [[nodiscard]] AwaitableObject
 {
 public:
 	template <typename U>
-	AwaitableObject(U&& value)
+	inline AwaitableObject(U&& value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableObject<T> get_return_object() noexcept
+		[[nodiscard]] inline AwaitableObject<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		inline coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		inline coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		inline void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
 		}
 
-		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		inline void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
 		{
 			_promise.set_value(std::move(value));
 		}
 
-		void unhandled_exception() noexcept
+		inline void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -470,7 +470,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard]] inline bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -490,7 +490,7 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	inline void await_suspend(coro::coroutine_handle<> h) const
 	{
 		std::thread(
 			[this](coro::coroutine_handle<> h) noexcept {
@@ -501,7 +501,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard]] inline T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -638,7 +638,8 @@ struct ModifiedArgument
 	[[nodiscard]] static Type convert(const response::Value& value);
 
 	// Call convert on this type without any modifiers.
-	[[nodiscard]] static Type require(std::string_view name, const response::Value& arguments)
+	[[nodiscard]] static inline Type require(
+		std::string_view name, const response::Value& arguments)
 	{
 		try
 		{
@@ -662,7 +663,7 @@ struct ModifiedArgument
 	}
 
 	// Wrap require in a try/catch block.
-	[[nodiscard]] static std::pair<Type, bool> find(
+	[[nodiscard]] static inline std::pair<Type, bool> find(
 		const std::string& name, const response::Value& arguments) noexcept
 	{
 		try
@@ -677,7 +678,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier, Type> require(
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::None == Modifier, Type>
+	require(
 		std::string_view name, const response::Value& arguments)
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
@@ -688,7 +690,7 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
 	require(std::string_view name, const response::Value& arguments)
 	{
@@ -714,7 +716,7 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::List == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
 	require(std::string_view name, const response::Value& arguments)
 	{
@@ -738,7 +740,8 @@ struct ModifiedArgument
 
 	// Wrap require with modifiers in a try/catch block.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool>
+	[[nodiscard]] static inline std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type,
+		bool>
 	find(std::string_view name, const response::Value& arguments) noexcept
 	{
 		try
@@ -753,7 +756,7 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
 		duplicate(const Type& value)
 	{
@@ -763,7 +766,7 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
 	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
 	{
@@ -787,7 +790,7 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::List == Modifier,
 		typename ArgumentTraits<Type, Modifier, Other...>::type>
 	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
 	{
@@ -903,7 +906,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::None == Modifier
 			&& !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
 		AwaitableResolver>
 	convert(AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params)
@@ -925,7 +928,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::None == Modifier
 			&& (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
 		AwaitableResolver>
 	convert(typename ResultTraits<Type>::future_type result, ResolverParams params)
@@ -938,7 +941,7 @@ struct ModifiedResult
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
 		AwaitableResolver>
 	convert(
@@ -961,7 +964,7 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier
 			&& !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
 		AwaitableResolver>
 	convert(
@@ -1000,7 +1003,7 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::List == Modifier, AwaitableResolver>
 		convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
 			ResolverParams params)
@@ -1107,7 +1110,7 @@ private:
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static void validateScalar(
+	static inline void validateScalar(
 		typename std::enable_if_t<TypeModifier::None == Modifier, const response::Value&> value)
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
@@ -1118,7 +1121,7 @@ private:
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(
+	static inline void validateScalar(
 		typename std::enable_if_t<TypeModifier::Nullable == Modifier, const response::Value&> value)
 	{
 		if (value.type() != response::Type::Null)
@@ -1129,7 +1132,7 @@ private:
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(
+	static inline void validateScalar(
 		typename std::enable_if_t<TypeModifier::List == Modifier, const response::Value&> value)
 	{
 		if (value.type() != response::Type::List)
@@ -1146,7 +1149,8 @@ private:
 	using ResolverCallback =
 		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
-	[[nodiscard]] static AwaitableResolver resolve(typename ResultTraits<Type>::future_type result,
+	[[nodiscard]] static inline AwaitableResolver resolve(
+		typename ResultTraits<Type>::future_type result,
 		ResolverParams params, ResolverCallback&& resolver)
 	{
 		static_assert(!std::is_base_of_v<Object, Type>,

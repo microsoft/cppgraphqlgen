@@ -61,12 +61,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<int> getOrder(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<int> getOrder(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::ExpensiveHas::getOrderWithParams<T>)
 			{
@@ -82,7 +82,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::ExpensiveHas::beginSelectionSet<T>)
 			{
@@ -90,7 +90,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::ExpensiveHas::endSelectionSet<T>)
 			{
@@ -114,7 +114,7 @@ private:
 
 public:
 	template <class T>
-	Expensive(std::shared_ptr<T> pimpl) noexcept
+	inline Expensive(std::shared_ptr<T> pimpl) noexcept
 		: Expensive { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

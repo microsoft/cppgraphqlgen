@@ -18,7 +18,7 @@ namespace graphql::peg {
 using namespace tao::graphqlpeg;
 
 template <typename Rule>
-void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
+inline void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{
@@ -30,7 +30,7 @@ void for_each_child(const ast_node& n, std::function<void(const ast_node&)>&& fu
 }
 
 template <typename Rule>
-void on_first_child_if(const ast_node& n, std::function<bool(const ast_node&)>&& func)
+inline void on_first_child_if(const ast_node& n, std::function<bool(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{
@@ -42,7 +42,7 @@ void on_first_child_if(const ast_node& n, std::function<bool(const ast_node&)>&&
 }
 
 template <typename Rule>
-void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
+inline void on_first_child(const ast_node& n, std::function<void(const ast_node&)>&& func)
 {
 	for (const auto& child : n.children)
 	{

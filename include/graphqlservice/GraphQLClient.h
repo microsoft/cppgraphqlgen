@@ -87,7 +87,6 @@ concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 template <typename Type, TypeModifier... Other>
 concept InputVariableUniquePtr = InputVariableClass<Type> && OnlyNoneModifiers<Other...>;
 
-
 // Serialize variable input values with chained type modifiers which add nullable or list wrappers.
 template <typename Type>
 struct ModifiedVariable
@@ -115,7 +114,7 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0,
 			response::Value>
 		serialize(Type&& value)
@@ -126,7 +125,7 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::Nullable == Modifier, response::Value>
 		serialize(typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue)
 	{
@@ -143,8 +142,9 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier, response::Value>
-	serialize(typename VariableTraits<Type, Modifier, Other...>::type&& listValue)
+	[[nodiscard]] static inline
+		typename std::enable_if_t<TypeModifier::List == Modifier, response::Value>
+		serialize(typename VariableTraits<Type, Modifier, Other...>::type&& listValue)
 	{
 		response::Value result { response::Type::List };
 
@@ -159,7 +159,7 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
 		duplicate(const Type& value)
 	{
@@ -169,7 +169,7 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		typename VariableTraits<Type, Modifier, Other...>::type>
 	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue)
 	{
@@ -193,7 +193,7 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::List == Modifier,
 		typename VariableTraits<Type, Modifier, Other...>::type>
 	duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& listValue)
 	{
@@ -259,7 +259,7 @@ struct ModifiedResponse
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static
+	[[nodiscard]] static inline
 		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
 		parse(response::Value&& response)
 	{
@@ -268,7 +268,7 @@ struct ModifiedResponse
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::Nullable == Modifier,
 		std::optional<typename ResponseTraits<Type, Other...>::type>>
 	parse(response::Value&& response)
 	{
@@ -283,7 +283,7 @@ struct ModifiedResponse
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
+	[[nodiscard]] static inline typename std::enable_if_t<TypeModifier::List == Modifier,
 		std::vector<typename ResponseTraits<Type, Other...>::type>>
 	parse(response::Value&& response)
 	{

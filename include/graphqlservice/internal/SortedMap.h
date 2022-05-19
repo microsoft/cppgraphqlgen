@@ -86,7 +86,7 @@ public:
 		return _data == rhs._data;
 	}
 
-	void reserve(size_t size)
+	inline void reserve(size_t size)
 	{
 		_data.reserve(size);
 	}
@@ -96,7 +96,7 @@ public:
 		return _data.capacity();
 	}
 
-	void clear() noexcept
+	inline void clear() noexcept
 	{
 		_data.clear();
 	}
@@ -147,7 +147,7 @@ public:
 	}
 
 	template <typename KeyArg, typename... ValueArgs>
-	std::pair<const_iterator, bool> emplace(KeyArg&& keyArg, ValueArgs&&... args) noexcept
+	inline std::pair<const_iterator, bool> emplace(KeyArg&& keyArg, ValueArgs&&... args) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
@@ -161,7 +161,7 @@ public:
 			true };
 	}
 
-	const_iterator erase(const K& key) noexcept
+	inline const_iterator erase(const K& key) noexcept
 	{
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
@@ -174,20 +174,20 @@ public:
 	}
 
 	template <typename KeyArg>
-	const_iterator erase(KeyArg&& keyArg) noexcept
+	inline const_iterator erase(KeyArg&& keyArg) noexcept
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
 
 		return erase(key);
 	}
 
-	const_iterator erase(const_iterator itr) noexcept
+	inline const_iterator erase(const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}
 
 	template <typename KeyArg>
-	[[nodiscard]] V& operator[](KeyArg&& keyArg) noexcept
+	[[nodiscard]] inline V& operator[](KeyArg&& keyArg) noexcept
 	{
 		K key { std::forward<KeyArg>(keyArg) };
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
@@ -201,7 +201,7 @@ public:
 	}
 
 	template <typename KeyArg>
-	[[nodiscard]] V& at(KeyArg&& keyArg)
+	[[nodiscard]] inline V& at(KeyArg&& keyArg)
 	{
 		const K key { std::forward<KeyArg>(keyArg) };
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
@@ -246,7 +246,7 @@ public:
 		return _data == rhs._data;
 	}
 
-	void reserve(size_t size)
+	inline void reserve(size_t size)
 	{
 		_data.reserve(size);
 	}
@@ -256,7 +256,7 @@ public:
 		return _data.capacity();
 	}
 
-	void clear() noexcept
+	inline void clear() noexcept
 	{
 		_data.clear();
 	}
@@ -310,7 +310,7 @@ public:
 	}
 
 	template <typename Arg>
-	std::pair<const_iterator, bool> emplace(Arg&& key) noexcept
+	inline std::pair<const_iterator, bool> emplace(Arg&& key) noexcept
 	{
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
 			_data.end(),
@@ -327,7 +327,7 @@ public:
 		return { _data.emplace(itrEnd, std::forward<Arg>(key)), true };
 	}
 
-	const_iterator erase(const K& key) noexcept
+	inline const_iterator erase(const K& key) noexcept
 	{
 		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
 			_data.end(),
@@ -345,14 +345,14 @@ public:
 	}
 
 	template <typename Arg>
-	const_iterator erase(Arg&& arg) noexcept
+	inline const_iterator erase(Arg&& arg) noexcept
 	{
 		const K key { std::forward<Arg>(arg) };
 
 		return erase(key);
 	}
 
-	const_iterator erase(const_iterator itr) noexcept
+	inline const_iterator erase(const_iterator itr) noexcept
 	{
 		return _data.erase(itr);
 	}

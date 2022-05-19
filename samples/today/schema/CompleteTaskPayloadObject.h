@@ -75,12 +75,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Task>> getTask(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::getTaskWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getClientMutationId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::getClientMutationIdWithParams<T>)
 			{
@@ -112,7 +112,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::beginSelectionSet<T>)
 			{
@@ -120,7 +120,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::CompleteTaskPayloadHas::endSelectionSet<T>)
 			{
@@ -144,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	CompleteTaskPayload(std::shared_ptr<T> pimpl) noexcept
+	inline CompleteTaskPayload(std::shared_ptr<T> pimpl) noexcept
 		: CompleteTaskPayload { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

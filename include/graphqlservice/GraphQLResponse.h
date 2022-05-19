@@ -396,42 +396,42 @@ private:
 	template <class T>
 	struct Model : Concept
 	{
-		Model(std::unique_ptr<T>&& pimpl)
+		inline Model(std::unique_ptr<T>&& pimpl)
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		void start_object() const final
+		inline void start_object() const final
 		{
 			_pimpl->start_object();
 		}
 
-		void add_member(const std::string& key) const final
+		inline void add_member(const std::string& key) const final
 		{
 			_pimpl->add_member(key);
 		}
 
-		void end_object() const final
+		inline void end_object() const final
 		{
 			_pimpl->end_object();
 		}
 
-		void start_array() const final
+		inline void start_array() const final
 		{
 			_pimpl->start_array();
 		}
 
-		void end_arrary() const final
+		inline void end_arrary() const final
 		{
 			_pimpl->end_arrary();
 		}
 
-		void write_null() const final
+		inline void write_null() const final
 		{
 			_pimpl->write_null();
 		}
 
-		void write_string(const std::string& value) const final
+		inline void write_string(const std::string& value) const final
 		{
 			_pimpl->write_string(value);
 		}
@@ -441,12 +441,12 @@ private:
 			_pimpl->write_bool(value);
 		}
 
-		void write_int(int value) const final
+		inline void write_int(int value) const final
 		{
 			_pimpl->write_int(value);
 		}
 
-		void write_float(double value) const final
+		inline void write_float(double value) const final
 		{
 			_pimpl->write_float(value);
 		}
@@ -459,7 +459,7 @@ private:
 
 public:
 	template <class T>
-	Writer(std::unique_ptr<T> writer)
+	inline Writer(std::unique_ptr<T> writer)
 		: _concept { std::static_pointer_cast<const Concept>(
 			std::make_shared<Model<T>>(std::move(writer))) }
 	{
