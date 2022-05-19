@@ -976,6 +976,36 @@ template <typename Rule, template <typename...> class Action, template <typename
 
 } // namespace graphql_parse_tree
 
+template <class ParseInput>
+class [[nodiscard]] depth_limit_input : public ParseInput
+{
+public:
+	template <typename... Args>
+	explicit depth_limit_input(size_t depthLimit, Args&&... args) noexcept
+		: ParseInput(std::forward<Args>(args)...)
+		, _depthLimit(depthLimit)
+	{
+	}
+
+	size_t depthLimit() const noexcept
+	{
+		return _depthLimit;
+	}
+
+	size_t selectionSetDepth = 0;
+
+private:
+	const size_t _depthLimit;
+};
+
+using ast_file = depth_limit_input<file_input<>>;
+using ast_memory = depth_limit_input<memory_input<>>;
+
+struct [[nodiscard]] ast_input
+{
+	std::variant<std::vector<char>, std::unique_ptr<ast_file>, std::string_view> data;
+};
+
 ast parseSchemaString(std::string_view input, size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
