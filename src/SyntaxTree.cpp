@@ -1004,13 +1004,13 @@ using ast_memory = depth_limit_input<memory_input<>>;
 struct ast_string
 {
 	std::vector<char> input;
-	std::unique_ptr<ast_memory> memory;
+	std::unique_ptr<ast_memory> memory {};
 };
 
 struct ast_string_view
 {
 	std::string_view input;
-	std::unique_ptr<memory_input<>> memory;
+	std::unique_ptr<memory_input<>> memory {};
 };
 
 struct [[nodiscard]] ast_input
