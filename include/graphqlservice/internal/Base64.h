@@ -59,11 +59,12 @@ public:
 		const std::vector<std::uint8_t>& bytes);
 
 	enum class [[nodiscard]] Comparison {
+		// Valid Base64 always compares as less than non-empty invalid Base64.
+		InvalidBase64 = -2,
+
 		LessThan = -1,
 		EqualTo = 0,
 		GreaterThan = 1,
-
-		InvalidBase64 = 2,
 	};
 
 	// Compare a set of bytes to a possible Base64 string without performing any heap allocations.
