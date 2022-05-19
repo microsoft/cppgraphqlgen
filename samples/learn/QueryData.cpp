@@ -31,26 +31,26 @@ std::shared_ptr<object::Character> Query::getHero(std::optional<Episode> episode
 
 std::shared_ptr<object::Human> Query::getHuman(const response::IdType& idArg) const noexcept
 {
-	std::shared_ptr<Human> result;
+	std::shared_ptr<object::Human> result;
 
 	if (const auto itr = humans_.find(idArg); itr != humans_.end())
 	{
-		result = itr->second;
+		result = std::make_shared<object::Human>(itr->second);
 	}
 
-	return std::make_shared<object::Human>(std::move(result));
+	return result;
 }
 
 std::shared_ptr<object::Droid> Query::getDroid(const response::IdType& idArg) const noexcept
 {
-	std::shared_ptr<Droid> result;
+	std::shared_ptr<object::Droid> result;
 
 	if (const auto itr = droids_.find(idArg); itr != droids_.end())
 	{
-		result = itr->second;
+		result = std::make_shared<object::Droid>(itr->second);
 	}
 
-	return std::make_shared<object::Droid>(std::move(result));
+	return result;
 }
 
 } // namespace graphql::learn
