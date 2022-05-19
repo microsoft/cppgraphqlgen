@@ -161,7 +161,7 @@ Base64::Comparison Base64::compareBase64(
 	}
 	else if (maybeEncoded.empty())
 	{
-		return Comparison::GreaterThan;
+		return Comparison::LessThan;
 	}
 
 	auto result = Comparison::EqualTo;

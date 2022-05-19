@@ -138,11 +138,12 @@ bool IdType::operator<(const IdType& rhs) const noexcept
 	}
 
 	return (std::holds_alternative<ByteData>(_data)
-				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
-					   std::get<OpaqueString>(rhs._data))
-				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-					   std::get<OpaqueString>(_data)))
-		> internal::Base64::Comparison::EqualTo;
+			? (internal::Base64::compareBase64(std::get<ByteData>(_data),
+				   std::get<OpaqueString>(rhs._data))
+				> internal::Base64::Comparison::EqualTo)
+			: (internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
+				  std::get<OpaqueString>(_data)))
+				< internal::Base64::Comparison::EqualTo);
 }
 
 bool IdType::isBase64() const noexcept
