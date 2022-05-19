@@ -1001,30 +1001,48 @@ private:
 using ast_file = depth_limit_input<file_input<>>;
 using ast_memory = depth_limit_input<memory_input<>>;
 
+struct ast_string
+{
+	std::vector<char> input;
+	std::unique_ptr<ast_memory> memory;
+};
+
+struct ast_string_view
+{
+	std::string_view input;
+	std::unique_ptr<memory_input<>> memory;
+};
+
 struct [[nodiscard]] ast_input
 {
-	std::variant<std::vector<char>, std::unique_ptr<ast_file>, std::string_view> data;
+	std::variant<ast_string, std::unique_ptr<ast_file>, ast_string_view> data;
 };
 
 ast parseSchemaString(std::string_view input, size_t depthLimit)
 {
-	ast result { std::make_shared<ast_input>(
-					 ast_input { std::vector<char> { input.cbegin(), input.cend() } }),
-		{} };
-	const auto& data = std::get<std::vector<char>>(result.input->data);
+	ast result { std::make_shared<ast_input>(ast_string { { input.cbegin(), input.cend() } }), {} };
+	auto& data = std::get<ast_string>(result.input->data);
 
 	try
 	{
 		// Try a smaller grammar with only schema type definitions first.
-		result.root = graphql_parse_tree::parse<schema_document, ast_action, schema_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
+		data.memory = std::make_unique<ast_memory>(depthLimit,
+			data.input.data(),
+			data.input.size(),
+			"GraphQL"s);
+		result.root =
+			graphql_parse_tree::parse<schema_document, ast_action, schema_selector>(*data.memory);
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
-		result.root = graphql_parse_tree::parse<mixed_document, ast_action, schema_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
+		data.memory = std::make_unique<ast_memory>(depthLimit,
+			data.input.data(),
+			data.input.size(),
+			"GraphQL"s);
+		result.root =
+			graphql_parse_tree::parse<mixed_document, ast_action, schema_selector>(*data.memory);
 	}
 
 	return result;
@@ -1063,24 +1081,30 @@ ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 
 ast parseString(std::string_view input, size_t depthLimit)
 {
-	ast result { std::make_shared<ast_input>(
-					 ast_input { std::vector<char> { input.cbegin(), input.cend() } }),
-		{} };
-	const auto& data = std::get<std::vector<char>>(result.input->data);
+	ast result { std::make_shared<ast_input>(ast_string { { input.cbegin(), input.cend() } }), {} };
+	auto& data = std::get<ast_string>(result.input->data);
 
 	try
 	{
 		// Try a smaller grammar with only executable definitions first.
+		data.memory = std::make_unique<ast_memory>(depthLimit,
+			data.input.data(),
+			data.input.size(),
+			"GraphQL"s);
 		result.root =
 			graphql_parse_tree::parse<executable_document, ast_action, executable_selector>(
-				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
+				*data.memory);
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
+		data.memory = std::make_unique<ast_memory>(depthLimit,
+			data.input.data(),
+			data.input.size(),
+			"GraphQL"s);
 		result.root = graphql_parse_tree::parse<mixed_document, ast_action, executable_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
+			*data.memory);
 	}
 
 	return result;
@@ -1122,24 +1146,25 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 peg::ast operator"" _graphql(const char* text, size_t size)
 {
-	peg::ast result { std::make_shared<peg::ast_input>(
-						  peg::ast_input { { std::string_view { text, size } } }),
-		{} };
+	peg::ast result { std::make_shared<peg::ast_input>(peg::ast_string_view { { text, size } }) };
+	auto& data = std::get<peg::ast_string_view>(result.input->data);
 
 	try
 	{
 		// Try a smaller grammar with only executable definitions first.
-		result.root = peg::graphql_parse_tree::parse<peg::executable_document,
-			peg::nothing,
-			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"));
+		data.memory =
+			std::make_unique<peg::memory_input<>>(data.input.data(), data.input.size(), "GraphQL"s);
+		result.root = peg::graphql_parse_tree::
+			parse<peg::executable_document, peg::nothing, peg::executable_selector>(*data.memory);
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
-		result.root = peg::graphql_parse_tree::parse<peg::mixed_document,
-			peg::nothing,
-			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"));
+		data.memory =
+			std::make_unique<peg::memory_input<>>(data.input.data(), data.input.size(), "GraphQL"s);
+		result.root = peg::graphql_parse_tree::
+			parse<peg::mixed_document, peg::nothing, peg::executable_selector>(*data.memory);
 	}
 
 	return result;
