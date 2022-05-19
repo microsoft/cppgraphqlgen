@@ -1017,14 +1017,14 @@ ast parseSchemaString(std::string_view input, size_t depthLimit)
 	{
 		// Try a smaller grammar with only schema type definitions first.
 		result.root = graphql_parse_tree::parse<schema_document, ast_action, schema_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected
 		// executable definitions if this is a mixed document.
 		result.root = graphql_parse_tree::parse<mixed_document, ast_action, schema_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
 	}
 
 	return result;
@@ -1073,14 +1073,14 @@ ast parseString(std::string_view input, size_t depthLimit)
 		// Try a smaller grammar with only executable definitions first.
 		result.root =
 			graphql_parse_tree::parse<executable_document, ast_action, executable_selector>(
-				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+				ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
 	}
 	catch (const peg::parse_error&)
 	{
 		// Try again with the full document grammar so validation can handle the unexepected type
 		// definitions if this is a mixed document.
 		result.root = graphql_parse_tree::parse<mixed_document, ast_action, executable_selector>(
-			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"s));
+			ast_memory(depthLimit, data.data(), data.size(), "GraphQL"));
 	}
 
 	return result;
@@ -1131,7 +1131,7 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 		// Try a smaller grammar with only executable definitions first.
 		result.root = peg::graphql_parse_tree::parse<peg::executable_document,
 			peg::nothing,
-			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"s));
+			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"));
 	}
 	catch (const peg::parse_error&)
 	{
@@ -1139,7 +1139,7 @@ peg::ast operator"" _graphql(const char* text, size_t size)
 		// definitions if this is a mixed document.
 		result.root = peg::graphql_parse_tree::parse<peg::mixed_document,
 			peg::nothing,
-			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"s));
+			peg::executable_selector>(peg::memory_input<>(text, size, "GraphQL"));
 	}
 
 	return result;
