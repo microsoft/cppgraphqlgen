@@ -1146,7 +1146,8 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 peg::ast operator"" _graphql(const char* text, size_t size)
 {
-	peg::ast result { std::make_shared<peg::ast_input>(peg::ast_string_view { { text, size } }) };
+	peg::ast result { std::make_shared<peg::ast_input>(peg::ast_string_view { { text, size } }),
+		{} };
 	auto& data = std::get<peg::ast_string_view>(result.input->data);
 
 	try
