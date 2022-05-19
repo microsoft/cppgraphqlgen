@@ -109,9 +109,9 @@ the license text. Please see the license or copyright notice which comes with ea
 
 ### graphqlpeg
 
-- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.2.5,
+- GraphQL parsing: [Parsing Expression Grammar Template Library (PEGTL)](https://github.com/taocpp/PEGTL) release 3.2.6,
 which is part of [The Art of C++](https://taocpp.github.io/) library collection. I've added this as a sub-module, so you
-do not need to install this separately. If you already have 3.2.5 installed where CMake can find it, it will use that
+do not need to install this separately. If you already have 3.2.6 installed where CMake can find it, it will use that
 instead of the sub-module and avoid installing another copy of PEGTL.
 
 ### graphqlservice
