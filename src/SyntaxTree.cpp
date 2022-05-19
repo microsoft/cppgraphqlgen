@@ -1020,7 +1020,9 @@ struct [[nodiscard]] ast_input
 
 ast parseSchemaString(std::string_view input, size_t depthLimit)
 {
-	ast result { std::make_shared<ast_input>(ast_string { { input.cbegin(), input.cend() } }), {} };
+	ast result { std::make_shared<ast_input>(
+					 ast_input { ast_string { { input.cbegin(), input.cend() } } }),
+		{} };
 	auto& data = std::get<ast_string>(result.input->data);
 
 	try
@@ -1081,7 +1083,9 @@ ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 
 ast parseString(std::string_view input, size_t depthLimit)
 {
-	ast result { std::make_shared<ast_input>(ast_string { { input.cbegin(), input.cend() } }), {} };
+	ast result { std::make_shared<ast_input>(
+					 ast_input { ast_string { { input.cbegin(), input.cend() } } }),
+		{} };
 	auto& data = std::get<ast_string>(result.input->data);
 
 	try
@@ -1146,7 +1150,8 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 peg::ast operator"" _graphql(const char* text, size_t size)
 {
-	peg::ast result { std::make_shared<peg::ast_input>(peg::ast_string_view { { text, size } }),
+	peg::ast result { std::make_shared<peg::ast_input>(
+						  peg::ast_input { peg::ast_string_view { { text, size } } }),
 		{} };
 	auto& data = std::get<peg::ast_string_view>(result.input->data);
 
