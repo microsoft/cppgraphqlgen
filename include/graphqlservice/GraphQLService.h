@@ -884,9 +884,25 @@ concept ObjectBaseType = std::is_base_of_v<Object, Type>;
 template <typename Type>
 concept ObjectDerivedType = ObjectBaseType<Type> && !ObjectType<Type>;
 
-// Test if ResultType is std::shared_ptr<Type>.
-template <typename ResultType, typename Type>
-concept ResultTypeSharedPtr = std::is_same_v<ResultType, std::shared_ptr<Type>>;
+// Test if this method should std::static_pointer_cast an ObjectDerivedType to
+// std::shared_ptr<const Object>.
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NoneObjectDerivedType = OnlyNoneModifiers<Modifier, Other...> && ObjectDerivedType<Type>;
+
+// Test all other result types to see if they should call the specialized convert method without
+// template parameters.
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier, Other...> && !ObjectDerivedType<Type>;
+
+// Test if this method should return a nullable std::shared_ptr<Type>
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NullableResultSharedPtr =
+	NullableModifier<Modifier> && OnlyNoneModifiers<Other...> && ObjectBaseType<Type>;
+
+// Test if this method should return a nullable std::optional<Type>
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NullableResultOptional =
+	NullableModifier<Modifier> && !(OnlyNoneModifiers<Other...> && ObjectBaseType<Type>);
 
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
@@ -897,17 +913,15 @@ struct ModifiedResult
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ResultTraits
 	{
-		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<
-				ObjectBaseType<
-					U> && std::is_same_v<std::shared_ptr<U>, typename ResultTraits<U, Other...>::type>,
+		using type = typename std::conditional_t<NullableModifier<Modifier>,
+			typename std::conditional_t<OnlyNoneModifiers<Other...> && ObjectBaseType<U>,
 				std::shared_ptr<U>, std::optional<typename ResultTraits<U, Other...>::type>>,
-			typename std::conditional_t<TypeModifier::List == Modifier,
+			typename std::conditional_t<ListModifier<Modifier>,
 				std::vector<typename ResultTraits<U, Other...>::type>,
 				typename std::conditional_t<ObjectBaseType<U>, std::shared_ptr<U>, U>>>;
 
-		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
-			AwaitableObject<type>, AwaitableScalar<type>>;
+		using future_type = typename std::conditional_t<ObjectBaseType<U>, AwaitableObject<type>,
+			AwaitableScalar<type>>;
 	};
 
 	template <typename U>
@@ -926,8 +940,8 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
-		AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params) requires
-		OnlyNoneModifiers<Modifier, Other...> && ObjectDerivedType<Type>
+		AwaitableObject<typename ResultTraits<Type>::type> result,
+		ResolverParams params) requires NoneObjectDerivedType<Type, Modifier, Other...>
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
@@ -947,8 +961,8 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
-		typename ResultTraits<Type>::future_type result, ResolverParams params) requires
-		OnlyNoneModifiers<Modifier, Other...> && !ObjectDerivedType<Type>
+		typename ResultTraits<Type>::future_type result,
+		ResolverParams params) requires NoneScalarOrObjectType<Type, Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
@@ -960,9 +974,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams params) requires
-		NullableModifier<Modifier> && ResultTypeSharedPtr<
-			typename ResultTraits<Type, Other...>::type, Type>
+		ResolverParams params) requires NullableResultSharedPtr<Type, Modifier, Other...>
 	{
 		co_await params.launch;
 
@@ -983,9 +995,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams params) requires
-		NullableModifier<Modifier> && !ResultTypeSharedPtr<
-			typename ResultTraits<Type, Other...>::type, Type>
+		ResolverParams params) requires NullableResultOptional<Type, Modifier, Other...>
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>,
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
@@ -1137,7 +1147,8 @@ private:
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static inline void validateScalar(const response::Value& value) requires NullableModifier<Modifier>
+	static inline void validateScalar(
+		const response::Value& value) requires NullableModifier<Modifier>
 	{
 		if (value.type() != response::Type::Null)
 		{
