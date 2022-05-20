@@ -884,6 +884,10 @@ concept ObjectBaseType = std::is_base_of_v<Object, Type>;
 template <typename Type>
 concept ObjectDerivedType = ObjectBaseType<Type> && !ObjectType<Type>;
 
+// Test if a nullable type is std::shared_ptr<Type> or std::optional<T>.
+template <typename Type, TypeModifier... Other>
+concept NullableSharedPtr = OnlyNoneModifiers<Other...> && ObjectBaseType<Type>;
+
 // Test if this method should std::static_pointer_cast an ObjectDerivedType to
 // std::shared_ptr<const Object>.
 template <typename Type, TypeModifier Modifier, TypeModifier... Other>
@@ -914,8 +918,8 @@ struct ModifiedResult
 	struct ResultTraits
 	{
 		using type = typename std::conditional_t<NullableModifier<Modifier>,
-			typename std::conditional_t<OnlyNoneModifiers<Other...> && ObjectBaseType<U>,
-				std::shared_ptr<U>, std::optional<typename ResultTraits<U, Other...>::type>>,
+			typename std::conditional_t<NullableSharedPtr<U, Other...>, std::shared_ptr<U>,
+				std::optional<typename ResultTraits<U, Other...>::type>>,
 			typename std::conditional_t<ListModifier<Modifier>,
 				std::vector<typename ResultTraits<U, Other...>::type>,
 				typename std::conditional_t<ObjectBaseType<U>, std::shared_ptr<U>, U>>>;
