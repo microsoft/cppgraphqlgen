@@ -209,6 +209,9 @@ struct ValueTypeTraits<FloatType>
 	using get_type = FloatType;
 };
 
+template <typename ValueType>
+concept ValueTypeMatches = std::is_same_v<std::decay_t<ValueType>, ValueType>;
+
 // Represent a discriminated union of GraphQL response value types.
 struct [[nodiscard]] Value
 {
@@ -265,15 +268,13 @@ struct [[nodiscard]] Value
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
-	void set(typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
-		typename ValueTypeTraits<ValueType>::set_type>
-			value);
+	void set(
+		typename ValueTypeTraits<ValueType>::set_type value) requires ValueTypeMatches<ValueType>;
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	[[nodiscard]] typename std::enable_if_t<std::is_same_v<std::decay_t<ValueType>, ValueType>,
-		typename ValueTypeTraits<ValueType>::get_type>
-	get() const;
+	[[nodiscard]] typename ValueTypeTraits<ValueType>::get_type get() const requires
+		ValueTypeMatches<ValueType>;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
