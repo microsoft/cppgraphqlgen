@@ -890,13 +890,13 @@ concept NullableSharedPtr = OnlyNoneModifiers<Other...> && ObjectBaseType<Type>;
 
 // Test if this method should std::static_pointer_cast an ObjectDerivedType to
 // std::shared_ptr<const Object>.
-template <typename Type, TypeModifier Modifier, TypeModifier... Other>
-concept NoneObjectDerivedType = OnlyNoneModifiers<Modifier, Other...> && ObjectDerivedType<Type>;
+template <typename Type, TypeModifier Modifier>
+concept NoneObjectDerivedType = OnlyNoneModifiers<Modifier> && ObjectDerivedType<Type>;
 
 // Test all other result types to see if they should call the specialized convert method without
 // template parameters.
-template <typename Type, TypeModifier Modifier, TypeModifier... Other>
-concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier, Other...> && !ObjectDerivedType<Type>;
+template <typename Type, TypeModifier Modifier>
+concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier> && !ObjectDerivedType<Type>;
 
 // Test if this method should return a nullable std::shared_ptr<Type>
 template <typename Type, TypeModifier Modifier, TypeModifier... Other>
@@ -945,7 +945,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
 		AwaitableObject<typename ResultTraits<Type>::type> result,
-		ResolverParams params) requires NoneObjectDerivedType<Type, Modifier, Other...>
+		ResolverParams params) requires NoneObjectDerivedType<Type, Modifier>
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
@@ -966,7 +966,7 @@ struct ModifiedResult
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
 		typename ResultTraits<Type>::future_type result,
-		ResolverParams params) requires NoneScalarOrObjectType<Type, Modifier, Other...>
+		ResolverParams params) requires NoneScalarOrObjectType<Type, Modifier>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
