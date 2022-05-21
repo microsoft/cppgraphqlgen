@@ -57,7 +57,7 @@ const peg::ast& GetRequestObject() noexcept
 using namespace subscribe;
 
 template <>
-subscription::TestSubscription::Response::nextAppointment_Appointment ModifiedResponse<subscription::TestSubscription::Response::nextAppointment_Appointment>::parse(response::Value&& response)
+subscription::TestSubscription::Response::nextAppointment_Appointment Response<subscription::TestSubscription::Response::nextAppointment_Appointment>::parse(response::Value&& response)
 {
 	subscription::TestSubscription::Response::nextAppointment_Appointment result;
 

@@ -201,7 +201,7 @@ InputBC& InputBC::operator=(InputBC&& other) noexcept
 using namespace nestedinput;
 
 template <>
-response::Value ModifiedVariable<InputA>::serialize(InputA&& inputValue)
+response::Value Variable<InputA>::serialize(InputA&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -211,7 +211,7 @@ response::Value ModifiedVariable<InputA>::serialize(InputA&& inputValue)
 }
 
 template <>
-response::Value ModifiedVariable<InputB>::serialize(InputB&& inputValue)
+response::Value Variable<InputB>::serialize(InputB&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -221,7 +221,7 @@ response::Value ModifiedVariable<InputB>::serialize(InputB&& inputValue)
 }
 
 template <>
-response::Value ModifiedVariable<InputABCD>::serialize(InputABCD&& inputValue)
+response::Value Variable<InputABCD>::serialize(InputABCD&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -234,7 +234,7 @@ response::Value ModifiedVariable<InputABCD>::serialize(InputABCD&& inputValue)
 }
 
 template <>
-response::Value ModifiedVariable<InputBC>::serialize(InputBC&& inputValue)
+response::Value Variable<InputBC>::serialize(InputBC&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -245,7 +245,7 @@ response::Value ModifiedVariable<InputBC>::serialize(InputBC&& inputValue)
 }
 
 template <>
-query::testQuery::Response::control_Control::test_Output ModifiedResponse<query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
+query::testQuery::Response::control_Control::test_Output Response<query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
 {
 	query::testQuery::Response::control_Control::test_Output result;
 
@@ -267,7 +267,7 @@ query::testQuery::Response::control_Control::test_Output ModifiedResponse<query:
 }
 
 template <>
-query::testQuery::Response::control_Control ModifiedResponse<query::testQuery::Response::control_Control>::parse(response::Value&& response)
+query::testQuery::Response::control_Control Response<query::testQuery::Response::control_Control>::parse(response::Value&& response)
 {
 	query::testQuery::Response::control_Control result;
 

@@ -114,7 +114,7 @@ static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskS
 };
 
 template <>
-TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
+TaskState Response<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -134,7 +134,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
@@ -176,7 +176,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
@@ -198,7 +198,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection ModifiedResponse<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection Response<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection result;
 
@@ -220,7 +220,7 @@ query::Query::Response::appointments_AppointmentConnection ModifiedResponse<quer
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task ModifiedResponse<query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
+query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
 {
 	query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
 
@@ -257,7 +257,7 @@ query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Modified
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
+query::Query::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
 {
 	query::Query::Response::tasks_TaskConnection::edges_TaskEdge result;
 
@@ -279,7 +279,7 @@ query::Query::Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<qu
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection ModifiedResponse<query::Query::Response::tasks_TaskConnection>::parse(response::Value&& response)
+query::Query::Response::tasks_TaskConnection Response<query::Query::Response::tasks_TaskConnection>::parse(response::Value&& response)
 {
 	query::Query::Response::tasks_TaskConnection result;
 
@@ -301,7 +301,7 @@ query::Query::Response::tasks_TaskConnection ModifiedResponse<query::Query::Resp
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder ModifiedResponse<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
+query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
 {
 	query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
 
@@ -338,7 +338,7 @@ query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Fo
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge ModifiedResponse<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
+query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
 {
 	query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
 
@@ -360,7 +360,7 @@ query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Modified
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection ModifiedResponse<query::Query::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
+query::Query::Response::unreadCounts_FolderConnection Response<query::Query::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
 {
 	query::Query::Response::unreadCounts_FolderConnection result;
 
@@ -382,7 +382,7 @@ query::Query::Response::unreadCounts_FolderConnection ModifiedResponse<query::Qu
 }
 
 template <>
-query::Query::Response::anyType_UnionType ModifiedResponse<query::Query::Response::anyType_UnionType>::parse(response::Value&& response)
+query::Query::Response::anyType_UnionType Response<query::Query::Response::anyType_UnionType>::parse(response::Value&& response)
 {
 	query::Query::Response::anyType_UnionType result;
 

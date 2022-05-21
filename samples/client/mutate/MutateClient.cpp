@@ -113,7 +113,7 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 };
 
 template <>
-response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
+response::Value Variable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
@@ -123,7 +123,7 @@ response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 }
 
 template <>
-response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
+response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -143,7 +143,7 @@ static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskS
 };
 
 template <>
-TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
+TaskState Response<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -163,7 +163,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
 {
 	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
 
@@ -195,7 +195,7 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::com
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
 {
 	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
 
