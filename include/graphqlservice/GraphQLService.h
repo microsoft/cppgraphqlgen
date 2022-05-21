@@ -892,8 +892,7 @@ struct Result
 		AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<Type>>;
 
 	// Convert a single value of the specified type to JSON.
-	[[nodiscard]] static AwaitableResolver convert(
-		typename future_type result, ResolverParams params);
+	[[nodiscard]] static AwaitableResolver convert(future_type result, ResolverParams params);
 
 	// Validate a single scalar value is the expected type.
 	static void validateScalar(const response::Value& value);
