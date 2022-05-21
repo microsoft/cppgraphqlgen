@@ -28,7 +28,7 @@ static const auto s_namesEpisode = learn::getEpisodeNames();
 static const auto s_valuesEpisode = learn::getEpisodeValues();
 
 template <>
-learn::Episode ModifiedArgument<learn::Episode>::convert(const response::Value& value)
+learn::Episode Argument<learn::Episode>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -81,7 +81,7 @@ void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value
 }
 
 template <>
-learn::ReviewInput ModifiedArgument<learn::ReviewInput>::convert(const response::Value& value)
+learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& value)
 {
 	auto valueStars = service::ModifiedArgument<int>::require("stars", value);
 	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);

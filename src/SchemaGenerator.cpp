@@ -604,7 +604,7 @@ private:
 			{
 				headerFile << R"cpp(template <>
 GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	const response::Value& value);
@@ -627,7 +627,7 @@ GRAPHQLSERVICE_EXPORT void ModifiedResult<)cpp"
 			{
 				headerFile << R"cpp(template <>
 GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
 						   << inputType.cppType << R"cpp(>::convert(
 	const response::Value& value);
 )cpp";
@@ -1283,7 +1283,7 @@ static const auto s_values)cpp"
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
+					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(const response::Value& value)
 {
@@ -1361,7 +1361,7 @@ void ModifiedResult<)cpp"
 
 			sourceFile << R"cpp(template <>
 )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+					   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
 					   << R"cpp(>::convert(const response::Value& value)
 {

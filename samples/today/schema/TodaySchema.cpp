@@ -29,7 +29,7 @@ static const auto s_namesTaskState = today::getTaskStateNames();
 static const auto s_valuesTaskState = today::getTaskStateValues();
 
 template <>
-today::TaskState ModifiedArgument<today::TaskState>::convert(const response::Value& value)
+today::TaskState Argument<today::TaskState>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -82,7 +82,7 @@ void ModifiedResult<today::TaskState>::validateScalar(const response::Value& val
 }
 
 template <>
-today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(const response::Value& value)
+today::CompleteTaskInput Argument<today::CompleteTaskInput>::convert(const response::Value& value)
 {
 	const auto defaultValue = []()
 	{
@@ -112,7 +112,7 @@ today::CompleteTaskInput ModifiedArgument<today::CompleteTaskInput>::convert(con
 }
 
 template <>
-today::ThirdNestedInput ModifiedArgument<today::ThirdNestedInput>::convert(const response::Value& value)
+today::ThirdNestedInput Argument<today::ThirdNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 	auto valueSecond = service::ModifiedArgument<today::SecondNestedInput>::require<service::TypeModifier::Nullable>("second", value);
@@ -124,7 +124,7 @@ today::ThirdNestedInput ModifiedArgument<today::ThirdNestedInput>::convert(const
 }
 
 template <>
-today::FourthNestedInput ModifiedArgument<today::FourthNestedInput>::convert(const response::Value& value)
+today::FourthNestedInput Argument<today::FourthNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 
@@ -134,7 +134,7 @@ today::FourthNestedInput ModifiedArgument<today::FourthNestedInput>::convert(con
 }
 
 template <>
-today::IncludeNullableSelfInput ModifiedArgument<today::IncludeNullableSelfInput>::convert(const response::Value& value)
+today::IncludeNullableSelfInput Argument<today::IncludeNullableSelfInput>::convert(const response::Value& value)
 {
 	auto valueSelf = service::ModifiedArgument<today::IncludeNullableSelfInput>::require<service::TypeModifier::Nullable>("self", value);
 
@@ -144,7 +144,7 @@ today::IncludeNullableSelfInput ModifiedArgument<today::IncludeNullableSelfInput
 }
 
 template <>
-today::IncludeNonNullableListSelfInput ModifiedArgument<today::IncludeNonNullableListSelfInput>::convert(const response::Value& value)
+today::IncludeNonNullableListSelfInput Argument<today::IncludeNonNullableListSelfInput>::convert(const response::Value& value)
 {
 	auto valueSelves = service::ModifiedArgument<today::IncludeNonNullableListSelfInput>::require<service::TypeModifier::List>("selves", value);
 
@@ -154,7 +154,7 @@ today::IncludeNonNullableListSelfInput ModifiedArgument<today::IncludeNonNullabl
 }
 
 template <>
-today::StringOperationFilterInput ModifiedArgument<today::StringOperationFilterInput>::convert(const response::Value& value)
+today::StringOperationFilterInput Argument<today::StringOperationFilterInput>::convert(const response::Value& value)
 {
 	auto valueAnd_ = service::ModifiedArgument<today::StringOperationFilterInput>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("and", value);
 	auto valueOr_ = service::ModifiedArgument<today::StringOperationFilterInput>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("or", value);
@@ -186,7 +186,7 @@ today::StringOperationFilterInput ModifiedArgument<today::StringOperationFilterI
 }
 
 template <>
-today::SecondNestedInput ModifiedArgument<today::SecondNestedInput>::convert(const response::Value& value)
+today::SecondNestedInput Argument<today::SecondNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 	auto valueThird = service::ModifiedArgument<today::ThirdNestedInput>::require("third", value);
@@ -198,7 +198,7 @@ today::SecondNestedInput ModifiedArgument<today::SecondNestedInput>::convert(con
 }
 
 template <>
-today::ForwardDeclaredInput ModifiedArgument<today::ForwardDeclaredInput>::convert(const response::Value& value)
+today::ForwardDeclaredInput Argument<today::ForwardDeclaredInput>::convert(const response::Value& value)
 {
 	auto valueNullableSelf = service::ModifiedArgument<today::IncludeNullableSelfInput>::require<service::TypeModifier::Nullable>("nullableSelf", value);
 	auto valueListSelves = service::ModifiedArgument<today::IncludeNonNullableListSelfInput>::require("listSelves", value);
@@ -210,7 +210,7 @@ today::ForwardDeclaredInput ModifiedArgument<today::ForwardDeclaredInput>::conve
 }
 
 template <>
-today::FirstNestedInput ModifiedArgument<today::FirstNestedInput>::convert(const response::Value& value)
+today::FirstNestedInput Argument<today::FirstNestedInput>::convert(const response::Value& value)
 {
 	auto valueId = service::ModifiedArgument<response::IdType>::require("id", value);
 	auto valueSecond = service::ModifiedArgument<today::SecondNestedInput>::require("second", value);

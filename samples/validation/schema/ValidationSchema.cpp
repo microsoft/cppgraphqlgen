@@ -29,7 +29,7 @@ static const auto s_namesDogCommand = validation::getDogCommandNames();
 static const auto s_valuesDogCommand = validation::getDogCommandValues();
 
 template <>
-validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const response::Value& value)
+validation::DogCommand Argument<validation::DogCommand>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -85,7 +85,7 @@ static const auto s_namesCatCommand = validation::getCatCommandNames();
 static const auto s_valuesCatCommand = validation::getCatCommandValues();
 
 template <>
-validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const response::Value& value)
+validation::CatCommand Argument<validation::CatCommand>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -138,7 +138,7 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 }
 
 template <>
-validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(const response::Value& value)
+validation::ComplexInput Argument<validation::ComplexInput>::convert(const response::Value& value)
 {
 	auto valueName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("name", value);
 	auto valueOwner = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("owner", value);

@@ -23,7 +23,7 @@ static const auto s_namesTypeKind = introspection::getTypeKindNames();
 static const auto s_valuesTypeKind = introspection::getTypeKindValues();
 
 template <>
-introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const response::Value& value)
+introspection::TypeKind Argument<introspection::TypeKind>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -79,7 +79,7 @@ static const auto s_namesDirectiveLocation = introspection::getDirectiveLocation
 static const auto s_valuesDirectiveLocation = introspection::getDirectiveLocationValues();
 
 template <>
-introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(const response::Value& value)
+introspection::DirectiveLocation Argument<introspection::DirectiveLocation>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{

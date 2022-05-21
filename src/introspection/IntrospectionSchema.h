@@ -177,7 +177,7 @@ namespace service {
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
-GRAPHQLSERVICE_EXPORT introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(
+GRAPHQLSERVICE_EXPORT introspection::TypeKind Argument<introspection::TypeKind>::convert(
 	const response::Value& value);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(
@@ -186,7 +186,7 @@ template <>
 GRAPHQLSERVICE_EXPORT void ModifiedResult<introspection::TypeKind>::validateScalar(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(
+GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation Argument<introspection::DirectiveLocation>::convert(
 	const response::Value& value);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(

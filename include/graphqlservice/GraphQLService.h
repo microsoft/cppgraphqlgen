@@ -592,6 +592,33 @@ enum class [[nodiscard]] TypeModifier {
 	List,
 };
 
+template <typename Type>
+struct Argument
+{
+	// Convert a single value to the specified type.
+	[[nodiscard]] static Type convert(const response::Value& value);
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT int Argument<int>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT double Argument<double>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::string Argument<std::string>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT bool Argument<bool>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT response::IdType Argument<response::IdType>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT response::Value Argument<response::Value>::convert(
+	const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
+namespace {
+
 // Test if there are any non-None modifiers left.
 template <TypeModifier... Other>
 concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
@@ -642,16 +669,13 @@ struct ModifiedArgument
 		using type = U;
 	};
 
-	// Convert a single value to the specified type.
-	[[nodiscard]] static Type convert(const response::Value& value);
-
 	// Call convert on this type without any modifiers.
 	[[nodiscard]] static inline Type require(
 		std::string_view name, const response::Value& arguments)
 	{
 		try
 		{
-			return convert(arguments[name]);
+			return Argument<Type>::convert(arguments[name]);
 		}
 		catch (schema_exception& ex)
 		{
@@ -816,24 +840,7 @@ using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-template <>
-GRAPHQLSERVICE_EXPORT int ModifiedArgument<int>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT double ModifiedArgument<double>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT std::string ModifiedArgument<std::string>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT bool ModifiedArgument<bool>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::IdType ModifiedArgument<response::IdType>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert(
-	const response::Value& value);
-#endif // GRAPHQL_DLLEXPORTS
+} // namespace
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -1134,10 +1141,11 @@ struct ModifiedResult
 		co_return document;
 	}
 
-private:
+private
+	:
 	// Validate a single scalar value is the expected type.
-	static void validateScalar(const response::Value& value);
-
+	static void
+	validateScalar(const response::Value& value);
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static inline void validateScalar(

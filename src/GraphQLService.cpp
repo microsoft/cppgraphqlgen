@@ -617,7 +617,7 @@ schema_location ResolverParams::getLocation() const
 }
 
 template <>
-int ModifiedArgument<int>::convert(const response::Value& value)
+int Argument<int>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -628,7 +628,7 @@ int ModifiedArgument<int>::convert(const response::Value& value)
 }
 
 template <>
-double ModifiedArgument<double>::convert(const response::Value& value)
+double Argument<double>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
@@ -639,7 +639,7 @@ double ModifiedArgument<double>::convert(const response::Value& value)
 }
 
 template <>
-std::string ModifiedArgument<std::string>::convert(const response::Value& value)
+std::string Argument<std::string>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -650,7 +650,7 @@ std::string ModifiedArgument<std::string>::convert(const response::Value& value)
 }
 
 template <>
-bool ModifiedArgument<bool>::convert(const response::Value& value)
+bool Argument<bool>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -661,13 +661,13 @@ bool ModifiedArgument<bool>::convert(const response::Value& value)
 }
 
 template <>
-response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
+response::Value Argument<response::Value>::convert(const response::Value& value)
 {
 	return response::Value(value);
 }
 
 template <>
-response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value)
+response::IdType Argument<response::IdType>::convert(const response::Value& value)
 {
 	if (!value.maybe_id())
 	{
