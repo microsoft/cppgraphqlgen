@@ -109,7 +109,7 @@ service::AwaitableResolver Human::resolveHomePlanet(service::ResolverParams&& pa
 
 service::AwaitableResolver Human::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Human)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Human)gql" }, std::move(params));
 }
 
 } // namespace object

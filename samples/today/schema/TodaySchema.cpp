@@ -49,9 +49,9 @@ today::TaskState Argument<today::TaskState>::convert(const response::Value& valu
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
+service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -63,7 +63,7 @@ service::AwaitableResolver ModifiedResult<today::TaskState>::convert(service::Aw
 }
 
 template <>
-void ModifiedResult<today::TaskState>::validateScalar(const response::Value& value)
+void Result<today::TaskState>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{

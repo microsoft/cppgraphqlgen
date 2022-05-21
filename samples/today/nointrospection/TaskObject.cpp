@@ -87,7 +87,7 @@ service::AwaitableResolver Task::resolveIsComplete(service::ResolverParams&& par
 
 service::AwaitableResolver Task::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Task)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Task)gql" }, std::move(params));
 }
 
 } // namespace object

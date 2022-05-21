@@ -99,7 +99,7 @@ service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& para
 
 service::AwaitableResolver Cat::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Cat)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Cat)gql" }, std::move(params));
 }
 
 } // namespace object

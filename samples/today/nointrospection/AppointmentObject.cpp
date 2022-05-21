@@ -109,7 +109,7 @@ service::AwaitableResolver Appointment::resolveForceError(service::ResolverParam
 
 service::AwaitableResolver Appointment::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Appointment)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Appointment)gql" }, std::move(params));
 }
 
 } // namespace object

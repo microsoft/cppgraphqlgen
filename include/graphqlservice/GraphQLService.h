@@ -592,6 +592,19 @@ enum class [[nodiscard]] TypeModifier {
 	List,
 };
 
+// Test if there are any non-None modifiers left.
+template <TypeModifier... Other>
+concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
+
+// Test if the next modifier is Nullable.
+template <TypeModifier Modifier>
+concept NullableModifier = Modifier == TypeModifier::Nullable;
+
+// Test if the next modifier is List.
+template <TypeModifier Modifier>
+concept ListModifier = Modifier == TypeModifier::List;
+
+// Convert arguments and input types with a non-templated static method.
 template <typename Type>
 struct Argument
 {
@@ -618,18 +631,6 @@ GRAPHQLSERVICE_EXPORT response::Value Argument<response::Value>::convert(
 #endif // GRAPHQL_DLLEXPORTS
 
 namespace {
-
-// Test if there are any non-None modifiers left.
-template <TypeModifier... Other>
-concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
-
-// Test if the next modifier is Nullable.
-template <TypeModifier Modifier>
-concept NullableModifier = Modifier == TypeModifier::Nullable;
-
-// Test if the next modifier is List.
-template <TypeModifier Modifier>
-concept ListModifier = Modifier == TypeModifier::List;
 
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
@@ -879,13 +880,69 @@ private:
 	ResolverMap _resolvers;
 };
 
-// Test if this Type is Object.
-template <typename Type>
-concept ObjectType = std::is_same_v<Object, Type>;
-
 // Test if this Type inherits from Object.
 template <typename Type>
 concept ObjectBaseType = std::is_base_of_v<Object, Type>;
+
+// Convert result types with non-templated static methods.
+template <typename Type>
+struct Result
+{
+	using future_type = typename std::conditional_t<ObjectBaseType<Type>,
+		AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<Type>>;
+
+	// Convert a single value of the specified type to JSON.
+	[[nodiscard]] static AwaitableResolver convert(
+		typename future_type result, ResolverParams params);
+
+	// Validate a single scalar value is the expected type.
+	static void validateScalar(const response::Value& value);
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<int>::convert(
+	AwaitableScalar<int> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<double>::convert(
+	AwaitableScalar<double> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<std::string>::convert(
+	AwaitableScalar<std::string> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<bool>::convert(
+	AwaitableScalar<bool> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::IdType>::convert(
+	AwaitableScalar<response::IdType> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::Value>::convert(
+	AwaitableScalar<response::Value> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<Object>::convert(
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
+
+// Export all of the scalar value validation methods
+template <>
+GRAPHQLSERVICE_EXPORT void Result<int>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<double>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<std::string>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<bool>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<response::IdType>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<response::Value>::validateScalar(const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
+namespace {
+
+// Test if this Type is Object.
+template <typename Type>
+concept ObjectType = std::is_same_v<Object, Type>;
 
 // Test if this Type inherits from Object but is not Object itself.
 template <typename Type>
@@ -944,10 +1001,6 @@ struct ModifiedResult
 			AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<type>>;
 	};
 
-	// Convert a single value of the specified type to JSON.
-	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type>::future_type result, ResolverParams params);
-
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static inline AwaitableResolver convert(
@@ -962,7 +1015,7 @@ struct ModifiedResult
 
 		co_await params.launch;
 
-		auto awaitedResult = co_await ModifiedResult<Object>::convert(
+		auto awaitedResult = co_await Result<Object>::convert(
 			std::static_pointer_cast<const Object>(co_await result),
 			std::move(params));
 
@@ -978,7 +1031,7 @@ struct ModifiedResult
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
 		// Just call through to the partial specialization without the modifier.
-		return convert(std::move(result), std::move(params));
+		return Result<Type>::convert(std::move(result), std::move(params));
 	}
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
@@ -1012,7 +1065,7 @@ struct ModifiedResult
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		if constexpr (!std::is_base_of_v<Object, Type>)
+		if constexpr (!ObjectBaseType<Type>)
 		{
 			auto value = result.get_value();
 
@@ -1045,7 +1098,7 @@ struct ModifiedResult
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams params) requires ListModifier<Modifier>
 	{
-		if constexpr (!std::is_base_of_v<Object, Type>)
+		if constexpr (!ObjectBaseType<Type>)
 		{
 			auto value = result.get_value();
 
@@ -1141,11 +1194,6 @@ struct ModifiedResult
 		co_return document;
 	}
 
-private
-	:
-	// Validate a single scalar value is the expected type.
-	static void
-	validateScalar(const response::Value& value);
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	static inline void validateScalar(
@@ -1154,7 +1202,7 @@ private
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
 		// Just call through to the partial specialization without the modifier.
-		validateScalar(value);
+		Result<Type>::validateScalar(value);
 	}
 
 	// Peel off nullable modifiers.
@@ -1190,14 +1238,13 @@ private
 		typename ResultTraits<Type>::future_type result, ResolverParams params,
 		ResolverCallback&& resolver)
 	{
-		static_assert(!std::is_base_of_v<Object, Type>,
-			"ModfiedResult<Object> needs special handling");
+		static_assert(!ObjectBaseType<Type>, "ModfiedResult<Object> needs special handling");
 
 		auto value = result.get_value();
 
 		if (value)
 		{
-			ModifiedResult::validateScalar(*value);
+			Result<Type>::validateScalar(*value);
 			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
 		}
 
@@ -1244,47 +1291,7 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<int>::convert(
-	AwaitableScalar<int> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<double>::convert(
-	AwaitableScalar<double> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<std::string>::convert(
-	AwaitableScalar<std::string> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<bool>::convert(
-	AwaitableScalar<bool> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IdType>::convert(
-	AwaitableScalar<response::IdType> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert(
-	AwaitableScalar<response::Value> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
-	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
-
-// Export all of the scalar value validation methods
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<int>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<double>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<std::string>::validateScalar(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<bool>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<response::IdType>::validateScalar(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<response::Value>::validateScalar(
-	const response::Value& value);
-#endif // GRAPHQL_DLLEXPORTS
+} // namespace
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.

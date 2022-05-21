@@ -75,7 +75,7 @@ service::AwaitableResolver NestedType::resolveNested(service::ResolverParams&& p
 
 service::AwaitableResolver NestedType::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(NestedType)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(NestedType)gql" }, std::move(params));
 }
 
 } // namespace object

@@ -108,7 +108,7 @@ service::AwaitableResolver Field::resolveDeprecationReason(service::ResolverPara
 
 service::AwaitableResolver Field::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(__Field)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(__Field)gql" }, std::move(params));
 }
 
 } // namespace object

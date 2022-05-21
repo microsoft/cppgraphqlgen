@@ -609,14 +609,14 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT void Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::validateScalar(
 	const response::Value& value);
@@ -1133,8 +1133,8 @@ public:
 
 public:
 	template <class T>
-	inline )cpp" << objectType.cppType
-			<< R"cpp((std::shared_ptr<T> pimpl) noexcept
+	inline )cpp"
+			<< objectType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
 			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
@@ -1308,13 +1308,15 @@ template <>
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<)cpp"
+service::AwaitableResolver Result<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::resolve(std::move(result), std::move(params),
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
@@ -1328,8 +1330,8 @@ service::AwaitableResolver ModifiedResult<)cpp"
 }
 
 template <>
-void ModifiedResult<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+void Result<)cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
@@ -2419,7 +2421,7 @@ service::AwaitableResolver )cpp"
 			   << objectType.cppType
 			   << R"cpp(::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql()cpp"
+	return service::Result<std::string>::convert(std::string{ R"gql()cpp"
 			   << objectType.type << R"cpp()gql" }, std::move(params));
 }
 )cpp";
@@ -2431,7 +2433,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
+	return service::Result<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::object::Schema>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()

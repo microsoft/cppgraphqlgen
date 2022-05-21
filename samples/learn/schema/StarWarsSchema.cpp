@@ -48,9 +48,9 @@ learn::Episode Argument<learn::Episode>::convert(const response::Value& value)
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
+service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -62,7 +62,7 @@ service::AwaitableResolver ModifiedResult<learn::Episode>::convert(service::Awai
 }
 
 template <>
-void ModifiedResult<learn::Episode>::validateScalar(const response::Value& value)
+void Result<learn::Episode>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{

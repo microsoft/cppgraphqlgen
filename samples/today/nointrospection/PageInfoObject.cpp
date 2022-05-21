@@ -74,7 +74,7 @@ service::AwaitableResolver PageInfo::resolveHasPreviousPage(service::ResolverPar
 
 service::AwaitableResolver PageInfo::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(PageInfo)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(PageInfo)gql" }, std::move(params));
 }
 
 } // namespace object
