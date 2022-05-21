@@ -106,6 +106,27 @@ std::unique_ptr<TodayMockService> mock_service() noexcept
 	return result;
 }
 
+RequestState::RequestState(size_t id)
+	: requestId(id)
+{
+}
+
+PageInfo::PageInfo(bool hasNextPage, bool hasPreviousPage)
+	: _hasNextPage(hasNextPage)
+	, _hasPreviousPage(hasPreviousPage)
+{
+}
+
+bool PageInfo::getHasNextPage() const noexcept
+{
+	return _hasNextPage;
+}
+
+bool PageInfo::getHasPreviousPage() const noexcept
+{
+	return _hasPreviousPage;
+}
+
 Appointment::Appointment(
 	response::IdType&& id, std::string&& when, std::string&& subject, bool isNow)
 	: _id(std::move(id))
@@ -115,6 +136,80 @@ Appointment::Appointment(
 {
 }
 
+const response::IdType& Appointment::id() const noexcept
+{
+	return _id;
+}
+
+service::AwaitableScalar<response::IdType> Appointment::getId() const noexcept
+{
+	return _id;
+}
+
+std::shared_ptr<const response::Value> Appointment::getWhen() const noexcept
+{
+	return _when;
+}
+
+std::shared_ptr<const response::Value> Appointment::getSubject() const noexcept
+{
+	return _subject;
+}
+
+bool Appointment::getIsNow() const noexcept
+{
+	return _isNow;
+}
+
+std::optional<std::string> Appointment::getForceError() const
+{
+	throw std::runtime_error(R"ex(this error was forced)ex");
+}
+
+AppointmentEdge::AppointmentEdge(std::shared_ptr<Appointment> appointment)
+	: _appointment(std::move(appointment))
+{
+}
+
+std::shared_ptr<object::Appointment> AppointmentEdge::getNode() const noexcept
+{
+	return std::make_shared<object::Appointment>(_appointment);
+}
+
+service::AwaitableScalar<response::Value> AppointmentEdge::getCursor() const
+{
+	co_return response::Value(co_await _appointment->getId());
+}
+
+AppointmentConnection::AppointmentConnection(
+	bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Appointment>> appointments)
+	: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
+	, _appointments(std::move(appointments))
+{
+}
+
+std::shared_ptr<object::PageInfo> AppointmentConnection::getPageInfo() const noexcept
+{
+	return std::make_shared<object::PageInfo>(_pageInfo);
+}
+
+std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>> AppointmentConnection::
+	getEdges() const noexcept
+{
+	auto result = std::make_optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>(
+		_appointments.size());
+
+	std::transform(_appointments.cbegin(),
+		_appointments.cend(),
+		result->begin(),
+		[](const std::shared_ptr<Appointment>& node) {
+			return std::make_shared<object::AppointmentEdge>(
+				std::make_shared<AppointmentEdge>(node));
+		});
+
+	return result;
+}
+
 Task::Task(response::IdType&& id, std::string&& title, bool isComplete)
 	: _id(std::move(id))
 	, _title(std::make_shared<response::Value>(std::move(title)))
@@ -122,11 +217,136 @@ Task::Task(response::IdType&& id, std::string&& title, bool isComplete)
 {
 }
 
+const response::IdType& Task::id() const
+{
+	return _id;
+}
+
+service::AwaitableScalar<response::IdType> Task::getId() const noexcept
+{
+	return _id;
+}
+
+std::shared_ptr<const response::Value> Task::getTitle() const noexcept
+{
+	return _title;
+}
+
+bool Task::getIsComplete() const noexcept
+{
+	return _isComplete;
+}
+
+TaskEdge::TaskEdge(std::shared_ptr<Task> task)
+	: _task(std::move(task))
+{
+}
+
+std::shared_ptr<object::Task> TaskEdge::getNode() const noexcept
+{
+	return std::make_shared<object::Task>(_task);
+}
+
+service::AwaitableScalar<response::Value> TaskEdge::getCursor() const noexcept
+{
+	co_return response::Value(co_await _task->getId());
+}
+
+TaskConnection::TaskConnection(
+	bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Task>> tasks)
+	: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
+	, _tasks(std::move(tasks))
+{
+}
+
+std::shared_ptr<object::PageInfo> TaskConnection::getPageInfo() const noexcept
+{
+	return std::make_shared<object::PageInfo>(_pageInfo);
+}
+
+std::optional<std::vector<std::shared_ptr<object::TaskEdge>>> TaskConnection::getEdges()
+	const noexcept
+{
+	auto result = std::make_optional<std::vector<std::shared_ptr<object::TaskEdge>>>(_tasks.size());
+
+	std::transform(_tasks.cbegin(),
+		_tasks.cend(),
+		result->begin(),
+		[](const std::shared_ptr<Task>& node) {
+			return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
+		});
+
+	return result;
+}
+
 Folder::Folder(response::IdType&& id, std::string&& name, int unreadCount)
 	: _id(std::move(id))
 	, _name(std::make_shared<response::Value>(std::move(name)))
 	, _unreadCount(unreadCount)
 {
+}
+
+const response::IdType& Folder::id() const noexcept
+{
+	return _id;
+}
+
+service::AwaitableScalar<response::IdType> Folder::getId() const noexcept
+{
+	return _id;
+}
+
+std::shared_ptr<const response::Value> Folder::getName() const noexcept
+{
+	return _name;
+}
+
+int Folder::getUnreadCount() const noexcept
+{
+	return _unreadCount;
+}
+
+FolderEdge::FolderEdge(std::shared_ptr<Folder> folder)
+	: _folder(std::move(folder))
+{
+}
+
+std::shared_ptr<object::Folder> FolderEdge::getNode() const noexcept
+{
+	return std::make_shared<object::Folder>(_folder);
+}
+
+service::AwaitableScalar<response::Value> FolderEdge::getCursor() const noexcept
+{
+	co_return response::Value(co_await _folder->getId());
+}
+
+FolderConnection::FolderConnection(
+	bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Folder>> folders)
+	: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
+	, _folders(std::move(folders))
+{
+}
+
+std::shared_ptr<object::PageInfo> FolderConnection::getPageInfo() const noexcept
+{
+	return std::make_shared<object::PageInfo>(_pageInfo);
+}
+
+std::optional<std::vector<std::shared_ptr<object::FolderEdge>>> FolderConnection::getEdges()
+	const noexcept
+{
+	auto result =
+		std::make_optional<std::vector<std::shared_ptr<object::FolderEdge>>>(_folders.size());
+
+	std::transform(_folders.cbegin(),
+		_folders.cend(),
+		result->begin(),
+		[](const std::shared_ptr<Folder>& node) {
+			return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
+		});
+
+	return result;
 }
 
 Query::Query(appointmentsLoader&& getAppointments, tasksLoader&& getTasks,
@@ -574,6 +794,23 @@ std::optional<std::string> Query::getDefault() const noexcept
 	return std::nullopt;
 }
 
+CompleteTaskPayload::CompleteTaskPayload(
+	std::shared_ptr<Task> task, std::optional<std::string>&& clientMutationId)
+	: _task(std::move(task))
+	, _clientMutationId(std::move(clientMutationId))
+{
+}
+
+std::shared_ptr<object::Task> CompleteTaskPayload::getTask() const noexcept
+{
+	return std::make_shared<object::Task>(_task);
+}
+
+const std::optional<std::string>& CompleteTaskPayload::getClientMutationId() const noexcept
+{
+	return _clientMutationId;
+}
+
 Mutation::Mutation(completeTaskMutation&& mutateCompleteTask)
 	: _mutateCompleteTask(std::move(mutateCompleteTask))
 {
@@ -598,9 +835,93 @@ double Mutation::applySetFloat(double valueArg) noexcept
 	return valueArg;
 }
 
+std::shared_ptr<object::Appointment> Subscription::getNextAppointmentChange() const
+{
+	throw std::runtime_error("Unexpected call to getNextAppointmentChange");
+}
+
+std::shared_ptr<object::Node> Subscription::getNodeChange(const response::IdType&) const
+{
+	throw std::runtime_error("Unexpected call to getNodeChange");
+}
+
 size_t NextAppointmentChange::_notifySubscribeCount = 0;
 size_t NextAppointmentChange::_subscriptionCount = 0;
 size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
+
+NextAppointmentChange::NextAppointmentChange(nextAppointmentChange&& changeNextAppointment)
+	: _changeNextAppointment(std::move(changeNextAppointment))
+{
+}
+
+size_t NextAppointmentChange::getCount(service::ResolverContext resolverContext)
+{
+	switch (resolverContext)
+	{
+		case service::ResolverContext::NotifySubscribe:
+			return _notifySubscribeCount;
+
+		case service::ResolverContext::Subscription:
+			return _subscriptionCount;
+
+		case service::ResolverContext::NotifyUnsubscribe:
+			return _notifyUnsubscribeCount;
+
+		default:
+			throw std::runtime_error("Unexpected ResolverContext");
+	}
+}
+
+std::shared_ptr<object::Appointment> NextAppointmentChange::getNextAppointmentChange(
+	const service::FieldParams& params) const
+{
+	switch (params.resolverContext)
+	{
+		case service::ResolverContext::NotifySubscribe:
+		{
+			++_notifySubscribeCount;
+			break;
+		}
+
+		case service::ResolverContext::Subscription:
+		{
+			++_subscriptionCount;
+			break;
+		}
+
+		case service::ResolverContext::NotifyUnsubscribe:
+		{
+			++_notifyUnsubscribeCount;
+			break;
+		}
+
+		default:
+			throw std::runtime_error("Unexpected ResolverContext");
+	}
+
+	return std::make_shared<object::Appointment>(_changeNextAppointment(params.state));
+}
+
+std::shared_ptr<object::Node> NextAppointmentChange::getNodeChange(const response::IdType&) const
+{
+	throw std::runtime_error("Unexpected call to getNodeChange");
+}
+
+NodeChange::NodeChange(nodeChange&& changeNode)
+	: _changeNode(std::move(changeNode))
+{
+}
+
+std::shared_ptr<object::Appointment> NodeChange::getNextAppointmentChange() const
+{
+	throw std::runtime_error("Unexpected call to getNextAppointmentChange");
+}
+
+std::shared_ptr<object::Node> NodeChange::getNodeChange(
+	const service::FieldParams& params, response::IdType&& idArg) const
+{
+	return _changeNode(params.resolverContext, params.state, std::move(idArg));
+}
 
 std::stack<CapturedParams> NestedType::_capturedParams;
 
