@@ -165,43 +165,43 @@ ServiceResponse parseServiceResponse(response::Value response)
 }
 
 template <>
-response::Value ModifiedVariable<int>::serialize(int&& value)
+response::Value Variable<int>::serialize(int&& value)
 {
 	return response::Value { value };
 }
 
 template <>
-response::Value ModifiedVariable<double>::serialize(double&& value)
+response::Value Variable<double>::serialize(double&& value)
 {
 	return response::Value { value };
 }
 
 template <>
-response::Value ModifiedVariable<std::string>::serialize(std::string&& value)
+response::Value Variable<std::string>::serialize(std::string&& value)
 {
 	return response::Value { std::move(value) };
 }
 
 template <>
-response::Value ModifiedVariable<bool>::serialize(bool&& value)
+response::Value Variable<bool>::serialize(bool&& value)
 {
 	return response::Value { value };
 }
 
 template <>
-response::Value ModifiedVariable<response::Value>::serialize(response::Value&& value)
+response::Value Variable<response::Value>::serialize(response::Value&& value)
 {
 	return response::Value { std::move(value) };
 }
 
 template <>
-response::Value ModifiedVariable<response::IdType>::serialize(response::IdType&& value)
+response::Value Variable<response::IdType>::serialize(response::IdType&& value)
 {
 	return response::Value { std::move(value) };
 }
 
 template <>
-int ModifiedResponse<int>::parse(response::Value&& value)
+int Response<int>::parse(response::Value&& value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -212,7 +212,7 @@ int ModifiedResponse<int>::parse(response::Value&& value)
 }
 
 template <>
-double ModifiedResponse<double>::parse(response::Value&& value)
+double Response<double>::parse(response::Value&& value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
@@ -223,7 +223,7 @@ double ModifiedResponse<double>::parse(response::Value&& value)
 }
 
 template <>
-std::string ModifiedResponse<std::string>::parse(response::Value&& value)
+std::string Response<std::string>::parse(response::Value&& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -234,7 +234,7 @@ std::string ModifiedResponse<std::string>::parse(response::Value&& value)
 }
 
 template <>
-bool ModifiedResponse<bool>::parse(response::Value&& value)
+bool Response<bool>::parse(response::Value&& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -245,13 +245,13 @@ bool ModifiedResponse<bool>::parse(response::Value&& value)
 }
 
 template <>
-response::Value ModifiedResponse<response::Value>::parse(response::Value&& value)
+response::Value Response<response::Value>::parse(response::Value&& value)
 {
 	return { std::move(value) };
 }
 
 template <>
-response::IdType ModifiedResponse<response::IdType>::parse(response::Value&& value)
+response::IdType Response<response::IdType>::parse(response::Value&& value)
 {
 	if (!value.maybe_id())
 	{

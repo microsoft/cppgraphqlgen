@@ -197,22 +197,22 @@ private:
 	template <class T>
 	struct [[nodiscard]] Model : Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl)
+		inline Model(std::shared_ptr<T>&& pimpl)
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] bool await_ready() const final
+		[[nodiscard]] inline bool await_ready() const final
 		{
 			return _pimpl->await_ready();
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) const final
+		inline void await_suspend(coro::coroutine_handle<> h) const final
 		{
 			_pimpl->await_suspend(std::move(h));
 		}
 
-		void await_resume() const final
+		inline void await_resume() const final
 		{
 			_pimpl->await_resume();
 		}
@@ -226,7 +226,7 @@ private:
 public:
 	// Type-erased explicit constructor for a custom awaitable.
 	template <class T>
-	explicit await_async(std::shared_ptr<T> pimpl)
+	inline explicit await_async(std::shared_ptr<T> pimpl)
 		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
 	{
 	}
@@ -300,39 +300,39 @@ class [[nodiscard]] AwaitableScalar
 {
 public:
 	template <typename U>
-	AwaitableScalar(U&& value)
+	inline AwaitableScalar(U&& value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableScalar<T> get_return_object() noexcept
+		[[nodiscard]] inline AwaitableScalar<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		inline coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		inline coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		inline void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
 		}
 
-		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		inline void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
 		{
 			_promise.set_value(std::move(value));
 		}
 
-		void unhandled_exception() noexcept
+		inline void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -341,7 +341,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard]] inline bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -366,7 +366,7 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	inline void await_suspend(coro::coroutine_handle<> h) const
 	{
 		std::thread(
 			[this](coro::coroutine_handle<> h) noexcept {
@@ -377,7 +377,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard]] inline T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -400,7 +400,7 @@ public:
 			std::move(_value));
 	}
 
-	[[nodiscard]] std::shared_ptr<const response::Value> get_value() noexcept
+	[[nodiscard]] inline std::shared_ptr<const response::Value> get_value() noexcept
 	{
 		return std::visit(
 			[](auto&& value) noexcept {
@@ -429,39 +429,39 @@ class [[nodiscard]] AwaitableObject
 {
 public:
 	template <typename U>
-	AwaitableObject(U&& value)
+	inline AwaitableObject(U&& value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableObject<T> get_return_object() noexcept
+		[[nodiscard]] inline AwaitableObject<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		inline coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		inline coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		inline void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
 		}
 
-		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		inline void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
 		{
 			_promise.set_value(std::move(value));
 		}
 
-		void unhandled_exception() noexcept
+		inline void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -470,7 +470,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard]] inline bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -490,7 +490,7 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	inline void await_suspend(coro::coroutine_handle<> h) const
 	{
 		std::thread(
 			[this](coro::coroutine_handle<> h) noexcept {
@@ -501,7 +501,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard]] inline T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -592,6 +592,46 @@ enum class [[nodiscard]] TypeModifier {
 	List,
 };
 
+// Test if there are any non-None modifiers left.
+template <TypeModifier... Other>
+concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
+
+// Test if the next modifier is Nullable.
+template <TypeModifier Modifier>
+concept NullableModifier = Modifier == TypeModifier::Nullable;
+
+// Test if the next modifier is List.
+template <TypeModifier Modifier>
+concept ListModifier = Modifier == TypeModifier::List;
+
+// Convert arguments and input types with a non-templated static method.
+template <typename Type>
+struct Argument
+{
+	// Convert a single value to the specified type.
+	[[nodiscard]] static Type convert(const response::Value& value);
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT int Argument<int>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT double Argument<double>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT std::string Argument<std::string>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT bool Argument<bool>::convert(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT response::IdType Argument<response::IdType>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT response::Value Argument<response::Value>::convert(
+	const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
+namespace {
+
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
 concept ScalarArgumentClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
@@ -600,10 +640,6 @@ concept ScalarArgumentClass = std::is_same_v<Type, std::string> || std::is_same_
 // Any non-scalar class used in an argument is a generated INPUT_OBJECT type.
 template <typename Type>
 concept InputArgumentClass = std::is_class_v<Type> && !ScalarArgumentClass<Type>;
-
-// Test if there are any non-None modifiers left.
-template <TypeModifier... Other>
-concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Special-case an innermost nullable INPUT_OBJECT type.
 template <typename Type, TypeModifier... Other>
@@ -634,15 +670,13 @@ struct ModifiedArgument
 		using type = U;
 	};
 
-	// Convert a single value to the specified type.
-	[[nodiscard]] static Type convert(const response::Value& value);
-
 	// Call convert on this type without any modifiers.
-	[[nodiscard]] static Type require(std::string_view name, const response::Value& arguments)
+	[[nodiscard]] static inline Type require(
+		std::string_view name, const response::Value& arguments)
 	{
 		try
 		{
-			return convert(arguments[name]);
+			return Argument<Type>::convert(arguments[name]);
 		}
 		catch (schema_exception& ex)
 		{
@@ -662,7 +696,7 @@ struct ModifiedArgument
 	}
 
 	// Wrap require in a try/catch block.
-	[[nodiscard]] static std::pair<Type, bool> find(
+	[[nodiscard]] static inline std::pair<Type, bool> find(
 		const std::string& name, const response::Value& arguments) noexcept
 	{
 		try
@@ -677,8 +711,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier, Type> require(
-		std::string_view name, const response::Value& arguments)
+	[[nodiscard]] static inline Type require(std::string_view name,
+		const response::Value& arguments) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
@@ -688,9 +722,8 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
-		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	require(std::string_view name, const response::Value& arguments)
+	[[nodiscard]] static inline typename ArgumentTraits<Type, Modifier, Other...>::type require(
+		std::string_view name, const response::Value& arguments) requires NullableModifier<Modifier>
 	{
 		const auto& valueItr = arguments.find(name);
 
@@ -714,9 +747,8 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
-		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	require(std::string_view name, const response::Value& arguments)
+	[[nodiscard]] static inline typename ArgumentTraits<Type, Modifier, Other...>::type require(
+		std::string_view name, const response::Value& arguments) requires ListModifier<Modifier>
 	{
 		const auto& values = arguments[name];
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
@@ -738,7 +770,8 @@ struct ModifiedArgument
 
 	// Wrap require with modifiers in a try/catch block.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool>
+	[[nodiscard]] static inline std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type,
+		bool>
 	find(std::string_view name, const response::Value& arguments) noexcept
 	{
 		try
@@ -753,9 +786,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static
-		typename std::enable_if_t<TypeModifier::None == Modifier && sizeof...(Other) == 0, Type>
-		duplicate(const Type& value)
+	[[nodiscard]] static inline Type duplicate(
+		const Type& value) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just copy the value.
 		return Type { value };
@@ -763,9 +795,9 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier,
-		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
+	[[nodiscard]] static inline typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
+		const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue) requires
+		NullableModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result {};
 
@@ -787,9 +819,9 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::List == Modifier,
-		typename ArgumentTraits<Type, Modifier, Other...>::type>
-	duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
+	[[nodiscard]] static inline typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
+		const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue) requires
+		ListModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
@@ -809,24 +841,7 @@ using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-template <>
-GRAPHQLSERVICE_EXPORT int ModifiedArgument<int>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT double ModifiedArgument<double>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT std::string ModifiedArgument<std::string>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT bool ModifiedArgument<bool>::convert(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::IdType ModifiedArgument<response::IdType>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT response::Value ModifiedArgument<response::Value>::convert(
-	const response::Value& value);
-#endif // GRAPHQL_DLLEXPORTS
+} // namespace
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -865,6 +880,97 @@ private:
 	ResolverMap _resolvers;
 };
 
+// Test if this Type inherits from Object.
+template <typename Type>
+concept ObjectBaseType = std::is_base_of_v<Object, Type>;
+
+// Convert result types with non-templated static methods.
+template <typename Type>
+struct Result
+{
+	using future_type = typename std::conditional_t<ObjectBaseType<Type>,
+		AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<Type>>;
+
+	// Convert a single value of the specified type to JSON.
+	[[nodiscard]] static AwaitableResolver convert(future_type result, ResolverParams params);
+
+	// Validate a single scalar value is the expected type.
+	static void validateScalar(const response::Value& value);
+};
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<int>::convert(
+	AwaitableScalar<int> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<double>::convert(
+	AwaitableScalar<double> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<std::string>::convert(
+	AwaitableScalar<std::string> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<bool>::convert(
+	AwaitableScalar<bool> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::IdType>::convert(
+	AwaitableScalar<response::IdType> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::Value>::convert(
+	AwaitableScalar<response::Value> result, ResolverParams params);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<Object>::convert(
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
+
+// Export all of the scalar value validation methods
+template <>
+GRAPHQLSERVICE_EXPORT void Result<int>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<double>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<std::string>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<bool>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<response::IdType>::validateScalar(const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<response::Value>::validateScalar(const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
+namespace {
+
+// Test if this Type is Object.
+template <typename Type>
+concept ObjectType = std::is_same_v<Object, Type>;
+
+// Test if this Type inherits from Object but is not Object itself.
+template <typename Type>
+concept ObjectDerivedType = ObjectBaseType<Type> && !ObjectType<Type>;
+
+// Test if a nullable type is std::shared_ptr<Type> or std::optional<T>.
+template <typename Type, TypeModifier... Other>
+concept NullableSharedPtr = OnlyNoneModifiers<Other...> && ObjectBaseType<Type>;
+
+// Test if this method should std::static_pointer_cast an ObjectDerivedType to
+// std::shared_ptr<const Object>.
+template <typename Type, TypeModifier Modifier>
+concept NoneObjectDerivedType = OnlyNoneModifiers<Modifier> && ObjectDerivedType<Type>;
+
+// Test all other result types to see if they should call the specialized convert method without
+// template parameters.
+template <typename Type, TypeModifier Modifier>
+concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier> && !ObjectDerivedType<Type>;
+
+// Test if this method should return a nullable std::shared_ptr<Type>
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NullableResultSharedPtr =
+	NullableModifier<Modifier> && OnlyNoneModifiers<Other...> && ObjectBaseType<Type>;
+
+// Test if this method should return a nullable std::optional<Type>
+template <typename Type, TypeModifier Modifier, TypeModifier... Other>
+concept NullableResultOptional =
+	NullableModifier<Modifier> && !(OnlyNoneModifiers<Other...> && ObjectBaseType<Type>);
+
 // Convert the result of a resolver function with chained type modifiers that add nullable or
 // list wrappers. This is the inverse of ModifiedArgument for output types instead of input types.
 template <typename Type>
@@ -874,39 +980,31 @@ struct ModifiedResult
 	template <typename U, TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	struct ResultTraits
 	{
-		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<
-				std::is_base_of_v<Object,
-					U> && std::is_same_v<std::shared_ptr<U>, typename ResultTraits<U, Other...>::type>,
-				std::shared_ptr<U>, std::optional<typename ResultTraits<U, Other...>::type>>,
-			typename std::conditional_t<TypeModifier::List == Modifier,
+		using type = typename std::conditional_t<NullableModifier<Modifier>,
+			typename std::conditional_t<NullableSharedPtr<U, Other...>, std::shared_ptr<U>,
+				std::optional<typename ResultTraits<U, Other...>::type>>,
+			typename std::conditional_t<ListModifier<Modifier>,
 				std::vector<typename ResultTraits<U, Other...>::type>,
-				typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>>>;
+				typename std::conditional_t<ObjectBaseType<U>, std::shared_ptr<U>, U>>>;
 
-		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
-			AwaitableObject<type>, AwaitableScalar<type>>;
+		using future_type = typename std::conditional_t<ObjectBaseType<U>, AwaitableObject<type>,
+			AwaitableScalar<type>>;
 	};
 
 	template <typename U>
 	struct ResultTraits<U, TypeModifier::None>
 	{
-		using type =
-			typename std::conditional_t<std::is_base_of_v<Object, U>, std::shared_ptr<U>, U>;
+		using type = typename std::conditional_t<ObjectBaseType<U>, std::shared_ptr<U>, U>;
 
-		using future_type = typename std::conditional_t<std::is_base_of_v<Object, U>,
+		using future_type = typename std::conditional_t<ObjectBaseType<U>,
 			AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<type>>;
 	};
 
-	// Convert a single value of the specified type to JSON.
-	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type>::future_type result, ResolverParams params);
-
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier
-			&& !std::is_same_v<Object, Type> && std::is_base_of_v<Object, Type>,
-		AwaitableResolver>
-	convert(AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params)
+	[[nodiscard]] static inline AwaitableResolver convert(
+		AwaitableObject<typename ResultTraits<Type>::type> result,
+		ResolverParams params) requires NoneObjectDerivedType<Type, Modifier>
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
@@ -916,7 +1014,7 @@ struct ModifiedResult
 
 		co_await params.launch;
 
-		auto awaitedResult = co_await ModifiedResult<Object>::convert(
+		auto awaitedResult = co_await Result<Object>::convert(
 			std::static_pointer_cast<const Object>(co_await result),
 			std::move(params));
 
@@ -925,24 +1023,21 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::None == Modifier
-			&& (std::is_same_v<Object, Type> || !std::is_base_of_v<Object, Type>),
-		AwaitableResolver>
-	convert(typename ResultTraits<Type>::future_type result, ResolverParams params)
+	[[nodiscard]] static inline AwaitableResolver convert(
+		typename ResultTraits<Type>::future_type result,
+		ResolverParams params) requires NoneScalarOrObjectType<Type, Modifier>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
 		// Just call through to the partial specialization without the modifier.
-		return convert(std::move(result), std::move(params));
+		return Result<Type>::convert(std::move(result), std::move(params));
 	}
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier
-			&& std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		AwaitableResolver>
-	convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+	[[nodiscard]] static inline AwaitableResolver convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams params) requires NullableResultSharedPtr<Type, Modifier, Other...>
 	{
 		co_await params.launch;
 
@@ -961,17 +1056,15 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename std::enable_if_t<TypeModifier::Nullable == Modifier
-			&& !std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type, Other...>::type>,
-		AwaitableResolver>
-	convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+	[[nodiscard]] static inline AwaitableResolver convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams params) requires NullableResultOptional<Type, Modifier, Other...>
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>,
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
 			"this is the optional version");
 
-		if constexpr (!std::is_base_of_v<Object, Type>)
+		if constexpr (!ObjectBaseType<Type>)
 		{
 			auto value = result.get_value();
 
@@ -1000,12 +1093,11 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static
-		typename std::enable_if_t<TypeModifier::List == Modifier, AwaitableResolver>
-		convert(typename ResultTraits<Type, Modifier, Other...>::future_type result,
-			ResolverParams params)
+	[[nodiscard]] static inline AwaitableResolver convert(
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams params) requires ListModifier<Modifier>
 	{
-		if constexpr (!std::is_base_of_v<Object, Type>)
+		if constexpr (!ObjectBaseType<Type>)
 		{
 			auto value = result.get_value();
 
@@ -1101,25 +1193,21 @@ struct ModifiedResult
 		co_return document;
 	}
 
-private:
-	// Validate a single scalar value is the expected type.
-	static void validateScalar(const response::Value& value);
-
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static void validateScalar(
-		typename std::enable_if_t<TypeModifier::None == Modifier, const response::Value&> value)
+	static inline void validateScalar(
+		const response::Value& value) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
 		// Just call through to the partial specialization without the modifier.
-		validateScalar(value);
+		Result<Type>::validateScalar(value);
 	}
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(
-		typename std::enable_if_t<TypeModifier::Nullable == Modifier, const response::Value&> value)
+	static inline void validateScalar(
+		const response::Value& value) requires NullableModifier<Modifier>
 	{
 		if (value.type() != response::Type::Null)
 		{
@@ -1129,8 +1217,7 @@ private:
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(
-		typename std::enable_if_t<TypeModifier::List == Modifier, const response::Value&> value)
+	static inline void validateScalar(const response::Value& value) requires ListModifier<Modifier>
 	{
 		if (value.type() != response::Type::List)
 		{
@@ -1146,17 +1233,17 @@ private:
 	using ResolverCallback =
 		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
-	[[nodiscard]] static AwaitableResolver resolve(typename ResultTraits<Type>::future_type result,
-		ResolverParams params, ResolverCallback&& resolver)
+	[[nodiscard]] static inline AwaitableResolver resolve(
+		typename ResultTraits<Type>::future_type result, ResolverParams params,
+		ResolverCallback&& resolver)
 	{
-		static_assert(!std::is_base_of_v<Object, Type>,
-			"ModfiedResult<Object> needs special handling");
+		static_assert(!ObjectBaseType<Type>, "ModfiedResult<Object> needs special handling");
 
 		auto value = result.get_value();
 
 		if (value)
 		{
-			ModifiedResult::validateScalar(*value);
+			Result<Type>::validateScalar(*value);
 			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
 		}
 
@@ -1203,47 +1290,7 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<int>::convert(
-	AwaitableScalar<int> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<double>::convert(
-	AwaitableScalar<double> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<std::string>::convert(
-	AwaitableScalar<std::string> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<bool>::convert(
-	AwaitableScalar<bool> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::IdType>::convert(
-	AwaitableScalar<response::IdType> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<response::Value>::convert(
-	AwaitableScalar<response::Value> result, ResolverParams params);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<Object>::convert(
-	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
-
-// Export all of the scalar value validation methods
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<int>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<double>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<std::string>::validateScalar(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<bool>::validateScalar(const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<response::IdType>::validateScalar(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<response::Value>::validateScalar(
-	const response::Value& value);
-#endif // GRAPHQL_DLLEXPORTS
+} // namespace
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.

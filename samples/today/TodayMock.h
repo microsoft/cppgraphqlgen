@@ -43,10 +43,7 @@ std::unique_ptr<TodayMockService> mock_service() noexcept;
 
 struct RequestState : service::RequestState
 {
-	RequestState(size_t id)
-		: requestId(id)
-	{
-	}
+	RequestState(size_t id);
 
 	const size_t requestId;
 
@@ -125,21 +122,10 @@ private:
 class PageInfo
 {
 public:
-	explicit PageInfo(bool hasNextPage, bool hasPreviousPage)
-		: _hasNextPage(hasNextPage)
-		, _hasPreviousPage(hasPreviousPage)
-	{
-	}
+	explicit PageInfo(bool hasNextPage, bool hasPreviousPage);
 
-	bool getHasNextPage() const noexcept
-	{
-		return _hasNextPage;
-	}
-
-	bool getHasPreviousPage() const noexcept
-	{
-		return _hasPreviousPage;
-	}
+	bool getHasNextPage() const noexcept;
+	bool getHasPreviousPage() const noexcept;
 
 private:
 	const bool _hasNextPage;
@@ -153,35 +139,13 @@ public:
 		response::IdType&& id, std::string&& when, std::string&& subject, bool isNow);
 
 	// EdgeConstraints accessor
-	const response::IdType& id() const noexcept
-	{
-		return _id;
-	}
+	const response::IdType& id() const noexcept;
 
-	service::AwaitableScalar<response::IdType> getId() const noexcept
-	{
-		return _id;
-	}
-
-	std::shared_ptr<const response::Value> getWhen() const noexcept
-	{
-		return _when;
-	}
-
-	std::shared_ptr<const response::Value> getSubject() const noexcept
-	{
-		return _subject;
-	}
-
-	bool getIsNow() const noexcept
-	{
-		return _isNow;
-	}
-
-	std::optional<std::string> getForceError() const
-	{
-		throw std::runtime_error(R"ex(this error was forced)ex");
-	}
+	service::AwaitableScalar<response::IdType> getId() const noexcept;
+	std::shared_ptr<const response::Value> getWhen() const noexcept;
+	std::shared_ptr<const response::Value> getSubject() const noexcept;
+	bool getIsNow() const noexcept;
+	std::optional<std::string> getForceError() const;
 
 private:
 	response::IdType _id;
@@ -193,20 +157,10 @@ private:
 class AppointmentEdge
 {
 public:
-	explicit AppointmentEdge(std::shared_ptr<Appointment> appointment)
-		: _appointment(std::move(appointment))
-	{
-	}
+	explicit AppointmentEdge(std::shared_ptr<Appointment> appointment);
 
-	std::shared_ptr<object::Appointment> getNode() const noexcept
-	{
-		return std::make_shared<object::Appointment>(_appointment);
-	}
-
-	service::AwaitableScalar<response::Value> getCursor() const
-	{
-		co_return response::Value(co_await _appointment->getId());
-	}
+	std::shared_ptr<object::Appointment> getNode() const noexcept;
+	service::AwaitableScalar<response::Value> getCursor() const;
 
 private:
 	std::shared_ptr<Appointment> _appointment;
@@ -216,32 +170,10 @@ class AppointmentConnection
 {
 public:
 	explicit AppointmentConnection(bool hasNextPage, bool hasPreviousPage,
-		std::vector<std::shared_ptr<Appointment>> appointments)
-		: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
-		, _appointments(std::move(appointments))
-	{
-	}
+		std::vector<std::shared_ptr<Appointment>> appointments);
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept
-	{
-		return std::make_shared<object::PageInfo>(_pageInfo);
-	}
-
-	std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>> getEdges() const noexcept
-	{
-		auto result = std::make_optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>(
-			_appointments.size());
-
-		std::transform(_appointments.cbegin(),
-			_appointments.cend(),
-			result->begin(),
-			[](const std::shared_ptr<Appointment>& node) {
-				return std::make_shared<object::AppointmentEdge>(
-					std::make_shared<AppointmentEdge>(node));
-			});
-
-		return result;
-	}
+	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept;
+	std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>> getEdges() const noexcept;
 
 private:
 	std::shared_ptr<PageInfo> _pageInfo;
@@ -254,25 +186,11 @@ public:
 	explicit Task(response::IdType&& id, std::string&& title, bool isComplete);
 
 	// EdgeConstraints accessor
-	const response::IdType& id() const
-	{
-		return _id;
-	}
+	const response::IdType& id() const;
 
-	service::AwaitableScalar<response::IdType> getId() const noexcept
-	{
-		return _id;
-	}
-
-	std::shared_ptr<const response::Value> getTitle() const noexcept
-	{
-		return _title;
-	}
-
-	bool getIsComplete() const noexcept
-	{
-		return _isComplete;
-	}
+	service::AwaitableScalar<response::IdType> getId() const noexcept;
+	std::shared_ptr<const response::Value> getTitle() const noexcept;
+	bool getIsComplete() const noexcept;
 
 private:
 	response::IdType _id;
@@ -283,20 +201,10 @@ private:
 class TaskEdge
 {
 public:
-	explicit TaskEdge(std::shared_ptr<Task> task)
-		: _task(std::move(task))
-	{
-	}
+	explicit TaskEdge(std::shared_ptr<Task> task);
 
-	std::shared_ptr<object::Task> getNode() const noexcept
-	{
-		return std::make_shared<object::Task>(_task);
-	}
-
-	service::AwaitableScalar<response::Value> getCursor() const noexcept
-	{
-		co_return response::Value(co_await _task->getId());
-	}
+	std::shared_ptr<object::Task> getNode() const noexcept;
+	service::AwaitableScalar<response::Value> getCursor() const noexcept;
 
 private:
 	std::shared_ptr<Task> _task;
@@ -306,31 +214,10 @@ class TaskConnection
 {
 public:
 	explicit TaskConnection(
-		bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Task>> tasks)
-		: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
-		, _tasks(std::move(tasks))
-	{
-	}
+		bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Task>> tasks);
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept
-	{
-		return std::make_shared<object::PageInfo>(_pageInfo);
-	}
-
-	std::optional<std::vector<std::shared_ptr<object::TaskEdge>>> getEdges() const noexcept
-	{
-		auto result =
-			std::make_optional<std::vector<std::shared_ptr<object::TaskEdge>>>(_tasks.size());
-
-		std::transform(_tasks.cbegin(),
-			_tasks.cend(),
-			result->begin(),
-			[](const std::shared_ptr<Task>& node) {
-				return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
-			});
-
-		return result;
-	}
+	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept;
+	std::optional<std::vector<std::shared_ptr<object::TaskEdge>>> getEdges() const noexcept;
 
 private:
 	std::shared_ptr<PageInfo> _pageInfo;
@@ -343,25 +230,11 @@ public:
 	explicit Folder(response::IdType&& id, std::string&& name, int unreadCount);
 
 	// EdgeConstraints accessor
-	const response::IdType& id() const noexcept
-	{
-		return _id;
-	}
+	const response::IdType& id() const noexcept;
 
-	service::AwaitableScalar<response::IdType> getId() const noexcept
-	{
-		return _id;
-	}
-
-	std::shared_ptr<const response::Value> getName() const noexcept
-	{
-		return _name;
-	}
-
-	int getUnreadCount() const noexcept
-	{
-		return _unreadCount;
-	}
+	service::AwaitableScalar<response::IdType> getId() const noexcept;
+	std::shared_ptr<const response::Value> getName() const noexcept;
+	int getUnreadCount() const noexcept;
 
 private:
 	response::IdType _id;
@@ -372,20 +245,10 @@ private:
 class FolderEdge
 {
 public:
-	explicit FolderEdge(std::shared_ptr<Folder> folder)
-		: _folder(std::move(folder))
-	{
-	}
+	explicit FolderEdge(std::shared_ptr<Folder> folder);
 
-	std::shared_ptr<object::Folder> getNode() const noexcept
-	{
-		return std::make_shared<object::Folder>(_folder);
-	}
-
-	service::AwaitableScalar<response::Value> getCursor() const noexcept
-	{
-		co_return response::Value(co_await _folder->getId());
-	}
+	std::shared_ptr<object::Folder> getNode() const noexcept;
+	service::AwaitableScalar<response::Value> getCursor() const noexcept;
 
 private:
 	std::shared_ptr<Folder> _folder;
@@ -395,31 +258,10 @@ class FolderConnection
 {
 public:
 	explicit FolderConnection(
-		bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Folder>> folders)
-		: _pageInfo(std::make_shared<PageInfo>(hasNextPage, hasPreviousPage))
-		, _folders(std::move(folders))
-	{
-	}
+		bool hasNextPage, bool hasPreviousPage, std::vector<std::shared_ptr<Folder>> folders);
 
-	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept
-	{
-		return std::make_shared<object::PageInfo>(_pageInfo);
-	}
-
-	std::optional<std::vector<std::shared_ptr<object::FolderEdge>>> getEdges() const noexcept
-	{
-		auto result =
-			std::make_optional<std::vector<std::shared_ptr<object::FolderEdge>>>(_folders.size());
-
-		std::transform(_folders.cbegin(),
-			_folders.cend(),
-			result->begin(),
-			[](const std::shared_ptr<Folder>& node) {
-				return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
-			});
-
-		return result;
-	}
+	std::shared_ptr<object::PageInfo> getPageInfo() const noexcept;
+	std::optional<std::vector<std::shared_ptr<object::FolderEdge>>> getEdges() const noexcept;
 
 private:
 	std::shared_ptr<PageInfo> _pageInfo;
@@ -430,21 +272,10 @@ class CompleteTaskPayload
 {
 public:
 	explicit CompleteTaskPayload(
-		std::shared_ptr<Task> task, std::optional<std::string>&& clientMutationId)
-		: _task(std::move(task))
-		, _clientMutationId(std::move(clientMutationId))
-	{
-	}
+		std::shared_ptr<Task> task, std::optional<std::string>&& clientMutationId);
 
-	std::shared_ptr<object::Task> getTask() const noexcept
-	{
-		return std::make_shared<object::Task>(_task);
-	}
-
-	const std::optional<std::string>& getClientMutationId() const noexcept
-	{
-		return _clientMutationId;
-	}
+	std::shared_ptr<object::Task> getTask() const noexcept;
+	const std::optional<std::string>& getClientMutationId() const noexcept;
 
 private:
 	std::shared_ptr<Task> _task;
@@ -475,15 +306,8 @@ class Subscription
 public:
 	explicit Subscription() = default;
 
-	std::shared_ptr<object::Appointment> getNextAppointmentChange() const
-	{
-		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
-	}
-
-	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const
-	{
-		throw std::runtime_error("Unexpected call to getNodeChange");
-	}
+	std::shared_ptr<object::Appointment> getNextAppointmentChange() const;
+	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const;
 };
 
 class NextAppointmentChange
@@ -492,63 +316,13 @@ public:
 	using nextAppointmentChange =
 		std::function<std::shared_ptr<Appointment>(const std::shared_ptr<service::RequestState>&)>;
 
-	explicit NextAppointmentChange(nextAppointmentChange&& changeNextAppointment)
-		: _changeNextAppointment(std::move(changeNextAppointment))
-	{
-	}
+	explicit NextAppointmentChange(nextAppointmentChange&& changeNextAppointment);
 
-	static size_t getCount(service::ResolverContext resolverContext)
-	{
-		switch (resolverContext)
-		{
-			case service::ResolverContext::NotifySubscribe:
-				return _notifySubscribeCount;
-
-			case service::ResolverContext::Subscription:
-				return _subscriptionCount;
-
-			case service::ResolverContext::NotifyUnsubscribe:
-				return _notifyUnsubscribeCount;
-
-			default:
-				throw std::runtime_error("Unexpected ResolverContext");
-		}
-	}
+	static size_t getCount(service::ResolverContext resolverContext);
 
 	std::shared_ptr<object::Appointment> getNextAppointmentChange(
-		const service::FieldParams& params) const
-	{
-		switch (params.resolverContext)
-		{
-			case service::ResolverContext::NotifySubscribe:
-			{
-				++_notifySubscribeCount;
-				break;
-			}
-
-			case service::ResolverContext::Subscription:
-			{
-				++_subscriptionCount;
-				break;
-			}
-
-			case service::ResolverContext::NotifyUnsubscribe:
-			{
-				++_notifyUnsubscribeCount;
-				break;
-			}
-
-			default:
-				throw std::runtime_error("Unexpected ResolverContext");
-		}
-
-		return std::make_shared<object::Appointment>(_changeNextAppointment(params.state));
-	}
-
-	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const
-	{
-		throw std::runtime_error("Unexpected call to getNodeChange");
-	}
+		const service::FieldParams& params) const;
+	std::shared_ptr<object::Node> getNodeChange(const response::IdType&) const;
 
 private:
 	nextAppointmentChange _changeNextAppointment;
@@ -565,21 +339,11 @@ public:
 		std::function<std::shared_ptr<object::Node>(service::ResolverContext resolverContext,
 			const std::shared_ptr<service::RequestState>&, response::IdType&&)>;
 
-	explicit NodeChange(nodeChange&& changeNode)
-		: _changeNode(std::move(changeNode))
-	{
-	}
+	explicit NodeChange(nodeChange&& changeNode);
 
-	std::shared_ptr<object::Appointment> getNextAppointmentChange() const
-	{
-		throw std::runtime_error("Unexpected call to getNextAppointmentChange");
-	}
-
+	std::shared_ptr<object::Appointment> getNextAppointmentChange() const;
 	std::shared_ptr<object::Node> getNodeChange(
-		const service::FieldParams& params, response::IdType&& idArg) const
-	{
-		return _changeNode(params.resolverContext, params.state, std::move(idArg));
-	}
+		const service::FieldParams& params, response::IdType&& idArg) const;
 
 private:
 	nodeChange _changeNode;

@@ -31,27 +31,27 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] inline service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] inline service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->beginSelectionSet(params);
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->endSelectionSet(params);
 		}
@@ -69,7 +69,7 @@ private:
 
 public:
 	template <class T>
-	Sentient(std::shared_ptr<T> pimpl) noexcept
+	inline Sentient(std::shared_ptr<T> pimpl) noexcept
 		: Sentient { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<Sentient>(), "Sentient is not implemented");

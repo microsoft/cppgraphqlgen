@@ -124,12 +124,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getIdWithParams<T>)
 			{
@@ -142,7 +142,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getNameWithParams<T>)
 			{
@@ -155,7 +155,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Character>>>> getFriends(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getFriendsWithParams<T>)
 			{
@@ -168,7 +168,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::vector<std::optional<Episode>>>> getAppearsIn(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getAppearsInWithParams<T>)
 			{
@@ -181,7 +181,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::HumanHas::getHomePlanetWithParams<T>)
 			{
@@ -194,7 +194,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::HumanHas::beginSelectionSet<T>)
 			{
@@ -202,7 +202,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::HumanHas::endSelectionSet<T>)
 			{
@@ -235,7 +235,7 @@ private:
 
 public:
 	template <class T>
-	Human(std::shared_ptr<T> pimpl) noexcept
+	inline Human(std::shared_ptr<T> pimpl) noexcept
 		: Human { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

@@ -82,12 +82,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AlienHas::getNameWithParams<T>)
 			{
@@ -103,7 +103,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getHomePlanet(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AlienHas::getHomePlanetWithParams<T>)
 			{
@@ -119,7 +119,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::AlienHas::beginSelectionSet<T>)
 			{
@@ -127,7 +127,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::AlienHas::endSelectionSet<T>)
 			{
@@ -163,7 +163,7 @@ private:
 
 public:
 	template <class T>
-	Alien(std::shared_ptr<T> pimpl) noexcept
+	inline Alien(std::shared_ptr<T> pimpl) noexcept
 		: Alien { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

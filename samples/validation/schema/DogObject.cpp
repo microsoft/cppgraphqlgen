@@ -124,7 +124,7 @@ service::AwaitableResolver Dog::resolveOwner(service::ResolverParams&& params) c
 
 service::AwaitableResolver Dog::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Dog)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Dog)gql" }, std::move(params));
 }
 
 } // namespace object

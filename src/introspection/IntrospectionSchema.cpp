@@ -23,7 +23,7 @@ static const auto s_namesTypeKind = introspection::getTypeKindNames();
 static const auto s_valuesTypeKind = introspection::getTypeKindValues();
 
 template <>
-introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const response::Value& value)
+introspection::TypeKind Argument<introspection::TypeKind>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -43,9 +43,9 @@ introspection::TypeKind ModifiedArgument<introspection::TypeKind>::convert(const
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams params)
+service::AwaitableResolver Result<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<introspection::TypeKind>::resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -57,7 +57,7 @@ service::AwaitableResolver ModifiedResult<introspection::TypeKind>::convert(serv
 }
 
 template <>
-void ModifiedResult<introspection::TypeKind>::validateScalar(const response::Value& value)
+void Result<introspection::TypeKind>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -79,7 +79,7 @@ static const auto s_namesDirectiveLocation = introspection::getDirectiveLocation
 static const auto s_valuesDirectiveLocation = introspection::getDirectiveLocationValues();
 
 template <>
-introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocation>::convert(const response::Value& value)
+introspection::DirectiveLocation Argument<introspection::DirectiveLocation>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -99,9 +99,9 @@ introspection::DirectiveLocation ModifiedArgument<introspection::DirectiveLocati
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params)
+service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<introspection::DirectiveLocation>::resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -113,7 +113,7 @@ service::AwaitableResolver ModifiedResult<introspection::DirectiveLocation>::con
 }
 
 template <>
-void ModifiedResult<introspection::DirectiveLocation>::validateScalar(const response::Value& value)
+void Result<introspection::DirectiveLocation>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{

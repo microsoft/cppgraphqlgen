@@ -617,7 +617,7 @@ schema_location ResolverParams::getLocation() const
 }
 
 template <>
-int ModifiedArgument<int>::convert(const response::Value& value)
+int Argument<int>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -628,7 +628,7 @@ int ModifiedArgument<int>::convert(const response::Value& value)
 }
 
 template <>
-double ModifiedArgument<double>::convert(const response::Value& value)
+double Argument<double>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Float && value.type() != response::Type::Int)
 	{
@@ -639,7 +639,7 @@ double ModifiedArgument<double>::convert(const response::Value& value)
 }
 
 template <>
-std::string ModifiedArgument<std::string>::convert(const response::Value& value)
+std::string Argument<std::string>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -650,7 +650,7 @@ std::string ModifiedArgument<std::string>::convert(const response::Value& value)
 }
 
 template <>
-bool ModifiedArgument<bool>::convert(const response::Value& value)
+bool Argument<bool>::convert(const response::Value& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -661,13 +661,13 @@ bool ModifiedArgument<bool>::convert(const response::Value& value)
 }
 
 template <>
-response::Value ModifiedArgument<response::Value>::convert(const response::Value& value)
+response::Value Argument<response::Value>::convert(const response::Value& value)
 {
 	return response::Value(value);
 }
 
 template <>
-response::IdType ModifiedArgument<response::IdType>::convert(const response::Value& value)
+response::IdType Argument<response::IdType>::convert(const response::Value& value)
 {
 	if (!value.maybe_id())
 	{
@@ -694,33 +694,36 @@ void blockSubFields(const ResolverParams& params)
 }
 
 template <>
-AwaitableResolver ModifiedResult<int>::convert(AwaitableScalar<int> result, ResolverParams params)
+AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result), std::move(params), [](int&& value, const ResolverParams&) {
-		return response::Value(value);
-	});
+	return ModifiedResult<int>::resolve(std::move(result),
+		std::move(params),
+		[](int&& value, const ResolverParams&) {
+			return response::Value(value);
+		});
 }
 
 template <>
-AwaitableResolver ModifiedResult<double>::convert(
-	AwaitableScalar<double> result, ResolverParams params)
+AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result), std::move(params), [](double&& value, const ResolverParams&) {
-		return response::Value(value);
-	});
+	return ModifiedResult<double>::resolve(std::move(result),
+		std::move(params),
+		[](double&& value, const ResolverParams&) {
+			return response::Value(value);
+		});
 }
 
 template <>
-AwaitableResolver ModifiedResult<std::string>::convert(
+AwaitableResolver Result<std::string>::convert(
 	AwaitableScalar<std::string> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
+	return ModifiedResult<std::string>::resolve(std::move(result),
 		std::move(params),
 		[](std::string&& value, const ResolverParams&) {
 			return response::Value(std::move(value));
@@ -728,22 +731,24 @@ AwaitableResolver ModifiedResult<std::string>::convert(
 }
 
 template <>
-AwaitableResolver ModifiedResult<bool>::convert(AwaitableScalar<bool> result, ResolverParams params)
+AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result), std::move(params), [](bool&& value, const ResolverParams&) {
-		return response::Value(value);
-	});
+	return ModifiedResult<bool>::resolve(std::move(result),
+		std::move(params),
+		[](bool&& value, const ResolverParams&) {
+			return response::Value(value);
+		});
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::Value>::convert(
+AwaitableResolver Result<response::Value>::convert(
 	AwaitableScalar<response::Value> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
+	return ModifiedResult<response::Value>::resolve(std::move(result),
 		std::move(params),
 		[](response::Value&& value, const ResolverParams&) {
 			return response::Value(std::move(value));
@@ -751,12 +756,12 @@ AwaitableResolver ModifiedResult<response::Value>::convert(
 }
 
 template <>
-AwaitableResolver ModifiedResult<response::IdType>::convert(
+AwaitableResolver Result<response::IdType>::convert(
 	AwaitableScalar<response::IdType> result, ResolverParams params)
 {
 	blockSubFields(params);
 
-	return resolve(std::move(result),
+	return ModifiedResult<response::IdType>::resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
 			return response::Value(std::move(value));
@@ -780,7 +785,7 @@ void requireSubFields(const ResolverParams& params)
 }
 
 template <>
-AwaitableResolver ModifiedResult<Object>::convert(
+AwaitableResolver Result<Object>::convert(
 	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params)
 {
 	requireSubFields(params);
@@ -803,7 +808,7 @@ AwaitableResolver ModifiedResult<Object>::convert(
 }
 
 template <>
-void ModifiedResult<int>::validateScalar(const response::Value& value)
+void Result<int>::validateScalar(const response::Value& value)
 {
 	if (value.type() != response::Type::Int)
 	{
@@ -812,7 +817,7 @@ void ModifiedResult<int>::validateScalar(const response::Value& value)
 }
 
 template <>
-void ModifiedResult<double>::validateScalar(const response::Value& value)
+void Result<double>::validateScalar(const response::Value& value)
 {
 	if (value.type() != response::Type::Float)
 	{
@@ -821,7 +826,7 @@ void ModifiedResult<double>::validateScalar(const response::Value& value)
 }
 
 template <>
-void ModifiedResult<std::string>::validateScalar(const response::Value& value)
+void Result<std::string>::validateScalar(const response::Value& value)
 {
 	if (value.type() != response::Type::String)
 	{
@@ -830,7 +835,7 @@ void ModifiedResult<std::string>::validateScalar(const response::Value& value)
 }
 
 template <>
-void ModifiedResult<bool>::validateScalar(const response::Value& value)
+void Result<bool>::validateScalar(const response::Value& value)
 {
 	if (value.type() != response::Type::Boolean)
 	{
@@ -839,7 +844,7 @@ void ModifiedResult<bool>::validateScalar(const response::Value& value)
 }
 
 template <>
-void ModifiedResult<response::IdType>::validateScalar(const response::Value& value)
+void Result<response::IdType>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_id())
 	{
@@ -848,7 +853,7 @@ void ModifiedResult<response::IdType>::validateScalar(const response::Value& val
 }
 
 template <>
-void ModifiedResult<response::Value>::validateScalar(const response::Value&)
+void Result<response::Value>::validateScalar(const response::Value&)
 {
 	// Any response::Value is valid for a custom scalar type.
 }

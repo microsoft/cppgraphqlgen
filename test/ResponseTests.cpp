@@ -19,7 +19,7 @@ TEST(ResponseCase, ValueConstructorFromStringLiteral)
 TEST(ResponseCase, IdTypeCompareEqual)
 {
 	const auto fakeId = []() noexcept {
-		std::string fakeIdString("fakeId");
+		std::string_view fakeIdString { "fakeId" };
 		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());

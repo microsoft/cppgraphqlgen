@@ -797,7 +797,7 @@ using namespace )cpp"
 				pendingSeparator.reset();
 
 				sourceFile << R"cpp(template <>
-response::Value ModifiedVariable<)cpp"
+response::Value Variable<)cpp"
 						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
 {
 	response::Value result { response::Type::EnumValue };
@@ -823,7 +823,7 @@ response::Value ModifiedVariable<)cpp"
 				pendingSeparator.reset();
 
 				sourceFile << R"cpp(template <>
-response::Value ModifiedVariable<)cpp"
+response::Value Variable<)cpp"
 						   << cppType << R"cpp(>::serialize()cpp" << cppType
 						   << R"cpp(&& inputValue)
 {
@@ -900,7 +900,7 @@ response::Value ModifiedVariable<)cpp"
 			pendingSeparator.reset();
 
 			sourceFile << R"cpp(template <>
-)cpp" << cppType << R"cpp( ModifiedResponse<)cpp"
+)cpp" << cppType << R"cpp( Response<)cpp"
 					   << cppType << R"cpp(>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
@@ -1107,7 +1107,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	sourceFile << R"cpp(
 template <>
 )cpp" << cppType
-			   << R"cpp( ModifiedResponse<)cpp" << cppType
+			   << R"cpp( Response<)cpp" << cppType
 			   << R"cpp(>::parse(response::Value&& response)
 {
 	)cpp" << cppType

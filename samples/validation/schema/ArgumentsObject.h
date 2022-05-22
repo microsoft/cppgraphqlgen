@@ -159,12 +159,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<int> getMultipleReqs(service::FieldParams&& params, int&& xArg, int&& yArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getMultipleReqsWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<bool>> getBooleanArgField(service::FieldParams&& params, std::optional<bool>&& booleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanArgFieldWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<double>> getFloatArgField(service::FieldParams&& params, std::optional<double>&& floatArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getFloatArgFieldWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<int>> getIntArgField(service::FieldParams&& params, std::optional<int>&& intArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getIntArgFieldWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<bool> getNonNullBooleanArgField(service::FieldParams&& params, bool&& nonNullBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanArgFieldWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::vector<bool>>> getNonNullBooleanListField(service::FieldParams&& params, std::optional<std::vector<bool>>&& nonNullBooleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getNonNullBooleanListFieldWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::vector<std::optional<bool>>>> getBooleanListArgField(service::FieldParams&& params, std::vector<std::optional<bool>>&& booleanListArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getBooleanListArgFieldWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<bool> getOptionalNonNullBooleanArgField(service::FieldParams&& params, bool&& optionalBooleanArgArg) const final
 		{
 			if constexpr (methods::ArgumentsHas::getOptionalNonNullBooleanArgFieldWithParams<T>)
 			{
@@ -292,7 +292,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::ArgumentsHas::beginSelectionSet<T>)
 			{
@@ -300,7 +300,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::ArgumentsHas::endSelectionSet<T>)
 			{
@@ -324,7 +324,7 @@ private:
 
 public:
 	template <class T>
-	Arguments(std::shared_ptr<T> pimpl) noexcept
+	inline Arguments(std::shared_ptr<T> pimpl) noexcept
 		: Arguments { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

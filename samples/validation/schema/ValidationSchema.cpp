@@ -29,7 +29,7 @@ static const auto s_namesDogCommand = validation::getDogCommandNames();
 static const auto s_valuesDogCommand = validation::getDogCommandValues();
 
 template <>
-validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const response::Value& value)
+validation::DogCommand Argument<validation::DogCommand>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -49,9 +49,9 @@ validation::DogCommand ModifiedArgument<validation::DogCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -63,7 +63,7 @@ service::AwaitableResolver ModifiedResult<validation::DogCommand>::convert(servi
 }
 
 template <>
-void ModifiedResult<validation::DogCommand>::validateScalar(const response::Value& value)
+void Result<validation::DogCommand>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -85,7 +85,7 @@ static const auto s_namesCatCommand = validation::getCatCommandNames();
 static const auto s_valuesCatCommand = validation::getCatCommandValues();
 
 template <>
-validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const response::Value& value)
+validation::CatCommand Argument<validation::CatCommand>::convert(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -105,9 +105,9 @@ validation::CatCommand ModifiedArgument<validation::CatCommand>::convert(const r
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
 			response::Value result(response::Type::EnumValue);
@@ -119,7 +119,7 @@ service::AwaitableResolver ModifiedResult<validation::CatCommand>::convert(servi
 }
 
 template <>
-void ModifiedResult<validation::CatCommand>::validateScalar(const response::Value& value)
+void Result<validation::CatCommand>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -138,7 +138,7 @@ void ModifiedResult<validation::CatCommand>::validateScalar(const response::Valu
 }
 
 template <>
-validation::ComplexInput ModifiedArgument<validation::ComplexInput>::convert(const response::Value& value)
+validation::ComplexInput Argument<validation::ComplexInput>::convert(const response::Value& value)
 {
 	auto valueName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("name", value);
 	auto valueOwner = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("owner", value);

@@ -148,7 +148,7 @@ service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& p
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
 } // namespace object

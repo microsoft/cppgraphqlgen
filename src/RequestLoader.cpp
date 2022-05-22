@@ -572,7 +572,7 @@ void RequestLoader::addTypesToSchema()
 
 				locationValue.set<std::string>(std::string { locationName });
 
-				return service::ModifiedArgument<introspection::DirectiveLocation>::convert(
+				return service::Argument<introspection::DirectiveLocation>::convert(
 					locationValue);
 			});
 

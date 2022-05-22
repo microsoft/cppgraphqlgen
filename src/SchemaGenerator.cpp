@@ -604,19 +604,19 @@ private:
 			{
 				headerFile << R"cpp(template <>
 GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	const response::Value& value);
 template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::convert(
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(> result, ResolverParams params);
 template <>
-GRAPHQLSERVICE_EXPORT void ModifiedResult<)cpp"
+GRAPHQLSERVICE_EXPORT void Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 						   << R"cpp(>::validateScalar(
 	const response::Value& value);
@@ -627,7 +627,7 @@ GRAPHQLSERVICE_EXPORT void ModifiedResult<)cpp"
 			{
 				headerFile << R"cpp(template <>
 GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
 						   << inputType.cppType << R"cpp(>::convert(
 	const response::Value& value);
 )cpp";
@@ -670,27 +670,27 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] inline service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] inline service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->beginSelectionSet(params);
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->endSelectionSet(params);
 		}
@@ -709,7 +709,7 @@ private:
 
 public:
 	template <class T>
-	)cpp"
+	inline )cpp"
 		<< cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 		<< cppType
@@ -898,7 +898,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -909,7 +909,7 @@ private:
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
 		headerFile << R"cpp(
-		[[nodiscard]] )cpp"
+		[[nodiscard]] inline )cpp"
 				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << accessorName
 				   << R"cpp(()cpp";
 
@@ -1028,7 +1028,7 @@ private:
 	if (!_loader.isIntrospection())
 	{
 		headerFile << R"cpp(
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::beginSelectionSet<T>)
@@ -1037,7 +1037,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::endSelectionSet<T>)
@@ -1133,8 +1133,8 @@ public:
 
 public:
 	template <class T>
-	)cpp" << objectType.cppType
-			<< R"cpp((std::shared_ptr<T> pimpl) noexcept
+	inline )cpp"
+			<< objectType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
 			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
@@ -1283,7 +1283,7 @@ static const auto s_values)cpp"
 
 template <>
 )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( ModifiedArgument<)cpp"
+					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(const response::Value& value)
 {
@@ -1308,13 +1308,15 @@ template <>
 }
 
 template <>
-service::AwaitableResolver ModifiedResult<)cpp"
+service::AwaitableResolver Result<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(> result, ResolverParams params)
 {
-	return resolve(std::move(result), std::move(params),
+	return ModifiedResult<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::resolve(std::move(result), std::move(params),
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
@@ -1328,8 +1330,8 @@ service::AwaitableResolver ModifiedResult<)cpp"
 }
 
 template <>
-void ModifiedResult<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+void Result<)cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::validateScalar(const response::Value& value)
 {
 	if (!value.maybe_enum())
@@ -1361,7 +1363,7 @@ void ModifiedResult<)cpp"
 
 			sourceFile << R"cpp(template <>
 )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << inputType.cppType << R"cpp( ModifiedArgument<)cpp"
+					   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
 					   << R"cpp(>::convert(const response::Value& value)
 {
@@ -2419,7 +2421,7 @@ service::AwaitableResolver )cpp"
 			   << objectType.cppType
 			   << R"cpp(::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql()cpp"
+	return service::Result<std::string>::convert(std::string{ R"gql()cpp"
 			   << objectType.type << R"cpp()gql" }, std::move(params));
 }
 )cpp";
@@ -2431,7 +2433,7 @@ service::AwaitableResolver )cpp"
 service::AwaitableResolver )cpp"
 			<< objectType.cppType << R"cpp(::resolve_schema(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
+	return service::Result<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()
 			<< R"cpp(::object::Schema>(std::make_shared<)cpp"
 			<< SchemaLoader::getIntrospectionNamespace()

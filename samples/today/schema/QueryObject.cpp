@@ -248,12 +248,12 @@ service::AwaitableResolver Query::resolveDefault(service::ResolverParams&& param
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_schema(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::object::Schema>(std::make_shared<introspection::Schema>(_schema))), std::move(params));
+	return service::Result<service::Object>::convert(std::static_pointer_cast<service::Object>(std::make_shared<introspection::object::Schema>(std::make_shared<introspection::Schema>(_schema))), std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params) const

@@ -173,7 +173,7 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 using namespace multiple;
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
 	query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
@@ -215,7 +215,7 @@ query::Appointments::Response::appointments_AppointmentConnection::edges_Appoint
 }
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
 	query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
@@ -237,7 +237,7 @@ query::Appointments::Response::appointments_AppointmentConnection::edges_Appoint
 }
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection ModifiedResponse<query::Appointments::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+query::Appointments::Response::appointments_AppointmentConnection Response<query::Appointments::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
 	query::Appointments::Response::appointments_AppointmentConnection result;
 
@@ -291,7 +291,7 @@ Response parseResponse(response::Value&& response)
 } // namespace query::Appointments
 
 template <>
-query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task ModifiedResponse<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
+query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
 {
 	query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
 
@@ -328,7 +328,7 @@ query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Modified
 }
 
 template <>
-query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
+query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
 {
 	query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge result;
 
@@ -350,7 +350,7 @@ query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge ModifiedResponse<qu
 }
 
 template <>
-query::Tasks::Response::tasks_TaskConnection ModifiedResponse<query::Tasks::Response::tasks_TaskConnection>::parse(response::Value&& response)
+query::Tasks::Response::tasks_TaskConnection Response<query::Tasks::Response::tasks_TaskConnection>::parse(response::Value&& response)
 {
 	query::Tasks::Response::tasks_TaskConnection result;
 
@@ -404,7 +404,7 @@ Response parseResponse(response::Value&& response)
 } // namespace query::Tasks
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder ModifiedResponse<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
+query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
 {
 	query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
 
@@ -441,7 +441,7 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::
 }
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge ModifiedResponse<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
+query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
 {
 	query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
 
@@ -463,7 +463,7 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge M
 }
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection ModifiedResponse<query::UnreadCounts::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
+query::UnreadCounts::Response::unreadCounts_FolderConnection Response<query::UnreadCounts::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
 {
 	query::UnreadCounts::Response::unreadCounts_FolderConnection result;
 
@@ -524,7 +524,7 @@ static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskS
 };
 
 template <>
-TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
+TaskState Response<TaskState>::parse(response::Value&& value)
 {
 	if (!value.maybe_enum())
 	{
@@ -544,7 +544,7 @@ TaskState ModifiedResponse<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-query::Miscellaneous::Response::anyType_UnionType ModifiedResponse<query::Miscellaneous::Response::anyType_UnionType>::parse(response::Value&& response)
+query::Miscellaneous::Response::anyType_UnionType Response<query::Miscellaneous::Response::anyType_UnionType>::parse(response::Value&& response)
 {
 	query::Miscellaneous::Response::anyType_UnionType result;
 
@@ -645,7 +645,7 @@ static const std::array<std::string_view, 4> s_namesTaskState = {
 };
 
 template <>
-response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
+response::Value Variable<TaskState>::serialize(TaskState&& value)
 {
 	response::Value result { response::Type::EnumValue };
 
@@ -655,7 +655,7 @@ response::Value ModifiedVariable<TaskState>::serialize(TaskState&& value)
 }
 
 template <>
-response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
+response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -668,7 +668,7 @@ response::Value ModifiedVariable<CompleteTaskInput>::serialize(CompleteTaskInput
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
 {
 	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
 
@@ -700,7 +700,7 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::com
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
 {
 	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
 

@@ -75,7 +75,7 @@ service::AwaitableResolver FolderEdge::resolveCursor(service::ResolverParams&& p
 
 service::AwaitableResolver FolderEdge::resolve_typename(service::ResolverParams&& params) const
 {
-	return service::ModifiedResult<std::string>::convert(std::string{ R"gql(FolderEdge)gql" }, std::move(params));
+	return service::Result<std::string>::convert(std::string{ R"gql(FolderEdge)gql" }, std::move(params));
 }
 
 } // namespace object

@@ -64,7 +64,7 @@ const peg::ast& GetRequestObject() noexcept
 using namespace benchmark;
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo Response<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
 
@@ -86,7 +86,7 @@ query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo Mo
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
@@ -123,7 +123,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
@@ -145,7 +145,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection ModifiedResponse<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+query::Query::Response::appointments_AppointmentConnection Response<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
 	query::Query::Response::appointments_AppointmentConnection result;
 

@@ -39,32 +39,32 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] inline service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
+		[[nodiscard]] inline service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
 		{
 			return { _pimpl->getLocations() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
+		[[nodiscard]] inline service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsRepeatable() const final
+		[[nodiscard]] inline service::AwaitableScalar<bool> getIsRepeatable() const final
 		{
 			return { _pimpl->getIsRepeatable() };
 		}

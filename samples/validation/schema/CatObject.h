@@ -110,12 +110,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		inline Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNameWithParams<T>)
 			{
@@ -131,7 +131,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getNicknameWithParams<T>)
 			{
@@ -147,7 +147,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
+		[[nodiscard]] inline service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, CatCommand&& catCommandArg) const final
 		{
 			if constexpr (methods::CatHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -163,7 +163,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
+		[[nodiscard]] inline service::AwaitableScalar<std::optional<int>> getMeowVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::CatHas::getMeowVolumeWithParams<T>)
 			{
@@ -179,7 +179,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::CatHas::beginSelectionSet<T>)
 			{
@@ -187,7 +187,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		inline void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::CatHas::endSelectionSet<T>)
 			{
@@ -223,7 +223,7 @@ private:
 
 public:
 	template <class T>
-	Cat(std::shared_ptr<T> pimpl) noexcept
+	inline Cat(std::shared_ptr<T> pimpl) noexcept
 		: Cat { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
