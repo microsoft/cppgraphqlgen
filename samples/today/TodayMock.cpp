@@ -22,7 +22,7 @@ namespace graphql::today {
 const response::IdType& getFakeAppointmentId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
-		std::string fakeIdString("fakeAppointmentId");
+		std::string_view fakeIdString { "fakeAppointmentId" };
 		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
@@ -36,7 +36,7 @@ const response::IdType& getFakeAppointmentId() noexcept
 const response::IdType& getFakeTaskId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
-		std::string fakeIdString("fakeTaskId");
+		std::string_view fakeIdString { "fakeTaskId" };
 		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
@@ -50,7 +50,7 @@ const response::IdType& getFakeTaskId() noexcept
 const response::IdType& getFakeFolderId() noexcept
 {
 	static const auto s_fakeId = []() noexcept {
-		std::string fakeIdString("fakeFolderId");
+		std::string_view fakeIdString { "fakeFolderId" };
 		response::IdType result(fakeIdString.size());
 
 		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());

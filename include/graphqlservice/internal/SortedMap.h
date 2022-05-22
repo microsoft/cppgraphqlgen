@@ -23,20 +23,20 @@ struct [[nodiscard]] sorted_map_key
 	{
 	}
 
-	constexpr sorted_map_key(const K& key) noexcept
+	constexpr sorted_map_key(K key) noexcept
 		: key { key }
 	{
 	}
 
 	constexpr ~sorted_map_key() noexcept = default;
 
-	const K& key;
+	K key;
 };
 
 template <class Compare, class Iterator, class K,
 	class V = decltype(std::declval<Iterator>()->second)>
 [[nodiscard]] constexpr std::pair<Iterator, Iterator> sorted_map_equal_range(
-	Iterator itrBegin, Iterator itrEnd, const K& key) noexcept
+	Iterator itrBegin, Iterator itrEnd, K key) noexcept
 {
 	return std::equal_range(itrBegin,
 		itrEnd,
@@ -47,7 +47,7 @@ template <class Compare, class Iterator, class K,
 }
 
 template <class Compare, class Container, class K>
-[[nodiscard]] constexpr auto sorted_map_lookup(const Container& container, const K& key) noexcept
+[[nodiscard]] constexpr auto sorted_map_lookup(const Container& container, K key) noexcept
 {
 	const auto [itr, itrEnd] =
 		sorted_map_equal_range<Compare>(container.begin(), container.end(), key);
@@ -131,7 +131,7 @@ public:
 		return _data.rend();
 	}
 
-	[[nodiscard]] constexpr const_iterator find(const K& key) const noexcept
+	[[nodiscard]] constexpr const_iterator find(K key) const noexcept
 	{
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
@@ -161,7 +161,7 @@ public:
 			true };
 	}
 
-	inline const_iterator erase(const K& key) noexcept
+	inline const_iterator erase(K key) noexcept
 	{
 		const auto [itr, itrEnd] = sorted_map_equal_range<Compare>(_data.begin(), _data.end(), key);
 
@@ -291,12 +291,11 @@ public:
 		return _data.rend();
 	}
 
-	[[nodiscard]] constexpr const_iterator find(const K& key) const noexcept
+	[[nodiscard]] constexpr const_iterator find(K key) const noexcept
 	{
-		const auto [itr, itrEnd] =
-			std::equal_range(begin(), end(), key, [](const K& lhs, const K& rhs) noexcept {
-				return Compare {}(lhs, rhs);
-			});
+		const auto [itr, itrEnd] = std::equal_range(begin(), end(), key, [](K lhs, K rhs) noexcept {
+			return Compare {}(lhs, rhs);
+		});
 
 		return itr == itrEnd ? _data.end() : itr;
 	}
@@ -312,10 +311,8 @@ public:
 	template <typename Arg>
 	inline std::pair<const_iterator, bool> emplace(Arg&& key) noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](const auto& lhs, const auto& rhs) noexcept {
+		const auto [itr, itrEnd] =
+			std::equal_range(_data.begin(), _data.end(), key, [](K lhs, K rhs) noexcept {
 				return Compare {}(lhs, rhs);
 			});
 
@@ -327,12 +324,10 @@ public:
 		return { _data.emplace(itrEnd, std::forward<Arg>(key)), true };
 	}
 
-	inline const_iterator erase(const K& key) noexcept
+	inline const_iterator erase(K key) noexcept
 	{
-		const auto [itr, itrEnd] = std::equal_range(_data.begin(),
-			_data.end(),
-			key,
-			[](const K& lhs, const K& rhs) noexcept {
+		const auto [itr, itrEnd] =
+			std::equal_range(_data.begin(), _data.end(), key, [](K lhs, K rhs) noexcept {
 				return Compare {}(lhs, rhs);
 			});
 
@@ -364,7 +359,7 @@ private:
 struct [[nodiscard]] shorter_or_less
 {
 	[[nodiscard]] constexpr bool operator()(
-		const std::string_view& lhs, const std::string_view& rhs) const noexcept
+		std::string_view lhs, std::string_view rhs) const noexcept
 	{
 		return lhs.size() == rhs.size() ? lhs < rhs : lhs.size() < rhs.size();
 	}
