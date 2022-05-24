@@ -124,12 +124,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIdWithParams<T>)
 			{
@@ -145,7 +145,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getWhenWithParams<T>)
 			{
@@ -161,7 +161,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getSubjectWithParams<T>)
 			{
@@ -177,7 +177,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getIsNowWithParams<T>)
 			{
@@ -193,7 +193,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::AppointmentHas::getForceErrorWithParams<T>)
 			{
@@ -209,7 +209,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::AppointmentHas::beginSelectionSet<T>)
 			{
@@ -217,7 +217,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::AppointmentHas::endSelectionSet<T>)
 			{
@@ -253,7 +253,7 @@ private:
 
 public:
 	template <class T>
-	inline Appointment(std::shared_ptr<T> pimpl) noexcept
+	Appointment(std::shared_ptr<T> pimpl) noexcept
 		: Appointment { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

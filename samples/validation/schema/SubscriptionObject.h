@@ -75,12 +75,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Message>> getNewMessage(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::getNewMessageWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getDisallowedSecondRootField(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::getDisallowedSecondRootFieldWithParams<T>)
 			{
@@ -112,7 +112,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::beginSelectionSet<T>)
 			{
@@ -120,7 +120,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::SubscriptionHas::endSelectionSet<T>)
 			{
@@ -144,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	inline Subscription(std::shared_ptr<T> pimpl) noexcept
+	Subscription(std::shared_ptr<T> pimpl) noexcept
 		: Subscription { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

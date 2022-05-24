@@ -61,12 +61,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<MutateDogResult>> applyMutateDog(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::MutationHas::applyMutateDogWithParams<T>)
 			{
@@ -82,7 +82,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::MutationHas::beginSelectionSet<T>)
 			{
@@ -90,7 +90,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::MutationHas::endSelectionSet<T>)
 			{
@@ -114,7 +114,7 @@ private:
 
 public:
 	template <class T>
-	inline Mutation(std::shared_ptr<T> pimpl) noexcept
+	Mutation(std::shared_ptr<T> pimpl) noexcept
 		: Mutation { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

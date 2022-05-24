@@ -75,12 +75,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskEdgeHas::getNodeWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::TaskEdgeHas::getCursorWithParams<T>)
 			{
@@ -112,7 +112,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::TaskEdgeHas::beginSelectionSet<T>)
 			{
@@ -120,7 +120,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::TaskEdgeHas::endSelectionSet<T>)
 			{
@@ -144,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	inline TaskEdge(std::shared_ptr<T> pimpl) noexcept
+	TaskEdge(std::shared_ptr<T> pimpl) noexcept
 		: TaskEdge { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

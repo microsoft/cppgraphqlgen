@@ -28,39 +28,39 @@ template <>
 class [[nodiscard]] Awaitable<void>
 {
 public:
-	inline Awaitable(std::future<void> value)
+	Awaitable(std::future<void> value)
 		: _value { std::move(value) }
 	{
 	}
 
-	inline void get()
+	void get()
 	{
 		_value.get();
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] inline Awaitable get_return_object() noexcept
+		[[nodiscard]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		inline coro::suspend_never initial_suspend() const noexcept
+		coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		inline coro::suspend_never final_suspend() const noexcept
+		coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		inline void return_void() noexcept
+		void return_void() noexcept
 		{
 			_promise.set_value();
 		}
 
-		inline void unhandled_exception() noexcept
+		void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -74,12 +74,12 @@ public:
 		return true;
 	}
 
-	inline void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(coro::coroutine_handle<> h) const
 	{
 		h.resume();
 	}
 
-	inline void await_resume()
+	void await_resume()
 	{
 		_value.get();
 	}
@@ -92,44 +92,44 @@ template <typename T>
 class [[nodiscard]] Awaitable
 {
 public:
-	inline Awaitable(std::future<T> value)
+	Awaitable(std::future<T> value)
 		: _value { std::move(value) }
 	{
 	}
 
-	[[nodiscard]] inline T get()
+	[[nodiscard]] T get()
 	{
 		return _value.get();
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] inline Awaitable get_return_object() noexcept
+		[[nodiscard]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
 
-		inline coro::suspend_never initial_suspend() const noexcept
+		coro::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		inline coro::suspend_never final_suspend() const noexcept
+		coro::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
 
-		inline void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		void return_value(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
 		{
 			_promise.set_value(value);
 		}
 
-		inline void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+		void return_value(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
 		{
 			_promise.set_value(std::move(value));
 		}
 
-		inline void unhandled_exception() noexcept
+		void unhandled_exception() noexcept
 		{
 			_promise.set_exception(std::current_exception());
 		}
@@ -143,12 +143,12 @@ public:
 		return true;
 	}
 
-	inline void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(coro::coroutine_handle<> h) const
 	{
 		h.resume();
 	}
 
-	[[nodiscard]] inline T await_resume()
+	[[nodiscard]] T await_resume()
 	{
 		return _value.get();
 	}

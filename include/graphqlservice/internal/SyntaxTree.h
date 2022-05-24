@@ -32,7 +32,7 @@ public:
 	[[nodiscard]] GRAPHQLPEG_EXPORT std::string_view unescaped_view() const;
 
 	template <typename U>
-	[[nodiscard]] inline bool is_type() const noexcept
+	[[nodiscard]] bool is_type() const noexcept
 	{
 		const auto u = type_name<U>();
 
@@ -48,7 +48,7 @@ public:
 	using basic_node_t = parse_tree::basic_node<ast_node>;
 
 	template <typename Rule, typename ParseInput>
-	inline void success(const ParseInput& in)
+	void success(const ParseInput& in)
 	{
 		basic_node_t::template success<Rule>(in);
 		_type_name = type_name<Rule>();
@@ -57,7 +57,7 @@ public:
 
 private:
 	template <typename U>
-	[[nodiscard]] static inline std::string_view type_name() noexcept
+	[[nodiscard]] static std::string_view type_name() noexcept
 	{
 		// This is cached in a static local variable per-specialization, but each module may have
 		// its own instance of the specialization and the local variable. Within a single module,
@@ -69,7 +69,7 @@ private:
 	}
 
 	template <typename U>
-	[[nodiscard]] static inline size_t type_hash() noexcept
+	[[nodiscard]] static size_t type_hash() noexcept
 	{
 		// This is cached in a static local variable per-specialization, but each module may have
 		// its own instance of the specialization and the local variable.
