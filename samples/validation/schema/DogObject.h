@@ -138,12 +138,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getNameWithParams<T>)
 			{
@@ -159,7 +159,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getNicknameWithParams<T>)
 			{
@@ -175,7 +175,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getBarkVolumeWithParams<T>)
 			{
@@ -191,7 +191,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const final
 		{
 			if constexpr (methods::DogHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -207,7 +207,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const final
 		{
 			if constexpr (methods::DogHas::getIsHousetrainedWithParams<T>)
 			{
@@ -223,7 +223,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::DogHas::getOwnerWithParams<T>)
 			{
@@ -239,7 +239,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::DogHas::beginSelectionSet<T>)
 			{
@@ -247,7 +247,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::DogHas::endSelectionSet<T>)
 			{
@@ -284,7 +284,7 @@ private:
 
 public:
 	template <class T>
-	inline Dog(std::shared_ptr<T> pimpl) noexcept
+	Dog(std::shared_ptr<T> pimpl) noexcept
 		: Dog { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

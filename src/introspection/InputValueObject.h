@@ -37,27 +37,27 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Type>> getType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const final
 		{
 			return { _pimpl->getType() };
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const final
 		{
 			return { _pimpl->getDefaultValue() };
 		}

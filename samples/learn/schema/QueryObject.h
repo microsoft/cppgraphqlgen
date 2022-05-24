@@ -93,12 +93,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const final
 		{
 			if constexpr (methods::QueryHas::getHeroWithParams<T>)
 			{
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const final
 		{
 			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{
@@ -137,7 +137,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
@@ -145,7 +145,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
@@ -169,7 +169,7 @@ private:
 
 public:
 	template <class T>
-	inline Query(std::shared_ptr<T> pimpl) noexcept
+	Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

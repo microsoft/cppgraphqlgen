@@ -31,27 +31,27 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] inline service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->beginSelectionSet(params);
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->endSelectionSet(params);
 		}
@@ -69,7 +69,7 @@ private:
 
 public:
 	template <class T>
-	inline DogOrHuman(std::shared_ptr<T> pimpl) noexcept
+	DogOrHuman(std::shared_ptr<T> pimpl) noexcept
 		: DogOrHuman { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<DogOrHuman>(), "DogOrHuman is not implemented");

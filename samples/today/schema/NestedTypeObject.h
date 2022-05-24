@@ -75,12 +75,12 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::getDepthWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::getNestedWithParams<T>)
 			{
@@ -112,7 +112,7 @@ private:
 			}
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::beginSelectionSet<T>)
 			{
@@ -120,7 +120,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::NestedTypeHas::endSelectionSet<T>)
 			{
@@ -144,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	inline NestedType(std::shared_ptr<T> pimpl) noexcept
+	NestedType(std::shared_ptr<T> pimpl) noexcept
 		: NestedType { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

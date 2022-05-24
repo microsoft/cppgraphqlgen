@@ -41,37 +41,37 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
 		{
 			return { _pimpl->getArgs() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Type>> getType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const final
 		{
 			return { _pimpl->getType() };
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<bool> getIsDeprecated() const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsDeprecated() const final
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
 		{
 			return { _pimpl->getDeprecationReason() };
 		}

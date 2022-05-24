@@ -670,27 +670,27 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] inline service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
 		{
 			return _pimpl->getResolvers();
 		}
 
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->beginSelectionSet(params);
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			_pimpl->endSelectionSet(params);
 		}
@@ -709,7 +709,7 @@ private:
 
 public:
 	template <class T>
-	inline )cpp"
+	)cpp"
 		<< cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 		<< cppType
@@ -898,7 +898,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -909,7 +909,7 @@ private:
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
 		headerFile << R"cpp(
-		[[nodiscard]] inline )cpp"
+		[[nodiscard]] )cpp"
 				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << accessorName
 				   << R"cpp(()cpp";
 
@@ -1028,7 +1028,7 @@ private:
 	if (!_loader.isIntrospection())
 	{
 		headerFile << R"cpp(
-		inline void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::beginSelectionSet<T>)
@@ -1037,7 +1037,7 @@ private:
 			}
 		}
 
-		inline void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const final
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::endSelectionSet<T>)
@@ -1133,7 +1133,7 @@ public:
 
 public:
 	template <class T>
-	inline )cpp"
+	)cpp"
 			<< objectType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType

@@ -146,7 +146,7 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static inline response::Value serialize(
+	[[nodiscard]] static response::Value serialize(
 		Type&& value) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just call through to the non-template method without the modifiers.
@@ -155,7 +155,7 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline response::Value serialize(
+	[[nodiscard]] static response::Value serialize(
 		typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue) requires
 		NullableModifier<Modifier>
 	{
@@ -172,7 +172,7 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline response::Value serialize(
+	[[nodiscard]] static response::Value serialize(
 		typename VariableTraits<Type, Modifier, Other...>::type&& listValue) requires
 		ListModifier<Modifier>
 	{
@@ -189,7 +189,7 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static inline Type duplicate(
+	[[nodiscard]] static Type duplicate(
 		const Type& value) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just copy the value.
@@ -198,7 +198,7 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline typename VariableTraits<Type, Modifier, Other...>::type duplicate(
+	[[nodiscard]] static typename VariableTraits<Type, Modifier, Other...>::type duplicate(
 		const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue) requires
 		NullableModifier<Modifier>
 	{
@@ -222,7 +222,7 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline typename VariableTraits<Type, Modifier, Other...>::type duplicate(
+	[[nodiscard]] static typename VariableTraits<Type, Modifier, Other...>::type duplicate(
 		const typename VariableTraits<Type, Modifier, Other...>::type& listValue) requires
 		ListModifier<Modifier>
 	{
@@ -296,7 +296,7 @@ struct ModifiedResponse
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static inline Type parse(
+	[[nodiscard]] static Type parse(
 		response::Value&& response) requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		return Response<Type>::parse(std::move(response));
@@ -304,7 +304,7 @@ struct ModifiedResponse
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline std::optional<typename ResponseTraits<Type, Other...>::type> parse(
+	[[nodiscard]] static std::optional<typename ResponseTraits<Type, Other...>::type> parse(
 		response::Value&& response) requires NullableModifier<Modifier>
 	{
 		if (response.type() == response::Type::Null)
@@ -318,7 +318,7 @@ struct ModifiedResponse
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static inline std::vector<typename ResponseTraits<Type, Other...>::type> parse(
+	[[nodiscard]] static std::vector<typename ResponseTraits<Type, Other...>::type> parse(
 		response::Value&& response) requires ListModifier<Modifier>
 	{
 		std::vector<typename ResponseTraits<Type, Other...>::type> result;

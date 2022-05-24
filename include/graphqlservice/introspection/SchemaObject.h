@@ -41,37 +41,37 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		inline Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T>&& pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] inline service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		[[nodiscard]] inline service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
 		{
 			return { _pimpl->getDirectives() };
 		}
