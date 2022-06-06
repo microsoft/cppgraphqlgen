@@ -638,10 +638,10 @@ Response parseResponse(response::Value&& response)
 } // namespace query::Miscellaneous
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
+	R"gql(Unassigned)gql"sv,
 	R"gql(New)gql"sv,
 	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
+	R"gql(Complete)gql"sv
 };
 
 template <>

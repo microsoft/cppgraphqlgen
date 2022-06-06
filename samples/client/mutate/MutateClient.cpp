@@ -25,7 +25,7 @@ const std::string& GetRequestText() noexcept
 		# Copyright (c) Microsoft Corporation. All rights reserved.
 		# Licensed under the MIT License.
 		
-		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!", testTaskState: Unassigned}, $skipClientMutationId: Boolean!) {
 		  completedTask: completeTask(input: $input) {
 		    completedTask: task {
 		      completedTaskId: id
@@ -106,10 +106,10 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 using namespace mutate;
 
 static const std::array<std::string_view, 4> s_namesTaskState = {
+	R"gql(Unassigned)gql"sv,
 	R"gql(New)gql"sv,
 	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
+	R"gql(Complete)gql"sv
 };
 
 template <>

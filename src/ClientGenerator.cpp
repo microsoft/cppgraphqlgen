@@ -824,8 +824,7 @@ response::Value Variable<)cpp"
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType
-						   << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -873,9 +872,25 @@ response::Value Variable<)cpp"
 						   << cppType << R"cpp(>, )cpp" << enumValues.size()
 						   << R"cpp(> s_values)cpp" << cppType << R"cpp( = {)cpp";
 
+				std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
+					enumValues.size());
+
+				std::transform(enumValues.cbegin(),
+					enumValues.cend(),
+					sortedValues.begin(),
+					[](const auto& value) noexcept {
+						return std::make_pair(value->name(),
+							SchemaLoader::getSafeCppName(value->name()));
+					});
+				std::sort(sortedValues.begin(),
+					sortedValues.end(),
+					[](const auto& lhs, const auto& rhs) noexcept {
+						return internal::shorter_or_less {}(lhs.first, rhs.first);
+					});
+
 				bool firstValue = true;
 
-				for (const auto& enumValue : enumValues)
+				for (const auto& enumValue : sortedValues)
 				{
 					if (!firstValue)
 					{
@@ -884,9 +899,9 @@ response::Value Variable<)cpp"
 
 					firstValue = false;
 					sourceFile << R"cpp(
-	std::make_pair(R"gql()cpp" << enumValue->name()
+	std::make_pair(R"gql()cpp" << enumValue.first
 							   << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
-							   << SchemaLoader::getSafeCppName(enumValue->name()) << R"cpp())cpp";
+							   << enumValue.second << R"cpp())cpp";
 					pendingSeparator.add();
 				}
 
@@ -1107,8 +1122,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	sourceFile << R"cpp(
 template <>
 )cpp" << cppType
-			   << R"cpp( Response<)cpp" << cppType
-			   << R"cpp(>::parse(response::Value&& response)
+			   << R"cpp( Response<)cpp" << cppType << R"cpp(>::parse(response::Value&& response)
 {
 	)cpp" << cppType
 			   << R"cpp( result;

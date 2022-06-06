@@ -24,10 +24,10 @@ namespace today {
 
 enum class [[nodiscard]] TaskState
 {
+	Unassigned,
 	New,
 	Started,
-	Complete,
-	Unassigned
+	Complete
 };
 
 [[nodiscard]] constexpr auto getTaskStateNames() noexcept
@@ -35,10 +35,10 @@ enum class [[nodiscard]] TaskState
 	using namespace std::literals;
 
 	return std::array<std::string_view, 4> {
+		R"gql(Unassigned)gql"sv,
 		R"gql(New)gql"sv,
 		R"gql(Started)gql"sv,
-		R"gql(Complete)gql"sv,
-		R"gql(Unassigned)gql"sv
+		R"gql(Complete)gql"sv
 	};
 }
 
