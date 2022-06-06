@@ -100,10 +100,10 @@ namespace query {
 
 enum class [[nodiscard]] TaskState
 {
+	Unassigned,
 	New,
 	Started,
 	Complete,
-	Unassigned,
 };
 
 } // namespace query

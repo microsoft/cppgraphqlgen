@@ -741,10 +741,8 @@ using namespace )cpp"
 
 	pendingSeparator.add();
 
-	std::unordered_set<std::string_view> outputEnumNames;
 	std::unordered_set<std::string_view> outputModifiedVariableEnum;
 	std::unordered_set<std::string_view> outputModifiedVariableInput;
-	std::unordered_set<std::string_view> outputEnumValues;
 	std::unordered_set<std::string_view> outputModifiedResponseEnum;
 
 	for (const auto& operation : operations)
@@ -762,48 +760,39 @@ using namespace )cpp"
 					continue;
 				}
 
-				if (outputEnumNames.insert(cppType).second)
-				{
-					pendingSeparator.reset();
-
-					const auto& enumValues = enumType->enumValues();
-
-					sourceFile << R"cpp(static const std::array<std::string_view, )cpp"
-							   << enumValues.size() << R"cpp(> s_names)cpp" << cppType
-							   << R"cpp( = {)cpp";
-
-					bool firstValue = true;
-
-					for (const auto& enumValue : enumValues)
-					{
-						if (!firstValue)
-						{
-							sourceFile << R"cpp(,)cpp";
-						}
-
-						firstValue = false;
-						sourceFile << R"cpp(
-	R"gql()cpp" << enumValue->name()
-								   << R"cpp()gql"sv)cpp";
-						pendingSeparator.add();
-					}
-
-					pendingSeparator.reset();
-					sourceFile << R"cpp(};
-
-)cpp";
-				}
-
 				pendingSeparator.reset();
+
+				const auto& enumValues = enumType->enumValues();
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
 						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& value)
 {
+	static const std::array<std::string_view, )cpp"
+						   << enumValues.size() << R"cpp(> s_names = {)cpp";
+
+				bool firstValue = true;
+
+				for (const auto& enumValue : enumValues)
+				{
+					if (!firstValue)
+					{
+						sourceFile << R"cpp(,)cpp";
+					}
+
+					firstValue = false;
+					sourceFile << R"cpp(
+		R"gql()cpp" << enumValue->name()
+							   << R"cpp()gql"sv)cpp";
+					pendingSeparator.add();
+				}
+
+				pendingSeparator.reset();
+				sourceFile << R"cpp(	};
+
 	response::Value result { response::Type::EnumValue };
 
-	result.set<std::string>(std::string { s_names)cpp"
-						   << cppType << R"cpp([static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_names[static_cast<size_t>(value)] });
 
 	return result;
 }
@@ -824,8 +813,7 @@ response::Value Variable<)cpp"
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType
-						   << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -863,41 +851,9 @@ response::Value Variable<)cpp"
 				continue;
 			}
 
-			if (outputEnumValues.insert(cppType).second)
-			{
-				pendingSeparator.reset();
-
-				const auto& enumValues = enumType->enumValues();
-
-				sourceFile << R"cpp(static const std::array<std::pair<std::string_view, )cpp"
-						   << cppType << R"cpp(>, )cpp" << enumValues.size()
-						   << R"cpp(> s_values)cpp" << cppType << R"cpp( = {)cpp";
-
-				bool firstValue = true;
-
-				for (const auto& enumValue : enumValues)
-				{
-					if (!firstValue)
-					{
-						sourceFile << R"cpp(,)cpp";
-					}
-
-					firstValue = false;
-					sourceFile << R"cpp(
-	std::make_pair(R"gql()cpp" << enumValue->name()
-							   << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
-							   << SchemaLoader::getSafeCppName(enumValue->name()) << R"cpp())cpp";
-					pendingSeparator.add();
-				}
-
-				pendingSeparator.reset();
-				sourceFile << R"cpp(};
-)cpp";
-
-				pendingSeparator.add();
-			}
-
 			pendingSeparator.reset();
+
+			const auto& enumValues = enumType->enumValues();
 
 			sourceFile << R"cpp(template <>
 )cpp" << cppType << R"cpp( Response<)cpp"
@@ -909,9 +865,48 @@ response::Value Variable<)cpp"
 					   << enumType->name() << R"cpp( value)ex" };
 	}
 
+	static const std::array<std::pair<std::string_view, )cpp"
+					   << cppType << R"cpp(>, )cpp" << enumValues.size()
+					   << R"cpp(> s_values = {)cpp";
+
+			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
+				enumValues.size());
+
+			std::transform(enumValues.cbegin(),
+				enumValues.cend(),
+				sortedValues.begin(),
+				[](const auto& value) noexcept {
+					return std::make_pair(value->name(),
+						SchemaLoader::getSafeCppName(value->name()));
+				});
+			std::sort(sortedValues.begin(),
+				sortedValues.end(),
+				[](const auto& lhs, const auto& rhs) noexcept {
+					return internal::shorter_or_less {}(lhs.first, rhs.first);
+				});
+
+			bool firstValue = true;
+
+			for (const auto& enumValue : sortedValues)
+			{
+				if (!firstValue)
+				{
+					sourceFile << R"cpp(,)cpp";
+				}
+
+				firstValue = false;
+				sourceFile << R"cpp(
+		std::make_pair(R"gql()cpp"
+						   << enumValue.first << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
+						   << enumValue.second << R"cpp())cpp";
+				pendingSeparator.add();
+			}
+
+			pendingSeparator.reset();
+			sourceFile << R"cpp(	};
+
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values)cpp" << cppType
-					   << R"cpp(,
+		s_values,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -1107,8 +1102,7 @@ bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	sourceFile << R"cpp(
 template <>
 )cpp" << cppType
-			   << R"cpp( Response<)cpp" << cppType
-			   << R"cpp(>::parse(response::Value&& response)
+			   << R"cpp( Response<)cpp" << cppType << R"cpp(>::parse(response::Value&& response)
 {
 	)cpp" << cppType
 			   << R"cpp( result;

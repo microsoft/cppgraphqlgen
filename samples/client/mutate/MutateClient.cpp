@@ -25,7 +25,7 @@ const std::string& GetRequestText() noexcept
 		# Copyright (c) Microsoft Corporation. All rights reserved.
 		# Licensed under the MIT License.
 		
-		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+		mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!", testTaskState: Unassigned}, $skipClientMutationId: Boolean!) {
 		  completedTask: completeTask(input: $input) {
 		    completedTask: task {
 		      completedTaskId: id
@@ -105,19 +105,19 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 
 using namespace mutate;
 
-static const std::array<std::string_view, 4> s_namesTaskState = {
-	R"gql(New)gql"sv,
-	R"gql(Started)gql"sv,
-	R"gql(Complete)gql"sv,
-	R"gql(Unassigned)gql"sv
-};
-
 template <>
 response::Value Variable<TaskState>::serialize(TaskState&& value)
 {
+	static const std::array<std::string_view, 4> s_names = {
+		R"gql(Unassigned)gql"sv,
+		R"gql(New)gql"sv,
+		R"gql(Started)gql"sv,
+		R"gql(Complete)gql"sv
+	};
+
 	response::Value result { response::Type::EnumValue };
 
-	result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_names[static_cast<size_t>(value)] });
 
 	return result;
 }
@@ -135,13 +135,6 @@ response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& input
 	return result;
 }
 
-static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
-	std::make_pair(R"gql(New)gql"sv, TaskState::New),
-	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-};
-
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
 {
@@ -150,8 +143,15 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
+	static const std::array<std::pair<std::string_view, TaskState>, 4> s_values = {
+		std::make_pair(R"gql(New)gql"sv, TaskState::New),
+		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+	};
+
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_valuesTaskState,
+		s_values,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)

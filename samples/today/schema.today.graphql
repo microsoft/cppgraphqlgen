@@ -117,12 +117,12 @@ type Subscription {
 scalar DateTime @specifiedBy(url: "https://en.wikipedia.org/wiki/ISO_8601")
 
 enum TaskState {
-    New
-    Started
-    Complete
     Unassigned @deprecated(
         reason:"""Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation)"""
     )
+    New
+    Started
+    Complete
 }
 
 type Appointment implements Node {

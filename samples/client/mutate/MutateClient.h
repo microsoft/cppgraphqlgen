@@ -31,7 +31,7 @@ namespace graphql::client {
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!"}, $skipClientMutationId: Boolean!) {
+/// mutation CompleteTaskMutation($input: CompleteTaskInput = {id: "ZmFrZVRhc2tJZA==", isComplete: true, clientMutationId: "Hi There!", testTaskState: Unassigned}, $skipClientMutationId: Boolean!) {
 ///   completedTask: completeTask(input: $input) {
 ///     completedTask: task {
 ///       completedTaskId: id
@@ -52,10 +52,10 @@ namespace mutate {
 
 enum class [[nodiscard]] TaskState
 {
+	Unassigned,
 	New,
 	Started,
 	Complete,
-	Unassigned,
 };
 
 struct [[nodiscard]] CompleteTaskInput

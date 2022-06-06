@@ -119,10 +119,10 @@ namespace multiple {
 
 enum class [[nodiscard]] TaskState
 {
+	Unassigned,
 	New,
 	Started,
 	Complete,
-	Unassigned,
 };
 
 struct [[nodiscard]] CompleteTaskInput
