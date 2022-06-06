@@ -106,13 +106,6 @@ const peg::ast& GetRequestObject() noexcept
 
 using namespace query;
 
-static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
-	std::make_pair(R"gql(New)gql"sv, TaskState::New),
-	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-};
-
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
 {
@@ -121,8 +114,15 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
+	static const std::array<std::pair<std::string_view, TaskState>, 4> s_values = {
+		std::make_pair(R"gql(New)gql"sv, TaskState::New),
+		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+	};
+
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_valuesTaskState,
+		s_values,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
