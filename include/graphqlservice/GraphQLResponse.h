@@ -392,7 +392,7 @@ private:
 	template <class T>
 	struct Model : Concept
 	{
-		Model(std::unique_ptr<T>&& pimpl)
+		Model(std::unique_ptr<T> pimpl)
 			: _pimpl { std::move(pimpl) }
 		{
 		}

@@ -670,7 +670,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -700,7 +700,7 @@ private:
 	};
 
 	)cpp"
-		<< cppType << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
+		<< cppType << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -898,7 +898,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -1075,7 +1075,7 @@ public:
 	else
 	{
 		headerFile << R"cpp(	)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
+				   << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept;
 
 )cpp";
 
@@ -2096,7 +2096,7 @@ void Generator::outputInterfaceImplementation(
 	// with arguments that declare the set of types it implements and bind the fields to the
 	// resolver methods.
 	sourceFile << cppType << R"cpp(::)cpp" << cppType
-			   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept
+			   << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -2175,7 +2175,7 @@ void Generator::outputObjectImplementation(
 		// with arguments that declare the set of types it implements and bind the fields to the
 		// resolver methods.
 		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<const Concept>&& pimpl))cpp";
+				   << R"cpp((std::unique_ptr<const Concept> pimpl))cpp";
 	}
 
 	sourceFile << R"cpp( noexcept

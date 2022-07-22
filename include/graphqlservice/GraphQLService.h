@@ -197,7 +197,7 @@ private:
 	template <class T>
 	struct [[nodiscard]] Model : Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl)
+		Model(std::shared_ptr<T> pimpl)
 			: _pimpl { std::move(pimpl) }
 		{
 		}

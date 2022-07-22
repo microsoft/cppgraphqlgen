@@ -82,7 +82,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -139,7 +139,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Alien(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	Alien(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Sentient;

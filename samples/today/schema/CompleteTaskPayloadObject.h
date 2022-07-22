@@ -75,7 +75,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -132,7 +132,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	CompleteTaskPayload(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	CompleteTaskPayload(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
