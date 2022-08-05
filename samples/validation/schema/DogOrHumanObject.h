@@ -62,8 +62,8 @@ private:
 
 	DogOrHuman(std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 

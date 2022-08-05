@@ -702,8 +702,8 @@ private:
 	)cpp"
 		<< cppType << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
@@ -1126,8 +1126,8 @@ public:
 			<< R"cpp(	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
