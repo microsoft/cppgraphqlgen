@@ -31,6 +31,32 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   endif()
 endif()
 
+option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
+option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
+option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
+
+if(GRAPHQL_BUILD_SCHEMAGEN)
+  list(APPEND VCPKG_MANIFEST_FEATURES "schemagen")
+endif()
+
+if(GRAPHQL_BUILD_CLIENTGEN)
+  list(APPEND VCPKG_MANIFEST_FEATURES "clientgen")
+endif()
+
+if(GRAPHQL_BUILD_TESTS)
+  list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+endif()
+
+if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)
+  option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
+
+  if(GRAPHQL_UPDATE_SAMPLES)
+    list(APPEND VCPKG_MANIFEST_FEATURES "update-samples")
+  endif()
+else()
+  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
+endif()
+
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
 
 set(GRAPHQL_INSTALL_INCLUDE_DIR include CACHE PATH "Header file install directory")
@@ -80,16 +106,6 @@ if(NOT pegtl_FOUND)
   set(PEGTL_INSTALL_CMAKE_DIR ${GRAPHQL_INSTALL_CMAKE_DIR}/pegtl CACHE STRING "Override PEGTL cmake install directory")
   add_subdirectory(PEGTL)
 endif()
-
-option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
-
-if(GRAPHQL_BUILD_SCHEMAGEN)
-  option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
-else()
-  set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
-endif()
-
-option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 
 option(GRAPHQL_UPDATE_VERSION "Regenerate graphqlservice/internal/Version.h and all of the version info rc files for Windows." ON)
 

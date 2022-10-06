@@ -406,8 +406,6 @@ install(FILES
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)
-  option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
-
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
 
   install(TARGETS graphqljson

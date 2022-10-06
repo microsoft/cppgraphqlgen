@@ -20,27 +20,18 @@ jobs:
       uses: actions/cache@v2
       id: cache-vcpkg
       with:
-        path: vcpkg/
+        path: build/vcpkg_installed/
         key: vcpkg-x64-osx
 
-    - name: Install Dependencies
-      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
-      shell: pwsh
-      run: |
-        git clone https://github.com/microsoft/vcpkg
-        cd vcpkg
-        ./bootstrap-vcpkg.sh -allowAppleClang
-        ./vcpkg integrate install
-        ./vcpkg install boost-program-options rapidjson gtest
-
     - name: Create Build Environment
+      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
       run: cmake -E make_directory build
 
     - name: Configure
       shell: pwsh
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path '../vcpkg' './scripts/buildsystems/vcpkg.cmake' -Resolve
+        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $cmakeBuildType = '${{ matrix.config }}'
 
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" ${{ github.workspace }}

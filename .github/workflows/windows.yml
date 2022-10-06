@@ -27,27 +27,18 @@ jobs:
       uses: actions/cache@v2
       id: cache-vcpkg
       with:
-        path: vcpkg/
+        path: build/vcpkg_installed/
         key: vcpkg-${{ steps.set-variables.outputs.vcpkg_triplet }}
 
-    - name: Install Dependencies
-      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
-      shell: pwsh
-      run: |
-        git clone https://github.com/microsoft/vcpkg
-        cd vcpkg
-        .\bootstrap-vcpkg.bat
-        .\vcpkg integrate install
-        .\vcpkg install boost-program-options rapidjson gtest --triplet ${{ steps.set-variables.outputs.vcpkg_triplet }}
-
     - name: Create Build Environment
+      if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
       run: cmake -E make_directory build
 
     - name: Configure
       shell: pwsh
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path '..\vcpkg' '.\scripts\buildsystems\vcpkg.cmake' -Resolve
+        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT '.\scripts\buildsystems\vcpkg.cmake' -Resolve
         $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
         $cmakeSharedLibs = $(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })
         $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })
