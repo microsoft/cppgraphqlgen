@@ -1,0 +1,41 @@
+{
+  "name": "current-cppgraphqlgen",
+  "version-string": "current",
+  "features": {
+    "schemagen": {
+      "description": "Build the schemagen tool.",
+      "dependencies": [
+        "boost-program-options"
+      ]
+    },
+    "clientgen": {
+      "description": "Build the clientgen tool.",
+      "dependencies": [
+        "boost-program-options"
+      ]
+    },
+    "tests": {
+      "description": "Build tests.",
+      "dependencies": [
+        "gtest"
+      ]
+    },
+    "update-samples": {
+      "description": "Regenerate the sample schema sources whether or not we're building the tests.",
+      "dependencies": [
+        {
+          "name": "current-cppgraphqlgen",
+          "default-features": false,
+          "features": [
+            "schemagen",
+            "clientgen"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": [
+    "pegtl",
+    "rapidjson"
+  ]
+}

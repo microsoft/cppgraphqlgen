@@ -180,6 +180,17 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Response = Appointments::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
+
 } // namespace query::Appointments
 
 namespace query::Tasks {
@@ -214,6 +225,17 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Response = Tasks::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
 
 } // namespace query::Tasks
 
@@ -250,6 +272,17 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Response = UnreadCounts::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
+
 } // namespace query::UnreadCounts
 
 namespace query::Miscellaneous {
@@ -281,6 +314,17 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Response = Miscellaneous::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
 
 } // namespace query::Miscellaneous
 
@@ -323,6 +367,21 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Variables = CompleteTaskMutation::Variables;
+
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+
+	using Response = CompleteTaskMutation::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
 
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client

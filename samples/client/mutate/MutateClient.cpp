@@ -261,5 +261,30 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return mutate::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return mutate::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return CompleteTaskMutation::GetOperationName();
+}
+
+[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+{
+	return CompleteTaskMutation::serializeVariables(std::move(variables));
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return CompleteTaskMutation::parseResponse(std::move(response));
+}
+
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client

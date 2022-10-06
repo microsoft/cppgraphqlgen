@@ -196,6 +196,17 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+
+	using Response = Query::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
+};
+
 } // namespace query::Query
 } // namespace graphql::client
 
