@@ -75,27 +75,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return subscribe::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return subscribe::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return TestSubscription::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = TestSubscription::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return TestSubscription::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace subscription::TestSubscription

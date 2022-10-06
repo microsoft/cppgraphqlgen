@@ -198,27 +198,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return query::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return query::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return Query::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Query::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return Query::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Query

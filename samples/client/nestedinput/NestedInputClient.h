@@ -147,34 +147,17 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return nestedinput::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return nestedinput::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return testQuery::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = testQuery::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
-	{
-		return testQuery::serializeVariables(std::move(variables));
-	}
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = testQuery::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return testQuery::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::testQuery

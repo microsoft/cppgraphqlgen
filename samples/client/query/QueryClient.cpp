@@ -488,5 +488,25 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return query::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return query::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return Query::GetOperationName();
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return Query::parseResponse(std::move(response));
+}
+
 } // namespace query::Query
 } // namespace graphql::client

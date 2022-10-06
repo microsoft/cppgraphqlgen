@@ -288,6 +288,26 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return multiple::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return multiple::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return Appointments::GetOperationName();
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return Appointments::parseResponse(std::move(response));
+}
+
 } // namespace query::Appointments
 
 template <>
@@ -401,6 +421,26 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return multiple::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return multiple::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return Tasks::GetOperationName();
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return Tasks::parseResponse(std::move(response));
+}
+
 } // namespace query::Tasks
 
 template <>
@@ -512,6 +552,26 @@ Response parseResponse(response::Value&& response)
 	}
 
 	return result;
+}
+
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return multiple::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return multiple::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return UnreadCounts::GetOperationName();
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return UnreadCounts::parseResponse(std::move(response));
 }
 
 } // namespace query::UnreadCounts
@@ -633,6 +693,26 @@ Response parseResponse(response::Value&& response)
 	}
 
 	return result;
+}
+
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return multiple::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return multiple::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return Miscellaneous::GetOperationName();
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return Miscellaneous::parseResponse(std::move(response));
 }
 
 } // namespace query::Miscellaneous
@@ -764,6 +844,31 @@ Response parseResponse(response::Value&& response)
 	}
 
 	return result;
+}
+
+[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+{
+	return multiple::GetRequestText();
+}
+
+[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+{
+	return multiple::GetRequestObject();
+}
+
+[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+{
+	return CompleteTaskMutation::GetOperationName();
+}
+
+[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+{
+	return CompleteTaskMutation::serializeVariables(std::move(variables));
+}
+
+[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+{
+	return CompleteTaskMutation::parseResponse(std::move(response));
 }
 
 } // namespace mutation::CompleteTaskMutation

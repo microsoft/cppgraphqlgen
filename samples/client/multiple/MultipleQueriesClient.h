@@ -182,27 +182,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return multiple::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return multiple::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return Appointments::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Appointments::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return Appointments::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Appointments
@@ -242,27 +228,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return multiple::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return multiple::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return Tasks::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Tasks::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return Tasks::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Tasks
@@ -302,27 +274,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return multiple::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return multiple::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return UnreadCounts::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = UnreadCounts::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return UnreadCounts::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::UnreadCounts
@@ -359,27 +317,13 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return multiple::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return multiple::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return Miscellaneous::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Miscellaneous::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return Miscellaneous::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Miscellaneous
@@ -426,34 +370,17 @@ struct [[nodiscard]] Response
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept
-	{
-		return multiple::GetRequestText();
-	}
-
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
-	{
-		return multiple::GetRequestObject();
-	}
-
-	[[nodiscard]] static const std::string& GetOperationName() noexcept
-	{
-		return CompleteTaskMutation::GetOperationName();
-	}
+	[[nodiscard]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = CompleteTaskMutation::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
-	{
-		return CompleteTaskMutation::serializeVariables(std::move(variables));
-	}
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = CompleteTaskMutation::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response)
-	{
-		return CompleteTaskMutation::parseResponse(std::move(response));
-	}
+	[[nodiscard]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace mutation::CompleteTaskMutation
