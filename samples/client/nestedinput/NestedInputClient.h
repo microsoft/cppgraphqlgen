@@ -145,6 +145,38 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return nestedinput::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return nestedinput::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return testQuery::GetOperationName();
+	}
+
+	using Variables = testQuery::Variables;
+
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
+	{
+		return testQuery::serializeVariables(std::move(variables));
+	}
+
+	using Response = testQuery::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return testQuery::parseResponse(std::move(response));
+	}
+};
+
 } // namespace query::testQuery
 } // namespace graphql::client
 

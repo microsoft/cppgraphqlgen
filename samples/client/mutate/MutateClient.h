@@ -119,6 +119,38 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return mutate::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return mutate::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return CompleteTaskMutation::GetOperationName();
+	}
+
+	using Variables = CompleteTaskMutation::Variables;
+
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
+	{
+		return CompleteTaskMutation::serializeVariables(std::move(variables));
+	}
+
+	using Response = CompleteTaskMutation::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return CompleteTaskMutation::parseResponse(std::move(response));
+	}
+};
+
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
 

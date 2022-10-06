@@ -424,6 +424,56 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return )cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return )cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return )cpp"
+				   << _requestLoader.getOperationNamespace(operation)
+				   << R"cpp(::GetOperationName();
+	}
+)cpp";
+
+		if (!variables.empty())
+		{
+			headerFile << R"cpp(
+	using Variables = )cpp"
+					   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Variables;
+
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
+	{
+		return )cpp" << _requestLoader.getOperationNamespace(operation)
+					   << R"cpp(::serializeVariables(std::move(variables));
+	}
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		headerFile << R"cpp(
+	using Response = )cpp"
+				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return )cpp"
+				   << _requestLoader.getOperationNamespace(operation)
+				   << R"cpp(::parseResponse(std::move(response));
+	}
+};
+
 )cpp";
 
 		pendingSeparator.add();
@@ -813,7 +863,8 @@ response::Value Variable<)cpp"
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType
+						   << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 

@@ -73,6 +73,31 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return subscribe::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return subscribe::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return TestSubscription::GetOperationName();
+	}
+
+	using Response = TestSubscription::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return TestSubscription::parseResponse(std::move(response));
+	}
+};
+
 } // namespace subscription::TestSubscription
 } // namespace graphql::client
 

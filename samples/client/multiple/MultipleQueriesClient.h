@@ -180,6 +180,31 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return multiple::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return multiple::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return Appointments::GetOperationName();
+	}
+
+	using Response = Appointments::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return Appointments::parseResponse(std::move(response));
+	}
+};
+
 } // namespace query::Appointments
 
 namespace query::Tasks {
@@ -214,6 +239,31 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return multiple::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return multiple::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return Tasks::GetOperationName();
+	}
+
+	using Response = Tasks::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return Tasks::parseResponse(std::move(response));
+	}
+};
 
 } // namespace query::Tasks
 
@@ -250,6 +300,31 @@ struct [[nodiscard]] Response
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
 
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return multiple::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return multiple::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return UnreadCounts::GetOperationName();
+	}
+
+	using Response = UnreadCounts::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return UnreadCounts::parseResponse(std::move(response));
+	}
+};
+
 } // namespace query::UnreadCounts
 
 namespace query::Miscellaneous {
@@ -281,6 +356,31 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return multiple::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return multiple::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return Miscellaneous::GetOperationName();
+	}
+
+	using Response = Miscellaneous::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return Miscellaneous::parseResponse(std::move(response));
+	}
+};
 
 } // namespace query::Miscellaneous
 
@@ -323,6 +423,38 @@ struct [[nodiscard]] Response
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);
+
+struct Traits
+{
+	[[nodiscard]] static const std::string& GetRequestText() noexcept
+	{
+		return multiple::GetRequestText();
+	}
+
+	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept
+	{
+		return multiple::GetRequestObject();
+	}
+
+	[[nodiscard]] static const std::string& GetOperationName() noexcept
+	{
+		return CompleteTaskMutation::GetOperationName();
+	}
+
+	using Variables = CompleteTaskMutation::Variables;
+
+	[[nodiscard]] static response::Value serializeVariables(Variables&& variables)
+	{
+		return CompleteTaskMutation::serializeVariables(std::move(variables));
+	}
+
+	using Response = CompleteTaskMutation::Response;
+
+	[[nodiscard]] static Response parseResponse(response::Value&& response)
+	{
+		return CompleteTaskMutation::parseResponse(std::move(response));
+	}
+};
 
 } // namespace mutation::CompleteTaskMutation
 } // namespace graphql::client
