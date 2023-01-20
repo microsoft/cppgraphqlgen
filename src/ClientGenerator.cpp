@@ -725,11 +725,7 @@ using namespace std::literals;
 )cpp" << cppType << R"cpp(& )cpp"
 					   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
 {
-	)cpp" << cppType << R"cpp( value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = )cpp" << cppType << R"cpp( { other };
 }
 
 )cpp" << cppType << R"cpp(& )cpp"

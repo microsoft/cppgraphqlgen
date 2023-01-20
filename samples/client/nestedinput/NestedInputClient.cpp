@@ -66,11 +66,7 @@ InputA::InputA(InputA&& other) noexcept
 
 InputA& InputA::operator=(const InputA& other)
 {
-	InputA value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = InputA { other };
 }
 
 InputA& InputA::operator=(InputA&& other) noexcept
@@ -98,11 +94,7 @@ InputB::InputB(InputB&& other) noexcept
 
 InputB& InputB::operator=(const InputB& other)
 {
-	InputB value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = InputB { other };
 }
 
 InputB& InputB::operator=(InputB&& other) noexcept
@@ -116,11 +108,13 @@ InputABCD::InputABCD(
 		std::string dArg,
 		InputA aArg,
 		InputB bArg,
-		std::vector<InputBC> bcArg) noexcept
+		std::vector<InputBC> bcArg,
+		int valueArg) noexcept
 	: d { std::move(dArg) }
 	, a { std::move(aArg) }
 	, b { std::move(bArg) }
 	, bc { std::move(bcArg) }
+	, value { std::move(valueArg) }
 {
 }
 
@@ -129,6 +123,7 @@ InputABCD::InputABCD(const InputABCD& other)
 	, a { ModifiedVariable<InputA>::duplicate(other.a) }
 	, b { ModifiedVariable<InputB>::duplicate(other.b) }
 	, bc { ModifiedVariable<InputBC>::duplicate<TypeModifier::List>(other.bc) }
+	, value { ModifiedVariable<int>::duplicate(other.value) }
 {
 }
 
@@ -137,16 +132,13 @@ InputABCD::InputABCD(InputABCD&& other) noexcept
 	, a { std::move(other.a) }
 	, b { std::move(other.b) }
 	, bc { std::move(other.bc) }
+	, value { std::move(other.value) }
 {
 }
 
 InputABCD& InputABCD::operator=(const InputABCD& other)
 {
-	InputABCD value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = InputABCD { other };
 }
 
 InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
@@ -155,6 +147,7 @@ InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 	a = std::move(other.a);
 	b = std::move(other.b);
 	bc = std::move(other.bc);
+	value = std::move(other.value);
 
 	return *this;
 }
@@ -181,11 +174,7 @@ InputBC::InputBC(InputBC&& other) noexcept
 
 InputBC& InputBC::operator=(const InputBC& other)
 {
-	InputBC value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = InputBC { other };
 }
 
 InputBC& InputBC::operator=(InputBC&& other) noexcept
@@ -229,6 +218,7 @@ response::Value Variable<InputABCD>::serialize(InputABCD&& inputValue)
 	result.emplace_back(R"js(a)js"s, ModifiedVariable<InputA>::serialize(std::move(inputValue.a)));
 	result.emplace_back(R"js(b)js"s, ModifiedVariable<InputB>::serialize(std::move(inputValue.b)));
 	result.emplace_back(R"js(bc)js"s, ModifiedVariable<InputBC>::serialize<TypeModifier::List>(std::move(inputValue.bc)));
+	result.emplace_back(R"js(value)js"s, ModifiedVariable<int>::serialize(std::move(inputValue.value)));
 
 	return result;
 }

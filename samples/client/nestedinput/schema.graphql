@@ -16,6 +16,7 @@ input InputABCD {
   a: InputA!
   b: InputB!
   bc: [InputBC!]!
+  value: Int!
 }
 
 type Output {
