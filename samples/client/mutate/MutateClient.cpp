@@ -84,11 +84,7 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 
 CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
 {
-	CompleteTaskInput value { other };
-
-	std::swap(*this, value);
-
-	return *this;
+	return *this = CompleteTaskInput { other };
 }
 
 CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexcept

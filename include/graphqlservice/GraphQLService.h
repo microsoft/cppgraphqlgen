@@ -116,7 +116,7 @@ struct [[nodiscard]] RequestState : std::enable_shared_from_this<RequestState>
 	virtual ~RequestState() = default;
 };
 
-namespace {
+inline namespace keywords {
 
 using namespace std::literals;
 
@@ -131,7 +131,7 @@ constexpr std::string_view strQuery { "query"sv };
 constexpr std::string_view strMutation { "mutation"sv };
 constexpr std::string_view strSubscription { "subscription"sv };
 
-} // namespace
+} // namespace keywords
 
 // Resolvers may be called in multiple different Operation contexts.
 enum class [[nodiscard]] ResolverContext {

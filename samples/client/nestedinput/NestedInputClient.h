@@ -78,7 +78,8 @@ struct [[nodiscard]] InputABCD
 		std::string dArg = std::string {},
 		InputA aArg = InputA {},
 		InputB bArg = InputB {},
-		std::vector<InputBC> bcArg = std::vector<InputBC> {}) noexcept;
+		std::vector<InputBC> bcArg = std::vector<InputBC> {},
+		int valueArg = int {}) noexcept;
 	InputABCD(const InputABCD& other);
 	InputABCD(InputABCD&& other) noexcept;
 
@@ -89,6 +90,7 @@ struct [[nodiscard]] InputABCD
 	InputA a {};
 	InputB b {};
 	std::vector<InputBC> bc {};
+	int value {};
 };
 
 struct [[nodiscard]] InputBC
