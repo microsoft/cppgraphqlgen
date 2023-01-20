@@ -9,7 +9,7 @@ jobs:
       matrix:
         config: [Debug, Release]
 
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
       shell: pwsh
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
+        $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $cmakeBuildType = '${{ matrix.config }}'
 
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" ${{ github.workspace }}
