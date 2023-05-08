@@ -14,17 +14,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
 
     - name: Set target triplet
       id: set-variables
       shell: pwsh
-      run: echo "::set-output name=vcpkg_triplet::${{ matrix.arch }}-windows$(if ('${{ matrix.libs }}' -eq 'static') { '-static' })"
+      run: echo "vcpkg_triplet=${{ matrix.arch }}-windows$(if ('${{ matrix.libs }}' -eq 'static') { '-static' })" >> $env:GITHUB_OUTPUT
 
     - name: Cache vcpkg
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-vcpkg
       with:
         path: build/vcpkg_installed/

@@ -12,12 +12,12 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
 
     - name: Cache vcpkg
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-vcpkg
       with:
         path: build/vcpkg_installed/
