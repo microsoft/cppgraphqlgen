@@ -46,8 +46,9 @@ namespace nestedinput {
 
 struct [[nodiscard]] InputA
 {
+	explicit InputA() noexcept;
 	explicit InputA(
-		bool aArg = bool {}) noexcept;
+		bool aArg) noexcept;
 	InputA(const InputA& other);
 	InputA(InputA&& other) noexcept;
 
@@ -59,8 +60,9 @@ struct [[nodiscard]] InputA
 
 struct [[nodiscard]] InputB
 {
+	explicit InputB() noexcept;
 	explicit InputB(
-		double bArg = double {}) noexcept;
+		double bArg) noexcept;
 	InputB(const InputB& other);
 	InputB(InputB&& other) noexcept;
 
@@ -74,12 +76,13 @@ struct InputBC;
 
 struct [[nodiscard]] InputABCD
 {
+	explicit InputABCD() noexcept;
 	explicit InputABCD(
-		std::string dArg = std::string {},
-		InputA aArg = InputA {},
-		InputB bArg = InputB {},
-		std::vector<InputBC> bcArg = std::vector<InputBC> {},
-		int valueArg = int {}) noexcept;
+		std::string dArg,
+		InputA aArg,
+		InputB bArg,
+		std::vector<InputBC> bcArg,
+		int valueArg) noexcept;
 	InputABCD(const InputABCD& other);
 	InputABCD(InputABCD&& other) noexcept;
 
@@ -95,9 +98,10 @@ struct [[nodiscard]] InputABCD
 
 struct [[nodiscard]] InputBC
 {
+	explicit InputBC() noexcept;
 	explicit InputBC(
-		response::IdType cArg = response::IdType {},
-		InputB bArg = InputB {}) noexcept;
+		response::IdType cArg,
+		InputB bArg) noexcept;
 	InputBC(const InputBC& other);
 	InputBC(InputBC&& other) noexcept;
 

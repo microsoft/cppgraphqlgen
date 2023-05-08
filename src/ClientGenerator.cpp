@@ -278,7 +278,13 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			for (const auto& inputField : inputType.type->inputFields())
 			{
-				if (!firstField)
+				if (firstField)
+				{
+					headerFile << R"cpp() noexcept;
+	explicit )cpp" << cppType
+					   << R"cpp(()cpp";
+				}
+				else
 				{
 					headerFile << R"cpp(,)cpp";
 				}
@@ -290,7 +296,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				headerFile << R"cpp(
 		)cpp" << inputCppType
 						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(Arg = )cpp" << inputCppType << R"cpp( {})cpp";
+						   << R"cpp(Arg)cpp";
 			}
 
 			headerFile << R"cpp() noexcept;
