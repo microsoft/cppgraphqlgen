@@ -60,7 +60,7 @@ enum class [[nodiscard]] TaskState
 
 struct [[nodiscard]] CompleteTaskInput
 {
-	explicit CompleteTaskInput() noexcept;
+	explicit CompleteTaskInput() noexcept = default;
 	explicit CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,

@@ -280,7 +280,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			{
 				if (firstField)
 				{
-					headerFile << R"cpp() noexcept;
+					headerFile << R"cpp() noexcept = default;
 	explicit )cpp" << cppType
 					   << R"cpp(()cpp";
 				}

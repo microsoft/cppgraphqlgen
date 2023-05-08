@@ -46,7 +46,7 @@ namespace nestedinput {
 
 struct [[nodiscard]] InputA
 {
-	explicit InputA() noexcept;
+	explicit InputA() noexcept = default;
 	explicit InputA(
 		bool aArg) noexcept;
 	InputA(const InputA& other);
@@ -60,7 +60,7 @@ struct [[nodiscard]] InputA
 
 struct [[nodiscard]] InputB
 {
-	explicit InputB() noexcept;
+	explicit InputB() noexcept = default;
 	explicit InputB(
 		double bArg) noexcept;
 	InputB(const InputB& other);
@@ -76,7 +76,7 @@ struct InputBC;
 
 struct [[nodiscard]] InputABCD
 {
-	explicit InputABCD() noexcept;
+	explicit InputABCD() noexcept = default;
 	explicit InputABCD(
 		std::string dArg,
 		InputA aArg,
@@ -98,7 +98,7 @@ struct [[nodiscard]] InputABCD
 
 struct [[nodiscard]] InputBC
 {
-	explicit InputBC() noexcept;
+	explicit InputBC() noexcept = default;
 	explicit InputBC(
 		response::IdType cArg,
 		InputB bArg) noexcept;
