@@ -34,6 +34,7 @@ endif()
 option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
+option(GRAPHQL_BUILD_HTTP_SAMPLE "Build the HTTP client sample using C++20 coroutines with Boost.Beast/Boost.Asio." OFF)
 
 if(GRAPHQL_BUILD_SCHEMAGEN)
   list(APPEND VCPKG_MANIFEST_FEATURES "schemagen")
@@ -45,6 +46,10 @@ endif()
 
 if(GRAPHQL_BUILD_TESTS)
   list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+endif()
+
+if(GRAPHQL_BUILD_HTTP_SAMPLE)
+  list(APPEND VCPKG_MANIFEST_FEATURES "http-sample")
 endif()
 
 if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)

@@ -32,6 +32,12 @@
           ]
         }
       ]
+    },
+    "http-sample": {
+      "description": "Build the HTTP client sample using C++20 coroutines with Boost.Beast/Boost.Asio.",
+      "dependencies": [
+        "boost-beast"
+      ]
     }
   },
   "dependencies": [
