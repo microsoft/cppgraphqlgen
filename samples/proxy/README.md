@@ -35,4 +35,4 @@ When it gets a response, `client` uses the same pre-parsed query in [query/query
 to parse the result and return the JSON document in the field returned from the `server` process.
 
 As long as you start the `server` process first, the behavior of `client` should be almost identical to the
-`learn` executable sample produced by [../learn](../learn/).
+`learn_star_wars` executable sample produced by [../learn](../learn/).
