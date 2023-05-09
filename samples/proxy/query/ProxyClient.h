@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef PROXYRELAYCLIENT_H
-#define PROXYRELAYCLIENT_H
+#ifndef PROXYCLIENT_H
+#define PROXYCLIENT_H
 
 #include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
@@ -35,7 +35,7 @@ namespace graphql::client {
 ///   relay(query: $query, operationName: $operationName, variables: $variables)
 /// }
 /// </code>
-namespace proxyrelay {
+namespace proxy {
 
 // Return the original text of the request document.
 [[nodiscard]] const std::string& GetRequestText() noexcept;
@@ -43,12 +43,12 @@ namespace proxyrelay {
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard]] const peg::ast& GetRequestObject() noexcept;
 
-} // namespace proxyrelay
+} // namespace proxy
 
 namespace query::relayQuery {
 
-using proxyrelay::GetRequestText;
-using proxyrelay::GetRequestObject;
+using proxy::GetRequestText;
+using proxy::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard]] const std::string& GetOperationName() noexcept;
@@ -87,4 +87,4 @@ struct Traits
 } // namespace query::relayQuery
 } // namespace graphql::client
 
-#endif // PROXYRELAYCLIENT_H
+#endif // PROXYCLIENT_H

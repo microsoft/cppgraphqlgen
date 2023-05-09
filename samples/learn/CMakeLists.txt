@@ -14,21 +14,12 @@ add_library(star_wars STATIC
   StarWarsData.cpp)
 target_link_libraries(star_wars PUBLIC learn_schema)
 target_include_directories(star_wars PUBLIC star_wars)
+target_include_directories(star_wars INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(learn_star_wars sample.cpp)
 target_link_libraries(learn_star_wars PRIVATE
   star_wars
   graphqljson)
-
-if(GRAPHQL_BUILD_HTTP_SAMPLE)
-  find_package(Boost)
-  if(Boost_FOUND)
-    add_executable(server server.cpp)
-    target_link_libraries(server PRIVATE
-      star_wars
-      graphqljson)
-  endif()
-endif()
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_sample_dlls
@@ -48,8 +39,4 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_target(copy_learn_sample_dlls DEPENDS copied_sample_dlls)
 
   add_dependencies(learn_star_wars copy_learn_sample_dlls)
-
-  if(GRAPHQL_BUILD_HTTP_SAMPLE AND Boost_FOUND)
-    add_dependencies(server copy_learn_sample_dlls)
-  endif()
 endif()

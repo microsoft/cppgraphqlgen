@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef HTTPPROXYSCHEMA_H
-#define HTTPPROXYSCHEMA_H
+#ifndef PROXYSCHEMA_H
+#define PROXYSCHEMA_H
 
 #include "graphqlservice/internal/Schema.h"
 
@@ -52,4 +52,4 @@ std::shared_ptr<schema::Schema> GetSchema();
 } // namespace proxy
 } // namespace graphql
 
-#endif // HTTPPROXYSCHEMA_H
+#endif // PROXYSCHEMA_H

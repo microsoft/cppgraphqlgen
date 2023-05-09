@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "HttpProxySchema.h"
-#include "QueryObject.h"
+#include "query/ProxyClient.h"
 
-#include "ProxyRelayClient.h"
+#include "schema/ProxySchema.h"
+#include "schema/QueryObject.h"
 
 #include "graphqlservice/JSONResponse.h"
 
@@ -178,7 +178,6 @@ int main(int argc, char** argv)
 		auto query = GetRequestObject();
 		auto variables = serializeVariables(
 			{ input, ((argc > 1) ? std::make_optional(argv[1]) : std::nullopt) });
-
 		auto launch = service::await_async { std::make_shared<service::await_worker_queue>() };
 		auto serviceResponse = client::parseServiceResponse(
 			service->resolve({ query, GetOperationName(), std::move(variables), launch }).get());

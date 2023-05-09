@@ -8,7 +8,7 @@
 #ifndef QUERYOBJECT_H
 #define QUERYOBJECT_H
 
-#include "HttpProxySchema.h"
+#include "ProxySchema.h"
 
 namespace graphql::proxy::object {
 namespace methods::QueryHas {

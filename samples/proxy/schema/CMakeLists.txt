@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.15)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/cppgraphqlgen-functions.cmake)
 
 if(GRAPHQL_UPDATE_SAMPLES)
-  update_graphql_schema_files(proxy schema.proxy.graphql HttpProxy proxy)
+  update_graphql_schema_files(proxy schema.graphql Proxy proxy)
 endif()
 
 add_graphql_schema_target(proxy)
