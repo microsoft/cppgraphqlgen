@@ -34,7 +34,6 @@ endif()
 option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
-option(GRAPHQL_BUILD_HTTP_SAMPLE "Build the HTTP client sample using C++20 coroutines with Boost.Beast/Boost.Asio." OFF)
 
 if(GRAPHQL_BUILD_SCHEMAGEN)
   list(APPEND VCPKG_MANIFEST_FEATURES "schemagen")
@@ -48,18 +47,21 @@ if(GRAPHQL_BUILD_TESTS)
   list(APPEND VCPKG_MANIFEST_FEATURES "tests")
 endif()
 
-if(GRAPHQL_BUILD_HTTP_SAMPLE)
-  list(APPEND VCPKG_MANIFEST_FEATURES "http-sample")
-endif()
-
 if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)
   option(GRAPHQL_UPDATE_SAMPLES "Regenerate the sample schema sources whether or not we're building the tests." ON)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     list(APPEND VCPKG_MANIFEST_FEATURES "update-samples")
+
+    option(GRAPHQL_BUILD_HTTP_SAMPLE "Build the HTTP client sample using C++20 coroutines with Boost.Beast/Boost.Asio." ON)
+
+    if(GRAPHQL_BUILD_HTTP_SAMPLE)
+      list(APPEND VCPKG_MANIFEST_FEATURES "http-sample")
+    endif()
   endif()
 else()
   set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
+  set(GRAPHQL_BUILD_HTTP_SAMPLE OFF CACHE BOOL "Disable regenerating samples." FORCE)
 endif()
 
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
