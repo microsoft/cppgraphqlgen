@@ -1231,20 +1231,20 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	for (auto& child : children)
 	{
-		auto location = std::move(child.location).value_or(schema_location {});
-		auto path = std::move(child.path).value_or(error_path {});
-
 		try
 		{
 			co_await launch;
 
-			auto value = co_await child.result;
+			auto value = co_await std::move(child.result);
 
 			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
 			{
 				std::ostringstream message;
 
 				message << "Ambiguous field error name: " << child.name;
+
+				auto location = std::move(child.location).value_or(schema_location {});
+				auto path = std::move(child.path).value_or(error_path {});
 
 				document.errors.push_back({ message.str(), std::move(location), std::move(path) });
 			}
@@ -1270,6 +1270,9 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 			std::ostringstream message;
 
 			message << "Field error name: " << child.name << " unknown error: " << ex.what();
+
+			auto location = std::move(child.location).value_or(schema_location {});
+			auto path = std::move(child.path).value_or(error_path {});
 
 			document.errors.push_back({ message.str(), std::move(location), std::move(path) });
 			document.data.emplace_back(std::string { child.name }, {});
