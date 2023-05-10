@@ -40,9 +40,9 @@ namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
 
-constexpr net::string_view c_host { "127.0.0.1" };
-constexpr net::string_view c_port { "8080" };
-constexpr net::string_view c_target { "/graphql" };
+constexpr auto c_host = "127.0.0.1"sv;
+constexpr auto c_port = "8080"sv;
+constexpr auto c_target = "/graphql"sv;
 constexpr int c_version = 11; // HTTP 1.1
 
 class Query
@@ -95,9 +95,9 @@ std::future<std::string> Query::getRelay(std::string&& queryArg,
 	net::io_context ioc;
 	auto future = net::co_spawn(
 		ioc,
-		[](net::string_view host,
-			net::string_view port,
-			net::string_view target,
+		[](const char* host,
+			const char* port,
+			const char* target,
 			int version,
 			std::string requestBody) -> net::awaitable<std::string> {
 			// These objects perform our I/O. They use an executor with a default completion token
@@ -151,7 +151,7 @@ std::future<std::string> Query::getRelay(std::string&& queryArg,
 			}
 
 			co_return std::string { std::move(res.body()) };
-		}(m_host, m_port, m_target, m_version, std::move(requestBody)),
+		}(m_host.c_str(), m_port.c_str(), m_target.c_str(), m_version, std::move(requestBody)),
 		net::use_future);
 
 	ioc.run();
