@@ -1053,8 +1053,8 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			selection,
 			_fragments,
 			_variables));
-		auto location = std::make_optional<schema_location>(position.line, position.column);
-		auto path = std::make_optional<error_path>(buildErrorPath(selectionSetParams.errorPath));
+		auto location = std::make_optional(schema_location { position.line, position.column });
+		auto path = std::make_optional(buildErrorPath(selectionSetParams.errorPath));
 
 		_values.push_back({ alias, std::move(location), std::move(path), std::move(result) });
 	}
