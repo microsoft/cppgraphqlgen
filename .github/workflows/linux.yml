@@ -41,7 +41,7 @@ jobs:
       run: |
         $cmakeBuildType = '${{ matrix.config }}'
 
-        cmake "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
+        cmake "-DCMAKE_BUILD_TYPE=$cmakeBuildType" "-DGRAPHQL_BUILD_HTTP_SAMPLE=OFF" -G Ninja ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
