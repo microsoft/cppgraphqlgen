@@ -869,7 +869,15 @@ public:
 
 	void visit(const peg::ast_node& selection);
 
-	std::vector<std::pair<std::string_view, AwaitableResolver>> getValues();
+	struct VisitorValue
+	{
+		std::string_view name;
+		std::optional<schema_location> location;
+		std::optional<error_path> path;
+		AwaitableResolver result;
+	};
+
+	std::vector<VisitorValue> getValues();
 
 private:
 	void visitField(const peg::ast_node& field);
@@ -890,7 +898,7 @@ private:
 	std::shared_ptr<FragmentSpreadDirectiveStack> _fragmentSpreadDirectives;
 	std::shared_ptr<FragmentSpreadDirectiveStack> _inlineFragmentDirectives;
 	internal::string_view_set _names;
-	std::vector<std::pair<std::string_view, AwaitableResolver>> _values;
+	std::vector<VisitorValue> _values;
 };
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
@@ -924,7 +932,7 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	_values.reserve(count);
 }
 
-std::vector<std::pair<std::string_view, AwaitableResolver>> SelectionVisitor::getValues()
+std::vector<SelectionVisitor::VisitorValue> SelectionVisitor::getValues()
 {
 	auto values = std::move(_values);
 
@@ -989,7 +997,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } }));
 
-		_values.push_back({ alias, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
 		return;
 	}
 
@@ -1033,6 +1041,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 		std::make_optional(field_path { _path, path_segment { alias } }),
 		_launch,
 	};
+	const auto position = field.begin();
 
 	try
 	{
@@ -1045,12 +1054,14 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			_fragments,
 			_variables));
 
-		_values.push_back({ alias, std::move(result) });
+		_values.push_back({ alias,
+			std::make_optional<schema_location>({ position.line, position.column }),
+			std::make_optional(buildErrorPath(selectionSetParams.errorPath)),
+			std::move(result) });
 	}
 	catch (schema_exception& scx)
 	{
 		std::promise<ResolverResult> promise;
-		auto position = field.begin();
 		auto messages = scx.getStructuredErrors();
 
 		for (auto& message : messages)
@@ -1068,12 +1079,11 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		promise.set_exception(std::make_exception_ptr(schema_exception { std::move(messages) }));
 
-		_values.push_back({ alias, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
 	}
 	catch (const std::exception& ex)
 	{
 		std::promise<ResolverResult> promise;
-		auto position = field.begin();
 		std::ostringstream message;
 
 		message << "Field error name: " << alias << " unknown error: " << ex.what();
@@ -1083,7 +1093,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				buildErrorPath(selectionSetParams.errorPath) } } }));
 
-		_values.push_back({ alias, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
 	}
 }
 
@@ -1222,21 +1232,23 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	for (auto& child : children)
 	{
-		auto name = child.first;
-
 		try
 		{
 			co_await launch;
 
-			auto value = co_await std::move(child.second);
+			auto value = co_await child.result;
 
-			if (!document.data.emplace_back(std::string { name }, std::move(value.data)))
+			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
 			{
 				std::ostringstream message;
 
-				message << "Ambiguous field error name: " << name;
+				message << "Ambiguous field error name: " << child.name;
 
-				document.errors.push_back({ message.str() });
+				auto location = (child.location ? schema_location { std::move(*child.location) }
+												: schema_location {});
+				auto path = (child.path ? error_path { std::move(*child.path) } : error_path {});
+
+				document.errors.push_back({ message.str(), std::move(location), std::move(path) });
 			}
 
 			if (!value.errors.empty())
@@ -1253,16 +1265,20 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 				std::copy(errors.begin(), errors.end(), std::back_inserter(document.errors));
 			}
 
-			document.data.emplace_back(std::string { name }, {});
+			document.data.emplace_back(std::string { child.name }, {});
 		}
 		catch (const std::exception& ex)
 		{
 			std::ostringstream message;
 
-			message << "Field error name: " << name << " unknown error: " << ex.what();
+			message << "Field error name: " << child.name << " unknown error: " << ex.what();
 
-			document.errors.push_back({ message.str() });
-			document.data.emplace_back(std::string { name }, {});
+			auto location = (child.location ? schema_location { std::move(*child.location) }
+											: schema_location {});
+			auto path = (child.path ? error_path { std::move(*child.path) } : error_path {});
+
+			document.errors.push_back({ message.str(), std::move(location), std::move(path) });
+			document.data.emplace_back(std::string { child.name }, {});
 		}
 	}
 
@@ -1454,8 +1470,8 @@ SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, Subscrip
 {
 }
 
-// SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the subscription
-// at the point where we create a subscription.
+// SubscriptionDefinitionVisitor visits the AST collects the fields referenced in the
+// subscription at the point where we create a subscription.
 class SubscriptionDefinitionVisitor
 {
 public:
@@ -1680,9 +1696,9 @@ Request::Request(TypeMap operationTypes, std::shared_ptr<schema::Schema> schema)
 
 Request::~Request()
 {
-	// The default implementation is fine, but it can't be declared as = default because it needs to
-	// know how to destroy the _validation member and it can't do that with just a forward
-	// declaration of the class.
+	// The default implementation is fine, but it can't be declared as = default because it
+	// needs to know how to destroy the _validation member and it can't do that with just a
+	// forward declaration of the class.
 }
 
 std::list<schema_error> Request::validate(peg::ast& query) const
@@ -1835,8 +1851,8 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 
 	if (itrOperation == _operations.end())
 	{
-		// There may be an empty entry in the operations map, but if it's completely missing then
-		// that means the schema doesn't support subscriptions at all.
+		// There may be an empty entry in the operations map, but if it's completely missing
+		// then that means the schema doesn't support subscriptions at all.
 		throw std::logic_error("Subscriptions not supported");
 	}
 
@@ -1897,8 +1913,8 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 
 	if (itrOperation == _operations.end())
 	{
-		// There may be an empty entry in the operations map, but if it's completely missing then
-		// that means the schema doesn't support subscriptions at all.
+		// There may be an empty entry in the operations map, but if it's completely missing
+		// then that means the schema doesn't support subscriptions at all.
 		throw std::logic_error("Subscriptions not supported");
 	}
 
@@ -1948,8 +1964,8 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 
 	if (itrOperation == _operations.end())
 	{
-		// There may be an empty entry in the operations map, but if it's completely missing then
-		// that means the schema doesn't support subscriptions at all.
+		// There may be an empty entry in the operations map, but if it's completely missing
+		// then that means the schema doesn't support subscriptions at all.
 		throw std::logic_error("Subscriptions not supported");
 	}
 
@@ -2211,8 +2227,8 @@ std::vector<std::shared_ptr<const SubscriptionData>> Request::collectRegistratio
 					const auto& subscriptionArguments = registration->arguments;
 					bool matchedArguments = true;
 
-					// If the field in this subscription had arguments that did not match what was
-					// provided in this event, don't deliver the event to this subscription
+					// If the field in this subscription had arguments that did not match what
+					// was provided in this event, don't deliver the event to this subscription
 					for (const auto& required : subscriptionArguments)
 					{
 						if (!(*argumentsMatch)(required))
@@ -2231,7 +2247,8 @@ std::vector<std::shared_ptr<const SubscriptionData>> Request::collectRegistratio
 				if (directivesMatch)
 				{
 					// If the field in this subscription had field directives that did not match
-					// what was provided in this event, don't deliver the event to this subscription
+					// what was provided in this event, don't deliver the event to this
+					// subscription
 					const auto& subscriptionFieldDirectives = registration->fieldDirectives;
 					bool matchedFieldDirectives = true;
 
