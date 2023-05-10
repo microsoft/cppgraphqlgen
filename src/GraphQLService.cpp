@@ -1053,11 +1053,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			selection,
 			_fragments,
 			_variables));
+		auto location = std::make_optional<schema_location>(position.line, position.column);
+		auto path = std::make_optional<error_path>(buildErrorPath(selectionSetParams.errorPath));
 
-		_values.push_back({ alias,
-			std::make_optional<schema_location>({ position.line, position.column }),
-			std::make_optional(buildErrorPath(selectionSetParams.errorPath)),
-			std::move(result) });
+		_values.push_back({ alias, std::move(location), std::move(path), std::move(result) });
 	}
 	catch (schema_exception& scx)
 	{
@@ -1232,6 +1231,9 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	for (auto& child : children)
 	{
+		auto location = std::move(child.location).value_or(schema_location {});
+		auto path = std::move(child.path).value_or(error_path {});
+
 		try
 		{
 			co_await launch;
@@ -1243,10 +1245,6 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 				std::ostringstream message;
 
 				message << "Ambiguous field error name: " << child.name;
-
-				auto location = (child.location ? schema_location { std::move(*child.location) }
-												: schema_location {});
-				auto path = (child.path ? error_path { std::move(*child.path) } : error_path {});
 
 				document.errors.push_back({ message.str(), std::move(location), std::move(path) });
 			}
@@ -1272,10 +1270,6 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 			std::ostringstream message;
 
 			message << "Field error name: " << child.name << " unknown error: " << ex.what();
-
-			auto location = (child.location ? schema_location { std::move(*child.location) }
-											: schema_location {});
-			auto path = (child.path ? error_path { std::move(*child.path) } : error_path {});
 
 			document.errors.push_back({ message.str(), std::move(location), std::move(path) });
 			document.data.emplace_back(std::string { child.name }, {});
