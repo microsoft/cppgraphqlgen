@@ -36,9 +36,9 @@
 
 using namespace std::literals;
 
-constexpr auto c_host = "127.0.0.1"sv;
+constexpr boost::asio::string_view c_host { "127.0.0.1" };
 constexpr unsigned short c_port = 8080;
-constexpr auto c_target = "/graphql"sv;
+constexpr boost::asio::string_view c_target { "/graphql" };
 
 using namespace graphql;
 
