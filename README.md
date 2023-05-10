@@ -127,9 +127,9 @@ do that.
 
 ### schemagen
 
-I'm using [Boost](https://www.boost.org/doc/libs/1_69_0/more/getting_started/index.html) for `schemagen`:
+I'm using [Boost](https://www.boost.org/doc/libs/1_82_0/more/getting_started/index.html) for `schemagen`:
 
-- Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_69_0/doc/html/program_options.html).
+- Command line handling: [Boost.Program_options](https://www.boost.org/doc/libs/1_82_0/doc/html/program_options.html).
 Run `schemagen -?` to get a list of options. Many of the files in the [samples](samples/) directory were generated
 with `schemagen`, you can look at [samples/CMakeLists.txt](samples/CMakeLists.txt) for a few examples of how to call it:
 ```
@@ -144,8 +144,8 @@ Command line options:
   -n [ --namespace ] arg C++ sub-namespace for the generated types
   --source-dir arg       Target path for the <prefix>Schema.cpp source file
   --header-dir arg       Target path for the <prefix>Schema.h header file
-  --no-stubs             Generate abstract classes without stub implementations
-  --separate-files       Generate separate files for each of the types
+  --stubs                Unimplemented fields throw runtime exceptions instead
+                         of compiler errors
   --no-introspection     Do not generate support for Introspection
 ```
 
@@ -161,8 +161,7 @@ Windows and UWP shared library targets (the platform triplets which don't end in
 ### clientgen
 
 The `clientgen` utility is based on `schemagen` and shares the same external dependencies. The command line arguments
-are almost the same, except it takes an extra file for the request document and there is no equivalent to `--no-stubs` or
-`--separate-files`:
+are almost the same, except it takes an extra file for the request document and there is no equivalent to `--stubs`:
 ```
 Usage:  clientgen [options] <schema file> <request file> <output filename prefix> <output namespace>
 Command line options:
@@ -259,6 +258,12 @@ is no implementation of this schema, it relies entirely generated stubs (created
 successfully without defining more than placeholder objects fo the Query, Mutation, and Subscription operations in
 [samples/validation/ValidationMock.h](samples/validation/ValidationMock.h). It is used to test the validation logic
 with every example or counter-example in the spec in [test/ValidationTests.cpp](test/ValidationTests.cpp).
+- [samples/proxy](samples/proxy/) (`GRAPHQL_BUILD_HTTP_SAMPLE=ON`): Generates a `client` and `server` pair of
+executables which proxy requests from the `client` to the `server` over HTTP (on port 8080 for localhost). The HTTP
+support in both samples comes from [Boost.Beast](https://www.boost.org/doc/libs/1_82_0/libs/beast/doc/html/index.html),
+which must be included in your `Boost` installation to build this directory. If you are using `vcpkg`, it will install
+the necessary `Boost` components on demand. _Note: This directory uses the Boost Software License because the samples
+borrow heavily from examples in the `Boost.Beast` documentation._
 
 # Build and Test
 

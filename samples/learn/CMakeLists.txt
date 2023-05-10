@@ -14,6 +14,7 @@ add_library(star_wars STATIC
   StarWarsData.cpp)
 target_link_libraries(star_wars PUBLIC learn_schema)
 target_include_directories(star_wars PUBLIC star_wars)
+target_include_directories(star_wars INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(learn_star_wars sample.cpp)
 target_link_libraries(learn_star_wars PRIVATE

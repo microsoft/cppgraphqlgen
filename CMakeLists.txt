@@ -52,9 +52,16 @@ if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)
 
   if(GRAPHQL_UPDATE_SAMPLES)
     list(APPEND VCPKG_MANIFEST_FEATURES "update-samples")
+
+    option(GRAPHQL_BUILD_HTTP_SAMPLE "Build the HTTP client sample using C++20 coroutines with Boost.Beast/Boost.Asio." ON)
+
+    if(GRAPHQL_BUILD_HTTP_SAMPLE)
+      list(APPEND VCPKG_MANIFEST_FEATURES "http-sample")
+    endif()
   endif()
 else()
   set(GRAPHQL_UPDATE_SAMPLES OFF CACHE BOOL "Disable regenerating samples." FORCE)
+  set(GRAPHQL_BUILD_HTTP_SAMPLE OFF CACHE BOOL "Disable regenerating samples." FORCE)
 endif()
 
 project(cppgraphqlgen VERSION ${LATEST_VERSION})
