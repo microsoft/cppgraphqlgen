@@ -20,6 +20,11 @@ target_link_libraries(server PRIVATE
   star_wars
   graphqljson)
 
+if(MSVC)
+  target_compile_options(client PRIVATE "-wd4702")
+  target_compile_options(server PRIVATE "-wd4702")
+endif()
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_sample_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
