@@ -64,7 +64,7 @@ struct [[nodiscard]] Variables
 
 struct [[nodiscard]] Response
 {
-	std::string relay {};
+	std::optional<std::string> relay {};
 };
 
 [[nodiscard]] Response parseResponse(response::Value&& response);

@@ -83,7 +83,7 @@ Response parseResponse(response::Value&& response)
 		{
 			if (member.first == R"js(relay)js"sv)
 			{
-				result.relay = ModifiedResponse<std::string>::parse(std::move(member.second));
+				result.relay = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
