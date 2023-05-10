@@ -33,17 +33,17 @@
 
 using namespace std::literals;
 
-constexpr boost::asio::string_view c_host { "127.0.0.1" };
-constexpr boost::asio::string_view c_port { "8080" };
-constexpr boost::asio::string_view c_target { "/graphql" };
-constexpr int c_version = 11; // HTTP 1.1
-
 using namespace graphql;
 
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
+
+constexpr net::string_view c_host { "127.0.0.1" };
+constexpr net::string_view c_port { "8080" };
+constexpr net::string_view c_target { "/graphql" };
+constexpr int c_version = 11; // HTTP 1.1
 
 class Query
 {
@@ -95,9 +95,9 @@ std::future<std::string> Query::getRelay(std::string&& queryArg,
 	net::io_context ioc;
 	auto future = net::co_spawn(
 		ioc,
-		[](std::string_view host,
-			std::string_view port,
-			std::string_view target,
+		[](net::string_view host,
+			net::string_view port,
+			net::string_view target,
 			int version,
 			std::string requestBody) -> net::awaitable<std::string> {
 			// These objects perform our I/O. They use an executor with a default completion token

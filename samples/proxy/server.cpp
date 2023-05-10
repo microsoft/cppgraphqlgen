@@ -36,10 +36,6 @@
 
 using namespace std::literals;
 
-constexpr boost::asio::string_view c_host { "127.0.0.1" };
-constexpr unsigned short c_port = 8080;
-constexpr boost::asio::string_view c_target { "/graphql" };
-
 using namespace graphql;
 
 namespace beast = boost::beast;
@@ -49,6 +45,10 @@ using tcp = boost::asio::ip::tcp;
 
 using tcp_stream = typename beast::tcp_stream::rebind_executor<
 	net::use_awaitable_t<>::executor_with_default<net::any_io_executor>>::other;
+
+constexpr net::string_view c_host { "127.0.0.1" };
+constexpr unsigned short c_port = 8080;
+constexpr net::string_view c_target { "/graphql" };
 
 // Based on:
 // https://www.boost.org/doc/libs/1_82_0/libs/beast/example/http/server/awaitable/http_server_awaitable.cpp
