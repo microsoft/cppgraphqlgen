@@ -278,7 +278,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
   #   c++fs
   check_filesystem_impl("stdc++fs;c++fs" STD_FILESYTEM)
 
-  find_package(Boost REQUIRED COMPONENTS program_options)
+  find_package(Boost QUIET REQUIRED COMPONENTS program_options)
   if(GRAPHQL_BUILD_SCHEMAGEN)
     target_link_libraries(schemagen PRIVATE Boost::program_options)
   endif()
