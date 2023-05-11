@@ -75,7 +75,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -126,7 +126,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Review(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Review(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
@@ -138,7 +138,7 @@ private:
 
 public:
 	template <class T>
-	Review(std::shared_ptr<T> pimpl) noexcept
+	explicit Review(std::shared_ptr<T> pimpl) noexcept
 		: Review { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

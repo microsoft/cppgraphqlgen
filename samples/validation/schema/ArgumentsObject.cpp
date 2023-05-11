@@ -20,7 +20,7 @@ using namespace std::literals;
 namespace graphql::validation {
 namespace object {
 
-Arguments::Arguments(std::unique_ptr<const Concept>&& pimpl) noexcept
+Arguments::Arguments(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {

@@ -31,7 +31,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -60,7 +60,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Resource(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Resource(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const final;
 	void endSelectionSet(const service::SelectionSetParams& params) const final;
@@ -69,7 +69,7 @@ private:
 
 public:
 	template <class T>
-	Resource(std::shared_ptr<T> pimpl) noexcept
+	explicit Resource(std::shared_ptr<T> pimpl) noexcept
 		: Resource { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 		static_assert(T::template implements<Resource>(), "Resource is not implemented");

@@ -41,7 +41,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -86,7 +86,7 @@ private:
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLSERVICE_EXPORT Schema(std::shared_ptr<introspection::Schema> pimpl) noexcept;
+	GRAPHQLSERVICE_EXPORT explicit Schema(std::shared_ptr<introspection::Schema> pimpl) noexcept;
 	GRAPHQLSERVICE_EXPORT ~Schema();
 };
 

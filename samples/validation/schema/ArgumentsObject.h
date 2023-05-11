@@ -159,7 +159,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -312,7 +312,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Arguments(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Arguments(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
@@ -324,7 +324,7 @@ private:
 
 public:
 	template <class T>
-	Arguments(std::shared_ptr<T> pimpl) noexcept
+	explicit Arguments(std::shared_ptr<T> pimpl) noexcept
 		: Arguments { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

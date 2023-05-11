@@ -134,7 +134,8 @@ constexpr std::string_view strSubscription { "subscription"sv };
 } // namespace keywords
 
 // Resolvers may be called in multiple different Operation contexts.
-enum class [[nodiscard]] ResolverContext {
+enum class [[nodiscard]] ResolverContext
+{
 	// Resolving a Query operation.
 	Query,
 
@@ -197,7 +198,7 @@ private:
 	template <class T>
 	struct [[nodiscard]] Model : Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl)
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -226,7 +227,7 @@ private:
 public:
 	// Type-erased explicit constructor for a custom awaitable.
 	template <class T>
-	explicit await_async(std::shared_ptr<T> pimpl)
+	explicit await_async(std::shared_ptr<T> pimpl) noexcept
 		: _pimpl { std::make_shared<Model<T>>(std::move(pimpl)) }
 	{
 	}
@@ -586,7 +587,8 @@ using ResolverMap = internal::string_view_map<Resolver>;
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.
-enum class [[nodiscard]] TypeModifier {
+enum class [[nodiscard]] TypeModifier
+{
 	None,
 	Nullable,
 	List,
@@ -598,11 +600,13 @@ concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Test if the next modifier is Nullable.
 template <TypeModifier Modifier>
-concept NullableModifier = Modifier == TypeModifier::Nullable;
+concept NullableModifier = Modifier ==
+TypeModifier::Nullable;
 
 // Test if the next modifier is List.
 template <TypeModifier Modifier>
-concept ListModifier = Modifier == TypeModifier::List;
+concept ListModifier = Modifier ==
+TypeModifier::List;
 
 // Convert arguments and input types with a non-templated static method.
 template <typename Type>
@@ -634,12 +638,13 @@ namespace {
 
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
-concept ScalarArgumentClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
-	response::IdType> || std::is_same_v<Type, response::Value>;
+concept ScalarArgumentClass = std::is_same_v<Type, std::string>
+	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>;
 
 // Any non-scalar class used in an argument is a generated INPUT_OBJECT type.
 template <typename Type>
-concept InputArgumentClass = std::is_class_v<Type> && !ScalarArgumentClass<Type>;
+concept InputArgumentClass = std::is_class_v<Type> && !
+ScalarArgumentClass<Type>;
 
 // Special-case an innermost nullable INPUT_OBJECT type.
 template <typename Type, TypeModifier... Other>
@@ -710,8 +715,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type require(std::string_view name,
-		const response::Value& arguments) requires OnlyNoneModifiers<Modifier, Other...>
+	[[nodiscard]] static Type require(std::string_view name, const response::Value& arguments)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
@@ -722,7 +727,8 @@ struct ModifiedArgument
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type require(
-		std::string_view name, const response::Value& arguments) requires NullableModifier<Modifier>
+		std::string_view name, const response::Value& arguments)
+		requires NullableModifier<Modifier>
 	{
 		const auto& valueItr = arguments.find(name);
 
@@ -747,7 +753,8 @@ struct ModifiedArgument
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type require(
-		std::string_view name, const response::Value& arguments) requires ListModifier<Modifier>
+		std::string_view name, const response::Value& arguments)
+		requires ListModifier<Modifier>
 	{
 		const auto& values = arguments[name];
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
@@ -784,8 +791,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type duplicate(
-		const Type& value) requires OnlyNoneModifiers<Modifier, Other...>
+	[[nodiscard]] static Type duplicate(const Type& value)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just copy the value.
 		return Type { value };
@@ -794,8 +801,8 @@ struct ModifiedArgument
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
-		const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue) requires
-		NullableModifier<Modifier>
+		const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
+		requires NullableModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result {};
 
@@ -818,8 +825,8 @@ struct ModifiedArgument
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
-		const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue) requires
-		ListModifier<Modifier>
+		const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
+		requires ListModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
@@ -943,7 +950,8 @@ concept ObjectType = std::is_same_v<Object, Type>;
 
 // Test if this Type inherits from Object but is not Object itself.
 template <typename Type>
-concept ObjectDerivedType = ObjectBaseType<Type> && !ObjectType<Type>;
+concept ObjectDerivedType = ObjectBaseType<Type> && !
+ObjectType<Type>;
 
 // Test if a nullable type is std::shared_ptr<Type> or std::optional<T>.
 template <typename Type, TypeModifier... Other>
@@ -957,7 +965,8 @@ concept NoneObjectDerivedType = OnlyNoneModifiers<Modifier> && ObjectDerivedType
 // Test all other result types to see if they should call the specialized convert method without
 // template parameters.
 template <typename Type, TypeModifier Modifier>
-concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier> && !ObjectDerivedType<Type>;
+concept NoneScalarOrObjectType = OnlyNoneModifiers<Modifier> && !
+ObjectDerivedType<Type>;
 
 // Test if this method should return a nullable std::shared_ptr<Type>
 template <typename Type, TypeModifier Modifier, TypeModifier... Other>
@@ -1001,8 +1010,8 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		AwaitableObject<typename ResultTraits<Type>::type> result,
-		ResolverParams params) requires NoneObjectDerivedType<Type, Modifier>
+		AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params)
+		requires NoneObjectDerivedType<Type, Modifier>
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
 		// Object.
@@ -1021,8 +1030,9 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(typename ResultTraits<Type>::future_type result,
-		ResolverParams params) requires NoneScalarOrObjectType<Type, Modifier>
+	[[nodiscard]] static AwaitableResolver convert(
+		typename ResultTraits<Type>::future_type result, ResolverParams params)
+		requires NoneScalarOrObjectType<Type, Modifier>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
@@ -1033,8 +1043,8 @@ struct ModifiedResult
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams params) requires NullableResultSharedPtr<Type, Modifier, Other...>
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		requires NullableResultSharedPtr<Type, Modifier, Other...>
 	{
 		co_await params.launch;
 
@@ -1054,8 +1064,8 @@ struct ModifiedResult
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams params) requires NullableResultOptional<Type, Modifier, Other...>
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		requires NullableResultOptional<Type, Modifier, Other...>
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>,
 						  typename ResultTraits<Type, Modifier, Other...>::type>,
@@ -1091,8 +1101,8 @@ struct ModifiedResult
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result,
-		ResolverParams params) requires ListModifier<Modifier>
+		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		requires ListModifier<Modifier>
 	{
 		if constexpr (!ObjectBaseType<Type>)
 		{
@@ -1192,8 +1202,8 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	static void validateScalar(
-		const response::Value& value) requires OnlyNoneModifiers<Modifier, Other...>
+	static void validateScalar(const response::Value& value)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 
@@ -1203,7 +1213,8 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(const response::Value& value) requires NullableModifier<Modifier>
+	static void validateScalar(const response::Value& value)
+		requires NullableModifier<Modifier>
 	{
 		if (value.type() != response::Type::Null)
 		{
@@ -1213,7 +1224,8 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	static void validateScalar(const response::Value& value) requires ListModifier<Modifier>
+	static void validateScalar(const response::Value& value)
+		requires ListModifier<Modifier>
 	{
 		if (value.type() != response::Type::List)
 		{

@@ -96,7 +96,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -169,7 +169,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Task(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Task(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Node;
@@ -193,7 +193,7 @@ private:
 
 public:
 	template <class T>
-	Task(std::shared_ptr<T> pimpl) noexcept
+	explicit Task(std::shared_ptr<T> pimpl) noexcept
 		: Task { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

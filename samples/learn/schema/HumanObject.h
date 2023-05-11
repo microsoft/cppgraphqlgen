@@ -124,7 +124,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -214,7 +214,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Human(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Human(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	// Interfaces which this type implements
 	friend Character;
@@ -235,7 +235,7 @@ private:
 
 public:
 	template <class T>
-	Human(std::shared_ptr<T> pimpl) noexcept
+	explicit Human(std::shared_ptr<T> pimpl) noexcept
 		: Human { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

@@ -20,7 +20,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Expensive::Expensive(std::unique_ptr<const Concept>&& pimpl) noexcept
+Expensive::Expensive(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {

@@ -75,7 +75,7 @@ private:
 	struct [[nodiscard]] Model
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -132,7 +132,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	NestedType(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit NestedType(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
@@ -144,7 +144,7 @@ private:
 
 public:
 	template <class T>
-	NestedType(std::shared_ptr<T> pimpl) noexcept
+	explicit NestedType(std::shared_ptr<T> pimpl) noexcept
 		: NestedType { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
