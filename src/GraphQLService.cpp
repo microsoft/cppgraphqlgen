@@ -1245,10 +1245,11 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 				message << "Ambiguous field error name: " << child.name;
 
+				field_path path { parent, path_segment { child.name } };
+
 				document.errors.push_back({ message.str(),
 					child.location.value_or(schema_location {}),
-					buildErrorPath(
-						std::make_optional(field_path { parent, path_segment { child.name } })) });
+					buildErrorPath(std::make_optional(path)) });
 			}
 
 			if (!value.errors.empty())
@@ -1273,10 +1274,11 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			message << "Field error name: " << child.name << " unknown error: " << ex.what();
 
+			field_path path { parent, path_segment { child.name } };
+
 			document.errors.push_back({ message.str(),
 				child.location.value_or(schema_location {}),
-				buildErrorPath(
-					std::make_optional(field_path { parent, path_segment { child.name } })) });
+				buildErrorPath(std::make_optional(path)) });
 			document.data.emplace_back(std::string { child.name }, {});
 		}
 	}
