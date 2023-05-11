@@ -20,7 +20,7 @@ using namespace std::literals;
 namespace graphql::validation {
 namespace object {
 
-Arguments::Arguments(std::unique_ptr<const Concept>&& pimpl) noexcept
+Arguments::Arguments(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -63,8 +63,9 @@ service::AwaitableResolver Arguments::resolveMultipleReqs(service::ResolverParam
 	auto argX = service::ModifiedArgument<int>::require("x", params.arguments);
 	auto argY = service::ModifiedArgument<int>::require("y", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getMultipleReqs(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argX), std::move(argY));
+	auto result = _pimpl->getMultipleReqs(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argX), std::move(argY));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));
@@ -74,8 +75,9 @@ service::AwaitableResolver Arguments::resolveBooleanArgField(service::ResolverPa
 {
 	auto argBooleanArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("booleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getBooleanArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argBooleanArg));
+	auto result = _pimpl->getBooleanArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -85,8 +87,9 @@ service::AwaitableResolver Arguments::resolveFloatArgField(service::ResolverPara
 {
 	auto argFloatArg = service::ModifiedArgument<double>::require<service::TypeModifier::Nullable>("floatArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getFloatArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argFloatArg));
+	auto result = _pimpl->getFloatArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argFloatArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<double>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -96,8 +99,9 @@ service::AwaitableResolver Arguments::resolveIntArgField(service::ResolverParams
 {
 	auto argIntArg = service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("intArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getIntArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argIntArg));
+	auto result = _pimpl->getIntArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argIntArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -107,8 +111,9 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanArgField(service::Res
 {
 	auto argNonNullBooleanArg = service::ModifiedArgument<bool>::require("nonNullBooleanArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNonNullBooleanArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argNonNullBooleanArg));
+	auto result = _pimpl->getNonNullBooleanArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argNonNullBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
@@ -118,8 +123,9 @@ service::AwaitableResolver Arguments::resolveNonNullBooleanListField(service::Re
 {
 	auto argNonNullBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("nonNullBooleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNonNullBooleanListField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argNonNullBooleanListArg));
+	auto result = _pimpl->getNonNullBooleanListField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argNonNullBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List>(std::move(result), std::move(params));
@@ -129,8 +135,9 @@ service::AwaitableResolver Arguments::resolveBooleanListArgField(service::Resolv
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::List, service::TypeModifier::Nullable>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getBooleanListArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argBooleanListArg));
+	auto result = _pimpl->getBooleanListArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable, service::TypeModifier::List, service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -151,11 +158,12 @@ service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(serv
 
 	auto pairOptionalBooleanArg = service::ModifiedArgument<bool>::find("optionalBooleanArg", params.arguments);
 	auto argOptionalBooleanArg = (pairOptionalBooleanArg.second
-		? std::move(pairOptionalBooleanArg.first)
+		? pairOptionalBooleanArg.first
 		: service::ModifiedArgument<bool>::require("optionalBooleanArg", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getOptionalNonNullBooleanArgField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argOptionalBooleanArg));
+	auto result = _pimpl->getOptionalNonNullBooleanArgField(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argOptionalBooleanArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));

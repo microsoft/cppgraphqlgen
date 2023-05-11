@@ -48,6 +48,10 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+InputA::InputA() noexcept
+{
+}
+
 InputA::InputA(
 		bool aArg) noexcept
 	: a { std::move(aArg) }
@@ -64,6 +68,10 @@ InputA::InputA(InputA&& other) noexcept
 {
 }
 
+InputA::~InputA()
+{
+}
+
 InputA& InputA::operator=(const InputA& other)
 {
 	return *this = InputA { other };
@@ -74,6 +82,10 @@ InputA& InputA::operator=(InputA&& other) noexcept
 	a = std::move(other.a);
 
 	return *this;
+}
+
+InputB::InputB() noexcept
+{
 }
 
 InputB::InputB(
@@ -92,6 +104,10 @@ InputB::InputB(InputB&& other) noexcept
 {
 }
 
+InputB::~InputB()
+{
+}
+
 InputB& InputB::operator=(const InputB& other)
 {
 	return *this = InputB { other };
@@ -102,6 +118,10 @@ InputB& InputB::operator=(InputB&& other) noexcept
 	b = std::move(other.b);
 
 	return *this;
+}
+
+InputABCD::InputABCD() noexcept
+{
 }
 
 InputABCD::InputABCD(
@@ -136,6 +156,10 @@ InputABCD::InputABCD(InputABCD&& other) noexcept
 {
 }
 
+InputABCD::~InputABCD()
+{
+}
+
 InputABCD& InputABCD::operator=(const InputABCD& other)
 {
 	return *this = InputABCD { other };
@@ -150,6 +174,10 @@ InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 	value = std::move(other.value);
 
 	return *this;
+}
+
+InputBC::InputBC() noexcept
+{
 }
 
 InputBC::InputBC(
@@ -169,6 +197,10 @@ InputBC::InputBC(const InputBC& other)
 InputBC::InputBC(InputBC&& other) noexcept
 	: c { std::move(other.c) }
 	, b { std::move(other.b) }
+{
+}
+
+InputBC::~InputBC()
 {
 }
 

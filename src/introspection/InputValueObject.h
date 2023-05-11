@@ -34,30 +34,30 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const override
 		{
 			return { _pimpl->getType() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const override
 		{
 			return { _pimpl->getDefaultValue() };
 		}
@@ -72,7 +72,7 @@ private:
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLSERVICE_EXPORT InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
+	GRAPHQLSERVICE_EXPORT explicit InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
 	GRAPHQLSERVICE_EXPORT ~InputValue();
 };
 

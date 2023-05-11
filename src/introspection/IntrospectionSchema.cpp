@@ -43,16 +43,16 @@ introspection::TypeKind Argument<introspection::TypeKind>::convert(const respons
 }
 
 template <>
-service::AwaitableResolver Result<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams params)
+service::AwaitableResolver Result<introspection::TypeKind>::convert(service::AwaitableScalar<introspection::TypeKind> result, ResolverParams&& params)
 {
 	return ModifiedResult<introspection::TypeKind>::resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesTypeKind[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTypeKind[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -99,16 +99,16 @@ introspection::DirectiveLocation Argument<introspection::DirectiveLocation>::con
 }
 
 template <>
-service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params)
+service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(service::AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams&& params)
 {
 	return ModifiedResult<introspection::DirectiveLocation>::resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 

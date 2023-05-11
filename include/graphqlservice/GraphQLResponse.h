@@ -33,7 +33,8 @@ namespace graphql::response {
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
 // of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
-enum class [[nodiscard]] Type : std::uint8_t {
+enum class [[nodiscard]] Type : std::uint8_t
+{
 	Map,	   // JSON Object
 	List,	   // JSON Array
 	String,	   // JSON String
@@ -392,7 +393,7 @@ private:
 	template <class T>
 	struct Model : Concept
 	{
-		Model(std::unique_ptr<T>&& pimpl)
+		explicit Model(std::unique_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -455,7 +456,7 @@ private:
 
 public:
 	template <class T>
-	Writer(std::unique_ptr<T> writer)
+	Writer(std::unique_ptr<T> writer) noexcept
 		: _concept { std::static_pointer_cast<const Concept>(
 			std::make_shared<Model<T>>(std::move(writer))) }
 	{

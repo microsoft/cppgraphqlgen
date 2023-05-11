@@ -21,7 +21,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<const Concept>&& pimpl) noexcept
+CompleteTaskPayload::CompleteTaskPayload(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -56,8 +56,9 @@ void CompleteTaskPayload::endSelectionSet(const service::SelectionSetParams& par
 service::AwaitableResolver CompleteTaskPayload::resolveTask(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getTask(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Task>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -66,8 +67,9 @@ service::AwaitableResolver CompleteTaskPayload::resolveTask(service::ResolverPar
 service::AwaitableResolver CompleteTaskPayload::resolveClientMutationId(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getClientMutationId(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getClientMutationId(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

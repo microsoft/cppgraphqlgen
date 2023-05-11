@@ -26,7 +26,7 @@ using namespace std::literals;
 namespace graphql::validation {
 namespace object {
 
-Query::Query(std::unique_ptr<const Concept>&& pimpl) noexcept
+Query::Query(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -67,8 +67,9 @@ void Query::endSelectionSet(const service::SelectionSetParams& params) const
 service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDog(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDog(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -77,8 +78,9 @@ service::AwaitableResolver Query::resolveDog(service::ResolverParams&& params) c
 service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getHuman(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getHuman(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Human>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -87,8 +89,9 @@ service::AwaitableResolver Query::resolveHuman(service::ResolverParams&& params)
 service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getPet(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getPet(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Pet>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -97,8 +100,9 @@ service::AwaitableResolver Query::resolvePet(service::ResolverParams&& params) c
 service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getCatOrDog(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getCatOrDog(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<CatOrDog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -107,8 +111,9 @@ service::AwaitableResolver Query::resolveCatOrDog(service::ResolverParams&& para
 service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getArguments(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getArguments(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Arguments>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -117,8 +122,9 @@ service::AwaitableResolver Query::resolveArguments(service::ResolverParams&& par
 service::AwaitableResolver Query::resolveResource(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getResource(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getResource(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Resource>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -128,8 +134,9 @@ service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& param
 {
 	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getFindDog(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argComplex));
+	auto result = _pimpl->getFindDog(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argComplex));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -139,8 +146,9 @@ service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& p
 {
 	auto argBooleanListArg = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("booleanListArg", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getBooleanList(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argBooleanListArg));
+	auto result = _pimpl->getBooleanList(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argBooleanListArg));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

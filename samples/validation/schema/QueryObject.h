@@ -156,15 +156,15 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getDogWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getPetWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getArgumentsWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getResourceWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const override
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const override
 		{
 			if constexpr (methods::QueryHas::getBooleanListWithParams<T>)
 			{
@@ -292,7 +292,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
@@ -300,7 +300,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
@@ -312,19 +312,19 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Query(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Query(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
-	Query(std::shared_ptr<T> pimpl) noexcept
+	explicit Query(std::shared_ptr<T> pimpl) noexcept
 		: Query { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

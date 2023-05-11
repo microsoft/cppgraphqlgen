@@ -694,7 +694,7 @@ void blockSubFields(const ResolverParams& params)
 }
 
 template <>
-AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverParams params)
+AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -706,7 +706,7 @@ AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverPara
 }
 
 template <>
-AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, ResolverParams params)
+AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -719,7 +719,7 @@ AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, Resolv
 
 template <>
 AwaitableResolver Result<std::string>::convert(
-	AwaitableScalar<std::string> result, ResolverParams params)
+	AwaitableScalar<std::string> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -731,7 +731,7 @@ AwaitableResolver Result<std::string>::convert(
 }
 
 template <>
-AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverParams params)
+AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -744,7 +744,7 @@ AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverPa
 
 template <>
 AwaitableResolver Result<response::Value>::convert(
-	AwaitableScalar<response::Value> result, ResolverParams params)
+	AwaitableScalar<response::Value> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -757,7 +757,7 @@ AwaitableResolver Result<response::Value>::convert(
 
 template <>
 AwaitableResolver Result<response::IdType>::convert(
-	AwaitableScalar<response::IdType> result, ResolverParams params)
+	AwaitableScalar<response::IdType> result, ResolverParams&& params)
 {
 	blockSubFields(params);
 
@@ -786,9 +786,12 @@ void requireSubFields(const ResolverParams& params)
 
 template <>
 AwaitableResolver Result<Object>::convert(
-	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params)
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams&& paramsArg)
 {
-	requireSubFields(params);
+	requireSubFields(paramsArg);
+
+	// Move the paramsArg into a local variable before the first suspension point.
+	auto params = std::move(paramsArg);
 
 	co_await params.launch;
 

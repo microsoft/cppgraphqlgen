@@ -21,7 +21,7 @@ using namespace std::literals;
 namespace graphql::validation {
 namespace object {
 
-Subscription::Subscription(std::unique_ptr<const Concept>&& pimpl) noexcept
+Subscription::Subscription(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -56,8 +56,9 @@ void Subscription::endSelectionSet(const service::SelectionSetParams& params) co
 service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNewMessage(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNewMessage(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Message>::convert(std::move(result), std::move(params));
@@ -66,8 +67,9 @@ service::AwaitableResolver Subscription::resolveNewMessage(service::ResolverPara
 service::AwaitableResolver Subscription::resolveDisallowedSecondRootField(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDisallowedSecondRootField(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getDisallowedSecondRootField(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));

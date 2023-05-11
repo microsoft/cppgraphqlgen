@@ -49,16 +49,16 @@ validation::DogCommand Argument<validation::DogCommand>::convert(const response:
 }
 
 template <>
-service::AwaitableResolver Result<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams&& params)
 {
 	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesDogCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDogCommand[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -105,16 +105,16 @@ validation::CatCommand Argument<validation::CatCommand>::convert(const response:
 }
 
 template <>
-service::AwaitableResolver Result<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams&& params)
 {
 	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesCatCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesCatCommand[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -153,6 +153,10 @@ validation::ComplexInput Argument<validation::ComplexInput>::convert(const respo
 
 namespace validation {
 
+ComplexInput::ComplexInput() noexcept
+{
+}
+
 ComplexInput::ComplexInput(
 		std::optional<std::string> nameArg,
 		std::optional<std::string> ownerArg) noexcept
@@ -188,6 +192,10 @@ ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
 	owner = std::move(other.owner);
 
 	return *this;
+}
+
+ComplexInput::~ComplexInput()
+{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)

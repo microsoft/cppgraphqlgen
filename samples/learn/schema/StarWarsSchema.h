@@ -53,11 +53,13 @@ enum class [[nodiscard]] Episode
 
 struct [[nodiscard]] ReviewInput
 {
+	explicit ReviewInput() noexcept;
 	explicit ReviewInput(
-		int starsArg = int {},
-		std::optional<std::string> commentaryArg = std::optional<std::string> {}) noexcept;
+		int starsArg,
+		std::optional<std::string> commentaryArg) noexcept;
 	ReviewInput(const ReviewInput& other);
 	ReviewInput(ReviewInput&& other) noexcept;
+	~ReviewInput();
 
 	ReviewInput& operator=(const ReviewInput& other);
 	ReviewInput& operator=(ReviewInput&& other) noexcept;

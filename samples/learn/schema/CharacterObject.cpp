@@ -14,7 +14,7 @@ using namespace std::literals;
 namespace graphql::learn {
 namespace object {
 
-Character::Character(std::unique_ptr<const Concept>&& pimpl) noexcept
+Character::Character(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {

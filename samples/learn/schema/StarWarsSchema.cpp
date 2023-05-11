@@ -48,16 +48,16 @@ learn::Episode Argument<learn::Episode>::convert(const response::Value& value)
 }
 
 template <>
-service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
+service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams&& params)
 {
 	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -87,7 +87,7 @@ learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& 
 	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);
 
 	return learn::ReviewInput {
-		std::move(valueStars),
+		valueStars,
 		std::move(valueCommentary)
 	};
 }
@@ -95,6 +95,10 @@ learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& 
 } // namespace service
 
 namespace learn {
+
+ReviewInput::ReviewInput() noexcept
+{
+}
 
 ReviewInput::ReviewInput(
 		int starsArg,
@@ -131,6 +135,10 @@ ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
 	commentary = std::move(other.commentary);
 
 	return *this;
+}
+
+ReviewInput::~ReviewInput()
+{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)

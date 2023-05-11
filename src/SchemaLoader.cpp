@@ -1873,6 +1873,48 @@ std::string SchemaLoader::getOutputCppResolver(const OutputField& field) noexcep
 	return getJoinedCppName(R"cpp(resolve)cpp"sv, field.name);
 }
 
+bool SchemaLoader::shouldMoveInputField(const InputField& field) noexcept
+{
+	bool shouldMove = true;
+
+	switch (field.fieldType)
+	{
+		case InputFieldType::Builtin:
+		{
+			if (field.modifiers.empty() || field.modifiers.front() == service::TypeModifier::None)
+			{
+				const auto& builtinTypes = getBuiltinTypes();
+
+				switch (builtinTypes.at(field.type))
+				{
+					case BuiltinType::Int:
+					case BuiltinType::Float:
+					case BuiltinType::Boolean:
+						shouldMove = false;
+						break;
+
+					default:
+						break;
+				}
+			}
+
+			break;
+		}
+
+		case InputFieldType::Enum:
+		{
+			shouldMove =
+				field.modifiers.empty() || field.modifiers.front() == service::TypeModifier::None;
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return shouldMove;
+}
+
 std::string SchemaLoader::getJoinedCppName(
 	std::string_view prefix, std::string_view fieldName) noexcept
 {

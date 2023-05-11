@@ -72,15 +72,15 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<int> getStars(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<int> getStars(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::ReviewHas::getStarsWithParams<T>)
 			{
@@ -93,7 +93,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getCommentary(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::ReviewHas::getCommentaryWithParams<T>)
 			{
@@ -106,7 +106,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::ReviewHas::beginSelectionSet<T>)
 			{
@@ -114,7 +114,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::ReviewHas::endSelectionSet<T>)
 			{
@@ -126,19 +126,19 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	Review(std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit Review(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
-	Review(std::shared_ptr<T> pimpl) noexcept
+	explicit Review(std::shared_ptr<T> pimpl) noexcept
 		: Review { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}

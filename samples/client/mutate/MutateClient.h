@@ -60,7 +60,7 @@ enum class [[nodiscard]] TaskState
 
 struct [[nodiscard]] CompleteTaskInput
 {
-	explicit CompleteTaskInput() noexcept = default;
+	explicit CompleteTaskInput() noexcept;
 	explicit CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
@@ -68,6 +68,7 @@ struct [[nodiscard]] CompleteTaskInput
 		std::optional<std::string> clientMutationIdArg) noexcept;
 	CompleteTaskInput(const CompleteTaskInput& other);
 	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
+	~CompleteTaskInput();
 
 	CompleteTaskInput& operator=(const CompleteTaskInput& other);
 	CompleteTaskInput& operator=(CompleteTaskInput&& other) noexcept;

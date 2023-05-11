@@ -49,16 +49,16 @@ today::TaskState Argument<today::TaskState>::convert(const response::Value& valu
 }
 
 template <>
-service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
+service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams&& params)
 {
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -105,7 +105,7 @@ today::CompleteTaskInput Argument<today::CompleteTaskInput>::convert(const respo
 
 	return today::CompleteTaskInput {
 		std::move(valueId),
-		std::move(valueTestTaskState),
+		valueTestTaskState,
 		std::move(valueIsComplete),
 		std::move(valueClientMutationId)
 	};
@@ -227,6 +227,10 @@ today::FirstNestedInput Argument<today::FirstNestedInput>::convert(const respons
 
 namespace today {
 
+CompleteTaskInput::CompleteTaskInput() noexcept
+{
+}
+
 CompleteTaskInput::CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
@@ -274,6 +278,14 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 	return *this;
 }
 
+CompleteTaskInput::~CompleteTaskInput()
+{
+}
+
+ThirdNestedInput::ThirdNestedInput() noexcept
+{
+}
+
 ThirdNestedInput::ThirdNestedInput(
 		response::IdType idArg,
 		std::unique_ptr<SecondNestedInput> secondArg) noexcept
@@ -311,6 +323,14 @@ ThirdNestedInput& ThirdNestedInput::operator=(ThirdNestedInput&& other) noexcept
 	return *this;
 }
 
+ThirdNestedInput::~ThirdNestedInput()
+{
+}
+
+FourthNestedInput::FourthNestedInput() noexcept
+{
+}
+
 FourthNestedInput::FourthNestedInput(
 		response::IdType idArg) noexcept
 	: id { std::move(idArg) }
@@ -341,6 +361,14 @@ FourthNestedInput& FourthNestedInput::operator=(FourthNestedInput&& other) noexc
 	id = std::move(other.id);
 
 	return *this;
+}
+
+FourthNestedInput::~FourthNestedInput()
+{
+}
+
+IncludeNullableSelfInput::IncludeNullableSelfInput() noexcept
+{
 }
 
 IncludeNullableSelfInput::IncludeNullableSelfInput(
@@ -375,6 +403,14 @@ IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(IncludeNullableSel
 	return *this;
 }
 
+IncludeNullableSelfInput::~IncludeNullableSelfInput()
+{
+}
+
+IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput() noexcept
+{
+}
+
 IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput(
 		std::vector<IncludeNonNullableListSelfInput> selvesArg) noexcept
 	: selves { std::move(selvesArg) }
@@ -405,6 +441,14 @@ IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(Incl
 	selves = std::move(other.selves);
 
 	return *this;
+}
+
+IncludeNonNullableListSelfInput::~IncludeNonNullableListSelfInput()
+{
+}
+
+StringOperationFilterInput::StringOperationFilterInput() noexcept
+{
 }
 
 StringOperationFilterInput::StringOperationFilterInput(
@@ -494,6 +538,14 @@ StringOperationFilterInput& StringOperationFilterInput::operator=(StringOperatio
 	return *this;
 }
 
+StringOperationFilterInput::~StringOperationFilterInput()
+{
+}
+
+SecondNestedInput::SecondNestedInput() noexcept
+{
+}
+
 SecondNestedInput::SecondNestedInput(
 		response::IdType idArg,
 		ThirdNestedInput thirdArg) noexcept
@@ -531,6 +583,14 @@ SecondNestedInput& SecondNestedInput::operator=(SecondNestedInput&& other) noexc
 	return *this;
 }
 
+SecondNestedInput::~SecondNestedInput()
+{
+}
+
+ForwardDeclaredInput::ForwardDeclaredInput() noexcept
+{
+}
+
 ForwardDeclaredInput::ForwardDeclaredInput(
 		std::unique_ptr<IncludeNullableSelfInput> nullableSelfArg,
 		IncludeNonNullableListSelfInput listSelvesArg) noexcept
@@ -566,6 +626,14 @@ ForwardDeclaredInput& ForwardDeclaredInput::operator=(ForwardDeclaredInput&& oth
 	listSelves = std::move(other.listSelves);
 
 	return *this;
+}
+
+ForwardDeclaredInput::~ForwardDeclaredInput()
+{
+}
+
+FirstNestedInput::FirstNestedInput() noexcept
+{
 }
 
 FirstNestedInput::FirstNestedInput(
@@ -608,6 +676,10 @@ FirstNestedInput& FirstNestedInput::operator=(FirstNestedInput&& other) noexcept
 	third = std::move(other.third);
 
 	return *this;
+}
+
+FirstNestedInput::~FirstNestedInput()
+{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)

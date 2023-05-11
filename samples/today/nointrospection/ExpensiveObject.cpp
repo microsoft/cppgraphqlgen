@@ -20,7 +20,7 @@ using namespace std::literals;
 namespace graphql::today {
 namespace object {
 
-Expensive::Expensive(std::unique_ptr<const Concept>&& pimpl) noexcept
+Expensive::Expensive(std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object{ getTypeNames(), getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -54,8 +54,9 @@ void Expensive::endSelectionSet(const service::SelectionSetParams& params) const
 service::AwaitableResolver Expensive::resolveOrder(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getOrder(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getOrder(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<int>::convert(std::move(result), std::move(params));

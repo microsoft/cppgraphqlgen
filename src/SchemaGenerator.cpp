@@ -295,7 +295,13 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			for (const auto& inputField : inputType.fields)
 			{
-				if (!firstField)
+				if (firstField)
+				{
+					headerFile << R"cpp() noexcept;
+	explicit )cpp" << inputType.cppType
+							   << R"cpp(()cpp";
+				}
+				else
 				{
 					headerFile << R"cpp(,)cpp";
 				}
@@ -306,8 +312,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 				headerFile << R"cpp(
 		)cpp" << inputCppType
-						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg = )cpp"
-						   << inputCppType << R"cpp( {})cpp";
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
 			}
 
 			headerFile << R"cpp() noexcept;
@@ -317,6 +322,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(()cpp" << inputType.cppType
 					   << R"cpp(&& other) noexcept;
+	~)cpp" << inputType.cppType
+					   << R"cpp(();
 
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(& operator=(const )cpp" << inputType.cppType
@@ -324,11 +331,19 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(& operator=()cpp" << inputType.cppType
 					   << R"cpp(&& other) noexcept;
-
 )cpp";
+
+			firstField = true;
 
 			for (const auto& inputField : inputType.fields)
 			{
+				if (firstField)
+				{
+					headerFile << std::endl;
+				}
+
+				firstField = false;
+
 				headerFile << getFieldDeclaration(inputField);
 			}
 			headerFile << R"cpp(};
@@ -614,7 +629,7 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
 						   << R"cpp(>::convert(
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(> result, ResolverParams params);
+						   << R"cpp(> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT void Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
@@ -667,30 +682,30 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] service::TypeNames getTypeNames() const noexcept final
+		[[nodiscard]] service::TypeNames getTypeNames() const noexcept override
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] service::ResolverMap getResolvers() const noexcept final
+		[[nodiscard]] service::ResolverMap getResolvers() const noexcept override
 		{
 			return _pimpl->getResolvers();
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			_pimpl->beginSelectionSet(params);
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			_pimpl->endSelectionSet(params);
 		}
@@ -699,17 +714,17 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	)cpp"
-		<< cppType << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
+	explicit )cpp"
+		<< cppType << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
-	)cpp"
+	explicit )cpp"
 		<< cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 		<< cppType
@@ -895,10 +910,10 @@ private:
 	headerFile << R"cpp(	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
-		Model(std::shared_ptr<T>&& pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
@@ -932,7 +947,7 @@ private:
 			firstArgument = false;
 		}
 
-		headerFile << R"cpp() const final
+		headerFile << R"cpp() const override
 		{
 			)cpp";
 
@@ -1028,7 +1043,7 @@ private:
 	if (!_loader.isIntrospection())
 	{
 		headerFile << R"cpp(
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::beginSelectionSet<T>)
@@ -1037,7 +1052,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::)cpp"
 				   << objectType.cppType << R"cpp(Has::endSelectionSet<T>)
@@ -1063,7 +1078,7 @@ private:
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
 public:
-	GRAPHQLSERVICE_EXPORT )cpp"
+	GRAPHQLSERVICE_EXPORT explicit )cpp"
 				   << objectType.cppType << R"cpp((std::shared_ptr<)cpp"
 				   << SchemaLoader::getIntrospectionNamespace() << R"cpp(::)cpp"
 				   << objectType.cppType << R"cpp(> pimpl) noexcept;
@@ -1074,8 +1089,8 @@ public:
 	}
 	else
 	{
-		headerFile << R"cpp(	)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept;
+		headerFile << R"cpp(	explicit )cpp" << objectType.cppType
+				   << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept;
 
 )cpp";
 
@@ -1126,14 +1141,14 @@ public:
 			<< R"cpp(	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 
 public:
 	template <class T>
-	)cpp"
+	explicit )cpp"
 			<< objectType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
@@ -1312,7 +1327,7 @@ service::AwaitableResolver Result<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(> result, ResolverParams params)
+					   << R"cpp(> result, ResolverParams&& params)
 {
 	return ModifiedResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
@@ -1320,12 +1335,12 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_names)cpp"
+			resolvedResult.set<std::string>(std::string { s_names)cpp"
 					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -1426,10 +1441,25 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 )cpp";
 				}
 
+				const bool shouldMove = SchemaLoader::shouldMoveInputField(inputField);
+
 				firstField = false;
 				fieldName[0] =
 					static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-				sourceFile << R"cpp(		std::move(value)cpp" << fieldName << R"cpp())cpp";
+
+				sourceFile << R"cpp(		)cpp";
+
+				if (shouldMove)
+				{
+					sourceFile << R"cpp(std::move()cpp";
+				}
+
+				sourceFile << R"cpp(value)cpp" << fieldName;
+
+				if (shouldMove)
+				{
+					sourceFile << R"cpp())cpp";
+				}
 			}
 
 			sourceFile << R"cpp(
@@ -1449,7 +1479,12 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 	for (const auto& inputType : _loader.getInputTypes())
 	{
 		sourceFile << std::endl
-				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
+				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(() noexcept
+{
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
 
 		bool firstField = true;
 
@@ -1581,6 +1616,11 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 
 		sourceFile << R"cpp(
 	return *this;
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
+{
 }
 )cpp";
 	}
@@ -2096,7 +2136,7 @@ void Generator::outputInterfaceImplementation(
 	// with arguments that declare the set of types it implements and bind the fields to the
 	// resolver methods.
 	sourceFile << cppType << R"cpp(::)cpp" << cppType
-			   << R"cpp((std::unique_ptr<const Concept>&& pimpl) noexcept
+			   << R"cpp((std::unique_ptr<const Concept> pimpl) noexcept
 	: service::Object { pimpl->getTypeNames(), pimpl->getResolvers() }
 	, _pimpl { std::move(pimpl) }
 {
@@ -2175,7 +2215,7 @@ void Generator::outputObjectImplementation(
 		// with arguments that declare the set of types it implements and bind the fields to the
 		// resolver methods.
 		sourceFile << objectType.cppType << R"cpp(::)cpp" << objectType.cppType
-				   << R"cpp((std::unique_ptr<const Concept>&& pimpl))cpp";
+				   << R"cpp((std::unique_ptr<const Concept> pimpl))cpp";
 	}
 
 	sourceFile << R"cpp( noexcept
@@ -2371,7 +2411,9 @@ service::AwaitableResolver )cpp"
 
 		if (!_loader.isIntrospection())
 		{
-			sourceFile << R"cpp(	auto directives = std::move(params.fieldDirectives);
+			sourceFile
+				<< R"cpp(	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+	auto directives = std::move(params.fieldDirectives);
 )cpp";
 		}
 
@@ -2384,7 +2426,7 @@ service::AwaitableResolver )cpp"
 		if (!firstArgument)
 		{
 			sourceFile
-				<< R"cpp(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
+				<< R"cpp(service::FieldParams { std::move(selectionSetParams), std::move(directives) })cpp";
 		}
 
 		if (!outputField.arguments.empty())
@@ -2749,8 +2791,23 @@ std::string Generator::getArgumentDeclaration(const InputField& argument, const 
 							<< argument.name << R"cpp(", )cpp" << argumentsToken << R"cpp();
 	auto )cpp" << prefixToken
 							<< argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
-		? std::move(pair)cpp"
-							<< argumentName << R"cpp(.first)
+		? )cpp";
+
+		const bool shouldMove = SchemaLoader::shouldMoveInputField(argument);
+
+		if (shouldMove)
+		{
+			argumentDeclaration << R"cpp(std::move()cpp";
+		}
+
+		argumentDeclaration << R"cpp(pair)cpp" << argumentName << R"cpp(.first)cpp";
+
+		if (shouldMove)
+		{
+			argumentDeclaration << R"cpp())cpp";
+		}
+
+		argumentDeclaration << R"cpp(
 		: )cpp" << getArgumentAccessType(argument)
 							<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
 							<< R"cpp((")cpp" << argument.name << R"cpp(", )cpp" << defaultToken
