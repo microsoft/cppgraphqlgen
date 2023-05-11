@@ -51,7 +51,7 @@ public:
 	explicit Query(std::string_view host, std::string_view port, std::string_view target,
 		int version) noexcept;
 
-	std::future<std::string> getRelay(std::string&& queryArg,
+	std::future<std::optional<std::string>> getRelay(std::string&& queryArg,
 		std::optional<std::string>&& operationNameArg,
 		std::optional<std::string>&& variablesArg) const;
 
@@ -73,7 +73,7 @@ Query::Query(
 
 // Based on:
 // https://www.boost.org/doc/libs/1_82_0/libs/beast/example/http/client/awaitable/http_client_awaitable.cpp
-std::future<std::string> Query::getRelay(std::string&& queryArg,
+std::future<std::optional<std::string>> Query::getRelay(std::string&& queryArg,
 	std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const
 {
 	response::Value payload { response::Type::Map };
@@ -99,7 +99,7 @@ std::future<std::string> Query::getRelay(std::string&& queryArg,
 			const char* port,
 			const char* target,
 			int version,
-			std::string requestBody) -> net::awaitable<std::string> {
+			std::string requestBody) -> net::awaitable<std::optional<std::string>> {
 			// These objects perform our I/O. They use an executor with a default completion token
 			// of use_awaitable. This makes our code easy, but will use exceptions as the default
 			// error handling, i.e. if the connection drops, we might see an exception.
@@ -150,7 +150,7 @@ std::future<std::string> Query::getRelay(std::string&& queryArg,
 				throw boost::system::system_error(ec, "shutdown");
 			}
 
-			co_return std::string { std::move(res.body()) };
+			co_return std::make_optional<std::string>(std::move(res.body()));
 		}(m_host.c_str(), m_port.c_str(), m_target.c_str(), m_version, std::move(requestBody)),
 		net::use_future);
 
@@ -182,8 +182,78 @@ int main(int argc, char** argv)
 		auto serviceResponse = client::parseServiceResponse(
 			service->resolve({ query, GetOperationName(), std::move(variables), launch }).get());
 		auto result = client::query::relayQuery::parseResponse(std::move(serviceResponse.data));
+		auto errors = std::move(serviceResponse.errors);
 
-		std::cout << result.relay << std::endl;
+		if (result.relay)
+		{
+			std::cout << *result.relay << std::endl;
+		}
+
+		if (!errors.empty())
+		{
+			std::cerr << "Errors executing query:" << std::endl << GetRequestText() << std::endl;
+
+			for (const auto& error : errors)
+			{
+				std::cerr << "Error: " << error.message;
+
+				if (!error.locations.empty())
+				{
+					bool firstLocation = true;
+
+					std::cerr << ", Locations: [";
+
+					for (const auto& location : error.locations)
+					{
+						if (!firstLocation)
+						{
+							std::cerr << ", ";
+						}
+
+						firstLocation = false;
+
+						std::cerr << "(line: " << location.line << ", column: " << location.column
+								  << ")";
+					}
+
+					std::cerr << "]";
+				}
+
+				if (!error.path.empty())
+				{
+					bool firstSegment = true;
+
+					std::cerr << ", Path: ";
+
+					for (const auto& segment : error.path)
+					{
+						std::visit(
+							[firstSegment](const auto& value) noexcept {
+								using _Type = std::decay_t<decltype(value)>;
+
+								if constexpr (std::is_same_v<std::string, _Type>)
+								{
+									if (!firstSegment)
+									{
+										std::cerr << "/";
+									}
+
+									std::cerr << value;
+								}
+								else if constexpr (std::is_same_v<int, _Type>)
+								{
+									std::cerr << "[" << value << "]";
+								}
+							},
+							segment);
+
+						firstSegment = false;
+					}
+				}
+
+				std::cerr << std::endl;
+			}
+		}
 	}
 	catch (const std::runtime_error& ex)
 	{

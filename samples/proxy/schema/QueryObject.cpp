@@ -65,7 +65,7 @@ service::AwaitableResolver Query::resolveRelay(service::ResolverParams&& params)
 	auto result = _pimpl->getRelay(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argQuery), std::move(argOperationName), std::move(argVariables));
 	resolverLock.unlock();
 
-	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
@@ -92,7 +92,7 @@ service::AwaitableResolver Query::resolve_type(service::ResolverParams&& params)
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
 {
 	typeQuery->AddFields({
-		schema::Field::Make(R"gql(relay)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), {
+		schema::Field::Make(R"gql(relay)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv), {
 			schema::InputValue::Make(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(operationName)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv),
 			schema::InputValue::Make(R"gql(variables)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
