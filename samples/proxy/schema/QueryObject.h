@@ -62,7 +62,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -70,7 +70,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const override
 		{
 			if constexpr (methods::QueryHas::getRelayWithParams<T>)
 			{
@@ -83,7 +83,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
@@ -91,7 +91,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
@@ -108,8 +108,8 @@ private:
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 

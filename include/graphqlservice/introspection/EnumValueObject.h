@@ -34,7 +34,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsDeprecated() const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsDeprecated() const override
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const override
 		{
 			return { _pimpl->getDeprecationReason() };
 		}

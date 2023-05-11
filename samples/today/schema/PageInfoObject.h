@@ -72,7 +72,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getHasNextPage(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getHasNextPage(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::PageInfoHas::getHasNextPageWithParams<T>)
 			{
@@ -96,7 +96,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getHasPreviousPage(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getHasPreviousPage(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::PageInfoHas::getHasPreviousPageWithParams<T>)
 			{
@@ -112,7 +112,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::PageInfoHas::beginSelectionSet<T>)
 			{
@@ -120,7 +120,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::PageInfoHas::endSelectionSet<T>)
 			{
@@ -137,8 +137,8 @@ private:
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 

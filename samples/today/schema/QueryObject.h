@@ -230,7 +230,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -238,7 +238,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Node>> getNode(service::FieldParams&& params, response::IdType&& idArg) const override
 		{
 			if constexpr (methods::QueryHas::getNodeWithParams<T>)
 			{
@@ -254,7 +254,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<AppointmentConnection>> getAppointments(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const override
 		{
 			if constexpr (methods::QueryHas::getAppointmentsWithParams<T>)
 			{
@@ -270,7 +270,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<TaskConnection>> getTasks(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const override
 		{
 			if constexpr (methods::QueryHas::getTasksWithParams<T>)
 			{
@@ -286,7 +286,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<FolderConnection>> getUnreadCounts(service::FieldParams&& params, std::optional<int>&& firstArg, std::optional<response::Value>&& afterArg, std::optional<int>&& lastArg, std::optional<response::Value>&& beforeArg) const override
 		{
 			if constexpr (methods::QueryHas::getUnreadCountsWithParams<T>)
 			{
@@ -302,7 +302,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Appointment>>> getAppointmentsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const override
 		{
 			if constexpr (methods::QueryHas::getAppointmentsByIdWithParams<T>)
 			{
@@ -318,7 +318,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Task>>> getTasksById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const override
 		{
 			if constexpr (methods::QueryHas::getTasksByIdWithParams<T>)
 			{
@@ -334,7 +334,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Folder>>> getUnreadCountsById(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const override
 		{
 			if constexpr (methods::QueryHas::getUnreadCountsByIdWithParams<T>)
 			{
@@ -350,7 +350,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getNestedWithParams<T>)
 			{
@@ -366,7 +366,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getUnimplemented(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getUnimplementedWithParams<T>)
 			{
@@ -382,7 +382,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Expensive>>> getExpensive(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getExpensiveWithParams<T>)
 			{
@@ -398,7 +398,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<TaskState> getTestTaskState(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getTestTaskStateWithParams<T>)
 			{
@@ -414,7 +414,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<UnionType>>> getAnyType(service::FieldParams&& params, std::vector<response::IdType>&& idsArg) const override
 		{
 			if constexpr (methods::QueryHas::getAnyTypeWithParams<T>)
 			{
@@ -430,7 +430,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefault(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getDefaultWithParams<T>)
 			{
@@ -446,7 +446,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::beginSelectionSet<T>)
 			{
@@ -454,7 +454,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::QueryHas::endSelectionSet<T>)
 			{
@@ -471,8 +471,8 @@ private:
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 

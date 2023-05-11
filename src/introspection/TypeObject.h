@@ -46,7 +46,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -54,52 +54,52 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<TypeKind> getKind() const final
+		[[nodiscard]] service::AwaitableScalar<TypeKind> getKind() const override
 		{
 			return { _pimpl->getKind() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const final
+		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Field>>>> getFields(std::optional<bool>&& includeDeprecatedArg) const override
 		{
 			return { _pimpl->getFields(std::move(includeDeprecatedArg)) };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const final
+		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getInterfaces() const override
 		{
 			return { _pimpl->getInterfaces() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const final
+		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<Type>>>> getPossibleTypes() const override
 		{
 			return { _pimpl->getPossibleTypes() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const final
+		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<EnumValue>>>> getEnumValues(std::optional<bool>&& includeDeprecatedArg) const override
 		{
 			return { _pimpl->getEnumValues(std::move(includeDeprecatedArg)) };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const final
+		[[nodiscard]] service::AwaitableObject<std::optional<std::vector<std::shared_ptr<InputValue>>>> getInputFields() const override
 		{
 			return { _pimpl->getInputFields() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getOfType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getOfType() const override
 		{
 			return { _pimpl->getOfType() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSpecifiedByURL() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSpecifiedByURL() const override
 		{
 			return { _pimpl->getSpecifiedByURL() };
 		}

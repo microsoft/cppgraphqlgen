@@ -121,7 +121,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -129,7 +129,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<response::IdType> getId(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::AppointmentHas::getIdWithParams<T>)
 			{
@@ -145,7 +145,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<response::Value>> getWhen(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::AppointmentHas::getWhenWithParams<T>)
 			{
@@ -161,7 +161,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::AppointmentHas::getSubjectWithParams<T>)
 			{
@@ -177,7 +177,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::AppointmentHas::getIsNowWithParams<T>)
 			{
@@ -193,7 +193,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::AppointmentHas::getForceErrorWithParams<T>)
 			{
@@ -209,7 +209,7 @@ private:
 			}
 		}
 
-		void beginSelectionSet(const service::SelectionSetParams& params) const final
+		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::AppointmentHas::beginSelectionSet<T>)
 			{
@@ -217,7 +217,7 @@ private:
 			}
 		}
 
-		void endSelectionSet(const service::SelectionSetParams& params) const final
+		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
 			if constexpr (methods::AppointmentHas::endSelectionSet<T>)
 			{
@@ -246,8 +246,8 @@ private:
 	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
 
-	void beginSelectionSet(const service::SelectionSetParams& params) const final;
-	void endSelectionSet(const service::SelectionSetParams& params) const final;
+	void beginSelectionSet(const service::SelectionSetParams& params) const override;
+	void endSelectionSet(const service::SelectionSetParams& params) const override;
 
 	const std::unique_ptr<const Concept> _pimpl;
 

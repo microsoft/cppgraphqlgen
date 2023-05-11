@@ -36,7 +36,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -44,27 +44,27 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const final
+		[[nodiscard]] service::AwaitableScalar<std::string> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const final
+		[[nodiscard]] service::AwaitableScalar<std::vector<DirectiveLocation>> getLocations() const override
 		{
 			return { _pimpl->getLocations() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<InputValue>>> getArgs() const override
 		{
 			return { _pimpl->getArgs() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsRepeatable() const final
+		[[nodiscard]] service::AwaitableScalar<bool> getIsRepeatable() const override
 		{
 			return { _pimpl->getIsRepeatable() };
 		}

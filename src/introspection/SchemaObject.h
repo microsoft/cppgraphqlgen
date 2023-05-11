@@ -38,7 +38,7 @@ private:
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model
+	struct [[nodiscard]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -46,32 +46,32 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const final
+		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const override
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const override
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const override
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const final
+		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const override
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const final
+		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const override
 		{
 			return { _pimpl->getDirectives() };
 		}
