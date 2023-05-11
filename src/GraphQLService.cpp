@@ -873,7 +873,6 @@ public:
 	{
 		std::string_view name;
 		std::optional<schema_location> location;
-		std::optional<error_path> path;
 		AwaitableResolver result;
 	};
 
@@ -997,7 +996,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } }));
 
-		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, promise.get_future() });
 		return;
 	}
 
@@ -1054,9 +1053,8 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 			_fragments,
 			_variables));
 		auto location = std::make_optional(schema_location { position.line, position.column });
-		auto path = std::make_optional(buildErrorPath(selectionSetParams.errorPath));
 
-		_values.push_back({ alias, std::move(location), std::move(path), std::move(result) });
+		_values.push_back({ alias, std::move(location), std::move(result) });
 	}
 	catch (schema_exception& scx)
 	{
@@ -1078,7 +1076,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 
 		promise.set_exception(std::make_exception_ptr(schema_exception { std::move(messages) }));
 
-		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, promise.get_future() });
 	}
 	catch (const std::exception& ex)
 	{
@@ -1092,7 +1090,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 				{ position.line, position.column },
 				buildErrorPath(selectionSetParams.errorPath) } } }));
 
-		_values.push_back({ alias, std::nullopt, std::nullopt, promise.get_future() });
+		_values.push_back({ alias, std::nullopt, promise.get_future() });
 	}
 }
 
@@ -1229,6 +1227,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	document.data.reserve(children.size());
 
+	const auto parent = selectionSetParams.errorPath
+		? std::make_optional(std::cref(*selectionSetParams.errorPath))
+		: std::nullopt;
+
 	for (auto& child : children)
 	{
 		try
@@ -1243,10 +1245,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 				message << "Ambiguous field error name: " << child.name;
 
-				auto location = std::move(child.location).value_or(schema_location {});
-				auto path = std::move(child.path).value_or(error_path {});
-
-				document.errors.push_back({ message.str(), std::move(location), std::move(path) });
+				document.errors.push_back({ message.str(),
+					child.location.value_or(schema_location {}),
+					buildErrorPath(
+						std::make_optional(field_path { parent, path_segment { child.name } })) });
 			}
 
 			if (!value.errors.empty())
@@ -1271,10 +1273,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			message << "Field error name: " << child.name << " unknown error: " << ex.what();
 
-			auto location = std::move(child.location).value_or(schema_location {});
-			auto path = std::move(child.path).value_or(error_path {});
-
-			document.errors.push_back({ message.str(), std::move(location), std::move(path) });
+			document.errors.push_back({ message.str(),
+				child.location.value_or(schema_location {}),
+				buildErrorPath(
+					std::make_optional(field_path { parent, path_segment { child.name } })) });
 			document.data.emplace_back(std::string { child.name }, {});
 		}
 	}
