@@ -181,7 +181,7 @@ GRAPHQLSERVICE_EXPORT introspection::TypeKind Argument<introspection::TypeKind>:
 	const response::Value& value);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<introspection::TypeKind>::convert(
-	AwaitableScalar<introspection::TypeKind> result, ResolverParams params);
+	AwaitableScalar<introspection::TypeKind> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT void Result<introspection::TypeKind>::validateScalar(
 	const response::Value& value);
@@ -190,7 +190,7 @@ GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation Argument<introspection::D
 	const response::Value& value);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<introspection::DirectiveLocation>::convert(
-	AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams params);
+	AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT void Result<introspection::DirectiveLocation>::validateScalar(
 	const response::Value& value);

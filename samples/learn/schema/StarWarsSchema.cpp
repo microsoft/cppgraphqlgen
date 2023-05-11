@@ -48,16 +48,16 @@ learn::Episode Argument<learn::Episode>::convert(const response::Value& value)
 }
 
 template <>
-service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams params)
+service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableScalar<learn::Episode> result, ResolverParams&& params)
 {
 	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 

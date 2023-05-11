@@ -49,16 +49,16 @@ today::TaskState Argument<today::TaskState>::convert(const response::Value& valu
 }
 
 template <>
-service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams params)
+service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableScalar<today::TaskState> result, ResolverParams&& params)
 {
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 

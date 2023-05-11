@@ -897,7 +897,7 @@ struct Result
 		AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<Type>>;
 
 	// Convert a single value of the specified type to JSON.
-	[[nodiscard]] static AwaitableResolver convert(future_type result, ResolverParams params);
+	[[nodiscard]] static AwaitableResolver convert(future_type result, ResolverParams&& params);
 
 	// Validate a single scalar value is the expected type.
 	static void validateScalar(const response::Value& value);
@@ -907,25 +907,25 @@ struct Result
 // Export all of the built-in converters
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<int>::convert(
-	AwaitableScalar<int> result, ResolverParams params);
+	AwaitableScalar<int> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<double>::convert(
-	AwaitableScalar<double> result, ResolverParams params);
+	AwaitableScalar<double> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<std::string>::convert(
-	AwaitableScalar<std::string> result, ResolverParams params);
+	AwaitableScalar<std::string> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<bool>::convert(
-	AwaitableScalar<bool> result, ResolverParams params);
+	AwaitableScalar<bool> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::IdType>::convert(
-	AwaitableScalar<response::IdType> result, ResolverParams params);
+	AwaitableScalar<response::IdType> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<response::Value>::convert(
-	AwaitableScalar<response::Value> result, ResolverParams params);
+	AwaitableScalar<response::Value> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT AwaitableResolver Result<Object>::convert(
-	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams params);
+	AwaitableObject<std::shared_ptr<const Object>> result, ResolverParams&& params);
 
 // Export all of the scalar value validation methods
 template <>
@@ -1010,7 +1010,7 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams params)
+		AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams&& paramsArg)
 		requires NoneObjectDerivedType<Type, Modifier>
 	{
 		// Call through to the Object specialization with a static_pointer_cast for subclasses of
@@ -1018,6 +1018,9 @@ struct ModifiedResult
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
 		static_assert(std::is_same_v<std::shared_ptr<Type>, typename ResultTraits<Type>::type>,
 			"this is the derived object type");
+
+		// Move the paramsArg into a local variable before the first suspension point.
+		auto params = std::move(paramsArg);
 
 		co_await params.launch;
 
@@ -1031,7 +1034,7 @@ struct ModifiedResult
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type>::future_type result, ResolverParams params)
+		typename ResultTraits<Type>::future_type result, ResolverParams&& params)
 		requires NoneScalarOrObjectType<Type, Modifier>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
@@ -1043,9 +1046,13 @@ struct ModifiedResult
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams&& paramsArg)
 		requires NullableResultSharedPtr<Type, Modifier, Other...>
 	{
+		// Move the paramsArg into a local variable before the first suspension point.
+		auto params = std::move(paramsArg);
+
 		co_await params.launch;
 
 		auto awaitedResult = co_await std::move(result);
@@ -1064,7 +1071,8 @@ struct ModifiedResult
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams&& paramsArg)
 		requires NullableResultOptional<Type, Modifier, Other...>
 	{
 		static_assert(std::is_same_v<std::optional<typename ResultTraits<Type, Other...>::type>,
@@ -1082,6 +1090,9 @@ struct ModifiedResult
 					std::shared_ptr { std::move(value) } } };
 			}
 		}
+
+		// Move the paramsArg into a local variable before the first suspension point.
+		auto params = std::move(paramsArg);
 
 		co_await params.launch;
 
@@ -1101,7 +1112,8 @@ struct ModifiedResult
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
 	[[nodiscard]] static AwaitableResolver convert(
-		typename ResultTraits<Type, Modifier, Other...>::future_type result, ResolverParams params)
+		typename ResultTraits<Type, Modifier, Other...>::future_type result,
+		ResolverParams&& paramsArg)
 		requires ListModifier<Modifier>
 	{
 		if constexpr (!ObjectBaseType<Type>)
@@ -1115,6 +1127,9 @@ struct ModifiedResult
 					std::shared_ptr { std::move(value) } } };
 			}
 		}
+
+		// Move the paramsArg into a local variable before the first suspension point.
+		auto params = std::move(paramsArg);
 
 		std::vector<AwaitableResolver> children;
 		const auto parentPath = params.errorPath;
@@ -1242,7 +1257,7 @@ struct ModifiedResult
 		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
 	[[nodiscard]] static AwaitableResolver resolve(typename ResultTraits<Type>::future_type result,
-		ResolverParams params, ResolverCallback&& resolver)
+		ResolverParams&& paramsArg, ResolverCallback&& resolver)
 	{
 		static_assert(!ObjectBaseType<Type>, "ModfiedResult<Object> needs special handling");
 
@@ -1256,6 +1271,9 @@ struct ModifiedResult
 
 		auto pendingResolver = std::move(resolver);
 		ResolverResult document;
+
+		// Move the paramsArg into a local variable before the first suspension point.
+		auto params = std::move(paramsArg);
 
 		try
 		{

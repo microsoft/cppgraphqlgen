@@ -629,7 +629,7 @@ GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
 						   << R"cpp(>::convert(
 	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(> result, ResolverParams params);
+						   << R"cpp(> result, ResolverParams&& params);
 template <>
 GRAPHQLSERVICE_EXPORT void Result<)cpp"
 						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
@@ -1327,7 +1327,7 @@ service::AwaitableResolver Result<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(> result, ResolverParams params)
+					   << R"cpp(> result, ResolverParams&& params)
 {
 	return ModifiedResult<)cpp"
 					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
@@ -1335,12 +1335,12 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_names)cpp"
+			resolvedResult.set<std::string>(std::string { s_names)cpp"
 					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 

@@ -49,16 +49,16 @@ validation::DogCommand Argument<validation::DogCommand>::convert(const response:
 }
 
 template <>
-service::AwaitableResolver Result<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::DogCommand>::convert(service::AwaitableScalar<validation::DogCommand> result, ResolverParams&& params)
 {
 	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesDogCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDogCommand[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
@@ -105,16 +105,16 @@ validation::CatCommand Argument<validation::CatCommand>::convert(const response:
 }
 
 template <>
-service::AwaitableResolver Result<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams params)
+service::AwaitableResolver Result<validation::CatCommand>::convert(service::AwaitableScalar<validation::CatCommand> result, ResolverParams&& params)
 {
 	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
-			response::Value result(response::Type::EnumValue);
+			response::Value resolvedResult(response::Type::EnumValue);
 
-			result.set<std::string>(std::string { s_namesCatCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesCatCommand[static_cast<size_t>(value)] });
 
-			return result;
+			return resolvedResult;
 		});
 }
 
