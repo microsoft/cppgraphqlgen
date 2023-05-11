@@ -153,6 +153,10 @@ validation::ComplexInput Argument<validation::ComplexInput>::convert(const respo
 
 namespace validation {
 
+ComplexInput::ComplexInput() noexcept
+{
+}
+
 ComplexInput::ComplexInput(
 		std::optional<std::string> nameArg,
 		std::optional<std::string> ownerArg) noexcept
@@ -188,6 +192,10 @@ ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
 	owner = std::move(other.owner);
 
 	return *this;
+}
+
+ComplexInput::~ComplexInput()
+{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)

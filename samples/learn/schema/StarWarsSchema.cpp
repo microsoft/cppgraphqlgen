@@ -96,6 +96,10 @@ learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& 
 
 namespace learn {
 
+ReviewInput::ReviewInput() noexcept
+{
+}
+
 ReviewInput::ReviewInput(
 		int starsArg,
 		std::optional<std::string> commentaryArg) noexcept
@@ -131,6 +135,10 @@ ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
 	commentary = std::move(other.commentary);
 
 	return *this;
+}
+
+ReviewInput::~ReviewInput()
+{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)

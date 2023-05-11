@@ -295,7 +295,13 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			for (const auto& inputField : inputType.fields)
 			{
-				if (!firstField)
+				if (firstField)
+				{
+					headerFile << R"cpp() noexcept;
+	explicit )cpp" << inputType.cppType
+							   << R"cpp(()cpp";
+				}
+				else
 				{
 					headerFile << R"cpp(,)cpp";
 				}
@@ -306,8 +312,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 				headerFile << R"cpp(
 		)cpp" << inputCppType
-						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg = )cpp"
-						   << inputCppType << R"cpp( {})cpp";
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
 			}
 
 			headerFile << R"cpp() noexcept;
@@ -317,6 +322,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(()cpp" << inputType.cppType
 					   << R"cpp(&& other) noexcept;
+	~)cpp" << inputType.cppType
+					   << R"cpp(();
 
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(& operator=(const )cpp" << inputType.cppType
@@ -324,11 +331,19 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	)cpp" << introspectionExport
 					   << inputType.cppType << R"cpp(& operator=()cpp" << inputType.cppType
 					   << R"cpp(&& other) noexcept;
-
 )cpp";
+
+			firstField = true;
 
 			for (const auto& inputField : inputType.fields)
 			{
+				if (firstField)
+				{
+					headerFile << std::endl;
+				}
+
+				firstField = false;
+
 				headerFile << getFieldDeclaration(inputField);
 			}
 			headerFile << R"cpp(};
@@ -1133,8 +1148,8 @@ public:
 
 public:
 	template <class T>
-	)cpp"
-			<< objectType.cppType << R"cpp((std::shared_ptr<T> pimpl) noexcept
+	)cpp" << objectType.cppType
+			<< R"cpp((std::shared_ptr<T> pimpl) noexcept
 		: )cpp"
 			<< objectType.cppType
 			<< R"cpp( { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
@@ -1449,7 +1464,12 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 	for (const auto& inputType : _loader.getInputTypes())
 	{
 		sourceFile << std::endl
-				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
+				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(() noexcept
+{
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
 
 		bool firstField = true;
 
@@ -1581,6 +1601,11 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 
 		sourceFile << R"cpp(
 	return *this;
+}
+
+)cpp" << inputType.cppType
+				   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
+{
 }
 )cpp";
 	}
