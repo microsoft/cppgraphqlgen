@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(FolderConnection::getPageInfo is not implemented)ex");
+				throw service::unimplemented_method(R"ex(FolderConnection::getPageInfo)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(FolderConnection::getEdges is not implemented)ex");
+				throw service::unimplemented_method(R"ex(FolderConnection::getEdges)ex");
 			}
 		}
 

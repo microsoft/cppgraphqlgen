@@ -107,6 +107,18 @@ private:
 	std::list<schema_error> _structuredErrors;
 };
 
+// This exception is thrown when an generated stub is called for an unimplemented method.
+class [[nodiscard]] unimplemented_method : public std::runtime_error
+{
+public:
+	GRAPHQLSERVICE_EXPORT explicit unimplemented_method(std::string_view methodName);
+
+	unimplemented_method() = delete;
+
+private:
+	static GRAPHQLSERVICE_EXPORT std::string getMessage(std::string_view methodName) noexcept;
+};
+
 // The RequestState is nullable, but if you have multiple threads processing requests and there's
 // any per-request state that you want to maintain throughout the request (e.g. optimizing or
 // batching backend requests), you can inherit from RequestState and pass it to Request::resolve to

@@ -99,7 +99,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Alien::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Alien::getName)ex");
 			}
 		}
 
@@ -115,7 +115,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Alien::getHomePlanet is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Alien::getHomePlanet)ex");
 			}
 		}
 

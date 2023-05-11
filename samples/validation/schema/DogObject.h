@@ -155,7 +155,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getName)ex");
 			}
 		}
 
@@ -171,7 +171,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getNickname is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getNickname)ex");
 			}
 		}
 
@@ -187,7 +187,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getBarkVolume is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getBarkVolume)ex");
 			}
 		}
 
@@ -203,7 +203,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getDoesKnowCommand is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getDoesKnowCommand)ex");
 			}
 		}
 
@@ -219,7 +219,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getIsHousetrained is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getIsHousetrained)ex");
 			}
 		}
 
@@ -235,7 +235,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Dog::getOwner is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Dog::getOwner)ex");
 			}
 		}
 

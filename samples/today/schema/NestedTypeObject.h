@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
+				throw service::unimplemented_method(R"ex(NestedType::getDepth)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+				throw service::unimplemented_method(R"ex(NestedType::getNested)ex");
 			}
 		}
 

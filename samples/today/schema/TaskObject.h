@@ -113,7 +113,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Task::getId is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Task::getId)ex");
 			}
 		}
 
@@ -129,7 +129,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Task::getTitle is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Task::getTitle)ex");
 			}
 		}
 
@@ -145,7 +145,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Task::getIsComplete is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Task::getIsComplete)ex");
 			}
 		}
 

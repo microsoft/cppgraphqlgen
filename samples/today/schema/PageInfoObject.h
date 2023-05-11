@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(PageInfo::getHasNextPage is not implemented)ex");
+				throw service::unimplemented_method(R"ex(PageInfo::getHasNextPage)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(PageInfo::getHasPreviousPage is not implemented)ex");
+				throw service::unimplemented_method(R"ex(PageInfo::getHasPreviousPage)ex");
 			}
 		}
 

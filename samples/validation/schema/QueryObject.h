@@ -176,7 +176,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getDog is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getDog)ex");
 			}
 		}
 
@@ -192,7 +192,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getHuman is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getHuman)ex");
 			}
 		}
 
@@ -208,7 +208,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getPet is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getPet)ex");
 			}
 		}
 
@@ -224,7 +224,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getCatOrDog is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getCatOrDog)ex");
 			}
 		}
 
@@ -240,7 +240,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getArguments is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getArguments)ex");
 			}
 		}
 
@@ -256,7 +256,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getResource is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getResource)ex");
 			}
 		}
 
@@ -272,7 +272,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getFindDog is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getFindDog)ex");
 			}
 		}
 
@@ -288,7 +288,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getBooleanList is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getBooleanList)ex");
 			}
 		}
 

@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(CompleteTaskPayload::getTask is not implemented)ex");
+				throw service::unimplemented_method(R"ex(CompleteTaskPayload::getTask)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(CompleteTaskPayload::getClientMutationId is not implemented)ex");
+				throw service::unimplemented_method(R"ex(CompleteTaskPayload::getClientMutationId)ex");
 			}
 		}
 

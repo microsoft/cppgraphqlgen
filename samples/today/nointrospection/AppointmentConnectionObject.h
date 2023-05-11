@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(AppointmentConnection::getPageInfo is not implemented)ex");
+				throw service::unimplemented_method(R"ex(AppointmentConnection::getPageInfo)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(AppointmentConnection::getEdges is not implemented)ex");
+				throw service::unimplemented_method(R"ex(AppointmentConnection::getEdges)ex");
 			}
 		}
 

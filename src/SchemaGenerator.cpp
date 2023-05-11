@@ -1028,9 +1028,9 @@ private:
 				headerFile << R"cpp(
 			else
 			{
-				throw std::runtime_error(R"ex()cpp"
+				throw service::unimplemented_method(R"ex()cpp"
 						   << objectType.cppType << R"cpp(::)cpp" << accessorName
-						   << R"cpp( is not implemented)ex");
+						   << R"cpp()ex");
 			})cpp";
 			}
 		}

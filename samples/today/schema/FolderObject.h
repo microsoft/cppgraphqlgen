@@ -113,7 +113,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Folder::getId is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Folder::getId)ex");
 			}
 		}
 
@@ -129,7 +129,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Folder::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Folder::getName)ex");
 			}
 		}
 
@@ -145,7 +145,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Folder::getUnreadCount is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Folder::getUnreadCount)ex");
 			}
 		}
 

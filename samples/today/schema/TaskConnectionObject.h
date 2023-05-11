@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(TaskConnection::getPageInfo is not implemented)ex");
+				throw service::unimplemented_method(R"ex(TaskConnection::getPageInfo)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(TaskConnection::getEdges is not implemented)ex");
+				throw service::unimplemented_method(R"ex(TaskConnection::getEdges)ex");
 			}
 		}
 

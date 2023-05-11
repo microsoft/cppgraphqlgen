@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Subscription::getNewMessage is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Subscription::getNewMessage)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Subscription::getDisallowedSecondRootField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Subscription::getDisallowedSecondRootField)ex");
 			}
 		}
 

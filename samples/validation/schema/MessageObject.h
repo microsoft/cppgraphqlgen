@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Message::getBody is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Message::getBody)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Message::getSender is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Message::getSender)ex");
 			}
 		}
 

@@ -78,7 +78,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Mutation::applyMutateDog is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Mutation::applyMutateDog)ex");
 			}
 		}
 

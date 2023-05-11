@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(AppointmentEdge::getNode is not implemented)ex");
+				throw service::unimplemented_method(R"ex(AppointmentEdge::getNode)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(AppointmentEdge::getCursor is not implemented)ex");
+				throw service::unimplemented_method(R"ex(AppointmentEdge::getCursor)ex");
 			}
 		}
 

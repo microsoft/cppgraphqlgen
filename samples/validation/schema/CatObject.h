@@ -127,7 +127,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Cat::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Cat::getName)ex");
 			}
 		}
 
@@ -143,7 +143,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Cat::getNickname is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Cat::getNickname)ex");
 			}
 		}
 
@@ -159,7 +159,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Cat::getDoesKnowCommand is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Cat::getDoesKnowCommand)ex");
 			}
 		}
 
@@ -175,7 +175,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Cat::getMeowVolume is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Cat::getMeowVolume)ex");
 			}
 		}
 

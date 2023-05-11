@@ -176,7 +176,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getMultipleReqs is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getMultipleReqs)ex");
 			}
 		}
 
@@ -192,7 +192,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getBooleanArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getBooleanArgField)ex");
 			}
 		}
 
@@ -208,7 +208,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getFloatArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getFloatArgField)ex");
 			}
 		}
 
@@ -224,7 +224,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getIntArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getIntArgField)ex");
 			}
 		}
 
@@ -240,7 +240,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getNonNullBooleanArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getNonNullBooleanArgField)ex");
 			}
 		}
 
@@ -256,7 +256,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getNonNullBooleanListField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getNonNullBooleanListField)ex");
 			}
 		}
 
@@ -272,7 +272,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getBooleanListArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getBooleanListArgField)ex");
 			}
 		}
 
@@ -288,7 +288,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Arguments::getOptionalNonNullBooleanArgField is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Arguments::getOptionalNonNullBooleanArgField)ex");
 			}
 		}
 

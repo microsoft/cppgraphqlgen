@@ -99,7 +99,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Human::getName)ex");
 			}
 		}
 
@@ -115,7 +115,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Human::getPets)ex");
 			}
 		}
 

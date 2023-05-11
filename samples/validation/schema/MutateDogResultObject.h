@@ -78,7 +78,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(MutateDogResult::getId is not implemented)ex");
+				throw service::unimplemented_method(R"ex(MutateDogResult::getId)ex");
 			}
 		}
 

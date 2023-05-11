@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Subscription::getNextAppointmentChange is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Subscription::getNextAppointmentChange)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Subscription::getNodeChange is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Subscription::getNodeChange)ex");
 			}
 		}
 

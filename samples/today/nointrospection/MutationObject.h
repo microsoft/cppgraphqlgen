@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Mutation::applyCompleteTask is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Mutation::applyCompleteTask)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Mutation::applySetFloat is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Mutation::applySetFloat)ex");
 			}
 		}
 

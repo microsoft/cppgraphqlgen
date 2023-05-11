@@ -163,6 +163,22 @@ response::Value schema_exception::getErrors()
 	return buildErrorValues(std::move(_structuredErrors));
 }
 
+unimplemented_method::unimplemented_method(std::string_view methodName)
+	: std::runtime_error { getMessage(methodName) }
+{
+}
+	
+std::string unimplemented_method::getMessage(std::string_view methodName) noexcept
+{
+	using namespace std::literals;
+
+	std::ostringstream oss;
+
+	oss << methodName << R"ex( is not implemented)ex"sv;
+
+	return oss.str();
+}
+
 void await_worker_thread::await_suspend(coro::coroutine_handle<> h) const
 {
 	std::thread(

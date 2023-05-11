@@ -246,7 +246,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getNode is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getNode)ex");
 			}
 		}
 
@@ -262,7 +262,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getAppointments is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getAppointments)ex");
 			}
 		}
 
@@ -278,7 +278,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getTasks is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getTasks)ex");
 			}
 		}
 
@@ -294,7 +294,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getUnreadCounts is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getUnreadCounts)ex");
 			}
 		}
 
@@ -310,7 +310,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getAppointmentsById is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getAppointmentsById)ex");
 			}
 		}
 
@@ -326,7 +326,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getTasksById is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getTasksById)ex");
 			}
 		}
 
@@ -342,7 +342,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getUnreadCountsById is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getUnreadCountsById)ex");
 			}
 		}
 
@@ -358,7 +358,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getNested is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getNested)ex");
 			}
 		}
 
@@ -374,7 +374,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getUnimplemented is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getUnimplemented)ex");
 			}
 		}
 
@@ -390,7 +390,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getExpensive is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getExpensive)ex");
 			}
 		}
 
@@ -406,7 +406,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getTestTaskState is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getTestTaskState)ex");
 			}
 		}
 
@@ -422,7 +422,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getAnyType is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getAnyType)ex");
 			}
 		}
 
@@ -438,7 +438,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Query::getDefault is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Query::getDefault)ex");
 			}
 		}
 

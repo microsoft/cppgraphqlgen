@@ -141,7 +141,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Appointment::getId is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Appointment::getId)ex");
 			}
 		}
 
@@ -157,7 +157,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Appointment::getWhen is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Appointment::getWhen)ex");
 			}
 		}
 
@@ -173,7 +173,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Appointment::getSubject is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Appointment::getSubject)ex");
 			}
 		}
 
@@ -189,7 +189,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Appointment::getIsNow is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Appointment::getIsNow)ex");
 			}
 		}
 
@@ -205,7 +205,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Appointment::getForceError is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Appointment::getForceError)ex");
 			}
 		}
 

@@ -92,7 +92,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(FolderEdge::getNode is not implemented)ex");
+				throw service::unimplemented_method(R"ex(FolderEdge::getNode)ex");
 			}
 		}
 
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(FolderEdge::getCursor is not implemented)ex");
+				throw service::unimplemented_method(R"ex(FolderEdge::getCursor)ex");
 			}
 		}
 
