@@ -9,6 +9,9 @@ cmake_policy(SET CMP0091 NEW)
 # Do not set default MSVC warning flags: https://cmake.org/cmake/help/latest/policy/CMP0092.html
 cmake_policy(SET CMP0092 NEW)
 
+# Export compile commands for other tools, e.g. SonarLint.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Default to the last updated version from version.txt.
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.txt" VERSION_FILE)
 file(READ "${VERSION_FILE}" LATEST_VERSION)
