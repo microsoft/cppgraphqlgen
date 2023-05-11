@@ -280,9 +280,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			{
 				if (firstField)
 				{
-					headerFile << R"cpp() noexcept = default;
-	explicit )cpp" << cppType
-					   << R"cpp(()cpp";
+					headerFile << R"cpp() noexcept;
+	explicit )cpp" << cppType << R"cpp(()cpp";
 				}
 				else
 				{
@@ -304,6 +303,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 					   << cppType << R"cpp(& other);
 	)cpp" << cppType << R"cpp(()cpp"
 					   << cppType << R"cpp(&& other) noexcept;
+	~)cpp" << cppType << R"cpp(();
 
 	)cpp" << cppType << R"cpp(& operator=(const )cpp"
 					   << cppType << R"cpp(& other);
@@ -646,7 +646,12 @@ using namespace std::literals;
 
 			pendingSeparator.reset();
 
-			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(()cpp";
+			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept
+{
+}
+
+)cpp" << cppType << R"cpp(::)cpp"
+					   << cppType << R"cpp(()cpp";
 
 			bool firstField = true;
 
@@ -728,10 +733,16 @@ using namespace std::literals;
 			sourceFile << R"cpp({
 }
 
+)cpp" << cppType << R"cpp(::~)cpp"
+					   << cppType << R"cpp(()
+{
+}
+
 )cpp" << cppType << R"cpp(& )cpp"
 					   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
 {
-	return *this = )cpp" << cppType << R"cpp( { other };
+	return *this = )cpp"
+					   << cppType << R"cpp( { other };
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
@@ -1036,21 +1047,20 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard]] const std::string& Traits::GetRequestText() noexcept
 {
-	return )cpp"
-				<< _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText();
+	return )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestText();
 }
 
 [[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return )cpp"
-				<< _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject();
+	return )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestObject();
 }
 
 [[nodiscard]] const std::string& Traits::GetOperationName() noexcept
 {
-	return )cpp"
-				<< _requestLoader.getOperationNamespace(operation)
-				<< R"cpp(::GetOperationName();
+	return )cpp" << _requestLoader.getOperationNamespace(operation)
+				   << R"cpp(::GetOperationName();
 }
 )cpp";
 
@@ -1060,7 +1070,7 @@ Response parseResponse(response::Value&& response)
 [[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
 {
 	return )cpp" << _requestLoader.getOperationNamespace(operation)
-					<< R"cpp(::serializeVariables(std::move(variables));
+					   << R"cpp(::serializeVariables(std::move(variables));
 }
 )cpp";
 		}
@@ -1068,9 +1078,8 @@ Response parseResponse(response::Value&& response)
 		sourceFile << R"cpp(
 [[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
-	return )cpp"
-				<< _requestLoader.getOperationNamespace(operation)
-				<< R"cpp(::parseResponse(std::move(response));
+	return )cpp" << _requestLoader.getOperationNamespace(operation)
+				   << R"cpp(::parseResponse(std::move(response));
 }
 
 )cpp";

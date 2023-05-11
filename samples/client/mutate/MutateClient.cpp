@@ -54,6 +54,10 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+CompleteTaskInput::CompleteTaskInput() noexcept
+{
+}
+
 CompleteTaskInput::CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
@@ -79,6 +83,10 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 	, testTaskState { std::move(other.testTaskState) }
 	, isComplete { std::move(other.isComplete) }
 	, clientMutationId { std::move(other.clientMutationId) }
+{
+}
+
+CompleteTaskInput::~CompleteTaskInput()
 {
 }
 
