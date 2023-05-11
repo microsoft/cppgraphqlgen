@@ -57,8 +57,9 @@ service::AwaitableResolver Mutation::resolveCompleteTask(service::ResolverParams
 {
 	auto argInput = service::ModifiedArgument<today::CompleteTaskInput>::require("input", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->applyCompleteTask(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argInput));
+	auto result = _pimpl->applyCompleteTask(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argInput));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<CompleteTaskPayload>::convert(std::move(result), std::move(params));
@@ -68,8 +69,9 @@ service::AwaitableResolver Mutation::resolveSetFloat(service::ResolverParams&& p
 {
 	auto argValue = service::ModifiedArgument<double>::require("value", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->applySetFloat(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argValue));
+	auto result = _pimpl->applySetFloat(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argValue));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<double>::convert(std::move(result), std::move(params));

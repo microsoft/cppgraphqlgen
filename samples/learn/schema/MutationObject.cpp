@@ -57,8 +57,9 @@ service::AwaitableResolver Mutation::resolveCreateReview(service::ResolverParams
 	auto argEp = service::ModifiedArgument<learn::Episode>::require("ep", params.arguments);
 	auto argReview = service::ModifiedArgument<learn::ReviewInput>::require("review", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->applyCreateReview(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argEp), std::move(argReview));
+	auto result = _pimpl->applyCreateReview(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argEp), std::move(argReview));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Review>::convert(std::move(result), std::move(params));

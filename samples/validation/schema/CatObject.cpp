@@ -59,8 +59,9 @@ void Cat::endSelectionSet(const service::SelectionSetParams& params) const
 service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getName(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getName(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
@@ -69,8 +70,9 @@ service::AwaitableResolver Cat::resolveName(service::ResolverParams&& params) co
 service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNickname(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNickname(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -80,8 +82,9 @@ service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&&
 {
 	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getDoesKnowCommand(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argCatCommand));
+	auto result = _pimpl->getDoesKnowCommand(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argCatCommand));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<bool>::convert(std::move(result), std::move(params));
@@ -90,8 +93,9 @@ service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&&
 service::AwaitableResolver Cat::resolveMeowVolume(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getMeowVolume(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getMeowVolume(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<int>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

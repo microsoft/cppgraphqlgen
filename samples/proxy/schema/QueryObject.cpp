@@ -61,8 +61,9 @@ service::AwaitableResolver Query::resolveRelay(service::ResolverParams&& params)
 	auto argOperationName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("operationName", params.arguments);
 	auto argVariables = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("variables", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getRelay(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argQuery), std::move(argOperationName), std::move(argVariables));
+	auto result = _pimpl->getRelay(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argQuery), std::move(argOperationName), std::move(argVariables));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));

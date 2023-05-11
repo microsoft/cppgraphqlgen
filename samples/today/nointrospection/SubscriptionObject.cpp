@@ -57,8 +57,9 @@ void Subscription::endSelectionSet(const service::SelectionSetParams& params) co
 service::AwaitableResolver Subscription::resolveNextAppointmentChange(service::ResolverParams&& params) const
 {
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNextAppointmentChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)));
+	auto result = _pimpl->getNextAppointmentChange(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Appointment>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
@@ -68,8 +69,9 @@ service::AwaitableResolver Subscription::resolveNodeChange(service::ResolverPara
 {
 	auto argId = service::ModifiedArgument<response::IdType>::require("id", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
-	auto result = _pimpl->getNodeChange(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)), std::move(argId));
+	auto result = _pimpl->getNodeChange(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argId));
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Node>::convert(std::move(result), std::move(params));

@@ -2396,7 +2396,8 @@ service::AwaitableResolver )cpp"
 
 		if (!_loader.isIntrospection())
 		{
-			sourceFile << R"cpp(	auto directives = std::move(params.fieldDirectives);
+			sourceFile << R"cpp(	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+	auto directives = std::move(params.fieldDirectives);
 )cpp";
 		}
 
@@ -2409,7 +2410,7 @@ service::AwaitableResolver )cpp"
 		if (!firstArgument)
 		{
 			sourceFile
-				<< R"cpp(service::FieldParams(service::SelectionSetParams{ params }, std::move(directives)))cpp";
+				<< R"cpp(service::FieldParams { std::move(selectionSetParams), std::move(directives) })cpp";
 		}
 
 		if (!outputField.arguments.empty())
