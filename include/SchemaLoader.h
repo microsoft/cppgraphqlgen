@@ -20,7 +20,8 @@
 namespace graphql::generator {
 
 // These are the set of built-in types in GraphQL.
-enum class [[nodiscard]] BuiltinType {
+enum class [[nodiscard]] BuiltinType
+{
 	Int,
 	Float,
 	String,
@@ -75,7 +76,8 @@ using EnumTypeList = std::vector<EnumType>;
 // Input types are complex types that have a set of named fields. Each field may be
 // a scalar type (including lists or non-null wrappers) or another nested input type,
 // but it cannot include output object types.
-enum class [[nodiscard]] InputFieldType {
+enum class [[nodiscard]] InputFieldType
+{
 	Builtin,
 	Scalar,
 	Enum,
@@ -136,7 +138,8 @@ using UnionTypeList = std::vector<UnionType>;
 // field may be a scalar type (including lists or non-null wrappers) or another nested
 // output type, but it cannot include input object types. Each field can also take
 // optional arguments which are all input types.
-enum class [[nodiscard]] OutputFieldType {
+enum class [[nodiscard]] OutputFieldType
+{
 	Builtin,
 	Scalar,
 	Enum,
@@ -263,6 +266,8 @@ public:
 
 	[[nodiscard]] static std::string getOutputCppAccessor(const OutputField& field) noexcept;
 	[[nodiscard]] static std::string getOutputCppResolver(const OutputField& field) noexcept;
+
+	[[nodiscard]] static bool shouldMoveInputField(const InputField& field) noexcept;
 
 private:
 	[[nodiscard]] static bool isExtension(const peg::ast_node& definition) noexcept;

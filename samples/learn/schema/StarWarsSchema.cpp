@@ -87,7 +87,7 @@ learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& 
 	auto valueCommentary = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("commentary", value);
 
 	return learn::ReviewInput {
-		std::move(valueStars),
+		valueStars,
 		std::move(valueCommentary)
 	};
 }

@@ -105,7 +105,7 @@ today::CompleteTaskInput Argument<today::CompleteTaskInput>::convert(const respo
 
 	return today::CompleteTaskInput {
 		std::move(valueId),
-		std::move(valueTestTaskState),
+		valueTestTaskState,
 		std::move(valueIsComplete),
 		std::move(valueClientMutationId)
 	};

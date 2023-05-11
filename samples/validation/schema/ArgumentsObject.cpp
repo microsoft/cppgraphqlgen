@@ -158,7 +158,7 @@ service::AwaitableResolver Arguments::resolveOptionalNonNullBooleanArgField(serv
 
 	auto pairOptionalBooleanArg = service::ModifiedArgument<bool>::find("optionalBooleanArg", params.arguments);
 	auto argOptionalBooleanArg = (pairOptionalBooleanArg.second
-		? std::move(pairOptionalBooleanArg.first)
+		? pairOptionalBooleanArg.first
 		: service::ModifiedArgument<bool>::require("optionalBooleanArg", defaultArguments));
 	std::unique_lock resolverLock(_resolverMutex);
 	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };

@@ -1441,10 +1441,25 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 )cpp";
 				}
 
+				const bool shouldMove = SchemaLoader::shouldMoveInputField(inputField);
+
 				firstField = false;
 				fieldName[0] =
 					static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-				sourceFile << R"cpp(		std::move(value)cpp" << fieldName << R"cpp())cpp";
+
+				sourceFile << R"cpp(		)cpp";
+
+				if (shouldMove)
+				{
+					sourceFile << R"cpp(std::move()cpp";
+				}
+
+				sourceFile << R"cpp(value)cpp" << fieldName;
+
+				if (shouldMove)
+				{
+					sourceFile << R"cpp())cpp";
+				}
 			}
 
 			sourceFile << R"cpp(
@@ -2396,7 +2411,8 @@ service::AwaitableResolver )cpp"
 
 		if (!_loader.isIntrospection())
 		{
-			sourceFile << R"cpp(	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+			sourceFile
+				<< R"cpp(	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
 )cpp";
 		}
@@ -2775,8 +2791,23 @@ std::string Generator::getArgumentDeclaration(const InputField& argument, const 
 							<< argument.name << R"cpp(", )cpp" << argumentsToken << R"cpp();
 	auto )cpp" << prefixToken
 							<< argumentName << R"cpp( = (pair)cpp" << argumentName << R"cpp(.second
-		? std::move(pair)cpp"
-							<< argumentName << R"cpp(.first)
+		? )cpp";
+
+		const bool shouldMove = SchemaLoader::shouldMoveInputField(argument);
+
+		if (shouldMove)
+		{
+			argumentDeclaration << R"cpp(std::move()cpp";
+		}
+
+		argumentDeclaration << R"cpp(pair)cpp" << argumentName << R"cpp(.first)cpp";
+
+		if (shouldMove)
+		{
+			argumentDeclaration << R"cpp())cpp";
+		}
+
+		argumentDeclaration << R"cpp(
 		: )cpp" << getArgumentAccessType(argument)
 							<< R"cpp(::require)cpp" << getTypeModifiers(argument.modifiers)
 							<< R"cpp((")cpp" << argument.name << R"cpp(", )cpp" << defaultToken
