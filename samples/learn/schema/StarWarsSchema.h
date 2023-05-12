@@ -22,14 +22,14 @@ static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: 
 namespace graphql {
 namespace learn {
 
-enum class [[nodiscard]] Episode
+enum class [[nodiscard("unnecessary conversion")]] Episode
 {
 	NEW_HOPE,
 	EMPIRE,
 	JEDI
 };
 
-[[nodiscard]] constexpr auto getEpisodeNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getEpisodeNames() noexcept
 {
 	using namespace std::literals;
 
@@ -40,7 +40,7 @@ enum class [[nodiscard]] Episode
 	};
 }
 
-[[nodiscard]] constexpr auto getEpisodeValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getEpisodeValues() noexcept
 {
 	using namespace std::literals;
 
@@ -51,7 +51,7 @@ enum class [[nodiscard]] Episode
 	};
 }
 
-struct [[nodiscard]] ReviewInput
+struct [[nodiscard("unnecessary construction")]] ReviewInput
 {
 	explicit ReviewInput() noexcept;
 	explicit ReviewInput(
@@ -80,7 +80,7 @@ class Mutation;
 
 } // namespace object
 
-class [[nodiscard]] Operations final
+class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:

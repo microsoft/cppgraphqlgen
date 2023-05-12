@@ -13,13 +13,13 @@ the subscriptions to those listeners.
 Subscriptions are created by calling the `Request::subscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableSubscribe subscribe(RequestSubscribeParams params);
+GRAPHQLSERVICE_EXPORT [[nodiscard("leaked subscription")]] AwaitableSubscribe subscribe(RequestSubscribeParams params);
 ```
 
 You need to fill in a `RequestSubscribeParams` struct with the subscription event
 callback, the [parsed](./parsing.md) `query` and any other relevant operation parameters:
 ```cpp
-struct [[nodiscard]] RequestSubscribeParams
+struct [[nodiscard("unnecessary construction")]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
 	SubscriptionCallback callback;
@@ -64,13 +64,13 @@ The `internal::Awaitable<T>` template is described in [awaitable.md](./awaitable
 Subscriptions are removed by calling the `Request::unsubscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
+GRAPHQLSERVICE_EXPORT [[nodiscard("potentially leaked subscription")]] AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
 ```
 
 You need to fill in a `RequestUnsubscribeParams` struct with the `SubscriptionKey`
 returned by `Request::subscribe` in `AwaitableSubscribe`:
 ```cpp
-struct [[nodiscard]] RequestUnsubscribeParams
+struct [[nodiscard("unnecessary construction")]] RequestUnsubscribeParams
 {
 	// Key returned by a previous call to subscribe.
 	SubscriptionKey key;
@@ -117,7 +117,7 @@ The `Request::deliver` method determines which subscriptions should receive
 an event based on several factors, which makes the `RequestDeliverParams` struct
 more complicated:
 ```cpp
-struct [[nodiscard]] RequestDeliverParams
+struct [[nodiscard("unnecessary construction")]] RequestDeliverParams
 {
 	// Deliver to subscriptions on this field.
 	std::string_view field;
@@ -155,7 +155,7 @@ using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
 using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
 
-struct [[nodiscard]] SubscriptionFilter
+struct [[nodiscard("unnecessary construction")]] SubscriptionFilter
 {
 	// Optional field argument filter, which can either be a set of required arguments, or a
 	// callback which returns true if the arguments match custom criteria.
@@ -186,6 +186,6 @@ that, there's a public `Request::findOperationDefinition` method which returns
 the operation type as a `std::string_view` along with a pointer to the AST node
 for the selected operation in the parsed query:
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard]] std::pair<std::string_view, const peg::ast_node*>
+GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::pair<std::string_view, const peg::ast_node*>
 findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 ```

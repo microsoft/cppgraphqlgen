@@ -98,6 +98,7 @@ namespace learn {
 
 ReviewInput::ReviewInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 ReviewInput::ReviewInput(
@@ -120,6 +121,11 @@ ReviewInput::ReviewInput(ReviewInput&& other) noexcept
 {
 }
 
+ReviewInput::~ReviewInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 ReviewInput& ReviewInput::operator=(const ReviewInput& other)
 {
 	ReviewInput value { other };
@@ -135,10 +141,6 @@ ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
 	commentary = std::move(other.commentary);
 
 	return *this;
-}
-
-ReviewInput::~ReviewInput()
-{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)

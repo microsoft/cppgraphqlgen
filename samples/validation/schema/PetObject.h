@@ -12,23 +12,23 @@
 
 namespace graphql::validation::object {
 
-class [[nodiscard]] Pet final
+class [[nodiscard("unnecessary construction")]] Pet final
 	: public service::Object
 {
 private:
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual service::TypeNames getTypeNames() const noexcept = 0;
-		[[nodiscard]] virtual service::ResolverMap getResolvers() const noexcept = 0;
+		[[nodiscard("unnecessary call")]] virtual service::TypeNames getTypeNames() const noexcept = 0;
+		[[nodiscard("unnecessary call")]] virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -36,12 +36,12 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::TypeNames getTypeNames() const noexcept override
+		[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept override
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] service::ResolverMap getResolvers() const noexcept override
+		[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept override
 		{
 			return _pimpl->getResolvers();
 		}

@@ -12,33 +12,33 @@
 
 namespace graphql::introspection::object {
 
-class [[nodiscard]] Schema final
+class [[nodiscard("unnecessary construction")]] Schema final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDirectives(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveTypes(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveQueryType(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveMutationType(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveSubscriptionType(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDirectives(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -46,32 +46,32 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::vector<std::shared_ptr<Type>>> getTypes() const override
 		{
 			return { _pimpl->getTypes() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Type>> getQueryType() const override
 		{
 			return { _pimpl->getQueryType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Type>> getMutationType() const override
 		{
 			return { _pimpl->getMutationType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Type>> getSubscriptionType() const override
 		{
 			return { _pimpl->getSubscriptionType() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::vector<std::shared_ptr<Directive>>> getDirectives() const override
 		{
 			return { _pimpl->getDirectives() };
 		}
@@ -82,8 +82,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT explicit Schema(std::shared_ptr<introspection::Schema> pimpl) noexcept;

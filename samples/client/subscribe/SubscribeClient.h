@@ -43,10 +43,10 @@ namespace graphql::client {
 namespace subscribe {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
 } // namespace subscribe
 
@@ -56,11 +56,11 @@ using subscribe::GetRequestText;
 using subscribe::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] nextAppointment_Appointment
+	struct [[nodiscard("unnecessary construction")]] nextAppointment_Appointment
 	{
 		response::IdType nextAppointmentId {};
 		std::optional<response::Value> when {};
@@ -71,17 +71,17 @@ struct [[nodiscard]] Response
 	std::optional<nextAppointment_Appointment> nextAppointment {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = TestSubscription::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace subscription::TestSubscription

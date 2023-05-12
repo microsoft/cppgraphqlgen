@@ -123,6 +123,7 @@ const peg::ast& GetRequestObject() noexcept
 
 CompleteTaskInput::CompleteTaskInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 CompleteTaskInput::CompleteTaskInput(
@@ -155,6 +156,7 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 
 CompleteTaskInput::~CompleteTaskInput()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
@@ -292,22 +294,22 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return multiple::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return multiple::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return Appointments::GetOperationName();
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return Appointments::parseResponse(std::move(response));
 }
@@ -425,22 +427,22 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return multiple::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return multiple::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return Tasks::GetOperationName();
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return Tasks::parseResponse(std::move(response));
 }
@@ -558,22 +560,22 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return multiple::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return multiple::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return UnreadCounts::GetOperationName();
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return UnreadCounts::parseResponse(std::move(response));
 }
@@ -699,22 +701,22 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return multiple::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return multiple::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return Miscellaneous::GetOperationName();
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return Miscellaneous::parseResponse(std::move(response));
 }
@@ -850,27 +852,27 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return multiple::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return multiple::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return CompleteTaskMutation::GetOperationName();
 }
 
-[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+[[nodiscard("unnecessary conversion")]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
 {
 	return CompleteTaskMutation::serializeVariables(std::move(variables));
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return CompleteTaskMutation::parseResponse(std::move(response));
 }

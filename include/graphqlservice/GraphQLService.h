@@ -54,7 +54,7 @@ class Schema;
 namespace service {
 
 // Errors should have a message string, and optional locations and a path.
-struct [[nodiscard]] schema_location
+struct [[nodiscard("unnecessary construction")]] schema_location
 {
 	size_t line = 0;
 	size_t column = 1;
@@ -65,7 +65,7 @@ struct [[nodiscard]] schema_location
 // from an accessor as part of error reporting.
 using path_segment = std::variant<std::string_view, size_t>;
 
-struct [[nodiscard]] field_path
+struct [[nodiscard("unnecessary construction")]] field_path
 {
 	std::optional<std::reference_wrapper<const field_path>> parent;
 	std::variant<std::string_view, size_t> segment;
@@ -73,42 +73,44 @@ struct [[nodiscard]] field_path
 
 using error_path = std::vector<path_segment>;
 
-GRAPHQLSERVICE_EXPORT [[nodiscard]] error_path buildErrorPath(
+GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary memory copy")]] error_path buildErrorPath(
 	const std::optional<field_path>& path);
 
-struct [[nodiscard]] schema_error
+struct [[nodiscard("unnecessary construction")]] schema_error
 {
 	std::string message;
 	schema_location location {};
 	error_path path {};
 };
 
-GRAPHQLSERVICE_EXPORT [[nodiscard]] response::Value buildErrorValues(
+GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary memory copy")]] response::Value buildErrorValues(
 	std::list<schema_error>&& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
-class [[nodiscard]] schema_exception : public std::exception
+class [[nodiscard("unnecessary construction")]] schema_exception : public std::exception
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::list<schema_error>&& structuredErrors);
-	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string>&& messages);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::list<schema_error> && structuredErrors);
+	GRAPHQLSERVICE_EXPORT explicit schema_exception(std::vector<std::string> && messages);
 
 	schema_exception() = delete;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] const char* what() const noexcept override;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary conversion")]] const char* what()
+		const noexcept override;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] std::list<schema_error> getStructuredErrors() noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] response::Value getErrors();
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary construction")]] std::list<schema_error>
+	getStructuredErrors() noexcept;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary conversion")]] response::Value getErrors();
 
 private:
-	[[nodiscard]] static std::list<schema_error> convertMessages(
-		std::vector<std::string>&& messages) noexcept;
+	[[nodiscard("unnecessary construction")]] static std::list<schema_error> convertMessages(
+		std::vector<std::string> && messages) noexcept;
 
 	std::list<schema_error> _structuredErrors;
 };
 
 // This exception is thrown when an generated stub is called for an unimplemented method.
-class [[nodiscard]] unimplemented_method : public std::runtime_error
+class [[nodiscard("unnecessary construction")]] unimplemented_method : public std::runtime_error
 {
 public:
 	GRAPHQLSERVICE_EXPORT explicit unimplemented_method(std::string_view methodName);
@@ -116,14 +118,16 @@ public:
 	unimplemented_method() = delete;
 
 private:
-	static GRAPHQLSERVICE_EXPORT std::string getMessage(std::string_view methodName) noexcept;
+	[[nodiscard("unnecessary construction")]] static std::string getMessage(
+		std::string_view methodName) noexcept;
 };
 
 // The RequestState is nullable, but if you have multiple threads processing requests and there's
 // any per-request state that you want to maintain throughout the request (e.g. optimizing or
 // batching backend requests), you can inherit from RequestState and pass it to Request::resolve to
 // correlate the asynchronous/recursive callbacks and accumulate state in it.
-struct [[nodiscard]] RequestState : std::enable_shared_from_this<RequestState>
+struct [[nodiscard("unnecessary construction")]] RequestState
+	: std::enable_shared_from_this<RequestState>
 {
 	virtual ~RequestState() = default;
 };
@@ -146,8 +150,7 @@ constexpr std::string_view strSubscription { "subscription"sv };
 } // namespace keywords
 
 // Resolvers may be called in multiple different Operation contexts.
-enum class [[nodiscard]] ResolverContext
-{
+enum class [[nodiscard("unnecessary conversion")]] ResolverContext {
 	// Resolving a Query operation.
 	Query,
 
@@ -168,19 +171,19 @@ enum class [[nodiscard]] ResolverContext
 
 // Resume coroutine execution on a new worker thread any time co_await is called. This emulates the
 // behavior of std::async when passing std::launch::async.
-struct [[nodiscard]] await_worker_thread : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_thread : coro::suspend_always
 {
 	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
 };
 
 // Queue coroutine execution on a single dedicated worker thread any time co_await is called from
 // the thread which created it.
-struct [[nodiscard]] await_worker_queue : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_queue : coro::suspend_always
 {
 	GRAPHQLSERVICE_EXPORT await_worker_queue();
 	GRAPHQLSERVICE_EXPORT ~await_worker_queue();
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unexpected call")]] bool await_ready() const;
 	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h);
 
 private:
@@ -195,27 +198,27 @@ private:
 };
 
 // Type-erased awaitable.
-class [[nodiscard]] await_async final
+class [[nodiscard("unnecessary construction")]] await_async final
 {
 private:
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual bool await_ready() const = 0;
+		[[nodiscard("unexpected call")]] virtual bool await_ready() const = 0;
 		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
 		virtual void await_resume() const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model : Concept
+	struct [[nodiscard("unnecessary construction")]] Model : Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		[[nodiscard]] bool await_ready() const final
+		[[nodiscard("unexpected call")]] bool await_ready() const final
 		{
 			return _pimpl->await_ready();
 		}
@@ -250,7 +253,7 @@ public:
 	// Implicitly convert a std::launch parameter used with std::async to an awaitable.
 	GRAPHQLSERVICE_EXPORT await_async(std::launch launch);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] bool await_ready() const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unexpected call")]] bool await_ready() const;
 	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
 	GRAPHQLSERVICE_EXPORT void await_resume() const;
 };
@@ -266,7 +269,7 @@ using FragmentSpreadDirectiveStack = std::list<Directives>;
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
-struct [[nodiscard]] SelectionSetParams
+struct [[nodiscard("unnecessary construction")]] SelectionSetParams
 {
 	// Context for this selection set.
 	const ResolverContext resolverContext;
@@ -291,10 +294,10 @@ struct [[nodiscard]] SelectionSetParams
 };
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors.
-struct [[nodiscard]] FieldParams : SelectionSetParams
+struct [[nodiscard("unnecessary construction")]] FieldParams : SelectionSetParams
 {
-	GRAPHQLSERVICE_EXPORT explicit FieldParams(
-		SelectionSetParams&& selectionSetParams, Directives directives);
+	GRAPHQLSERVICE_EXPORT explicit FieldParams(SelectionSetParams && selectionSetParams,
+		Directives directives);
 
 	// Each field owns its own field-specific directives. Once the accessor returns it will be
 	// destroyed, but you can move it into another instance of response::Value to keep it alive
@@ -309,18 +312,18 @@ struct [[nodiscard]] FieldParams : SelectionSetParams
 // If the overhead of conversion to response::Value is too expensive, scalar type field accessors
 // can store and return a std::shared_ptr<const response::Value> directly.
 template <typename T>
-class [[nodiscard]] AwaitableScalar
+class [[nodiscard("unnecessary construction")]] AwaitableScalar
 {
 public:
 	template <typename U>
-	AwaitableScalar(U&& value)
+	AwaitableScalar(U && value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableScalar<T> get_return_object() noexcept
+		[[nodiscard("unnecessary construction")]] AwaitableScalar<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -354,7 +357,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -390,7 +393,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard("unnecessary construction")]] T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -413,7 +416,8 @@ public:
 			std::move(_value));
 	}
 
-	[[nodiscard]] std::shared_ptr<const response::Value> get_value() noexcept
+	[[nodiscard("unnecessary construction")]] std::shared_ptr<const response::Value>
+	get_value() noexcept
 	{
 		return std::visit(
 			[](auto&& value) noexcept {
@@ -438,18 +442,18 @@ private:
 // runtime the implementer may choose to return by value or defer/parallelize expensive operations
 // by returning an async future or an awaitable coroutine.
 template <typename T>
-class [[nodiscard]] AwaitableObject
+class [[nodiscard("unnecessary construction")]] AwaitableObject
 {
 public:
 	template <typename U>
-	AwaitableObject(U&& value)
+	AwaitableObject(U && value)
 		: _value { std::forward<U>(value) }
 	{
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] AwaitableObject<T> get_return_object() noexcept
+		[[nodiscard("unnecessary construction")]] AwaitableObject<T> get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -483,7 +487,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
 	{
 		return std::visit(
 			[](const auto& value) noexcept {
@@ -514,7 +518,7 @@ public:
 			.detach();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard("unnecessary construction")]] T await_resume()
 	{
 		return std::visit(
 			[](auto&& value) -> T {
@@ -539,14 +543,14 @@ private:
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
 // (with optional aliases and sub-selections) and potentially references to other fragments.
-class [[nodiscard]] Fragment
+class [[nodiscard("unnecessary construction")]] Fragment
 {
 public:
 	explicit Fragment(const peg::ast_node& fragmentDefinition, const response::Value& variables);
 
-	[[nodiscard]] std::string_view getType() const;
-	[[nodiscard]] const peg::ast_node& getSelection() const;
-	[[nodiscard]] const Directives& getDirectives() const;
+	[[nodiscard("unnecessary call")]] std::string_view getType() const;
+	[[nodiscard("unnecessary call")]] const peg::ast_node& getSelection() const;
+	[[nodiscard("unnecessary call")]] const Directives& getDirectives() const;
 
 private:
 	std::string_view _type;
@@ -562,14 +566,18 @@ using FragmentMap = internal::string_view_map<Fragment>;
 // Resolver functors take a set of arguments encoded as members on a JSON object
 // with an optional selection set for complex types and return a JSON value for
 // a single field.
-struct [[nodiscard]] ResolverParams : SelectionSetParams
+struct [[nodiscard("unnecessary construction")]] ResolverParams : SelectionSetParams
 {
 	GRAPHQLSERVICE_EXPORT explicit ResolverParams(const SelectionSetParams& selectionSetParams,
-		const peg::ast_node& field, std::string&& fieldName, response::Value arguments,
-		Directives fieldDirectives, const peg::ast_node* selection, const FragmentMap& fragments,
+		const peg::ast_node& field,
+		std::string&& fieldName,
+		response::Value arguments,
+		Directives fieldDirectives,
+		const peg::ast_node* selection,
+		const FragmentMap& fragments,
 		const response::Value& variables);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] schema_location getLocation() const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] schema_location getLocation() const;
 
 	// These values are different for each resolver.
 	const peg::ast_node& field;
@@ -586,7 +594,7 @@ struct [[nodiscard]] ResolverParams : SelectionSetParams
 
 // Propagate data and errors together without bundling them into a response::Value struct until
 // we're ready to return from the top level Operation.
-struct [[nodiscard]] ResolverResult
+struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
 	response::Value data;
 	std::list<schema_error> errors {};
@@ -599,8 +607,7 @@ using ResolverMap = internal::string_view_map<Resolver>;
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.
-enum class [[nodiscard]] TypeModifier
-{
+enum class [[nodiscard("unnecessary conversion")]] TypeModifier {
 	None,
 	Nullable,
 	List,
@@ -625,7 +632,7 @@ template <typename Type>
 struct Argument
 {
 	// Convert a single value to the specified type.
-	[[nodiscard]] static Type convert(const response::Value& value);
+	[[nodiscard("unnecessary conversion")]] static Type convert(const response::Value& value);
 };
 
 #ifdef GRAPHQL_DLLEXPORTS
@@ -688,7 +695,8 @@ struct ModifiedArgument
 	};
 
 	// Call convert on this type without any modifiers.
-	[[nodiscard]] static Type require(std::string_view name, const response::Value& arguments)
+	[[nodiscard("unnecessary call")]] static Type require(
+		std::string_view name, const response::Value& arguments)
 	{
 		try
 		{
@@ -712,7 +720,7 @@ struct ModifiedArgument
 	}
 
 	// Wrap require in a try/catch block.
-	[[nodiscard]] static std::pair<Type, bool> find(
+	[[nodiscard("unnecessary call")]] static std::pair<Type, bool> find(
 		const std::string& name, const response::Value& arguments) noexcept
 	{
 		try
@@ -727,7 +735,8 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type require(std::string_view name, const response::Value& arguments)
+	[[nodiscard("unnecessary call")]] static Type require(
+		std::string_view name, const response::Value& arguments)
 		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		static_assert(sizeof...(Other) == 0, "None modifier should always be last");
@@ -738,8 +747,8 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type require(
-		std::string_view name, const response::Value& arguments)
+	[[nodiscard("unnecessary call")]] static typename ArgumentTraits<Type, Modifier, Other...>::type
+	require(std::string_view name, const response::Value& arguments)
 		requires NullableModifier<Modifier>
 	{
 		const auto& valueItr = arguments.find(name);
@@ -764,8 +773,8 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type require(
-		std::string_view name, const response::Value& arguments)
+	[[nodiscard("unnecessary call")]] static typename ArgumentTraits<Type, Modifier, Other...>::type
+	require(std::string_view name, const response::Value& arguments)
 		requires ListModifier<Modifier>
 	{
 		const auto& values = arguments[name];
@@ -788,7 +797,8 @@ struct ModifiedArgument
 
 	// Wrap require with modifiers in a try/catch block.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static std::pair<typename ArgumentTraits<Type, Modifier, Other...>::type, bool>
+	[[nodiscard("unnecessary call")]] static std::pair<
+		typename ArgumentTraits<Type, Modifier, Other...>::type, bool>
 	find(std::string_view name, const response::Value& arguments) noexcept
 	{
 		try
@@ -803,7 +813,7 @@ struct ModifiedArgument
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type duplicate(const Type& value)
+	[[nodiscard("unnecessary memory copy")]] static Type duplicate(const Type& value)
 		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just copy the value.
@@ -812,8 +822,9 @@ struct ModifiedArgument
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
-		const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
+	[[nodiscard("unnecessary memory copy")]] static
+		typename ArgumentTraits<Type, Modifier, Other...>::type
+		duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& nullableValue)
 		requires NullableModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result {};
@@ -836,8 +847,9 @@ struct ModifiedArgument
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename ArgumentTraits<Type, Modifier, Other...>::type duplicate(
-		const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
+	[[nodiscard("unnecessary memory copy")]] static
+		typename ArgumentTraits<Type, Modifier, Other...>::type
+		duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
 		requires ListModifier<Modifier>
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
@@ -868,17 +880,21 @@ using TypeNames = internal::string_view_set;
 // and @skip directives, and calls through to the resolver functor for each selected field with
 // its arguments. This may be a recursive process for fields which return another complex type,
 // in which case it requires its own selection set.
-class [[nodiscard]] Object : public std::enable_shared_from_this<Object>
+class [[nodiscard("unnecessary construction")]] Object : public std::enable_shared_from_this<Object>
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept;
+	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames && typeNames,
+		ResolverMap && resolvers) noexcept;
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableResolver resolve(
-		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
-		const FragmentMap& fragments, const response::Value& variables) const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] AwaitableResolver resolve(
+		const SelectionSetParams& selectionSetParams,
+		const peg::ast_node& selection,
+		const FragmentMap& fragments,
+		const response::Value& variables) const;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] bool matchesType(std::string_view typeName) const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] bool matchesType(
+		std::string_view typeName) const;
 
 protected:
 	// These callbacks are optional, you may override either, both, or neither of them. The
@@ -909,7 +925,8 @@ struct Result
 		AwaitableObject<std::shared_ptr<const Object>>, AwaitableScalar<Type>>;
 
 	// Convert a single value of the specified type to JSON.
-	[[nodiscard]] static AwaitableResolver convert(future_type result, ResolverParams&& params);
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
+		future_type result, ResolverParams&& params);
 
 	// Validate a single scalar value is the expected type.
 	static void validateScalar(const response::Value& value);
@@ -1021,7 +1038,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
 		AwaitableObject<typename ResultTraits<Type>::type> result, ResolverParams&& paramsArg)
 		requires NoneObjectDerivedType<Type, Modifier>
 	{
@@ -1045,7 +1062,7 @@ struct ModifiedResult
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
 		typename ResultTraits<Type>::future_type result, ResolverParams&& params)
 		requires NoneScalarOrObjectType<Type, Modifier>
 	{
@@ -1057,7 +1074,7 @@ struct ModifiedResult
 
 	// Peel off final nullable modifiers for std::shared_ptr of Object and subclasses of Object.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& paramsArg)
 		requires NullableResultSharedPtr<Type, Modifier, Other...>
@@ -1082,7 +1099,7 @@ struct ModifiedResult
 
 	// Peel off nullable modifiers for anything else, which should all be std::optional.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& paramsArg)
 		requires NullableResultOptional<Type, Modifier, Other...>
@@ -1123,7 +1140,7 @@ struct ModifiedResult
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static AwaitableResolver convert(
+	[[nodiscard("unnecessary conversion")]] static AwaitableResolver convert(
 		typename ResultTraits<Type, Modifier, Other...>::future_type result,
 		ResolverParams&& paramsArg)
 		requires ListModifier<Modifier>
@@ -1268,8 +1285,9 @@ struct ModifiedResult
 	using ResolverCallback =
 		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
-	[[nodiscard]] static AwaitableResolver resolve(typename ResultTraits<Type>::future_type result,
-		ResolverParams&& paramsArg, ResolverCallback&& resolver)
+	[[nodiscard("unnecessary call")]] static AwaitableResolver resolve(
+		typename ResultTraits<Type>::future_type result, ResolverParams&& paramsArg,
+		ResolverCallback&& resolver)
 	{
 		static_assert(!ObjectBaseType<Type>, "ModfiedResult<Object> needs special handling");
 
@@ -1341,7 +1359,7 @@ using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
 using AwaitableUnsubscribe = internal::Awaitable<void>;
 using AwaitableDeliver = internal::Awaitable<void>;
 
-struct [[nodiscard]] RequestResolveParams
+struct [[nodiscard("unnecessary construction")]] RequestResolveParams
 {
 	// Required query information.
 	peg::ast& query;
@@ -1355,7 +1373,7 @@ struct [[nodiscard]] RequestResolveParams
 	std::shared_ptr<RequestState> state {};
 };
 
-struct [[nodiscard]] RequestSubscribeParams
+struct [[nodiscard("unnecessary construction")]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
 	SubscriptionCallback callback;
@@ -1375,7 +1393,7 @@ struct [[nodiscard]] RequestSubscribeParams
 	std::shared_ptr<const Object> subscriptionObject {};
 };
 
-struct [[nodiscard]] RequestUnsubscribeParams
+struct [[nodiscard("unnecessary construction")]] RequestUnsubscribeParams
 {
 	// Key returned by a previous call to subscribe.
 	SubscriptionKey key;
@@ -1391,7 +1409,7 @@ using SubscriptionArguments = std::map<std::string_view, response::Value>;
 using SubscriptionArgumentFilterCallback = std::function<bool(response::MapType::const_reference)>;
 using SubscriptionDirectiveFilterCallback = std::function<bool(Directives::const_reference)>;
 
-struct [[nodiscard]] SubscriptionFilter
+struct [[nodiscard("unnecessary construction")]] SubscriptionFilter
 {
 	// Optional field argument filter, which can either be a set of required arguments, or a
 	// callback which returns true if the arguments match custom criteria.
@@ -1407,7 +1425,7 @@ struct [[nodiscard]] SubscriptionFilter
 // and directives in the Subscription query.
 using RequestDeliverFilter = std::optional<std::variant<SubscriptionKey, SubscriptionFilter>>;
 
-struct [[nodiscard]] RequestDeliverParams
+struct [[nodiscard("unnecessary construction")]] RequestDeliverParams
 {
 	// Deliver to subscriptions on this field.
 	std::string_view field;
@@ -1431,10 +1449,13 @@ using TypeMap = internal::string_view_map<std::shared_ptr<const Object>>;
 // it's up to the caller to guarantee the lifetime of the AST exceeds the futures we return.
 // Subscription operations need to hold onto the queries in SubscriptionData, so the lifetime is
 // already tied to the registration and any pending futures passed to callbacks.
-struct [[nodiscard]] OperationData : std::enable_shared_from_this<OperationData>
+struct [[nodiscard("unnecessary construction")]] OperationData
+	: std::enable_shared_from_this<OperationData>
 {
-	explicit OperationData(std::shared_ptr<RequestState> state, response::Value variables,
-		Directives directives, FragmentMap fragments);
+	explicit OperationData(std::shared_ptr<RequestState> state,
+		response::Value variables,
+		Directives directives,
+		FragmentMap fragments);
 
 	std::shared_ptr<RequestState> state;
 	response::Value variables;
@@ -1443,11 +1464,16 @@ struct [[nodiscard]] OperationData : std::enable_shared_from_this<OperationData>
 };
 
 // Registration information for subscription, cached in the Request::subscribe call.
-struct [[nodiscard]] SubscriptionData : std::enable_shared_from_this<SubscriptionData>
+struct [[nodiscard("unnecessary construction")]] SubscriptionData
+	: std::enable_shared_from_this<SubscriptionData>
 {
-	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
-		response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-		std::string&& operationName, SubscriptionCallback&& callback,
+	explicit SubscriptionData(std::shared_ptr<OperationData> data,
+		SubscriptionName && field,
+		response::Value arguments,
+		Directives fieldDirectives,
+		peg::ast && query,
+		std::string && operationName,
+		SubscriptionCallback && callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
@@ -1474,31 +1500,38 @@ class ValidateExecutableVisitor;
 // Request scans the fragment definitions and finds the right operation definition to interpret
 // depending on the operation name (which might be empty for a single-operation document). It
 // also needs the values of the request variables.
-class [[nodiscard]] Request : public std::enable_shared_from_this<Request>
+class [[nodiscard("unnecessary construction")]] Request
+	: public std::enable_shared_from_this<Request>
 {
 protected:
-	GRAPHQLSERVICE_EXPORT explicit Request(
-		TypeMap operationTypes, std::shared_ptr<schema::Schema> schema);
+	GRAPHQLSERVICE_EXPORT explicit Request(TypeMap operationTypes,
+		std::shared_ptr<schema::Schema>
+			schema);
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] std::list<schema_error> validate(peg::ast& query) const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::list<schema_error> validate(
+		peg::ast & query) const;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] std::pair<std::string_view, const peg::ast_node*>
-	findOperationDefinition(peg::ast& query, std::string_view operationName) const;
+	GRAPHQLSERVICE_EXPORT
+	[[nodiscard("unnecessary call")]] std::pair<std::string_view, const peg::ast_node*>
+	findOperationDefinition(peg::ast & query, std::string_view operationName) const;
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] response::AwaitableValue resolve(
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] response::AwaitableValue resolve(
 		RequestResolveParams params) const;
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableSubscribe subscribe(RequestSubscribeParams params);
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableUnsubscribe unsubscribe(
-		RequestUnsubscribeParams params);
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] AwaitableDeliver deliver(RequestDeliverParams params) const;
+	GRAPHQLSERVICE_EXPORT [[nodiscard("leaked subscription")]] AwaitableSubscribe subscribe(
+		RequestSubscribeParams params);
+	GRAPHQLSERVICE_EXPORT [[nodiscard("potentially leaked subscription")]] AwaitableUnsubscribe
+	unsubscribe(RequestUnsubscribeParams params);
+	GRAPHQLSERVICE_EXPORT [[nodiscard("potentially leaked event")]] AwaitableDeliver deliver(
+		RequestDeliverParams params) const;
 
 private:
-	[[nodiscard]] SubscriptionKey addSubscription(RequestSubscribeParams&& params);
+	[[nodiscard("leaked subscription")]] SubscriptionKey addSubscription(
+		RequestSubscribeParams && params);
 	void removeSubscription(SubscriptionKey key);
-	[[nodiscard]] std::vector<std::shared_ptr<const SubscriptionData>> collectRegistrations(
-		std::string_view field, RequestDeliverFilter&& filter) const noexcept;
+	[[nodiscard("unnecessary call")]] std::vector<std::shared_ptr<const SubscriptionData>>
+	collectRegistrations(std::string_view field, RequestDeliverFilter && filter) const noexcept;
 
 	const TypeMap _operations;
 	mutable std::mutex _validationMutex {};

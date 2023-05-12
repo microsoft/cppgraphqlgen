@@ -27,7 +27,7 @@ class Query;
 
 } // namespace object
 
-class [[nodiscard]] Operations final
+class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:

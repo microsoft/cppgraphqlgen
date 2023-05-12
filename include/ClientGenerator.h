@@ -11,53 +11,57 @@
 
 namespace graphql::generator::client {
 
-struct [[nodiscard]] GeneratorPaths
+struct [[nodiscard("unnecessary construction")]] GeneratorPaths
 {
 	const std::string headerPath;
 	const std::string sourcePath;
 };
 
-struct [[nodiscard]] GeneratorOptions
+struct [[nodiscard("unnecessary construction")]] GeneratorOptions
 {
 	const GeneratorPaths paths;
 	const bool verbose = false;
 };
 
-class [[nodiscard]] Generator
+class [[nodiscard("unnecessary construction")]] Generator
 {
 public:
 	// Initialize the generator with the introspection client or a custom GraphQL client.
-	explicit Generator(
-		SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
+	explicit Generator(SchemaOptions && schemaOptions,
+		RequestOptions && requestOptions,
+		GeneratorOptions && options);
 
 	// Run the generator and return a list of filenames that were output.
-	[[nodiscard]] std::vector<std::string> Build() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::vector<std::string> Build() const noexcept;
 
 private:
-	[[nodiscard]] std::string getHeaderDir() const noexcept;
-	[[nodiscard]] std::string getSourceDir() const noexcept;
-	[[nodiscard]] std::string getHeaderPath() const noexcept;
-	[[nodiscard]] std::string getSourcePath() const noexcept;
-	[[nodiscard]] const std::string& getClientNamespace() const noexcept;
-	[[nodiscard]] const std::string& getOperationNamespace(
+	[[nodiscard("unnecessary memory copy")]] std::string getHeaderDir() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSourceDir() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getHeaderPath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
+	[[nodiscard("unnecessary call")]] const std::string& getClientNamespace() const noexcept;
+	[[nodiscard("unnecessary call")]] const std::string& getOperationNamespace(
 		const Operation& operation) const noexcept;
-	[[nodiscard]] std::string getResponseFieldCppType(
-		const ResponseField& responseField, std::string_view currentScope = {}) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getResponseFieldCppType(
+		const ResponseField& responseField,
+		std::string_view currentScope = {}) const noexcept;
 
-	[[nodiscard]] bool outputHeader() const noexcept;
-	void outputRequestComment(std::ostream& headerFile) const noexcept;
-	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
-	void outputGetOperationNameDeclaration(std::ostream& headerFile) const noexcept;
-	[[nodiscard]] bool outputResponseFieldType(std::ostream& headerFile,
-		const ResponseField& responseField, size_t indent = 0) const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputHeader() const noexcept;
+	void outputRequestComment(std::ostream & headerFile) const noexcept;
+	void outputGetRequestDeclaration(std::ostream & headerFile) const noexcept;
+	void outputGetOperationNameDeclaration(std::ostream & headerFile) const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputResponseFieldType(std::ostream & headerFile,
+		const ResponseField& responseField,
+		size_t indent = 0) const noexcept;
 
-	[[nodiscard]] bool outputSource() const noexcept;
-	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
-	void outputGetOperationNameImplementation(
-		std::ostream& sourceFile, const Operation& operation) const noexcept;
-	bool outputModifiedResponseImplementation(std::ostream& sourceFile,
-		const std::string& outerScope, const ResponseField& responseField) const noexcept;
-	[[nodiscard]] static std::string getTypeModifierList(
+	[[nodiscard("unnecessary call")]] bool outputSource() const noexcept;
+	void outputGetRequestImplementation(std::ostream & sourceFile) const noexcept;
+	void outputGetOperationNameImplementation(std::ostream & sourceFile, const Operation& operation)
+		const noexcept;
+	bool outputModifiedResponseImplementation(std::ostream & sourceFile,
+		const std::string& outerScope,
+		const ResponseField& responseField) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] static std::string getTypeModifierList(
 		const TypeModifierStack& modifiers) noexcept;
 
 	const SchemaLoader _schemaLoader;

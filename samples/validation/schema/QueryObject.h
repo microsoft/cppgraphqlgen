@@ -123,40 +123,40 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::QueryHas
 
-class [[nodiscard]] Query final
+class [[nodiscard("unnecessary construction")]] Query final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveDog(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDog(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolvePet(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveCatOrDog(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -164,7 +164,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Dog>> getDog(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getDogWithParams<T>)
 			{
@@ -180,7 +180,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -196,7 +196,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Pet>> getPet(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getPetWithParams<T>)
 			{
@@ -212,7 +212,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getCatOrDogWithParams<T>)
 			{
@@ -228,7 +228,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getArgumentsWithParams<T>)
 			{
@@ -244,7 +244,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::QueryHas::getResourceWithParams<T>)
 			{
@@ -260,7 +260,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const override
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
@@ -276,7 +276,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const override
 		{
 			if constexpr (methods::QueryHas::getBooleanListWithParams<T>)
 			{
@@ -314,8 +314,8 @@ private:
 
 	explicit Query(std::unique_ptr<const Concept> pimpl) noexcept;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -329,7 +329,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Query)gql" };
 	}

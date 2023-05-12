@@ -229,6 +229,7 @@ namespace today {
 
 CompleteTaskInput::CompleteTaskInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 CompleteTaskInput::CompleteTaskInput(
@@ -259,6 +260,11 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 {
 }
 
+CompleteTaskInput::~CompleteTaskInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
 {
 	CompleteTaskInput value { other };
@@ -278,12 +284,9 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 	return *this;
 }
 
-CompleteTaskInput::~CompleteTaskInput()
-{
-}
-
 ThirdNestedInput::ThirdNestedInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 ThirdNestedInput::ThirdNestedInput(
@@ -306,6 +309,11 @@ ThirdNestedInput::ThirdNestedInput(ThirdNestedInput&& other) noexcept
 {
 }
 
+ThirdNestedInput::~ThirdNestedInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 ThirdNestedInput& ThirdNestedInput::operator=(const ThirdNestedInput& other)
 {
 	ThirdNestedInput value { other };
@@ -323,12 +331,9 @@ ThirdNestedInput& ThirdNestedInput::operator=(ThirdNestedInput&& other) noexcept
 	return *this;
 }
 
-ThirdNestedInput::~ThirdNestedInput()
-{
-}
-
 FourthNestedInput::FourthNestedInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 FourthNestedInput::FourthNestedInput(
@@ -347,6 +352,11 @@ FourthNestedInput::FourthNestedInput(FourthNestedInput&& other) noexcept
 {
 }
 
+FourthNestedInput::~FourthNestedInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 FourthNestedInput& FourthNestedInput::operator=(const FourthNestedInput& other)
 {
 	FourthNestedInput value { other };
@@ -363,12 +373,9 @@ FourthNestedInput& FourthNestedInput::operator=(FourthNestedInput&& other) noexc
 	return *this;
 }
 
-FourthNestedInput::~FourthNestedInput()
-{
-}
-
 IncludeNullableSelfInput::IncludeNullableSelfInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 IncludeNullableSelfInput::IncludeNullableSelfInput(
@@ -387,6 +394,11 @@ IncludeNullableSelfInput::IncludeNullableSelfInput(IncludeNullableSelfInput&& ot
 {
 }
 
+IncludeNullableSelfInput::~IncludeNullableSelfInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(const IncludeNullableSelfInput& other)
 {
 	IncludeNullableSelfInput value { other };
@@ -403,12 +415,9 @@ IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(IncludeNullableSel
 	return *this;
 }
 
-IncludeNullableSelfInput::~IncludeNullableSelfInput()
-{
-}
-
 IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput(
@@ -427,6 +436,11 @@ IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput(IncludeNonNulla
 {
 }
 
+IncludeNonNullableListSelfInput::~IncludeNonNullableListSelfInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(const IncludeNonNullableListSelfInput& other)
 {
 	IncludeNonNullableListSelfInput value { other };
@@ -443,12 +457,9 @@ IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(Incl
 	return *this;
 }
 
-IncludeNonNullableListSelfInput::~IncludeNonNullableListSelfInput()
-{
-}
-
 StringOperationFilterInput::StringOperationFilterInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 StringOperationFilterInput::StringOperationFilterInput(
@@ -511,6 +522,11 @@ StringOperationFilterInput::StringOperationFilterInput(StringOperationFilterInpu
 {
 }
 
+StringOperationFilterInput::~StringOperationFilterInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 StringOperationFilterInput& StringOperationFilterInput::operator=(const StringOperationFilterInput& other)
 {
 	StringOperationFilterInput value { other };
@@ -538,12 +554,9 @@ StringOperationFilterInput& StringOperationFilterInput::operator=(StringOperatio
 	return *this;
 }
 
-StringOperationFilterInput::~StringOperationFilterInput()
-{
-}
-
 SecondNestedInput::SecondNestedInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 SecondNestedInput::SecondNestedInput(
@@ -566,6 +579,11 @@ SecondNestedInput::SecondNestedInput(SecondNestedInput&& other) noexcept
 {
 }
 
+SecondNestedInput::~SecondNestedInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 SecondNestedInput& SecondNestedInput::operator=(const SecondNestedInput& other)
 {
 	SecondNestedInput value { other };
@@ -583,12 +601,9 @@ SecondNestedInput& SecondNestedInput::operator=(SecondNestedInput&& other) noexc
 	return *this;
 }
 
-SecondNestedInput::~SecondNestedInput()
-{
-}
-
 ForwardDeclaredInput::ForwardDeclaredInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 ForwardDeclaredInput::ForwardDeclaredInput(
@@ -611,6 +626,11 @@ ForwardDeclaredInput::ForwardDeclaredInput(ForwardDeclaredInput&& other) noexcep
 {
 }
 
+ForwardDeclaredInput::~ForwardDeclaredInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 ForwardDeclaredInput& ForwardDeclaredInput::operator=(const ForwardDeclaredInput& other)
 {
 	ForwardDeclaredInput value { other };
@@ -628,12 +648,9 @@ ForwardDeclaredInput& ForwardDeclaredInput::operator=(ForwardDeclaredInput&& oth
 	return *this;
 }
 
-ForwardDeclaredInput::~ForwardDeclaredInput()
-{
-}
-
 FirstNestedInput::FirstNestedInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 FirstNestedInput::FirstNestedInput(
@@ -660,6 +677,11 @@ FirstNestedInput::FirstNestedInput(FirstNestedInput&& other) noexcept
 {
 }
 
+FirstNestedInput::~FirstNestedInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 FirstNestedInput& FirstNestedInput::operator=(const FirstNestedInput& other)
 {
 	FirstNestedInput value { other };
@@ -676,10 +698,6 @@ FirstNestedInput& FirstNestedInput::operator=(FirstNestedInput&& other) noexcept
 	third = std::move(other.third);
 
 	return *this;
-}
-
-FirstNestedInput::~FirstNestedInput()
-{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)

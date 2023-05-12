@@ -10,7 +10,7 @@ represented in GraphQL, as of the
 [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format):
 
 ```c++
-enum class [[nodiscard]] Type : std::uint8_t {
+enum class [[nodiscard("unnecessary conversion")]] Type : std::uint8_t {
 	Map,	   // JSON Object
 	List,	   // JSON Array
 	String,	   // JSON String

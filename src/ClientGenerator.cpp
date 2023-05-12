@@ -218,7 +218,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			pendingSeparator.reset();
 
-			headerFile << R"cpp(enum class [[nodiscard]] )cpp" << cppType << R"cpp(
+			headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp" << cppType
+					   << R"cpp(
 {
 )cpp";
 			for (const auto& enumValue : enumType->enumValues())
@@ -269,7 +270,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				pendingSeparator.reset();
 			}
 
-			headerFile << R"cpp(struct [[nodiscard]] )cpp" << cppType << R"cpp(
+			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp" << cppType
+					   << R"cpp(
 {
 	explicit )cpp" << cppType
 					   << R"cpp(()cpp";
@@ -375,7 +377,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 		if (!variables.empty())
 		{
-			headerFile << R"cpp(struct [[nodiscard]] Variables
+			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] Variables
 {
 )cpp";
 
@@ -390,7 +392,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 			headerFile << R"cpp(};
 
-[[nodiscard]] response::Value serializeVariables(Variables&& variables);
+[[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 )cpp";
 
 			pendingSeparator.add();
@@ -400,7 +402,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 		const auto& responseType = _requestLoader.getResponseType(operation);
 
-		headerFile << R"cpp(struct [[nodiscard]] Response
+		headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] Response
 {)cpp";
 
 		pendingSeparator.add();
@@ -428,13 +430,13 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 		headerFile << R"cpp(};
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 )cpp";
 
 		if (!variables.empty())
@@ -443,7 +445,7 @@ struct Traits
 	using Variables = )cpp"
 					   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 )cpp";
 		}
 
@@ -451,7 +453,7 @@ struct Traits
 	using Response = )cpp"
 				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 )cpp";
@@ -512,10 +514,10 @@ void Generator::outputGetRequestDeclaration(std::ostream& headerFile) const noex
 {
 	headerFile << R"cpp(
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 )cpp";
 }
 
@@ -523,7 +525,7 @@ void Generator::outputGetOperationNameDeclaration(std::ostream& headerFile) cons
 {
 	headerFile << R"cpp(
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 )cpp";
 }
@@ -548,7 +550,7 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	std::unordered_set<std::string_view> fieldNames;
 	PendingBlankLine pendingSeparator { headerFile };
 
-	headerFile << indentTabs << R"cpp(struct [[nodiscard]] )cpp"
+	headerFile << indentTabs << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
 			   << getResponseFieldCppType(responseField) << R"cpp(
 )cpp" << indentTabs
 			   << R"cpp({)cpp";
@@ -648,6 +650,7 @@ using namespace std::literals;
 
 			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
@@ -736,6 +739,7 @@ using namespace std::literals;
 )cpp" << cppType << R"cpp(::~)cpp"
 					   << cppType << R"cpp(()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
@@ -1045,19 +1049,19 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return )cpp" << _schemaLoader.getSchemaNamespace()
 				   << R"cpp(::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return )cpp" << _schemaLoader.getSchemaNamespace()
 				   << R"cpp(::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return )cpp" << _requestLoader.getOperationNamespace(operation)
 				   << R"cpp(::GetOperationName();
@@ -1067,7 +1071,7 @@ Response parseResponse(response::Value&& response)
 		if (!variables.empty())
 		{
 			sourceFile << R"cpp(
-[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+[[nodiscard("unnecessary conversion")]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
 {
 	return )cpp" << _requestLoader.getOperationNamespace(operation)
 					   << R"cpp(::serializeVariables(std::move(variables));
@@ -1076,7 +1080,7 @@ Response parseResponse(response::Value&& response)
 		}
 
 		sourceFile << R"cpp(
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return )cpp" << _requestLoader.getOperationNamespace(operation)
 				   << R"cpp(::parseResponse(std::move(response));

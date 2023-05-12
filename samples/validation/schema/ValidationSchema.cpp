@@ -155,6 +155,7 @@ namespace validation {
 
 ComplexInput::ComplexInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 ComplexInput::ComplexInput(
@@ -177,6 +178,11 @@ ComplexInput::ComplexInput(ComplexInput&& other) noexcept
 {
 }
 
+ComplexInput::~ComplexInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
 ComplexInput& ComplexInput::operator=(const ComplexInput& other)
 {
 	ComplexInput value { other };
@@ -192,10 +198,6 @@ ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
 	owner = std::move(other.owner);
 
 	return *this;
-}
-
-ComplexInput::~ComplexInput()
-{
 }
 
 Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)

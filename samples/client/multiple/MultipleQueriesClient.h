@@ -112,12 +112,12 @@ namespace graphql::client {
 namespace multiple {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-enum class [[nodiscard]] TaskState
+enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
 	Unassigned,
 	New,
@@ -125,7 +125,7 @@ enum class [[nodiscard]] TaskState
 	Complete,
 };
 
-struct [[nodiscard]] CompleteTaskInput
+struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 {
 	explicit CompleteTaskInput() noexcept;
 	explicit CompleteTaskInput(
@@ -154,15 +154,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] appointments_AppointmentConnection
+	struct [[nodiscard("unnecessary construction")]] appointments_AppointmentConnection
 	{
-		struct [[nodiscard]] edges_AppointmentEdge
+		struct [[nodiscard("unnecessary construction")]] edges_AppointmentEdge
 		{
-			struct [[nodiscard]] node_Appointment
+			struct [[nodiscard("unnecessary construction")]] node_Appointment
 			{
 				response::IdType id {};
 				std::optional<std::string> subject {};
@@ -180,17 +180,17 @@ struct [[nodiscard]] Response
 	appointments_AppointmentConnection appointments {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Appointments::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Appointments
@@ -201,15 +201,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] tasks_TaskConnection
+	struct [[nodiscard("unnecessary construction")]] tasks_TaskConnection
 	{
-		struct [[nodiscard]] edges_TaskEdge
+		struct [[nodiscard("unnecessary construction")]] edges_TaskEdge
 		{
-			struct [[nodiscard]] node_Task
+			struct [[nodiscard("unnecessary construction")]] node_Task
 			{
 				response::IdType id {};
 				std::optional<std::string> title {};
@@ -226,17 +226,17 @@ struct [[nodiscard]] Response
 	tasks_TaskConnection tasks {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Tasks::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Tasks
@@ -247,15 +247,15 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] unreadCounts_FolderConnection
+	struct [[nodiscard("unnecessary construction")]] unreadCounts_FolderConnection
 	{
-		struct [[nodiscard]] edges_FolderEdge
+		struct [[nodiscard("unnecessary construction")]] edges_FolderEdge
 		{
-			struct [[nodiscard]] node_Folder
+			struct [[nodiscard("unnecessary construction")]] node_Folder
 			{
 				response::IdType id {};
 				std::optional<std::string> name {};
@@ -272,17 +272,17 @@ struct [[nodiscard]] Response
 	unreadCounts_FolderConnection unreadCounts {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = UnreadCounts::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::UnreadCounts
@@ -293,13 +293,13 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 using multiple::TaskState;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] anyType_UnionType
+	struct [[nodiscard("unnecessary construction")]] anyType_UnionType
 	{
 		std::string _typename {};
 		response::IdType id {};
@@ -315,17 +315,17 @@ struct [[nodiscard]] Response
 	std::optional<std::string> default_ {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Miscellaneous::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Miscellaneous
@@ -336,25 +336,25 @@ using multiple::GetRequestText;
 using multiple::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 using multiple::TaskState;
 
 using multiple::CompleteTaskInput;
 
-struct [[nodiscard]] Variables
+struct [[nodiscard("unnecessary construction")]] Variables
 {
 	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 
-[[nodiscard]] response::Value serializeVariables(Variables&& variables);
+[[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] completedTask_CompleteTaskPayload
+	struct [[nodiscard("unnecessary construction")]] completedTask_CompleteTaskPayload
 	{
-		struct [[nodiscard]] completedTask_Task
+		struct [[nodiscard("unnecessary construction")]] completedTask_Task
 		{
 			response::IdType completedTaskId {};
 			std::optional<std::string> title {};
@@ -368,21 +368,21 @@ struct [[nodiscard]] Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = CompleteTaskMutation::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = CompleteTaskMutation::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace mutation::CompleteTaskMutation

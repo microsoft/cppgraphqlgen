@@ -33,8 +33,7 @@ namespace graphql::response {
 // GraphQL responses are not technically JSON-specific, although that is probably the most common
 // way of representing them. These are the primitive types that may be represented in GraphQL, as
 // of the [October 2021 spec](https://spec.graphql.org/October2021/#sec-Serialization-Format).
-enum class [[nodiscard]] Type : std::uint8_t
-{
+enum class [[nodiscard("unnecessary conversion")]] Type : std::uint8_t {
 	Map,	   // JSON Object
 	List,	   // JSON Array
 	String,	   // JSON String
@@ -57,7 +56,7 @@ using IntType = int;
 using FloatType = double;
 using ScalarType = Value;
 
-struct [[nodiscard]] IdType
+struct [[nodiscard("unnecessary conversion")]] IdType
 {
 	using ByteData = std::vector<std::uint8_t>;
 	using OpaqueString = std::string;
@@ -77,62 +76,73 @@ struct [[nodiscard]] IdType
 	IdType& operator=(const IdType& rhs) = delete;
 
 	// Conversion
-	GRAPHQLRESPONSE_EXPORT IdType(ByteData&& data) noexcept;
-	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString&& opaque) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType(ByteData && data) noexcept;
+	GRAPHQLRESPONSE_EXPORT IdType(OpaqueString && opaque) noexcept;
 
 	template <typename ValueType>
-	[[nodiscard]] const ValueType& get() const;
+	[[nodiscard("unnecessary call")]] const ValueType& get() const;
 
 	template <typename ValueType>
-	[[nodiscard]] ValueType release();
+	[[nodiscard("unnecessary call")]] ValueType release();
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const IdType& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const ByteData& rhs) const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const OpaqueString& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool operator==(const IdType& rhs)
+		const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool operator==(const ByteData& rhs)
+		const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool operator==(
+		const OpaqueString& rhs) const noexcept;
 
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator<(const IdType& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool operator<(const IdType& rhs)
+		const noexcept;
 
 	// Check the type
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool isBase64() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool isBase64() const noexcept;
 
 	// Shared accessors
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool empty() const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t max_size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool empty() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] size_t size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] size_t max_size() const noexcept;
 	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t capacity() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] size_t capacity() const noexcept;
 	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
 	GRAPHQLRESPONSE_EXPORT void clear() noexcept;
 
 	// ByteData accessors
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& at(size_t pos) const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& at(size_t pos);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& operator[](size_t pos) const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& operator[](size_t pos);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& front() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& front();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t& back() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t& back();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const std::uint8_t* data() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] std::uint8_t* data();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const std::uint8_t& at(size_t pos)
+		const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] std::uint8_t& at(size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const std::uint8_t& operator[](
+		size_t pos) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] std::uint8_t& operator[](size_t pos);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const std::uint8_t& front() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] std::uint8_t& front();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const std::uint8_t& back() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] std::uint8_t& back();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const std::uint8_t* data() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] std::uint8_t* data();
 
 	// ByteData iterators
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator begin() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator begin();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cbegin() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator end() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::iterator end();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_iterator cend() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rbegin() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rbegin();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crbegin() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator rend() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::reverse_iterator rend();
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] ByteData::const_reverse_iterator crend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::iterator begin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_iterator cbegin()
+		const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::iterator end();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_iterator cend() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_reverse_iterator
+	rbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::reverse_iterator rbegin();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_reverse_iterator
+	crbegin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_reverse_iterator rend()
+		const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::reverse_iterator rend();
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] ByteData::const_reverse_iterator
+	crend() const;
 
 	// OpaqueString accessors
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const char* c_str() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const char* c_str() const;
 
 private:
 	std::variant<ByteData, OpaqueString> _data;
@@ -211,19 +221,19 @@ struct ValueTypeTraits<FloatType>
 };
 
 // Represent a discriminated union of GraphQL response value types.
-struct [[nodiscard]] Value
+struct [[nodiscard("unnecessary conversion")]] Value
 {
 	GRAPHQLRESPONSE_EXPORT Value(Type type = Type::Null);
 	GRAPHQLRESPONSE_EXPORT ~Value();
 
 	GRAPHQLRESPONSE_EXPORT explicit Value(const char* value);
-	GRAPHQLRESPONSE_EXPORT explicit Value(StringType&& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(StringType && value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(BooleanType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
-	GRAPHQLRESPONSE_EXPORT explicit Value(IdType&& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(IdType && value);
 
-	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
+	GRAPHQLRESPONSE_EXPORT Value(Value && other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
 
 	GRAPHQLRESPONSE_EXPORT Value(std::shared_ptr<const Value> other) noexcept;
@@ -232,37 +242,41 @@ struct [[nodiscard]] Value
 	Value& operator=(const Value& rhs) = delete;
 
 	// Comparison
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool operator==(const Value& rhs) const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool operator==(const Value& rhs)
+		const noexcept;
 
 	// Check the Type
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Type type() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] Type type() const noexcept;
 
 	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
 	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
 	// as any of those types.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_json() noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_enum() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] Value&& from_json() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool maybe_enum() const noexcept;
 
 	// Input values don't distinguish between Type::String and Type::ID, so if this value comes from
 	// a string literal input value we need to track that fact that it can be interpreted as either
 	// of those types.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] Value&& from_input() noexcept;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] bool maybe_id() const noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] Value&& from_input() noexcept;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
 	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] size_t size() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] size_t size() const;
 
 	// Valid for Type::Map
-	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator find(std::string_view name) const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator begin() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] MapType::const_iterator end() const;
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string && name, Value && value);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] MapType::const_iterator find(
+		std::string_view name) const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] MapType::const_iterator begin() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] MapType::const_iterator end() const;
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const Value& operator[](
+		std::string_view name) const;
 
 	// Valid for Type::List
-	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
-	GRAPHQLRESPONSE_EXPORT [[nodiscard]] const Value& operator[](size_t index) const;
+	GRAPHQLRESPONSE_EXPORT void emplace_back(Value && value);
+	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] const Value& operator[](size_t index)
+		const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -270,26 +284,26 @@ struct [[nodiscard]] Value
 
 	// Specialized for all Types.
 	template <typename ValueType>
-	[[nodiscard]] typename ValueTypeTraits<ValueType>::get_type get() const;
+	[[nodiscard("unnecessary call")]] typename ValueTypeTraits<ValueType>::get_type get() const;
 
 	// Specialized for all Types which allocate extra memory.
 	template <typename ValueType>
-	[[nodiscard]] typename ValueTypeTraits<ValueType>::release_type release();
+	[[nodiscard("unnecessary call")]] typename ValueTypeTraits<ValueType>::release_type release();
 
 private:
 	// Type::Map
-	struct [[nodiscard]] MapData
+	struct [[nodiscard("unnecessary construction")]] MapData
 	{
-		[[nodiscard]] bool operator==(const MapData& rhs) const;
+		[[nodiscard("unnecessary call")]] bool operator==(const MapData& rhs) const;
 
 		MapType map;
 		std::vector<size_t> members;
 	};
 
 	// Type::String
-	struct [[nodiscard]] StringData
+	struct [[nodiscard("unnecessary construction")]] StringData
 	{
-		[[nodiscard]] bool operator==(const StringData& rhs) const;
+		[[nodiscard("unnecessary call")]] bool operator==(const StringData& rhs) const;
 
 		StringType string;
 		bool from_json = false;
@@ -297,30 +311,39 @@ private:
 	};
 
 	// Type::Null
-	struct [[nodiscard]] NullData
+	struct [[nodiscard("unnecessary construction")]] NullData
 	{
-		[[nodiscard]] bool operator==(const NullData& rhs) const;
+		[[nodiscard("unnecessary call")]] bool operator==(const NullData& rhs) const;
 	};
 
 	// Type::EnumValue
 	using EnumData = StringType;
 
 	// Type::Scalar
-	struct [[nodiscard]] ScalarData
+	struct [[nodiscard("unnecessary construction")]] ScalarData
 	{
-		[[nodiscard]] bool operator==(const ScalarData& rhs) const;
+		[[nodiscard("unnecessary call")]] bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
 	};
 
 	using SharedData = std::shared_ptr<const Value>;
 
-	using TypeData = std::variant<MapData, ListType, StringData, NullData, BooleanType, IntType,
-		FloatType, EnumData, IdType, ScalarData, SharedData>;
+	using TypeData = std::variant<MapData,
+		ListType,
+		StringData,
+		NullData,
+		BooleanType,
+		IntType,
+		FloatType,
+		EnumData,
+		IdType,
+		ScalarData,
+		SharedData>;
 
-	[[nodiscard]] const TypeData& data() const noexcept;
+	[[nodiscard("unnecessary call")]] const TypeData& data() const noexcept;
 
-	[[nodiscard]] static Type typeOf(const TypeData& data) noexcept;
+	[[nodiscard("unnecessary call")]] static Type typeOf(const TypeData& data) noexcept;
 
 	TypeData _data;
 };
@@ -369,7 +392,7 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 
 using AwaitableValue = internal::Awaitable<Value>;
 
-class [[nodiscard]] Writer final
+class [[nodiscard("unnecessary construction")]] Writer final
 {
 private:
 	struct Concept

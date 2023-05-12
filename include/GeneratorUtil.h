@@ -13,10 +13,10 @@
 namespace graphql::generator {
 
 // RAII object to help with emitting matching include guard begin and end statements
-class [[nodiscard]] IncludeGuardScope
+class [[nodiscard("unnecessary construction")]] IncludeGuardScope
 {
 public:
-	explicit IncludeGuardScope(std::ostream& outputFile, std::string_view headerFileName) noexcept;
+	explicit IncludeGuardScope(std::ostream & outputFile, std::string_view headerFileName) noexcept;
 	~IncludeGuardScope() noexcept;
 
 private:
@@ -25,12 +25,13 @@ private:
 };
 
 // RAII object to help with emitting matching namespace begin and end statements
-class [[nodiscard]] NamespaceScope
+class [[nodiscard("unnecessary construction")]] NamespaceScope
 {
 public:
-	explicit NamespaceScope(
-		std::ostream& outputFile, std::string_view cppNamespace, bool deferred = false) noexcept;
-	NamespaceScope(NamespaceScope&& other) noexcept;
+	explicit NamespaceScope(std::ostream & outputFile,
+		std::string_view cppNamespace,
+		bool deferred = false) noexcept;
+	NamespaceScope(NamespaceScope && other) noexcept;
 	~NamespaceScope() noexcept;
 
 	bool enter() noexcept;
@@ -44,10 +45,10 @@ private:
 
 // Keep track of whether we want to add a blank separator line once some additional content is about
 // to be output.
-class [[nodiscard]] PendingBlankLine
+class [[nodiscard("unnecessary construction")]] PendingBlankLine
 {
 public:
-	explicit PendingBlankLine(std::ostream& outputFile) noexcept;
+	explicit PendingBlankLine(std::ostream & outputFile) noexcept;
 
 	void add() noexcept;
 	bool reset() noexcept;

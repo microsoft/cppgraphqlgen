@@ -640,9 +640,9 @@ struct ast_action : nothing<Rule>
 {
 };
 
-struct [[nodiscard]] depth_guard
+struct [[nodiscard("unnecessary construction")]] depth_guard
 {
-	explicit depth_guard(size_t& depth) noexcept
+	explicit depth_guard(size_t & depth) noexcept
 		: _depth(depth)
 	{
 		++_depth;
@@ -653,7 +653,7 @@ struct [[nodiscard]] depth_guard
 		--_depth;
 	}
 
-	depth_guard(depth_guard&&) noexcept = delete;
+	depth_guard(depth_guard &&) noexcept = delete;
 	depth_guard(const depth_guard&) = delete;
 
 	depth_guard& operator=(depth_guard&&) noexcept = delete;
@@ -668,7 +668,7 @@ struct ast_action<selection_set> : maybe_nothing
 {
 	template <typename Rule, apply_mode A, rewind_mode M, template <typename...> class Action,
 		template <typename...> class Control, typename ParseInput, typename... States>
-	[[nodiscard]] static bool match(ParseInput& in, States&&... st)
+	[[nodiscard("unnecessary call")]] static bool match(ParseInput& in, States&&... st)
 	{
 		depth_guard guard(in.selectionSetDepth);
 		if (in.selectionSetDepth > in.depthLimit())
@@ -956,7 +956,7 @@ struct make_control<Selector>::state_handler<Rule, true, B> : ast_control<Rule>
 
 template <typename Rule, template <typename...> class Action, template <typename...> class Selector,
 	typename ParseInput>
-[[nodiscard]] std::unique_ptr<ast_node> parse(ParseInput&& in)
+[[nodiscard("unnecessary call")]] std::unique_ptr<ast_node> parse(ParseInput&& in)
 {
 	internal::ast_state state;
 	if (!tao::graphqlpeg::parse<Rule, Action, internal::make_control<Selector>::template type>(
@@ -977,11 +977,11 @@ template <typename Rule, template <typename...> class Action, template <typename
 } // namespace graphql_parse_tree
 
 template <class ParseInput>
-class [[nodiscard]] depth_limit_input : public ParseInput
+class [[nodiscard("unnecessary construction")]] depth_limit_input : public ParseInput
 {
 public:
 	template <typename... Args>
-	explicit depth_limit_input(size_t depthLimit, Args&&... args) noexcept
+	explicit depth_limit_input(size_t depthLimit, Args && ... args) noexcept
 		: ParseInput(std::forward<Args>(args)...)
 		, _depthLimit(depthLimit)
 	{
@@ -1001,19 +1001,19 @@ private:
 using ast_file = depth_limit_input<file_input<>>;
 using ast_memory = depth_limit_input<memory_input<>>;
 
-struct [[nodiscard]] ast_string
+struct [[nodiscard("unnecessary construction")]] ast_string
 {
 	std::vector<char> input;
 	std::unique_ptr<ast_memory> memory {};
 };
 
-struct [[nodiscard]] ast_string_view
+struct [[nodiscard("unnecessary construction")]] ast_string_view
 {
 	std::string_view input;
 	std::unique_ptr<memory_input<>> memory {};
 };
 
-struct [[nodiscard]] ast_input
+struct [[nodiscard("unnecessary construction")]] ast_input
 {
 	std::variant<ast_string, std::unique_ptr<ast_file>, ast_string_view> data;
 };

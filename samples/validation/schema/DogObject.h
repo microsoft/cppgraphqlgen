@@ -106,36 +106,36 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::DogHas
 
-class [[nodiscard]] Dog final
+class [[nodiscard("unnecessary construction")]] Dog final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveOwner(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveNickname(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveBarkVolume(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDoesKnowCommand(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveIsHousetrained(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveOwner(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -143,7 +143,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::DogHas::getNameWithParams<T>)
 			{
@@ -159,7 +159,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getNickname(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::DogHas::getNicknameWithParams<T>)
 			{
@@ -175,7 +175,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<int>> getBarkVolume(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::DogHas::getBarkVolumeWithParams<T>)
 			{
@@ -191,7 +191,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<bool> getDoesKnowCommand(service::FieldParams&& params, DogCommand&& dogCommandArg) const override
 		{
 			if constexpr (methods::DogHas::getDoesKnowCommandWithParams<T>)
 			{
@@ -207,7 +207,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<bool> getIsHousetrained(service::FieldParams&& params, std::optional<bool>&& atOtherHomesArg) const override
 		{
 			if constexpr (methods::DogHas::getIsHousetrainedWithParams<T>)
 			{
@@ -223,7 +223,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Human>> getOwner(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::DogHas::getOwnerWithParams<T>)
 			{
@@ -269,13 +269,13 @@ private:
 	friend DogOrHuman;
 
 	template <class I>
-	[[nodiscard]] static constexpr bool implements() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr bool implements() noexcept
 	{
 		return implements::DogIs<I>;
 	}
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -289,7 +289,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Dog)gql" };
 	}

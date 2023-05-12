@@ -27,7 +27,7 @@ namespace peg {
 class ast_node;
 struct ast_input;
 
-struct [[nodiscard]] ast
+struct [[nodiscard("unnecessary parse")]] ast
 {
 	std::shared_ptr<ast_input> input;
 	std::shared_ptr<ast_node> root;
@@ -38,19 +38,20 @@ struct [[nodiscard]] ast
 // another value for the depthLimit parameter in these parse functions.
 constexpr size_t c_defaultDepthLimit = 25;
 
-GRAPHQLPEG_EXPORT [[nodiscard]] ast parseSchemaString(
+GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseSchemaString(
 	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
-GRAPHQLPEG_EXPORT [[nodiscard]] ast parseSchemaFile(
+GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseSchemaFile(
 	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
 
-GRAPHQLPEG_EXPORT [[nodiscard]] ast parseString(
+GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseString(
 	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
-GRAPHQLPEG_EXPORT [[nodiscard]] ast parseFile(
+GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseFile(
 	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
 
 } // namespace peg
 
-GRAPHQLPEG_EXPORT [[nodiscard]] peg::ast operator"" _graphql(const char* text, size_t size);
+GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] peg::ast operator"" _graphql(
+	const char* text, size_t size);
 
 } // namespace graphql
 

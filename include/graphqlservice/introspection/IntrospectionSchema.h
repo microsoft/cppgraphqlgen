@@ -34,7 +34,7 @@ enum class TypeKind
 	NON_NULL
 };
 
-[[nodiscard]] constexpr auto getTypeKindNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getTypeKindNames() noexcept
 {
 	using namespace std::literals;
 
@@ -50,7 +50,7 @@ enum class TypeKind
 	};
 }
 
-[[nodiscard]] constexpr auto getTypeKindValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getTypeKindValues() noexcept
 {
 	using namespace std::literals;
 
@@ -89,7 +89,7 @@ enum class DirectiveLocation
 	INPUT_FIELD_DEFINITION
 };
 
-[[nodiscard]] constexpr auto getDirectiveLocationNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getDirectiveLocationNames() noexcept
 {
 	using namespace std::literals;
 
@@ -116,7 +116,7 @@ enum class DirectiveLocation
 	};
 }
 
-[[nodiscard]] constexpr auto getDirectiveLocationValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getDirectiveLocationValues() noexcept
 {
 	using namespace std::literals;
 

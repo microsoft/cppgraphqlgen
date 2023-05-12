@@ -56,6 +56,7 @@ const peg::ast& GetRequestObject() noexcept
 
 CompleteTaskInput::CompleteTaskInput() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 CompleteTaskInput::CompleteTaskInput(
@@ -88,6 +89,7 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 
 CompleteTaskInput::~CompleteTaskInput()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 CompleteTaskInput& CompleteTaskInput::operator=(const CompleteTaskInput& other)
@@ -265,27 +267,27 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return mutate::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return mutate::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return CompleteTaskMutation::GetOperationName();
 }
 
-[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+[[nodiscard("unnecessary conversion")]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
 {
 	return CompleteTaskMutation::serializeVariables(std::move(variables));
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return CompleteTaskMutation::parseResponse(std::move(response));
 }
