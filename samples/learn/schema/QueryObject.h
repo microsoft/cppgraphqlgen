@@ -63,34 +63,34 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::QueryHas
 
-class [[nodiscard]] Query final
+class [[nodiscard("unnecessary construction")]] Query final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveHero(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDroid(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveHero(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveHuman(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDroid(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -98,7 +98,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Character>> getHero(service::FieldParams&& params, std::optional<Episode>&& episodeArg) const override
 		{
 			if constexpr (methods::QueryHas::getHeroWithParams<T>)
 			{
@@ -111,7 +111,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Human>> getHuman(service::FieldParams&& params, response::IdType&& idArg) const override
 		{
 			if constexpr (methods::QueryHas::getHumanWithParams<T>)
 			{
@@ -124,7 +124,7 @@ private:
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Droid>> getDroid(service::FieldParams&& params, response::IdType&& idArg) const override
 		{
 			if constexpr (methods::QueryHas::getDroidWithParams<T>)
 			{
@@ -159,8 +159,8 @@ private:
 
 	explicit Query(std::unique_ptr<const Concept> pimpl) noexcept;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -174,7 +174,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Query)gql" };
 	}

@@ -39,12 +39,12 @@ namespace graphql::client {
 namespace nestedinput {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-struct [[nodiscard]] InputA
+struct [[nodiscard("unnecessary construction")]] InputA
 {
 	explicit InputA() noexcept;
 	explicit InputA(
@@ -59,7 +59,7 @@ struct [[nodiscard]] InputA
 	bool a {};
 };
 
-struct [[nodiscard]] InputB
+struct [[nodiscard("unnecessary construction")]] InputB
 {
 	explicit InputB() noexcept;
 	explicit InputB(
@@ -76,7 +76,7 @@ struct [[nodiscard]] InputB
 
 struct InputBC;
 
-struct [[nodiscard]] InputABCD
+struct [[nodiscard("unnecessary construction")]] InputABCD
 {
 	explicit InputABCD() noexcept;
 	explicit InputABCD(
@@ -99,7 +99,7 @@ struct [[nodiscard]] InputABCD
 	int value {};
 };
 
-struct [[nodiscard]] InputBC
+struct [[nodiscard("unnecessary construction")]] InputBC
 {
 	explicit InputBC() noexcept;
 	explicit InputBC(
@@ -124,25 +124,25 @@ using nestedinput::GetRequestText;
 using nestedinput::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 using nestedinput::InputA;
 using nestedinput::InputB;
 using nestedinput::InputABCD;
 using nestedinput::InputBC;
 
-struct [[nodiscard]] Variables
+struct [[nodiscard("unnecessary construction")]] Variables
 {
 	InputABCD stream {};
 };
 
-[[nodiscard]] response::Value serializeVariables(Variables&& variables);
+[[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] control_Control
+	struct [[nodiscard("unnecessary construction")]] control_Control
 	{
-		struct [[nodiscard]] test_Output
+		struct [[nodiscard("unnecessary construction")]] test_Output
 		{
 			std::optional<bool> id {};
 		};
@@ -153,21 +153,21 @@ struct [[nodiscard]] Response
 	control_Control control {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = testQuery::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = testQuery::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::testQuery

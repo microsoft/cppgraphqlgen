@@ -45,12 +45,12 @@ namespace graphql::client {
 namespace mutate {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-enum class [[nodiscard]] TaskState
+enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
 	Unassigned,
 	New,
@@ -58,7 +58,7 @@ enum class [[nodiscard]] TaskState
 	Complete,
 };
 
-struct [[nodiscard]] CompleteTaskInput
+struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 {
 	explicit CompleteTaskInput() noexcept;
 	explicit CompleteTaskInput(
@@ -87,25 +87,25 @@ using mutate::GetRequestText;
 using mutate::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 using mutate::TaskState;
 
 using mutate::CompleteTaskInput;
 
-struct [[nodiscard]] Variables
+struct [[nodiscard("unnecessary construction")]] Variables
 {
 	std::unique_ptr<CompleteTaskInput> input {};
 	bool skipClientMutationId {};
 };
 
-[[nodiscard]] response::Value serializeVariables(Variables&& variables);
+[[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] completedTask_CompleteTaskPayload
+	struct [[nodiscard("unnecessary construction")]] completedTask_CompleteTaskPayload
 	{
-		struct [[nodiscard]] completedTask_Task
+		struct [[nodiscard("unnecessary construction")]] completedTask_Task
 		{
 			response::IdType completedTaskId {};
 			std::optional<std::string> title {};
@@ -119,21 +119,21 @@ struct [[nodiscard]] Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = CompleteTaskMutation::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = CompleteTaskMutation::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace mutation::CompleteTaskMutation

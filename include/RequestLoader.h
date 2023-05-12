@@ -25,14 +25,14 @@ struct ResponseField;
 
 using ResponseFieldList = std::vector<ResponseField>;
 
-struct [[nodiscard]] ResponseType
+struct [[nodiscard("unnecessary construction")]] ResponseType
 {
 	RequestSchemaType type;
 	std::string_view cppType;
 	ResponseFieldList fields;
 };
 
-struct [[nodiscard]] ResponseField
+struct [[nodiscard("unnecessary construction")]] ResponseField
 {
 	RequestSchemaType type;
 	TypeModifierStack modifiers;
@@ -42,7 +42,7 @@ struct [[nodiscard]] ResponseField
 	ResponseFieldList children;
 };
 
-struct [[nodiscard]] RequestInputType
+struct [[nodiscard("unnecessary construction")]] RequestInputType
 {
 	RequestSchemaType type;
 	std::unordered_set<std::string_view> dependencies {};
@@ -51,7 +51,7 @@ struct [[nodiscard]] RequestInputType
 
 using RequestInputTypeList = std::vector<RequestInputType>;
 
-struct [[nodiscard]] RequestVariable
+struct [[nodiscard("unnecessary construction")]] RequestVariable
 {
 	RequestInputType inputType;
 	TypeModifierStack modifiers;
@@ -64,7 +64,7 @@ struct [[nodiscard]] RequestVariable
 
 using RequestVariableList = std::vector<RequestVariable>;
 
-struct [[nodiscard]] Operation
+struct [[nodiscard("unnecessary construction")]] Operation
 {
 	const peg::ast_node* operation;
 	std::string_view name;
@@ -79,7 +79,7 @@ struct [[nodiscard]] Operation
 
 using OperationList = std::vector<Operation>;
 
-struct [[nodiscard]] RequestOptions
+struct [[nodiscard("unnecessary construction")]] RequestOptions
 {
 	const std::string requestFilename;
 	const std::optional<std::string> operationName;
@@ -88,75 +88,82 @@ struct [[nodiscard]] RequestOptions
 
 class SchemaLoader;
 
-class [[nodiscard]] RequestLoader
+class [[nodiscard("unnecessary construction")]] RequestLoader
 {
 public:
-	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
+	explicit RequestLoader(RequestOptions && requestOptions, const SchemaLoader& schemaLoader);
 
-	[[nodiscard]] std::string_view getRequestFilename() const noexcept;
-	[[nodiscard]] const OperationList& getOperations() const noexcept;
-	[[nodiscard]] std::string_view getOperationDisplayName(
+	[[nodiscard("unnecessary call")]] std::string_view getRequestFilename() const noexcept;
+	[[nodiscard("unnecessary call")]] const OperationList& getOperations() const noexcept;
+	[[nodiscard("unnecessary call")]] std::string_view getOperationDisplayName(
 		const Operation& operation) const noexcept;
-	[[nodiscard]] std::string getOperationNamespace(const Operation& operation) const noexcept;
-	[[nodiscard]] std::string_view getOperationType(const Operation& operation) const noexcept;
-	[[nodiscard]] std::string_view getRequestText() const noexcept;
+	[[nodiscard("unnecessary call")]] std::string getOperationNamespace(const Operation& operation)
+		const noexcept;
+	[[nodiscard("unnecessary call")]] std::string_view getOperationType(const Operation& operation)
+		const noexcept;
+	[[nodiscard("unnecessary call")]] std::string_view getRequestText() const noexcept;
 
-	[[nodiscard]] const ResponseType& getResponseType(const Operation& operation) const noexcept;
-	[[nodiscard]] const RequestVariableList& getVariables(
+	[[nodiscard("unnecessary call")]] const ResponseType& getResponseType(
 		const Operation& operation) const noexcept;
-
-	[[nodiscard]] const RequestInputTypeList& getReferencedInputTypes(
-		const Operation& operation) const noexcept;
-	[[nodiscard]] const RequestSchemaTypeList& getReferencedEnums(
+	[[nodiscard("unnecessary call")]] const RequestVariableList& getVariables(
 		const Operation& operation) const noexcept;
 
-	[[nodiscard]] std::string getInputCppType(
+	[[nodiscard("unnecessary call")]] const RequestInputTypeList& getReferencedInputTypes(
+		const Operation& operation) const noexcept;
+	[[nodiscard("unnecessary call")]] const RequestSchemaTypeList& getReferencedEnums(
+		const Operation& operation) const noexcept;
+
+	[[nodiscard("unnecessary call")]] std::string getInputCppType(
 		const RequestSchemaType& wrappedInputType) const noexcept;
-	[[nodiscard]] std::string getInputCppType(
-		const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept;
-	[[nodiscard]] static std::string getOutputCppType(
-		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
+	[[nodiscard("unnecessary call")]] std::string getInputCppType(
+		const RequestSchemaType& inputType,
+		const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard("unnecessary call")]] static std::string getOutputCppType(
+		std::string_view outputCppType,
+		const TypeModifierStack& modifiers) noexcept;
 
-	[[nodiscard]] static std::pair<RequestSchemaType, TypeModifierStack> unwrapSchemaType(
-		RequestSchemaType&& type) noexcept;
+	[[nodiscard("unnecessary call")]] static std::pair<RequestSchemaType, TypeModifierStack>
+		unwrapSchemaType(RequestSchemaType && type) noexcept;
 
 private:
 	void buildSchema();
 	void addTypesToSchema();
-	[[nodiscard]] RequestSchemaType getSchemaType(
-		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard("unnecessary call")]] RequestSchemaType getSchemaType(std::string_view type,
+		const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
-	[[nodiscard]] static std::string_view trimWhitespace(std::string_view content) noexcept;
+	[[nodiscard("unnecessary call")]] static std::string_view trimWhitespace(
+		std::string_view content) noexcept;
 
 	void findOperation();
 	void collectFragments() noexcept;
-	void collectVariables(Operation& operation) noexcept;
-	void collectInputTypes(Operation& operation, const RequestSchemaType& variableType) noexcept;
-	void reorderInputTypeDependencies(Operation& operation);
-	void collectEnums(Operation& operation, const RequestSchemaType& variableType) noexcept;
-	void collectEnums(Operation& operation, const ResponseField& responseField) noexcept;
+	void collectVariables(Operation & operation) noexcept;
+	void collectInputTypes(Operation & operation, const RequestSchemaType& variableType) noexcept;
+	void reorderInputTypeDependencies(Operation & operation);
+	void collectEnums(Operation & operation, const RequestSchemaType& variableType) noexcept;
+	void collectEnums(Operation & operation, const ResponseField& responseField) noexcept;
 
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
 	// SelectionVisitor visits the AST and fills in the ResponseType for the request.
-	class [[nodiscard]] SelectionVisitor
+	class [[nodiscard("unnecessary construction")]] SelectionVisitor
 	{
 	public:
 		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
-			const FragmentDefinitionMap& fragments, const std::shared_ptr<schema::Schema>& schema,
+			const FragmentDefinitionMap& fragments,
+			const std::shared_ptr<schema::Schema>& schema,
 			const RequestSchemaType& type);
 
 		void visit(const peg::ast_node& selection);
 
-		[[nodiscard]] ResponseFieldList getFields();
+		[[nodiscard("unnecessary construction")]] ResponseFieldList getFields();
 
 	private:
 		void visitField(const peg::ast_node& field);
 		void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 		void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-		void mergeFragmentFields(ResponseFieldList&& fragmentFields) noexcept;
+		void mergeFragmentFields(ResponseFieldList && fragmentFields) noexcept;
 
 		const SchemaLoader& _schemaLoader;
 		const FragmentDefinitionMap& _fragments;

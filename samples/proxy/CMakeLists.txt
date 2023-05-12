@@ -11,14 +11,13 @@ target_link_libraries(client PRIVATE
   proxy_schema
   proxy_client
   graphqljson)
-target_include_directories(client PRIVATE
-  proxy_schema
-  proxy_client)
+target_include_directories(client SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
 
 add_executable(server server.cpp)
 target_link_libraries(server PRIVATE
   star_wars
   graphqljson)
+target_include_directories(server SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
 
 if(MSVC)
   target_compile_options(client PRIVATE "-wd4702")

@@ -11,7 +11,7 @@
 namespace graphql::generator {
 
 // Types that we understand and use to generate the skeleton of a service.
-enum class [[nodiscard]] SchemaType {
+enum class [[nodiscard("unnecessary conversion")]] SchemaType {
 	Scalar,
 	Enum,
 	Input,
@@ -30,10 +30,11 @@ using TypeModifierStack = std::vector<service::TypeModifier>;
 
 // Recursively visit a Type node until we reach a NamedType and we've
 // taken stock of all of the modifier wrappers.
-class [[nodiscard]] TypeVisitor
+class [[nodiscard("unnecessary construction")]] TypeVisitor
 {
 public:
-	[[nodiscard]] std::pair<std::string_view, TypeModifierStack> getType();
+	[[nodiscard("unnecessary construction")]] std::pair<std::string_view, TypeModifierStack>
+	getType();
 
 	void visit(const peg::ast_node& typeName);
 
@@ -49,10 +50,10 @@ private:
 
 // Recursively visit a Value node representing the default value on an input field
 // and build a JSON representation of the hardcoded value.
-class [[nodiscard]] DefaultValueVisitor
+class [[nodiscard("unnecessary construction")]] DefaultValueVisitor
 {
 public:
-	[[nodiscard]] response::Value getValue();
+	[[nodiscard("unnecessary construction")]] response::Value getValue();
 
 	void visit(const peg::ast_node& value);
 

@@ -50,6 +50,7 @@ const peg::ast& GetRequestObject() noexcept
 
 InputA::InputA() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputA::InputA(
@@ -70,6 +71,7 @@ InputA::InputA(InputA&& other) noexcept
 
 InputA::~InputA()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputA& InputA::operator=(const InputA& other)
@@ -86,6 +88,7 @@ InputA& InputA::operator=(InputA&& other) noexcept
 
 InputB::InputB() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputB::InputB(
@@ -106,6 +109,7 @@ InputB::InputB(InputB&& other) noexcept
 
 InputB::~InputB()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputB& InputB::operator=(const InputB& other)
@@ -122,6 +126,7 @@ InputB& InputB::operator=(InputB&& other) noexcept
 
 InputABCD::InputABCD() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputABCD::InputABCD(
@@ -158,6 +163,7 @@ InputABCD::InputABCD(InputABCD&& other) noexcept
 
 InputABCD::~InputABCD()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputABCD& InputABCD::operator=(const InputABCD& other)
@@ -178,6 +184,7 @@ InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 
 InputBC::InputBC() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputBC::InputBC(
@@ -202,6 +209,7 @@ InputBC::InputBC(InputBC&& other) noexcept
 
 InputBC::~InputBC()
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 InputBC& InputBC::operator=(const InputBC& other)
@@ -349,27 +357,27 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return nestedinput::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return nestedinput::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return testQuery::GetOperationName();
 }
 
-[[nodiscard]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
+[[nodiscard("unnecessary conversion")]] response::Value Traits::serializeVariables(Traits::Variables&& variables)
 {
 	return testQuery::serializeVariables(std::move(variables));
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return testQuery::parseResponse(std::move(response));
 }

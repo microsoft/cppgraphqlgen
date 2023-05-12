@@ -67,6 +67,7 @@ target_link_libraries(pegtl_combined_tests PRIVATE
   GTest::Main)
 target_include_directories(pegtl_combined_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_compile_features(pegtl_combined_tests PRIVATE cxx_std_20)
 gtest_add_tests(TARGET pegtl_combined_tests)
 
 add_executable(pegtl_executable_tests PegtlExecutableTests.cpp)
@@ -85,6 +86,7 @@ target_link_libraries(pegtl_schema_tests PRIVATE
   GTest::Main)
 target_include_directories(pegtl_schema_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_compile_features(pegtl_schema_tests PRIVATE cxx_std_20)
 gtest_add_tests(TARGET pegtl_schema_tests)
 
 add_executable(response_tests ResponseTests.cpp)

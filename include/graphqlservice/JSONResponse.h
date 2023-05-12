@@ -22,9 +22,10 @@
 
 namespace graphql::response {
 
-JSONRESPONSE_EXPORT [[nodiscard]] std::string toJSON(Value&& response);
+JSONRESPONSE_EXPORT [[nodiscard("unnecessary conversion")]] std::string toJSON(Value&& response);
 
-JSONRESPONSE_EXPORT [[nodiscard]] Value parseJSON(const std::string& json);
+JSONRESPONSE_EXPORT [[nodiscard("unnecessary conversion")]] Value parseJSON(
+	const std::string& json);
 
 } // namespace graphql::response
 

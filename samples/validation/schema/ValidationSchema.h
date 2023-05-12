@@ -22,14 +22,14 @@ static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: 
 namespace graphql {
 namespace validation {
 
-enum class [[nodiscard]] DogCommand
+enum class [[nodiscard("unnecessary conversion")]] DogCommand
 {
 	SIT,
 	DOWN,
 	HEEL
 };
 
-[[nodiscard]] constexpr auto getDogCommandNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getDogCommandNames() noexcept
 {
 	using namespace std::literals;
 
@@ -40,7 +40,7 @@ enum class [[nodiscard]] DogCommand
 	};
 }
 
-[[nodiscard]] constexpr auto getDogCommandValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getDogCommandValues() noexcept
 {
 	using namespace std::literals;
 
@@ -51,12 +51,12 @@ enum class [[nodiscard]] DogCommand
 	};
 }
 
-enum class [[nodiscard]] CatCommand
+enum class [[nodiscard("unnecessary conversion")]] CatCommand
 {
 	JUMP
 };
 
-[[nodiscard]] constexpr auto getCatCommandNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getCatCommandNames() noexcept
 {
 	using namespace std::literals;
 
@@ -65,7 +65,7 @@ enum class [[nodiscard]] CatCommand
 	};
 }
 
-[[nodiscard]] constexpr auto getCatCommandValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getCatCommandValues() noexcept
 {
 	using namespace std::literals;
 
@@ -74,7 +74,7 @@ enum class [[nodiscard]] CatCommand
 	};
 }
 
-struct [[nodiscard]] ComplexInput
+struct [[nodiscard("unnecessary construction")]] ComplexInput
 {
 	explicit ComplexInput() noexcept;
 	explicit ComplexInput(
@@ -115,7 +115,7 @@ class Arguments;
 
 } // namespace object
 
-class [[nodiscard]] Operations final
+class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:

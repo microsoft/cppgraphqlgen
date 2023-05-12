@@ -23,16 +23,16 @@ namespace graphql::peg {
 using namespace tao::graphqlpeg;
 namespace peginternal = tao::graphqlpeg::internal;
 
-class [[nodiscard]] ast_node : public parse_tree::basic_node<ast_node>
+class [[nodiscard("unnecessary construction")]] ast_node : public parse_tree::basic_node<ast_node>
 {
 public:
 	GRAPHQLPEG_EXPORT void remove_content() noexcept;
 
 	GRAPHQLPEG_EXPORT void unescaped_view(std::string_view unescaped) noexcept;
-	[[nodiscard]] GRAPHQLPEG_EXPORT std::string_view unescaped_view() const;
+	[[nodiscard("unnecessary call")]] GRAPHQLPEG_EXPORT std::string_view unescaped_view() const;
 
 	template <typename U>
-	[[nodiscard]] bool is_type() const noexcept
+	[[nodiscard("unnecessary call")]] bool is_type() const noexcept
 	{
 		const auto u = type_name<U>();
 
@@ -57,7 +57,7 @@ public:
 
 private:
 	template <typename U>
-	[[nodiscard]] static std::string_view type_name() noexcept
+	[[nodiscard("unnecessary call")]] static std::string_view type_name() noexcept
 	{
 		// This is cached in a static local variable per-specialization, but each module may have
 		// its own instance of the specialization and the local variable. Within a single module,
@@ -69,7 +69,7 @@ private:
 	}
 
 	template <typename U>
-	[[nodiscard]] static size_t type_hash() noexcept
+	[[nodiscard("unnecessary call")]] static size_t type_hash() noexcept
 	{
 		// This is cached in a static local variable per-specialization, but each module may have
 		// its own instance of the specialization and the local variable.

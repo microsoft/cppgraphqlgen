@@ -201,22 +201,22 @@ Response parseResponse(response::Value&& response)
 	return result;
 }
 
-[[nodiscard]] const std::string& Traits::GetRequestText() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
 	return benchmark::GetRequestText();
 }
 
-[[nodiscard]] const peg::ast& Traits::GetRequestObject() noexcept
+[[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
 	return benchmark::GetRequestObject();
 }
 
-[[nodiscard]] const std::string& Traits::GetOperationName() noexcept
+[[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
 {
 	return Query::GetOperationName();
 }
 
-[[nodiscard]] Traits::Response Traits::parseResponse(response::Value&& response)
+[[nodiscard("unnecessary conversion")]] Traits::Response Traits::parseResponse(response::Value&& response)
 {
 	return Query::parseResponse(std::move(response));
 }

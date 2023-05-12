@@ -22,10 +22,10 @@
 namespace graphql::internal {
 
 template <typename T>
-class [[nodiscard]] Awaitable;
+class [[nodiscard("unnecessary construction")]] Awaitable;
 
 template <>
-class [[nodiscard]] Awaitable<void>
+class [[nodiscard("unnecessary construction")]] Awaitable<void>
 {
 public:
 	Awaitable(std::future<void> value)
@@ -40,7 +40,7 @@ public:
 
 	struct promise_type
 	{
-		[[nodiscard]] Awaitable get_return_object() noexcept
+		[[nodiscard("unnecessary construction")]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -69,7 +69,7 @@ public:
 		std::promise<void> _promise;
 	};
 
-	[[nodiscard]] constexpr bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
 		return true;
 	}
@@ -89,7 +89,7 @@ private:
 };
 
 template <typename T>
-class [[nodiscard]] Awaitable
+class [[nodiscard("unnecessary construction")]] Awaitable
 {
 public:
 	Awaitable(std::future<T> value)
@@ -97,14 +97,14 @@ public:
 	{
 	}
 
-	[[nodiscard]] T get()
+	[[nodiscard("unnecessary construction")]] T get()
 	{
 		return _value.get();
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] Awaitable get_return_object() noexcept
+		[[nodiscard("unnecessary construction")]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -138,7 +138,7 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard]] constexpr bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
 		return true;
 	}
@@ -148,7 +148,7 @@ public:
 		h.resume();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard("unnecessary construction")]] T await_resume()
 	{
 		return _value.get();
 	}

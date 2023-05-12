@@ -93,12 +93,12 @@ namespace graphql::client {
 namespace query {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-enum class [[nodiscard]] TaskState
+enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
 	Unassigned,
 	New,
@@ -114,17 +114,17 @@ using query::GetRequestText;
 using query::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
 using query::TaskState;
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard]] appointments_AppointmentConnection
+	struct [[nodiscard("unnecessary construction")]] appointments_AppointmentConnection
 	{
-		struct [[nodiscard]] edges_AppointmentEdge
+		struct [[nodiscard("unnecessary construction")]] edges_AppointmentEdge
 		{
-			struct [[nodiscard]] node_Appointment
+			struct [[nodiscard("unnecessary construction")]] node_Appointment
 			{
 				response::IdType id {};
 				std::optional<std::string> subject {};
@@ -139,11 +139,11 @@ struct [[nodiscard]] Response
 		std::optional<std::vector<std::optional<edges_AppointmentEdge>>> edges {};
 	};
 
-	struct [[nodiscard]] tasks_TaskConnection
+	struct [[nodiscard("unnecessary construction")]] tasks_TaskConnection
 	{
-		struct [[nodiscard]] edges_TaskEdge
+		struct [[nodiscard("unnecessary construction")]] edges_TaskEdge
 		{
-			struct [[nodiscard]] node_Task
+			struct [[nodiscard("unnecessary construction")]] node_Task
 			{
 				response::IdType id {};
 				std::optional<std::string> title {};
@@ -157,11 +157,11 @@ struct [[nodiscard]] Response
 		std::optional<std::vector<std::optional<edges_TaskEdge>>> edges {};
 	};
 
-	struct [[nodiscard]] unreadCounts_FolderConnection
+	struct [[nodiscard("unnecessary construction")]] unreadCounts_FolderConnection
 	{
-		struct [[nodiscard]] edges_FolderEdge
+		struct [[nodiscard("unnecessary construction")]] edges_FolderEdge
 		{
-			struct [[nodiscard]] node_Folder
+			struct [[nodiscard("unnecessary construction")]] node_Folder
 			{
 				response::IdType id {};
 				std::optional<std::string> name {};
@@ -175,7 +175,7 @@ struct [[nodiscard]] Response
 		std::optional<std::vector<std::optional<edges_FolderEdge>>> edges {};
 	};
 
-	struct [[nodiscard]] anyType_UnionType
+	struct [[nodiscard("unnecessary construction")]] anyType_UnionType
 	{
 		std::string _typename {};
 		response::IdType id {};
@@ -194,17 +194,17 @@ struct [[nodiscard]] Response
 	std::optional<std::string> default_ {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Query::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::Query

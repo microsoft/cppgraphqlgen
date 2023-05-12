@@ -22,7 +22,7 @@ static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: 
 namespace graphql {
 namespace today {
 
-enum class [[nodiscard]] TaskState
+enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
 	Unassigned,
 	New,
@@ -30,7 +30,7 @@ enum class [[nodiscard]] TaskState
 	Complete
 };
 
-[[nodiscard]] constexpr auto getTaskStateNames() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getTaskStateNames() noexcept
 {
 	using namespace std::literals;
 
@@ -42,7 +42,7 @@ enum class [[nodiscard]] TaskState
 	};
 }
 
-[[nodiscard]] constexpr auto getTaskStateValues() noexcept
+[[nodiscard("unnecessary call")]] constexpr auto getTaskStateValues() noexcept
 {
 	using namespace std::literals;
 
@@ -54,7 +54,7 @@ enum class [[nodiscard]] TaskState
 	};
 }
 
-struct [[nodiscard]] CompleteTaskInput
+struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 {
 	explicit CompleteTaskInput() noexcept;
 	explicit CompleteTaskInput(
@@ -77,7 +77,7 @@ struct [[nodiscard]] CompleteTaskInput
 
 struct SecondNestedInput;
 
-struct [[nodiscard]] ThirdNestedInput
+struct [[nodiscard("unnecessary construction")]] ThirdNestedInput
 {
 	explicit ThirdNestedInput() noexcept;
 	explicit ThirdNestedInput(
@@ -94,7 +94,7 @@ struct [[nodiscard]] ThirdNestedInput
 	std::unique_ptr<SecondNestedInput> second {};
 };
 
-struct [[nodiscard]] FourthNestedInput
+struct [[nodiscard("unnecessary construction")]] FourthNestedInput
 {
 	explicit FourthNestedInput() noexcept;
 	explicit FourthNestedInput(
@@ -109,7 +109,7 @@ struct [[nodiscard]] FourthNestedInput
 	response::IdType id {};
 };
 
-struct [[nodiscard]] IncludeNullableSelfInput
+struct [[nodiscard("unnecessary construction")]] IncludeNullableSelfInput
 {
 	explicit IncludeNullableSelfInput() noexcept;
 	explicit IncludeNullableSelfInput(
@@ -124,7 +124,7 @@ struct [[nodiscard]] IncludeNullableSelfInput
 	std::unique_ptr<IncludeNullableSelfInput> self {};
 };
 
-struct [[nodiscard]] IncludeNonNullableListSelfInput
+struct [[nodiscard("unnecessary construction")]] IncludeNonNullableListSelfInput
 {
 	explicit IncludeNonNullableListSelfInput() noexcept;
 	explicit IncludeNonNullableListSelfInput(
@@ -139,7 +139,7 @@ struct [[nodiscard]] IncludeNonNullableListSelfInput
 	std::vector<IncludeNonNullableListSelfInput> selves {};
 };
 
-struct [[nodiscard]] StringOperationFilterInput
+struct [[nodiscard("unnecessary construction")]] StringOperationFilterInput
 {
 	explicit StringOperationFilterInput() noexcept;
 	explicit StringOperationFilterInput(
@@ -176,7 +176,7 @@ struct [[nodiscard]] StringOperationFilterInput
 	std::optional<std::string> notEndsWith {};
 };
 
-struct [[nodiscard]] SecondNestedInput
+struct [[nodiscard("unnecessary construction")]] SecondNestedInput
 {
 	explicit SecondNestedInput() noexcept;
 	explicit SecondNestedInput(
@@ -193,7 +193,7 @@ struct [[nodiscard]] SecondNestedInput
 	ThirdNestedInput third {};
 };
 
-struct [[nodiscard]] ForwardDeclaredInput
+struct [[nodiscard("unnecessary construction")]] ForwardDeclaredInput
 {
 	explicit ForwardDeclaredInput() noexcept;
 	explicit ForwardDeclaredInput(
@@ -210,7 +210,7 @@ struct [[nodiscard]] ForwardDeclaredInput
 	IncludeNonNullableListSelfInput listSelves {};
 };
 
-struct [[nodiscard]] FirstNestedInput
+struct [[nodiscard("unnecessary construction")]] FirstNestedInput
 {
 	explicit FirstNestedInput() noexcept;
 	explicit FirstNestedInput(
@@ -254,7 +254,7 @@ class Expensive;
 
 } // namespace object
 
-class [[nodiscard]] Operations final
+class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:

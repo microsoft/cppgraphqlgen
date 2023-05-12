@@ -51,28 +51,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::NestedTypeHas
 
-class [[nodiscard]] NestedType final
+class [[nodiscard("unnecessary construction")]] NestedType final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveDepth(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDepth(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveNested(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<int> getDepth(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::NestedTypeHas::getDepthWithParams<T>)
 			{
@@ -92,11 +92,11 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(NestedType::getDepth is not implemented)ex");
+				throw service::unimplemented_method(R"ex(NestedType::getDepth)ex");
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<NestedType>> getNested(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::NestedTypeHas::getNestedWithParams<T>)
 			{
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(NestedType::getNested is not implemented)ex");
+				throw service::unimplemented_method(R"ex(NestedType::getNested)ex");
 			}
 		}
 
@@ -134,8 +134,8 @@ private:
 
 	explicit NestedType(std::unique_ptr<const Concept> pimpl) noexcept;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -149,7 +149,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(NestedType)gql" };
 	}

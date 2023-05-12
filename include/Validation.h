@@ -15,10 +15,10 @@ namespace graphql::service {
 using ValidateType = std::optional<std::reference_wrapper<const schema::BaseType>>;
 using SharedType = std::shared_ptr<const schema::BaseType>;
 
-[[nodiscard]] SharedType getSharedType(const ValidateType& type) noexcept;
-[[nodiscard]] ValidateType getValidateType(const SharedType& type) noexcept;
+[[nodiscard("unnecessary call")]] SharedType getSharedType(const ValidateType& type) noexcept;
+[[nodiscard("unnecessary call")]] ValidateType getValidateType(const SharedType& type) noexcept;
 
-struct [[nodiscard]] ValidateArgument
+struct [[nodiscard("unnecessary construction")]] ValidateArgument
 {
 	bool defaultValue = false;
 	bool nonNullDefaultValue = false;
@@ -27,7 +27,7 @@ struct [[nodiscard]] ValidateArgument
 
 using ValidateTypeFieldArguments = internal::string_view_map<ValidateArgument>;
 
-struct [[nodiscard]] ValidateTypeField
+struct [[nodiscard("unnecessary construction")]] ValidateTypeField
 {
 	ValidateType returnType;
 	ValidateTypeFieldArguments arguments;
@@ -35,47 +35,47 @@ struct [[nodiscard]] ValidateTypeField
 
 using ValidateDirectiveArguments = internal::string_view_map<ValidateArgument>;
 
-struct [[nodiscard]] ValidateDirective
+struct [[nodiscard("unnecessary construction")]] ValidateDirective
 {
 	bool isRepeatable = false;
 	internal::sorted_set<introspection::DirectiveLocation> locations;
 	ValidateDirectiveArguments arguments;
 };
 
-struct [[nodiscard]] ValidateArgumentVariable
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentVariable
 {
-	[[nodiscard]] bool operator==(const ValidateArgumentVariable& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateArgumentVariable& other) const;
 
 	std::string_view name;
 };
 
-struct [[nodiscard]] ValidateArgumentEnumValue
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentEnumValue
 {
-	[[nodiscard]] bool operator==(const ValidateArgumentEnumValue& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateArgumentEnumValue& other) const;
 
 	std::string_view value;
 };
 
 struct ValidateArgumentValue;
 
-struct [[nodiscard]] ValidateArgumentValuePtr
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentValuePtr
 {
-	[[nodiscard]] bool operator==(const ValidateArgumentValuePtr& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateArgumentValuePtr& other) const;
 
 	std::unique_ptr<ValidateArgumentValue> value;
 	schema_location position;
 };
 
-struct [[nodiscard]] ValidateArgumentList
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentList
 {
-	[[nodiscard]] bool operator==(const ValidateArgumentList& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateArgumentList& other) const;
 
 	std::vector<ValidateArgumentValuePtr> values;
 };
 
-struct [[nodiscard]] ValidateArgumentMap
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentMap
 {
-	[[nodiscard]] bool operator==(const ValidateArgumentMap& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateArgumentMap& other) const;
 
 	internal::string_view_map<ValidateArgumentValuePtr> values;
 };
@@ -83,30 +83,30 @@ struct [[nodiscard]] ValidateArgumentMap
 using ValidateArgumentVariant = std::variant<ValidateArgumentVariable, int, double,
 	std::string_view, bool, ValidateArgumentEnumValue, ValidateArgumentList, ValidateArgumentMap>;
 
-struct [[nodiscard]] ValidateArgumentValue
+struct [[nodiscard("unnecessary construction")]] ValidateArgumentValue
 {
-	ValidateArgumentValue(ValidateArgumentVariable&& value);
+	ValidateArgumentValue(ValidateArgumentVariable && value);
 	ValidateArgumentValue(int value);
 	ValidateArgumentValue(double value);
 	ValidateArgumentValue(std::string_view value);
 	ValidateArgumentValue(bool value);
-	ValidateArgumentValue(ValidateArgumentEnumValue&& value);
-	ValidateArgumentValue(ValidateArgumentList&& value);
-	ValidateArgumentValue(ValidateArgumentMap&& value);
+	ValidateArgumentValue(ValidateArgumentEnumValue && value);
+	ValidateArgumentValue(ValidateArgumentList && value);
+	ValidateArgumentValue(ValidateArgumentMap && value);
 
 	ValidateArgumentVariant data;
 };
 
 // ValidateArgumentValueVisitor visits the AST and builds a record of a field return type and map
 // of the arguments for comparison to see if 2 fields with the same result name can be merged.
-class [[nodiscard]] ValidateArgumentValueVisitor
+class [[nodiscard("unnecessary construction")]] ValidateArgumentValueVisitor
 {
 public:
-	ValidateArgumentValueVisitor(std::list<schema_error>& errors);
+	ValidateArgumentValueVisitor(std::list<schema_error> & errors);
 
 	void visit(const peg::ast_node& value);
 
-	[[nodiscard]] ValidateArgumentValuePtr getArgumentValue();
+	[[nodiscard("unnecessary call")]] ValidateArgumentValuePtr getArgumentValue();
 
 private:
 	void visitVariable(const peg::ast_node& variable);
@@ -125,12 +125,14 @@ private:
 
 using ValidateFieldArguments = internal::string_view_map<ValidateArgumentValuePtr>;
 
-struct [[nodiscard]] ValidateField
+struct [[nodiscard("unnecessary construction")]] ValidateField
 {
-	ValidateField(ValidateType&& returnType, ValidateType&& objectType, std::string_view fieldName,
-		ValidateFieldArguments&& arguments);
+	ValidateField(ValidateType && returnType,
+		ValidateType && objectType,
+		std::string_view fieldName,
+		ValidateFieldArguments && arguments);
 
-	[[nodiscard]] bool operator==(const ValidateField& other) const;
+	[[nodiscard("unnecessary call")]] bool operator==(const ValidateField& other) const;
 
 	ValidateType returnType;
 	ValidateType objectType;
@@ -142,16 +144,16 @@ using ValidateTypes = internal::string_view_map<ValidateType>;
 
 // ValidateVariableTypeVisitor visits the AST and builds a ValidateType structure representing
 // a variable type in an operation definition as if it came from an Introspection query.
-class [[nodiscard]] ValidateVariableTypeVisitor
+class [[nodiscard("unnecessary construction")]] ValidateVariableTypeVisitor
 {
 public:
-	ValidateVariableTypeVisitor(
-		const std::shared_ptr<schema::Schema>& schema, const ValidateTypes& types);
+	ValidateVariableTypeVisitor(const std::shared_ptr<schema::Schema>& schema,
+		const ValidateTypes& types);
 
 	void visit(const peg::ast_node& typeName);
 
-	[[nodiscard]] bool isInputType() const;
-	[[nodiscard]] ValidateType getType();
+	[[nodiscard("unnecessary call")]] bool isInputType() const;
+	[[nodiscard("unnecessary call")]] ValidateType getType();
 
 private:
 	void visitNamedType(const peg::ast_node& namedType);
@@ -167,17 +169,18 @@ private:
 
 // ValidateExecutableVisitor visits the AST and validates that it is executable against the service
 // schema.
-class [[nodiscard]] ValidateExecutableVisitor
+class [[nodiscard("unnecessary construction")]] ValidateExecutableVisitor
 {
 public:
 	GRAPHQLSERVICE_EXPORT ValidateExecutableVisitor(std::shared_ptr<schema::Schema> schema);
 
 	GRAPHQLSERVICE_EXPORT void visit(const peg::ast_node& root);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard]] std::list<schema_error> getStructuredErrors();
+	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary construction")]] std::list<schema_error>
+	getStructuredErrors();
 
 private:
-	[[nodiscard]] static ValidateTypeFieldArguments getArguments(
+	[[nodiscard("unnecessary call")]] static ValidateTypeFieldArguments getArguments(
 		const std::vector<std::shared_ptr<const schema::InputValue>>& args);
 
 	using FieldTypes = internal::string_view_map<ValidateTypeField>;
@@ -186,22 +189,24 @@ private:
 	using InputTypeFields = internal::string_view_map<InputFieldTypes>;
 	using EnumValues = internal::string_view_map<internal::string_view_set>;
 
-	[[nodiscard]] constexpr bool isScalarType(introspection::TypeKind kind);
+	[[nodiscard("unnecessary call")]] constexpr bool isScalarType(introspection::TypeKind kind);
 
-	[[nodiscard]] bool matchesScopedType(std::string_view name) const;
+	[[nodiscard("unnecessary call")]] bool matchesScopedType(std::string_view name) const;
 
-	[[nodiscard]] TypeFields::const_iterator getScopedTypeFields();
-	[[nodiscard]] InputTypeFields::const_iterator getInputTypeFields(std::string_view name);
-	[[nodiscard]] static const ValidateType& getValidateFieldType(
+	[[nodiscard("unnecessary call")]] TypeFields::const_iterator getScopedTypeFields();
+	[[nodiscard("unnecessary call")]] InputTypeFields::const_iterator getInputTypeFields(
+		std::string_view name);
+	[[nodiscard("unnecessary call")]] static const ValidateType& getValidateFieldType(
 		const FieldTypes::mapped_type& value);
-	[[nodiscard]] static const ValidateType& getValidateFieldType(
+	[[nodiscard("unnecessary call")]] static const ValidateType& getValidateFieldType(
 		const InputFieldTypes::mapped_type& value);
 	template <class _FieldTypes>
-	[[nodiscard]] static ValidateType getFieldType(
-		const _FieldTypes& fields, std::string_view name);
+	[[nodiscard("unnecessary call")]] static ValidateType getFieldType(const _FieldTypes& fields,
+		std::string_view name);
 	template <class _FieldTypes>
-	[[nodiscard]] static ValidateType getWrappedFieldType(
-		const _FieldTypes& fields, std::string_view name);
+	[[nodiscard("unnecessary call")]] static ValidateType getWrappedFieldType(
+		const _FieldTypes& fields,
+		std::string_view name);
 
 	void visitFragmentDefinition(const peg::ast_node& fragmentDefinition);
 	void visitOperationDefinition(const peg::ast_node& operationDefinition);
@@ -212,13 +217,16 @@ private:
 	void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 	void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-	void visitDirectives(
-		introspection::DirectiveLocation location, const peg::ast_node& directives);
+	void visitDirectives(introspection::DirectiveLocation location,
+		const peg::ast_node& directives);
 
-	[[nodiscard]] bool validateInputValue(bool hasNonNullDefaultValue,
-		const ValidateArgumentValuePtr& argument, const ValidateType& type);
-	[[nodiscard]] bool validateVariableType(bool isNonNull, const ValidateType& variableType,
-		const schema_location& position, const ValidateType& inputType);
+	[[nodiscard("unnecessary call")]] bool validateInputValue(bool hasNonNullDefaultValue,
+		const ValidateArgumentValuePtr& argument,
+		const ValidateType& type);
+	[[nodiscard("unnecessary call")]] bool validateVariableType(bool isNonNull,
+		const ValidateType& variableType,
+		const schema_location& position,
+		const ValidateType& inputType);
 
 	const std::shared_ptr<schema::Schema> _schema;
 	std::list<schema_error> _errors;

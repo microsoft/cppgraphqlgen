@@ -58,28 +58,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::HumanHas
 
-class [[nodiscard]] Human final
+class [[nodiscard("unnecessary construction")]] Human final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolvePets(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolvePets(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -87,7 +87,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::string> getName(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::HumanHas::getNameWithParams<T>)
 			{
@@ -99,11 +99,11 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Human::getName is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Human::getName)ex");
 			}
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::vector<std::shared_ptr<Pet>>> getPets(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::HumanHas::getPetsWithParams<T>)
 			{
@@ -115,7 +115,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(Human::getPets is not implemented)ex");
+				throw service::unimplemented_method(R"ex(Human::getPets)ex");
 			}
 		}
 
@@ -149,13 +149,13 @@ private:
 	friend HumanOrAlien;
 
 	template <class I>
-	[[nodiscard]] static constexpr bool implements() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr bool implements() noexcept
 	{
 		return implements::HumanIs<I>;
 	}
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -169,7 +169,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(Human)gql" };
 	}

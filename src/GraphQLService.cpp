@@ -163,6 +163,22 @@ response::Value schema_exception::getErrors()
 	return buildErrorValues(std::move(_structuredErrors));
 }
 
+unimplemented_method::unimplemented_method(std::string_view methodName)
+	: std::runtime_error { getMessage(methodName) }
+{
+}
+
+std::string unimplemented_method::getMessage(std::string_view methodName) noexcept
+{
+	using namespace std::literals;
+
+	std::ostringstream oss;
+
+	oss << methodName << R"ex( is not implemented)ex"sv;
+
+	return oss.str();
+}
+
 void await_worker_thread::await_suspend(coro::coroutine_handle<> h) const
 {
 	std::thread(
@@ -216,7 +232,9 @@ void await_worker_queue::resumePending()
 			return _shutdown || !_pending.empty();
 		});
 
-		auto pending = std::move(_pending);
+		std::list<coro::coroutine_handle<>> pending;
+
+		std::swap(pending, _pending);
 
 		lock.unlock();
 
@@ -500,12 +518,11 @@ bool DirectiveVisitor::shouldSkip() const
 		std::make_pair(false, R"gql(include)gql"sv),
 	};
 
-	for (const auto& entry : c_skippedDirectives)
+	for (const auto& [skip, directiveName] : c_skippedDirectives)
 	{
-		const bool skip = entry.first;
 		auto itrDirective = std::find_if(_directives.cbegin(),
 			_directives.cend(),
-			[directiveName = entry.second](const auto& directive) noexcept {
+			[directiveName = directiveName](const auto& directive) noexcept {
 				return directive.first == directiveName;
 			});
 
@@ -520,7 +537,7 @@ bool DirectiveVisitor::shouldSkip() const
 		{
 			std::ostringstream error;
 
-			error << "Invalid arguments to directive: " << entry.second;
+			error << "Invalid arguments to directive: " << directiveName;
 
 			throw schema_exception { { error.str() } };
 		}
@@ -528,20 +545,20 @@ bool DirectiveVisitor::shouldSkip() const
 		bool argumentTrue = false;
 		bool argumentFalse = false;
 
-		for (auto& argument : arguments)
+		for (auto& [argumentName, argumentValue] : arguments)
 		{
-			if (argumentTrue || argumentFalse || argument.second.type() != response::Type::Boolean
-				|| argument.first != "if")
+			if (argumentTrue || argumentFalse || argumentValue.type() != response::Type::Boolean
+				|| argumentName != "if")
 			{
 				std::ostringstream error;
 
-				error << "Invalid argument to directive: " << entry.second
-					  << " name: " << argument.first;
+				error << "Invalid argument to directive: " << directiveName
+					  << " name: " << argumentName;
 
 				throw schema_exception { { error.str() } };
 			}
 
-			argumentTrue = argument.second.get<bool>();
+			argumentTrue = argumentValue.get<bool>();
 			argumentFalse = !argumentTrue;
 		}
 
@@ -557,7 +574,7 @@ bool DirectiveVisitor::shouldSkip() const
 		{
 			std::ostringstream error;
 
-			error << "Missing argument directive: " << entry.second << " name: if";
+			error << "Missing argument directive: " << directiveName << " name: if";
 
 			throw schema_exception { { error.str() } };
 		}
@@ -1296,10 +1313,12 @@ bool Object::matchesType(std::string_view typeName) const
 
 void Object::beginSelectionSet(const SelectionSetParams&) const
 {
+	// This virtual method may be overridden in a sub-class.
 }
 
 void Object::endSelectionSet(const SelectionSetParams&) const
 {
+	// This virtual method may be overridden in a sub-class.
 }
 
 OperationData::OperationData(std::shared_ptr<RequestState> state, response::Value variables,
@@ -1774,9 +1793,10 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 			});
 
 		auto fragments = fragmentVisitor.getFragments();
-		auto operationDefinition = findOperationDefinition(params.query, params.operationName);
+		auto [operationType, operationDefinition] =
+			findOperationDefinition(params.query, params.operationName);
 
-		if (!operationDefinition.second)
+		if (!operationDefinition)
 		{
 			std::ostringstream message;
 
@@ -1789,9 +1809,9 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 
 			throw schema_exception { { message.str() } };
 		}
-		else if (operationDefinition.first == strSubscription)
+		else if (operationType == strSubscription)
 		{
-			auto position = operationDefinition.second->begin();
+			auto position = operationDefinition->begin();
 			std::ostringstream message;
 
 			message << "Unexpected subscription";
@@ -1806,7 +1826,7 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 			};
 		}
 
-		const bool isMutation = (operationDefinition.first == strMutation);
+		const bool isMutation = (operationType == strMutation);
 		const auto resolverContext =
 			isMutation ? ResolverContext::Mutation : ResolverContext::Query;
 		// https://spec.graphql.org/October2021/#sec-Normal-and-Serial-Execution
@@ -1820,7 +1840,7 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 			std::move(fragments));
 
 		co_await params.launch;
-		operationVisitor.visit(operationDefinition.first, *operationDefinition.second);
+		operationVisitor.visit(operationType, *operationDefinition);
 
 		auto result = co_await operationVisitor.getValue();
 		response::Value document { response::Type::Map };
@@ -2051,9 +2071,10 @@ SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 		});
 
 	auto fragments = fragmentVisitor.getFragments();
-	auto operationDefinition = findOperationDefinition(params.query, params.operationName);
+	auto [operationType, operationDefinition] =
+		findOperationDefinition(params.query, params.operationName);
 
-	if (!operationDefinition.second)
+	if (!operationDefinition)
 	{
 		std::ostringstream message;
 
@@ -2066,12 +2087,12 @@ SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 
 		throw schema_exception { { message.str() } };
 	}
-	else if (operationDefinition.first != strSubscription)
+	else if (operationType != strSubscription)
 	{
-		auto position = operationDefinition.second->begin();
+		auto position = operationDefinition->begin();
 		std::ostringstream message;
 
-		message << "Unexpected operation type: " << operationDefinition.first;
+		message << "Unexpected operation type: " << operationType;
 
 		if (!params.operationName.empty())
 		{

@@ -157,7 +157,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			if (!_loader.isIntrospection())
 			{
-				headerFile << R"cpp([[nodiscard]] )cpp";
+				headerFile << R"cpp([[nodiscard("unnecessary conversion")]] )cpp";
 			}
 
 			headerFile << enumType.cppType << R"cpp(
@@ -182,8 +182,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-			headerFile << R"cpp([[nodiscard]] constexpr auto get)cpp" << enumType.cppType
-					   << R"cpp(Names() noexcept
+			headerFile << R"cpp([[nodiscard("unnecessary call")]] constexpr auto get)cpp"
+					   << enumType.cppType << R"cpp(Names() noexcept
 {
 	using namespace std::literals;
 
@@ -209,7 +209,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	};
 }
 
-[[nodiscard]] constexpr auto get)cpp"
+[[nodiscard("unnecessary call")]] constexpr auto get)cpp"
 					   << enumType.cppType << R"cpp(Values() noexcept
 {
 	using namespace std::literals;
@@ -235,7 +235,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 			firstValue = true;
 
-			for (const auto& value : sortedValues)
+			for (const auto& [enumName, enumValue] : sortedValues)
 			{
 				if (!firstValue)
 				{
@@ -244,9 +244,9 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				}
 
 				firstValue = false;
-				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << value.first
-						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp"
-						   << value.second << R"cpp())cpp";
+				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << enumName
+						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp" << enumValue
+						   << R"cpp())cpp";
 			}
 
 			headerFile << R"cpp(
@@ -286,7 +286,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				pendingSeparator.reset();
 			}
 
-			headerFile << R"cpp(struct [[nodiscard]] )cpp" << inputType.cppType << R"cpp(
+			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
+					   << inputType.cppType << R"cpp(
 {
 	)cpp" << introspectionExport
 					   << R"cpp(explicit )cpp" << inputType.cppType << R"cpp(()cpp";
@@ -428,7 +429,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		bool hasSubscription = false;
 		bool firstOperation = true;
 
-		headerFile << R"cpp(class [[nodiscard]] Operations final
+		headerFile << R"cpp(class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:
@@ -666,23 +667,23 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 void Generator::outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const
 {
 	headerFile
-		<< R"cpp(class [[nodiscard]] )cpp" << cppType << R"cpp( final
+		<< R"cpp(class [[nodiscard("unnecessary construction")]] )cpp" << cppType << R"cpp( final
 	: public service::Object
 {
 private:
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual service::TypeNames getTypeNames() const noexcept = 0;
-		[[nodiscard]] virtual service::ResolverMap getResolvers() const noexcept = 0;
+		[[nodiscard("unnecessary call")]] virtual service::TypeNames getTypeNames() const noexcept = 0;
+		[[nodiscard("unnecessary call")]] virtual service::ResolverMap getResolvers() const noexcept = 0;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -690,12 +691,12 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::TypeNames getTypeNames() const noexcept override
+		[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept override
 		{
 			return _pimpl->getTypeNames();
 		}
 
-		[[nodiscard]] service::ResolverMap getResolvers() const noexcept override
+		[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept override
 		{
 			return _pimpl->getResolvers();
 		}
@@ -752,7 +753,7 @@ concept )cpp" << objectType.cppType
 			headerFile << R"cpp( || )cpp";
 		}
 
-		headerFile << R"cpp(std::is_same_v<I, )cpp" << _loader.getSafeCppName(interfaceName)
+		headerFile << R"cpp(std::is_same_v<I, )cpp" << SchemaLoader::getSafeCppName(interfaceName)
 				   << R"cpp(>)cpp";
 		firstInterface = false;
 	}
@@ -764,7 +765,7 @@ concept )cpp" << objectType.cppType
 			headerFile << R"cpp( || )cpp";
 		}
 
-		headerFile << R"cpp(std::is_same_v<I, )cpp" << _loader.getSafeCppName(unionName)
+		headerFile << R"cpp(std::is_same_v<I, )cpp" << SchemaLoader::getSafeCppName(unionName)
 				   << R"cpp(>)cpp";
 		firstInterface = false;
 	}
@@ -861,7 +862,8 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 void Generator::outputObjectDeclaration(
 	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
 {
-	headerFile << R"cpp(class [[nodiscard]] )cpp" << objectType.cppType << R"cpp( final
+	headerFile << R"cpp(class [[nodiscard("unnecessary construction")]] )cpp" << objectType.cppType
+			   << R"cpp( final
 	: public service::Object
 {
 private:
@@ -873,21 +875,21 @@ private:
 	}
 
 	headerFile << R"cpp(
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 )cpp";
 
 	if (!_options.noIntrospection && isQueryType)
 	{
 		headerFile
-			<< R"cpp(	[[nodiscard]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
+			<< R"cpp(	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_schema(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_type(service::ResolverParams&& params) const;
 
 	std::shared_ptr<schema::Schema> _schema;
 )cpp";
 	}
 
 	headerFile << R"cpp(
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
@@ -910,7 +912,7 @@ private:
 	headerFile << R"cpp(	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -924,7 +926,7 @@ private:
 		const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
 		headerFile << R"cpp(
-		[[nodiscard]] )cpp"
+		[[nodiscard("unnecessary call")]] )cpp"
 				   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << accessorName
 				   << R"cpp(()cpp";
 
@@ -1028,9 +1030,8 @@ private:
 				headerFile << R"cpp(
 			else
 			{
-				throw std::runtime_error(R"ex()cpp"
-						   << objectType.cppType << R"cpp(::)cpp" << accessorName
-						   << R"cpp( is not implemented)ex");
+				throw service::unimplemented_method(R"ex()cpp"
+						   << objectType.cppType << R"cpp(::)cpp" << accessorName << R"cpp()ex");
 			})cpp";
 			}
 		}
@@ -1074,8 +1075,8 @@ private:
 	{
 		headerFile << R"cpp(	const std::unique_ptr<const Concept> _pimpl;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT explicit )cpp"
@@ -1101,7 +1102,7 @@ public:
 
 			for (auto interfaceName : objectType.interfaces)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(interfaceName)
+				headerFile << R"cpp(	friend )cpp" << SchemaLoader::getSafeCppName(interfaceName)
 						   << R"cpp(;
 )cpp";
 			}
@@ -1116,7 +1117,7 @@ public:
 
 			for (auto unionName : objectType.unions)
 			{
-				headerFile << R"cpp(	friend )cpp" << _loader.getSafeCppName(unionName)
+				headerFile << R"cpp(	friend )cpp" << SchemaLoader::getSafeCppName(unionName)
 						   << R"cpp(;
 )cpp";
 			}
@@ -1128,7 +1129,7 @@ public:
 		{
 
 			headerFile << R"cpp(	template <class I>
-	[[nodiscard]] static constexpr bool implements() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr bool implements() noexcept
 	{
 		return implements::)cpp"
 					   << objectType.cppType << R"cpp(Is<I>;
@@ -1138,8 +1139,8 @@ public:
 		}
 
 		headerFile
-			<< R"cpp(	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+			<< R"cpp(	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -1156,7 +1157,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql()cpp"
 			<< objectType.type << R"cpp()gql" };
@@ -1182,8 +1183,8 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::ostringstream output;
 	const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
 
-	output << R"cpp(		[[nodiscard]] virtual )cpp" << _loader.getOutputCppType(outputField)
-		   << R"cpp( )cpp" << accessorName << R"cpp(()cpp";
+	output << R"cpp(		[[nodiscard("unnecessary call")]] virtual )cpp"
+		   << _loader.getOutputCppType(outputField) << R"cpp( )cpp" << accessorName << R"cpp(()cpp";
 
 	bool firstArgument = _loader.isIntrospection();
 
@@ -1214,8 +1215,8 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 	std::ostringstream output;
 	const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 
-	output << R"cpp(	[[nodiscard]] service::AwaitableResolver )cpp" << resolverName
-		   << R"cpp((service::ResolverParams&& params) const;
+	output << R"cpp(	[[nodiscard("unnecessary call")]] service::AwaitableResolver )cpp"
+		   << resolverName << R"cpp((service::ResolverParams&& params) const;
 )cpp";
 
 	return output.str();
@@ -1481,6 +1482,7 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 		sourceFile << std::endl
 				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(() noexcept
 {
+	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << inputType.cppType
@@ -1590,6 +1592,12 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 }
 
 )cpp" << inputType.cppType
+				   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+)cpp" << inputType.cppType
 				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=(const )cpp"
 				   << inputType.cppType << R"cpp(& other)
 {
@@ -1616,11 +1624,6 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 
 		sourceFile << R"cpp(
 	return *this;
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
-{
 }
 )cpp";
 	}
@@ -1708,10 +1711,10 @@ Operations::Operations()cpp";
 	if (_loader.isIntrospection())
 	{
 		// Add SCALAR types for each of the built-in types
-		for (const auto& builtinType : SchemaLoader::getBuiltinTypes())
+		for (const auto& [typeName, builtinType] : SchemaLoader::getBuiltinTypes())
 		{
-			sourceFile << R"cpp(	schema->AddType(R"gql()cpp" << builtinType.first
-					   << R"cpp()gql"sv, schema::ScalarType::Make(R"gql()cpp" << builtinType.first
+			sourceFile << R"cpp(	schema->AddType(R"gql()cpp" << typeName
+					   << R"cpp()gql"sv, schema::ScalarType::Make(R"gql()cpp" << typeName
 					   << R"cpp()gql"sv, R"md()cpp";
 
 			if (!_options.noIntrospection)
@@ -1723,8 +1726,7 @@ Operations::Operations()cpp";
 
 			if (!_options.noIntrospection)
 			{
-				sourceFile << R"cpp(https://spec.graphql.org/October2021/#sec-)cpp"
-						   << builtinType.first;
+				sourceFile << R"cpp(https://spec.graphql.org/October2021/#sec-)cpp" << typeName;
 			}
 
 			sourceFile << R"cpp()url"sv));
@@ -2314,7 +2316,7 @@ service::ResolverMap )cpp"
 
 	bool firstField = true;
 
-	for (const auto& resolver : resolvers)
+	for (const auto& [fieldName, resolver] : resolvers)
 	{
 		if (!firstField)
 		{
@@ -2323,7 +2325,7 @@ service::ResolverMap )cpp"
 		}
 
 		firstField = false;
-		sourceFile << resolver.second;
+		sourceFile << resolver;
 	}
 
 	sourceFile << R"cpp(
@@ -2646,10 +2648,10 @@ std::string Generator::getArgumentDefaultValue(
 
 )cpp";
 
-			for (const auto& entry : members)
+			for (const auto& [memberName, memberDefault] : members)
 			{
-				argumentDefaultValue << getArgumentDefaultValue(level + 1, entry.second) << padding
-									 << R"cpp(			members.emplace_back(")cpp" << entry.first
+				argumentDefaultValue << getArgumentDefaultValue(level + 1, memberDefault) << padding
+									 << R"cpp(			members.emplace_back(")cpp" << memberName
 									 << R"cpp(", std::move(entry));
 )cpp";
 			}
@@ -3239,7 +3241,8 @@ using namespace std::literals;
 						if (includedObjects.insert(field.type).second)
 						{
 							sourceFile << R"cpp(#include ")cpp"
-									   << _loader.getSafeCppName(field.type) << R"cpp(Object.h"
+									   << SchemaLoader::getSafeCppName(field.type)
+									   << R"cpp(Object.h"
 )cpp";
 						}
 						break;

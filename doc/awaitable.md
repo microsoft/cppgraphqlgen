@@ -8,14 +8,14 @@ specifically a type-erased `graphql::service::await_async` class in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
 // Type-erased awaitable.
-class [[nodiscard]] await_async final
+class [[nodiscard("unnecessary construction")]] await_async final
 {
 private:
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual bool await_ready() const = 0;
+		[[nodiscard("unexpected call")]] virtual bool await_ready() const = 0;
 		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
 		virtual void await_resume() const = 0;
 	};
@@ -71,7 +71,7 @@ Many APIs which used to return some sort of `std::future` now return an alias fo
 `graphql::internal::Awaitable<...>`. This template is defined in [Awaitable.h](../include/graphqlservice/internal/Awaitable.h):
 ```cpp
 template <typename T>
-class [[nodiscard]] Awaitable
+class [[nodiscard("unnecessary construction")]] Awaitable
 {
 public:
 	Awaitable(std::future<T> value)
@@ -79,14 +79,14 @@ public:
 	{
 	}
 
-	[[nodiscard]] T get()
+	[[nodiscard("unnecessary construction")]] T get()
 	{
 		return _value.get();
 	}
 
 	struct promise_type
 	{
-		[[nodiscard]] Awaitable get_return_object() noexcept
+		[[nodiscard("unnecessary construction")]] Awaitable get_return_object() noexcept
 		{
 			return { _promise.get_future() };
 		}
@@ -105,7 +105,7 @@ public:
 
 	};
 
-	[[nodiscard]] constexpr bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
 		return true;
 	}
@@ -115,7 +115,7 @@ public:
 		h.resume();
 	}
 
-	[[nodiscard]] T await_resume()
+	[[nodiscard("unnecessary construction")]] T await_resume()
 	{
 		return _value.get();
 	}

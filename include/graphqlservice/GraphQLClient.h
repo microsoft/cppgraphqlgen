@@ -32,7 +32,7 @@
 namespace graphql::client {
 
 // Errors may specify the line number and column number where the error occurred.
-struct [[nodiscard]] ErrorLocation
+struct [[nodiscard("unnecessary construction")]] ErrorLocation
 {
 	int line {};
 	int column {};
@@ -43,7 +43,7 @@ struct [[nodiscard]] ErrorLocation
 using ErrorPathSegment = std::variant<std::string, int>;
 
 // Error returned from the service.
-struct [[nodiscard]] Error
+struct [[nodiscard("unnecessary construction")]] Error
 {
 	std::string message;
 	std::vector<ErrorLocation> locations;
@@ -52,19 +52,20 @@ struct [[nodiscard]] Error
 
 // Complete response from the service, split into the unparsed graphql::response::Value in
 // data and the (typically empty) collection of Errors in errors.
-struct [[nodiscard]] ServiceResponse
+struct [[nodiscard("unnecessary construction")]] ServiceResponse
 {
 	response::Value data;
 	std::vector<Error> errors;
 };
 
 // Split a service response into separate ServiceResponse data and errors members.
-GRAPHQLCLIENT_EXPORT [[nodiscard]] ServiceResponse parseServiceResponse(response::Value response);
+GRAPHQLCLIENT_EXPORT [[nodiscard("unnecessary conversion")]] ServiceResponse parseServiceResponse(
+	response::Value response);
 
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
 // Since nullability is a more special case in C++, we invert the default and apply that modifier
 // instead when the non-null wrapper is not present in that part of the wrapper chain.
-enum class [[nodiscard]] TypeModifier {
+enum class [[nodiscard("unnecessary conversion")]] TypeModifier {
 	None,
 	Nullable,
 	List,
@@ -75,7 +76,7 @@ template <typename Type>
 struct Variable
 {
 	// Serialize a single value to the variables document.
-	[[nodiscard]] static response::Value serialize(Type&& value);
+	[[nodiscard("unnecessary conversion")]] static response::Value serialize(Type&& value);
 };
 
 #ifdef GRAPHQL_DLLEXPORTS
@@ -99,12 +100,13 @@ namespace {
 
 // These types are used as scalar variables even though they are represented with a class.
 template <typename Type>
-concept ScalarVariableClass = std::is_same_v<Type, std::string> || std::is_same_v<Type,
-	response::IdType> || std::is_same_v<Type, response::Value>;
+concept ScalarVariableClass = std::is_same_v<Type, std::string>
+	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>;
 
 // Any non-scalar class used in a variable is a generated INPUT_OBJECT type.
 template <typename Type>
-concept InputVariableClass = std::is_class_v<Type> && !ScalarVariableClass<Type>;
+concept InputVariableClass = std::is_class_v<Type> && !
+ScalarVariableClass<Type>;
 
 // Test if there are any non-None modifiers left.
 template <TypeModifier... Other>
@@ -112,11 +114,13 @@ concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Test if the next modifier is Nullable.
 template <TypeModifier Modifier>
-concept NullableModifier = Modifier == TypeModifier::Nullable;
+concept NullableModifier = Modifier ==
+TypeModifier::Nullable;
 
 // Test if the next modifier is List.
 template <TypeModifier Modifier>
-concept ListModifier = Modifier == TypeModifier::List;
+concept ListModifier = Modifier ==
+TypeModifier::List;
 
 // Special-case an innermost nullable INPUT_OBJECT type.
 template <typename Type, TypeModifier... Other>
@@ -146,8 +150,8 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static response::Value serialize(
-		Type&& value) requires OnlyNoneModifiers<Modifier, Other...>
+	[[nodiscard("unnecessary conversion")]] static response::Value serialize(Type&& value)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just call through to the non-template method without the modifiers.
 		return Variable<Type>::serialize(std::move(value));
@@ -155,9 +159,9 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static response::Value serialize(
-		typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue) requires
-		NullableModifier<Modifier>
+	[[nodiscard("unnecessary conversion")]] static response::Value serialize(
+		typename VariableTraits<Type, Modifier, Other...>::type&& nullableValue)
+		requires NullableModifier<Modifier>
 	{
 		response::Value result;
 
@@ -172,9 +176,9 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static response::Value serialize(
-		typename VariableTraits<Type, Modifier, Other...>::type&& listValue) requires
-		ListModifier<Modifier>
+	[[nodiscard("unnecessary conversion")]] static response::Value serialize(
+		typename VariableTraits<Type, Modifier, Other...>::type&& listValue)
+		requires ListModifier<Modifier>
 	{
 		response::Value result { response::Type::List };
 
@@ -189,8 +193,8 @@ struct ModifiedVariable
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type duplicate(
-		const Type& value) requires OnlyNoneModifiers<Modifier, Other...>
+	[[nodiscard("unnecessary memory copy")]] static Type duplicate(const Type& value)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		// Just copy the value.
 		return Type { value };
@@ -198,9 +202,10 @@ struct ModifiedVariable
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename VariableTraits<Type, Modifier, Other...>::type duplicate(
-		const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue) requires
-		NullableModifier<Modifier>
+	[[nodiscard("unnecessary memory copy")]] static
+		typename VariableTraits<Type, Modifier, Other...>::type
+		duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& nullableValue)
+		requires NullableModifier<Modifier>
 	{
 		typename VariableTraits<Type, Modifier, Other...>::type result {};
 
@@ -222,9 +227,10 @@ struct ModifiedVariable
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static typename VariableTraits<Type, Modifier, Other...>::type duplicate(
-		const typename VariableTraits<Type, Modifier, Other...>::type& listValue) requires
-		ListModifier<Modifier>
+	[[nodiscard("unnecessary memory copy")]] static
+		typename VariableTraits<Type, Modifier, Other...>::type
+		duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& listValue)
+		requires ListModifier<Modifier>
 	{
 		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
 
@@ -252,7 +258,7 @@ template <typename Type>
 struct Response
 {
 	// Parse a single value of the response document.
-	[[nodiscard]] static Type parse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Type parse(response::Value&& response);
 };
 
 #ifdef GRAPHQL_DLLEXPORTS
@@ -296,16 +302,18 @@ struct ModifiedResponse
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
-	[[nodiscard]] static Type parse(
-		response::Value&& response) requires OnlyNoneModifiers<Modifier, Other...>
+	[[nodiscard("unnecessary conversion")]] static Type parse(response::Value&& response)
+		requires OnlyNoneModifiers<Modifier, Other...>
 	{
 		return Response<Type>::parse(std::move(response));
 	}
 
 	// Peel off nullable modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static std::optional<typename ResponseTraits<Type, Other...>::type> parse(
-		response::Value&& response) requires NullableModifier<Modifier>
+	[[nodiscard("unnecessary conversion")]] static std::optional<
+		typename ResponseTraits<Type, Other...>::type>
+	parse(response::Value&& response)
+		requires NullableModifier<Modifier>
 	{
 		if (response.type() == response::Type::Null)
 		{
@@ -318,8 +326,10 @@ struct ModifiedResponse
 
 	// Peel off list modifiers.
 	template <TypeModifier Modifier, TypeModifier... Other>
-	[[nodiscard]] static std::vector<typename ResponseTraits<Type, Other...>::type> parse(
-		response::Value&& response) requires ListModifier<Modifier>
+	[[nodiscard("unnecessary conversion")]] static std::vector<
+		typename ResponseTraits<Type, Other...>::type>
+	parse(response::Value&& response)
+		requires ListModifier<Modifier>
 	{
 		std::vector<typename ResponseTraits<Type, Other...>::type> result;
 

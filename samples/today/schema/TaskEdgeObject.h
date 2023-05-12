@@ -51,28 +51,28 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 
 } // namespace methods::TaskEdgeHas
 
-class [[nodiscard]] TaskEdge final
+class [[nodiscard("unnecessary construction")]] TaskEdge final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveCursor(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveNode(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveCursor(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -80,7 +80,7 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Task>> getNode(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::TaskEdgeHas::getNodeWithParams<T>)
 			{
@@ -92,11 +92,11 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(TaskEdge::getNode is not implemented)ex");
+				throw service::unimplemented_method(R"ex(TaskEdge::getNode)ex");
 			}
 		}
 
-		[[nodiscard]] service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<response::Value> getCursor(service::FieldParams&& params) const override
 		{
 			if constexpr (methods::TaskEdgeHas::getCursorWithParams<T>)
 			{
@@ -108,7 +108,7 @@ private:
 			}
 			else
 			{
-				throw std::runtime_error(R"ex(TaskEdge::getCursor is not implemented)ex");
+				throw service::unimplemented_method(R"ex(TaskEdge::getCursor)ex");
 			}
 		}
 
@@ -134,8 +134,8 @@ private:
 
 	explicit TaskEdge(std::unique_ptr<const Concept> pimpl) noexcept;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 	void beginSelectionSet(const service::SelectionSetParams& params) const override;
 	void endSelectionSet(const service::SelectionSetParams& params) const override;
@@ -149,7 +149,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static constexpr std::string_view getObjectType() noexcept
+	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
 		return { R"gql(TaskEdge)gql" };
 	}

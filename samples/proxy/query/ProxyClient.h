@@ -38,10 +38,10 @@ namespace graphql::client {
 namespace proxy {
 
 // Return the original text of the request document.
-[[nodiscard]] const std::string& GetRequestText() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
-[[nodiscard]] const peg::ast& GetRequestObject() noexcept;
+[[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
 } // namespace proxy
 
@@ -51,37 +51,37 @@ using proxy::GetRequestText;
 using proxy::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
-[[nodiscard]] const std::string& GetOperationName() noexcept;
+[[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-struct [[nodiscard]] Variables
+struct [[nodiscard("unnecessary construction")]] Variables
 {
 	std::string query {};
 	std::optional<std::string> operationName {};
 	std::optional<std::string> variables {};
 };
 
-[[nodiscard]] response::Value serializeVariables(Variables&& variables);
+[[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 
-struct [[nodiscard]] Response
+struct [[nodiscard("unnecessary construction")]] Response
 {
 	std::optional<std::string> relay {};
 };
 
-[[nodiscard]] Response parseResponse(response::Value&& response);
+[[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
 {
-	[[nodiscard]] static const std::string& GetRequestText() noexcept;
-	[[nodiscard]] static const peg::ast& GetRequestObject() noexcept;
-	[[nodiscard]] static const std::string& GetOperationName() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetRequestText() noexcept;
+	[[nodiscard("unnecessary call")]] static const peg::ast& GetRequestObject() noexcept;
+	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Variables = relayQuery::Variables;
 
-	[[nodiscard]] static response::Value serializeVariables(Variables&& variables);
+	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = relayQuery::Response;
 
-	[[nodiscard]] static Response parseResponse(response::Value&& response);
+	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::relayQuery

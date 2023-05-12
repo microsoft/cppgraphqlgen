@@ -12,29 +12,29 @@
 
 namespace graphql::introspection::object {
 
-class [[nodiscard]] EnumValue final
+class [[nodiscard("unnecessary construction")]] EnumValue final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveIsDeprecated(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDeprecationReason(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName() const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<bool> getIsDeprecated() const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::string> getName() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<bool> getIsDeprecated() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::string> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<bool> getIsDeprecated() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<bool> getIsDeprecated() const override
 		{
 			return { _pimpl->getIsDeprecated() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getDeprecationReason() const override
 		{
 			return { _pimpl->getDeprecationReason() };
 		}
@@ -68,8 +68,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT explicit EnumValue(std::shared_ptr<introspection::EnumValue> pimpl) noexcept;

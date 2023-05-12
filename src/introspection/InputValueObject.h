@@ -12,29 +12,29 @@
 
 namespace graphql::introspection::object {
 
-class [[nodiscard]] InputValue final
+class [[nodiscard("unnecessary construction")]] InputValue final
 	: public service::Object
 {
 private:
-	[[nodiscard]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
-	[[nodiscard]] service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveName(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDescription(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveType(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveDefaultValue(service::ResolverParams&& params) const;
 
-	[[nodiscard]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
-	struct [[nodiscard]] Concept
+	struct [[nodiscard("unnecessary construction")]] Concept
 	{
 		virtual ~Concept() = default;
 
-		[[nodiscard]] virtual service::AwaitableScalar<std::string> getName() const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
-		[[nodiscard]] virtual service::AwaitableObject<std::shared_ptr<Type>> getType() const = 0;
-		[[nodiscard]] virtual service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::string> getName() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getDescription() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Type>> getType() const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const = 0;
 	};
 
 	template <class T>
-	struct [[nodiscard]] Model final
+	struct [[nodiscard("unnecessary construction")]] Model final
 		: Concept
 	{
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
@@ -42,22 +42,22 @@ private:
 		{
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::string> getName() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::string> getName() const override
 		{
 			return { _pimpl->getName() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getDescription() const override
 		{
 			return { _pimpl->getDescription() };
 		}
 
-		[[nodiscard]] service::AwaitableObject<std::shared_ptr<Type>> getType() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Type>> getType() const override
 		{
 			return { _pimpl->getType() };
 		}
 
-		[[nodiscard]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const override
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getDefaultValue() const override
 		{
 			return { _pimpl->getDefaultValue() };
 		}
@@ -68,8 +68,8 @@ private:
 
 	const std::unique_ptr<const Concept> _pimpl;
 
-	[[nodiscard]] service::TypeNames getTypeNames() const noexcept;
-	[[nodiscard]] service::ResolverMap getResolvers() const noexcept;
+	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
+	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
 
 public:
 	GRAPHQLSERVICE_EXPORT explicit InputValue(std::shared_ptr<introspection::InputValue> pimpl) noexcept;
