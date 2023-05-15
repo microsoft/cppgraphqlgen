@@ -29,5 +29,6 @@ The following functions are defined to help with code generation and build targe
 
 include(CMakeFindDependencyMacro)
 find_package(Threads REQUIRED)
+find_package(PEGTL CONFIG REQUIRED)
 include("${CMAKE_CURRENT_LIST_DIR}/cppgraphqlgen-targets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cppgraphqlgen-functions.cmake")
