@@ -1494,8 +1494,8 @@ public:
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::list<schema_error> validate(
 		peg::ast& query) const;
 
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] std::pair<std::string_view, const peg::ast_node*>
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::pair<std::string_view,
+		const peg::ast_node*>
 	findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
