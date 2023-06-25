@@ -37,39 +37,35 @@ class EnumValue;
 class [[nodiscard("unnecessary construction")]] Schema : public std::enable_shared_from_this<Schema>
 {
 public:
-	GRAPHQLSERVICE_EXPORT explicit Schema(bool noIntrospection = false,
-		std::string_view description = "");
+	GRAPHQLSERVICE_EXPORT explicit Schema(
+		bool noIntrospection = false, std::string_view description = "");
 
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
 	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
 	GRAPHQLSERVICE_EXPORT void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
 	GRAPHQLSERVICE_EXPORT void AddType(std::string_view name, std::shared_ptr<BaseType> type);
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] const std::shared_ptr<const BaseType>& LookupType(
-		std::string_view name) const;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::shared_ptr<const BaseType>
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::shared_ptr<const BaseType>&
+	LookupType(std::string_view name) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<const BaseType>
 	WrapType(introspection::TypeKind kind, std::shared_ptr<const BaseType> ofType);
 	GRAPHQLSERVICE_EXPORT void AddDirective(std::shared_ptr<Directive> directive);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] bool supportsIntrospection()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT bool supportsIntrospection()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::vector<
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
 		std::pair<std::string_view, std::shared_ptr<const BaseType>>>&
 	types() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] const std::shared_ptr<const ObjectType>& queryType()
-		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] const std::shared_ptr<const ObjectType>& mutationType()
-		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] const std::shared_ptr<const ObjectType>& subscriptionType()
-		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const Directive>>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::shared_ptr<const ObjectType>&
+	queryType() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::shared_ptr<const ObjectType>&
+	mutationType() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::shared_ptr<const ObjectType>&
+	subscriptionType() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const Directive>>&
 	directives() const noexcept;
 
 private:
@@ -97,32 +93,31 @@ public:
 	GRAPHQLSERVICE_EXPORT virtual ~BaseType() = default;
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] introspection::TypeKind kind()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT introspection::TypeKind kind()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] virtual std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual std::string_view name()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] virtual const std::vector<std::shared_ptr<const Field>>&
-		fields() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard(
-		"unnecessary call")]] virtual const std::vector<std::shared_ptr<const InterfaceType>>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::vector<
+		std::shared_ptr<const Field>>&
+	fields() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::vector<
+		std::shared_ptr<const InterfaceType>>&
 	interfaces() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] virtual const std::vector<std::weak_ptr<const BaseType>>&
-		possibleTypes() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] virtual const std::vector<std::shared_ptr<const EnumValue>>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::vector<
+		std::weak_ptr<const BaseType>>&
+	possibleTypes() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::vector<
+		std::shared_ptr<const EnumValue>>&
 	enumValues() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-	[[nodiscard("unnecessary call")]] virtual const std::vector<std::shared_ptr<const InputValue>>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::vector<
+		std::shared_ptr<const InputValue>>&
 	inputFields() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] virtual const std::weak_ptr<const BaseType>&
-		ofType() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] virtual std::string_view
+	[[nodiscard(
+		"unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual const std::weak_ptr<const BaseType>&
+	ofType() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT virtual std::string_view
 	specifiedByURL() const noexcept;
 
 protected:
@@ -141,17 +136,15 @@ private:
 	struct init;
 
 public:
-	explicit ScalarType(init && params);
+	explicit ScalarType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<ScalarType> Make(
-		std::string_view name,
-		std::string_view description,
-		std::string_view specifiedByURL);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<ScalarType> Make(
+		std::string_view name, std::string_view description, std::string_view specifiedByURL);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view specifiedByURL()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view specifiedByURL()
 		const noexcept final;
 
 private:
@@ -167,25 +160,24 @@ private:
 	struct init;
 
 public:
-	explicit ObjectType(init && params);
+	explicit ObjectType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<ObjectType> Make(
-		std::string_view name,
-		std::string_view description);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<ObjectType> Make(
+		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddInterfaces(
-		std::vector<std::shared_ptr<const InterfaceType>> && interfaces);
-	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>> && fields);
+		std::vector<std::shared_ptr<const InterfaceType>>&& interfaces);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const Field>>&
-		fields() const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const InterfaceType>>&
-		interfaces() const noexcept final;
+	[[nodiscard(
+		"unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<const Field>>&
+	fields() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const InterfaceType>>&
+	interfaces() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -202,28 +194,28 @@ private:
 	struct init;
 
 public:
-	explicit InterfaceType(init && params);
+	explicit InterfaceType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<InterfaceType>
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<InterfaceType>
 	Make(std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddPossibleType(std::weak_ptr<BaseType> possibleType);
 	GRAPHQLSERVICE_EXPORT void AddInterfaces(
-		std::vector<std::shared_ptr<const InterfaceType>> && interfaces);
-	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>> && fields);
+		std::vector<std::shared_ptr<const InterfaceType>>&& interfaces);
+	GRAPHQLSERVICE_EXPORT void AddFields(std::vector<std::shared_ptr<const Field>>&& fields);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const Field>>&
-		fields() const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::weak_ptr<const BaseType>>&
-		possibleTypes() const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const InterfaceType>>&
-		interfaces() const noexcept final;
+	[[nodiscard(
+		"unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<std::shared_ptr<const Field>>&
+	fields() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::weak_ptr<const BaseType>>&
+	possibleTypes() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const InterfaceType>>&
+	interfaces() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -241,21 +233,20 @@ private:
 	struct init;
 
 public:
-	explicit UnionType(init && params);
+	explicit UnionType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<UnionType> Make(
-		std::string_view name,
-		std::string_view description);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<UnionType> Make(
+		std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddPossibleTypes(
-		std::vector<std::weak_ptr<const BaseType>> && possibleTypes);
+		std::vector<std::weak_ptr<const BaseType>>&& possibleTypes);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::weak_ptr<const BaseType>>&
-		possibleTypes() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::weak_ptr<const BaseType>>&
+	possibleTypes() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -278,20 +269,19 @@ private:
 	struct init;
 
 public:
-	explicit EnumType(init && params);
+	explicit EnumType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<EnumType> Make(
-		std::string_view name,
-		std::string_view description);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<EnumType> Make(
+		std::string_view name, std::string_view description);
 
-	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::vector<EnumValueType> && enumValues);
+	GRAPHQLSERVICE_EXPORT void AddEnumValues(std::vector<EnumValueType>&& enumValues);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const EnumValue>>&
-		enumValues() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const EnumValue>>&
+	enumValues() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -307,20 +297,20 @@ private:
 	struct init;
 
 public:
-	explicit InputObjectType(init && params);
+	explicit InputObjectType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<InputObjectType>
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<InputObjectType>
 	Make(std::string_view name, std::string_view description);
 
 	GRAPHQLSERVICE_EXPORT void AddInputValues(
-		std::vector<std::shared_ptr<const InputValue>> && inputValues);
+		std::vector<std::shared_ptr<const InputValue>>&& inputValues);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name()
 		const noexcept final;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const InputValue>>&
-		inputFields() const noexcept final;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const InputValue>>&
+	inputFields() const noexcept final;
 
 private:
 	const std::string_view _name;
@@ -336,13 +326,13 @@ private:
 	struct init;
 
 public:
-	explicit WrapperType(init && params);
+	explicit WrapperType(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<WrapperType>
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<WrapperType>
 	Make(introspection::TypeKind kind, std::weak_ptr<const BaseType> ofType);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::weak_ptr<const BaseType>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::weak_ptr<const BaseType>&
 	ofType() const noexcept final;
 
 private:
@@ -357,27 +347,23 @@ private:
 	struct init;
 
 public:
-	explicit Field(init && params);
+	explicit Field(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<Field> Make(
-		std::string_view name,
-		std::string_view description,
-		std::optional<std::string_view>
-			deprecationReason,
-		std::weak_ptr<const BaseType>
-			type,
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<Field> Make(
+		std::string_view name, std::string_view description,
+		std::optional<std::string_view> deprecationReason, std::weak_ptr<const BaseType> type,
 		std::vector<std::shared_ptr<const InputValue>>&& args = {});
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const InputValue>>&
-		args() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::weak_ptr<const BaseType>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const InputValue>>&
+	args() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::weak_ptr<const BaseType>&
 	type() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::optional<std::string_view>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::optional<std::string_view>&
 	deprecationReason() const noexcept;
 
 private:
@@ -397,22 +383,19 @@ private:
 	struct init;
 
 public:
-	explicit InputValue(init && params);
+	explicit InputValue(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<InputValue> Make(
-		std::string_view name,
-		std::string_view description,
-		std::weak_ptr<const BaseType>
-			type,
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<InputValue> Make(
+		std::string_view name, std::string_view description, std::weak_ptr<const BaseType> type,
 		std::string_view defaultValue);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::weak_ptr<const BaseType>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::weak_ptr<const BaseType>&
 	type() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view defaultValue()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view defaultValue()
 		const noexcept;
 
 private:
@@ -431,19 +414,17 @@ private:
 	struct init;
 
 public:
-	explicit EnumValue(init && params);
+	explicit EnumValue(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<EnumValue> Make(
-		std::string_view name,
-		std::string_view description,
-		std::optional<std::string_view>
-			deprecationReason);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<EnumValue> Make(
+		std::string_view name, std::string_view description,
+		std::optional<std::string_view> deprecationReason);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] const std::optional<std::string_view>&
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::optional<std::string_view>&
 	deprecationReason() const noexcept;
 
 private:
@@ -461,26 +442,24 @@ private:
 	struct init;
 
 public:
-	explicit Directive(init && params);
+	explicit Directive(init&& params);
 
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] static std::shared_ptr<Directive> Make(
-		std::string_view name,
-		std::string_view description,
-		std::vector<introspection::DirectiveLocation> && locations,
-		std::vector<std::shared_ptr<const InputValue>> && args,
-		bool isRepeatable);
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT static std::shared_ptr<Directive> Make(
+		std::string_view name, std::string_view description,
+		std::vector<introspection::DirectiveLocation>&& locations,
+		std::vector<std::shared_ptr<const InputValue>>&& args, bool isRepeatable);
 
 	// Accessors
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view name() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::string_view description()
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view name() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::string_view description()
 		const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<introspection::DirectiveLocation>&
-		locations() const noexcept;
-	GRAPHQLSERVICE_EXPORT
-		[[nodiscard("unnecessary call")]] const std::vector<std::shared_ptr<const InputValue>>&
-		args() const noexcept;
-	GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] bool isRepeatable() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		introspection::DirectiveLocation>&
+	locations() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT const std::vector<
+		std::shared_ptr<const InputValue>>&
+	args() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT bool isRepeatable() const noexcept;
 
 private:
 	const std::string_view _name;

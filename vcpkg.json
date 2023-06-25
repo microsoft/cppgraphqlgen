@@ -43,5 +43,6 @@
   "dependencies": [
     "pegtl",
     "rapidjson"
-  ]
+  ],
+  "builtin-baseline": "a618637937298060bdbe5fbcfb628eabd1082c8a"
 }

@@ -13,7 +13,7 @@ the subscriptions to those listeners.
 Subscriptions are created by calling the `Request::subscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard("leaked subscription")]] AwaitableSubscribe subscribe(RequestSubscribeParams params);
+[[nodiscard("leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(RequestSubscribeParams params);
 ```
 
 You need to fill in a `RequestSubscribeParams` struct with the subscription event
@@ -64,7 +64,7 @@ The `internal::Awaitable<T>` template is described in [awaitable.md](./awaitable
 Subscriptions are removed by calling the `Request::unsubscribe` method in
 [GraphQLService.h](../include/graphqlservice/GraphQLService.h):
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard("potentially leaked subscription")]] AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
+[[nodiscard("potentially leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe unsubscribe(RequestUnsubscribeParams params);
 ```
 
 You need to fill in a `RequestUnsubscribeParams` struct with the `SubscriptionKey`
@@ -186,6 +186,6 @@ that, there's a public `Request::findOperationDefinition` method which returns
 the operation type as a `std::string_view` along with a pointer to the AST node
 for the selected operation in the parsed query:
 ```cpp
-GRAPHQLSERVICE_EXPORT [[nodiscard("unnecessary call")]] std::pair<std::string_view, const peg::ast_node*>
+[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::pair<std::string_view, const peg::ast_node*>
 findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 ```

@@ -59,7 +59,7 @@ struct [[nodiscard("unnecessary construction")]] ServiceResponse
 };
 
 // Split a service response into separate ServiceResponse data and errors members.
-GRAPHQLCLIENT_EXPORT [[nodiscard("unnecessary conversion")]] ServiceResponse parseServiceResponse(
+[[nodiscard("unnecessary conversion")]] GRAPHQLCLIENT_EXPORT ServiceResponse parseServiceResponse(
 	response::Value response);
 
 // GraphQL types are nullable by default, but they may be wrapped with non-null or list types.
@@ -105,8 +105,7 @@ concept ScalarVariableClass = std::is_same_v<Type, std::string>
 
 // Any non-scalar class used in a variable is a generated INPUT_OBJECT type.
 template <typename Type>
-concept InputVariableClass = std::is_class_v<Type> && !
-ScalarVariableClass<Type>;
+concept InputVariableClass = std::is_class_v<Type> && !ScalarVariableClass<Type>;
 
 // Test if there are any non-None modifiers left.
 template <TypeModifier... Other>
@@ -114,13 +113,11 @@ concept OnlyNoneModifiers = (... && (Other == TypeModifier::None));
 
 // Test if the next modifier is Nullable.
 template <TypeModifier Modifier>
-concept NullableModifier = Modifier ==
-TypeModifier::Nullable;
+concept NullableModifier = Modifier == TypeModifier::Nullable;
 
 // Test if the next modifier is List.
 template <TypeModifier Modifier>
-concept ListModifier = Modifier ==
-TypeModifier::List;
+concept ListModifier = Modifier == TypeModifier::List;
 
 // Special-case an innermost nullable INPUT_OBJECT type.
 template <typename Type, TypeModifier... Other>

@@ -42,7 +42,7 @@ public:
 	}
 
 	// Convert a Base64-encoded string to a vector of bytes.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary conversion")]] static std::vector<std::uint8_t>
+	[[nodiscard("unnecessary conversion")]] GRAPHQLRESPONSE_EXPORT static std::vector<std::uint8_t>
 	fromBase64(std::string_view encoded);
 
 	// Map a single 6-bit integer value to its Base64-encoded character.
@@ -56,7 +56,7 @@ public:
 	}
 
 	// Convert a set of bytes to Base64.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary conversion")]] static std::string toBase64(
+	[[nodiscard("unnecessary conversion")]] GRAPHQLRESPONSE_EXPORT static std::string toBase64(
 		const std::vector<std::uint8_t>& bytes);
 
 	enum class [[nodiscard("unnecessary call")]] Comparison {
@@ -69,11 +69,11 @@ public:
 	};
 
 	// Compare a set of bytes to a possible Base64 string without performing any heap allocations.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] static Comparison compareBase64(
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT static Comparison compareBase64(
 		const std::vector<std::uint8_t>& bytes, std::string_view maybeEncoded) noexcept;
 
 	// Validate whether or not a string is valid Base64 without performing any heap allocations.
-	GRAPHQLRESPONSE_EXPORT [[nodiscard("unnecessary call")]] static bool validateBase64(
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT static bool validateBase64(
 		std::string_view maybeEncoded) noexcept;
 
 private:

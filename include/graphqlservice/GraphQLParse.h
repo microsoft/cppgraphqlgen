@@ -38,19 +38,19 @@ struct [[nodiscard("unnecessary parse")]] ast
 // another value for the depthLimit parameter in these parse functions.
 constexpr size_t c_defaultDepthLimit = 25;
 
-GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseSchemaString(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseSchemaString(
 	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
-GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseSchemaFile(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseSchemaFile(
 	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
 
-GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseString(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseString(
 	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
-GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] ast parseFile(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseFile(
 	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
 
 } // namespace peg
 
-GRAPHQLPEG_EXPORT [[nodiscard("unnecessary parse")]] peg::ast operator"" _graphql(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(
 	const char* text, size_t size);
 
 } // namespace graphql

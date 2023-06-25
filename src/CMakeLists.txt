@@ -48,7 +48,17 @@ if(WIN32)
 
   if(BUILD_SHARED_LIBS)
     function(add_version_rc target)
-      add_library(${target}_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc)
+      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc.res
+        COMMAND ${CMAKE_RC_COMPILER} ${CMAKE_RC_FLAGS} $<$<CONFIG:Debug>:${CMAKE_RC_FLAGS_DEBUG}>
+          "/fo${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc.res"
+          "${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../res/${target}_version.rc")
+      add_custom_target(build_${target}_version_rc ALL
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc.res)
+
+      add_library(${target}_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${target}_version.rc.res)
+      set_target_properties(${target}_version PROPERTIES LINKER_LANGUAGE CXX)
+      add_dependencies(${target}_version build_${target}_version_rc)
       target_link_libraries(${target} PRIVATE ${target}_version)
     endfunction()
   endif()
@@ -193,7 +203,17 @@ if(GRAPHQL_BUILD_CLIENTGEN)
   endif()
 
   if(WIN32)
-    add_library(clientgen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc.res
+      COMMAND ${CMAKE_RC_COMPILER} ${CMAKE_RC_FLAGS} $<$<CONFIG:Debug>:${CMAKE_RC_FLAGS_DEBUG}>
+        "/fo${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc.res"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc"
+      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../res/ClientGen.rc")
+    add_custom_target(build_clientgen_rc ALL
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc.res)
+
+    add_library(clientgen_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/ClientGen.rc.res)
+    set_target_properties(clientgen_version PROPERTIES LINKER_LANGUAGE CXX)
+    add_dependencies(clientgen_version build_clientgen_rc)
     target_link_libraries(clientgen PRIVATE clientgen_version)
   endif()
 
@@ -231,7 +251,17 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
   endif()
 
   if(WIN32)
-    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc.res
+      COMMAND ${CMAKE_RC_COMPILER} ${CMAKE_RC_FLAGS} $<$<CONFIG:Debug>:${CMAKE_RC_FLAGS_DEBUG}>
+        "/fo${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc.res"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc"
+      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../res/SchemaGen.rc")
+    add_custom_target(build_schemagen_rc ALL
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc.res)
+
+    add_library(schemagen_version OBJECT ${CMAKE_CURRENT_BINARY_DIR}/SchemaGen.rc.res)
+    set_target_properties(schemagen_version PROPERTIES LINKER_LANGUAGE CXX)
+    add_dependencies(schemagen_version build_schemagen_rc)
     target_link_libraries(schemagen PRIVATE schemagen_version)
   endif()
 
