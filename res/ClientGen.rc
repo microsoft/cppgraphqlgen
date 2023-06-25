@@ -3,8 +3,8 @@
 
 #include <winver.h>
 
-#define GRAPHQL_RC_VERSION     4,5,3,0
-#define GRAPHQL_RC_VERSION_STR "4.5.3"
+#define GRAPHQL_RC_VERSION     4,5,4,0
+#define GRAPHQL_RC_VERSION_STR "4.5.4"
 
 #ifndef DEBUG
 #define VER_DEBUG   0
