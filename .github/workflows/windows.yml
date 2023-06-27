@@ -37,7 +37,6 @@ jobs:
         cmake -E make_directory build/vcpkg_cache
 
     - name: Configure
-      id: configure-build
       shell: pwsh
       working-directory: build/
       run: |
