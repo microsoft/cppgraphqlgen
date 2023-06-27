@@ -27,16 +27,21 @@ jobs:
       uses: actions/cache@v3
       id: cache-vcpkg
       with:
-        path: build/vcpkg_installed/
+        path: build/vcpkg_cache/
         key: vcpkg-${{ steps.set-variables.outputs.vcpkg_triplet }}
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
-      run: cmake -E make_directory build
+      run: |
+        cmake -E make_directory build
+        cmake -E make_directory build/vcpkg_cache
 
     - name: Configure
+      id: configure-build
       shell: pwsh
       working-directory: build/
+      env:
+        VCPKG_BINARY_SOURCES: 'clear;files,${{ steps.configure-build.working-directory }}/vcpkg_cache/,$(if ${{ steps.cache-vcpkg.outputs.cache-hit }} { "r" } else { "rw" })'
       run: |
         $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT '.\scripts\buildsystems\vcpkg.cmake' -Resolve
         $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
