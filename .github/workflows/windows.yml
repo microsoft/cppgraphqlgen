@@ -47,7 +47,7 @@ jobs:
         $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })
 
         $cachedBinaries = Join-Path $(Get-Location) './vcpkg_cache/' -Resolve
-        $cacheAccess = $(if ${{ steps.cache-vcpkg.outputs.cache-hit }} { 'r' } else { 'rw' })
+        $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'r' } else { 'rw' })
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 17 2022" -A "$msbuildArch" ${{ github.workspace }}
