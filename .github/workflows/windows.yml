@@ -40,13 +40,12 @@ jobs:
       id: configure-build
       shell: pwsh
       working-directory: build/
-      env:
-        VCPKG_BINARY_SOURCES: 'clear;files,${{ steps.configure-build.working-directory }}/vcpkg_cache/,$(if ${{ steps.cache-vcpkg.outputs.cache-hit }} { "r" } else { "rw" })'
       run: |
         $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT '.\scripts\buildsystems\vcpkg.cmake' -Resolve
         $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
         $cmakeSharedLibs = $(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })
         $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })
+        $env:VCPKG_BINARY_SOURCES = "clear;files,${{ steps.configure-build.working-directory }}/vcpkg_cache/,$(if ${{ steps.cache-vcpkg.outputs.cache-hit }} { 'r' } else { 'rw' })"
 
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 17 2022" -A "$msbuildArch" ${{ github.workspace }}
 
