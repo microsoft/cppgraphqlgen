@@ -27,12 +27,14 @@ jobs:
       uses: actions/cache@v3
       id: cache-vcpkg
       with:
-        path: build/vcpkg_installed/
-        key: vcpkg-${{ steps.set-variables.outputs.vcpkg_triplet }}
+        path: build/vcpkg_cache/
+        key: vcpkg-binaries-${{ steps.set-variables.outputs.vcpkg_triplet }}
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
-      run: cmake -E make_directory build
+      run: |
+        cmake -E make_directory build
+        cmake -E make_directory build/vcpkg_cache
 
     - name: Configure
       shell: pwsh
@@ -42,6 +44,10 @@ jobs:
         $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
         $cmakeSharedLibs = $(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })
         $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })
+
+        $cachedBinaries = Join-Path $(Get-Location) './vcpkg_cache/' -Resolve
+        $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'read' } else { 'write' })
+        $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 17 2022" -A "$msbuildArch" ${{ github.workspace }}
 
