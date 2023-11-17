@@ -20,6 +20,12 @@
         "gtest"
       ]
     },
+    "rapidjson": {
+      "description": "Build the graphqljson library with RapidJSON.",
+      "dependencies": [
+        "rapidjson"
+      ]
+    },
     "update-samples": {
       "description": "Regenerate the sample schema sources whether or not we're building the tests.",
       "dependencies": [
@@ -41,8 +47,7 @@
     }
   },
   "dependencies": [
-    "pegtl",
-    "rapidjson"
+    "pegtl"
   ],
   "builtin-baseline": "a618637937298060bdbe5fbcfb628eabd1082c8a"
 }

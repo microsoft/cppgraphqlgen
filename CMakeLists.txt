@@ -37,6 +37,7 @@ endif()
 option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
+option(GRAPHQL_USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
 
 if(GRAPHQL_BUILD_SCHEMAGEN)
   list(APPEND VCPKG_MANIFEST_FEATURES "schemagen")
@@ -48,6 +49,10 @@ endif()
 
 if(GRAPHQL_BUILD_TESTS)
   list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+endif()
+
+if(GRAPHQL_USE_RAPIDJSON)
+  list(APPEND VCPKG_MANIFEST_FEATURES "rapidjson")
 endif()
 
 if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)
