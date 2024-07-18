@@ -453,9 +453,7 @@ struct field_selection_set : seq<star<ignored>, selection_set>
 {
 };
 
-struct field_content
-	: sor<seq<field_arguments, opt<field_directives>, field_selection_set>,
-		  seq<field_arguments, field_directives>, field_arguments>
+struct field_content : seq<field_arguments, opt<field_directives>, opt<field_selection_set>>
 {
 };
 
