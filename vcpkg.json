@@ -49,5 +49,5 @@
   "dependencies": [
     "pegtl"
   ],
-  "builtin-baseline": "a618637937298060bdbe5fbcfb628eabd1082c8a"
+  "builtin-baseline": "1318ab14aae14db20085441cd71366891a9c9d0c"
 }
