@@ -896,6 +896,7 @@ IdType Value::release<IdType>()
 }
 
 Value::Value(Type type /* = Type::Null */)
+	: _data { NullData {} }
 {
 	switch (type)
 	{
@@ -909,10 +910,6 @@ Value::Value(Type type /* = Type::Null */)
 
 		case Type::String:
 			_data = { StringData {} };
-			break;
-
-		case Type::Null:
-			_data = { NullData {} };
 			break;
 
 		case Type::Boolean:
@@ -937,6 +934,9 @@ Value::Value(Type type /* = Type::Null */)
 
 		case Type::Scalar:
 			_data = { ScalarData {} };
+			break;
+
+		default:
 			break;
 	}
 }
