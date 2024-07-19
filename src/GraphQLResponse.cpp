@@ -901,39 +901,39 @@ Value::Value(Type type /* = Type::Null */)
 	switch (type)
 	{
 		case Type::Map:
-			_data = { MapData {} };
+			_data = MapData {};
 			break;
 
 		case Type::List:
-			_data = { ListType {} };
+			_data = ListType {};
 			break;
 
 		case Type::String:
-			_data = { StringData {} };
+			_data = StringData {};
 			break;
 
 		case Type::Boolean:
-			_data = { BooleanType { false } };
+			_data = BooleanType { false };
 			break;
 
 		case Type::Int:
-			_data = { IntType { 0 } };
+			_data = IntType { 0 };
 			break;
 
 		case Type::Float:
-			_data = { FloatType { 0.0 } };
+			_data = FloatType { 0.0 };
 			break;
 
 		case Type::EnumValue:
-			_data = { EnumData {} };
+			_data = EnumData {};
 			break;
 
 		case Type::ID:
-			_data = { IdType {} };
+			_data = IdType {};
 			break;
 
 		case Type::Scalar:
-			_data = { ScalarData {} };
+			_data = ScalarData {};
 			break;
 
 		default:
