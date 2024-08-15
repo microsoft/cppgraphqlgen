@@ -230,3 +230,13 @@ TEST(PegtlExecutableCase, ParserDepthLimitExceeded)
 	EXPECT_TRUE(caughtException) << "should catch a parse exception";
 	EXPECT_FALSE(parsedQuery) << "should not successfully parse the query";
 }
+
+TEST(PegtlExecutableCase, ParseFloatWithFractionalAndExponentialParts)
+{
+	memory_input<> input(R"gql({ field(value: 1.1e1) })gql",
+		"ParseFloatWithFractionalAndExponentialParts");
+
+	const bool result = parse<executable_document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
