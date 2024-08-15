@@ -234,8 +234,7 @@ struct exponent_part : if_must<exponent_indicator, exponent_part_content>
 };
 
 // https://spec.graphql.org/October2021/#FloatValue
-struct float_value
-	: seq<integer_part, sor<fractional_part, exponent_part, seq<fractional_part, exponent_part>>>
+struct float_value : seq<integer_part, sor<seq<fractional_part, opt<exponent_part>>, exponent_part>>
 {
 };
 
