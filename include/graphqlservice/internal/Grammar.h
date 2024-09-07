@@ -65,7 +65,7 @@ struct comment : seq<one<'#'>, until<eolf>>
 };
 
 // https://spec.graphql.org/October2021/#sec-Source-Text.Ignored-Tokens
-struct ignored : sor<space, one<','>, comment>
+struct ignored : sor<utf8::bom, space, one<','>, comment>
 {
 };
 
@@ -1177,7 +1177,7 @@ struct mixed_definition : sor<executable_definition, type_system_definition, typ
 };
 
 struct mixed_document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>,	 // leading whitespace/ignored
+	: seq<bof, star<ignored>,					 // leading whitespace/ignored
 		  list<mixed_definition, star<ignored>>, // mixed definitions
 		  star<ignored>, tao::graphqlpeg::eof>	 // trailing whitespace/ignored
 {
@@ -1189,7 +1189,7 @@ struct mixed_document : must<mixed_document_content>
 };
 
 struct executable_document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>,		  // leading whitespace/ignored
+	: seq<bof, star<ignored>,						  // leading whitespace/ignored
 		  list<executable_definition, star<ignored>>, // executable definitions
 		  star<ignored>, tao::graphqlpeg::eof>		  // trailing whitespace/ignored
 {
@@ -1206,7 +1206,7 @@ struct schema_type_definition : sor<type_system_definition, type_system_extensio
 };
 
 struct schema_document_content
-	: seq<bof, opt<utf8::bom>, star<ignored>,		   // leading whitespace/ignored
+	: seq<bof, star<ignored>,						   // leading whitespace/ignored
 		  list<schema_type_definition, star<ignored>>, // schema type definitions
 		  star<ignored>, tao::graphqlpeg::eof>		   // trailing whitespace/ignored
 {
