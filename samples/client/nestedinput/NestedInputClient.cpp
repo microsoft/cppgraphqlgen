@@ -49,6 +49,7 @@ const peg::ast& GetRequestObject() noexcept
 }
 
 InputA::InputA() noexcept
+	: a {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -87,6 +88,7 @@ InputA& InputA::operator=(InputA&& other) noexcept
 }
 
 InputB::InputB() noexcept
+	: b {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -125,6 +127,11 @@ InputB& InputB::operator=(InputB&& other) noexcept
 }
 
 InputABCD::InputABCD() noexcept
+	: d {}
+	, a {}
+	, b {}
+	, bc {}
+	, value {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -183,6 +190,8 @@ InputABCD& InputABCD::operator=(InputABCD&& other) noexcept
 }
 
 InputBC::InputBC() noexcept
+	: c {}
+	, b {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }

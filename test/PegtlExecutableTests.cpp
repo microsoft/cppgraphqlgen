@@ -233,8 +233,23 @@ TEST(PegtlExecutableCase, ParserDepthLimitExceeded)
 
 TEST(PegtlExecutableCase, ParseFloatWithFractionalAndExponentialParts)
 {
-	memory_input<> input(R"gql({ field(value: 1.1e1) })gql",
+	memory_input<> input(R"gql(
+		query {
+			combinedField(value: 1.1e1)
+			onlyFractional(value: 1.1)
+			onlyExponent(value: 1e1)
+		})gql",
 		"ParseFloatWithFractionalAndExponentialParts");
+
+	const bool result = parse<executable_document>(input);
+
+	ASSERT_TRUE(result) << "we should be able to parse the doc";
+}
+
+TEST(PegtlExecutableCase, ParseIgnoreUnicodeBOM)
+{
+	memory_input<> input("query { \xEF\xBB\xBF __typename }",
+		"ParseIgnoreUnicodeBOM");
 
 	const bool result = parse<executable_document>(input);
 

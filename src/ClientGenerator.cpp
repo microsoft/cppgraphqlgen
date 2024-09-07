@@ -319,7 +319,7 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 				headerFile << R"cpp(	)cpp"
 						   << _requestLoader.getInputCppType(inputField->type().lock())
 						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp( {};
+						   << R"cpp(;
 )cpp";
 			}
 
@@ -648,7 +648,20 @@ using namespace std::literals;
 
 			pendingSeparator.reset();
 
-			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept
+			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
+
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.type->inputFields())
+			{
+				sourceFile << R"cpp(
+	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
+						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+						   << R"cpp( {})cpp";
+				firstField = false;
+			}
+
+			sourceFile << R"cpp(
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -656,7 +669,7 @@ using namespace std::literals;
 )cpp" << cppType << R"cpp(::)cpp"
 					   << cppType << R"cpp(()cpp";
 
-			bool firstField = true;
+			firstField = true;
 
 			for (const auto& inputField : inputType.type->inputFields())
 			{
@@ -854,8 +867,7 @@ response::Value Variable<)cpp"
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType
-						   << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
