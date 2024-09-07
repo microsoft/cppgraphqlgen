@@ -55,6 +55,10 @@ const peg::ast& GetRequestObject() noexcept
 }
 
 CompleteTaskInput::CompleteTaskInput() noexcept
+	: id {}
+	, testTaskState {}
+	, isComplete {}
+	, clientMutationId {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }

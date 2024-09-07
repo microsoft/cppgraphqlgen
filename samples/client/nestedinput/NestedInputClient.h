@@ -56,7 +56,7 @@ struct [[nodiscard("unnecessary construction")]] InputA
 	InputA& operator=(const InputA& other);
 	InputA& operator=(InputA&& other) noexcept;
 
-	bool a {};
+	bool a;
 };
 
 struct [[nodiscard("unnecessary construction")]] InputB
@@ -71,7 +71,7 @@ struct [[nodiscard("unnecessary construction")]] InputB
 	InputB& operator=(const InputB& other);
 	InputB& operator=(InputB&& other) noexcept;
 
-	double b {};
+	double b;
 };
 
 struct InputBC;
@@ -92,11 +92,11 @@ struct [[nodiscard("unnecessary construction")]] InputABCD
 	InputABCD& operator=(const InputABCD& other);
 	InputABCD& operator=(InputABCD&& other) noexcept;
 
-	std::string d {};
-	InputA a {};
-	InputB b {};
-	std::vector<InputBC> bc {};
-	int value {};
+	std::string d;
+	InputA a;
+	InputB b;
+	std::vector<InputBC> bc;
+	int value;
 };
 
 struct [[nodiscard("unnecessary construction")]] InputBC
@@ -112,8 +112,8 @@ struct [[nodiscard("unnecessary construction")]] InputBC
 	InputBC& operator=(const InputBC& other);
 	InputBC& operator=(InputBC&& other) noexcept;
 
-	response::IdType c {};
-	InputB b {};
+	response::IdType c;
+	InputB b;
 };
 
 } // namespace nestedinput

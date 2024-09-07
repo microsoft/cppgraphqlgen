@@ -73,10 +73,10 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	CompleteTaskInput& operator=(const CompleteTaskInput& other);
 	CompleteTaskInput& operator=(CompleteTaskInput&& other) noexcept;
 
-	response::IdType id {};
-	std::optional<TaskState> testTaskState {};
-	std::optional<bool> isComplete {};
-	std::optional<std::string> clientMutationId {};
+	response::IdType id;
+	std::optional<TaskState> testTaskState;
+	std::optional<bool> isComplete;
+	std::optional<std::string> clientMutationId;
 };
 
 } // namespace mutate
