@@ -69,10 +69,10 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	CompleteTaskInput& operator=(const CompleteTaskInput& other);
 	CompleteTaskInput& operator=(CompleteTaskInput&& other) noexcept;
 
-	response::IdType id {};
-	std::optional<TaskState> testTaskState {};
-	std::optional<bool> isComplete {};
-	std::optional<std::string> clientMutationId {};
+	response::IdType id;
+	std::optional<TaskState> testTaskState;
+	std::optional<bool> isComplete;
+	std::optional<std::string> clientMutationId;
 };
 
 struct SecondNestedInput;
@@ -90,8 +90,8 @@ struct [[nodiscard("unnecessary construction")]] ThirdNestedInput
 	ThirdNestedInput& operator=(const ThirdNestedInput& other);
 	ThirdNestedInput& operator=(ThirdNestedInput&& other) noexcept;
 
-	response::IdType id {};
-	std::unique_ptr<SecondNestedInput> second {};
+	response::IdType id;
+	std::unique_ptr<SecondNestedInput> second;
 };
 
 struct [[nodiscard("unnecessary construction")]] FourthNestedInput
@@ -106,7 +106,7 @@ struct [[nodiscard("unnecessary construction")]] FourthNestedInput
 	FourthNestedInput& operator=(const FourthNestedInput& other);
 	FourthNestedInput& operator=(FourthNestedInput&& other) noexcept;
 
-	response::IdType id {};
+	response::IdType id;
 };
 
 struct [[nodiscard("unnecessary construction")]] IncludeNullableSelfInput
@@ -121,7 +121,7 @@ struct [[nodiscard("unnecessary construction")]] IncludeNullableSelfInput
 	IncludeNullableSelfInput& operator=(const IncludeNullableSelfInput& other);
 	IncludeNullableSelfInput& operator=(IncludeNullableSelfInput&& other) noexcept;
 
-	std::unique_ptr<IncludeNullableSelfInput> self {};
+	std::unique_ptr<IncludeNullableSelfInput> self;
 };
 
 struct [[nodiscard("unnecessary construction")]] IncludeNonNullableListSelfInput
@@ -136,7 +136,7 @@ struct [[nodiscard("unnecessary construction")]] IncludeNonNullableListSelfInput
 	IncludeNonNullableListSelfInput& operator=(const IncludeNonNullableListSelfInput& other);
 	IncludeNonNullableListSelfInput& operator=(IncludeNonNullableListSelfInput&& other) noexcept;
 
-	std::vector<IncludeNonNullableListSelfInput> selves {};
+	std::vector<IncludeNonNullableListSelfInput> selves;
 };
 
 struct [[nodiscard("unnecessary construction")]] StringOperationFilterInput
@@ -162,18 +162,18 @@ struct [[nodiscard("unnecessary construction")]] StringOperationFilterInput
 	StringOperationFilterInput& operator=(const StringOperationFilterInput& other);
 	StringOperationFilterInput& operator=(StringOperationFilterInput&& other) noexcept;
 
-	std::optional<std::vector<StringOperationFilterInput>> and_ {};
-	std::optional<std::vector<StringOperationFilterInput>> or_ {};
-	std::optional<std::string> equal {};
-	std::optional<std::string> notEqual {};
-	std::optional<std::string> contains {};
-	std::optional<std::string> notContains {};
-	std::optional<std::vector<std::string>> in {};
-	std::optional<std::vector<std::string>> notIn {};
-	std::optional<std::string> startsWith {};
-	std::optional<std::string> notStartsWith {};
-	std::optional<std::string> endsWith {};
-	std::optional<std::string> notEndsWith {};
+	std::optional<std::vector<StringOperationFilterInput>> and_;
+	std::optional<std::vector<StringOperationFilterInput>> or_;
+	std::optional<std::string> equal;
+	std::optional<std::string> notEqual;
+	std::optional<std::string> contains;
+	std::optional<std::string> notContains;
+	std::optional<std::vector<std::string>> in;
+	std::optional<std::vector<std::string>> notIn;
+	std::optional<std::string> startsWith;
+	std::optional<std::string> notStartsWith;
+	std::optional<std::string> endsWith;
+	std::optional<std::string> notEndsWith;
 };
 
 struct [[nodiscard("unnecessary construction")]] SecondNestedInput
@@ -189,8 +189,8 @@ struct [[nodiscard("unnecessary construction")]] SecondNestedInput
 	SecondNestedInput& operator=(const SecondNestedInput& other);
 	SecondNestedInput& operator=(SecondNestedInput&& other) noexcept;
 
-	response::IdType id {};
-	ThirdNestedInput third {};
+	response::IdType id;
+	ThirdNestedInput third;
 };
 
 struct [[nodiscard("unnecessary construction")]] ForwardDeclaredInput
@@ -206,8 +206,8 @@ struct [[nodiscard("unnecessary construction")]] ForwardDeclaredInput
 	ForwardDeclaredInput& operator=(const ForwardDeclaredInput& other);
 	ForwardDeclaredInput& operator=(ForwardDeclaredInput&& other) noexcept;
 
-	std::unique_ptr<IncludeNullableSelfInput> nullableSelf {};
-	IncludeNonNullableListSelfInput listSelves {};
+	std::unique_ptr<IncludeNullableSelfInput> nullableSelf;
+	IncludeNonNullableListSelfInput listSelves;
 };
 
 struct [[nodiscard("unnecessary construction")]] FirstNestedInput
@@ -224,9 +224,9 @@ struct [[nodiscard("unnecessary construction")]] FirstNestedInput
 	FirstNestedInput& operator=(const FirstNestedInput& other);
 	FirstNestedInput& operator=(FirstNestedInput&& other) noexcept;
 
-	response::IdType id {};
-	SecondNestedInput second {};
-	ThirdNestedInput third {};
+	response::IdType id;
+	SecondNestedInput second;
+	ThirdNestedInput third;
 };
 
 namespace object {

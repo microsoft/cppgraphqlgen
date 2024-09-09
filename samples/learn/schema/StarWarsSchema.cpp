@@ -97,6 +97,8 @@ learn::ReviewInput Argument<learn::ReviewInput>::convert(const response::Value& 
 namespace learn {
 
 ReviewInput::ReviewInput() noexcept
+	: stars {}
+	, commentary {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }

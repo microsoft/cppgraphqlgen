@@ -228,6 +228,10 @@ today::FirstNestedInput Argument<today::FirstNestedInput>::convert(const respons
 namespace today {
 
 CompleteTaskInput::CompleteTaskInput() noexcept
+	: id {}
+	, testTaskState {}
+	, isComplete {}
+	, clientMutationId {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -285,6 +289,8 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 }
 
 ThirdNestedInput::ThirdNestedInput() noexcept
+	: id {}
+	, second {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -332,6 +338,7 @@ ThirdNestedInput& ThirdNestedInput::operator=(ThirdNestedInput&& other) noexcept
 }
 
 FourthNestedInput::FourthNestedInput() noexcept
+	: id {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -374,6 +381,7 @@ FourthNestedInput& FourthNestedInput::operator=(FourthNestedInput&& other) noexc
 }
 
 IncludeNullableSelfInput::IncludeNullableSelfInput() noexcept
+	: self {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -416,6 +424,7 @@ IncludeNullableSelfInput& IncludeNullableSelfInput::operator=(IncludeNullableSel
 }
 
 IncludeNonNullableListSelfInput::IncludeNonNullableListSelfInput() noexcept
+	: selves {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -458,6 +467,18 @@ IncludeNonNullableListSelfInput& IncludeNonNullableListSelfInput::operator=(Incl
 }
 
 StringOperationFilterInput::StringOperationFilterInput() noexcept
+	: and_ {}
+	, or_ {}
+	, equal {}
+	, notEqual {}
+	, contains {}
+	, notContains {}
+	, in {}
+	, notIn {}
+	, startsWith {}
+	, notStartsWith {}
+	, endsWith {}
+	, notEndsWith {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -555,6 +576,8 @@ StringOperationFilterInput& StringOperationFilterInput::operator=(StringOperatio
 }
 
 SecondNestedInput::SecondNestedInput() noexcept
+	: id {}
+	, third {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -602,6 +625,8 @@ SecondNestedInput& SecondNestedInput::operator=(SecondNestedInput&& other) noexc
 }
 
 ForwardDeclaredInput::ForwardDeclaredInput() noexcept
+	: nullableSelf {}
+	, listSelves {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -649,6 +674,9 @@ ForwardDeclaredInput& ForwardDeclaredInput::operator=(ForwardDeclaredInput&& oth
 }
 
 FirstNestedInput::FirstNestedInput() noexcept
+	: id {}
+	, second {}
+	, third {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }

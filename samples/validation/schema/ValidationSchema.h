@@ -87,8 +87,8 @@ struct [[nodiscard("unnecessary construction")]] ComplexInput
 	ComplexInput& operator=(const ComplexInput& other);
 	ComplexInput& operator=(ComplexInput&& other) noexcept;
 
-	std::optional<std::string> name {};
-	std::optional<std::string> owner {};
+	std::optional<std::string> name;
+	std::optional<std::string> owner;
 };
 
 namespace object {
