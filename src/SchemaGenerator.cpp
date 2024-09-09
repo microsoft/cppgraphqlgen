@@ -1172,7 +1172,7 @@ std::string Generator::getFieldDeclaration(const InputField& inputField) const n
 	std::ostringstream output;
 
 	output << R"cpp(	)cpp" << _loader.getInputCppType(inputField) << R"cpp( )cpp"
-		   << inputField.cppName << R"cpp( {};
+		   << inputField.cppName << R"cpp(;
 )cpp";
 
 	return output.str();
@@ -1480,7 +1480,20 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 	for (const auto& inputType : _loader.getInputTypes())
 	{
 		sourceFile << std::endl
-				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType << R"cpp(() noexcept
+				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType
+				   << R"cpp(() noexcept)cpp";
+
+		bool firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << R"cpp(
+	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
+					   << R"cpp( )cpp" << inputField.cppName << R"cpp( {})cpp";
+			firstField = false;
+		}
+
+		sourceFile << R"cpp(
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -1488,7 +1501,7 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 )cpp" << inputType.cppType
 				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
 
-		bool firstField = true;
+		firstField = true;
 
 		for (const auto& inputField : inputType.fields)
 		{

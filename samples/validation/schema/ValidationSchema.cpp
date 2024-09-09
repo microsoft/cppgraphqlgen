@@ -154,6 +154,8 @@ validation::ComplexInput Argument<validation::ComplexInput>::convert(const respo
 namespace validation {
 
 ComplexInput::ComplexInput() noexcept
+	: name {}
+	, owner {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }

@@ -64,8 +64,8 @@ struct [[nodiscard("unnecessary construction")]] ReviewInput
 	ReviewInput& operator=(const ReviewInput& other);
 	ReviewInput& operator=(ReviewInput&& other) noexcept;
 
-	int stars {};
-	std::optional<std::string> commentary {};
+	int stars;
+	std::optional<std::string> commentary;
 };
 
 namespace object {
