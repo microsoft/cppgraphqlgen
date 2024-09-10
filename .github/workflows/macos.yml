@@ -30,15 +30,20 @@ jobs:
         cmake -E make_directory build
         cmake -E make_directory build/vcpkg_cache
 
+    - name: Boostrap vcpkg
+      shell: pwsh
+      working-directory: vcpkg/
+      run: |
+        ./bootstrap-vcpkg.sh
+        ./vcpkg integrate install
+        git fetch
+
     - name: Configure
       shell: pwsh
       env:
         VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       working-directory: build/
       run: |
-        & "${env:VCPKG_ROOT}/bootstrap-vcpkg.sh"
-        & "${env:VCPKG_ROOT}/vcpkg integrate install"
-        
         $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $cmakeBuildType = '${{ matrix.config }}'
 
