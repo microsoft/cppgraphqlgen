@@ -1,13 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.15)
-
-# Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows: https://cmake.org/cmake/help/latest/policy/CMP0091.html
-cmake_policy(SET CMP0091 NEW)
-
-# Do not set default MSVC warning flags: https://cmake.org/cmake/help/latest/policy/CMP0092.html
-cmake_policy(SET CMP0092 NEW)
+cmake_minimum_required(VERSION 3.28)
 
 # Export compile commands for other tools, e.g. SonarLint.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
