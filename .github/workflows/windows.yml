@@ -38,9 +38,14 @@ jobs:
 
     - name: Configure
       shell: pwsh
+      env:
+        VCPKG_ROOT: ${{ github.workspace }}\vcpkg
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT '.\scripts\buildsystems\vcpkg.cmake' -Resolve
+        & "${env:VCPKG_ROOT}/bootstrap-vcpkg.bat"
+        & "${env:VCPKG_ROOT}/vcpkg" integrate install
+        
+        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $vcpkgTriplet = '${{ steps.set-variables.outputs.vcpkg_triplet }}'
         $cmakeSharedLibs = $(if ('${{ matrix.libs }}' -eq 'shared') { 'ON' } else { 'OFF' })
         $msbuildArch = $(if ('${{ matrix.arch }}' -eq 'x64') { 'X64' } else { 'Win32' })

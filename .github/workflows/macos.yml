@@ -9,12 +9,13 @@ jobs:
       matrix:
         config: [Debug, Release]
 
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4.1.3
       with:
         submodules: true
+    - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401
 
     - name: Cache vcpkg
       uses: actions/cache@v4.0.2
@@ -31,9 +32,14 @@ jobs:
 
     - name: Configure
       shell: pwsh
+      env:
+        VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
+        & "${env:VCPKG_ROOT}/bootstrap-vcpkg.sh"
+        & "${env:VCPKG_ROOT}/vcpkg integrate install"
+        
+        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $cmakeBuildType = '${{ matrix.config }}'
 
         $cachedBinaries = Join-Path $(Get-Location) './vcpkg_cache/' -Resolve

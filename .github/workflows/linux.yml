@@ -19,7 +19,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev ninja-build gcc-10 g++-10
+        sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev ninja-build gcc-14 g++-14
 
     - name: Build GTest
       run: |
@@ -35,8 +35,8 @@ jobs:
     - name: Configure CMake
       shell: pwsh
       env:
-        CC: gcc-10
-        CXX: g++-10
+        CC: gcc-14
+        CXX: g++-14
       working-directory: build/
       run: |
         $cmakeBuildType = '${{ matrix.config }}'
