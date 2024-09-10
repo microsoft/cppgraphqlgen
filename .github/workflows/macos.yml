@@ -24,7 +24,7 @@ jobs:
       id: cache-vcpkg
       with:
         path: build/vcpkg_cache/
-        key: vcpkg-binaries-x64-osx-${{ hashFiles('vcpkg.json') }}
+        key: vcpkg-binaries-osx-${{ hashFiles('vcpkg.json') }}
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
