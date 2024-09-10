@@ -29,7 +29,7 @@ jobs:
       id: cache-vcpkg
       with:
         path: build/vcpkg_cache/
-        key: vcpkg-binaries-${{ steps.set-variables.outputs.vcpkg_triplet }}
+        key: vcpkg-binaries-${{ steps.set-variables.outputs.vcpkg_triplet }}-${{ hashFiles('vcpkg.json') }}
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
