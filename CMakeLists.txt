@@ -3,6 +3,11 @@
 
 cmake_minimum_required(VERSION 3.28)
 
+if(POLICY CMP0167)
+  # Prefer the upstream BoostConfig.cmake file instead of the builtin FindBoost module: https://cmake.org/cmake/help/latest/policy/CMP0167.html
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 # Export compile commands for other tools, e.g. SonarLint.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
