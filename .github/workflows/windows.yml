@@ -42,7 +42,6 @@ jobs:
       run: |
         ./bootstrap-vcpkg.bat
         ./vcpkg integrate install
-        git fetch
 
     - name: Configure
       shell: pwsh

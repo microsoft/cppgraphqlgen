@@ -36,7 +36,6 @@ jobs:
       run: |
         ./bootstrap-vcpkg.sh
         ./vcpkg integrate install
-        git fetch
 
     - name: Configure
       shell: pwsh
@@ -51,6 +50,7 @@ jobs:
         $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'read' } else { 'write' })
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
+        $env:PATH = "${env:PATH}:${{ github.workspace }}/ninja-build"
         cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
 
     - name: Build
