@@ -40,3 +40,4 @@ settings.json
 build/
 install/
 isenseconfig/
+vc140.pdb
