@@ -17,10 +17,6 @@ import Internal.Version;
 
 #include <chrono>
 #include <condition_variable>
-#include <coroutine>
-#include <cstddef>
-#include <functional>
-#include <future>
 #include <list>
 #include <map>
 #include <memory>
@@ -29,9 +25,7 @@ import Internal.Version;
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <thread>
-#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>

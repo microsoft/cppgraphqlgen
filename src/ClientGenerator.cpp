@@ -21,14 +21,12 @@ import Internal.Version;
 #endif // _MSC_VER
 
 #include <cctype>
-#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
-#include <string_view>
 
 using namespace std::literals;
 
@@ -188,10 +186,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with clientgen: minor version mismatch");
 
-#include <cstddef>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 )cpp";
