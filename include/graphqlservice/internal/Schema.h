@@ -6,9 +6,15 @@
 #ifndef GRAPHQLSCHEMA_H
 #define GRAPHQLSCHEMA_H
 
-#include "graphqlservice/GraphQLService.h"
+#include "DllExports.h"
+#include "SortedMap.h"
+#include "Version.h"
 
+#include <memory>
+#include <optional>
 #include <shared_mutex>
+#include <string_view>
+#include <vector>
 
 namespace graphql {
 namespace introspection {

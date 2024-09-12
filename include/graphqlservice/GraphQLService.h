@@ -6,24 +6,13 @@
 #ifndef GRAPHQLSERVICE_H
 #define GRAPHQLSERVICE_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLSERVICE_DLL
-		#define GRAPHQLSERVICE_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLSERVICE_DLL
-		#define GRAPHQLSERVICE_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLSERVICE_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLSERVICE_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "GraphQLParse.h"
+#include "GraphQLResponse.h"
 
-#include "graphqlservice/GraphQLParse.h"
-#include "graphqlservice/GraphQLResponse.h"
-
-#include "graphqlservice/internal/Awaitable.h"
-#include "graphqlservice/internal/SortedMap.h"
-#include "graphqlservice/internal/Version.h"
+#include "internal/Awaitable.h"
+#include "internal/DllExports.h"
+#include "internal/SortedMap.h"
+#include "internal/Version.h"
 
 #include <chrono>
 #include <condition_variable>

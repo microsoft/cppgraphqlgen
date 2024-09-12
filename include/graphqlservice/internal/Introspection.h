@@ -8,7 +8,8 @@
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
-#include "graphqlservice/internal/Schema.h"
+#include "DllExports.h"
+#include "Schema.h"
 
 namespace graphql::introspection {
 

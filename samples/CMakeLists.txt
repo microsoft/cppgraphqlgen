@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 
 add_subdirectory(client)
 add_subdirectory(learn)
@@ -15,7 +15,7 @@ if(GRAPHQL_BUILD_HTTP_SAMPLE)
       try_compile(TEST_RESULT
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_boost_beast.cpp
-        CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIR}
+        CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
         CXX_STANDARD 20)
 
       if(TEST_RESULT)

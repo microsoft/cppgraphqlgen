@@ -6,17 +6,7 @@
 #ifndef GRAPHQLBASE64_H
 #define GRAPHQLBASE64_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLRESPONSE_DLL
-		#define GRAPHQLRESPONSE_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLRESPONSE_DLL
-		#define GRAPHQLRESPONSE_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLRESPONSE_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLRESPONSE_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "DllExports.h"
 
 #include <cstdint>
 #include <string>

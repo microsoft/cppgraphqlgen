@@ -9,19 +9,22 @@ jobs:
       matrix:
         config: [Debug, Release]
 
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4.1.3
       with:
         submodules: true
+        fetch-depth: 0
+
+    - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401
 
     - name: Cache vcpkg
       uses: actions/cache@v4.0.2
       id: cache-vcpkg
       with:
         path: build/vcpkg_cache/
-        key: vcpkg-binaries-x64-osx
+        key: vcpkg-binaries-osx-${{ hashFiles('vcpkg.json') }}
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}
@@ -29,18 +32,28 @@ jobs:
         cmake -E make_directory build
         cmake -E make_directory build/vcpkg_cache
 
+    - name: Boostrap vcpkg
+      shell: pwsh
+      working-directory: vcpkg/
+      run: |
+        ./bootstrap-vcpkg.sh
+        ./vcpkg integrate install
+
     - name: Configure
       shell: pwsh
+      env:
+        VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       working-directory: build/
       run: |
-        $vcpkgToolchain = Join-Path $env:VCPKG_INSTALLATION_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
+        $vcpkgToolchain = Join-Path $env:VCPKG_ROOT './scripts/buildsystems/vcpkg.cmake' -Resolve
         $cmakeBuildType = '${{ matrix.config }}'
 
         $cachedBinaries = Join-Path $(Get-Location) './vcpkg_cache/' -Resolve
         $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'read' } else { 'write' })
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
-        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" ${{ github.workspace }}
+        $env:PATH = "${env:PATH}:${{ github.workspace }}/ninja-build"
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
 
     - name: Build
       working-directory: build/

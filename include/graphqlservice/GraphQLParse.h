@@ -6,17 +6,7 @@
 #ifndef GRAPHQLPARSE_H
 #define GRAPHQLPARSE_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLPEG_DLL
-		#define GRAPHQLPEG_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLPEG_DLL
-		#define GRAPHQLPEG_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLPEG_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLPEG_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "internal/DllExports.h"
 
 #include <memory>
 #include <string_view>
