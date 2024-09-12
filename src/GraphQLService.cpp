@@ -181,10 +181,10 @@ std::string unimplemented_method::getMessage(std::string_view methodName) noexce
 	return oss.str();
 }
 
-void await_worker_thread::await_suspend(coro::coroutine_handle<> h) const
+void await_worker_thread::await_suspend(std::coroutine_handle<> h) const
 {
 	std::thread(
-		[](coro::coroutine_handle<>&& h) {
+		[](std::coroutine_handle<>&& h) {
 			h.resume();
 		},
 		std::move(h))
@@ -215,7 +215,7 @@ bool await_worker_queue::await_ready() const
 	return std::this_thread::get_id() != _startId;
 }
 
-void await_worker_queue::await_suspend(coro::coroutine_handle<> h)
+void await_worker_queue::await_suspend(std::coroutine_handle<> h)
 {
 	std::unique_lock lock { _mutex };
 
@@ -234,7 +234,7 @@ void await_worker_queue::resumePending()
 			return _shutdown || !_pending.empty();
 		});
 
-		std::list<coro::coroutine_handle<>> pending;
+		std::list<std::coroutine_handle<>> pending;
 
 		std::swap(pending, _pending);
 
@@ -252,7 +252,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		  std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -261,8 +261,8 @@ await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
 				  std::make_shared<await_worker_thread>()))
-			: std::static_pointer_cast<const Concept>(std::make_shared<Model<coro::suspend_never>>(
-				  std::make_shared<coro::suspend_never>())) }
+			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
+				  std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -271,7 +271,7 @@ bool await_async::await_ready() const
 	return _pimpl->await_ready();
 }
 
-void await_async::await_suspend(coro::coroutine_handle<> h) const
+void await_async::await_suspend(std::coroutine_handle<> h) const
 {
 	_pimpl->await_suspend(std::move(h));
 }

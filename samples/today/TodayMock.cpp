@@ -477,7 +477,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 			return true;
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) noexcept
+		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
 			h.resume();
 		}

@@ -68,7 +68,7 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	const auto worker = std::make_shared<coro::suspend_never>();
+	const auto worker = std::make_shared<std::suspend_never>();
 	auto result = _mockService->service
 					  ->resolve({ query,
 						  "Everything"sv,

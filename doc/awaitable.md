@@ -16,7 +16,7 @@ private:
 		virtual ~Concept() = default;
 
 		[[nodiscard("unexpected call")]] virtual bool await_ready() const = 0;
-		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+		virtual void await_suspend(std::coroutine_handle<> h) const = 0;
 		virtual void await_resume() const = 0;
 	};
 ...
@@ -32,7 +32,7 @@ public:
 	// Default to immediate synchronous execution.
 	await_async()
 		: _pimpl { std::static_pointer_cast<const Concept>(
-			std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+			std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 	{
 	}
 
@@ -41,8 +41,8 @@ public:
 		: _pimpl { ((launch & std::launch::async) == std::launch::async)
 				? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
 					std::make_shared<await_worker_thread>()))
-				: std::static_pointer_cast<const Concept>(std::make_shared<Model<coro::suspend_never>>(
-					std::make_shared<coro::suspend_never>())) }
+				: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
+					std::make_shared<std::suspend_never>())) }
 	{
 	}
 ...
@@ -51,12 +51,12 @@ public:
 For convenience, it will use `graphql::service::await_worker_thread` if you specify `std::launch::async`,
 which should have the same behavior as calling `std::async(std::launch::async, ...)` did before.
 
-If you specify any other flags for `std::launch`, it does not honor them. It will use `coro::suspend_never`
+If you specify any other flags for `std::launch`, it does not honor them. It will use `std::suspend_never`
 (an alias for `std::suspend_never` or `std::experimental::suspend_never`), which as the name suggests,
 continues executing the coroutine without suspending. In other words, `std::launch::deferred` will no
 longer defer execution as in previous versions, it will execute immediately.
 
-There is also a default constructor which also uses `coro::suspend_never`, so that is the default
+There is also a default constructor which also uses `std::suspend_never`, so that is the default
 behavior anywhere that `await_async` is default-initialized with `{}`.
 
 Other than simplification, the big advantage this brings is in the type-erased template constructor.
@@ -110,7 +110,7 @@ public:
 		return true;
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
 		h.resume();
 	}
@@ -189,7 +189,7 @@ public:
 
 	bool await_ready() const noexcept { ... }
 
-	void await_suspend(coro::coroutine_handle<> h) const { ... }
+	void await_suspend(std::coroutine_handle<> h) const { ... }
 
 	T await_resume()
 	{
@@ -245,7 +245,7 @@ public:
 
 	bool await_ready() const noexcept { ... }
 
-	void await_suspend(coro::coroutine_handle<> h) const { ... }
+	void await_suspend(std::coroutine_handle<> h) const { ... }
 
 	T await_resume() { ... }
 

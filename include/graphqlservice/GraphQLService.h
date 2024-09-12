@@ -161,20 +161,20 @@ enum class [[nodiscard("unnecessary conversion")]] ResolverContext {
 
 // Resume coroutine execution on a new worker thread any time co_await is called. This emulates the
 // behavior of std::async when passing std::launch::async.
-struct [[nodiscard("unnecessary construction")]] await_worker_thread : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_thread : std::suspend_always
 {
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h) const;
 };
 
 // Queue coroutine execution on a single dedicated worker thread any time co_await is called from
 // the thread which created it.
-struct [[nodiscard("unnecessary construction")]] await_worker_queue : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_queue : std::suspend_always
 {
 	GRAPHQLSERVICE_EXPORT await_worker_queue();
 	GRAPHQLSERVICE_EXPORT ~await_worker_queue();
 
 	[[nodiscard("unexpected call")]] GRAPHQLSERVICE_EXPORT bool await_ready() const;
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h);
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h);
 
 private:
 	void resumePending();
@@ -182,7 +182,7 @@ private:
 	const std::thread::id _startId;
 	std::mutex _mutex {};
 	std::condition_variable _cv {};
-	std::list<coro::coroutine_handle<>> _pending {};
+	std::list<std::coroutine_handle<>> _pending {};
 	bool _shutdown = false;
 	std::thread _worker;
 };
@@ -196,7 +196,7 @@ private:
 		virtual ~Concept() = default;
 
 		[[nodiscard("unexpected call")]] virtual bool await_ready() const = 0;
-		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+		virtual void await_suspend(std::coroutine_handle<> h) const = 0;
 		virtual void await_resume() const = 0;
 	};
 
@@ -213,7 +213,7 @@ private:
 			return _pimpl->await_ready();
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) const final
+		void await_suspend(std::coroutine_handle<> h) const final
 		{
 			_pimpl->await_suspend(std::move(h));
 		}
@@ -244,7 +244,7 @@ public:
 	GRAPHQLSERVICE_EXPORT await_async(std::launch launch);
 
 	[[nodiscard("unexpected call")]] GRAPHQLSERVICE_EXPORT bool await_ready() const;
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h) const;
 	GRAPHQLSERVICE_EXPORT void await_resume() const;
 };
 
@@ -318,12 +318,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -372,10 +372,10 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
 		std::thread(
-			[this](coro::coroutine_handle<> h) noexcept {
+			[this](std::coroutine_handle<> h) noexcept {
 				std::get<std::future<T>>(_value).wait();
 				h.resume();
 			},
@@ -448,12 +448,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -497,10 +497,10 @@ public:
 			_value);
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
 		std::thread(
-			[this](coro::coroutine_handle<> h) noexcept {
+			[this](std::coroutine_handle<> h) noexcept {
 				std::get<std::future<T>>(_value).wait();
 				h.resume();
 			},

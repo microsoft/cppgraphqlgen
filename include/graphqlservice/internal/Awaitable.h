@@ -6,16 +6,7 @@
 #ifndef GRAPHQLAWAITABLE_H
 #define GRAPHQLAWAITABLE_H
 
-// clang-format off
-#ifdef USE_STD_EXPERIMENTAL_COROUTINE
-	#include <experimental/coroutine>
-	namespace coro = std::experimental;
-#else // !USE_STD_EXPERIMENTAL_COROUTINE
-	#include <coroutine>
-	namespace coro = std;
-#endif
-// clang-format on
-
+#include <coroutine>
 #include <future>
 #include <type_traits>
 
@@ -45,12 +36,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -74,7 +65,7 @@ public:
 		return true;
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
 		h.resume();
 	}
@@ -109,12 +100,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -143,7 +134,7 @@ public:
 		return true;
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
 		h.resume();
 	}
