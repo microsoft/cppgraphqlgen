@@ -16,6 +16,8 @@ import Internal.Awaitable;
 
 #include <chrono>
 #include <condition_variable>
+#include <coroutine>
+#include <future>
 #include <list>
 #include <map>
 #include <memory>

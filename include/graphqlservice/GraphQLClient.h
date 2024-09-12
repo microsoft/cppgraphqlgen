@@ -10,11 +10,12 @@
 
 #include "internal/DllExports.h"
 
+import Internal.Awaitable;
+
 #include <algorithm>
 #include <iterator>
 #include <optional>
 #include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 namespace graphql::client {
