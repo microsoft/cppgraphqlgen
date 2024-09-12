@@ -12,8 +12,6 @@
 #include "internal/DllExports.h"
 #include "internal/SortedMap.h"
 
-import Internal.Awaitable;
-
 #include <chrono>
 #include <condition_variable>
 #include <coroutine>
@@ -30,6 +28,8 @@ import Internal.Awaitable;
 #include <utility>
 #include <variant>
 #include <vector>
+
+import Internal.Awaitable;
 
 namespace graphql {
 namespace schema {

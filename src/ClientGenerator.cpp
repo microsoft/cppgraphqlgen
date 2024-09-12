@@ -6,8 +6,6 @@
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
-import Internal.Version;
-
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 26495)
@@ -27,6 +25,8 @@ import Internal.Version;
 #include <regex>
 #include <sstream>
 #include <stdexcept>
+
+import Internal.Version;
 
 using namespace std::literals;
 
@@ -174,6 +174,10 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
+#include <optional>
+#include <string>
+#include <vector>
+
 import Internal.Version;
 
 // Check if the library version is compatible with clientgen )cpp"
@@ -185,10 +189,6 @@ static_assert(graphql::internal::MajorVersion == )cpp"
 static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with clientgen: minor version mismatch");
-
-#include <optional>
-#include <string>
-#include <vector>
 
 )cpp";
 

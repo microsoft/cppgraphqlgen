@@ -13,16 +13,16 @@
 
 #include "graphqlservice/internal/Schema.h"
 
+#include <array>
+#include <memory>
+#include <string>
+#include <string_view>
+
 import Internal.Version;
 
 // Check if the library version is compatible with schemagen 4.5.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
-
-#include <array>
-#include <memory>
-#include <string>
-#include <string_view>
 
 namespace graphql {
 namespace learn {

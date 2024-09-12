@@ -8,8 +8,6 @@
 
 #include "internal/DllExports.h"
 
-import Internal.Awaitable;
-
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -19,6 +17,8 @@ import Internal.Awaitable;
 #include <string_view>
 #include <variant>
 #include <vector>
+
+import Internal.Awaitable;
 
 namespace graphql::response {
 
