@@ -13,7 +13,6 @@
 #include "internal/SortedMap.h"
 
 import Internal.Awaitable;
-import Internal.Version;
 
 #include <chrono>
 #include <condition_variable>

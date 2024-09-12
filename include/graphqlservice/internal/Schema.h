@@ -8,7 +8,6 @@
 
 #include "DllExports.h"
 #include "SortedMap.h"
-#include "Version.h"
 
 #include <memory>
 #include <optional>

@@ -10,8 +10,6 @@
 
 #include "internal/DllExports.h"
 
-import Internal.Version;
-
 #include <algorithm>
 #include <iterator>
 #include <optional>
