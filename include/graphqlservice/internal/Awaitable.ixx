@@ -1,16 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#pragma once
-
-#ifndef GRAPHQLAWAITABLE_H
-#define GRAPHQLAWAITABLE_H
+module;
 
 #include <coroutine>
 #include <future>
 #include <type_traits>
 
-namespace graphql::internal {
+export module Internal.Awaitable;
+
+export namespace graphql::internal {
 
 template <typename T>
 class [[nodiscard("unnecessary construction")]] Awaitable;
@@ -149,5 +148,3 @@ private:
 };
 
 } // namespace graphql::internal
-
-#endif // GRAPHQLAWAITABLE_H

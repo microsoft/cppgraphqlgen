@@ -7,11 +7,15 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <variant>
+#include <vector>
 
 namespace graphql::response {
 

@@ -4,7 +4,7 @@
 // combination of headers and namespaces which we want to pass to the CMake
 // try_compile command.
 
-#include <@COROUTINE_HEADER@>
+#include <coroutine>
 #include <future>
 
 struct task
@@ -16,12 +16,12 @@ struct task
             return {};
         }
 
-        @COROUTINE_NAMESPACE@::suspend_never initial_suspend() noexcept
+        std::suspend_never initial_suspend() noexcept
         {
             return {};
         }
 
-        @COROUTINE_NAMESPACE@::suspend_never final_suspend() noexcept
+        std::suspend_never final_suspend() noexcept
         {
             return {};
         }

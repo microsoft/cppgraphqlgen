@@ -8,13 +8,16 @@
 
 #include "GraphQLResponse.h"
 
-#include "internal/Version.h"
 #include "internal/DllExports.h"
 
+import Internal.Version;
+
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 

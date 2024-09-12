@@ -9,13 +9,15 @@
 #include "GraphQLParse.h"
 #include "GraphQLResponse.h"
 
-#include "internal/Awaitable.h"
 #include "internal/DllExports.h"
 #include "internal/SortedMap.h"
-#include "internal/Version.h"
+
+import Internal.Awaitable;
+import Internal.Version;
 
 #include <chrono>
 #include <condition_variable>
+#include <coroutine>
 #include <cstddef>
 #include <functional>
 #include <future>

@@ -68,7 +68,7 @@ coroutine when and where it likes.
 ## Awaitable Results
 
 Many APIs which used to return some sort of `std::future` now return an alias for
-`graphql::internal::Awaitable<...>`. This template is defined in [Awaitable.h](../include/graphqlservice/internal/Awaitable.h):
+`graphql::internal::Awaitable<...>`. This template is defined in [Awaitable.ixx](../include/graphqlservice/internal/Awaitable.ixx):
 ```cpp
 template <typename T>
 class [[nodiscard("unnecessary construction")]] Awaitable

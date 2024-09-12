@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+import Internal.Version;
+
 #include "ClientGenerator.h"
 #include "GeneratorUtil.h"
-
-#include "graphqlservice/internal/Version.h"
 
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
@@ -28,6 +28,7 @@
 #include <regex>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 
 using namespace std::literals;
 
@@ -171,11 +172,11 @@ bool Generator::outputHeader() const noexcept
 	IncludeGuardScope includeGuard { headerFile,
 		std::filesystem::path(_headerPath).filename().string() };
 
-	headerFile << R"cpp(#include "graphqlservice/GraphQLClient.h"
+	headerFile << R"cpp(import Internal.Version;
+
+#include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
-
-#include "graphqlservice/internal/Version.h"
 
 // Check if the library version is compatible with clientgen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion
@@ -187,8 +188,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with clientgen: minor version mismatch");
 
+#include <cstddef>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 )cpp";

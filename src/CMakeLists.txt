@@ -71,12 +71,20 @@ function(add_bigobj_flag target)
   endif()
 endfunction()
 
-add_library(graphqlcoro INTERFACE)
-target_compile_features(graphqlcoro INTERFACE cxx_std_20)
+file(REAL_PATH ../include/ INCLUDE_ROOT)
 
-function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAGS OUT_RESULT)
+# graphqlawaitable
+add_library(graphqlawaitable STATIC)
+add_library(cppgraphqlgen::graphqlawaitable ALIAS graphqlawaitable)
+target_compile_features(graphqlawaitable PUBLIC cxx_std_20)
+target_sources(graphqlawaitable PUBLIC FILE_SET CXX_MODULES
+BASE_DIRS
+  ${INCLUDE_ROOT}
+FILES
+  ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx)
+
+function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_${OUT_RESULT}.cpp")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_coroutine.cpp.in ${TEST_FILE} @ONLY)
 
   try_compile(TEST_RESULT
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -94,7 +102,7 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAG
 
         if(TEST_RESULT)
           # Looks like the optional flag was required, go ahead and add it to the compile options.
-          target_compile_options(graphqlcoro INTERFACE ${OPTIONAL_FLAG})
+          target_compile_options(graphqlawaitable INTERFACE ${OPTIONAL_FLAG})
           break()
         endif()
       endforeach(OPTIONAL_FLAG)
@@ -103,19 +111,27 @@ function(check_coroutine_impl COROUTINE_HEADER COROUTINE_NAMESPACE OPTIONAL_FLAG
   set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
 endfunction()
 
-check_coroutine_impl("coroutine" "std" "-fcoroutines" STD_COROUTINE)
+check_coroutine_impl("-fcoroutines" STD_COROUTINE)
 if(STD_COROUTINE)
   message(STATUS "Using std coroutine")
 else()
   message(FATAL_ERROR "Missing coroutine support")
 endif()
 
+# graphqlversion
+add_library(graphqlversion STATIC)
+add_library(cppgraphqlgen::graphqlversion ALIAS graphqlversion)
+target_compile_features(graphqlversion PUBLIC cxx_std_20)
+target_sources(graphqlversion PUBLIC FILE_SET CXX_MODULES
+BASE_DIRS
+  ${INCLUDE_ROOT}
+FILES
+  ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
+
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
-target_link_libraries(graphqlpeg PUBLIC
-  graphqlcoro
-  taocpp::pegtl)
+target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
@@ -142,7 +158,7 @@ add_library(cppgraphqlgen::graphqlresponse ALIAS graphqlresponse)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_link_libraries(graphqlresponse PUBLIC graphqlcoro)
+target_link_libraries(graphqlresponse PUBLIC graphqlawaitable)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -163,6 +179,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
     GeneratorLoader.cpp
     GeneratorUtil.cpp)
   target_link_libraries(generator_util PUBLIC
+    graphqlversion
     graphqlpeg
     graphqlresponse)
 endif()
@@ -324,6 +341,8 @@ add_library(graphqlservice
   ${INTROSPECTION_SCHEMA_FILES})
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_link_libraries(graphqlservice PUBLIC
+  graphqlversion
+  graphqlawaitable
   graphqlpeg
   graphqlresponse
   Threads::Threads)
@@ -352,6 +371,7 @@ endif()
 add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
 target_link_libraries(graphqlclient PUBLIC
+  graphqlversion
   graphqlpeg
   graphqlresponse)
 
@@ -396,15 +416,17 @@ if(GRAPHQL_USE_RAPIDJSON)
 endif()
 
 install(TARGETS
+    graphqlawaitable
+    graphqlversion
     graphqlclient
     graphqlpeg
-    graphqlcoro
     graphqlresponse
     graphqlservice
   EXPORT cppgraphqlgen-targets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib)
+  LIBRARY DESTINATION lib
+  FILE_SET CXX_MODULES DESTINATION include)
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLClient.h
