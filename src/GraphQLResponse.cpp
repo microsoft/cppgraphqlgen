@@ -6,6 +6,7 @@
 #include "graphqlservice/internal/Base64.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <map>
 #include <optional>
@@ -31,7 +32,7 @@ IdType::~IdType()
 	// omitted, declare it explicitly and define it in graphqlresponse.
 }
 
-IdType::IdType(size_t count, typename ByteData::value_type value /* = 0 */)
+IdType::IdType(std::size_t count, typename ByteData::value_type value /* = 0 */)
 	: _data { ByteData(count, value) }
 {
 }
@@ -95,9 +96,9 @@ bool IdType::operator==(const IdType& rhs) const noexcept
 
 	return (std::holds_alternative<ByteData>(_data)
 				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
-					   std::get<OpaqueString>(rhs._data))
+						 std::get<OpaqueString>(rhs._data))
 				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-					   std::get<OpaqueString>(_data)))
+						 std::get<OpaqueString>(_data)))
 		== internal::Base64::Comparison::EqualTo;
 }
 
@@ -140,7 +141,7 @@ bool IdType::operator<(const IdType& rhs) const noexcept
 	return (std::holds_alternative<ByteData>(_data)
 			? (internal::Base64::compareBase64(std::get<ByteData>(_data),
 				   std::get<OpaqueString>(rhs._data))
-				< internal::Base64::Comparison::EqualTo)
+				  < internal::Base64::Comparison::EqualTo)
 			: (internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
 				  std::get<OpaqueString>(_data)))
 				> internal::Base64::Comparison::EqualTo);
@@ -161,7 +162,7 @@ bool IdType::empty() const noexcept
 		_data);
 }
 
-size_t IdType::size() const noexcept
+std::size_t IdType::size() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -170,7 +171,7 @@ size_t IdType::size() const noexcept
 		_data);
 }
 
-size_t IdType::max_size() const noexcept
+std::size_t IdType::max_size() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -179,7 +180,7 @@ size_t IdType::max_size() const noexcept
 		_data);
 }
 
-void IdType::reserve(size_t new_cap)
+void IdType::reserve(std::size_t new_cap)
 {
 	std::visit(
 		[new_cap](auto& data) {
@@ -188,7 +189,7 @@ void IdType::reserve(size_t new_cap)
 		_data);
 }
 
-size_t IdType::capacity() const noexcept
+std::size_t IdType::capacity() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -215,7 +216,7 @@ void IdType::clear() noexcept
 		_data);
 }
 
-const std::uint8_t& IdType::at(size_t pos) const
+const std::uint8_t& IdType::at(std::size_t pos) const
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -225,7 +226,7 @@ const std::uint8_t& IdType::at(size_t pos) const
 	return std::get<ByteData>(_data).at(pos);
 }
 
-std::uint8_t& IdType::at(size_t pos)
+std::uint8_t& IdType::at(std::size_t pos)
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -235,7 +236,7 @@ std::uint8_t& IdType::at(size_t pos)
 	return std::get<ByteData>(_data).at(pos);
 }
 
-const std::uint8_t& IdType::operator[](size_t pos) const
+const std::uint8_t& IdType::operator[](std::size_t pos) const
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -245,7 +246,7 @@ const std::uint8_t& IdType::operator[](size_t pos) const
 	return std::get<ByteData>(_data)[pos];
 }
 
-std::uint8_t& IdType::operator[](size_t pos)
+std::uint8_t& IdType::operator[](std::size_t pos)
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -1003,7 +1004,7 @@ Value::Value(const Value& other)
 				copy.map.push_back({ entry.first, Value { entry.second } });
 			}
 
-			std::map<std::string_view, size_t> members;
+			std::map<std::string_view, std::size_t> members;
 
 			for (const auto& entry : copy.map)
 			{
@@ -1027,7 +1028,7 @@ Value::Value(const Value& other)
 			ListType copy {};
 
 			copy.reserve(other.size());
-			for (size_t i = 0; i < other.size(); ++i)
+			for (std::size_t i = 0; i < other.size(); ++i)
 			{
 				copy.push_back(Value { other[i] });
 			}
@@ -1090,38 +1091,40 @@ Type Value::typeOf(const TypeData& data) noexcept
 	// As long as the order of the variant alternatives matches the Type enum, we can cast the index
 	// to the Type in one step.
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Map), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Map), TypeData>,
 			MapData>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::List), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::List), TypeData>,
 			ListType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::String), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::String), TypeData>,
 			StringData>,
 		"type mistmatch");
-	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Boolean), TypeData>,
-			BooleanType>,
+	static_assert(std::is_same_v<
+					  std::variant_alternative_t<static_cast<std::size_t>(Type::Boolean), TypeData>,
+					  BooleanType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Int), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Int), TypeData>,
 			IntType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Float), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Float), TypeData>,
 			FloatType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::EnumValue), TypeData>,
+		std::is_same_v<
+			std::variant_alternative_t<static_cast<std::size_t>(Type::EnumValue), TypeData>,
 			EnumData>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::ID), TypeData>, IdType>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::ID), TypeData>,
+			IdType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Scalar), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Scalar), TypeData>,
 			ScalarData>,
 		"type mistmatch");
 
@@ -1270,7 +1273,7 @@ bool Value::maybe_id() const noexcept
 	return false;
 }
 
-void Value::reserve(size_t count)
+void Value::reserve(std::size_t count)
 {
 	if (std::holds_alternative<SharedData>(_data))
 	{
@@ -1299,7 +1302,7 @@ void Value::reserve(size_t count)
 	}
 }
 
-size_t Value::size() const
+std::size_t Value::size() const
 {
 	switch (type())
 	{
@@ -1334,7 +1337,7 @@ bool Value::emplace_back(std::string&& name, Value&& value)
 	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
 		mapData.members.cend(),
 		std::nullopt,
-		[&mapData, &name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+		[&mapData, &name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
 			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
 			return lhsName < rhsName;
@@ -1364,7 +1367,7 @@ MapType::const_iterator Value::find(std::string_view name) const
 	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
 		mapData.members.cend(),
 		std::nullopt,
-		[&mapData, name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+		[&mapData, name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
 			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
 			return lhsName < rhsName;
@@ -1429,7 +1432,7 @@ void Value::emplace_back(Value&& value)
 	std::get<ListType>(_data).emplace_back(std::move(value));
 }
 
-const Value& Value::operator[](size_t index) const
+const Value& Value::operator[](std::size_t index) const
 {
 	const auto& typeData = data();
 

@@ -5,6 +5,7 @@
 #include "TodayMock.h"
 
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 #include <numeric>
@@ -17,7 +18,7 @@ using namespace graphql;
 using namespace std::literals;
 
 void outputOverview(
-	size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
+	std::size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
 {
 	const auto requestsPerSecond =
 		((static_cast<double>(iterations)
@@ -60,14 +61,14 @@ void outputSegment(
 
 int main(int argc, char** argv)
 {
-	const size_t iterations = [](const char* arg) noexcept -> size_t {
+	const std::size_t iterations = [](const char* arg) noexcept -> std::size_t {
 		if (arg)
 		{
 			const int parsed = std::atoi(arg);
 
 			if (parsed > 0)
 			{
-				return static_cast<size_t>(parsed);
+				return static_cast<std::size_t>(parsed);
 			}
 		}
 
@@ -91,7 +92,7 @@ int main(int argc, char** argv)
 		auto query = GetRequestObject();
 		const auto& name = GetOperationName();
 
-		for (size_t i = 0; i < iterations; ++i)
+		for (std::size_t i = 0; i < iterations; ++i)
 		{
 			const auto startResolve = std::chrono::steady_clock::now();
 			auto response = service->resolve({ query, name }).get();

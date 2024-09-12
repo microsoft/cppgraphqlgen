@@ -7,6 +7,8 @@
 
 #include <tao/pegtl/contrib/analyze.hpp>
 
+#include <cstddef>
+
 using namespace graphql;
 using namespace graphql::peg;
 
@@ -219,6 +221,6 @@ TEST(PegtlSchemaCase, ParseTodaySchema)
 
 TEST(PegtlSchemaCase, AnalyzeSchemaGrammar)
 {
-	ASSERT_EQ(size_t { 0 }, analyze<schema_document>(true))
+	ASSERT_EQ(std::size_t { 0 }, analyze<schema_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }

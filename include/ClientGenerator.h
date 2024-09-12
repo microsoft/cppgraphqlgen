@@ -9,6 +9,8 @@
 #include "RequestLoader.h"
 #include "SchemaLoader.h"
 
+#include <cstddef>
+
 namespace graphql::generator::client {
 
 struct [[nodiscard("unnecessary construction")]] GeneratorPaths
@@ -27,9 +29,8 @@ class [[nodiscard("unnecessary construction")]] Generator
 {
 public:
 	// Initialize the generator with the introspection client or a custom GraphQL client.
-	explicit Generator(SchemaOptions && schemaOptions,
-		RequestOptions && requestOptions,
-		GeneratorOptions && options);
+	explicit Generator(
+		SchemaOptions&& schemaOptions, RequestOptions&& requestOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	[[nodiscard("unnecessary memory copy")]] std::vector<std::string> Build() const noexcept;
@@ -43,24 +44,21 @@ private:
 	[[nodiscard("unnecessary call")]] const std::string& getOperationNamespace(
 		const Operation& operation) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getResponseFieldCppType(
-		const ResponseField& responseField,
-		std::string_view currentScope = {}) const noexcept;
+		const ResponseField& responseField, std::string_view currentScope = {}) const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputHeader() const noexcept;
-	void outputRequestComment(std::ostream & headerFile) const noexcept;
-	void outputGetRequestDeclaration(std::ostream & headerFile) const noexcept;
-	void outputGetOperationNameDeclaration(std::ostream & headerFile) const noexcept;
-	[[nodiscard("unnecessary call")]] bool outputResponseFieldType(std::ostream & headerFile,
-		const ResponseField& responseField,
-		size_t indent = 0) const noexcept;
+	void outputRequestComment(std::ostream& headerFile) const noexcept;
+	void outputGetRequestDeclaration(std::ostream& headerFile) const noexcept;
+	void outputGetOperationNameDeclaration(std::ostream& headerFile) const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputResponseFieldType(std::ostream& headerFile,
+		const ResponseField& responseField, std::size_t indent = 0) const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputSource() const noexcept;
-	void outputGetRequestImplementation(std::ostream & sourceFile) const noexcept;
-	void outputGetOperationNameImplementation(std::ostream & sourceFile, const Operation& operation)
-		const noexcept;
-	bool outputModifiedResponseImplementation(std::ostream & sourceFile,
-		const std::string& outerScope,
-		const ResponseField& responseField) const noexcept;
+	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
+	void outputGetOperationNameImplementation(
+		std::ostream& sourceFile, const Operation& operation) const noexcept;
+	bool outputModifiedResponseImplementation(std::ostream& sourceFile,
+		const std::string& outerScope, const ResponseField& responseField) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] static std::string getTypeModifierList(
 		const TypeModifierStack& modifiers) noexcept;
 

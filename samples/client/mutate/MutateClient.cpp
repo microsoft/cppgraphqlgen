@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -127,7 +128,7 @@ response::Value Variable<TaskState>::serialize(TaskState&& value)
 
 	response::Value result { response::Type::EnumValue };
 
-	result.set<std::string>(std::string { s_names[static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_names[static_cast<std::size_t>(value)] });
 
 	return result;
 }

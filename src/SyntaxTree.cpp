@@ -8,6 +8,7 @@
 
 #include <tao/pegtl/contrib/unescape.hpp>
 
+#include <cstddef>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -50,14 +51,14 @@ std::string_view ast_node::unescaped_view() const
 							   && child->children.front()->is_type<block_quote_empty_line>()
 							   && child->children.back()->is_type<block_quote_line_content>())
 						? std::make_optional(std::make_pair(child->children.front()->string_view(),
-							child->children.back()->unescaped_view()))
+							  child->children.back()->unescaped_view()))
 						: std::nullopt;
 				});
 
 			// Calculate the common indent
 			const auto commonIndent = std::accumulate(lines.cbegin(),
 				lines.cend(),
-				std::optional<size_t> {},
+				std::optional<std::size_t> {},
 				[](auto value, const auto& line) noexcept {
 					if (line)
 					{
@@ -79,7 +80,7 @@ std::string_view ast_node::unescaped_view() const
 			{
 				joined.reserve(std::accumulate(lines.cbegin(),
 								   lines.cend(),
-								   size_t {},
+								   std::size_t {},
 								   [trimIndent](auto value, const auto& line) noexcept {
 									   if (line)
 									   {
@@ -118,8 +119,8 @@ std::string_view ast_node::unescaped_view() const
 
 			joined.reserve(std::accumulate(children.cbegin(),
 				children.cend(),
-				size_t(0),
-				[](size_t total, const std::unique_ptr<ast_node>& child) {
+				std::size_t(0),
+				[](std::size_t total, const std::unique_ptr<ast_node>& child) {
 					return total + child->string_view().size();
 				}));
 
@@ -642,7 +643,7 @@ struct ast_action : nothing<Rule>
 
 struct [[nodiscard("unnecessary construction")]] depth_guard
 {
-	explicit depth_guard(size_t & depth) noexcept
+	explicit depth_guard(std::size_t& depth) noexcept
 		: _depth(depth)
 	{
 		++_depth;
@@ -653,14 +654,14 @@ struct [[nodiscard("unnecessary construction")]] depth_guard
 		--_depth;
 	}
 
-	depth_guard(depth_guard &&) noexcept = delete;
+	depth_guard(depth_guard&&) noexcept = delete;
 	depth_guard(const depth_guard&) = delete;
 
 	depth_guard& operator=(depth_guard&&) noexcept = delete;
 	depth_guard& operator=(const depth_guard&) = delete;
 
 private:
-	size_t& _depth;
+	std::size_t& _depth;
 };
 
 template <>
@@ -981,21 +982,21 @@ class [[nodiscard("unnecessary construction")]] depth_limit_input : public Parse
 {
 public:
 	template <typename... Args>
-	explicit depth_limit_input(size_t depthLimit, Args && ... args) noexcept
+	explicit depth_limit_input(std::size_t depthLimit, Args&&... args) noexcept
 		: ParseInput(std::forward<Args>(args)...)
 		, _depthLimit(depthLimit)
 	{
 	}
 
-	size_t depthLimit() const noexcept
+	std::size_t depthLimit() const noexcept
 	{
 		return _depthLimit;
 	}
 
-	size_t selectionSetDepth = 0;
+	std::size_t selectionSetDepth = 0;
 
 private:
-	const size_t _depthLimit;
+	const std::size_t _depthLimit;
 };
 
 using ast_file = depth_limit_input<file_input<>>;
@@ -1018,7 +1019,7 @@ struct [[nodiscard("unnecessary construction")]] ast_input
 	std::variant<ast_string, std::unique_ptr<ast_file>, ast_string_view> data;
 };
 
-ast parseSchemaString(std::string_view input, size_t depthLimit)
+ast parseSchemaString(std::string_view input, std::size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
 					 ast_input { ast_string { { input.cbegin(), input.cend() } } }),
@@ -1050,7 +1051,7 @@ ast parseSchemaString(std::string_view input, size_t depthLimit)
 	return result;
 }
 
-ast parseSchemaFile(std::string_view filename, size_t depthLimit)
+ast parseSchemaFile(std::string_view filename, std::size_t depthLimit)
 {
 	ast result;
 
@@ -1081,7 +1082,7 @@ ast parseSchemaFile(std::string_view filename, size_t depthLimit)
 	return result;
 }
 
-ast parseString(std::string_view input, size_t depthLimit)
+ast parseString(std::string_view input, std::size_t depthLimit)
 {
 	ast result { std::make_shared<ast_input>(
 					 ast_input { ast_string { { input.cbegin(), input.cend() } } }),
@@ -1114,7 +1115,7 @@ ast parseString(std::string_view input, size_t depthLimit)
 	return result;
 }
 
-ast parseFile(std::string_view filename, size_t depthLimit)
+ast parseFile(std::string_view filename, std::size_t depthLimit)
 {
 	ast result;
 
@@ -1148,7 +1149,7 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 } // namespace peg
 
-peg::ast operator"" _graphql(const char* text, size_t size)
+peg::ast operator"" _graphql(const char* text, std::size_t size)
 {
 	peg::ast result { std::make_shared<peg::ast_input>(
 						  peg::ast_input { peg::ast_string_view { { text, size } } }),

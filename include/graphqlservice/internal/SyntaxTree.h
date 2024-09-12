@@ -13,6 +13,7 @@
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -69,17 +70,17 @@ private:
 	}
 
 	template <typename U>
-	[[nodiscard("unnecessary call")]] static size_t type_hash() noexcept
+	[[nodiscard("unnecessary call")]] static std::size_t type_hash() noexcept
 	{
 		// This is cached in a static local variable per-specialization, but each module may have
 		// its own instance of the specialization and the local variable.
-		static const size_t hash = std::hash<std::string_view> {}(type_name<U>());
+		static const std::size_t hash = std::hash<std::string_view> {}(type_name<U>());
 
 		return hash;
 	}
 
 	std::string_view _type_name;
-	size_t _type_hash = 0;
+	std::size_t _type_hash = 0;
 
 	using unescaped_t = std::variant<std::string_view, std::string>;
 

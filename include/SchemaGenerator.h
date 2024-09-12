@@ -8,6 +8,8 @@
 
 #include "SchemaLoader.h"
 
+#include <cstddef>
+
 namespace graphql::generator::schema {
 
 struct [[nodiscard("unnecessary construction")]] GeneratorPaths
@@ -28,7 +30,7 @@ class [[nodiscard("unnecessary construction")]] Generator
 {
 public:
 	// Initialize the generator with the introspection schema or a custom GraphQL schema.
-	explicit Generator(SchemaOptions && schemaOptions, GeneratorOptions && options);
+	explicit Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options);
 
 	// Run the generator and return a list of filenames that were output.
 	[[nodiscard("unnecessary construction")]] std::vector<std::string> Build() const noexcept;
@@ -40,12 +42,11 @@ private:
 	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputHeader() const noexcept;
-	void outputInterfaceDeclaration(std::ostream & headerFile, std::string_view cppType) const;
-	void outputObjectImplements(std::ostream & headerFile, const ObjectType& objectType) const;
-	void outputObjectStubs(std::ostream & headerFile, const ObjectType& objectType) const;
-	void outputObjectDeclaration(std::ostream & headerFile,
-		const ObjectType& objectType,
-		bool isQueryType) const;
+	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
+	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
+	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
+	void outputObjectDeclaration(
+		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
 	[[nodiscard("unnecessary memory copy")]] std::string getFieldDeclaration(
 		const InputField& inputField) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getFieldDeclaration(
@@ -54,26 +55,21 @@ private:
 		const OutputField& outputField) const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputSource() const noexcept;
-	void outputInterfaceImplementation(std::ostream & sourceFile, std::string_view cppType) const;
-	void outputInterfaceIntrospection(std::ostream & sourceFile, const InterfaceType& interfaceType)
-		const;
-	void outputUnionIntrospection(std::ostream & sourceFile, const UnionType& unionType) const;
-	void outputObjectImplementation(std::ostream & sourceFile,
-		const ObjectType& objectType,
-		bool isQueryType) const;
-	void outputObjectIntrospection(std::ostream & sourceFile, const ObjectType& objectType) const;
-	void outputIntrospectionInterfaces(std::ostream & sourceFile,
-		std::string_view cppType,
+	void outputInterfaceImplementation(std::ostream& sourceFile, std::string_view cppType) const;
+	void outputInterfaceIntrospection(
+		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
+	void outputUnionIntrospection(std::ostream& sourceFile, const UnionType& unionType) const;
+	void outputObjectImplementation(
+		std::ostream& sourceFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectIntrospection(std::ostream& sourceFile, const ObjectType& objectType) const;
+	void outputIntrospectionInterfaces(std::ostream& sourceFile, std::string_view cppType,
 		const std::vector<std::string_view>& interfaces) const;
-	void outputIntrospectionFields(std::ostream & sourceFile,
-		std::string_view cppType,
-		const OutputFieldList& fields) const;
-	[[nodiscard("unnecessary memory copy")]] std::string getArgumentDefaultValue(size_t level,
-		const response::Value& defaultValue) const noexcept;
+	void outputIntrospectionFields(
+		std::ostream& sourceFile, std::string_view cppType, const OutputFieldList& fields) const;
+	[[nodiscard("unnecessary memory copy")]] std::string getArgumentDefaultValue(
+		std::size_t level, const response::Value& defaultValue) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getArgumentDeclaration(
-		const InputField& argument,
-		const char* prefixToken,
-		const char* argumentsToken,
+		const InputField& argument, const char* prefixToken, const char* argumentsToken,
 		const char* defaultToken) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getArgumentAccessType(
 		const InputField& argument) const noexcept;
@@ -81,8 +77,8 @@ private:
 		const OutputField& result) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getTypeModifiers(
 		const TypeModifierStack& modifiers) const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getIntrospectionType(std::string_view type,
-		const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getIntrospectionType(
+		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 
 	[[nodiscard("unnecessary memory copy")]] std::vector<std::string> outputSeparateFiles()
 		const noexcept;

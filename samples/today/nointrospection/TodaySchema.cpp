@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -56,7 +57,7 @@ service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableS
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -802,10 +803,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
 
 	typeTaskState->AddEnumValues({
-		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation))md"sv) },
-		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::New)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Started)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTaskState[static_cast<size_t>(today::TaskState::Complete)], R"md()md"sv, std::nullopt }
+		{ service::s_namesTaskState[static_cast<std::size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation))md"sv) },
+		{ service::s_namesTaskState[static_cast<std::size_t>(today::TaskState::New)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTaskState[static_cast<std::size_t>(today::TaskState::Started)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTaskState[static_cast<std::size_t>(today::TaskState::Complete)], R"md()md"sv, std::nullopt }
 	});
 
 	typeCompleteTaskInput->AddInputValues({

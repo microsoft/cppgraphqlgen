@@ -21,6 +21,7 @@
 #endif // _MSC_VER
 
 #include <cctype>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -531,7 +532,7 @@ void Generator::outputGetOperationNameDeclaration(std::ostream& headerFile) cons
 }
 
 bool Generator::outputResponseFieldType(std::ostream& headerFile,
-	const ResponseField& responseField, size_t indent /* = 0 */) const noexcept
+	const ResponseField& responseField, std::size_t indent /* = 0 */) const noexcept
 {
 	switch (responseField.type->kind())
 	{
@@ -617,6 +618,7 @@ bool Generator::outputSource() const noexcept
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -846,7 +848,7 @@ response::Value Variable<)cpp"
 
 	response::Value result { response::Type::EnumValue };
 
-	result.set<std::string>(std::string { s_names[static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_names[static_cast<std::size_t>(value)] });
 
 	return result;
 }
@@ -1448,9 +1450,9 @@ int main(int argc, char** argv)
 
 				for (const auto& segment : error.path)
 				{
-					if (std::holds_alternative<size_t>(segment))
+					if (std::holds_alternative<std::size_t>(segment))
 					{
-						std::cerr << '[' << std::get<size_t>(segment) << ']';
+						std::cerr << '[' << std::get<std::size_t>(segment) << ']';
 					}
 					else
 					{

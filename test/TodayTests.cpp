@@ -8,6 +8,7 @@
 #include "graphqlservice/JSONResponse.h"
 
 #include <chrono>
+#include <cstddef>
 
 using namespace graphql;
 
@@ -72,20 +73,23 @@ TEST_F(TodayServiceCase, QueryEverything)
 		_mockService->service
 			->resolve({ query, "Everything"sv, std::move(variables), std::launch::async, state })
 			.get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->tasksRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -100,7 +104,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -119,7 +123,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
@@ -134,7 +138,7 @@ TEST_F(TodayServiceCase, QueryEverything)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -171,20 +175,21 @@ TEST_F(TodayServiceCase, QueryAppointments)
 	auto state = std::make_shared<today::RequestState>(2);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -200,7 +205,7 @@ TEST_F(TodayServiceCase, QueryAppointments)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -239,20 +244,21 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 	auto state = std::make_shared<today::RequestState>(2);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -275,7 +281,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceError)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -315,20 +321,21 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
 	auto result = _mockService->service
 					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -351,7 +358,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsWithForceErrorAsync)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -388,21 +395,22 @@ TEST_F(TodayServiceCase, QueryTasks)
 	auto state = std::make_shared<today::RequestState>(3);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_GE(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 0 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->appointmentsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 3 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 3 }, state->tasksRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadAppointmentsCount)
+	EXPECT_EQ(std::size_t { 0 }, state->loadAppointmentsCount)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -418,7 +426,7 @@ TEST_F(TodayServiceCase, QueryTasks)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("taskId", taskNode))
@@ -451,21 +459,22 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 	auto state = std::make_shared<today::RequestState>(4);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_GE(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 0 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->appointmentsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 4 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 4 }, state->unreadCountsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->loadAppointmentsCount)
+	EXPECT_EQ(std::size_t { 0 }, state->loadAppointmentsCount)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -480,7 +489,7 @@ TEST_F(TodayServiceCase, QueryUnreadCounts)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -615,7 +624,8 @@ TEST_F(TodayServiceCase, SubscribeNextAppointmentChangeOverride)
 	auto subscriptionObject = std::make_shared<today::NextAppointmentChange>(
 		[](const std::shared_ptr<service::RequestState>& state)
 			-> std::shared_ptr<today::Appointment> {
-			EXPECT_EQ(size_t { 7 }, std::static_pointer_cast<today::RequestState>(state)->requestId)
+			EXPECT_EQ(std::size_t { 7 },
+				std::static_pointer_cast<today::RequestState>(state)->requestId)
 				<< "should pass the RequestState to the subscription resolvers";
 			return std::make_shared<today::Appointment>(
 				response::IdType(today::getFakeAppointmentId()),
@@ -963,7 +973,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		capturedParams.pop();
 		const auto params1 = std::move(capturedParams.top());
 		capturedParams.pop();
-		ASSERT_EQ(size_t { 1 }, params1.operationDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params1.operationDirectives.size())
 			<< "missing operation directive";
 		const auto itrQueryTag1 = params1.operationDirectives.cbegin();
 		ASSERT_TRUE(itrQueryTag1->first == "queryTag"sv) << "missing required directive";
@@ -972,18 +982,19 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto fragmentDefinitionCount1 = params1.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount1 = params1.fragmentSpreadDirectives.size();
 		const auto inlineFragmentCount1 = params1.inlineFragmentDirectives.size();
-		ASSERT_EQ(size_t { 1 }, params1.fieldDirectives.size()) << "missing operation directive";
+		ASSERT_EQ(std::size_t { 1 }, params1.fieldDirectives.size())
+			<< "missing operation directive";
 		const auto itrFieldTag1 = params1.fieldDirectives.cbegin();
 		ASSERT_TRUE(itrFieldTag1->first == "fieldTag"sv) << "missing required directive";
 		const auto& fieldTag1 = itrFieldTag1->second;
 		const auto field1 = service::StringArgument::require("field", fieldTag1);
-		ASSERT_EQ(size_t { 1 }, params2.operationDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params2.operationDirectives.size())
 			<< "missing operation directive";
 		const auto itrQueryTag2 = params2.operationDirectives.cbegin();
 		ASSERT_TRUE(itrQueryTag2->first == "queryTag"sv) << "missing required directive";
 		const auto& queryTag2 = itrQueryTag2->second;
 		const auto query2 = service::StringArgument::require("query", queryTag2);
-		ASSERT_EQ(size_t { 1 }, params2.fragmentDefinitionDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params2.fragmentDefinitionDirectives.size())
 			<< "missing fragment definition directive";
 		const auto itrFragmentDefinitionTag2 = params2.fragmentDefinitionDirectives.cbegin();
 		ASSERT_TRUE(itrFragmentDefinitionTag2->first == "fragmentDefinitionTag"sv)
@@ -991,7 +1002,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto& fragmentDefinitionTag2 = itrFragmentDefinitionTag2->second;
 		const auto fragmentDefinition2 =
 			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag2);
-		ASSERT_EQ(size_t { 1 }, params2.fragmentSpreadDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params2.fragmentSpreadDirectives.size())
 			<< "missing fragment spread directive";
 		const auto itrFragmentSpreadTag2 = params2.fragmentSpreadDirectives.cbegin();
 		ASSERT_TRUE(itrFragmentSpreadTag2->first == "fragmentSpreadTag"sv)
@@ -1000,18 +1011,18 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto fragmentSpread2 =
 			service::StringArgument::require("fragmentSpread", fragmentSpreadTag2);
 		const auto inlineFragmentCount2 = params2.inlineFragmentDirectives.size();
-		ASSERT_EQ(size_t { 1 }, params2.fieldDirectives.size()) << "missing field directive";
+		ASSERT_EQ(std::size_t { 1 }, params2.fieldDirectives.size()) << "missing field directive";
 		const auto itrFieldTag2 = params2.fieldDirectives.cbegin();
 		ASSERT_TRUE(itrFieldTag2->first == "fieldTag"sv) << "missing field directive";
 		const auto& fieldTag2 = itrFieldTag2->second;
 		const auto field2 = service::StringArgument::require("field", fieldTag2);
-		ASSERT_EQ(size_t { 1 }, params3.operationDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params3.operationDirectives.size())
 			<< "missing operation directive";
 		const auto itrQueryTag3 = params3.operationDirectives.cbegin();
 		ASSERT_TRUE(itrQueryTag3->first == "queryTag"sv) << "missing required directive";
 		const auto& queryTag3 = itrQueryTag3->second;
 		const auto query3 = service::StringArgument::require("query", queryTag3);
-		ASSERT_EQ(size_t { 1 }, params3.fragmentDefinitionDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params3.fragmentDefinitionDirectives.size())
 			<< "missing fragment definition directive";
 		const auto itrFragmentDefinitionTag3 = params3.fragmentDefinitionDirectives.cbegin();
 		ASSERT_TRUE(itrFragmentDefinitionTag3->first == "fragmentDefinitionTag"sv)
@@ -1019,7 +1030,7 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto& fragmentDefinitionTag3 = itrFragmentDefinitionTag3->second;
 		const auto fragmentDefinition3 =
 			service::StringArgument::require("fragmentDefinition", fragmentDefinitionTag3);
-		ASSERT_EQ(size_t { 1 }, params3.fragmentSpreadDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params3.fragmentSpreadDirectives.size())
 			<< "missing fragment spread directive";
 		const auto itrFragmentSpreadTag3 = params3.fragmentSpreadDirectives.cbegin();
 		ASSERT_TRUE(itrFragmentSpreadTag3->first == "fragmentSpreadTag"sv)
@@ -1027,19 +1038,19 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto& fragmentSpreadTag3 = itrFragmentSpreadTag3->second;
 		const auto fragmentSpread3 =
 			service::StringArgument::require("fragmentSpread", fragmentSpreadTag3);
-		ASSERT_EQ(size_t { 1 }, params3.inlineFragmentDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params3.inlineFragmentDirectives.size())
 			<< "missing inline fragment directive";
 		const auto itrInlineFragmentTag3 = params3.inlineFragmentDirectives.cbegin();
 		ASSERT_TRUE(itrInlineFragmentTag3->first == "inlineFragmentTag"sv);
 		const auto& inlineFragmentTag3 = itrInlineFragmentTag3->second;
 		const auto inlineFragment3 =
 			service::StringArgument::require("inlineFragment", inlineFragmentTag3);
-		ASSERT_EQ(size_t { 1 }, params3.fieldDirectives.size()) << "missing field directive";
+		ASSERT_EQ(std::size_t { 1 }, params3.fieldDirectives.size()) << "missing field directive";
 		const auto itrFieldTag3 = params3.fieldDirectives.cbegin();
 		ASSERT_TRUE(itrFieldTag3->first == "fieldTag"sv) << "missing field directive";
 		const auto& fieldTag3 = itrFieldTag3->second;
 		const auto field3 = service::StringArgument::require("field", fieldTag3);
-		ASSERT_EQ(size_t { 1 }, params4.operationDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params4.operationDirectives.size())
 			<< "missing operation directive";
 		const auto itrQueryTag4 = params4.operationDirectives.cbegin();
 		ASSERT_TRUE(itrQueryTag4->first == "queryTag"sv) << "missing required directive";
@@ -1047,19 +1058,20 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		const auto query4 = service::StringArgument::require("query", queryTag4);
 		const auto fragmentDefinitionCount4 = params4.fragmentDefinitionDirectives.size();
 		const auto fragmentSpreadCount4 = params4.fragmentSpreadDirectives.size();
-		ASSERT_EQ(size_t { 1 }, params4.inlineFragmentDirectives.size())
+		ASSERT_EQ(std::size_t { 1 }, params4.inlineFragmentDirectives.size())
 			<< "missing inline fragment directive";
 		const auto itrInlineFragmentTag4 = params4.inlineFragmentDirectives.cbegin();
 		ASSERT_TRUE(itrInlineFragmentTag4->first == "inlineFragmentTag"sv);
 		const auto& inlineFragmentTag4 = itrInlineFragmentTag4->second;
 		const auto inlineFragment4 =
 			service::StringArgument::require("inlineFragment", inlineFragmentTag4);
-		ASSERT_EQ(size_t { 3 }, params4.fieldDirectives.size()) << "missing field directive";
+		ASSERT_EQ(std::size_t { 3 }, params4.fieldDirectives.size()) << "missing field directive";
 		const auto itrRepeatable1 = params4.fieldDirectives.cbegin();
 		ASSERT_TRUE(itrRepeatable1->first == "repeatableOnField"sv) << "missing field directive";
 		EXPECT_TRUE(response::Type::Map == itrRepeatable1->second.type())
 			<< "unexpected arguments type directive";
-		EXPECT_EQ(size_t { 0 }, itrRepeatable1->second.size()) << "extra arguments on directive";
+		EXPECT_EQ(std::size_t { 0 }, itrRepeatable1->second.size())
+			<< "extra arguments on directive";
 		const auto itrFieldTag4 = itrRepeatable1 + 1;
 		ASSERT_TRUE(itrFieldTag4->first == "fieldTag"sv) << "missing field directive";
 		const auto& fieldTag4 = itrFieldTag4->second;
@@ -1067,7 +1079,8 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_TRUE(itrRepeatable2->first == "repeatableOnField"sv) << "missing field directive";
 		EXPECT_TRUE(response::Type::Map == itrRepeatable2->second.type())
 			<< "unexpected arguments type directive";
-		EXPECT_EQ(size_t { 0 }, itrRepeatable2->second.size()) << "extra arguments on directive";
+		EXPECT_EQ(std::size_t { 0 }, itrRepeatable2->second.size())
+			<< "extra arguments on directive";
 		const auto field4 = service::StringArgument::require("field", fieldTag4);
 
 		ASSERT_EQ(1, depth1);
@@ -1076,16 +1089,16 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 		ASSERT_EQ(4, depth4);
 		ASSERT_TRUE(capturedParams.empty());
 		ASSERT_EQ("nested", query1) << "remember the operation directives";
-		ASSERT_EQ(size_t { 0 }, fragmentDefinitionCount1);
-		ASSERT_EQ(size_t { 0 }, fragmentSpreadCount1);
-		ASSERT_EQ(size_t { 0 }, inlineFragmentCount1);
+		ASSERT_EQ(std::size_t { 0 }, fragmentDefinitionCount1);
+		ASSERT_EQ(std::size_t { 0 }, fragmentSpreadCount1);
+		ASSERT_EQ(std::size_t { 0 }, inlineFragmentCount1);
 		ASSERT_EQ("nested1", field1) << "remember the field directives";
 		ASSERT_EQ("nested", query2) << "remember the operation directives";
 		ASSERT_EQ("fragmentDefinition1", fragmentDefinition2)
 			<< "remember the directives from the fragment definition";
 		ASSERT_EQ("fragmentSpread1", fragmentSpread2)
 			<< "remember the directives from the fragment spread";
-		ASSERT_EQ(size_t { 0 }, inlineFragmentCount2);
+		ASSERT_EQ(std::size_t { 0 }, inlineFragmentCount2);
 		ASSERT_EQ("nested2", field2) << "remember the field directives";
 		ASSERT_EQ("nested", query3) << "remember the operation directives";
 		ASSERT_EQ("fragmentDefinition2", fragmentDefinition3)
@@ -1096,10 +1109,10 @@ TEST_F(TodayServiceCase, NestedFragmentDirectives)
 			<< "remember the directives from the inline fragment";
 		ASSERT_EQ("nested3", field3) << "remember the field directives";
 		ASSERT_EQ("nested", query4) << "remember the operation directives";
-		ASSERT_EQ(size_t { 0 }, fragmentDefinitionCount4)
+		ASSERT_EQ(std::size_t { 0 }, fragmentDefinitionCount4)
 			<< "traversing a field to a nested object SelectionSet resets the fragment "
 			   "directives";
-		ASSERT_EQ(size_t { 0 }, fragmentSpreadCount4)
+		ASSERT_EQ(std::size_t { 0 }, fragmentSpreadCount4)
 			<< "traversing a field to a nested object SelectionSet resets the fragment "
 			   "directives";
 		ASSERT_EQ("inlineFragment5", inlineFragment4)
@@ -1128,20 +1141,21 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 	auto state = std::make_shared<today::RequestState>(12);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 12 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 12 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -1156,7 +1170,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsById)
 
 		const auto appointmentsById =
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
-		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
+		ASSERT_EQ(std::size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
 		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
@@ -1186,7 +1200,7 @@ TEST_F(TodayServiceCase, UnimplementedFieldError)
 		ASSERT_TRUE(result.type() == response::Type::Map);
 		const auto& errors = result["errors"];
 		ASSERT_TRUE(errors.type() == response::Type::List);
-		ASSERT_EQ(size_t { 1 }, errors.size());
+		ASSERT_EQ(std::size_t { 1 }, errors.size());
 		response::Value error { errors[0] };
 		ASSERT_TRUE(error.type() == response::Type::Map);
 		ASSERT_EQ(
@@ -1219,7 +1233,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingId)
 				const std::shared_ptr<service::RequestState>& state,
 				response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
 				EXPECT_EQ(expectedContext, resolverContext);
-				EXPECT_EQ(size_t { 13 },
+				EXPECT_EQ(std::size_t { 13 },
 					std::static_pointer_cast<today::RequestState>(state)->requestId)
 					<< "should pass the RequestState to the subscription resolvers";
 				EXPECT_EQ(today::getFakeTaskId(), idArg);
@@ -1366,7 +1380,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeFuzzyComparator)
 				const response::IdType fuzzyId { 'f', 'a', 'k' };
 
 				EXPECT_EQ(expectedContext, resolverContext);
-				EXPECT_EQ(size_t { 14 },
+				EXPECT_EQ(std::size_t { 14 },
 					std::static_pointer_cast<today::RequestState>(state)->requestId)
 					<< "should pass the RequestState to the subscription resolvers";
 				EXPECT_EQ(fuzzyId, idArg);
@@ -1514,7 +1528,7 @@ TEST_F(TodayServiceCase, SubscribeNodeChangeMatchingVariable)
 				const std::shared_ptr<service::RequestState>& state,
 				response::IdType&& idArg) -> std::shared_ptr<today::object::Node> {
 				EXPECT_EQ(expectedContext, resolverContext);
-				EXPECT_EQ(size_t { 14 },
+				EXPECT_EQ(std::size_t { 14 },
 					std::static_pointer_cast<today::RequestState>(state)->requestId)
 					<< "should pass the RequestState to the subscription resolvers";
 				EXPECT_EQ(today::getFakeTaskId(), idArg);
@@ -1587,20 +1601,21 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 	auto state = std::make_shared<today::RequestState>(15);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 15 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 15 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -1615,7 +1630,7 @@ TEST_F(TodayServiceCase, DeferredQueryAppointmentsById)
 
 		const auto appointmentsById =
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
-		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
+		ASSERT_EQ(std::size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
 		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
@@ -1650,20 +1665,21 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 	auto result = _mockService->service
 					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 16 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 16 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -1678,7 +1694,7 @@ TEST_F(TodayServiceCase, NonBlockingQueryAppointmentsById)
 
 		const auto appointmentsById =
 			service::ScalarArgument::require<service::TypeModifier::List>("appointmentsById", data);
-		ASSERT_EQ(size_t { 1 }, appointmentsById.size());
+		ASSERT_EQ(std::size_t { 1 }, appointmentsById.size());
 		const auto& appointmentEntry = appointmentsById.front();
 		EXPECT_EQ(today::getFakeAppointmentId(),
 			service::IdArgument::require("appointmentId", appointmentEntry))
@@ -1868,20 +1884,21 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 	auto state = std::make_shared<today::RequestState>(20);
 	auto result =
 		_mockService->service->resolve({ query, {}, std::move(variables), {}, state }).get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_GE(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_GE(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 20 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 20 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 0 }, state->tasksRequestId) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->unreadCountsRequestId)
 		<< "today service did not call the loader";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
-	EXPECT_EQ(size_t { 0 }, state->loadUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 0 }, state->loadTasksCount) << "today service did not call the loader";
+	EXPECT_EQ(std::size_t { 0 }, state->loadUnreadCountsCount)
 		<< "today service did not call the loader";
 
 	try
@@ -1897,7 +1914,7 @@ TEST_F(TodayServiceCase, QueryAppointmentsThroughUnionTypeFragment)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);

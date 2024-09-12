@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <iostream>
 
 namespace graphql::service {
@@ -58,9 +59,10 @@ void addErrorPath(const error_path& path, response::Value& error)
 			errorPath.emplace_back(
 				response::Value { std::string { std::get<std::string_view>(segment) } });
 		}
-		else if (std::holds_alternative<size_t>(segment))
+		else if (std::holds_alternative<std::size_t>(segment))
 		{
-			errorPath.emplace_back(response::Value(static_cast<int>(std::get<size_t>(segment))));
+			errorPath.emplace_back(
+				response::Value(static_cast<int>(std::get<std::size_t>(segment))));
 		}
 	}
 
@@ -250,7 +252,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+		  std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
 {
 }
 
@@ -258,9 +260,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				std::make_shared<await_worker_thread>()))
+				  std::make_shared<await_worker_thread>()))
 			: std::static_pointer_cast<const Concept>(std::make_shared<Model<coro::suspend_never>>(
-				std::make_shared<coro::suspend_never>())) }
+				  std::make_shared<coro::suspend_never>())) }
 {
 }
 
@@ -885,7 +887,7 @@ class SelectionVisitor
 public:
 	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-		const ResolverMap& resolvers, size_t count);
+		const ResolverMap& resolvers, std::size_t count);
 
 	void visit(const peg::ast_node& selection);
 
@@ -922,7 +924,7 @@ private:
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-	const ResolverMap& resolvers, size_t count)
+	const ResolverMap& resolvers, std::size_t count)
 	: _resolverContext(selectionSetParams.resolverContext)
 	, _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
@@ -1152,7 +1154,7 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	_fragmentDefinitionDirectives->push_front(itr->second.getDirectives());
 	_fragmentSpreadDirectives->push_front(directiveVisitor.getDirectives());
 
-	const size_t count = itr->second.getSelection().children.size();
+	const std::size_t count = itr->second.getSelection().children.size();
 
 	if (count > 1)
 	{
@@ -1197,7 +1199,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 			[this, &directiveVisitor](const peg::ast_node& child) {
 				_inlineFragmentDirectives->push_front(directiveVisitor.getDirectives());
 
-				const size_t count = child.children.size();
+				const std::size_t count = child.children.size();
 
 				if (count > 1)
 				{

@@ -9,6 +9,7 @@
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
@@ -1770,7 +1771,7 @@ void ValidateExecutableVisitor::visitField(const peg::ast_node& field)
 		selection = &child;
 	});
 
-	size_t subFieldCount = 0;
+	std::size_t subFieldCount = 0;
 
 	if (selection != nullptr)
 	{

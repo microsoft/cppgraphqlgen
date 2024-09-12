@@ -17,6 +17,7 @@
 #endif // _MSC_VER
 
 #include <cctype>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -1272,6 +1273,7 @@ bool Generator::outputSource() const noexcept
 	sourceFile << R"cpp(
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -1342,7 +1344,7 @@ service::AwaitableResolver Result<)cpp"
 			response::Value resolvedResult(response::Type::EnumValue);
 
 			resolvedResult.set<std::string>(std::string { s_names)cpp"
-					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
+					   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -1902,9 +1904,9 @@ Operations::Operations()cpp";
 
 					firstValue = false;
 					sourceFile << R"cpp(		{ service::s_names)cpp" << enumType.cppType
-							   << R"cpp([static_cast<size_t>()cpp" << _loader.getSchemaNamespace()
-							   << R"cpp(::)cpp" << enumType.cppType << R"cpp(::)cpp"
-							   << enumValue.cppValue << R"cpp()], R"md()cpp";
+							   << R"cpp([static_cast<std::size_t>()cpp"
+							   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+							   << R"cpp(::)cpp" << enumValue.cppValue << R"cpp()], R"md()cpp";
 
 					if (!_options.noIntrospection)
 					{
@@ -2087,8 +2089,7 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
-					   << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}
@@ -2646,7 +2647,7 @@ void Generator::outputIntrospectionFields(
 }
 
 std::string Generator::getArgumentDefaultValue(
-	size_t level, const response::Value& defaultValue) const noexcept
+	std::size_t level, const response::Value& defaultValue) const noexcept
 {
 	const std::string padding(level, '\t');
 	std::ostringstream argumentDefaultValue;
@@ -2933,7 +2934,7 @@ std::string Generator::getTypeModifiers(const TypeModifierStack& modifiers) cons
 std::string Generator::getIntrospectionType(
 	std::string_view type, const TypeModifierStack& modifiers) const noexcept
 {
-	size_t wrapperCount = 0;
+	std::size_t wrapperCount = 0;
 	bool nonNull = true;
 	std::ostringstream introspectionType;
 
@@ -2995,7 +2996,7 @@ std::string Generator::getIntrospectionType(
 
 	introspectionType << R"cpp(schema->LookupType(R"gql()cpp" << type << R"cpp()gql"sv))cpp";
 
-	for (size_t i = 0; i < wrapperCount; ++i)
+	for (std::size_t i = 0; i < wrapperCount; ++i)
 	{
 		introspectionType << R"cpp())cpp";
 	}

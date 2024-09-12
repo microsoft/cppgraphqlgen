@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <functional>
 #include <future>
 #include <list>
@@ -45,19 +46,19 @@ namespace service {
 // Errors should have a message string, and optional locations and a path.
 struct [[nodiscard("unnecessary construction")]] schema_location
 {
-	size_t line = 0;
-	size_t column = 1;
+	std::size_t line = 0;
+	std::size_t column = 1;
 };
 
 // The implementation details of the error path should be opaque to client code. It is carried along
 // with the SelectionSetParams and automatically added to any schema errors or exceptions thrown
 // from an accessor as part of error reporting.
-using path_segment = std::variant<std::string_view, size_t>;
+using path_segment = std::variant<std::string_view, std::size_t>;
 
 struct [[nodiscard("unnecessary construction")]] field_path
 {
 	std::optional<std::reference_wrapper<const field_path>> parent;
-	std::variant<std::string_view, size_t> segment;
+	std::variant<std::string_view, std::size_t> segment;
 };
 
 using error_path = std::vector<path_segment>;
@@ -1147,7 +1148,7 @@ struct ModifiedResult
 		children.reserve(awaitedResult.size());
 		params.errorPath = std::make_optional(
 			field_path { parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
-				path_segment { size_t { 0 } } });
+				path_segment { std::size_t { 0 } } });
 
 		using vector_type = std::decay_t<decltype(awaitedResult)>;
 
@@ -1161,7 +1162,7 @@ struct ModifiedResult
 			{
 				children.push_back(
 					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				++std::get<std::size_t>(params.errorPath->segment);
 			}
 		}
 		else
@@ -1170,14 +1171,14 @@ struct ModifiedResult
 			{
 				children.push_back(
 					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				++std::get<std::size_t>(params.errorPath->segment);
 			}
 		}
 
 		ResolverResult document { response::Value { response::Type::List } };
 
 		document.data.reserve(children.size());
-		std::get<size_t>(params.errorPath->segment) = 0;
+		std::get<std::size_t>(params.errorPath->segment) = 0;
 
 		for (auto& child : children)
 		{
@@ -1215,7 +1216,7 @@ struct ModifiedResult
 					buildErrorPath(params.errorPath) });
 			}
 
-			++std::get<size_t>(params.errorPath->segment);
+			++std::get<std::size_t>(params.errorPath->segment);
 		}
 
 		co_return document;
@@ -1253,7 +1254,7 @@ struct ModifiedResult
 			throw schema_exception { { R"ex(not a valid List value)ex" } };
 		}
 
-		for (size_t i = 0; i < value.size(); ++i)
+		for (std::size_t i = 0; i < value.size(); ++i)
 		{
 			ModifiedResult::validateScalar<Other...>(value[i]);
 		}
@@ -1329,7 +1330,7 @@ using ObjectResult = ModifiedResult<Object>;
 using SubscriptionCallback = std::function<void(response::Value)>;
 
 // Subscriptions are stored in maps using these keys.
-using SubscriptionKey = size_t;
+using SubscriptionKey = std::size_t;
 using SubscriptionName = std::string;
 
 using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;

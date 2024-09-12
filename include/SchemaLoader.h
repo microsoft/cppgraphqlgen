@@ -14,6 +14,7 @@
 #include "graphqlservice/internal/Grammar.h"
 
 #include <array>
+#include <cstddef>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -31,14 +32,14 @@ enum class [[nodiscard("unnecessary conversion")]] BuiltinType {
 using BuiltinTypeMap = std::map<std::string_view, BuiltinType>;
 
 // These are the C++ types we'll use for them.
-using CppTypeMap = std::array<std::string_view, static_cast<size_t>(BuiltinType::ID) + 1>;
+using CppTypeMap = std::array<std::string_view, static_cast<std::size_t>(BuiltinType::ID) + 1>;
 
 // Keep track of the positions of each type declaration in the file.
 using PositionMap = std::unordered_map<std::string_view, tao::graphqlpeg::position>;
 
 // For all of the named types we track, we want to keep them in order in a vector but
 // be able to lookup their offset quickly by name.
-using TypeNameMap = std::unordered_map<std::string_view, size_t>;
+using TypeNameMap = std::unordered_map<std::string_view, std::size_t>;
 
 // Scalar types are opaque to the generator, it's up to the service implementation
 // to handle parsing, validating, and serializing them. We just need to track which
@@ -216,7 +217,7 @@ class [[nodiscard("unnecessary construction")]] SchemaLoader
 {
 public:
 	// Initialize the loader with the introspection schema or a custom GraphQL schema.
-	explicit SchemaLoader(SchemaOptions && schemaOptions);
+	explicit SchemaLoader(SchemaOptions&& schemaOptions);
 
 	[[nodiscard("unnecessary call")]] bool isIntrospection() const noexcept;
 	[[nodiscard("unnecessary call")]] std::string_view getSchemaDescription() const noexcept;
@@ -232,22 +233,22 @@ public:
 	[[nodiscard("unnecessary call")]] const tao::graphqlpeg::position& getTypePosition(
 		std::string_view type) const;
 
-	[[nodiscard("unnecessary call")]] size_t getScalarIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getScalarIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const ScalarTypeList& getScalarTypes() const noexcept;
 
-	[[nodiscard("unnecessary call")]] size_t getEnumIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getEnumIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const EnumTypeList& getEnumTypes() const noexcept;
 
-	[[nodiscard("unnecessary call")]] size_t getInputIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getInputIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const InputTypeList& getInputTypes() const noexcept;
 
-	[[nodiscard("unnecessary call")]] size_t getUnionIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getUnionIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const UnionTypeList& getUnionTypes() const noexcept;
 
-	[[nodiscard("unnecessary call")]] size_t getInterfaceIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getInterfaceIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const InterfaceTypeList& getInterfaceTypes() const noexcept;
 
-	[[nodiscard("unnecessary call")]] size_t getObjectIndex(std::string_view type) const;
+	[[nodiscard("unnecessary call")]] std::size_t getObjectIndex(std::string_view type) const;
 	[[nodiscard("unnecessary call")]] const ObjectTypeList& getObjectTypes() const noexcept;
 
 	[[nodiscard("unnecessary call")]] const DirectiveList& getDirectives() const noexcept;
@@ -259,12 +260,12 @@ public:
 	[[nodiscard("unnecessary call")]] static std::string_view getSafeCppName(
 		std::string_view type) noexcept;
 
-	[[nodiscard("unnecessary call")]] std::string_view getCppType(std::string_view type)
-		const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getInputCppType(const InputField& field)
-		const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getOutputCppType(const OutputField& field)
-		const noexcept;
+	[[nodiscard("unnecessary call")]] std::string_view getCppType(
+		std::string_view type) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getInputCppType(
+		const InputField& field) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getOutputCppType(
+		const OutputField& field) const noexcept;
 
 	[[nodiscard("unnecessary memory copy")]] static std::string getOutputCppAccessor(
 		const OutputField& field) noexcept;
@@ -296,32 +297,29 @@ private:
 	void visitObjectTypeExtension(const peg::ast_node& objectTypeExtension);
 	void visitDirectiveDefinition(const peg::ast_node& directiveDefinition);
 
-	static void blockReservedName(std::string_view name,
-		std::optional<tao::graphqlpeg::position> position = std::nullopt);
+	static void blockReservedName(
+		std::string_view name, std::optional<tao::graphqlpeg::position> position = std::nullopt);
 	[[nodiscard("unnecessary memory copy")]] static OutputFieldList getOutputFields(
 		const peg::ast_node::children_t& fields);
 	[[nodiscard("unnecessary memory copy")]] static InputFieldList getInputFields(
 		const peg::ast_node::children_t& fields);
 
 	void validateSchema();
-	void fixupOutputFieldList(OutputFieldList & fields,
+	void fixupOutputFieldList(OutputFieldList& fields,
 		const std::optional<std::unordered_set<std::string_view>>& interfaceFields,
 		const std::optional<std::string_view>& accessor);
-	void fixupInputFieldList(InputFieldList & fields);
+	void fixupInputFieldList(InputFieldList& fields);
 	void reorderInputTypeDependencies();
 	void validateImplementedInterfaces() const;
 	[[nodiscard("unnecessary call")]] const InterfaceType& findInterfaceType(
-		std::string_view typeName,
-		std::string_view interfaceName) const;
-	void validateInterfaceFields(std::string_view typeName,
-		std::string_view interfaceName,
+		std::string_view typeName, std::string_view interfaceName) const;
+	void validateInterfaceFields(std::string_view typeName, std::string_view interfaceName,
 		const OutputFieldList& typeFields) const;
-	void validateTransitiveInterfaces(std::string_view typeName,
-		const std::vector<std::string_view>& interfaces) const;
+	void validateTransitiveInterfaces(
+		std::string_view typeName, const std::vector<std::string_view>& interfaces) const;
 
 	[[nodiscard("unnecessary memory copy")]] static std::string getJoinedCppName(
-		std::string_view prefix,
-		std::string_view fieldName) noexcept;
+		std::string_view prefix, std::string_view fieldName) noexcept;
 
 	static const std::string_view s_introspectionNamespace;
 	static const BuiltinTypeMap s_builtinTypes;

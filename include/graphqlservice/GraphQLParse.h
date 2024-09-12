@@ -8,6 +8,7 @@
 
 #include "internal/DllExports.h"
 
+#include <cstddef>
 #include <memory>
 #include <string_view>
 
@@ -26,22 +27,22 @@ struct [[nodiscard("unnecessary parse")]] ast
 
 // By default, we want to limit the depth of nested nodes. You can override this with
 // another value for the depthLimit parameter in these parse functions.
-constexpr size_t c_defaultDepthLimit = 25;
+constexpr std::size_t c_defaultDepthLimit = 25;
 
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseSchemaString(
-	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
+	std::string_view input, std::size_t depthLimit = c_defaultDepthLimit);
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseSchemaFile(
-	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
+	std::string_view filename, std::size_t depthLimit = c_defaultDepthLimit);
 
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseString(
-	std::string_view input, size_t depthLimit = c_defaultDepthLimit);
+	std::string_view input, std::size_t depthLimit = c_defaultDepthLimit);
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseFile(
-	std::string_view filename, size_t depthLimit = c_defaultDepthLimit);
+	std::string_view filename, std::size_t depthLimit = c_defaultDepthLimit);
 
 } // namespace peg
 
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(
-	const char* text, size_t size);
+	const char* text, std::size_t size);
 
 } // namespace graphql
 

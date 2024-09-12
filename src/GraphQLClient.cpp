@@ -3,6 +3,8 @@
 
 #include "graphqlservice/GraphQLClient.h"
 
+#include <cstddef>
+
 using namespace std::literals;
 
 namespace graphql::client {
@@ -21,7 +23,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.line = static_cast<size_t>(member.second.get<int>());
+					result.line = static_cast<std::size_t>(member.second.get<int>());
 				}
 
 				continue;
@@ -31,7 +33,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.column = static_cast<size_t>(member.second.get<int>());
+					result.column = static_cast<std::size_t>(member.second.get<int>());
 				}
 
 				continue;

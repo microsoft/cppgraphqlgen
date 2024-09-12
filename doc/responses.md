@@ -41,8 +41,8 @@ specializations.
 
 ## Map and List
 
-`Map` and `List` types enable collection methods like `reserve(size_t)`,
+`Map` and `List` types enable collection methods like `reserve(std::size_t)`,
 `size()`, and `emplace_back(...)`. `Map` additionally implements `begin()`
 and `end()` for range-based for loops and `find(const std::string&)` and
 `operator[](const std::string&)` for key-based lookups. `List` has an
-`operator[](size_t)` for index-based instead of key-based lookups.
+`operator[](std::size_t)` for index-based instead of key-based lookups.
