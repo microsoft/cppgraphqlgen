@@ -84,7 +84,8 @@ FILES
   ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx)
 
 function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
-  set(TEST_FILE "test_${OUT_RESULT}.cpp")
+  set(TEST_FILE "test_coroutine.cpp")
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/${TEST_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
   try_compile(TEST_RESULT
     ${CMAKE_CURRENT_BINARY_DIR}
