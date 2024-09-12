@@ -6,7 +6,7 @@
 #ifndef GRAPHQLSYNTAXTREE_H
 #define GRAPHQLSYNTAXTREE_H
 
-#include "graphqlservice/GraphQLParse.h"
+#include "DllExports.h"
 
 #define TAO_PEGTL_NAMESPACE tao::graphqlpeg
 

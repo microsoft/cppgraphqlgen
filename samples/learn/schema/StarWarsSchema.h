@@ -8,6 +8,9 @@
 #ifndef STARWARSSCHEMA_H
 #define STARWARSSCHEMA_H
 
+#include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/GraphQLService.h"
+
 #include "graphqlservice/internal/Schema.h"
 
 // Check if the library version is compatible with schemagen 4.5.0

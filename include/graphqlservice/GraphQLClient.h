@@ -6,21 +6,10 @@
 #ifndef GRAPHQLCLIENT_H
 #define GRAPHQLCLIENT_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLCLIENT_DLL
-		#define GRAPHQLCLIENT_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLCLIENT_DLL
-		#define GRAPHQLCLIENT_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLCLIENT_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLCLIENT_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "GraphQLResponse.h"
 
-#include "graphqlservice/GraphQLResponse.h"
-
-#include "graphqlservice/internal/Version.h"
+#include "internal/Version.h"
+#include "internal/DllExports.h"
 
 #include <algorithm>
 #include <iterator>
