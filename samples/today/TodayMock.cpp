@@ -14,8 +14,6 @@ module;
 
 module GraphQL.Today.Mock;
 
-import GraphQL.Response;
-
 namespace graphql::today {
 
 const response::IdType& getFakeAppointmentId() noexcept

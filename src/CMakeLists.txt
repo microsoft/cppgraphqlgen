@@ -517,6 +517,18 @@ install(TARGETS
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
     DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR})
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  install(TARGETS
+      graphqlpeg_version
+      graphqlresponse_version
+      graphqlservice_version
+      graphqlclient_version
+      graphqljson_version
+    EXPORT cppgraphqlgen-targets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib)
+endif()
+
 # graphqljson
 if(BUILD_GRAPHQLJSON)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
