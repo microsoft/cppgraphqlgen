@@ -73,15 +73,15 @@ endfunction()
 
 file(REAL_PATH ../include/ INCLUDE_ROOT)
 
-# graphql_internal_module
-add_library(graphql_internal_module STATIC)
-add_library(cppgraphqlgen::graphql_internal_module ALIAS graphql_internal_module)
-target_compile_features(graphql_internal_module PUBLIC cxx_std_20)
-target_link_libraries(graphql_internal_module PUBLIC taocpp::pegtl)
-target_include_directories(graphql_internal_module PUBLIC
+# graphql_internal_modules
+add_library(graphql_internal_modules STATIC)
+add_library(cppgraphqlgen::graphql_internal_modules ALIAS graphql_internal_modules)
+target_compile_features(graphql_internal_modules PUBLIC cxx_std_20)
+target_link_libraries(graphql_internal_modules PUBLIC taocpp::pegtl)
+target_include_directories(graphql_internal_modules PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_sources(graphql_internal_module
+target_sources(graphql_internal_modules
   PUBLIC FILE_SET HEADERS
   BASE_DIRS
     ${INCLUDE_ROOT}
@@ -107,6 +107,28 @@ target_sources(graphql_internal_module
     ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
 
+# graphql_introspection_modules
+add_library(graphql_introspection_modules STATIC)
+add_library(cppgraphqlgen::graphql_introspection_modules ALIAS graphql_introspection_modules)
+target_compile_features(graphql_introspection_modules PUBLIC cxx_std_20)
+target_link_libraries(graphql_introspection_modules PUBLIC taocpp::pegtl)
+target_include_directories(graphql_introspection_modules PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+file(GLOB INTROSPECTION_HEADERS ${INCLUDE_ROOT}/graphqlservice/introspection/*.h)
+file(GLOB INTROSPECTION_MODULES ${INCLUDE_ROOT}/graphqlservice/introspection/*.ixx)
+target_sources(graphql_introspection_modules
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INTROSPECTION_HEADERS}
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INTROSPECTION_MODULES})
+
 function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_coroutine.cpp")
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/${TEST_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -127,7 +149,7 @@ function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
 
         if(TEST_RESULT)
           # Looks like the optional flag was required, go ahead and add it to the compile options.
-          target_compile_options(graphql_internal_module INTERFACE ${OPTIONAL_FLAG})
+          target_compile_options(graphql_internal_modules INTERFACE ${OPTIONAL_FLAG})
           break()
         endif()
       endforeach(OPTIONAL_FLAG)
@@ -174,7 +196,7 @@ target_compile_features(graphqlresponse PUBLIC cxx_std_20)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_link_libraries(graphqlresponse PUBLIC graphql_internal_module)
+target_link_libraries(graphqlresponse PUBLIC graphql_internal_modules)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -358,7 +380,8 @@ add_library(graphqlservice
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
-  graphql_internal_module
+  graphql_internal_modules
+  graphql_introspection_modules
   graphqlpeg
   graphqlresponse
   Threads::Threads)
@@ -433,7 +456,8 @@ if(GRAPHQL_USE_RAPIDJSON)
 endif()
 
 install(TARGETS
-    graphql_internal_module
+    graphql_internal_modules
+    graphql_introspection_modules
     graphqlclient
     graphqlpeg
     graphqlresponse

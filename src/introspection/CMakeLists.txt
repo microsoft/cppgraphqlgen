@@ -20,8 +20,3 @@ if(GRAPHQL_UPDATE_SAMPLES)
   add_custom_target(copy_introspection_schema_headers ALL
     DEPENDS copied_introspection_schema_headers)
 endif()
-
-file(GLOB PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../../include/graphqlservice/introspection/*.h)
-install(FILES ${PUBLIC_HEADERS}
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/introspection)
