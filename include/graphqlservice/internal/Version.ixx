@@ -5,7 +5,7 @@ module;
 
 #include "Version.h"
 
-export module Internal.Version;
+export module GraphQL.Internal:Version;
 
 export namespace graphql::internal {
 

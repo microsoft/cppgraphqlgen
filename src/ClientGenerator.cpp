@@ -4,6 +4,7 @@
 #include "ClientGenerator.h"
 #include "GeneratorUtil.h"
 
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #ifdef _MSC_VER
@@ -25,8 +26,6 @@
 #include <regex>
 #include <sstream>
 #include <stdexcept>
-
-import Internal.Version;
 
 using namespace std::literals;
 
@@ -174,11 +173,11 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/Version.h"
+
 #include <optional>
 #include <string>
 #include <vector>
-
-import Internal.Version;
 
 // Check if the library version is compatible with clientgen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion

@@ -73,15 +73,28 @@ endfunction()
 
 file(REAL_PATH ../include/ INCLUDE_ROOT)
 
-# graphqlawaitable
-add_library(graphqlawaitable STATIC)
-add_library(cppgraphqlgen::graphqlawaitable ALIAS graphqlawaitable)
-target_compile_features(graphqlawaitable PUBLIC cxx_std_20)
-target_sources(graphqlawaitable PUBLIC FILE_SET CXX_MODULES
+# graphql_internal_module
+add_library(graphql_internal_module STATIC)
+add_library(cppgraphqlgen::graphql_internal_module ALIAS graphql_internal_module)
+target_compile_features(graphql_internal_module PUBLIC cxx_std_20)
+target_link_libraries(graphql_internal_module PUBLIC taocpp::pegtl)
+target_include_directories(graphql_internal_module PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
+  $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
+target_sources(graphql_internal_module PUBLIC FILE_SET CXX_MODULES
 BASE_DIRS
   ${INCLUDE_ROOT}
 FILES
-  ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx)
+  ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
+  ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx
+  ${INCLUDE_ROOT}/graphqlservice/GraphQL.Internal.ixx)
 
 function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_coroutine.cpp")
@@ -103,7 +116,7 @@ function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
 
         if(TEST_RESULT)
           # Looks like the optional flag was required, go ahead and add it to the compile options.
-          target_compile_options(graphqlawaitable INTERFACE ${OPTIONAL_FLAG})
+          target_compile_options(graphql_internal_module INTERFACE ${OPTIONAL_FLAG})
           break()
         endif()
       endforeach(OPTIONAL_FLAG)
@@ -161,7 +174,7 @@ target_compile_features(graphqlresponse PUBLIC cxx_std_20)
 target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_link_libraries(graphqlresponse PUBLIC graphqlawaitable)
+target_link_libraries(graphqlresponse PUBLIC graphql_internal_module)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -347,7 +360,7 @@ add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
   graphqlversion
-  graphqlawaitable
+  graphql_internal_module
   graphqlpeg
   graphqlresponse
   Threads::Threads)
@@ -423,7 +436,7 @@ if(GRAPHQL_USE_RAPIDJSON)
 endif()
 
 install(TARGETS
-    graphqlawaitable
+    graphql_internal_module
     graphqlversion
     graphqlclient
     graphqlpeg

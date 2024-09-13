@@ -3,9 +3,9 @@
 
 module;
 
-#include "Awaitable.h"
+#include "Base64.h"
 
-export module GraphQL.Internal:Awaitable;
+export module GraphQL.Internal:Base64;
 
 namespace included = graphql::internal;
 
@@ -13,8 +13,7 @@ export namespace graphql::internal {
 
 namespace exported {
 
-template <typename T>
-using Awaitable = included::Awaitable<T>;
+using Base64 = included::Base64;
 
 } // namespace exported
 

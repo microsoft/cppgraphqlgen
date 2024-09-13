@@ -16,8 +16,6 @@
 #include <stdexcept>
 #include <vector>
 
-import Internal.Awaitable;
-
 namespace graphql::client {
 
 // Errors may specify the line number and column number where the error occurred.

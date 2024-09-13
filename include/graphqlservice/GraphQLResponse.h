@@ -7,6 +7,7 @@
 #define GRAPHQLRESPONSE_H
 
 #include "internal/DllExports.h"
+#include "internal/Awaitable.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -17,8 +18,6 @@
 #include <string_view>
 #include <variant>
 #include <vector>
-
-import Internal.Awaitable;
 
 namespace graphql::response {
 

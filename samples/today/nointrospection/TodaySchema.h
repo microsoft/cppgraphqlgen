@@ -11,14 +11,13 @@
 #include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/GraphQLService.h"
 
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
 #include <array>
 #include <memory>
 #include <string>
 #include <string_view>
-
-import Internal.Version;
 
 // Check if the library version is compatible with schemagen 4.5.0
 static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");

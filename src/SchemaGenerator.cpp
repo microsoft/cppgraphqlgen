@@ -4,6 +4,8 @@
 #include "SchemaGenerator.h"
 #include "GeneratorUtil.h"
 
+#include "graphqlservice/internal/Version.h"
+
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 26495)
@@ -25,8 +27,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
-
-import Internal.Version;
 
 using namespace std::literals;
 
@@ -115,14 +115,13 @@ bool Generator::outputHeader() const noexcept
 	headerFile << R"cpp(#include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/GraphQLService.h"
 
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
 #include <array>
 #include <memory>
 #include <string>
 #include <string_view>
-
-import Internal.Version;
 
 // Check if the library version is compatible with schemagen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion

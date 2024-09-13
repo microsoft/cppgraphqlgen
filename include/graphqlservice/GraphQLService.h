@@ -9,6 +9,7 @@
 #include "GraphQLParse.h"
 #include "GraphQLResponse.h"
 
+#include "internal/Awaitable.h"
 #include "internal/DllExports.h"
 #include "internal/SortedMap.h"
 
@@ -28,8 +29,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-import Internal.Awaitable;
 
 namespace graphql {
 namespace schema {
