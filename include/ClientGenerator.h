@@ -39,6 +39,7 @@ private:
 	[[nodiscard("unnecessary memory copy")]] std::string getHeaderDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourceDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getHeaderPath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getModulePath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
 	[[nodiscard("unnecessary call")]] const std::string& getClientNamespace() const noexcept;
 	[[nodiscard("unnecessary call")]] const std::string& getOperationNamespace(
@@ -52,6 +53,8 @@ private:
 	void outputGetOperationNameDeclaration(std::ostream& headerFile) const noexcept;
 	[[nodiscard("unnecessary call")]] bool outputResponseFieldType(std::ostream& headerFile,
 		const ResponseField& responseField, std::size_t indent = 0) const noexcept;
+
+	[[nodiscard("unnecessary call")]] bool outputModule() const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputSource() const noexcept;
 	void outputGetRequestImplementation(std::ostream& sourceFile) const noexcept;
@@ -68,6 +71,7 @@ private:
 	const std::string _headerDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
+	const std::string _modulePath;
 	const std::string _sourcePath;
 };
 
