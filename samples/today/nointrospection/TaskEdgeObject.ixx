@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using TaskEdge = included::TaskEdge;
+using included::TaskEdge;
 
 } // namespace exported
 

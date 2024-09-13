@@ -15,7 +15,7 @@ export namespace graphql::introspection::object {
 
 namespace exported {
 
-using InputValue = included::InputValue;
+using included::InputValue;
 
 } // namespace exported
 

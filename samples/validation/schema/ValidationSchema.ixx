@@ -15,123 +15,37 @@ export namespace graphql::validation {
 
 namespace exported {
 
-using DogCommand = included::DogCommand;
+using included::DogCommand;
+using included::getDogCommandNames;
+using included::getDogCommandValues;
 
-constexpr auto getDogCommandNames() noexcept
-{
-	return included::getDogCommandNames();
-}
+using included::CatCommand;
+using included::getCatCommandNames;
+using included::getCatCommandValues;
 
-constexpr auto getDogCommandValues() noexcept
-{
-	return included::getDogCommandValues();
-}
+using included::ComplexInput;
 
-using CatCommand = included::CatCommand;
+using included::Operations;
 
-constexpr auto getCatCommandNames() noexcept
-{
-	return included::getCatCommandNames();
-}
+using included::AddSentientDetails;
+using included::AddPetDetails;
+using included::AddNodeDetails;
+using included::AddResourceDetails;
+using included::AddCatOrDogDetails;
+using included::AddDogOrHumanDetails;
+using included::AddHumanOrAlienDetails;
+using included::AddQueryDetails;
+using included::AddDogDetails;
+using included::AddAlienDetails;
+using included::AddHumanDetails;
+using included::AddCatDetails;
+using included::AddMutationDetails;
+using included::AddMutateDogResultDetails;
+using included::AddSubscriptionDetails;
+using included::AddMessageDetails;
+using included::AddArgumentsDetails;
 
-constexpr auto getCatCommandValues() noexcept
-{
-	return included::getCatCommandValues();
-}
-
-using ComplexInput= included::ComplexInput;
-
-using Operations = included::Operations;
-
-void AddSentientDetails(const std::shared_ptr<schema::InterfaceType>& typeSentient, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddSentientDetails(typeSentient, schema);
-}
-
-void AddPetDetails(const std::shared_ptr<schema::InterfaceType>& typePet, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddPetDetails(typePet, schema);
-}
-
-void AddNodeDetails(const std::shared_ptr<schema::InterfaceType>& typeNode, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddNodeDetails(typeNode, schema);
-}
-
-void AddResourceDetails(const std::shared_ptr<schema::InterfaceType>& typeResource, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddResourceDetails(typeResource, schema);
-}
-
-void AddCatOrDogDetails(const std::shared_ptr<schema::UnionType>& typeCatOrDog, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddCatOrDogDetails(typeCatOrDog, schema);
-}
-
-void AddDogOrHumanDetails(const std::shared_ptr<schema::UnionType>& typeDogOrHuman, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddDogOrHumanDetails(typeDogOrHuman, schema);
-}
-
-void AddHumanOrAlienDetails(const std::shared_ptr<schema::UnionType>& typeHumanOrAlien, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddHumanOrAlienDetails(typeHumanOrAlien, schema);
-}
-
-void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddQueryDetails(typeQuery, schema);
-}
-
-void AddDogDetails(const std::shared_ptr<schema::ObjectType>& typeDog, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddDogDetails(typeDog, schema);
-}
-
-void AddAlienDetails(const std::shared_ptr<schema::ObjectType>& typeAlien, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddAlienDetails(typeAlien, schema);
-}
-
-void AddHumanDetails(const std::shared_ptr<schema::ObjectType>& typeHuman, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddHumanDetails(typeHuman, schema);
-}
-
-void AddCatDetails(const std::shared_ptr<schema::ObjectType>& typeCat, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddCatDetails(typeCat, schema);
-}
-
-void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddMutationDetails(typeMutation, schema);
-}
-
-void AddMutateDogResultDetails(const std::shared_ptr<schema::ObjectType>& typeMutateDogResult, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddMutateDogResultDetails(typeMutateDogResult, schema);
-}
-
-void AddSubscriptionDetails(const std::shared_ptr<schema::ObjectType>& typeSubscription, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddSubscriptionDetails(typeSubscription, schema);
-}
-
-void AddMessageDetails(const std::shared_ptr<schema::ObjectType>& typeMessage, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddMessageDetails(typeMessage, schema);
-}
-
-void AddArgumentsDetails(const std::shared_ptr<schema::ObjectType>& typeArguments, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddArgumentsDetails(typeArguments, schema);
-}
-
-std::shared_ptr<schema::Schema> GetSchema()
-{
-	return included::GetSchema();
-}
+using included::GetSchema;
 
 } // namespace exported
 

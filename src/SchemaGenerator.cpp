@@ -727,22 +727,11 @@ export )cpp";
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			moduleFile << R"cpp(using )cpp" << enumType.cppType << R"cpp( = included::)cpp"
-					   << enumType.cppType << R"cpp(;
-
-constexpr auto get)cpp" << enumType.cppType
-					   << R"cpp(Names() noexcept
-{
-	return included::get)cpp"
-					   << enumType.cppType << R"cpp(Names();
-}
-
-constexpr auto get)cpp" << enumType.cppType
-					   << R"cpp(Values() noexcept
-{
-	return included::get)cpp"
-					   << enumType.cppType << R"cpp(Values();
-}
+			moduleFile << R"cpp(using included::)cpp" << enumType.cppType << R"cpp(;
+using included::get)cpp"
+					   << enumType.cppType << R"cpp(Names;
+using included::get)cpp"
+					   << enumType.cppType << R"cpp(Values;
 
 )cpp";
 		}
@@ -754,8 +743,7 @@ constexpr auto get)cpp" << enumType.cppType
 
 		for (const auto& inputType : _loader.getInputTypes())
 		{
-			moduleFile << R"cpp(using )cpp" << inputType.cppType << R"cpp(= included::)cpp"
-					   << inputType.cppType << R"cpp(;
+			moduleFile << R"cpp(using included::)cpp" << inputType.cppType << R"cpp(;
 )cpp";
 		}
 
@@ -766,7 +754,7 @@ constexpr auto get)cpp" << enumType.cppType
 	{
 		pendingSeparator.reset();
 
-		moduleFile << R"cpp(using Operations = included::Operations;
+		moduleFile << R"cpp(using included::Operations;
 
 )cpp";
 	}
@@ -777,15 +765,7 @@ constexpr auto get)cpp" << enumType.cppType
 
 		for (const auto& interfaceType : _loader.getInterfaceTypes())
 		{
-			moduleFile << R"cpp(void Add)cpp" << interfaceType.cppType
-					   << R"cpp(Details(const std::shared_ptr<schema::InterfaceType>& type)cpp"
-					   << interfaceType.cppType
-					   << R"cpp(, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::Add)cpp" << interfaceType.cppType
-					   << R"cpp(Details(type)cpp" << interfaceType.cppType << R"cpp(, schema);
-}
-
+			moduleFile << R"cpp(using included::Add)cpp" << interfaceType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
@@ -796,15 +776,7 @@ constexpr auto get)cpp" << enumType.cppType
 
 		for (const auto& unionType : _loader.getUnionTypes())
 		{
-			moduleFile << R"cpp(void Add)cpp" << unionType.cppType
-					   << R"cpp(Details(const std::shared_ptr<schema::UnionType>& type)cpp"
-					   << unionType.cppType
-					   << R"cpp(, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::Add)cpp" << unionType.cppType
-					   << R"cpp(Details(type)cpp" << unionType.cppType << R"cpp(, schema);
-}
-
+			moduleFile << R"cpp(using included::Add)cpp" << unionType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
@@ -815,36 +787,22 @@ constexpr auto get)cpp" << enumType.cppType
 
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
-			moduleFile << R"cpp(void Add)cpp" << objectType.cppType
-					   << R"cpp(Details(const std::shared_ptr<schema::ObjectType>& type)cpp"
-					   << objectType.cppType
-					   << R"cpp(, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::Add)cpp" << objectType.cppType
-					   << R"cpp(Details(type)cpp" << objectType.cppType << R"cpp(, schema);
-}
-
+			moduleFile << R"cpp(using included::Add)cpp" << objectType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
 
 	if (_loader.isIntrospection())
 	{
-		pendingSeparator.reset();
-		moduleFile << R"cpp(void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTypesToSchema(schema);
-}
+		moduleFile << R"cpp(
+using included::AddTypesToSchema;
 
 )cpp";
 	}
 	else
 	{
-		pendingSeparator.reset();
-		moduleFile << R"cpp(std::shared_ptr<schema::Schema> GetSchema()
-{
-	return included::GetSchema();
-}
+		moduleFile << R"cpp(
+using included::GetSchema;
 
 )cpp";
 	}
@@ -958,8 +916,8 @@ export namespace )cpp"
 
 namespace exported {
 
-using )cpp" << cppType
-			   << R"cpp( = included::)cpp" << cppType << R"cpp(;
+using included::)cpp"
+			   << cppType << R"cpp(;
 
 } // namespace exported
 

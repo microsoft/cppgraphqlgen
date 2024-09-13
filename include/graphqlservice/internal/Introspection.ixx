@@ -13,12 +13,14 @@ export namespace graphql::introspection {
 
 namespace exported {
 
-using Schema = included::Schema;
-using Type = included::Type;
-using Field = included::Field;
-using InputValue = included::InputValue;
-using EnumValue = included::EnumValue;
-using Directive = included::Directive;
+// clang-format off
+using included::Schema;
+using included::Type;
+using included::Field;
+using included::InputValue;
+using included::EnumValue;
+using included::Directive;
+// clang-format on
 
 } // namespace exported
 

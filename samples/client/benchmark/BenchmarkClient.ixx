@@ -15,9 +15,23 @@ export namespace graphql::client {
 
 namespace exported {
 
+namespace benchmark {
+
+using included::benchmark::GetRequestText;
+using included::benchmark::GetRequestObject;
+
+} // namespace benchmark
+
 namespace query::Query {
 
-using Traits = included::query::Query::Traits;
+using included::benchmark::GetRequestText;
+using included::benchmark::GetRequestObject;
+using included::query::Query::GetOperationName;
+
+using included::query::Query::Response;
+using included::query::Query::parseResponse;
+
+using included::query::Query::Traits;
 
 } // namespace query::Query
 

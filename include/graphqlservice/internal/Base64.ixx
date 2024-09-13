@@ -13,7 +13,9 @@ export namespace graphql::internal {
 
 namespace exported {
 
-using Base64 = included::Base64;
+// clang-format off
+using included::Base64;
+// clang-format on
 
 } // namespace exported
 

@@ -653,6 +653,18 @@ export )cpp";
 	NamespaceScope schemaNamespace { moduleFile, _schemaLoader.getSchemaNamespace(), true };
 	PendingBlankLine pendingSeparator { moduleFile };
 
+	pendingSeparator.reset();
+	if (schemaNamespace.enter())
+	{
+		moduleFile << R"cpp(
+using included::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText;
+using included::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject;
+)cpp";
+		pendingSeparator.add();
+	}
+
 	const auto& operations = _requestLoader.getOperations();
 	std::unordered_set<std::string_view> declaredEnum;
 
@@ -672,14 +684,8 @@ export )cpp";
 					continue;
 				}
 
-				if (schemaNamespace.enter())
-				{
-					moduleFile << std::endl;
-				}
-
-				moduleFile << R"cpp(using )cpp" << cppType << R"cpp( = included::)cpp"
-						   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << cppType
-						   << R"cpp(;
+				moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << cppType << R"cpp(;
 )cpp";
 			}
 		}
@@ -709,9 +715,8 @@ export )cpp";
 					continue;
 				}
 
-				moduleFile << R"cpp(using )cpp" << cppType << R"cpp( = included::)cpp"
-						   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << cppType
-						   << R"cpp(;
+				moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << cppType << R"cpp(;
 )cpp";
 			}
 		}
@@ -735,7 +740,61 @@ export )cpp";
 		NamespaceScope operationNamespaceScope { moduleFile, getOperationNamespace(operation) };
 
 		moduleFile << R"cpp(
-using Traits = included::)cpp"
+using included::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText;
+using included::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject;
+using included::)cpp"
+				   << getOperationNamespace(operation) << R"cpp(::GetOperationName;
+
+)cpp";
+
+		// Alias all of the enums referenced either in variables or the response.
+		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
+		{
+			moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		// Alias all of the input object structs referenced in variables.
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+		{
+			moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
+					   << R"cpp(;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		const auto& variables = _requestLoader.getVariables(operation);
+
+		if (!variables.empty())
+		{
+			moduleFile << R"cpp(using included::)cpp" << getOperationNamespace(operation)
+					   << R"cpp(::Variables;
+using included::)cpp" << getOperationNamespace(operation)
+					   << R"cpp(::serializeVariables;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		moduleFile << R"cpp(using included::)cpp" << getOperationNamespace(operation)
+				   << R"cpp(::Response;
+using included::)cpp"
+				   << getOperationNamespace(operation) << R"cpp(::parseResponse;
+
+using included::)cpp"
 				   << getOperationNamespace(operation) << R"cpp(::Traits;
 
 )cpp";

@@ -15,17 +15,11 @@ export namespace graphql::proxy {
 
 namespace exported {
 
-using Operations = included::Operations;
+using included::Operations;
 
-void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddQueryDetails(typeQuery, schema);
-}
+using included::AddQueryDetails;
 
-std::shared_ptr<schema::Schema> GetSchema()
-{
-	return included::GetSchema();
-}
+using included::GetSchema;
 
 } // namespace exported
 

@@ -15,124 +15,42 @@ export namespace graphql::today {
 
 namespace exported {
 
-using TaskState = included::TaskState;
+using included::TaskState;
+using included::getTaskStateNames;
+using included::getTaskStateValues;
 
-constexpr auto getTaskStateNames() noexcept
-{
-	return included::getTaskStateNames();
-}
+using included::CompleteTaskInput;
+using included::ThirdNestedInput;
+using included::FourthNestedInput;
+using included::IncludeNullableSelfInput;
+using included::IncludeNonNullableListSelfInput;
+using included::StringOperationFilterInput;
+using included::SecondNestedInput;
+using included::ForwardDeclaredInput;
+using included::FirstNestedInput;
 
-constexpr auto getTaskStateValues() noexcept
-{
-	return included::getTaskStateValues();
-}
+using included::Operations;
 
-using CompleteTaskInput= included::CompleteTaskInput;
-using ThirdNestedInput= included::ThirdNestedInput;
-using FourthNestedInput= included::FourthNestedInput;
-using IncludeNullableSelfInput= included::IncludeNullableSelfInput;
-using IncludeNonNullableListSelfInput= included::IncludeNonNullableListSelfInput;
-using StringOperationFilterInput= included::StringOperationFilterInput;
-using SecondNestedInput= included::SecondNestedInput;
-using ForwardDeclaredInput= included::ForwardDeclaredInput;
-using FirstNestedInput= included::FirstNestedInput;
+using included::AddNodeDetails;
+using included::AddUnionTypeDetails;
+using included::AddQueryDetails;
+using included::AddPageInfoDetails;
+using included::AddAppointmentEdgeDetails;
+using included::AddAppointmentConnectionDetails;
+using included::AddTaskEdgeDetails;
+using included::AddTaskConnectionDetails;
+using included::AddFolderEdgeDetails;
+using included::AddFolderConnectionDetails;
+using included::AddCompleteTaskPayloadDetails;
+using included::AddMutationDetails;
+using included::AddSubscriptionDetails;
+using included::AddAppointmentDetails;
+using included::AddTaskDetails;
+using included::AddFolderDetails;
+using included::AddNestedTypeDetails;
+using included::AddExpensiveDetails;
 
-using Operations = included::Operations;
-
-void AddNodeDetails(const std::shared_ptr<schema::InterfaceType>& typeNode, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddNodeDetails(typeNode, schema);
-}
-
-void AddUnionTypeDetails(const std::shared_ptr<schema::UnionType>& typeUnionType, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddUnionTypeDetails(typeUnionType, schema);
-}
-
-void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddQueryDetails(typeQuery, schema);
-}
-
-void AddPageInfoDetails(const std::shared_ptr<schema::ObjectType>& typePageInfo, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddPageInfoDetails(typePageInfo, schema);
-}
-
-void AddAppointmentEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeAppointmentEdge, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddAppointmentEdgeDetails(typeAppointmentEdge, schema);
-}
-
-void AddAppointmentConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeAppointmentConnection, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddAppointmentConnectionDetails(typeAppointmentConnection, schema);
-}
-
-void AddTaskEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeTaskEdge, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTaskEdgeDetails(typeTaskEdge, schema);
-}
-
-void AddTaskConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeTaskConnection, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTaskConnectionDetails(typeTaskConnection, schema);
-}
-
-void AddFolderEdgeDetails(const std::shared_ptr<schema::ObjectType>& typeFolderEdge, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddFolderEdgeDetails(typeFolderEdge, schema);
-}
-
-void AddFolderConnectionDetails(const std::shared_ptr<schema::ObjectType>& typeFolderConnection, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddFolderConnectionDetails(typeFolderConnection, schema);
-}
-
-void AddCompleteTaskPayloadDetails(const std::shared_ptr<schema::ObjectType>& typeCompleteTaskPayload, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddCompleteTaskPayloadDetails(typeCompleteTaskPayload, schema);
-}
-
-void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddMutationDetails(typeMutation, schema);
-}
-
-void AddSubscriptionDetails(const std::shared_ptr<schema::ObjectType>& typeSubscription, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddSubscriptionDetails(typeSubscription, schema);
-}
-
-void AddAppointmentDetails(const std::shared_ptr<schema::ObjectType>& typeAppointment, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddAppointmentDetails(typeAppointment, schema);
-}
-
-void AddTaskDetails(const std::shared_ptr<schema::ObjectType>& typeTask, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTaskDetails(typeTask, schema);
-}
-
-void AddFolderDetails(const std::shared_ptr<schema::ObjectType>& typeFolder, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddFolderDetails(typeFolder, schema);
-}
-
-void AddNestedTypeDetails(const std::shared_ptr<schema::ObjectType>& typeNestedType, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddNestedTypeDetails(typeNestedType, schema);
-}
-
-void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensive, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddExpensiveDetails(typeExpensive, schema);
-}
-
-std::shared_ptr<schema::Schema> GetSchema()
-{
-	return included::GetSchema();
-}
+using included::GetSchema;
 
 } // namespace exported
 

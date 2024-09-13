@@ -15,9 +15,26 @@ export namespace graphql::client {
 
 namespace exported {
 
+namespace proxy {
+
+using included::proxy::GetRequestText;
+using included::proxy::GetRequestObject;
+
+} // namespace proxy
+
 namespace query::relayQuery {
 
-using Traits = included::query::relayQuery::Traits;
+using included::proxy::GetRequestText;
+using included::proxy::GetRequestObject;
+using included::query::relayQuery::GetOperationName;
+
+using included::query::relayQuery::Variables;
+using included::query::relayQuery::serializeVariables;
+
+using included::query::relayQuery::Response;
+using included::query::relayQuery::parseResponse;
+
+using included::query::relayQuery::Traits;
 
 } // namespace query::relayQuery
 

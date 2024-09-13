@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using Folder = included::Folder;
+using included::Folder;
 
 } // namespace exported
 

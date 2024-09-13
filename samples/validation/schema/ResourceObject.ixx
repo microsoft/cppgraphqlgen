@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using Resource = included::Resource;
+using included::Resource;
 
 } // namespace exported
 

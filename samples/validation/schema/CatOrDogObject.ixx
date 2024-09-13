@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using CatOrDog = included::CatOrDog;
+using included::CatOrDog;
 
 } // namespace exported
 

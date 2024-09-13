@@ -15,9 +15,23 @@ export namespace graphql::client {
 
 namespace exported {
 
+namespace subscribe {
+
+using included::subscribe::GetRequestText;
+using included::subscribe::GetRequestObject;
+
+} // namespace subscribe
+
 namespace subscription::TestSubscription {
 
-using Traits = included::subscription::TestSubscription::Traits;
+using included::subscribe::GetRequestText;
+using included::subscribe::GetRequestObject;
+using included::subscription::TestSubscription::GetOperationName;
+
+using included::subscription::TestSubscription::Response;
+using included::subscription::TestSubscription::parseResponse;
+
+using included::subscription::TestSubscription::Traits;
 
 } // namespace subscription::TestSubscription
 

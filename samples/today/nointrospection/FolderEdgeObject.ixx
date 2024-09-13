@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using FolderEdge = included::FolderEdge;
+using included::FolderEdge;
 
 } // namespace exported
 

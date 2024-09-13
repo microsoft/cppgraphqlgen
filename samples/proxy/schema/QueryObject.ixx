@@ -15,7 +15,7 @@ export namespace graphql::proxy::object {
 
 namespace exported {
 
-using Query = included::Query;
+using included::Query;
 
 } // namespace exported
 

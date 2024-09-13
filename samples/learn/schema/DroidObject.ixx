@@ -15,7 +15,7 @@ export namespace graphql::learn::object {
 
 namespace exported {
 
-using Droid = included::Droid;
+using included::Droid;
 
 } // namespace exported
 

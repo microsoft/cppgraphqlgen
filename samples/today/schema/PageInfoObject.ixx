@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using PageInfo = included::PageInfo;
+using included::PageInfo;
 
 } // namespace exported
 

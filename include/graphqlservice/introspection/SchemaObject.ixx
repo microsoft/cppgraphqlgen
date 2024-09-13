@@ -15,7 +15,7 @@ export namespace graphql::introspection::object {
 
 namespace exported {
 
-using Schema = included::Schema;
+using included::Schema;
 
 } // namespace exported
 

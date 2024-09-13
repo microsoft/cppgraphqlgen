@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using Mutation = included::Mutation;
+using included::Mutation;
 
 } // namespace exported
 

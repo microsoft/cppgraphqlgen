@@ -15,64 +15,22 @@ export namespace graphql::introspection {
 
 namespace exported {
 
-using TypeKind = included::TypeKind;
+using included::TypeKind;
+using included::getTypeKindNames;
+using included::getTypeKindValues;
 
-constexpr auto getTypeKindNames() noexcept
-{
-	return included::getTypeKindNames();
-}
+using included::DirectiveLocation;
+using included::getDirectiveLocationNames;
+using included::getDirectiveLocationValues;
 
-constexpr auto getTypeKindValues() noexcept
-{
-	return included::getTypeKindValues();
-}
+using included::AddSchemaDetails;
+using included::AddTypeDetails;
+using included::AddFieldDetails;
+using included::AddInputValueDetails;
+using included::AddEnumValueDetails;
+using included::AddDirectiveDetails;
 
-using DirectiveLocation = included::DirectiveLocation;
-
-constexpr auto getDirectiveLocationNames() noexcept
-{
-	return included::getDirectiveLocationNames();
-}
-
-constexpr auto getDirectiveLocationValues() noexcept
-{
-	return included::getDirectiveLocationValues();
-}
-
-void AddSchemaDetails(const std::shared_ptr<schema::ObjectType>& typeSchema, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddSchemaDetails(typeSchema, schema);
-}
-
-void AddTypeDetails(const std::shared_ptr<schema::ObjectType>& typeType, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTypeDetails(typeType, schema);
-}
-
-void AddFieldDetails(const std::shared_ptr<schema::ObjectType>& typeField, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddFieldDetails(typeField, schema);
-}
-
-void AddInputValueDetails(const std::shared_ptr<schema::ObjectType>& typeInputValue, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddInputValueDetails(typeInputValue, schema);
-}
-
-void AddEnumValueDetails(const std::shared_ptr<schema::ObjectType>& typeEnumValue, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddEnumValueDetails(typeEnumValue, schema);
-}
-
-void AddDirectiveDetails(const std::shared_ptr<schema::ObjectType>& typeDirective, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddDirectiveDetails(typeDirective, schema);
-}
-
-void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddTypesToSchema(schema);
-}
+using included::AddTypesToSchema;
 
 } // namespace exported
 

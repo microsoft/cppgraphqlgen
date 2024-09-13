@@ -15,7 +15,7 @@ export namespace graphql::learn::object {
 
 namespace exported {
 
-using Human = included::Human;
+using included::Human;
 
 } // namespace exported
 

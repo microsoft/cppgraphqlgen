@@ -15,7 +15,7 @@ export namespace graphql::learn::object {
 
 namespace exported {
 
-using Review = included::Review;
+using included::Review;
 
 } // namespace exported
 

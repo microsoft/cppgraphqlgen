@@ -15,7 +15,7 @@ export namespace graphql::introspection::object {
 
 namespace exported {
 
-using Directive = included::Directive;
+using included::Directive;
 
 } // namespace exported
 

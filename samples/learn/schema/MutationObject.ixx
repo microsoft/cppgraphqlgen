@@ -15,7 +15,7 @@ export namespace graphql::learn::object {
 
 namespace exported {
 
-using Mutation = included::Mutation;
+using included::Mutation;
 
 } // namespace exported
 

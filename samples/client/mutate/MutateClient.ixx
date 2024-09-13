@@ -17,15 +17,32 @@ namespace exported {
 
 namespace mutate {
 
-using TaskState = included::mutate::TaskState;
+using included::mutate::GetRequestText;
+using included::mutate::GetRequestObject;
 
-using CompleteTaskInput = included::mutate::CompleteTaskInput;
+using included::mutate::TaskState;
+
+using included::mutate::CompleteTaskInput;
 
 } // namespace mutate
 
 namespace mutation::CompleteTaskMutation {
 
-using Traits = included::mutation::CompleteTaskMutation::Traits;
+using included::mutate::GetRequestText;
+using included::mutate::GetRequestObject;
+using included::mutation::CompleteTaskMutation::GetOperationName;
+
+using included::mutate::TaskState;
+
+using included::mutate::CompleteTaskInput;
+
+using included::mutation::CompleteTaskMutation::Variables;
+using included::mutation::CompleteTaskMutation::serializeVariables;
+
+using included::mutation::CompleteTaskMutation::Response;
+using included::mutation::CompleteTaskMutation::parseResponse;
+
+using included::mutation::CompleteTaskMutation::Traits;
 
 } // namespace mutation::CompleteTaskMutation
 

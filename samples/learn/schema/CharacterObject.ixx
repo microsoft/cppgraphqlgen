@@ -15,7 +15,7 @@ export namespace graphql::learn::object {
 
 namespace exported {
 
-using Character = included::Character;
+using included::Character;
 
 } // namespace exported
 

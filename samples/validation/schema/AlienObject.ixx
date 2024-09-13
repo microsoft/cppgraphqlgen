@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using Alien = included::Alien;
+using included::Alien;
 
 } // namespace exported
 

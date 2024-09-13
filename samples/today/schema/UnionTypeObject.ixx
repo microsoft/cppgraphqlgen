@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using UnionType = included::UnionType;
+using included::UnionType;
 
 } // namespace exported
 

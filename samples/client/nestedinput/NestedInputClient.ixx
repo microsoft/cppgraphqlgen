@@ -15,14 +15,36 @@ export namespace graphql::client {
 
 namespace exported {
 
-using InputA = included::nestedinput::InputA;
-using InputB = included::nestedinput::InputB;
-using InputABCD = included::nestedinput::InputABCD;
-using InputBC = included::nestedinput::InputBC;
+namespace nestedinput {
+
+using included::nestedinput::GetRequestText;
+using included::nestedinput::GetRequestObject;
+
+using included::nestedinput::InputA;
+using included::nestedinput::InputB;
+using included::nestedinput::InputABCD;
+using included::nestedinput::InputBC;
+
+} // namespace nestedinput
 
 namespace query::testQuery {
 
-using Traits = included::query::testQuery::Traits;
+using included::nestedinput::GetRequestText;
+using included::nestedinput::GetRequestObject;
+using included::query::testQuery::GetOperationName;
+
+using included::nestedinput::InputA;
+using included::nestedinput::InputB;
+using included::nestedinput::InputABCD;
+using included::nestedinput::InputBC;
+
+using included::query::testQuery::Variables;
+using included::query::testQuery::serializeVariables;
+
+using included::query::testQuery::Response;
+using included::query::testQuery::parseResponse;
+
+using included::query::testQuery::Traits;
 
 } // namespace query::testQuery
 

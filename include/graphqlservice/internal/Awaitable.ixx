@@ -13,8 +13,9 @@ export namespace graphql::internal {
 
 namespace exported {
 
-template <typename T>
-using Awaitable = included::Awaitable<T>;
+// clang-format off
+using included::Awaitable;
+// clang-format on
 
 } // namespace exported
 

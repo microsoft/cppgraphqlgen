@@ -15,56 +15,22 @@ export namespace graphql::learn {
 
 namespace exported {
 
-using Episode = included::Episode;
+using included::Episode;
+using included::getEpisodeNames;
+using included::getEpisodeValues;
 
-constexpr auto getEpisodeNames() noexcept
-{
-	return included::getEpisodeNames();
-}
+using included::ReviewInput;
 
-constexpr auto getEpisodeValues() noexcept
-{
-	return included::getEpisodeValues();
-}
+using included::Operations;
 
-using ReviewInput= included::ReviewInput;
+using included::AddCharacterDetails;
+using included::AddHumanDetails;
+using included::AddDroidDetails;
+using included::AddQueryDetails;
+using included::AddReviewDetails;
+using included::AddMutationDetails;
 
-using Operations = included::Operations;
-
-void AddCharacterDetails(const std::shared_ptr<schema::InterfaceType>& typeCharacter, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddCharacterDetails(typeCharacter, schema);
-}
-
-void AddHumanDetails(const std::shared_ptr<schema::ObjectType>& typeHuman, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddHumanDetails(typeHuman, schema);
-}
-
-void AddDroidDetails(const std::shared_ptr<schema::ObjectType>& typeDroid, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddDroidDetails(typeDroid, schema);
-}
-
-void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddQueryDetails(typeQuery, schema);
-}
-
-void AddReviewDetails(const std::shared_ptr<schema::ObjectType>& typeReview, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddReviewDetails(typeReview, schema);
-}
-
-void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema)
-{
-	included::AddMutationDetails(typeMutation, schema);
-}
-
-std::shared_ptr<schema::Schema> GetSchema()
-{
-	return included::GetSchema();
-}
+using included::GetSchema;
 
 } // namespace exported
 

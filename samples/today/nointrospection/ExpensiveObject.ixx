@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using Expensive = included::Expensive;
+using included::Expensive;
 
 } // namespace exported
 

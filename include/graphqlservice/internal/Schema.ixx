@@ -20,8 +20,10 @@ namespace introspection {
 
 namespace exported {
 
-using TypeKind = included::introspection::TypeKind;
-using DirectiveLocation = included::introspection::DirectiveLocation;
+// clang-format off
+using included::introspection::TypeKind;
+using included::introspection::DirectiveLocation;
+// clang-format on
 
 } // namespace exported
 
@@ -33,20 +35,22 @@ namespace schema {
 
 namespace exported {
 
-using Schema = included::schema::Schema;
-using BaseType = included::schema::BaseType;
-using ScalarType = included::schema::ScalarType;
-using ObjectType = included::schema::ObjectType;
-using InterfaceType = included::schema::InterfaceType;
-using UnionType = included::schema::UnionType;
-using EnumValueType = included::schema::EnumValueType;
-using EnumType = included::schema::EnumType;
-using InputObjectType = included::schema::InputObjectType;
-using WrapperType = included::schema::WrapperType;
-using Field = included::schema::Field;
-using InputValue = included::schema::InputValue;
-using EnumValue = included::schema::EnumValue;
-using Directive = included::schema::Directive;
+// clang-format off
+using included::schema::Schema;
+using included::schema::BaseType;
+using included::schema::ScalarType;
+using included::schema::ObjectType;
+using included::schema::InterfaceType;
+using included::schema::UnionType;
+using included::schema::EnumValueType;
+using included::schema::EnumType;
+using included::schema::InputObjectType;
+using included::schema::WrapperType;
+using included::schema::Field;
+using included::schema::InputValue;
+using included::schema::EnumValue;
+using included::schema::Directive;
+// clang-format on
 
 } // namespace exported
 

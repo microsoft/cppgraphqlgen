@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using Task = included::Task;
+using included::Task;
 
 } // namespace exported
 

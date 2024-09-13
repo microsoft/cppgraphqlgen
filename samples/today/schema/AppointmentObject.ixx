@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using Appointment = included::Appointment;
+using included::Appointment;
 
 } // namespace exported
 

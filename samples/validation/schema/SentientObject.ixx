@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using Sentient = included::Sentient;
+using included::Sentient;
 
 } // namespace exported
 

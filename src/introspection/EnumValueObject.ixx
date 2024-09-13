@@ -15,7 +15,7 @@ export namespace graphql::introspection::object {
 
 namespace exported {
 
-using EnumValue = included::EnumValue;
+using included::EnumValue;
 
 } // namespace exported
 

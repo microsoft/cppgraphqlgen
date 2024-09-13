@@ -17,13 +17,25 @@ namespace exported {
 
 namespace query {
 
-using TaskState = included::query::TaskState;
+using included::query::GetRequestText;
+using included::query::GetRequestObject;
+
+using included::query::TaskState;
 
 } // namespace query
 
 namespace query::Query {
 
-using Traits = included::query::Query::Traits;
+using included::query::GetRequestText;
+using included::query::GetRequestObject;
+using included::query::Query::GetOperationName;
+
+using included::query::TaskState;
+
+using included::query::Query::Response;
+using included::query::Query::parseResponse;
+
+using included::query::Query::Traits;
 
 } // namespace query::Query
 

@@ -11,10 +11,12 @@ export namespace graphql::peg {
 
 namespace exported {
 
+// clang-format off
 using namespace tao::graphqlpeg;
 namespace peginternal = tao::graphqlpeg::internal;
 
-using ast_node = graphql::peg::ast_node;
+using graphql::peg::ast_node;
+// clang-format on
 
 } // namespace exported
 

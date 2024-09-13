@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using FolderConnection = included::FolderConnection;
+using included::FolderConnection;
 
 } // namespace exported
 

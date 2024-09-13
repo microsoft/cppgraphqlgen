@@ -15,7 +15,7 @@ export namespace graphql::validation::object {
 
 namespace exported {
 
-using MutateDogResult = included::MutateDogResult;
+using included::MutateDogResult;
 
 } // namespace exported
 

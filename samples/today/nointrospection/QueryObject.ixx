@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using Query = included::Query;
+using included::Query;
 
 } // namespace exported
 

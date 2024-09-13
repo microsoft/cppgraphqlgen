@@ -15,7 +15,7 @@ export namespace graphql::today::object {
 
 namespace exported {
 
-using NestedType = included::NestedType;
+using included::NestedType;
 
 } // namespace exported
 

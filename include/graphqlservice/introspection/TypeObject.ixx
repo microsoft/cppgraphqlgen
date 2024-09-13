@@ -15,7 +15,7 @@ export namespace graphql::introspection::object {
 
 namespace exported {
 
-using Type = included::Type;
+using included::Type;
 
 } // namespace exported
 
