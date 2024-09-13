@@ -39,10 +39,14 @@ private:
 	[[nodiscard("unnecessary memory copy")]] std::string getHeaderDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourceDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getHeaderPath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getModulePath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputHeader() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputModule() const noexcept;
 	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
+	void outputObjectModule(
+		std::ostream& moduleFile, std::string_view objectNamespace, std::string_view cppType) const;
 	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectDeclaration(
@@ -88,8 +92,10 @@ private:
 	SchemaLoader _loader;
 	const GeneratorOptions _options;
 	const std::string _headerDir;
+	const std::string _moduleDir;
 	const std::string _sourceDir;
 	const std::string _headerPath;
+	const std::string _modulePath;
 	const std::string _sourcePath;
 };
 

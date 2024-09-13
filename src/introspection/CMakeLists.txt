@@ -10,11 +10,12 @@ if(GRAPHQL_UPDATE_SAMPLES)
   update_graphql_schema_files(introspection schema.introspection.graphql Introspection introspection --introspection)
 
   file(GLOB PRIVATE_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+  file(GLOB PRIVATE_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
   add_custom_command(
     OUTPUT copied_introspection_schema_headers
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/../../include/graphqlservice/introspection/
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRIVATE_HEADERS} ${PRIVATE_MODULES} ${CMAKE_CURRENT_SOURCE_DIR}/../../include/graphqlservice/introspection/
     COMMAND ${CMAKE_COMMAND} -E touch copied_introspection_schema_headers
-    DEPENDS ${PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/introspection_schema_files
+    DEPENDS ${PRIVATE_HEADERS} ${PRIVATE_MODULES} ${CMAKE_CURRENT_SOURCE_DIR}/introspection_schema_files
     COMMENT "Updating IntrospectionSchema headers")
 
   add_custom_target(copy_introspection_schema_headers ALL
