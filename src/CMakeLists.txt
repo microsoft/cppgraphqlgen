@@ -102,7 +102,6 @@ target_sources(graphql_internal_module
     ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Module.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
