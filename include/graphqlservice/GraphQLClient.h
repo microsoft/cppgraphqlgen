@@ -83,7 +83,7 @@ template <>
 GRAPHQLCLIENT_EXPORT response::Value Variable<response::Value>::serialize(response::Value&& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_variable {
 
 // These types are used as scalar variables even though they are represented with a class.
 template <typename Type>
@@ -234,7 +234,7 @@ using BooleanVariable = ModifiedVariable<bool>;
 using IdVariable = ModifiedVariable<response::IdType>;
 using ScalarVariable = ModifiedVariable<response::Value>;
 
-} // namespace
+} // namespace modified_variable
 
 // Parse a single response output value. This is the inverse of Variable for output types instead of
 // input types.
@@ -261,7 +261,7 @@ template <>
 GRAPHQLCLIENT_EXPORT response::Value Response<response::Value>::parse(response::Value&& response);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_response {
 
 // Parse response output values with chained type modifiers that add nullable or list wrappers.
 // This is the inverse of ModifiedVariable for output types instead of input types.
@@ -344,7 +344,7 @@ using BooleanResponse = ModifiedResponse<bool>;
 using IdResponse = ModifiedResponse<response::IdType>;
 using ScalarResponse = ModifiedResponse<response::Value>;
 
-} // namespace
+} // namespace modified_response
 } // namespace graphql::client
 
 #endif // GRAPHQLCLIENT_H

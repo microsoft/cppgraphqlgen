@@ -170,6 +170,17 @@ add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
 target_compile_features(graphqlpeg PUBLIC cxx_std_20)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
+target_sources(graphqlpeg
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/GraphQLParse.h
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/Parse.ixx)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
@@ -197,6 +208,17 @@ target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 target_link_libraries(graphqlresponse PUBLIC graphql_internal_modules)
+target_sources(graphqlresponse
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/GraphQLResponse.h
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/Response.ixx)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -385,6 +407,17 @@ target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
   graphqlresponse
   Threads::Threads)
+target_sources(graphqlservice
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/GraphQLService.h
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/Service.ixx)
 
 if(GRAPHQL_UPDATE_SAMPLES)
   add_dependencies(graphqlservice copy_introspection_schema_headers)
@@ -413,6 +446,17 @@ target_compile_features(graphqlclient PUBLIC cxx_std_20)
 target_link_libraries(graphqlclient PUBLIC
   graphqlpeg
   graphqlresponse)
+target_sources(graphqlclient
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/GraphQLClient.h
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/Client.ixx)
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlclient)
@@ -472,14 +516,6 @@ install(TARGETS
   FILE_SET CXX_MODULES
     CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
     DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR})
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLClient.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLParse.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLResponse.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)

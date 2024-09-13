@@ -12,6 +12,8 @@
 #include <cstddef>
 #include <iostream>
 
+using namespace std::literals;
+
 namespace graphql::service {
 
 void addErrorMessage(std::string&& message, response::Value& error)

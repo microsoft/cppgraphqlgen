@@ -120,18 +120,16 @@ struct [[nodiscard("unnecessary construction")]] RequestState
 
 inline namespace keywords {
 
-using namespace std::literals;
-
-constexpr std::string_view strData { "data"sv };
-constexpr std::string_view strErrors { "errors"sv };
-constexpr std::string_view strMessage { "message"sv };
-constexpr std::string_view strLocations { "locations"sv };
-constexpr std::string_view strLine { "line"sv };
-constexpr std::string_view strColumn { "column"sv };
-constexpr std::string_view strPath { "path"sv };
-constexpr std::string_view strQuery { "query"sv };
-constexpr std::string_view strMutation { "mutation"sv };
-constexpr std::string_view strSubscription { "subscription"sv };
+constexpr std::string_view strData { "data" };
+constexpr std::string_view strErrors { "errors" };
+constexpr std::string_view strMessage { "message" };
+constexpr std::string_view strLocations { "locations" };
+constexpr std::string_view strLine { "line" };
+constexpr std::string_view strColumn { "column" };
+constexpr std::string_view strPath { "path" };
+constexpr std::string_view strQuery { "query" };
+constexpr std::string_view strMutation { "mutation" };
+constexpr std::string_view strSubscription { "subscription" };
 
 } // namespace keywords
 
@@ -633,7 +631,7 @@ GRAPHQLSERVICE_EXPORT response::Value Argument<response::Value>::convert(
 	const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_argument {
 
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
@@ -849,7 +847,7 @@ using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
-} // namespace
+} // namespace modified_argument
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -947,7 +945,7 @@ template <>
 GRAPHQLSERVICE_EXPORT void Result<response::Value>::validateScalar(const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_result {
 
 // Test if this Type is Object.
 template <typename Type>
@@ -1319,7 +1317,7 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
-} // namespace
+} // namespace modified_result
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
