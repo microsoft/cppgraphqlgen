@@ -17,12 +17,6 @@ export module GraphQL.Today.Mock;
 export import GraphQL.Response;
 export import GraphQL.Service;
 
-export import GraphQL.Today.TodaySchema;
-
-export import GraphQL.Today.QueryObject;
-export import GraphQL.Today.MutationObject;
-export import GraphQL.Today.SubscriptionObject;
-
 export import GraphQL.Today.AppointmentEdgeObject;
 export import GraphQL.Today.AppointmentObject;
 export import GraphQL.Today.AppointmentConnectionObject;
@@ -38,6 +32,12 @@ export import GraphQL.Today.TaskConnectionObject;
 export import GraphQL.Today.TaskEdgeObject;
 export import GraphQL.Today.TaskObject;
 export import GraphQL.Today.UnionTypeObject;
+
+export import GraphQL.Today.QueryObject;
+export import GraphQL.Today.MutationObject;
+export import GraphQL.Today.SubscriptionObject;
+
+export import GraphQL.Today.TodaySchema;
 
 export namespace graphql::today {
 
