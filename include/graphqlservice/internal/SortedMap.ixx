@@ -5,7 +5,7 @@ module;
 
 #include "SortedMap.h"
 
-export module GraphQL.Internal:SortedMap;
+export module GraphQL.Internal.SortedMap;
 
 namespace included = graphql::internal;
 

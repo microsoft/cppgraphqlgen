@@ -3,11 +3,11 @@
 
 export module GraphQL.Internal;
 
-export import :Awaitable;
-export import :Base64;
-export import :Grammar;
-export import :Introspection;
-export import :Schema;
-export import :SortedMap;
-export import :SyntaxTree;
-export import :Version;
+export import GraphQL.Internal.Awaitable;
+export import GraphQL.Internal.Base64;
+export import GraphQL.Internal.Grammar;
+export import GraphQL.Internal.Introspection;
+export import GraphQL.Internal.Schema;
+export import GraphQL.Internal.SortedMap;
+export import GraphQL.Internal.SyntaxTree;
+export import GraphQL.Internal.Version;

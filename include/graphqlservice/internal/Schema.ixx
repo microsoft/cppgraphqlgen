@@ -5,7 +5,7 @@ module;
 
 #include "Schema.h"
 
-export module GraphQL.Internal:Schema;
+export module GraphQL.Internal.Schema;
 
 namespace included {
 

@@ -5,7 +5,7 @@ module;
 
 #include "Grammar.h"
 
-export module GraphQL.Internal:Grammar;
+export module GraphQL.Internal.Grammar;
 
 namespace included = graphql::peg;
 

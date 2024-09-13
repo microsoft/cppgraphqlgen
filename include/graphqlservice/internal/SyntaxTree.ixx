@@ -5,7 +5,7 @@ module;
 
 #include "SyntaxTree.h"
 
-export module GraphQL.Internal:SyntaxTree;
+export module GraphQL.Internal.SyntaxTree;
 
 export namespace graphql::peg {
 

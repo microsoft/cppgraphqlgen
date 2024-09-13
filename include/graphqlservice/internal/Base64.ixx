@@ -5,7 +5,7 @@ module;
 
 #include "Base64.h"
 
-export module GraphQL.Internal:Base64;
+export module GraphQL.Internal.Base64;
 
 namespace included = graphql::internal;
 

@@ -5,7 +5,7 @@ module;
 
 #include "Introspection.h"
 
-export module GraphQL.Internal:Introspection;
+export module GraphQL.Internal.Introspection;
 
 namespace included = graphql::introspection;
 

@@ -5,7 +5,7 @@ module;
 
 #include "Awaitable.h"
 
-export module GraphQL.Internal:Awaitable;
+export module GraphQL.Internal.Awaitable;
 
 namespace included = graphql::internal;
 
