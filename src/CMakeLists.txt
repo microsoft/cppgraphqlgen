@@ -80,7 +80,6 @@ target_compile_features(graphql_internal_module PUBLIC cxx_std_20)
 target_link_libraries(graphql_internal_module PUBLIC taocpp::pegtl)
 target_include_directories(graphql_internal_module PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 target_sources(graphql_internal_module
   PUBLIC FILE_SET HEADERS
@@ -103,11 +102,11 @@ target_sources(graphql_internal_module
     ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Module.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
     ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx
-    ${INCLUDE_ROOT}/graphqlservice/GraphQL.Internal.ixx)
+    ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
 
 function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_coroutine.cpp")
@@ -152,7 +151,6 @@ target_compile_features(graphqlpeg PUBLIC cxx_std_20)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 add_bigobj_flag(graphqlpeg)
 
