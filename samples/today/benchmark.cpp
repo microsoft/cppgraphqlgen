@@ -3,6 +3,7 @@
 
 #include "graphqlservice/JSONResponse.h"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <iterator>

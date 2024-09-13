@@ -19,6 +19,7 @@
 #pragma warning(pop)
 #endif // _MSC_VER
 
+#include <algorithm>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
