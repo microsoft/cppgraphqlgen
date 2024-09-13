@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.FolderEdgeObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::FolderEdge;
-
-} // namespace exported
-
-using namespace exported;
+using object::FolderEdge;
 
 } // namespace graphql::today::object

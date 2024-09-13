@@ -13,16 +13,10 @@ namespace included = graphql::proxy;
 
 export namespace graphql::proxy {
 
-namespace exported {
+using proxy::Operations;
 
-using included::Operations;
+using proxy::AddQueryDetails;
 
-using included::AddQueryDetails;
-
-using included::GetSchema;
-
-} // namespace exported
-
-using namespace exported;
+using proxy::GetSchema;
 
 } // namespace graphql::proxy

@@ -13,27 +13,21 @@ namespace included = graphql::learn;
 
 export namespace graphql::learn {
 
-namespace exported {
+using learn::Episode;
+using learn::getEpisodeNames;
+using learn::getEpisodeValues;
 
-using included::Episode;
-using included::getEpisodeNames;
-using included::getEpisodeValues;
+using learn::ReviewInput;
 
-using included::ReviewInput;
+using learn::Operations;
 
-using included::Operations;
+using learn::AddCharacterDetails;
+using learn::AddHumanDetails;
+using learn::AddDroidDetails;
+using learn::AddQueryDetails;
+using learn::AddReviewDetails;
+using learn::AddMutationDetails;
 
-using included::AddCharacterDetails;
-using included::AddHumanDetails;
-using included::AddDroidDetails;
-using included::AddQueryDetails;
-using included::AddReviewDetails;
-using included::AddMutationDetails;
-
-using included::GetSchema;
-
-} // namespace exported
-
-using namespace exported;
+using learn::GetSchema;
 
 } // namespace graphql::learn

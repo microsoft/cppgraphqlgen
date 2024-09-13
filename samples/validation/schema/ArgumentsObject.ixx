@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.ArgumentsObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Arguments;
-
-} // namespace exported
-
-using namespace exported;
+using object::Arguments;
 
 } // namespace graphql::validation::object

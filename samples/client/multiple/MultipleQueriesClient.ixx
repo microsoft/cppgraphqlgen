@@ -9,99 +9,92 @@ module;
 
 export module GraphQL.MultipleQueries.MultipleQueriesClient;
 
-namespace included = graphql::client;
-
 export namespace graphql::client {
 
-namespace exported {
 
 namespace multiple {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
 
-using included::multiple::TaskState;
+using multiple::TaskState;
 
-using included::multiple::CompleteTaskInput;
+using multiple::CompleteTaskInput;
 
 } // namespace multiple
 
 namespace query::Appointments {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
-using included::query::Appointments::GetOperationName;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+using Appointments::GetOperationName;
 
-using included::query::Appointments::Response;
-using included::query::Appointments::parseResponse;
+using Appointments::Response;
+using Appointments::parseResponse;
 
-using included::query::Appointments::Traits;
+using Appointments::Traits;
 
 } // namespace query::Appointments
 
 namespace query::Tasks {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
-using included::query::Tasks::GetOperationName;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+using Tasks::GetOperationName;
 
-using included::query::Tasks::Response;
-using included::query::Tasks::parseResponse;
+using Tasks::Response;
+using Tasks::parseResponse;
 
-using included::query::Tasks::Traits;
+using Tasks::Traits;
 
 } // namespace query::Tasks
 
 namespace query::UnreadCounts {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
-using included::query::UnreadCounts::GetOperationName;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+using UnreadCounts::GetOperationName;
 
-using included::query::UnreadCounts::Response;
-using included::query::UnreadCounts::parseResponse;
+using UnreadCounts::Response;
+using UnreadCounts::parseResponse;
 
-using included::query::UnreadCounts::Traits;
+using UnreadCounts::Traits;
 
 } // namespace query::UnreadCounts
 
 namespace query::Miscellaneous {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
-using included::query::Miscellaneous::GetOperationName;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+using Miscellaneous::GetOperationName;
 
-using included::multiple::TaskState;
+using multiple::TaskState;
 
-using included::query::Miscellaneous::Response;
-using included::query::Miscellaneous::parseResponse;
+using Miscellaneous::Response;
+using Miscellaneous::parseResponse;
 
-using included::query::Miscellaneous::Traits;
+using Miscellaneous::Traits;
 
 } // namespace query::Miscellaneous
 
 namespace mutation::CompleteTaskMutation {
 
-using included::multiple::GetRequestText;
-using included::multiple::GetRequestObject;
-using included::mutation::CompleteTaskMutation::GetOperationName;
+using multiple::GetRequestText;
+using multiple::GetRequestObject;
+using CompleteTaskMutation::GetOperationName;
 
-using included::multiple::TaskState;
+using multiple::TaskState;
 
-using included::multiple::CompleteTaskInput;
+using multiple::CompleteTaskInput;
 
-using included::mutation::CompleteTaskMutation::Variables;
-using included::mutation::CompleteTaskMutation::serializeVariables;
+using CompleteTaskMutation::Variables;
+using CompleteTaskMutation::serializeVariables;
 
-using included::mutation::CompleteTaskMutation::Response;
-using included::mutation::CompleteTaskMutation::parseResponse;
+using CompleteTaskMutation::Response;
+using CompleteTaskMutation::parseResponse;
 
-using included::mutation::CompleteTaskMutation::Traits;
+using CompleteTaskMutation::Traits;
 
 } // namespace mutation::CompleteTaskMutation
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::client

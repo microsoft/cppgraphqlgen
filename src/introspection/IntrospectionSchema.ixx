@@ -13,27 +13,21 @@ namespace included = graphql::introspection;
 
 export namespace graphql::introspection {
 
-namespace exported {
+using introspection::TypeKind;
+using introspection::getTypeKindNames;
+using introspection::getTypeKindValues;
 
-using included::TypeKind;
-using included::getTypeKindNames;
-using included::getTypeKindValues;
+using introspection::DirectiveLocation;
+using introspection::getDirectiveLocationNames;
+using introspection::getDirectiveLocationValues;
 
-using included::DirectiveLocation;
-using included::getDirectiveLocationNames;
-using included::getDirectiveLocationValues;
+using introspection::AddSchemaDetails;
+using introspection::AddTypeDetails;
+using introspection::AddFieldDetails;
+using introspection::AddInputValueDetails;
+using introspection::AddEnumValueDetails;
+using introspection::AddDirectiveDetails;
 
-using included::AddSchemaDetails;
-using included::AddTypeDetails;
-using included::AddFieldDetails;
-using included::AddInputValueDetails;
-using included::AddEnumValueDetails;
-using included::AddDirectiveDetails;
-
-using included::AddTypesToSchema;
-
-} // namespace exported
-
-using namespace exported;
+using introspection::AddTypesToSchema;
 
 } // namespace graphql::introspection

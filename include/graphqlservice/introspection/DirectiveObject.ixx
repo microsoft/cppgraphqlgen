@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Introspection.DirectiveObject;
 
-namespace included = graphql::introspection::object;
-
 export namespace graphql::introspection::object {
 
-namespace exported {
-
-using included::Directive;
-
-} // namespace exported
-
-using namespace exported;
+using object::Directive;
 
 } // namespace graphql::introspection::object

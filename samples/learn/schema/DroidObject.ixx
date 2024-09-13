@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.DroidObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Droid;
-
-} // namespace exported
-
-using namespace exported;
+using object::Droid;
 
 } // namespace graphql::learn::object

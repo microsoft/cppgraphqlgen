@@ -7,134 +7,126 @@ module;
 
 export module GraphQL.Service;
 
-namespace included = graphql::service;
-
 export namespace graphql {
 
 namespace schema {
 
-namespace exported {
-
 using schema::Schema;
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace schema
 
 namespace service {
 
-namespace exported {
-
 // clang-format off
-using included::schema_location;
-using included::path_segment;
-using included::field_path;
+using service::schema_location;
+using service::path_segment;
+using service::field_path;
 
-using included::error_path;
-using included::buildErrorPath;
+using service::error_path;
+using service::buildErrorPath;
 
-using included::schema_error;
-using included::buildErrorValues;
+using service::schema_error;
+using service::buildErrorValues;
 
-using included::schema_exception;
-using included::unimplemented_method;
+using service::schema_exception;
+using service::unimplemented_method;
 
-using included::RequestState;
+using service::RequestState;
 
-constexpr std::string_view strData = included::strData;
-constexpr std::string_view strErrors = included::strErrors;
-constexpr std::string_view strMessage = included::strMessage;
-constexpr std::string_view strLocations = included::strLocations;
-constexpr std::string_view strLine = included::strLine;
-constexpr std::string_view strColumn = included::strColumn;
-constexpr std::string_view strPath = included::strPath;
-constexpr std::string_view strQuery = included::strQuery;
-constexpr std::string_view strMutation = included::strMutation;
-constexpr std::string_view strSubscription = included::strSubscription;
+namespace constants {
 
-using included::ResolverContext;
+constexpr std::string_view strData = service::strData;
+constexpr std::string_view strErrors = service::strErrors;
+constexpr std::string_view strMessage = service::strMessage;
+constexpr std::string_view strLocations = service::strLocations;
+constexpr std::string_view strLine = service::strLine;
+constexpr std::string_view strColumn = service::strColumn;
+constexpr std::string_view strPath = service::strPath;
+constexpr std::string_view strQuery = service::strQuery;
+constexpr std::string_view strMutation = service::strMutation;
+constexpr std::string_view strSubscription = service::strSubscription;
+    
+} // namespace constants
 
-using included::await_worker_thread;
-using included::await_worker_queue;
-using included::await_async;
+using namespace constants;
 
-using included::Directives;
-using included::FragmentDefinitionDirectiveStack;
-using included::FragmentSpreadDirectiveStack;
+using service::ResolverContext;
 
-using included::SelectionSetParams;
-using included::FieldParams;
+using service::await_worker_thread;
+using service::await_worker_queue;
+using service::await_async;
 
-using included::AwaitableScalar;
-using included::AwaitableObject;
+using service::Directives;
+using service::FragmentDefinitionDirectiveStack;
+using service::FragmentSpreadDirectiveStack;
 
-using included::Fragment;
-using included::FragmentMap;
+using service::SelectionSetParams;
+using service::FieldParams;
 
-using included::ResolverParams;
-using included::ResolverResult;
-using included::AwaitableResolver;
-using included::Resolver;
-using included::ResolverMap;
+using service::AwaitableScalar;
+using service::AwaitableObject;
 
-using included::TypeModifier;
-using included::Argument;
+using service::Fragment;
+using service::FragmentMap;
 
-using included::ModifiedArgument;
-using included::IntArgument;
-using included::FloatArgument;
-using included::StringArgument;
-using included::BooleanArgument;
-using included::IdArgument;
-using included::ScalarArgument;
+using service::ResolverParams;
+using service::ResolverResult;
+using service::AwaitableResolver;
+using service::Resolver;
+using service::ResolverMap;
 
-using included::TypeNames;
-using included::Object;
-using included::Result;
+using service::TypeModifier;
+using service::Argument;
 
-using included::ModifiedResult;
-using included::IntResult;
-using included::FloatResult;
-using included::StringResult;
-using included::BooleanResult;
-using included::IdResult;
-using included::ScalarResult;
-using included::ObjectResult;
+using service::ModifiedArgument;
+using service::IntArgument;
+using service::FloatArgument;
+using service::StringArgument;
+using service::BooleanArgument;
+using service::IdArgument;
+using service::ScalarArgument;
 
-using included::SubscriptionCallback;
-using included::SubscriptionKey;
-using included::SubscriptionName;
+using service::TypeNames;
+using service::Object;
+using service::Result;
 
-using included::AwaitableSubscribe;
-using included::AwaitableUnsubscribe;
-using included::AwaitableDeliver;
+using service::ModifiedResult;
+using service::IntResult;
+using service::FloatResult;
+using service::StringResult;
+using service::BooleanResult;
+using service::IdResult;
+using service::ScalarResult;
+using service::ObjectResult;
 
-using included::RequestResolveParams;
-using included::RequestSubscribeParams;
-using included::RequestUnsubscribeParams;
+using service::SubscriptionCallback;
+using service::SubscriptionKey;
+using service::SubscriptionName;
 
-using included::SubscriptionArguments;
-using included::SubscriptionArgumentFilterCallback;
-using included::SubscriptionDirectiveFilterCallback;
-using included::SubscriptionFilter;
+using service::AwaitableSubscribe;
+using service::AwaitableUnsubscribe;
+using service::AwaitableDeliver;
 
-using included::RequestDeliverFilter;
-using included::RequestDeliverParams;
+using service::RequestResolveParams;
+using service::RequestSubscribeParams;
+using service::RequestUnsubscribeParams;
 
-using included::TypeMap;
-using included::OperationData;
-using included::SubscriptionData;
+using service::SubscriptionArguments;
+using service::SubscriptionArgumentFilterCallback;
+using service::SubscriptionDirectiveFilterCallback;
+using service::SubscriptionFilter;
 
-using included::SubscriptionPlaceholder;
+using service::RequestDeliverFilter;
+using service::RequestDeliverParams;
 
-using included::Request;
+using service::TypeMap;
+using service::OperationData;
+using service::SubscriptionData;
+
+using service::SubscriptionPlaceholder;
+
+using service::Request;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace service
 

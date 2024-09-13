@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.CharacterObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Character;
-
-} // namespace exported
-
-using namespace exported;
+using object::Character;
 
 } // namespace graphql::learn::object

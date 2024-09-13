@@ -7,23 +7,15 @@ module;
 
 export module GraphQL.Internal.Introspection;
 
-namespace included = graphql::introspection;
-
 export namespace graphql::introspection {
 
-namespace exported {
-
 // clang-format off
-using included::Schema;
-using included::Type;
-using included::Field;
-using included::InputValue;
-using included::EnumValue;
-using included::Directive;
+using introspection::Schema;
+using introspection::Type;
+using introspection::Field;
+using introspection::InputValue;
+using introspection::EnumValue;
+using introspection::Directive;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::introspection

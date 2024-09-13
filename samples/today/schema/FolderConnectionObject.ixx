@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.FolderConnectionObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::FolderConnection;
-
-} // namespace exported
-
-using namespace exported;
+using object::FolderConnection;
 
 } // namespace graphql::today::object

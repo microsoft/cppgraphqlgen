@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.MutationObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::Mutation;
-
-} // namespace exported
-
-using namespace exported;
+using object::Mutation;
 
 } // namespace graphql::today::object

@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.QueryObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Query;
-
-} // namespace exported
-
-using namespace exported;
+using object::Query;
 
 } // namespace graphql::learn::object

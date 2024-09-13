@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Proxy.QueryObject;
 
-namespace included = graphql::proxy::object;
-
 export namespace graphql::proxy::object {
 
-namespace exported {
-
-using included::Query;
-
-} // namespace exported
-
-using namespace exported;
+using object::Query;
 
 } // namespace graphql::proxy::object

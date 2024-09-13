@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.ExpensiveObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::Expensive;
-
-} // namespace exported
-
-using namespace exported;
+using object::Expensive;
 
 } // namespace graphql::today::object

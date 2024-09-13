@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.MutationObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Mutation;
-
-} // namespace exported
-
-using namespace exported;
+using object::Mutation;
 
 } // namespace graphql::validation::object

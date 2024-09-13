@@ -9,45 +9,38 @@ module;
 
 export module GraphQL.Mutate.MutateClient;
 
-namespace included = graphql::client;
-
 export namespace graphql::client {
 
-namespace exported {
 
 namespace mutate {
 
-using included::mutate::GetRequestText;
-using included::mutate::GetRequestObject;
+using mutate::GetRequestText;
+using mutate::GetRequestObject;
 
-using included::mutate::TaskState;
+using mutate::TaskState;
 
-using included::mutate::CompleteTaskInput;
+using mutate::CompleteTaskInput;
 
 } // namespace mutate
 
 namespace mutation::CompleteTaskMutation {
 
-using included::mutate::GetRequestText;
-using included::mutate::GetRequestObject;
-using included::mutation::CompleteTaskMutation::GetOperationName;
+using mutate::GetRequestText;
+using mutate::GetRequestObject;
+using CompleteTaskMutation::GetOperationName;
 
-using included::mutate::TaskState;
+using mutate::TaskState;
 
-using included::mutate::CompleteTaskInput;
+using mutate::CompleteTaskInput;
 
-using included::mutation::CompleteTaskMutation::Variables;
-using included::mutation::CompleteTaskMutation::serializeVariables;
+using CompleteTaskMutation::Variables;
+using CompleteTaskMutation::serializeVariables;
 
-using included::mutation::CompleteTaskMutation::Response;
-using included::mutation::CompleteTaskMutation::parseResponse;
+using CompleteTaskMutation::Response;
+using CompleteTaskMutation::parseResponse;
 
-using included::mutation::CompleteTaskMutation::Traits;
+using CompleteTaskMutation::Traits;
 
 } // namespace mutation::CompleteTaskMutation
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::client

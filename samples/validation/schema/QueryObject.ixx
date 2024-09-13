@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.QueryObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Query;
-
-} // namespace exported
-
-using namespace exported;
+using object::Query;
 
 } // namespace graphql::validation::object

@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.NodeObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Node;
-
-} // namespace exported
-
-using namespace exported;
+using object::Node;
 
 } // namespace graphql::validation::object

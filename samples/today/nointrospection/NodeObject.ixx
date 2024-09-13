@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.NodeObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::Node;
-
-} // namespace exported
-
-using namespace exported;
+using object::Node;
 
 } // namespace graphql::today::object

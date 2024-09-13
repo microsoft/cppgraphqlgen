@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.HumanOrAlienObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::HumanOrAlien;
-
-} // namespace exported
-
-using namespace exported;
+using object::HumanOrAlien;
 
 } // namespace graphql::validation::object

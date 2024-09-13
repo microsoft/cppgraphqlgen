@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.MutateDogResultObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::MutateDogResult;
-
-} // namespace exported
-
-using namespace exported;
+using object::MutateDogResult;
 
 } // namespace graphql::validation::object

@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.CompleteTaskPayloadObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::CompleteTaskPayload;
-
-} // namespace exported
-
-using namespace exported;
+using object::CompleteTaskPayload;
 
 } // namespace graphql::today::object

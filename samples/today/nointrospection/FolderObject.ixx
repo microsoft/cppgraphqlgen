@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.FolderObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::Folder;
-
-} // namespace exported
-
-using namespace exported;
+using object::Folder;
 
 } // namespace graphql::today::object

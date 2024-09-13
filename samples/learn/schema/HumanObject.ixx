@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.HumanObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Human;
-
-} // namespace exported
-
-using namespace exported;
+using object::Human;
 
 } // namespace graphql::learn::object

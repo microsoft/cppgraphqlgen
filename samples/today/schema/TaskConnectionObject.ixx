@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.TaskConnectionObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::TaskConnection;
-
-} // namespace exported
-
-using namespace exported;
+using object::TaskConnection;
 
 } // namespace graphql::today::object

@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.MutationObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Mutation;
-
-} // namespace exported
-
-using namespace exported;
+using object::Mutation;
 
 } // namespace graphql::learn::object

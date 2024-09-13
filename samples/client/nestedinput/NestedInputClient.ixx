@@ -9,47 +9,40 @@ module;
 
 export module GraphQL.NestedInput.NestedInputClient;
 
-namespace included = graphql::client;
-
 export namespace graphql::client {
 
-namespace exported {
 
 namespace nestedinput {
 
-using included::nestedinput::GetRequestText;
-using included::nestedinput::GetRequestObject;
+using nestedinput::GetRequestText;
+using nestedinput::GetRequestObject;
 
-using included::nestedinput::InputA;
-using included::nestedinput::InputB;
-using included::nestedinput::InputABCD;
-using included::nestedinput::InputBC;
+using nestedinput::InputA;
+using nestedinput::InputB;
+using nestedinput::InputABCD;
+using nestedinput::InputBC;
 
 } // namespace nestedinput
 
 namespace query::testQuery {
 
-using included::nestedinput::GetRequestText;
-using included::nestedinput::GetRequestObject;
-using included::query::testQuery::GetOperationName;
+using nestedinput::GetRequestText;
+using nestedinput::GetRequestObject;
+using testQuery::GetOperationName;
 
-using included::nestedinput::InputA;
-using included::nestedinput::InputB;
-using included::nestedinput::InputABCD;
-using included::nestedinput::InputBC;
+using nestedinput::InputA;
+using nestedinput::InputB;
+using nestedinput::InputABCD;
+using nestedinput::InputBC;
 
-using included::query::testQuery::Variables;
-using included::query::testQuery::serializeVariables;
+using testQuery::Variables;
+using testQuery::serializeVariables;
 
-using included::query::testQuery::Response;
-using included::query::testQuery::parseResponse;
+using testQuery::Response;
+using testQuery::parseResponse;
 
-using included::query::testQuery::Traits;
+using testQuery::Traits;
 
 } // namespace query::testQuery
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::client

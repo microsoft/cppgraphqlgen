@@ -7,30 +7,26 @@ module;
 
 export module GraphQL.Parse;
 
-namespace included = graphql::peg;
-
 export namespace graphql {
 
 namespace peg {
 
-namespace exported {
-
 // clang-format off
-using included::ast_node;
-using included::ast_input;
-using included::ast;
+using peg::ast_node;
+using peg::ast_input;
+using peg::ast;
 
-constexpr std::size_t c_defaultDepthLimit = included::c_defaultDepthLimit;
+namespace constants {
 
-using included::parseSchemaString;
-using included::parseSchemaFile;
-using included::parseString;
-using included::parseFile;
+constexpr std::size_t c_defaultDepthLimit = peg::c_defaultDepthLimit;
+
+} // namespace constants
+
+using peg::parseSchemaString;
+using peg::parseSchemaFile;
+using peg::parseString;
+using peg::parseFile;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace peg
 

@@ -715,10 +715,6 @@ namespace included = )cpp"
 export )cpp";
 
 	NamespaceScope graphqlNamespace { moduleFile, schemaNamespace };
-
-	moduleFile << std::endl;
-
-	NamespaceScope exportedNamespace { moduleFile, "exported" };
 	PendingBlankLine pendingSeparator { moduleFile };
 
 	if (!_loader.getEnumTypes().empty())
@@ -727,11 +723,12 @@ export )cpp";
 
 		for (const auto& enumType : _loader.getEnumTypes())
 		{
-			moduleFile << R"cpp(using included::)cpp" << enumType.cppType << R"cpp(;
-using included::get)cpp"
-					   << enumType.cppType << R"cpp(Names;
-using included::get)cpp"
-					   << enumType.cppType << R"cpp(Values;
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << enumType.cppType << R"cpp(;
+using )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Names;
+using )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values;
 
 )cpp";
 		}
@@ -743,7 +740,8 @@ using included::get)cpp"
 
 		for (const auto& inputType : _loader.getInputTypes())
 		{
-			moduleFile << R"cpp(using included::)cpp" << inputType.cppType << R"cpp(;
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << inputType.cppType << R"cpp(;
 )cpp";
 		}
 
@@ -754,7 +752,7 @@ using included::get)cpp"
 	{
 		pendingSeparator.reset();
 
-		moduleFile << R"cpp(using included::Operations;
+		moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::Operations;
 
 )cpp";
 	}
@@ -765,7 +763,8 @@ using included::get)cpp"
 
 		for (const auto& interfaceType : _loader.getInterfaceTypes())
 		{
-			moduleFile << R"cpp(using included::Add)cpp" << interfaceType.cppType << R"cpp(Details;
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::Add)cpp"
+					   << interfaceType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
@@ -776,7 +775,8 @@ using included::get)cpp"
 
 		for (const auto& unionType : _loader.getUnionTypes())
 		{
-			moduleFile << R"cpp(using included::Add)cpp" << unionType.cppType << R"cpp(Details;
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::Add)cpp"
+					   << unionType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
@@ -787,7 +787,8 @@ using included::get)cpp"
 
 		for (const auto& objectType : _loader.getObjectTypes())
 		{
-			moduleFile << R"cpp(using included::Add)cpp" << objectType.cppType << R"cpp(Details;
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::Add)cpp"
+					   << objectType.cppType << R"cpp(Details;
 )cpp";
 		}
 	}
@@ -795,22 +796,16 @@ using included::get)cpp"
 	if (_loader.isIntrospection())
 	{
 		moduleFile << R"cpp(
-using included::AddTypesToSchema;
+using )cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::AddTypesToSchema;
 
 )cpp";
 	}
 	else
 	{
 		moduleFile << R"cpp(
-using included::GetSchema;
-
-)cpp";
-	}
-
-	if (exportedNamespace.exit())
-	{
-		moduleFile << R"cpp(
-using namespace exported;
+using )cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::GetSchema;
 
 )cpp";
 	}
@@ -908,20 +903,11 @@ module;
 export module GraphQL.)cpp"
 			   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << cppType << R"cpp(Object;
 
-namespace included = )cpp"
-			   << objectNamespace << R"cpp(;
-
 export namespace )cpp"
 			   << objectNamespace << R"cpp( {
 
-namespace exported {
-
-using included::)cpp"
+using object::)cpp"
 			   << cppType << R"cpp(;
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace )cpp"
 			   << objectNamespace << R"cpp(

@@ -7,18 +7,10 @@ module;
 
 export module GraphQL.Internal.Base64;
 
-namespace included = graphql::internal;
-
 export namespace graphql::internal {
 
-namespace exported {
-
 // clang-format off
-using included::Base64;
+using internal::Base64;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::internal

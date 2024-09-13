@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.StarWars.ReviewObject;
 
-namespace included = graphql::learn::object;
-
 export namespace graphql::learn::object {
 
-namespace exported {
-
-using included::Review;
-
-} // namespace exported
-
-using namespace exported;
+using object::Review;
 
 } // namespace graphql::learn::object

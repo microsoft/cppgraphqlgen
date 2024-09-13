@@ -13,47 +13,41 @@ namespace included = graphql::today;
 
 export namespace graphql::today {
 
-namespace exported {
+using today::TaskState;
+using today::getTaskStateNames;
+using today::getTaskStateValues;
 
-using included::TaskState;
-using included::getTaskStateNames;
-using included::getTaskStateValues;
+using today::CompleteTaskInput;
+using today::ThirdNestedInput;
+using today::FourthNestedInput;
+using today::IncludeNullableSelfInput;
+using today::IncludeNonNullableListSelfInput;
+using today::StringOperationFilterInput;
+using today::SecondNestedInput;
+using today::ForwardDeclaredInput;
+using today::FirstNestedInput;
 
-using included::CompleteTaskInput;
-using included::ThirdNestedInput;
-using included::FourthNestedInput;
-using included::IncludeNullableSelfInput;
-using included::IncludeNonNullableListSelfInput;
-using included::StringOperationFilterInput;
-using included::SecondNestedInput;
-using included::ForwardDeclaredInput;
-using included::FirstNestedInput;
+using today::Operations;
 
-using included::Operations;
+using today::AddNodeDetails;
+using today::AddUnionTypeDetails;
+using today::AddQueryDetails;
+using today::AddPageInfoDetails;
+using today::AddAppointmentEdgeDetails;
+using today::AddAppointmentConnectionDetails;
+using today::AddTaskEdgeDetails;
+using today::AddTaskConnectionDetails;
+using today::AddFolderEdgeDetails;
+using today::AddFolderConnectionDetails;
+using today::AddCompleteTaskPayloadDetails;
+using today::AddMutationDetails;
+using today::AddSubscriptionDetails;
+using today::AddAppointmentDetails;
+using today::AddTaskDetails;
+using today::AddFolderDetails;
+using today::AddNestedTypeDetails;
+using today::AddExpensiveDetails;
 
-using included::AddNodeDetails;
-using included::AddUnionTypeDetails;
-using included::AddQueryDetails;
-using included::AddPageInfoDetails;
-using included::AddAppointmentEdgeDetails;
-using included::AddAppointmentConnectionDetails;
-using included::AddTaskEdgeDetails;
-using included::AddTaskConnectionDetails;
-using included::AddFolderEdgeDetails;
-using included::AddFolderConnectionDetails;
-using included::AddCompleteTaskPayloadDetails;
-using included::AddMutationDetails;
-using included::AddSubscriptionDetails;
-using included::AddAppointmentDetails;
-using included::AddTaskDetails;
-using included::AddFolderDetails;
-using included::AddNestedTypeDetails;
-using included::AddExpensiveDetails;
-
-using included::GetSchema;
-
-} // namespace exported
-
-using namespace exported;
+using today::GetSchema;
 
 } // namespace graphql::today

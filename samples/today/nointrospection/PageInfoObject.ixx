@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.PageInfoObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::PageInfo;
-
-} // namespace exported
-
-using namespace exported;
+using object::PageInfo;
 
 } // namespace graphql::today::object

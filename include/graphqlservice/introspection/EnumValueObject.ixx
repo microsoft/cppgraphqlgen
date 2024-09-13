@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Introspection.EnumValueObject;
 
-namespace included = graphql::introspection::object;
-
 export namespace graphql::introspection::object {
 
-namespace exported {
-
-using included::EnumValue;
-
-} // namespace exported
-
-using namespace exported;
+using object::EnumValue;
 
 } // namespace graphql::introspection::object

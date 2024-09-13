@@ -13,42 +13,36 @@ namespace included = graphql::validation;
 
 export namespace graphql::validation {
 
-namespace exported {
+using validation::DogCommand;
+using validation::getDogCommandNames;
+using validation::getDogCommandValues;
 
-using included::DogCommand;
-using included::getDogCommandNames;
-using included::getDogCommandValues;
+using validation::CatCommand;
+using validation::getCatCommandNames;
+using validation::getCatCommandValues;
 
-using included::CatCommand;
-using included::getCatCommandNames;
-using included::getCatCommandValues;
+using validation::ComplexInput;
 
-using included::ComplexInput;
+using validation::Operations;
 
-using included::Operations;
+using validation::AddSentientDetails;
+using validation::AddPetDetails;
+using validation::AddNodeDetails;
+using validation::AddResourceDetails;
+using validation::AddCatOrDogDetails;
+using validation::AddDogOrHumanDetails;
+using validation::AddHumanOrAlienDetails;
+using validation::AddQueryDetails;
+using validation::AddDogDetails;
+using validation::AddAlienDetails;
+using validation::AddHumanDetails;
+using validation::AddCatDetails;
+using validation::AddMutationDetails;
+using validation::AddMutateDogResultDetails;
+using validation::AddSubscriptionDetails;
+using validation::AddMessageDetails;
+using validation::AddArgumentsDetails;
 
-using included::AddSentientDetails;
-using included::AddPetDetails;
-using included::AddNodeDetails;
-using included::AddResourceDetails;
-using included::AddCatOrDogDetails;
-using included::AddDogOrHumanDetails;
-using included::AddHumanOrAlienDetails;
-using included::AddQueryDetails;
-using included::AddDogDetails;
-using included::AddAlienDetails;
-using included::AddHumanDetails;
-using included::AddCatDetails;
-using included::AddMutationDetails;
-using included::AddMutateDogResultDetails;
-using included::AddSubscriptionDetails;
-using included::AddMessageDetails;
-using included::AddArgumentsDetails;
-
-using included::GetSchema;
-
-} // namespace exported
-
-using namespace exported;
+using validation::GetSchema;
 
 } // namespace graphql::validation

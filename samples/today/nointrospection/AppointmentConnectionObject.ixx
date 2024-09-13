@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.AppointmentConnectionObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::AppointmentConnection;
-
-} // namespace exported
-
-using namespace exported;
+using object::AppointmentConnection;
 
 } // namespace graphql::today::object

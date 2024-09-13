@@ -9,38 +9,31 @@ module;
 
 export module GraphQL.Query.QueryClient;
 
-namespace included = graphql::client;
-
 export namespace graphql::client {
 
-namespace exported {
 
 namespace query {
 
-using included::query::GetRequestText;
-using included::query::GetRequestObject;
+using query::GetRequestText;
+using query::GetRequestObject;
 
-using included::query::TaskState;
+using query::TaskState;
 
 } // namespace query
 
 namespace query::Query {
 
-using included::query::GetRequestText;
-using included::query::GetRequestObject;
-using included::query::Query::GetOperationName;
+using query::GetRequestText;
+using query::GetRequestObject;
+using Query::GetOperationName;
 
-using included::query::TaskState;
+using query::TaskState;
 
-using included::query::Query::Response;
-using included::query::Query::parseResponse;
+using Query::Response;
+using Query::parseResponse;
 
-using included::query::Query::Traits;
+using Query::Traits;
 
 } // namespace query::Query
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::client

@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Introspection.FieldObject;
 
-namespace included = graphql::introspection::object;
-
 export namespace graphql::introspection::object {
 
-namespace exported {
-
-using included::Field;
-
-} // namespace exported
-
-using namespace exported;
+using object::Field;
 
 } // namespace graphql::introspection::object

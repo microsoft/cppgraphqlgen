@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.NestedTypeObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::NestedType;
-
-} // namespace exported
-
-using namespace exported;
+using object::NestedType;
 
 } // namespace graphql::today::object

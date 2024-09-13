@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.UnionTypeObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::UnionType;
-
-} // namespace exported
-
-using namespace exported;
+using object::UnionType;
 
 } // namespace graphql::today::object

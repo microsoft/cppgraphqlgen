@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.CatOrDogObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::CatOrDog;
-
-} // namespace exported
-
-using namespace exported;
+using object::CatOrDog;
 
 } // namespace graphql::validation::object

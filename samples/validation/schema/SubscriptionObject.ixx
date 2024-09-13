@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.SubscriptionObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Subscription;
-
-} // namespace exported
-
-using namespace exported;
+using object::Subscription;
 
 } // namespace graphql::validation::object

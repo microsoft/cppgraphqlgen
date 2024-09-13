@@ -11,30 +11,24 @@ namespace included = graphql::response;
 
 export namespace graphql::response {
 
-namespace exported {
-
 // clang-format off
-using included::Type;
+using response::Type;
 
-using included::MapType;
-using included::ListType;
-using included::StringType;
-using included::BooleanType;
-using included::IntType;
-using included::FloatType;
-using included::ScalarType;
+using response::MapType;
+using response::ListType;
+using response::StringType;
+using response::BooleanType;
+using response::IntType;
+using response::FloatType;
+using response::ScalarType;
 
-using included::IdType;
+using response::IdType;
 
-using included::ValueTypeTraits;
-using included::Value;
-using included::AwaitableValue;
+using response::ValueTypeTraits;
+using response::Value;
+using response::AwaitableValue;
 
-using included::Writer;
+using response::Writer;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::response

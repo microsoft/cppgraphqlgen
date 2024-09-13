@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.AppointmentEdgeObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::AppointmentEdge;
-
-} // namespace exported
-
-using namespace exported;
+using object::AppointmentEdge;
 
 } // namespace graphql::today::object

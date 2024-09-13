@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.DogOrHumanObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::DogOrHuman;
-
-} // namespace exported
-
-using namespace exported;
+using object::DogOrHuman;
 
 } // namespace graphql::validation::object

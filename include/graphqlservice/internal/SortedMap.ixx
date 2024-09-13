@@ -7,25 +7,17 @@ module;
 
 export module GraphQL.Internal.SortedMap;
 
-namespace included = graphql::internal;
-
 export namespace graphql::internal {
 
-namespace exported {
-
 // clang-format off
-using included::sorted_map_key;
-using included::sorted_map_equal_range;
-using included::sorted_map_lookup;
-using included::sorted_map;
-using included::sorted_set;
-using included::shorter_or_less;
-using included::string_view_map;
-using included::string_view_set;
+using internal::sorted_map_key;
+using internal::sorted_map_equal_range;
+using internal::sorted_map_lookup;
+using internal::sorted_map;
+using internal::sorted_set;
+using internal::shorter_or_less;
+using internal::string_view_map;
+using internal::string_view_set;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::internal

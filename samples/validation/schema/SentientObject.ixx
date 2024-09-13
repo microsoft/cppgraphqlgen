@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.SentientObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Sentient;
-
-} // namespace exported
-
-using namespace exported;
+using object::Sentient;
 
 } // namespace graphql::validation::object

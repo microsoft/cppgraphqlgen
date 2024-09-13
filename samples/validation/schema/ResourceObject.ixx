@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Validation.ResourceObject;
 
-namespace included = graphql::validation::object;
-
 export namespace graphql::validation::object {
 
-namespace exported {
-
-using included::Resource;
-
-} // namespace exported
-
-using namespace exported;
+using object::Resource;
 
 } // namespace graphql::validation::object

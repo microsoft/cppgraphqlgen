@@ -9,16 +9,8 @@ module;
 
 export module GraphQL.Today.SubscriptionObject;
 
-namespace included = graphql::today::object;
-
 export namespace graphql::today::object {
 
-namespace exported {
-
-using included::Subscription;
-
-} // namespace exported
-
-using namespace exported;
+using object::Subscription;
 
 } // namespace graphql::today::object

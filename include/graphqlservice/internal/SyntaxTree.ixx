@@ -9,17 +9,11 @@ export module GraphQL.Internal.SyntaxTree;
 
 export namespace graphql::peg {
 
-namespace exported {
-
 // clang-format off
 using namespace tao::graphqlpeg;
 namespace peginternal = tao::graphqlpeg::internal;
 
-using graphql::peg::ast_node;
+using peg::ast_node;
 // clang-format on
-
-} // namespace exported
-
-using namespace exported;
 
 } // namespace graphql::peg

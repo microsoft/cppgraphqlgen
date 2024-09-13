@@ -620,10 +620,6 @@ bool Generator::outputModule() const noexcept
 	std::ofstream moduleFile(_modulePath, std::ios_base::trunc);
 	std::ostringstream ossNamespace;
 
-	ossNamespace << getClientNamespace() << R"cpp(::)cpp";
-
-	const auto clientNamespace = ossNamespace.str();
-
 	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
@@ -640,16 +636,12 @@ export module GraphQL.)cpp"
 			   << _schemaLoader.getFilenamePrefix() <<
 		R"cpp(Client;
 
-namespace included = )cpp"
-			   << getClientNamespace() << R"cpp(;
-
 export )cpp";
 
 	NamespaceScope graphqlNamespace { moduleFile, getClientNamespace() };
 
 	moduleFile << std::endl;
 
-	NamespaceScope exportedNamespace { moduleFile, "exported" };
 	NamespaceScope schemaNamespace { moduleFile, _schemaLoader.getSchemaNamespace(), true };
 	PendingBlankLine pendingSeparator { moduleFile };
 
@@ -657,10 +649,10 @@ export )cpp";
 	if (schemaNamespace.enter())
 	{
 		moduleFile << R"cpp(
-using included::)cpp"
-				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText;
-using included::)cpp"
-				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject;
+using )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestText;
+using )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestObject;
 )cpp";
 		pendingSeparator.add();
 	}
@@ -684,7 +676,7 @@ using included::)cpp"
 					continue;
 				}
 
-				moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+				moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << cppType << R"cpp(;
 )cpp";
 			}
@@ -715,7 +707,7 @@ using included::)cpp"
 					continue;
 				}
 
-				moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
+				moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace()
 						   << R"cpp(::)cpp" << cppType << R"cpp(;
 )cpp";
 			}
@@ -738,22 +730,23 @@ using included::)cpp"
 		pendingSeparator.reset();
 
 		NamespaceScope operationNamespaceScope { moduleFile, getOperationNamespace(operation) };
+		const auto operationNamespace = _requestLoader.getOperationNamespace(operation);
 
 		moduleFile << R"cpp(
-using included::)cpp"
-				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestText;
-using included::)cpp"
-				   << _schemaLoader.getSchemaNamespace() << R"cpp(::GetRequestObject;
-using included::)cpp"
-				   << getOperationNamespace(operation) << R"cpp(::GetOperationName;
+using )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestText;
+using )cpp" << _schemaLoader.getSchemaNamespace()
+				   << R"cpp(::GetRequestObject;
+using )cpp" << operationNamespace
+				   << R"cpp(::GetOperationName;
 
 )cpp";
 
 		// Alias all of the enums referenced either in variables or the response.
 		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 		{
-			moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+			moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -764,9 +757,8 @@ using included::)cpp"
 		// Alias all of the input object structs referenced in variables.
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 		{
-			moduleFile << R"cpp(using included::)cpp" << _schemaLoader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
-					   << R"cpp(;
+			moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << _schemaLoader.getCppType(inputType.type->name()) << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -778,9 +770,8 @@ using included::)cpp"
 
 		if (!variables.empty())
 		{
-			moduleFile << R"cpp(using included::)cpp" << getOperationNamespace(operation)
-					   << R"cpp(::Variables;
-using included::)cpp" << getOperationNamespace(operation)
+			moduleFile << R"cpp(using )cpp" << operationNamespace << R"cpp(::Variables;
+using )cpp" << operationNamespace
 					   << R"cpp(::serializeVariables;
 )cpp";
 
@@ -789,13 +780,12 @@ using included::)cpp" << getOperationNamespace(operation)
 
 		pendingSeparator.reset();
 
-		moduleFile << R"cpp(using included::)cpp" << getOperationNamespace(operation)
-				   << R"cpp(::Response;
-using included::)cpp"
-				   << getOperationNamespace(operation) << R"cpp(::parseResponse;
+		moduleFile << R"cpp(using )cpp" << operationNamespace << R"cpp(::Response;
+using )cpp" << operationNamespace
+				   << R"cpp(::parseResponse;
 
-using included::)cpp"
-				   << getOperationNamespace(operation) << R"cpp(::Traits;
+using )cpp" << operationNamespace
+				   << R"cpp(::Traits;
 
 )cpp";
 
@@ -803,14 +793,6 @@ using included::)cpp"
 	}
 
 	pendingSeparator.reset();
-
-	if (exportedNamespace.exit())
-	{
-		moduleFile << R"cpp(
-using namespace exported;
-
-)cpp";
-	}
 
 	return true;
 }
