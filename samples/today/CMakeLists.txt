@@ -29,24 +29,28 @@ endif()
 
 # sample
 add_executable(sample sample.cpp)
+target_compile_features(sample PUBLIC cxx_std_20)
 target_link_libraries(sample PRIVATE
   todaygraphql
   graphqljson)
 
 # sample_nointrospection
 add_executable(sample_nointrospection sample.cpp)
+target_compile_features(sample_nointrospection PUBLIC cxx_std_20)
 target_link_libraries(sample_nointrospection PRIVATE
   todaygraphql_nointrospection
   graphqljson)
 
 # benchmark
 add_executable(benchmark benchmark.cpp)
+target_compile_features(benchmark PUBLIC cxx_std_20)
 target_link_libraries(benchmark PRIVATE
   todaygraphql
   graphqljson)
 
 # benchmark_nointrospection
 add_executable(benchmark_nointrospection benchmark.cpp)
+target_compile_features(benchmark_nointrospection PUBLIC cxx_std_20)
 target_link_libraries(benchmark_nointrospection PRIVATE
   todaygraphql_nointrospection
   graphqljson)
