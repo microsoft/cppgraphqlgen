@@ -1,9 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "BenchmarkClient.h"
-#include "TodayMock.h"
-
 #include <chrono>
 #include <cstddef>
 #include <iostream>
@@ -12,6 +9,12 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+
+import GraphQL.Client;
+import GraphQL.Parse;
+
+import GraphQL.Today.Mock;
+import GraphQL.Benchmark.BenchmarkClient;
 
 using namespace graphql;
 

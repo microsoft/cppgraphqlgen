@@ -3,13 +3,19 @@
 
 #include <gtest/gtest.h>
 
-#include "MutateClient.h"
-#include "QueryClient.h"
-#include "SubscribeClient.h"
-#include "TodayMock.h"
-
 #include <chrono>
 #include <cstddef>
+#include <future>
+
+import GraphQL.Parse;
+import GraphQL.Response;
+import GraphQL.Client;
+
+import GraphQL.Mutate.MutateClient;
+import GraphQL.Query.QueryClient;
+import GraphQL.Subscribe.SubscribeClient;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 

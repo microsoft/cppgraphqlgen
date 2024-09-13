@@ -3,12 +3,15 @@
 
 #include <gtest/gtest.h>
 
-#include "TodayMock.h"
-
 #include "graphqlservice/JSONResponse.h"
 
 #include <chrono>
 #include <cstddef>
+
+import GraphQL.Parse;
+import GraphQL.Service;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 

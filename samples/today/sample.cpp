@@ -1,14 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
-
 #include "graphqlservice/JSONResponse.h"
 
 #include <cstdio>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
+
+import GraphQL.Parse;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 

@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
-
 #include "graphqlservice/JSONResponse.h"
 
 #include <chrono>
@@ -12,6 +10,10 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+
+import GraphQL.Parse;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 

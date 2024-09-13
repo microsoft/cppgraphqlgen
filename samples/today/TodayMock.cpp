@@ -1,20 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
-
-#include "AppointmentConnectionObject.h"
-#include "CompleteTaskPayloadObject.h"
-#include "ExpensiveObject.h"
-#include "FolderConnectionObject.h"
-#include "NestedTypeObject.h"
-#include "TaskConnectionObject.h"
-#include "UnionTypeObject.h"
+module;
 
 #include <algorithm>
 #include <chrono>
+#include <coroutine>
+#include <future>
 #include <iostream>
 #include <mutex>
+#include <stack>
+#include <thread>
+
+module GraphQL.Today.Mock;
+
+import GraphQL.Response;
 
 namespace graphql::today {
 

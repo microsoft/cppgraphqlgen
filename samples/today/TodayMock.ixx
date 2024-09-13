@@ -1,30 +1,44 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#pragma once
-
-#ifndef TODAYMOCK_H
-#define TODAYMOCK_H
-
-#include "TodaySchema.h"
-
-#include "AppointmentEdgeObject.h"
-#include "AppointmentObject.h"
-#include "FolderEdgeObject.h"
-#include "FolderObject.h"
-#include "MutationObject.h"
-#include "NodeObject.h"
-#include "PageInfoObject.h"
-#include "QueryObject.h"
-#include "SubscriptionObject.h"
-#include "TaskEdgeObject.h"
-#include "TaskObject.h"
+module;
 
 #include <atomic>
+#include <cstddef>
+#include <functional>
+#include <future>
 #include <memory>
+#include <optional>
 #include <stack>
+#include <string>
 
-namespace graphql::today {
+export module GraphQL.Today.Mock;
+
+import GraphQL.Response;
+import GraphQL.Service;
+
+export import GraphQL.Today.TodaySchema;
+
+export import GraphQL.Today.AppointmentEdgeObject;
+export import GraphQL.Today.AppointmentObject;
+export import GraphQL.Today.AppointmentConnectionObject;
+export import GraphQL.Today.CompleteTaskPayloadObject;
+export import GraphQL.Today.ExpensiveObject;
+export import GraphQL.Today.FolderEdgeObject;
+export import GraphQL.Today.FolderObject;
+export import GraphQL.Today.FolderConnectionObject;
+export import GraphQL.Today.MutationObject;
+export import GraphQL.Today.NestedTypeObject;
+export import GraphQL.Today.NodeObject;
+export import GraphQL.Today.PageInfoObject;
+export import GraphQL.Today.QueryObject;
+export import GraphQL.Today.SubscriptionObject;
+export import GraphQL.Today.TaskConnectionObject;
+export import GraphQL.Today.TaskEdgeObject;
+export import GraphQL.Today.TaskObject;
+export import GraphQL.Today.UnionTypeObject;
+
+export namespace graphql::today {
 
 // These IDs are hard-coded in every test which uses TodayMock.
 const response::IdType& getFakeAppointmentId() noexcept;
@@ -411,5 +425,3 @@ public:
 };
 
 } // namespace graphql::today
-
-#endif // TODAYMOCK_H
