@@ -82,19 +82,32 @@ target_include_directories(graphql_internal_module PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../PEGTL/include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_sources(graphql_internal_module PUBLIC FILE_SET CXX_MODULES
-BASE_DIRS
-  ${INCLUDE_ROOT}
-FILES
-  ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
-  ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx
-  ${INCLUDE_ROOT}/graphqlservice/GraphQL.Internal.ixx)
+target_sources(graphql_internal_module
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/Base64.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/Schema.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/Version.h
+  PUBLIC FILE_SET CXX_MODULES
+  BASE_DIRS
+    ${INCLUDE_ROOT}
+  FILES
+    ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
+    ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx
+    ${INCLUDE_ROOT}/graphqlservice/GraphQL.Internal.ixx)
 
 function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
   set(TEST_FILE "test_coroutine.cpp")
@@ -131,16 +144,6 @@ if(STD_COROUTINE)
 else()
   message(FATAL_ERROR "Missing coroutine support")
 endif()
-
-# graphqlversion
-add_library(graphqlversion STATIC)
-add_library(cppgraphqlgen::graphqlversion ALIAS graphqlversion)
-target_compile_features(graphqlversion PUBLIC cxx_std_20)
-target_sources(graphqlversion PUBLIC FILE_SET CXX_MODULES
-BASE_DIRS
-  ${INCLUDE_ROOT}
-FILES
-  ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
 
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
@@ -196,7 +199,6 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
     GeneratorUtil.cpp)
   target_compile_features(generator_util PUBLIC cxx_std_20)
   target_link_libraries(generator_util PUBLIC
-    graphqlversion
     graphqlpeg
     graphqlresponse)
 endif()
@@ -359,7 +361,6 @@ add_library(graphqlservice
 add_library(cppgraphqlgen::graphqlservice ALIAS graphqlservice)
 target_compile_features(graphqlservice PUBLIC cxx_std_20)
 target_link_libraries(graphqlservice PUBLIC
-  graphqlversion
   graphql_internal_module
   graphqlpeg
   graphqlresponse
@@ -390,7 +391,6 @@ add_library(graphqlclient GraphQLClient.cpp)
 add_library(cppgraphqlgen::graphqlclient ALIAS graphqlclient)
 target_compile_features(graphqlclient PUBLIC cxx_std_20)
 target_link_libraries(graphqlclient PUBLIC
-  graphqlversion
   graphqlpeg
   graphqlresponse)
 
@@ -437,7 +437,6 @@ endif()
 
 install(TARGETS
     graphql_internal_module
-    graphqlversion
     graphqlclient
     graphqlpeg
     graphqlresponse
@@ -446,7 +445,12 @@ install(TARGETS
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  FILE_SET CXX_MODULES DESTINATION include)
+  FILE_SET HEADERS
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}
+  FILE_SET CXX_MODULES
+    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR})
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLClient.h
@@ -455,18 +459,6 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/GraphQLService.h
   CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
   DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Awaitable.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Base64.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Grammar.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Introspection.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Schema.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SortedMap.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/SyntaxTree.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/internal/Version.h
-  CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-  DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice/internal)
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)
