@@ -14,8 +14,8 @@ module;
 
 export module GraphQL.Today.Mock;
 
-import GraphQL.Response;
-import GraphQL.Service;
+export import GraphQL.Response;
+export import GraphQL.Service;
 
 export import GraphQL.Today.TodaySchema;
 
