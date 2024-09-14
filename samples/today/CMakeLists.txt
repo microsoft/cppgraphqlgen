@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.28)
 add_subdirectory(schema)
 add_library(todaygraphql STATIC TodayMock.cpp)
 target_compile_features(todaygraphql PUBLIC cxx_std_20)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(todaygraphql PUBLIC "-fabi-version=0")
+endif()
 target_link_libraries(todaygraphql PUBLIC today_schema)
 target_sources(todaygraphql PUBLIC FILE_SET CXX_MODULES
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,6 +19,9 @@ target_sources(todaygraphql PUBLIC FILE_SET CXX_MODULES
 add_subdirectory(nointrospection)
 add_library(todaygraphql_nointrospection STATIC TodayMock.cpp)
 target_compile_features(todaygraphql_nointrospection PUBLIC cxx_std_20)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(todaygraphql_nointrospection PUBLIC "-fabi-version=0")
+endif()
 target_link_libraries(todaygraphql_nointrospection PUBLIC today_nointrospection_schema)
 target_sources(todaygraphql_nointrospection PUBLIC FILE_SET CXX_MODULES
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -29,28 +35,24 @@ endif()
 
 # sample
 add_executable(sample sample.cpp)
-target_compile_features(sample PUBLIC cxx_std_20)
 target_link_libraries(sample PRIVATE
   todaygraphql
   graphqljson)
 
 # sample_nointrospection
 add_executable(sample_nointrospection sample.cpp)
-target_compile_features(sample_nointrospection PUBLIC cxx_std_20)
 target_link_libraries(sample_nointrospection PRIVATE
   todaygraphql_nointrospection
   graphqljson)
 
 # benchmark
 add_executable(benchmark benchmark.cpp)
-target_compile_features(benchmark PUBLIC cxx_std_20)
 target_link_libraries(benchmark PRIVATE
   todaygraphql
   graphqljson)
 
 # benchmark_nointrospection
 add_executable(benchmark_nointrospection benchmark.cpp)
-target_compile_features(benchmark_nointrospection PUBLIC cxx_std_20)
 target_link_libraries(benchmark_nointrospection PRIVATE
   todaygraphql_nointrospection
   graphqljson)

@@ -15,7 +15,6 @@ add_bigobj_flag(validation_tests)
 gtest_add_tests(TARGET validation_tests)
 
 add_executable(today_tests TodayTests.cpp)
-target_compile_features(today_tests PRIVATE cxx_std_20)
 target_link_libraries(today_tests PRIVATE
   todaygraphql
   graphqljson
@@ -25,7 +24,6 @@ add_bigobj_flag(today_tests)
 gtest_add_tests(TARGET today_tests)
 
 add_executable(coroutine_tests CoroutineTests.cpp)
-target_compile_features(coroutine_tests PRIVATE cxx_std_20)
 target_link_libraries(coroutine_tests PRIVATE
   todaygraphql
   graphqljson
@@ -34,7 +32,6 @@ target_link_libraries(coroutine_tests PRIVATE
 gtest_add_tests(TARGET coroutine_tests)
 
 add_executable(client_tests ClientTests.cpp)
-target_compile_features(client_tests PRIVATE cxx_std_20)
 target_link_libraries(client_tests PRIVATE
   todaygraphql
   query_client
@@ -46,7 +43,6 @@ add_bigobj_flag(client_tests)
 gtest_add_tests(TARGET client_tests)
 
 add_executable(nointrospection_tests NoIntrospectionTests.cpp)
-target_compile_features(nointrospection_tests PRIVATE cxx_std_20)
 target_link_libraries(nointrospection_tests PRIVATE
   todaygraphql_nointrospection
   graphqljson
@@ -56,7 +52,6 @@ add_bigobj_flag(nointrospection_tests)
 gtest_add_tests(TARGET nointrospection_tests)
 
 add_executable(argument_tests ArgumentTests.cpp)
-target_compile_features(argument_tests PRIVATE cxx_std_20)
 target_link_libraries(argument_tests PRIVATE
   todaygraphql
   graphqljson
