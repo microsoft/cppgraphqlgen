@@ -63,33 +63,33 @@ std::unique_ptr<TodayMockService> mock_service() noexcept
 	auto result = std::make_unique<TodayMockService>();
 
 	auto query = std::make_shared<Query>(
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Appointment>> {
+		[mockService = result.get()]() noexcept -> std::vector<std::shared_ptr<Appointment>> {
 			++mockService->getAppointmentsCount;
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
 				false) };
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Task>> {
+		[mockService = result.get()]() noexcept -> std::vector<std::shared_ptr<Task>> {
 			++mockService->getTasksCount;
 			return {
 				std::make_shared<Task>(response::IdType(getFakeTaskId()), "Don't forget", true)
 			};
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Folder>> {
+		[mockService = result.get()]() noexcept -> std::vector<std::shared_ptr<Folder>> {
 			++mockService->getUnreadCountsCount;
 			return {
 				std::make_shared<Folder>(response::IdType(getFakeFolderId()), "\"Fake\" Inbox", 3)
 			};
 		});
 	auto mutation = std::make_shared<Mutation>(
-		[](CompleteTaskInput&& input) -> std::shared_ptr<CompleteTaskPayload> {
+		[](CompleteTaskInput&& input) noexcept -> std::shared_ptr<CompleteTaskPayload> {
 			return std::make_shared<CompleteTaskPayload>(
 				std::make_shared<Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
 				std::move(input.clientMutationId));
 		});
 	auto subscription = std::make_shared<NextAppointmentChange>(
-		[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<Appointment> {
+		[](const std::shared_ptr<service::RequestState>&) noexcept -> std::shared_ptr<Appointment> {
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
