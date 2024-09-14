@@ -17,6 +17,7 @@ CMakeSettings.json
 CMakeCache.txt
 CTestCostData.txt
 CTestTestfile.cmake
+CMakeUserPresets.json
 DartConfiguration.tcl
 install_manifest.txt
 LastTest.log
