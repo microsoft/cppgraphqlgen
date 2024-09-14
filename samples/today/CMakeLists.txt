@@ -7,9 +7,6 @@ cmake_minimum_required(VERSION 3.28)
 add_subdirectory(schema)
 add_library(todaygraphql STATIC TodayMock.cpp)
 target_compile_features(todaygraphql PUBLIC cxx_std_20)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(todaygraphql PUBLIC "-fabi-version=0")
-endif()
 target_link_libraries(todaygraphql PUBLIC today_schema)
 target_sources(todaygraphql PUBLIC FILE_SET CXX_MODULES
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -19,9 +16,6 @@ target_sources(todaygraphql PUBLIC FILE_SET CXX_MODULES
 add_subdirectory(nointrospection)
 add_library(todaygraphql_nointrospection STATIC TodayMock.cpp)
 target_compile_features(todaygraphql_nointrospection PUBLIC cxx_std_20)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(todaygraphql_nointrospection PUBLIC "-fabi-version=0")
-endif()
 target_link_libraries(todaygraphql_nointrospection PUBLIC today_nointrospection_schema)
 target_sources(todaygraphql_nointrospection PUBLIC FILE_SET CXX_MODULES
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}

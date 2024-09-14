@@ -102,6 +102,11 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+# Workaround name mangling compatibility in GCC.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  add_compile_options(-fabi-compat-version=19)
+endif()
+
 function(add_bigobj_flag target)
   if(MSVC)
     # MSVC requires the /bigobj flag if the number of sections gets too big.
