@@ -9,16 +9,12 @@ export module GraphQL.Internal.Version;
 
 export namespace graphql::internal {
 
-namespace constants {
+// clang-format off
+constexpr std::string_view FullVersion = version::FullVersion;
 
-constexpr std::string_view FullVersion = internal::FullVersion;
-
-constexpr std::size_t MajorVersion = internal::MajorVersion;
-constexpr std::size_t MinorVersion = internal::MinorVersion;
-constexpr std::size_t PatchVersion = internal::PatchVersion;
-
-} // namespace constants
-
-using namespace constants;
+constexpr std::size_t MajorVersion = version::MajorVersion;
+constexpr std::size_t MinorVersion = version::MinorVersion;
+constexpr std::size_t PatchVersion = version::PatchVersion;
+// clang-format on
 
 } // namespace graphql::internal

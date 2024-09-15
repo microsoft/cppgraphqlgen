@@ -33,22 +33,16 @@ using service::unimplemented_method;
 
 using service::RequestState;
 
-namespace constants {
-
-constexpr std::string_view strData = service::strData;
-constexpr std::string_view strErrors = service::strErrors;
-constexpr std::string_view strMessage = service::strMessage;
-constexpr std::string_view strLocations = service::strLocations;
-constexpr std::string_view strLine = service::strLine;
-constexpr std::string_view strColumn = service::strColumn;
-constexpr std::string_view strPath = service::strPath;
-constexpr std::string_view strQuery = service::strQuery;
-constexpr std::string_view strMutation = service::strMutation;
-constexpr std::string_view strSubscription = service::strSubscription;
-    
-} // namespace constants
-
-using namespace constants;
+constexpr std::string_view strData = keywords::strData;
+constexpr std::string_view strErrors = keywords::strErrors;
+constexpr std::string_view strMessage = keywords::strMessage;
+constexpr std::string_view strLocations = keywords::strLocations;
+constexpr std::string_view strLine = keywords::strLine;
+constexpr std::string_view strColumn = keywords::strColumn;
+constexpr std::string_view strPath = keywords::strPath;
+constexpr std::string_view strQuery = keywords::strQuery;
+constexpr std::string_view strMutation = keywords::strMutation;
+constexpr std::string_view strSubscription = keywords::strSubscription;
 
 using service::ResolverContext;
 
@@ -78,26 +72,26 @@ using service::ResolverMap;
 using service::TypeModifier;
 using service::Argument;
 
-using service::ModifiedArgument;
-using service::IntArgument;
-using service::FloatArgument;
-using service::StringArgument;
-using service::BooleanArgument;
-using service::IdArgument;
-using service::ScalarArgument;
+using modified_argument::ModifiedArgument;
+using modified_argument::IntArgument;
+using modified_argument::FloatArgument;
+using modified_argument::StringArgument;
+using modified_argument::BooleanArgument;
+using modified_argument::IdArgument;
+using modified_argument::ScalarArgument;
 
 using service::TypeNames;
 using service::Object;
 using service::Result;
 
-using service::ModifiedResult;
-using service::IntResult;
-using service::FloatResult;
-using service::StringResult;
-using service::BooleanResult;
-using service::IdResult;
-using service::ScalarResult;
-using service::ObjectResult;
+using modified_result::ModifiedResult;
+using modified_result::IntResult;
+using modified_result::FloatResult;
+using modified_result::StringResult;
+using modified_result::BooleanResult;
+using modified_result::IdResult;
+using modified_result::ScalarResult;
+using modified_result::ObjectResult;
 
 using service::SubscriptionCallback;
 using service::SubscriptionKey;

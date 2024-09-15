@@ -11,11 +11,15 @@
 
 namespace graphql::internal {
 
+inline namespace version {
+
 constexpr std::string_view FullVersion { "@PROJECT_VERSION@" };
 
 constexpr std::size_t MajorVersion = @PROJECT_VERSION_MAJOR@;
 constexpr std::size_t MinorVersion = @PROJECT_VERSION_MINOR@;
 constexpr std::size_t PatchVersion = @PROJECT_VERSION_PATCH@;
+
+} // namespace version
 
 } // namespace graphql::internal
 

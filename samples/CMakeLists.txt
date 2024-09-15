@@ -9,7 +9,7 @@ add_subdirectory(today)
 add_subdirectory(validation)
 
 if(GRAPHQL_BUILD_HTTP_SAMPLE)
-  find_package(Boost QUIET)
+  find_package(boost_beast CONFIG QUIET)
   if(Boost_FOUND)
     if(Boost_VERSION VERSION_GREATER_EQUAL "1.81.0")
       try_compile(TEST_RESULT

@@ -8,18 +8,26 @@ add_subdirectory(schema)
 add_library(todaygraphql STATIC TodayMock.cpp)
 target_compile_features(todaygraphql PUBLIC cxx_std_20)
 target_link_libraries(todaygraphql PUBLIC today_schema)
-target_sources(todaygraphql PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.ixx)
+target_sources(todaygraphql
+  PUBLIC FILE_SET HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.h
+  PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.ixx)
 
 # todaygraphql_nointrospection
 add_subdirectory(nointrospection)
 add_library(todaygraphql_nointrospection STATIC TodayMock.cpp)
 target_compile_features(todaygraphql_nointrospection PUBLIC cxx_std_20)
 target_link_libraries(todaygraphql_nointrospection PUBLIC today_nointrospection_schema)
-target_sources(todaygraphql_nointrospection PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.ixx)
+target_sources(todaygraphql_nointrospection
+  PUBLIC FILE_SET HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.h
+  PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/TodayMock.ixx)
 
 if(MSVC)
   # warning C4702: unreachable code

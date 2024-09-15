@@ -379,7 +379,7 @@ if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
   #   c++fs
   check_filesystem_impl("stdc++fs;c++fs" STD_FILESYTEM)
 
-  find_package(Boost QUIET REQUIRED COMPONENTS program_options)
+  find_package(boost_program_options CONFIG REQUIRED)
   if(GRAPHQL_BUILD_SCHEMAGEN)
     target_link_libraries(schemagen PRIVATE Boost::program_options)
   endif()
@@ -485,6 +485,17 @@ if(GRAPHQL_USE_RAPIDJSON)
   target_compile_features(graphqljson PUBLIC cxx_std_20)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+  target_sources(graphqljson
+    PUBLIC FILE_SET HEADERS
+    BASE_DIRS
+      ${INCLUDE_ROOT}
+    FILES
+      ${INCLUDE_ROOT}/graphqlservice/JSONResponse.h
+    PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS
+      ${INCLUDE_ROOT}
+    FILES
+      ${INCLUDE_ROOT}/graphqlservice/JSONResponse.ixx)
 
   if(GRAPHQL_UPDATE_VERSION)
     update_version_rc(graphqljson)
@@ -537,10 +548,13 @@ if(BUILD_GRAPHQLJSON)
     EXPORT cppgraphqlgen-targets
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../include/graphqlservice/JSONResponse.h
-    CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
-    DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}/graphqlservice)
+    LIBRARY DESTINATION lib
+    FILE_SET HEADERS
+      CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+      DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR}
+    FILE_SET CXX_MODULES
+      CONFIGURATIONS ${GRAPHQL_INSTALL_CONFIGURATIONS}
+      DESTINATION ${GRAPHQL_INSTALL_INCLUDE_DIR})
 else()
   set(GRAPHQL_BUILD_TESTS OFF CACHE BOOL "GRAPHQL_BUILD_TESTS depends on BUILD_GRAPHQLJSON" FORCE)
 endif()

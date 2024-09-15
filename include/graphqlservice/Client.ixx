@@ -18,23 +18,23 @@ using client::parseServiceResponse;
 using client::TypeModifier;
 using client::Variable;
 
-using client::ModifiedVariable;
-using client::IntVariable;
-using client::FloatVariable;
-using client::StringVariable;
-using client::BooleanVariable;
-using client::IdVariable;
-using client::ScalarVariable;
+using modified_variable::ModifiedVariable;
+using modified_variable::IntVariable;
+using modified_variable::FloatVariable;
+using modified_variable::StringVariable;
+using modified_variable::BooleanVariable;
+using modified_variable::IdVariable;
+using modified_variable::ScalarVariable;
 
 using client::Response;
 
-using client::ModifiedResponse;
-using client::IntResponse;
-using client::FloatResponse;
-using client::StringResponse;
-using client::BooleanResponse;
-using client::IdResponse;
-using client::ScalarResponse;
+using modified_response::ModifiedResponse;
+using modified_response::IntResponse;
+using modified_response::FloatResponse;
+using modified_response::StringResponse;
+using modified_response::BooleanResponse;
+using modified_response::IdResponse;
+using modified_response::ScalarResponse;
 // clang-format on
 
 } // namespace graphql::client
