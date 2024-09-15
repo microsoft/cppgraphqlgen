@@ -709,14 +709,52 @@ module;
 export module GraphQL.)cpp"
 			   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << _loader.getFilenamePrefix() <<
 		R"cpp(Schema;
+)cpp";
 
-namespace included = )cpp"
-			   << schemaNamespace << R"cpp(;
+	PendingBlankLine pendingSeparator { moduleFile };
 
+	if (!_loader.getInterfaceTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& interfaceType : _loader.getInterfaceTypes())
+		{
+			moduleFile << R"cpp(export import GraphQL.)cpp" << _loader.getFilenamePrefix()
+					   << R"cpp(.)cpp" << interfaceType.cppType << R"cpp(Object;
+)cpp";
+		}
+	}
+
+	if (!_loader.getUnionTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& unionType : _loader.getUnionTypes())
+		{
+			moduleFile << R"cpp(export import GraphQL.)cpp" << _loader.getFilenamePrefix()
+					   << R"cpp(.)cpp" << unionType.cppType << R"cpp(Object;
+)cpp";
+		}
+	}
+
+	if (!_loader.getObjectTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& objectType : _loader.getObjectTypes())
+		{
+			moduleFile << R"cpp(export import GraphQL.)cpp" << _loader.getFilenamePrefix()
+					   << R"cpp(.)cpp" << objectType.cppType << R"cpp(Object;
+)cpp";
+		}
+	}
+
+	moduleFile << R"cpp(
 export )cpp";
 
 	NamespaceScope graphqlNamespace { moduleFile, schemaNamespace };
-	PendingBlankLine pendingSeparator { moduleFile };
+
+	pendingSeparator.add();
 
 	if (!_loader.getEnumTypes().empty())
 	{
@@ -2262,7 +2300,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}

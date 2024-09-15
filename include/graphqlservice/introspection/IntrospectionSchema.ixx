@@ -9,7 +9,12 @@ module;
 
 export module GraphQL.Introspection.IntrospectionSchema;
 
-namespace included = graphql::introspection;
+export import GraphQL.Introspection.SchemaObject;
+export import GraphQL.Introspection.TypeObject;
+export import GraphQL.Introspection.FieldObject;
+export import GraphQL.Introspection.InputValueObject;
+export import GraphQL.Introspection.EnumValueObject;
+export import GraphQL.Introspection.DirectiveObject;
 
 export namespace graphql::introspection {
 

@@ -7,6 +7,8 @@ module;
 
 export module GraphQL.Today.Mock;
 
+export import GraphQL.Today.TodaySchema;
+
 export namespace graphql::today {
 
 // clang-format off

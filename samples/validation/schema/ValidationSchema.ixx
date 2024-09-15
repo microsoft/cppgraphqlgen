@@ -9,7 +9,23 @@ module;
 
 export module GraphQL.Validation.ValidationSchema;
 
-namespace included = graphql::validation;
+export import GraphQL.Validation.SentientObject;
+export import GraphQL.Validation.PetObject;
+export import GraphQL.Validation.NodeObject;
+export import GraphQL.Validation.ResourceObject;
+export import GraphQL.Validation.CatOrDogObject;
+export import GraphQL.Validation.DogOrHumanObject;
+export import GraphQL.Validation.HumanOrAlienObject;
+export import GraphQL.Validation.QueryObject;
+export import GraphQL.Validation.DogObject;
+export import GraphQL.Validation.AlienObject;
+export import GraphQL.Validation.HumanObject;
+export import GraphQL.Validation.CatObject;
+export import GraphQL.Validation.MutationObject;
+export import GraphQL.Validation.MutateDogResultObject;
+export import GraphQL.Validation.SubscriptionObject;
+export import GraphQL.Validation.MessageObject;
+export import GraphQL.Validation.ArgumentsObject;
 
 export namespace graphql::validation {
 

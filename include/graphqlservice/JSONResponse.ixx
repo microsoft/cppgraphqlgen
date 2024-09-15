@@ -7,6 +7,8 @@ module;
 
 export module GraphQL.JSONResponse;
 
+export import GraphQL.Response;
+
 export namespace graphql::response {
 
 // clang-format off

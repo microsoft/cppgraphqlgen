@@ -9,7 +9,24 @@ module;
 
 export module GraphQL.Today.TodaySchema;
 
-namespace included = graphql::today;
+export import GraphQL.Today.NodeObject;
+export import GraphQL.Today.UnionTypeObject;
+export import GraphQL.Today.QueryObject;
+export import GraphQL.Today.PageInfoObject;
+export import GraphQL.Today.AppointmentEdgeObject;
+export import GraphQL.Today.AppointmentConnectionObject;
+export import GraphQL.Today.TaskEdgeObject;
+export import GraphQL.Today.TaskConnectionObject;
+export import GraphQL.Today.FolderEdgeObject;
+export import GraphQL.Today.FolderConnectionObject;
+export import GraphQL.Today.CompleteTaskPayloadObject;
+export import GraphQL.Today.MutationObject;
+export import GraphQL.Today.SubscriptionObject;
+export import GraphQL.Today.AppointmentObject;
+export import GraphQL.Today.TaskObject;
+export import GraphQL.Today.FolderObject;
+export import GraphQL.Today.NestedTypeObject;
+export import GraphQL.Today.ExpensiveObject;
 
 export namespace graphql::today {
 

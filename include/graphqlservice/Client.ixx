@@ -7,6 +7,8 @@ module;
 
 export module GraphQL.Client;
 
+export import GraphQL.Response;
+
 export namespace graphql::client {
 
 // clang-format off

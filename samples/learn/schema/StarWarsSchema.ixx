@@ -9,7 +9,12 @@ module;
 
 export module GraphQL.StarWars.StarWarsSchema;
 
-namespace included = graphql::learn;
+export import GraphQL.StarWars.CharacterObject;
+export import GraphQL.StarWars.HumanObject;
+export import GraphQL.StarWars.DroidObject;
+export import GraphQL.StarWars.QueryObject;
+export import GraphQL.StarWars.ReviewObject;
+export import GraphQL.StarWars.MutationObject;
 
 export namespace graphql::learn {
 
