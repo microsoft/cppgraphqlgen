@@ -19,9 +19,9 @@
 #include <string>
 #include <string_view>
 
-// Check if the library version is compatible with schemagen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+// Check if the library version is compatible with schemagen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
 namespace graphql {
 namespace validation {
