@@ -1,8 +1,6 @@
 name: macOS
 
-# Turning off macOS CI build since Apple Clang doesn't support C++20 modules
-#on: [push, pull_request]
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   xcode:
@@ -18,8 +16,6 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
-
-    - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401
 
     - name: Cache vcpkg
       uses: actions/cache@v4.0.2
@@ -54,8 +50,7 @@ jobs:
         $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'read' } else { 'write' })
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
-        $env:PATH = "${env:PATH}:${{ github.workspace }}/ninja-build"
-        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" "-DGRAPHQL_BUILD_MODULES=OFF" ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
