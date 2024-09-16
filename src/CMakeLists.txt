@@ -129,42 +129,6 @@ target_sources(graphql_introspection_modules
   FILES
     ${INTROSPECTION_MODULES})
 
-function(check_coroutine_impl OPTIONAL_FLAGS OUT_RESULT)
-  set(TEST_FILE "test_coroutine.cpp")
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/${TEST_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-  try_compile(TEST_RESULT
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-    CXX_STANDARD 20)
-
-  if(NOT TEST_RESULT)
-      # Retry with each of the optional flags.
-      foreach(OPTIONAL_FLAG IN LISTS OPTIONAL_FLAGS)
-        try_compile(TEST_RESULT
-          ${CMAKE_CURRENT_BINARY_DIR}
-          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-          CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${OPTIONAL_FLAG}"
-          CXX_STANDARD 20)
-
-        if(TEST_RESULT)
-          # Looks like the optional flag was required, go ahead and add it to the compile options.
-          target_compile_options(graphql_internal_modules INTERFACE ${OPTIONAL_FLAG})
-          break()
-        endif()
-      endforeach(OPTIONAL_FLAG)
-  endif()
-
-  set(${OUT_RESULT} ${TEST_RESULT} PARENT_SCOPE)
-endfunction()
-
-check_coroutine_impl("-fcoroutines" STD_COROUTINE)
-if(STD_COROUTINE)
-  message(STATUS "Using std coroutine")
-else()
-  message(FATAL_ERROR "Missing coroutine support")
-endif()
-
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
@@ -342,43 +306,8 @@ if(GRAPHQL_BUILD_SCHEMAGEN)
     RUNTIME DESTINATION ${GRAPHQL_INSTALL_TOOLS_DIR}/${PROJECT_NAME})
 endif()
 
-# Common schemagen and clientgen filesystem and Boost dependencies
+# Common schemagen and clientgen Boost dependencies
 if(GRAPHQL_BUILD_SCHEMAGEN OR GRAPHQL_BUILD_CLIENTGEN)
-  # Try compiling a test program with std::filesystem or one of its alternatives.
-  function(check_filesystem_impl OPTIONAL_LIBS)
-    try_compile(TEST_RESULT
-      ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_filesystem.cpp
-      CXX_STANDARD 20)
-
-    if(NOT TEST_RESULT)
-      # Retry with each of the optional libraries.
-      foreach(OPTIONAL_LIB IN LISTS OPTIONAL_LIBS)
-        try_compile(TEST_RESULT
-          ${CMAKE_CURRENT_BINARY_DIR}
-          ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}
-          LINK_LIBRARIES ${OPTIONAL_LIB}
-          CXX_STANDARD 20)
-
-        if(TEST_RESULT)
-          # Looks like the optional library was required, go ahead and add it to the link options.
-          if(GRAPHQL_BUILD_SCHEMAGEN)
-            target_link_libraries(schemagen PRIVATE ${OPTIONAL_LIB})
-          endif()
-          if(GRAPHQL_BUILD_CLIENTGEN)
-            target_link_libraries(clientgen PRIVATE ${OPTIONAL_LIB})
-          endif()
-          break()
-        endif()
-      endforeach(OPTIONAL_LIB)
-    endif()
-  endfunction(check_filesystem_impl)
-
-  # Try compiling a minimal program without any extra libraries, then with each optional library until it succeeded:
-  #   stdc++fs
-  #   c++fs
-  check_filesystem_impl("stdc++fs;c++fs" STD_FILESYTEM)
-
   find_package(boost_program_options CONFIG REQUIRED)
   if(GRAPHQL_BUILD_SCHEMAGEN)
     target_link_libraries(schemagen PRIVATE Boost::program_options)
