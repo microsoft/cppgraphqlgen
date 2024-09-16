@@ -1,0 +1,89 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "hidden": true,
+            "name": "ninja-generator",
+            "binaryDir": "build/${presetName}",
+            "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "generator": "Ninja"
+        },
+        {
+            "name": "debug",
+            "inherits": [ "ninja-generator" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": [ "ninja-generator" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "gcc-14",
+            "inherits": [ "debug" ],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc-14",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++-14"
+            }
+        },
+        {
+            "name": "clang-18",
+            "inherits": [ "debug" ],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/clang-18",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+                "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS": "/usr/bin/clang-scan-deps-18"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "gcc-14",
+            "configurePreset": "gcc-14"
+        },
+        {
+            "name": "clang-18",
+            "configurePreset": "clang-18"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "gcc-14",
+            "configurePreset": "gcc-14"
+        },
+        {
+            "name": "clang-18",
+            "configurePreset": "clang-18"
+        }
+    ]
+}
