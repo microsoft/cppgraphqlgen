@@ -32,7 +32,8 @@
             },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "/usr/bin/gcc-14",
-                "CMAKE_CXX_COMPILER": "/usr/bin/g++-14"
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++-14",
+                "GRAPHQL_BUILD_MODULES": false
             }
         },
         {

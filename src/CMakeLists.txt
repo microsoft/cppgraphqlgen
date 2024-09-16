@@ -76,13 +76,13 @@ file(REAL_PATH ../include/ INCLUDE_ROOT)
 # graphql_internal_modules
 add_library(graphql_internal_modules STATIC)
 add_library(cppgraphqlgen::graphql_internal_modules ALIAS graphql_internal_modules)
+set_target_properties(graphql_internal_modules PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_features(graphql_internal_modules PUBLIC cxx_std_20)
 target_link_libraries(graphql_internal_modules PUBLIC taocpp::pegtl)
 target_include_directories(graphql_internal_modules PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
-target_sources(graphql_internal_modules
-  PUBLIC FILE_SET HEADERS
+target_sources(graphql_internal_modules PUBLIC FILE_SET HEADERS
   BASE_DIRS
     ${INCLUDE_ROOT}
   FILES
@@ -93,58 +93,55 @@ target_sources(graphql_internal_modules
     ${INCLUDE_ROOT}/graphqlservice/internal/Schema.h
     ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.h
     ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.h
-    ${INCLUDE_ROOT}/graphqlservice/internal/Version.h
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
-    ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
+    ${INCLUDE_ROOT}/graphqlservice/internal/Version.h)
+if(GRAPHQL_BUILD_MODULES)
+  target_sources(graphql_internal_modules PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS
+      ${INCLUDE_ROOT}
+    FILES
+      ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/Base64.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/Schema.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/SortedMap.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/SyntaxTree.ixx
+      ${INCLUDE_ROOT}/graphqlservice/internal/Version.ixx)
+endif()
 
 # graphql_introspection_modules
 add_library(graphql_introspection_modules STATIC)
 add_library(cppgraphqlgen::graphql_introspection_modules ALIAS graphql_introspection_modules)
+set_target_properties(graphql_introspection_modules PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_features(graphql_introspection_modules PUBLIC cxx_std_20)
 target_link_libraries(graphql_introspection_modules PUBLIC taocpp::pegtl)
 target_include_directories(graphql_introspection_modules PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 file(GLOB INTROSPECTION_HEADERS ${INCLUDE_ROOT}/graphqlservice/introspection/*.h)
-file(GLOB INTROSPECTION_MODULES ${INCLUDE_ROOT}/graphqlservice/introspection/*.ixx)
-target_sources(graphql_introspection_modules
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INTROSPECTION_HEADERS}
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INTROSPECTION_MODULES})
+target_sources(graphql_introspection_modules PUBLIC FILE_SET HEADERS
+  BASE_DIRS ${INCLUDE_ROOT}
+  FILES ${INTROSPECTION_HEADERS})
+if(GRAPHQL_BUILD_MODULES)
+  file(GLOB INTROSPECTION_MODULES ${INCLUDE_ROOT}/graphqlservice/introspection/*.ixx)
+  target_sources(graphql_introspection_modules PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INTROSPECTION_MODULES})
+endif()
 
 # graphqlpeg
 add_library(graphqlpeg SyntaxTree.cpp)
 add_library(cppgraphqlgen::graphqlpeg ALIAS graphqlpeg)
 target_compile_features(graphqlpeg PUBLIC cxx_std_20)
 target_link_libraries(graphqlpeg PUBLIC taocpp::pegtl)
-target_sources(graphqlpeg
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/GraphQLParse.h
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/Parse.ixx)
+target_sources(graphqlpeg PUBLIC FILE_SET HEADERS
+  BASE_DIRS ${INCLUDE_ROOT}
+  FILES ${INCLUDE_ROOT}/graphqlservice/GraphQLParse.h)
+if(GRAPHQL_BUILD_MODULES)
+  target_sources(graphqlpeg PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INCLUDE_ROOT}/graphqlservice/Parse.ixx)
+endif()
 target_include_directories(graphqlpeg PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
@@ -172,17 +169,14 @@ target_include_directories(graphqlresponse PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:${GRAPHQL_INSTALL_INCLUDE_DIR}>)
 target_link_libraries(graphqlresponse PUBLIC graphql_internal_modules)
-target_sources(graphqlresponse
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/GraphQLResponse.h
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/Response.ixx)
+target_sources(graphqlresponse PUBLIC FILE_SET HEADERS
+  BASE_DIRS ${INCLUDE_ROOT}
+  FILES ${INCLUDE_ROOT}/graphqlservice/GraphQLResponse.h)
+if(GRAPHQL_BUILD_MODULES)
+  target_sources(graphqlresponse PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INCLUDE_ROOT}/graphqlservice/Response.ixx)
+endif()
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlresponse)
@@ -336,17 +330,14 @@ target_link_libraries(graphqlservice PUBLIC
   graphqlpeg
   graphqlresponse
   Threads::Threads)
-target_sources(graphqlservice
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/GraphQLService.h
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/Service.ixx)
+target_sources(graphqlservice PUBLIC FILE_SET HEADERS
+  BASE_DIRS ${INCLUDE_ROOT}
+  FILES ${INCLUDE_ROOT}/graphqlservice/GraphQLService.h)
+if(GRAPHQL_BUILD_MODULES)
+  target_sources(graphqlservice PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INCLUDE_ROOT}/graphqlservice/Service.ixx)
+endif()
 
 if(GRAPHQL_UPDATE_SAMPLES)
   add_dependencies(graphqlservice copy_introspection_schema_headers)
@@ -375,17 +366,14 @@ target_compile_features(graphqlclient PUBLIC cxx_std_20)
 target_link_libraries(graphqlclient PUBLIC
   graphqlpeg
   graphqlresponse)
-target_sources(graphqlclient
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/GraphQLClient.h
-  PUBLIC FILE_SET CXX_MODULES
-  BASE_DIRS
-    ${INCLUDE_ROOT}
-  FILES
-    ${INCLUDE_ROOT}/graphqlservice/Client.ixx)
+target_sources(graphqlclient PUBLIC FILE_SET HEADERS
+  BASE_DIRS ${INCLUDE_ROOT}
+  FILES ${INCLUDE_ROOT}/graphqlservice/GraphQLClient.h)
+if(GRAPHQL_BUILD_MODULES)
+  target_sources(graphqlclient PUBLIC FILE_SET CXX_MODULES
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INCLUDE_ROOT}/graphqlservice/Client.ixx)
+endif()
 
 if(GRAPHQL_UPDATE_VERSION)
   update_version_rc(graphqlclient)
@@ -414,17 +402,14 @@ if(GRAPHQL_USE_RAPIDJSON)
   target_compile_features(graphqljson PUBLIC cxx_std_20)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
   target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
-  target_sources(graphqljson
-    PUBLIC FILE_SET HEADERS
-    BASE_DIRS
-      ${INCLUDE_ROOT}
-    FILES
-      ${INCLUDE_ROOT}/graphqlservice/JSONResponse.h
-    PUBLIC FILE_SET CXX_MODULES
-    BASE_DIRS
-      ${INCLUDE_ROOT}
-    FILES
-      ${INCLUDE_ROOT}/graphqlservice/JSONResponse.ixx)
+  target_sources(graphqljson PUBLIC FILE_SET HEADERS
+    BASE_DIRS ${INCLUDE_ROOT}
+    FILES ${INCLUDE_ROOT}/graphqlservice/JSONResponse.h)
+  if(GRAPHQL_BUILD_MODULES)
+    target_sources(graphqljson PUBLIC FILE_SET CXX_MODULES
+      BASE_DIRS ${INCLUDE_ROOT}
+      FILES ${INCLUDE_ROOT}/graphqlservice/JSONResponse.ixx)
+  endif()
 
   if(GRAPHQL_UPDATE_VERSION)
     update_version_rc(graphqljson)

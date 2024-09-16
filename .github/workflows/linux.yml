@@ -3,10 +3,11 @@ name: Linux
 on: [push, pull_request]
 
 jobs:
-  clang-18:
+  Linux:
     strategy:
       fail-fast: false
       matrix:
+        compiler: [gcc-14, clang-18]
         config: [debug, release]
 
     runs-on: ubuntu-24.04
@@ -34,10 +35,10 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure CMake
-      run: cmake --preset clang-18-${{ matrix.config }} -DCMAKE_TOOLCHAIN_FILE=
+      run: cmake --preset ${{ matrix.compiler }}-${{ matrix.config }} -DCMAKE_TOOLCHAIN_FILE=
 
     - name: Build
-      run: cmake --build --preset clang-18-${{ matrix.config }} -j -v
+      run: cmake --build --preset ${{ matrix.compiler }}-${{ matrix.config }} -j -v
 
     - name: Test
-      run: ctest --preset clang-18-${{ matrix.config }} --output-on-failure
+      run: ctest --preset ${{ matrix.compiler }}-${{ matrix.config }} --output-on-failure

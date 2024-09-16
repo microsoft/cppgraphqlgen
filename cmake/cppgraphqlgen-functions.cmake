@@ -44,24 +44,21 @@ function(add_graphql_schema_target SCHEMA_TARGET)
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files)
     file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files SCHEMA_FILES)
-    file(GLOB SCHEMA_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-    file(GLOB SCHEMA_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
     add_library(${SCHEMA_TARGET}_schema STATIC ${SCHEMA_FILES})
     add_dependencies(${SCHEMA_TARGET}_schema ${SCHEMA_TARGET}_update_schema)
     target_compile_features(${SCHEMA_TARGET}_schema PUBLIC cxx_std_20)
     target_include_directories(${SCHEMA_TARGET}_schema PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
     target_link_libraries(${SCHEMA_TARGET}_schema PUBLIC cppgraphqlgen::graphqlservice)
-    target_sources(${SCHEMA_TARGET}_schema
-      PUBLIC FILE_SET HEADERS
-      BASE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
-      FILES
-        ${SCHEMA_HEADERS}
-      PUBLIC FILE_SET CXX_MODULES
-      BASE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
-      FILES
-        ${SCHEMA_MODULES})
+    file(GLOB SCHEMA_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+    target_sources(${SCHEMA_TARGET}_schema PUBLIC FILE_SET HEADERS
+      BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+      FILES ${SCHEMA_HEADERS})
+    if(GRAPHQL_BUILD_MODULES)
+      file(GLOB SCHEMA_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
+      target_sources(${SCHEMA_TARGET}_schema PUBLIC FILE_SET CXX_MODULES
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+        FILES ${SCHEMA_MODULES})
+    endif()
   endif()
 endfunction()
 
@@ -100,23 +97,20 @@ function(add_graphql_client_target CLIENT_TARGET)
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files)
     file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files CLIENT_FILES)
-    file(GLOB CLIENT_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-    file(GLOB CLIENT_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
     add_library(${CLIENT_TARGET}_client STATIC ${CLIENT_FILES})
     add_dependencies(${CLIENT_TARGET}_client ${CLIENT_TARGET}_update_client)
     target_compile_features(${CLIENT_TARGET}_client PUBLIC cxx_std_20)
     target_include_directories(${CLIENT_TARGET}_client PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
     target_link_libraries(${CLIENT_TARGET}_client PUBLIC cppgraphqlgen::graphqlclient)
-    target_sources(${CLIENT_TARGET}_client
-      PUBLIC FILE_SET HEADERS
-      BASE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
-      FILES
-        ${CLIENT_HEADERS}
-      PUBLIC FILE_SET CXX_MODULES
-      BASE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
-      FILES
-        ${CLIENT_MODULES})
+    file(GLOB CLIENT_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+    target_sources(${CLIENT_TARGET}_client PUBLIC FILE_SET HEADERS
+      BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+      FILES ${CLIENT_HEADERS})
+    if(GRAPHQL_BUILD_MODULES)
+      file(GLOB CLIENT_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
+      target_sources(${CLIENT_TARGET}_client PUBLIC FILE_SET CXX_MODULES
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+        FILES ${CLIENT_MODULES})
+    endif()
   endif()
 endfunction()

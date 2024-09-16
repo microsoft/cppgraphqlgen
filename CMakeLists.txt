@@ -33,6 +33,7 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   endif()
 endif()
 
+option(GRAPHQL_BUILD_MODULES "Build the C++20 module interface libraries." ON)
 option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
@@ -100,11 +101,6 @@ if(MSVC)
   add_compile_options(/W4 /WX /permissive-)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
-endif()
-
-# Workaround name mangling compatibility in GCC.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-fabi-compat-version=19)
 endif()
 
 function(add_bigobj_flag target)
