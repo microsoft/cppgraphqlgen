@@ -19,11 +19,11 @@
             "name": "release",
             "inherits": [ "ninja-generator" ],
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
-            "name": "gcc-14",
+            "name": "gcc-14-debug",
             "inherits": [ "debug" ],
             "condition": {
                 "type": "notEquals",
@@ -36,7 +36,14 @@
             }
         },
         {
-            "name": "clang-18",
+            "name": "gcc-14-release",
+            "inherits": [ "gcc-14-debug" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "clang-18-debug",
             "inherits": [ "debug" ],
             "condition": {
                 "type": "notEquals",
@@ -47,6 +54,13 @@
                 "CMAKE_C_COMPILER": "/usr/bin/clang-18",
                 "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
                 "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS": "/usr/bin/clang-scan-deps-18"
+            }
+        },
+        {
+            "name": "clang-18-release",
+            "inherits": [ "clang-18-debug" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
             }
         }
     ],
@@ -60,12 +74,20 @@
             "configurePreset": "release"
         },
         {
-            "name": "gcc-14",
-            "configurePreset": "gcc-14"
+            "name": "gcc-14-debug",
+            "configurePreset": "gcc-14-debug"
         },
         {
-            "name": "clang-18",
-            "configurePreset": "clang-18"
+            "name": "gcc-14-release",
+            "configurePreset": "gcc-14-release"
+        },
+        {
+            "name": "clang-18-debug",
+            "configurePreset": "clang-18-debug"
+        },
+        {
+            "name": "clang-18-release",
+            "configurePreset": "clang-18-release"
         }
     ],
     "testPresets": [
@@ -78,12 +100,20 @@
             "configurePreset": "release"
         },
         {
-            "name": "gcc-14",
-            "configurePreset": "gcc-14"
+            "name": "gcc-14-debug",
+            "configurePreset": "gcc-14-debug"
         },
         {
-            "name": "clang-18",
-            "configurePreset": "clang-18"
+            "name": "gcc-14-release",
+            "configurePreset": "gcc-14-release"
+        },
+        {
+            "name": "clang-18-debug",
+            "configurePreset": "clang-18-debug"
+        },
+        {
+            "name": "clang-18-release",
+            "configurePreset": "clang-18-release"
         }
     ]
 }

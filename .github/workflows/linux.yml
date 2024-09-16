@@ -3,11 +3,11 @@ name: Linux
 on: [push, pull_request]
 
 jobs:
-  gcc14:
+  clang-18:
     strategy:
       fail-fast: false
       matrix:
-        config: [Debug, Release]
+        config: [debug, release]
 
     runs-on: ubuntu-24.04
 
@@ -18,17 +18,15 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get upgrade
         sudo add-apt-repository -y universe
         sudo apt-get update
-        sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev ninja-build gcc-14 g++-14
+        sudo apt-get install -yq libgtest-dev libboost-program-options-dev rapidjson-dev ninja-build
 
     - name: Build GTest
       run: |
         cmake -E make_directory gtest
         cd gtest
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config }} -G Ninja /usr/src/gtest
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config == 'debug' && 'Debug' || 'Release' }} -G Ninja /usr/src/gtest
         cmake --build . -j -v
         sudo cmake --install .
 
@@ -37,19 +35,13 @@ jobs:
 
     - name: Configure CMake
       shell: pwsh
-      env:
-        CC: gcc-14
-        CXX: g++-14
-      working-directory: build/
       run: |
-        $cmakeBuildType = '${{ matrix.config }}'
-
-        cmake "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
+        cmake --preset clang-18-${{ matrix.config }}
 
     - name: Build
       working-directory: build/
-      run: cmake --build . -j -v
+      run: cmake --build --preset clang-18-${{ matrix.config }} -j -v
 
     - name: Test
       working-directory: build/
-      run: ctest --output-on-failure
+      run: ctest --preset clang-18-${{ matrix.config }} --output-on-failure
