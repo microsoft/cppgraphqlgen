@@ -74,7 +74,7 @@ endfunction()
 file(REAL_PATH ../include/ INCLUDE_ROOT)
 
 # graphql_internal_modules
-add_library(graphql_internal_modules STATIC)
+add_library(graphql_internal_modules OBJECT)
 add_library(cppgraphqlgen::graphql_internal_modules ALIAS graphql_internal_modules)
 set_target_properties(graphql_internal_modules PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_features(graphql_internal_modules PUBLIC cxx_std_20)
@@ -110,7 +110,7 @@ if(GRAPHQL_BUILD_MODULES)
 endif()
 
 # graphql_introspection_modules
-add_library(graphql_introspection_modules STATIC)
+add_library(graphql_introspection_modules OBJECT)
 add_library(cppgraphqlgen::graphql_introspection_modules ALIAS graphql_introspection_modules)
 set_target_properties(graphql_introspection_modules PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_features(graphql_introspection_modules PUBLIC cxx_std_20)
